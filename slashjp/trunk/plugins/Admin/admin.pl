@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -98,6 +98,12 @@ sub main {
 			adminmenu	=> 'config',
 			tab_selected	=> 'filters',
 		},
+		moderate_recent		=> {
+			function	=> \&moderate,
+			seclev		=> 500,
+			adminmenu	=> 'info',
+			tab_selected	=> 'recent',
+		},
 		siteinfo	=> {
 			function 	=> \&siteInfo,
 			seclev		=> 10000,
@@ -130,16 +136,28 @@ sub main {
 			adminmenu	=> 'config',
 			tab_selected	=> 'vars',
 		},
+		acls		=> {
+			function	=> \&aclEdit,
+			seclev		=> 10000,
+			adminmenu	=> 'config',
+			tab_selected	=> 'acls',
+		},
 		recent		=> {
 			function	=> \&displayRecent,
 			seclev		=> 500,
-			adminmenu	=> 'info',
+			adminmenu	=> 'security',
 			tab_selected	=> 'recent',
+		},
+		recent_mods		=> {
+			function	=> \&displayRecentMods,
+			seclev		=> 500,
+			adminmenu	=> 'security',
+			tab_selected	=> 'recent_mods',
 		},
 		recent_requests		=> {
 			function	=> \&displayRecentRequests,
 			seclev		=> 500,
-			adminmenu	=> 'info',
+			adminmenu	=> 'security',
 			tab_selected	=> 'requests',
 		},
 		recent_subs		=> {
@@ -147,6 +165,18 @@ sub main {
 			seclev		=> 500,
 			adminmenu	=> 'info',
 			tab_selected	=> 'subs',
+		},
+		recent_webheads		=> {
+			function	=> \&displayRecentWebheads,
+			seclev		=> 500,
+			adminmenu	=> 'info',
+			tab_selected	=> 'webheads',
+		},
+		mcd_stats		=> {
+			function	=> \&displayMcdStats,
+			seclev		=> 500,
+			adminmenu	=> 'info',
+			tab_selected	=> 'mcdstats',
 		},
 	};
 
@@ -241,13 +271,54 @@ sub varSave {
 
 		if ($form->{desc}) {
 			print getData('varSave-message');
-		} else {
-# please don't delete this by just removing comment,
-# since we don't even warn the admin this will happen.
-#			$slashdb->deleteVar($form->{thisname});
-#			print getData('varDelete-message');
 		}
 	}
+}
+
+##################################################################
+# ACLs Edit
+# This is for editing the list of ACLs that are defined on your
+# Slash site.  To edit which users have those ACLs, see users.pl.
+sub aclEdit {
+	my($form, $slashdb, $user, $constants) = @_;
+
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $all_acls_hr;
+
+	# If we need to create an ACL, do so.  By doing this before we
+	# get the list of all ACLs in use, we make sure that when we
+	# get that list, it will include the ACL we just created.
+	if ($form->{aclsave}) {
+		aclSave(@_, $all_acls_hr);
+		# We go to the master DB for the definitive list,
+		# because the ACL we created moments ago may not
+		# have replicated to the reader DBs yet.
+		$all_acls_hr = $slashdb->getAllACLs();
+	} else {
+		# Not creating any ACLs with this click, so trust
+		# that the readers have the correct list.
+		$all_acls_hr = $reader->getAllACLs();
+	}
+
+	slashDisplay('aclEdit', {
+		title		=> getTitle('aclEdit-title'),
+		acls		=> $all_acls_hr,
+	});
+}
+
+##################################################################
+sub aclSave {
+	my($form, $slashdb, $user, $constants, $all_acls_hr) = @_;
+
+	return unless $form->{thisname};
+
+	# Set the current user (the admin) to have this acl.  Creating
+	# a single acl entry makes it exist.
+	$slashdb->setUser($user->{uid}, {
+		acl => { $form->{thisname}, 1 }
+	});
+
+	print getData('aclSave-message');
 }
 
 ##################################################################
@@ -343,7 +414,7 @@ sub templateEdit {
 		my $getpage    = $page    eq 'All' ? '' : $page;
 		my $getsection = $section eq 'All' ? '' : $section;
 
-		unless ($form->{templatesection} || $form->{templatepage} || $form->{templatesearch}) {
+		unless ($form->{templatesection} || $form->{templatepage} || $form->{templatepageandsection} || $form->{templatesearch}) {
 			$form->{ $form->{templatelastselect} } = 1;
 		}
 
@@ -793,7 +864,7 @@ sub topicEdit {
 		if (!$form->{topicnew} && $form->{nexttid}) {
 			$topic = $slashdb->getTopic($form->{nexttid}, 0, 1);
 			my $topic_image = $slashdb->getTopicImage($topic->{default_image}, 0, 1);
-			%$topic = (%$topic_image, %$topic);
+			%$topic = (%$topic_image, %$topic) if ref $topic_image;
 		} else {
 			$topic = {};
 		}
@@ -933,8 +1004,8 @@ sub importFile {
 	} else {
 		return "<attach:not found>";
 	}
-	return qq[<A HREF="$rootdir/$section/] . getsiddir() . $filename
-		. qq[">Attachment</A>];
+	return qq[<a href="$rootdir/$section/] . getsiddir() . $filename
+		. qq[">Attachment</a>];
 }
 
 ########################################################
@@ -965,7 +1036,9 @@ sub getRelated {
 	my($story_content, $tid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $rl = $slashdb->getRelatedLinks();
+	my $user    = getCurrentUser;
+
+	my $rl = $slashdb->getRelatedLinks;
 	my @related_text = ( );
 	my @rl_keys = sort keys %$rl;
 
@@ -988,7 +1061,9 @@ sub getRelated {
 					&& $story_content =~ /\b$rl->{$_}{keyword}\b/i
 			} @rl_keys;
 		for my $key (@matchkeys) {
-			my $str = qq[&middot; <A HREF="$rl->{$key}{link}">$rl->{$key}{name}</A><BR>\n];
+			# Instead of hard-coding the HTML here, we should
+			# do something a little more flexible.
+			my $str = qq[&middot; <a href="$rl->{$key}{link}">$rl->{$key}{name}</a><br>\n];
 			push @related_text, $str;
 		}
 	}
@@ -996,14 +1071,14 @@ sub getRelated {
 	# And slurp in all of the anchor links (<A>) from the story just for
 	# good measure.  If TITLE attribute is present, use that for the link
 	# label; otherwise just use the A content.
-	while ($story_content =~ m|<A\s+(.*?)>(.*?)</A>|sgi) {
+	while ($story_content =~ m|<a\s+(.*?)>(.*?)</a>|sgi) {
 		my($a_attr, $label) = ($1, $2);
-		if ($a_attr =~ m/(\bTITLE\s*=\s*(["'])(.*?)\2)/si) {
+		if ($a_attr =~ m/(\btitle\s*=\s*(["'])(.*?)\2)/si) {
 			$label = $3;
 			$a_attr =~ s/\Q$1\E//;
 		}
 
-		$a_attr =~ /\bHREF\s*=\s*(["'])(.*?)\1/;
+		$a_attr =~ /\bhref\s*=\s*(["'])(.*?)\1/;
 		my $a_href = $2;
 		# If we want to exclude certain types of links from appearing
 		# in Related Links, we can make that decision based on the
@@ -1011,8 +1086,19 @@ sub getRelated {
 
 		$label = strip_notags($label);
 		$label =~ s/(\S{30})/$1 /g;
-		my $str = qq[&middot; <A $a_attr>$label</A><BR>\n];
+		# Instead of hard-coding the HTML here, we should
+		# do something a little more flexible.
+		my $str = qq[&middot; <a $a_attr>$label</a><br>\n];
 		push @related_text, $str unless $label eq "?" || $label eq "[?]";
+	}
+
+	for (@{$user->{state}{related_links}}) {
+		push @related_text, sprintf(
+			# Instead of hard-coding the HTML here, we should
+			# do something a little more flexible.
+			qq[&middot; <a href="%s">%s</a><br>\n],
+			strip_attribute($_->[1]), $_->[0]
+		);
 	}
 
 	# Check to make sure we don't include the same link twice.
@@ -1030,9 +1116,9 @@ sub getRelated {
 sub otherLinks {
 	my($aid, $tid, $uid) = @_;
 
-	my $slashdb = getCurrentDB();
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
-	my $topics = $slashdb->getTopics();
+	my $topics = $reader->getTopics();
 	my @tids = ( $tid );
 	if (ref($tid) && ref($tid) eq 'ARRAY') {
 		@tids = ( @$tid );
@@ -1132,6 +1218,8 @@ sub editStory {
 		}
 	}
 
+	$slashdb->setCommonStoryWords();
+
 	my @stid;
 	my($extracolumn_flag) = (0, 0);
 	my($storyref, $story, $author, $topic, $storycontent, $locktest,
@@ -1174,11 +1262,6 @@ sub editStory {
 		$storyref->{dept} =~ s/^-//;
 		$storyref->{dept} =~ s/-$//;
 
-		$storyref->{introtext} =~ s/^<P>//;
-		$storyref->{introtext} =~ s/^<BR>//;
-		$storyref->{introtext} =~ s/<P>$//;
-		$storyref->{introtext} =~ s/<BR>$//;
-
 		for my $field (qw( introtext bodytext )) {
 			$storyref->{$field} = $slashdb->autoUrl(
 				$form->{section}, $storyref->{$field});
@@ -1203,17 +1286,6 @@ sub editStory {
 		} elsif ($form->{stid}) {
 			@stid = $form->{stid};
 		}
-
-		# Get the related text.
-		$storyref->{relatedtext} =
-			getRelated(
-				"$storyref->{title} $storyref->{introtext} $storyref->{bodytext}",
-				\@stid
-			) . otherLinks(
-				$slashdb->getAuthor($storyref->{uid}, 'nickname'),
-				$storyref->{tid}, 
-				$storyref->{uid}
-			);
 
 		# Get wordcounts
 		$storyref->{introtext_wordcount} = countWords($storyref->{introtext});
@@ -1272,19 +1344,33 @@ sub editStory {
 		}
 
 		for my $field (qw( introtext bodytext )) {
-			$storyref->{$field} = cleanSlashTags(
-				$storyref->{$field}, {});
+			$storyref->{$field} = cleanSlashTags($storyref->{$field});
 
 			# do some of the processing displayStory()
 			# does, as we are bypassing it by going straight to
 			# dispStory() -- pudge
-			$story_copy{$field} = parseSlashizedLinks(
-				$storyref->{$field}, {});
-			$story_copy{$field} = cleanSlashTags(
-				$storyref->{$field}, {});
-			$story_copy{$field} = processSlashTags(
-				$storyref->{$field}, {});
+			$story_copy{$field} = parseSlashizedLinks($storyref->{$field});
+			$story_copy{$field} = cleanSlashTags($storyref->{$field});
+			my $options = $field eq 'bodytext' ? { break => 1 } : undef;
+			$story_copy{$field} = processSlashTags($storyref->{$field}, $options);
 		}
+
+		# Get the related text.
+		$storyref->{relatedtext} = getRelated(
+			"$story_copy{title} $story_copy{introtext} $story_copy{bodytext}",
+			\@stid
+		) . otherLinks(
+			$slashdb->getAuthor($storyref->{uid}, 'nickname'),
+			$storyref->{tid}, 
+			$storyref->{uid}
+		);
+		# If getRelated and otherLinks seem to be putting <li>
+		# tags around each item, they probably want a <ul></ul>
+		# surrounding the whole list.  This is a bit hacky but
+		# should help make strictly parsed versions of HTML
+		# work better.
+		$storyref->{relatedtext} = "<ul>\n$storyref->{relatedtext}\n</ul>"
+			if $storyref->{relatedtext} && $storyref->{relatedtext} =~ /^\s*<li>/;
 
 		my $author  = $slashdb->getAuthor($storyref->{uid});
 		my $topic   = $slashdb->getTopic($storyref->{tid});
@@ -1361,9 +1447,11 @@ sub editStory {
 		bodytext =>     get_ispell_comments($storyref->{bodytext}),
 	} unless $user->{no_spell};
 
-	my $future = $slashdb->getStoryByTimeAdmin('>', $storyref, "3");
-	$future = [ reverse(@$future) ];
-	my $past = $slashdb->getStoryByTimeAdmin('<', $storyref, "3");
+	my $future = $slashdb->getStoryByTimeAdmin('>', $storyref, 3);
+	$future = [ reverse @$future ];
+	my $past = $slashdb->getStoryByTimeAdmin('<', $storyref, 3);
+	my $current = $slashdb->getStoryByTimeAdmin('=', $storyref, 20);
+	unshift @$past, @$current;
 
 	my $num_sim = $constants->{similarstorynumshow} || 5;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
@@ -1656,14 +1744,6 @@ sub updateStory {
 	} elsif ($form->{stid}) {
 		@stid = $form->{stid};
 	}
-	$form->{relatedtext} = getRelated(
-			"$form->{title} $form->{bodytext} $form->{introtext}",
-			$topic
-		) . otherLinks(
-			$slashdb->getAuthor($form->{uid}, 'nickname'),
-			$topic,
-			$form->{uid}
-		);
 
 	my $time = findTheTime();
 
@@ -1672,13 +1752,35 @@ sub updateStory {
 	$form->{bodytext} =  slashizeLinks($form->{bodytext});
 	$form->{introtext} = balanceTags($form->{introtext});
 	$form->{bodytext} =  balanceTags($form->{bodytext});
+
 	my $reloDB = getObject("Slash::Relocate");
 	if ($reloDB) {
 		$form->{introtext} = $reloDB->href2SlashTag($form->{introtext}, $form->{sid});
 		$form->{bodytext} = $reloDB->href2SlashTag($form->{bodytext}, $form->{sid});
 	}
+
 	$form->{introtext} = cleanSlashTags($form->{introtext});
 	$form->{bodytext} = cleanSlashTags($form->{bodytext});
+
+	# grab our links for getRelated, but toss away the result -- pudge
+	processSlashTags("$form->{bodytext} $form->{introtext}");
+	$form->{relatedtext} = getRelated(
+		"$form->{title} $form->{bodytext} $form->{introtext}",
+		$topic
+	) . otherLinks(
+		$slashdb->getAuthor($form->{uid}, 'nickname'),
+		$topic,
+		$form->{uid}
+	);
+	# If getRelated and otherLinks seem to be putting <li>
+	# tags around each item, they probably want a <ul></ul>
+	# surrounding the whole list.  This is a bit hacky but
+	# should help make strictly parsed versions of HTML
+	# work better.
+	$form->{relatedtext} = "<ul>\n$form->{relatedtext}\n</ul>"
+		if $form->{relatedtext} && $form->{relatedtext} =~ /^\s*<li>/;
+
+	$slashdb->setCommonStoryWords();
 
 	my $data = {
 		uid		=> $form->{uid},
@@ -1697,11 +1799,16 @@ sub updateStory {
 		subsection	=> $form->{subsection},
 		-rendered	=> 'NULL', # freshenup.pl will write this
 	};
+
+	for (qw(dept bodytext relatedtext)) {
+		$data->{$_} = '' unless defined $data->{$_};  # allow to blank out
+	}
+
 	my $extras = $slashdb->getSectionExtras($data->{section});
 	if ($extras && @$extras) {
 		for (@$extras) {
 			my $key = $_->[1];
-			$data->{$key} = $form->{$key} if $form->{$key};
+			$data->{$key} = $form->{$key};
 		}
 	}
 
@@ -1735,12 +1842,70 @@ sub displaySlashd {
 	});
 }
 
+
 ##################################################################
+# Handles moderation
+sub moderate {
+	my($form, $slashdb, $user, $constants) = @_;
+
+	my $was_touched = {};
+	my($sid, $cid);
+
+	titlebar("100%", "Moderating...");
+	if (!dbAvailable("write_comments")) {
+		print getData("comment_db_down");
+		return;
+	}
+	for my $key (sort keys %{$form}) {
+		if ($key =~ /^reason_(\d+)_(\d+)$/) {
+			($sid, $cid) = ($1, $2);
+			next if $form->{$key} eq "";
+			my $ret_val = $slashdb->moderateComment($sid, $cid, $form->{$key});			
+			# No points and not enough points shouldn't show up since the user
+			# is an admin but check just in case 
+			if ($ret_val < 0) {
+				if ($ret_val == -1) {
+					print getData('no points');
+				} elsif ($ret_val == -2){
+					print getData('not enough points');
+				} else {
+					print getData('unknown_moderation_warning');
+				}
+			
+			} else {
+				$was_touched->{$sid} += $ret_val;
+			}
+			
+		}
+	}
+
+	foreach my $s (keys %$was_touched) {
+		if ($was_touched->{$s}) {
+			my $story_sid = $slashdb->getStorySidFromDiscussion($sid);
+			$slashdb->setStory($story_sid, { writestatus => 'dirty' }) if $story_sid;
+		}
+	}
+	my $startat = $form->{startat} || 0;
+	if ($form->{returnto}) {
+		print getData('moderate_recent_message_returnto', { returnto => $form->{returnto} });
+	} else {
+		print getData('moderate_recent_message', { startat => $startat });
+	}
+}
+
+
+##################################################################
+sub displayRecentMods {
+	my($form, $slashdb, $user, $constants) = @_;
+	slashDisplay('recent_mods');
+}
+
 sub displayRecent {
 	my($form, $slashdb, $user, $constants) = @_;
-	my($min, $max) = (undef, undef);
+	my($min, $max, $sid) = (undef, undef, undef);
 	$min = $form->{min} if defined($form->{min});
 	$max = $form->{max} if defined($form->{max});
+	$sid = $form->{sid} if defined($form->{sid});
 	my $startat = $form->{startat} || undef;
 
 	my $max_cid = $slashdb->sqlSelect("MAX(cid)", "comments");
@@ -1748,8 +1913,16 @@ sub displayRecent {
 		min	=> $min,
 		max	=> $max,
 		startat	=> $startat,
-		num	=> 30,
+		num	=> 100,
+		sid	=> $sid
+		
 	}) || [ ];
+
+	if (defined($form->{show_m2s})) {
+		$slashdb->setUser($user->{uid},
+			{ user_m2_with_mod => $form->{show_m2s} });
+	}
+
 
 	my $subj_vislen = 30;
 	for my $comm (@$recent_comments) {
@@ -1764,6 +1937,7 @@ sub displayRecent {
 		recent_comments	=> $recent_comments,
 		min		=> $min,
 		max		=> $max,
+		sid		=> $sid
 	});
 }
 
@@ -1819,7 +1993,7 @@ sub displayRecentSubs {
 	my($form, $slashdb, $user, $constants) = @_;
 
 	if (!$constants->{subscribe}) {
-		listStories();
+		listStories(@_);
 		return;
 	}
 
@@ -1830,6 +2004,50 @@ sub displayRecentSubs {
 	slashDisplay('recent_subs', {
 		subs		=> $subs,
 	});
+}
+
+##################################################################
+sub displayRecentWebheads {
+	my($form, $slashdb, $user, $constants) = @_;
+
+	my $admindb = getObject("Slash::Admin", { db_type => 'log' });
+
+	my $data_hr = $admindb->getRecentWebheads(10, 5000);
+
+	# We need the list of all webheads too.
+	my %webheads = ( );
+	for my $min (keys %$data_hr) {
+		my @webheads = keys %{$data_hr->{$min}};
+		for my $wh (@webheads) {
+			$webheads{$wh} = 1;
+		}
+	}
+	my $webheads_ar = [ sort keys %webheads ];
+
+	# Format the times.
+	for my $min (keys %$data_hr) {
+		for my $wh (keys %{$data_hr->{$min}}) {
+			$data_hr->{$min}{$wh}{dur} = sprintf("%0.3f",
+				$data_hr->{$min}{$wh}{dur});
+		}
+	}
+
+	slashDisplay('recent_webheads', {
+		data		=> $data_hr,
+		webheads	=> $webheads_ar,
+	});
+}
+
+##################################################################
+sub displayMcdStats {
+	my($form, $slashdb, $user, $constants) = @_;
+
+	my $stats = $slashdb->getMCDStats();
+	if (!$stats) {
+		print getData('no-mcd-stats');
+		return;
+	}
+	slashDisplay('mcd_stats', { stats => $stats });
 }
 
 ##################################################################
@@ -1860,6 +2078,13 @@ sub saveStory {
 	my $story_text = "$form->{title} $form->{bodytext} $form->{introtext}";
 	$form->{relatedtext} = getRelated($story_text, $form->{tid})
 		. otherLinks($edituser->{nickname}, $form->{tid}, $edituser->{uid});
+	# If getRelated and otherLinks seem to be putting <li>
+	# tags around each item, they probably want a <ul></ul>
+	# surrounding the whole list.  This is a bit hacky but
+	# should help make strictly parsed versions of HTML
+	# work better.
+	$form->{relatedtext} = "<ul>\n$form->{relatedtext}\n</ul>"
+		if $form->{relatedtext} && $form->{relatedtext} =~ /^\s*<li>/;
 
 	$form->{introtext} = slashizeLinks($form->{introtext});
 	$form->{bodytext} =  slashizeLinks($form->{bodytext});
@@ -1867,6 +2092,7 @@ sub saveStory {
 	$form->{bodytext} =  balanceTags($form->{bodytext});
 
 	my $time = findTheTime();
+	$slashdb->setCommonStoryWords();
 
 	# used to just pass $form to createStory, which is not
 	# a good idea because you end up getting form values 
@@ -1890,11 +2116,16 @@ sub saveStory {
 		commentstatus	=> $form->{commentstatus},
 		-rendered	=> 'NULL', # freshenup.pl will write this
 	};
+
+	for (qw(dept bodytext relatedtext)) {
+		$data->{$_} = '' unless defined $data->{$_};  # allow to blank out
+	}
+
 	my $extras = $slashdb->getSectionExtras($data->{section});
 	if ($extras && @$extras) {
 		for (@$extras) {
 			my $key = $_->[1];
-			$data->{$key} = $form->{$key} if $form->{$key};
+			$data->{$key} = $form->{$key};
 		}
 	}
 	my $sid = $slashdb->createStory($data);

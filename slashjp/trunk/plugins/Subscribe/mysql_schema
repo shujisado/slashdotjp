@@ -1,3 +1,7 @@
+#
+# $Id$
+#
+
 ALTER TABLE users_hits ADD COLUMN hits_bought INT DEFAULT 0 NOT NULL AFTER hits, ADD COLUMN hits_bought_today SMALLINT UNSIGNED DEFAULT 0 NOT NULL AFTER hits_bought, ADD COLUMN hits_paidfor INT DEFAULT 0 NOT NULL AFTER hits_bought_today;
 
 DROP TABLE IF EXISTS subscribe_payments;
@@ -13,10 +17,13 @@ CREATE TABLE subscribe_payments (
 	method		VARCHAR(6),
 	memo		VARCHAR(255) NOT NULL,
 	data		BLOB,
+	payment_type	VARCHAR(10),
+	puid		MEDIUMINT UNSIGNED,
 	PRIMARY KEY(spid),
 	KEY(uid),
 	KEY(ts),
-	UNIQUE(transaction_id)
+	UNIQUE(transaction_id),
+	KEY(puid)
 ) TYPE = InnoDB;
 
 ALTER TABLE comments ADD COLUMN subscriber_bonus ENUM("no", "yes") NOT NULL DEFAULT "no" AFTER karma_bonus;

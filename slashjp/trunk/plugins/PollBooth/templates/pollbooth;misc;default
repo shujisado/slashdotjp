@@ -26,7 +26,7 @@ __name__
 pollbooth
 __template__
 [% IF has_activated or user.is_admin %]
-[% IF user.is_admin %]       
+[% IF user.is_admin %]
 	[% IF !has_activated %]
 	(Poll not yet active)<BR>
 	[% END %]
@@ -49,7 +49,7 @@ __template__
 	<FORM ACTION="[% constants.rootdir %]/pollBooth.pl">
 		[%- IF returnto -%]
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="vote_return">
-		<INPUT TYPE="HIDDEN" NAME="returnto" VALUE="[% returnto %]">
+		<INPUT TYPE="HIDDEN" NAME="returnto" VALUE="[% returnto | strip_attribute %]">
 		[%- END -%]
 		<INPUT TYPE="hidden" NAME="qid" VALUE="[% qid | strip_attribute %]">
 		[% IF user.currentSection %]

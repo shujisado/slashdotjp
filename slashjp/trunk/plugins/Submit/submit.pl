@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -78,6 +78,10 @@ sub main {
 			seclev		=> $constants->{submiss_view} ? 0 : 100,
 			function	=> \&previewForm,
 		},
+		update		=> {
+			seclev		=> 100,
+			function	=> \&updateSubmissions,
+		},
 		delete		=> {
 			seclev		=> 100,
 			function	=> \&deleteSubmissions,
@@ -133,6 +137,14 @@ sub main {
 }
 
 #################################################################
+# update the notes and sections fields but don't delete anything.
+sub updateSubmissions {
+	my($constants, $slashdb, $user, $form) = @_;
+	$slashdb->deleteSubmission({ nodelete => 1 });
+	submissionEd(@_);
+}
+
+#################################################################
 sub deleteSubmissions {
 	my($constants, $slashdb, $user, $form) = @_;
 	my @subids = $slashdb->deleteSubmission;
@@ -156,17 +168,12 @@ sub previewStory {
 sub yourPendingSubmissions {
 	my($constants, $slashdb, $user, $form) = @_;
 
-	my $summary;
 	return if $user->{is_anon};
 
-	if (my $submissions = $slashdb->getSubmissionsPending()) {
-		for my $submission (@$submissions) {
-			$summary->{$submission->[4]}++;
-		}
+	if (my $submissions = $slashdb->getSubmissionsByUID($user->{uid}, "", { limit_days => 365 })) {
 		slashDisplay('yourPendingSubs', {
 			submissions	=> $submissions,
 			width		=> '100%',
-			summary		=> $summary,
 		});
 	}
 }
@@ -254,7 +261,7 @@ sub mergeSubmissions {
 	}
 
 	# need to do this even if nothing is checked, so we update notes etc.
-	my @subids = $slashdb->deleteSubmission;
+	my @subids = $slashdb->deleteSubmission({ accepted => 1 });
 
 	submissionEd(@_, getData('mergehead', { subids => \@subids }));
 }
@@ -460,7 +467,13 @@ sub displayForm {
 		$fixedstory = strip_plaintext(url2html($form->{story}));
 	} else {
 		$fixedstory = strip_html(url2html($form->{story}));
+
+		# some submitters like to add whitespace before and
+		# after their introtext. This is never wanted. --Pater
+		$fixedstory =~ s/^<(?:P|BR)(?:>|\s[^>]*>)//i;
+		$fixedstory =~ s/<(?:P|BR)(?:>|\s[^>]*>)$//i;
 	}
+	$fixedstory = balanceTags($fixedstory);
 
 	slashDisplay('displayForm', {
 		fixedstory	=> $fixedstory,
@@ -512,7 +525,7 @@ sub saveSub {
 	} else {
 		$form->{story} = strip_html(url2html($form->{story}));
 	}
-	# Maybe $form->{story} = balanceTags($form->{story}) here?
+	$form->{story} = balanceTags($form->{story});
 
 	my $uid ||= $form->{name}
 		? getCurrentUser('uid')

@@ -39,7 +39,7 @@ rm.score; "  "; constants.absolutedir_secure %]/~[% rm.nickname | fixparam %] ([
 [% END %]
 [% IF repeat_mods;
 	FOREACH dir = [ '-1', '1' ];
-		IF repeat_mods.$dir.defined AND repeat_mods.$dir.keys.size >= 1;
+		IF repeat_mods.defined(dir) AND repeat_mods.$dir.keys.size >= 1;
 			IF dir == -1; dirword = "DOWN"; ELSE; dirword = "UP"; END %]
 REPEAT [% dirword %]MODS:
 [%			FOREACH orguid = repeat_mods.$dir.keys.nsort;
@@ -52,6 +52,21 @@ constants.absolutedir_secure %]/~[% hr.orgnick | fixparam %] ([% hr.orguid %]): 
 	END;
 END; %]
 
+[% IF late_modders_report %]
+---------------------------------
+Top Moderators Near Archive Time
+
+UID     Nickname              Count
+[% late_modders_report %]
+[% END %]
+
+[% IF early_inactive_modders_report %]
+---------------------------------
+Top Early Down Moderators with Inactive Mods
+
+UID     Nickname              Count
+[% early_inactive_modders_report %]
+[% END %]
 __seclev__
 100
 __version__

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -79,8 +79,12 @@ sub findComments {
 			$where .= "     AND discussions.id=" . $self->sqlQuote($form->{sid})
 		}
 	}
-	$where .= "     AND points >= " .  $self->sqlQuote($form->{threshold})
-			if defined($form->{threshold});
+	if (defined $form->{threshold}){
+		my $threshold   = $form->{threshold};
+		my $threshold_q = $self->sqlQuote($threshold);
+		$where .= " AND GREATEST((points + tweak), $constants->{comment_minscore}) >= $threshold_q ";
+		
+	}
 
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $SECT = $reader->getSection($form->{section});
@@ -210,7 +214,7 @@ sub findStory {
 	my $columns;
 	$columns .= "title, stories.sid as sid, "; 
 	$columns .= "time, commentcount, stories.section as section,";
-	$columns .= "tid, ";
+	$columns .= "stories.tid as tid, ";
 	$columns .= "introtext ";
 	$columns .= ", TRUNCATE((( " . $self->_score('title', $form->{query}, $constants->{search_method}) . "  + " .  $self->_score('introtext,bodytext', $form->{query}, $constants->{search_method}) .") / 2), 1) as score "
 		if $form->{query};
@@ -249,7 +253,35 @@ sub findStory {
 		$where .= " AND stories.section = " . $self->sqlQuote($SECT->{section});
 	}
 
-	# Here we find the possible sids that could have this tid and then search only those
+	# Here we find the possible sids that could have this tid and
+	# then search only those.
+	# ...but there are two ways to do this.  The proper way is to
+	# do a "LEFT JOIN story_topics ON stories.sid=story_topics.sid" and
+	# put a "story_topics.id IS NOT NULL" into the WHERE clause.  But
+	# my guess is that on the searches by the larger topics, this will
+	# be too slow.  The other way (which we have done so far) is to do
+	# one select to pull out *all* sids with the topic(s) in question,
+	# and then not join on story_topics, just use a "sid IN" clause.
+	# The problem is that, for large topics, this may be very many sids;
+	# on OSDN sites, we're seeing some topics with 4,000 to 13,000
+	# stories in them.  That makes the SELECT too large to be efficient.
+	# So I'm fixing this in a not very good way:  limiting the number
+	# of stories we search, on any search that includes a topic
+	# limitation.  This sucks and should be replaced with a real
+	# solution ASAP -- this is only a stopgap! - Jamie 2003/11/10
+	#
+	# Changed sorting of story sids by time instead of sid.  This prevents
+	# only dated stories from showing up when there were > 1000 
+	# sids that were created prior to 2000 
+	#
+	# Added support for more correct left join method.  Also added vars
+	# so you can choose to lose left join method or change the limit on
+	# sids returned in the two select method
+	#
+	# Tweak to your site size and performance needs
+	#
+	#-- Vroom 2003/12/08
+
 	if ($form->{tid}) {
 		my @tids;
 		if (ref($form->{_multi}{tid}) eq 'ARRAY') {
@@ -258,12 +290,24 @@ sub findStory {
 			push @tids, $form->{tid};
 		}
 		my $string = join(',', @{$self->sqlQuote(\@tids)});
-		my $sids = $self->sqlSelectColArrayref('sid', 'story_topics', "tid IN ($string)");
-		if ($sids && @$sids) {
-			$string = join(',', @{$self->sqlQuote($sids)});
-			$where .= " AND stories.sid IN ($string) ";
+		if ($constants->{topic_search_use_join}) {
+			$tables.= " LEFT JOIN story_topics ON stories.sid = story_topics.sid ";
+			$where .= " AND story_topics.id IS NOT NULL";
+			$where .= " AND story_topics.tid IN ($string)";
+			$other = "GROUP by sid $other";
 		} else {
-			return; # No results could possibly match
+			my $topic_search_sid_limit = $constants->{topic_search_sid_limit} || 1000;
+			my $sids = $self->sqlSelectColArrayref(
+				'story_topics.sid',
+				'story_topics, stories', 
+				"story_topics.sid = stories.sid AND story_topics.tid IN ($string)",
+				"ORDER BY time DESC LIMIT $topic_search_sid_limit");
+			if ($sids && @$sids) {
+				$string = join(',', @{$self->sqlQuote($sids)});
+				$where .= " AND stories.sid IN ($string) ";
+			} else {
+				return; # No results could possibly match
+			}
 		}
 	}
 	
@@ -274,7 +318,7 @@ sub findStory {
 }
 
 ################################################################################
-# DEad code at the moment -Brian
+# Dead code at the moment -Brian
 sub findRetrieveSite {
 #	my($self, $query, $start, $limit, $sort) = @_;
 #	$query = $self->sqlQuote($query);
@@ -512,6 +556,8 @@ sub findDiscussion {
 
 sub _score {
 	my ($self, $col, $query, $method) = @_;
+	my $constants = getCurrentStatic();
+	
 	if ($method) {
 		# We were getting malformed SQL queries with the previous
 		# way this was done, so I made it a bit more robust.  If
@@ -531,8 +577,25 @@ sub _score {
 			next unless $term;
 			push @terms, $self->sqlQuote($term);
 		}
-		return "0" if !@terms;
+		my @cols = ();
+		for my $c (split /,/, $col) {
+			$c =~ /^\s*(.*?)\s*$/;
+			$c = $1;
+			next unless $c;
+			push @cols, $c;
+		}
+		return "0" if !@terms || !@cols;
 		my $terms = join(",", @terms);
+		if ($method eq "scour") {
+			# This is a fix to do separate SCOUR()s on each
+			# column;  it only applies if your mysqld is set
+			# up to use Brian's special function.
+			my @scour = map { $_ = "($method($_, $terms))" } @cols;
+			my $scour = join " + ", @scour;
+			my $n_scour = scalar(@scour);
+			$scour = "( ( $scour ) / $n_scour )" if $n_scour > 1;
+			return $scour;
+		}
 		return "($method($col, $terms))";
 	} else {
 		$query = $self->sqlQuote($query);

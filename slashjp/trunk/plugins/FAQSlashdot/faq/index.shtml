@@ -39,6 +39,8 @@ in this FAQ. What should I do?</a></b></li>
 <li>
 <b><a href="editorial.shtml#ed103">Where do I submit Press Releases?</a></b></li>
 
+<li>
+<b><a href="editorial.shtml#ed104">Can I email you a Story Submission?</A></B></li>
 
 <li>
 <b><a href="editorial.shtml#ed105">Can I submit a story anonymously?</a></b></li>
@@ -289,6 +291,7 @@ mean?</a></b></li>
   <li> <b><a href="accounts.shtml#ac1000">How do I get an IP Unbanned?</a></b></li>
   <li> <B><a href="accounts.shtml#ac1050">My RSS Headline Reader Tells me I Was Banned!</A></B></LI>
   <li> <b><a href="accounts.shtml#ac1100">Why is someone else's User Name appearing on my User Page's Menu?</a></b></li>
+  <li> <b><a href="accounts.shtml#ac1200">What are Login Sessions?</a></b></li>
   
 </ul>
 <!-- Friends and Journals -->
@@ -340,6 +343,7 @@ list?</a></b></li>
   <li><b><a href="subscriptions.shtml#ss100">Why does Slashdot have subscriptions?</a></b></li>
   <li> <b><a href="subscriptions.shtml#ss200">Where / How can I purchase a subscription 
     to slashdot?</a></b></li>
+  <li> <b><a href="subscriptions.shtml#ss250">Can I purchase a subscription for someone else? Can I do so anonymously?</a></b></li> 
   <li> <b><a href="subscriptions.shtml#ss300">How much does a subscription cost?</a></b></li>
   <li> <b><a href="subscriptions.shtml#ss400">Paypal? Why Paypal?</a></b></li>
   <li> <b><a href="subscriptions.shtml#ss500">I have an idea for a feature for 
@@ -494,7 +498,9 @@ Microsoft.  Why do you keep hyping CDs, movies, and Windows games?</a></b></li>
     administer the submissions bin?</a></b></li>
   <li> <b><a href="suggestions.shtml#su700">How about an AvantGo channel, or some 
     other PDA interface?</a></b></li>
+<!--
   <li> <b><a href="suggestions.shtml#su800">How about a WAP interface?</a></b></li>
+//-->
   <li> <b><a href="suggestions.shtml#su850">Getting the Slashdot headlines by 
     'finger @www.slashdot.org' would be nice, don't you think?</a></b></li>
   <li> <b><a href="suggestions.shtml#su900">Slashdot should cache pages to prevent 

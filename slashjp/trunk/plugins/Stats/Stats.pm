@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -43,6 +43,8 @@ sub new {
 		? $options->{day}
 		: sprintf("%4d-%02d-%02d", $yest_lt[5] + 1900, $yest_lt[4] + 1, $yest_lt[3]);
 	$self->{_day_between_clause} = " BETWEEN '$self->{_day} 00:00' AND '$self->{_day} 23:59:59' ";
+	($self->{_ts} = $self->{_day}) =~ s/-//g;
+	$self->{_ts_between_clause}  = " BETWEEN '$self->{_ts}000000' AND '$self->{_ts}235959' ";
 
 	my $count = 0;
 	if ($options->{create}) {
@@ -168,7 +170,7 @@ sub countModeratorLog {
 		my $reasons = $self->getReasons();
 		my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 		my $reasons_m2able = join(",", @reasons_m2able);
-		push @clauses, "reason IN ($reasons_m2able)"
+		push @clauses, "reason IN ($reasons_m2able)" if $reasons_m2able;
 	}
 
 	my $where = join(" AND ", @clauses) || "";
@@ -199,15 +201,39 @@ sub countMetamodLog {
 }
 
 ########################################################
+# Well this stat ends up being written as modlog_m2count_0
+# which is useless to date (2004-04-20) since it also counts
+# active mods which are un-m2able (under/overrated).  At the
+# 0 count level, it's including old mods.  (Of course, at
+# the 1 and above count levels, the un-m2able mods don't
+# show up, so that's fine.)  Question is, do we change the
+# stat now and just ignore all the old data, or do we create
+# a new stat to correctly track count=0, reason IN m2able?
+# - Jamie
+sub countUnmetamoddedMods {
+	my($self, $options) = @_;
+	my $active_clause = $options->{active_only} ? " AND active=1" : "";
+	return $self->sqlSelectAllHashrefArray(
+		"m2count, COUNT(*) AS cnt",
+		"moderatorlog",
+		"m2status = 0 $active_clause",
+		"GROUP BY m2count");
+}
+
+########################################################
 sub getOldestUnm2dMod {
 	my($self) = @_;
 	my $reasons = $self->getReasons();
 	my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 	my $reasons_m2able = join(",", @reasons_m2able);
+	my @clauses = ("active=1", "m2status=0");
+	push @clauses, "reason IN ($reasons_m2able)" if $reasons_m2able;
+	my $where = join(" AND ", @clauses) || "";
+
 	my($oldest) = $self->sqlSelect(
 		"UNIX_TIMESTAMP(MIN(ts))",
 		"moderatorlog",
-		"active=1 AND reason IN ($reasons_m2able) AND m2status=0"
+		$where
 	);
 	return $oldest || 0;
 }
@@ -276,10 +302,13 @@ sub getRepeatMods {
 		 usersdest.nickname AS destnick,
 		 usersdesti.karma AS destkarma",
 		"users AS usersorg,
+		 users_info AS usersorgi,
 		 moderatorlog,
 		 users AS usersdest,
 		 users_info AS usersdesti",
 		"usersorg.uid=moderatorlog.uid
+		 AND usersorg.uid=usersorgi.uid
+		 AND usersorgi.tokens >= -50
 		 AND usersorg.seclev < 100
 		 AND moderatorlog.cuid=usersdest.uid
 		 AND usersdest.uid=usersdesti.uid
@@ -297,14 +326,28 @@ sub getRepeatMods {
 sub getModM2Ratios {
 	my($self, $options) = @_;
 
+	# The SQL here tells the DB to count up how many of the mods
+	# have been M2'd how much, basically building a histogram.
+	# (The DB returns the counts for each character in each row
+	# of the histogram, and perl assembles them into the text
+	# that is output.)
+	# If there are no m2able modreasons, every char in the
+	# histogram is "X".  Otherwise, the chars in the histogram
+	# are "X" for fully-M2'd mods, "_" for un-m2able mods, and
+	# for mods which have been partially M2'd, the digit showing
+	# the number of M2's applied to them so far.
 	my $reasons = $self->getReasons();
 	my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 	my $reasons_m2able = join(",", @reasons_m2able);
+	my $m2able_char_clause = $reasons_m2able
+		? "IF(reason IN ($reasons_m2able), m2count, '_')"
+		: "'X'";
+
 	my $hr = $self->sqlSelectAllHashref(
 		[qw( day val )],
 		"SUBSTRING(ts, 1, 10) AS day,
 		 IF(m2status=0,
-			IF(reason IN ($reasons_m2able), m2count, '_'),
+			$m2able_char_clause,
 			'X'
 		 ) AS val,
 		 COUNT(*) AS c",
@@ -333,18 +376,21 @@ sub getReverseMods {
 	my $unm2able =  0.5;	$unm2able = $options->{unm2able} if defined $options->{unm2able};
 	my $denomadd =  4  ;	$denomadd = $options->{denomadd} if defined $options->{denomadd};
 	my $limit =    12  ;	$limit = $options->{limit} if defined $options->{limit};
-	my $min_tokens = -100; # fudge factor: only users who are likely to mod soon
+	my $min_tokens = -50; # fudge factor: only users who are likely to mod soon
 
 	my $reasons = $self->getReasons();
 	my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 	my $reasons_m2able = join(",", @reasons_m2able);
+	my $m2able_score_clause = $reasons_m2able
+		? "IF( moderatorlog.reason IN ($reasons_m2able), 0, $unm2able )"
+		: "0";
 	my $ar = $self->sqlSelectAllHashrefArray(
 		"moderatorlog.uid AS muid,
-		 nickname, tokens, karma,
+		 nickname, tokens, users_info.karma AS karma,
 		 ( SUM( IF( moderatorlog.val=-1,
 				IF(points=5, $down5, 0),
 				IF(points<=$upmax, $upsub-points*$upmul, 0) ) )
-		  +SUM( IF( moderatorlog.reason IN ($reasons_m2able), 0, $unm2able ) )
+		  +SUM( $m2able_score_clause )
 		 )/(COUNT(*)+$denomadd) AS score,
 		 IF(MAX(moderatorlog.ts) > DATE_SUB(NOW(), INTERVAL 24 HOUR),
 			1, 0) AS isrecent",
@@ -362,36 +408,83 @@ sub getReverseMods {
 
 	return $ar;
 }
+
 ########################################################
 sub countErrorStatuses {
 	my($self, $options) = @_;
 
-	my $where = " status BETWEEN 500 AND 600 ";
+	my $where = "status BETWEEN 500 AND 599";
 
-	$self->sqlSelect("count(id)", "accesslog_temp_errors", $where);
+	$self->sqlSelect("COUNT(id)", "accesslog_temp_errors", $where);
 }
 
 ########################################################
 sub countByStatus {
 	my($self, $status, $options) = @_;
 
-	my $where = " status = $status  ";
+	my $where = "status = '$status'";
 
-	$self->sqlSelect("count(id)", "accesslog_temp_errors", $where);
+	$self->sqlSelect("COUNT(id)", "accesslog_temp_errors", $where);
 }
 
 ########################################################
 sub getErrorStatuses {
 	my($self, $op, $options) = @_;
 
-	my $where = "1=1 ";
-	$where .= " AND op='$op' "
-		if $op;
-	$where .= " AND section='$options->{section}' "
-		if $options->{section};
-	$where .= " AND status BETWEEN 500 AND 600 ";
+	my $where = "status BETWEEN 500 AND 599";
+	$where .= " AND op='$op'"			if $op;
+	$where .= " AND section='$options->{section}'"	if $options->{section};
 
-	$self->sqlSelectAllHashrefArray("status, count(op) as count, op", "accesslog_temp_errors", $where, " GROUP BY status ORDER BY status ");
+	$self->sqlSelectAllHashrefArray(
+		"status, COUNT(op) AS count, op",
+		"accesslog_temp_errors",
+		$where,
+		"GROUP BY status ORDER BY status");
+}
+
+########################################################
+sub getStoryHitsForDay {
+	my ($self, $day, $options) = @_;
+	my $sids = $self->sqlSelectAllHashrefArray("sid,hits","stories","day_published=".$self->sqlQuote($day));
+	return $sids;
+}
+
+########################################################
+sub getDaysOfUnarchivedStories {
+	my($self, $options) = @_;
+	my $max_days = $options->{max_days} || 180;
+	my $days = $self->sqlSelectColArrayref(
+		"day_published",
+		"stories",
+		"writestatus != 'archived' AND displaystatus != -1",
+		"GROUP BY day_published ORDER BY day_published DESC LIMIT $max_days");
+	return $days;
+}
+
+########################################################
+sub getAverageCommentCountPerStoryOnDay {
+	my($self, $day, $options) = @_;
+	my $col = "AVG(commentcount)";
+	my $where = " DATE_FORMAT(time,'%Y-%m-%d') = '$day' ";
+	$where .= " AND section = '$options->{section}' " if $options->{section};
+	return $self->sqlSelect($col, "stories", $where);
+}
+
+########################################################
+sub getAverageHitsPerStoryOnDay {
+	my($self, $day, $pages, $other) = @_;
+	my $numStories = $self->getNumberStoriesPerDay($day, $other);
+	return $numStories ? $pages / $numStories : 0;
+}
+
+########################################################
+sub getNumberStoriesPerDay {
+	my($self, $day, $options) = @_;
+	my $col = "COUNT(*)";
+	my $where = " DATE_FORMAT(time,'%Y-%m-%d') = '$day' ";
+	$where .= " AND section = '$options->{section}' " if $options->{section};
+	return $self->sqlSelect($col, "stories", $where);
+
 }
 
 ########################################################
@@ -839,6 +932,7 @@ sub countUsersByPage {
 ########################################################
 sub countDailyByPage {
 	my($self, $op, $options) = @_;
+	my $constants = getCurrentStatic();
 	$options ||= {};
 
 	my $where = "1=1 ";
@@ -848,6 +942,8 @@ sub countDailyByPage {
 		if $options->{section};
 	$where .= " AND static='$options->{static}'"
 		if $options->{static};
+	$where .=" AND uid = $constants->{anonymous_coward_uid} " if $options->{user_type} eq "anonymous";
+	$where .=" AND uid != $constants->{anonymous_coward_uid} " if $options->{user_type} eq "logged-in";
 
 	# The "no_op" option can take either a scalar for one op to exclude,
 	# or an arrayref of multiple ops to exclude.
@@ -865,11 +961,15 @@ sub countDailyByPage {
 sub countDailyByPageDistinctIPID {
 	# This is so lame, and so not ANSI SQL -Brian
 	my($self, $op, $options) = @_;
+	my $constants = getCurrentStatic();
+	
 	my $where = "1=1 ";
 	$where .= "AND op='$op' "
 		if $op;
 	$where .= " AND section='$options->{section}' "
 		if $options->{section};
+	$where .=" AND uid = $constants->{anonymous_coward_uid} " if $options->{user_type} eq "anonymous";
+	$where .=" AND uid != $constants->{anonymous_coward_uid} " if $options->{user_type} eq "logged-in";
 	$self->sqlSelect("COUNT(DISTINCT host_addr)", "accesslog_temp", $where);
 }
 
@@ -1128,6 +1228,84 @@ sub getDailyScoreTotal {
 		"points=$score AND date $self->{_day_between_clause}");
 }
 
+
+########################################################
+sub getTopBadPasswordsByUID{
+	my($self, $options) = @_;
+	my $limit = $options->{limit} || 10;
+	my $min = $options->{min};
+
+	my $other = "GROUP BY uid ";
+	$other .= " HAVING count(*) >= $options->{min}" if $min;
+	$other .= "  ORDER BY count DESC LIMIT $limit";
+
+	return $self->sqlSelectAllHashrefArray(
+		"nickname, users.uid AS uid, count(*) AS count",
+		"badpasswords, users",
+		"ts $self->{_ts_between_clause} AND users.uid = badpasswords.uid",
+		$other);
+}
+
+########################################################
+sub getTopBadPasswordsByIP{
+	my($self, $options) = @_;
+	my $limit = $options->{limit} || 10;
+	my $min = $options->{min};
+
+	my $other = "GROUP BY ip";
+	$other .= " HAVING count(*) >= $options->{min}" if $min;
+	$other .= "  ORDER BY count DESC LIMIT $limit";
+	
+	return $self->sqlSelectAllHashrefArray(
+		"ip, count(*) AS count",
+		"badpasswords",
+		"ts $self->{_ts_between_clause}",
+		$other);
+}
+
+########################################################
+sub getTopBadPasswordsBySubnet{
+	my($self, $options) = @_;
+	my $limit = $options->{limit} || 10;
+	my $min = $options->{min};
+
+	my $other = "GROUP BY subnet";
+	$other .= " HAVING count(*) >= $options->{min}" if $min;
+	$other .= "  ORDER BY count DESC LIMIT $limit";
+
+	return $self->sqlSelectAllHashrefArray(
+		"subnet, count(*) AS count",
+		"badpasswords",
+		"ts $self->{_ts_between_clause}",
+		$other);
+}
+
+########################################################
+sub getTailslash {
+	my($self) = @_;
+	my $retval =         "Hour        Hits        Hits/sec\n";
+	my $sprintf_format = "  %02d    %8d          %6.2f    %-40s\n";
+
+        my $page_ar = $self->sqlSelectAllHashrefArray(
+                "HOUR(ts) AS hour, COUNT(*) AS c",
+                "accesslog_temp",
+                "",
+                "GROUP BY hour ORDER BY hour ASC");
+
+	my $max_count = 0;
+	for my $hr (@$page_ar) {
+		$max_count = $hr->{c} if $hr->{c} > $max_count;
+	}
+	for my $hr (@$page_ar) {
+		my $hour = $hr->{hour};
+		my $count = $hr->{c};
+		$retval .= sprintf( $sprintf_format,
+			$hour, $count, $count/3600,
+			("#" x (40*$count/$max_count)) );
+	}
+	return $retval;
+}
+
 ########################################################
 # Note, we are carrying the misspelling of "referrer" over from
 # the HTTP spec.
@@ -1144,7 +1322,7 @@ sub getTopReferers {
 	}
 
 	return $self->sqlSelectAll(
-		"distinct SUBSTRING_INDEX(referer,'/',3) as referer, COUNT(id) AS c",
+		"DISTINCT SUBSTRING_INDEX(referer,'/',3) AS referer, COUNT(id) AS c",
 		"accesslog_temp",
 		"referer IS NOT NULL AND LENGTH(referer) > 0 AND referer REGEXP '^http' $where ",
 		"GROUP BY referer ORDER BY c DESC, referer LIMIT $count"
@@ -1181,6 +1359,118 @@ sub countSfNetIssues {
 	}
 	return $hr;
 }
+
+#######################################################
+
+sub getRelocatedLinksSummary {
+	my($self, $options) = @_;
+	$options ||= {};
+	my $limit = "limit $options->{limit}" if $options->{limit};
+	return $self->sqlSelectAllHashrefArray("query_string, count(query_string) as cnt","accesslog_temp_errors","op='relocate-undef' AND dat = '/relocate.pl'",
+		"GROUP by query_string order by cnt desc $limit");
+}
+
+########################################################
+#  expects arrayref returned by getRelocatedLinksSummary
+
+sub getRelocatedLinkHitsByType {
+	my($self, $ls) = @_;
+	my $summary;
+	foreach my $l (@$ls) {
+		my($id) = $l->{query_string} =~/id=([^&]*)/;
+		my $type = $self->sqlSelect("stats_type", "links", "id=" . $self->sqlQuote($id));
+		$summary->{$type} += $l->{cnt}; 
+	}
+	return $summary;
+}
+
+########################################################
+#  expects arrayref returned by getRelocatedLinksSummary
+sub getRelocatedLinkHitsByUrl {
+	my($self, $ls) = @_;
+	my $top_links = [];
+	foreach my $l (@$ls) {
+		my($id) = $l->{query_string} =~/id=([^&]*)/;
+		my($url, $stats_type) = $self->sqlSelect("url, stats_type","links","id=".$self->sqlQuote($id));
+		push @$top_links, { url => $url,
+				  count => $l->{cnt},
+			     stats_type => $stats_type }; 
+	}
+	return $top_links;
+}
+
+########################################################
+
+sub getSubscribersWithRecentHits {
+	my($self) = @_;
+	return $self->sqlSelectColArrayref("uid", "users_hits", "hits_paidfor > hits_bought and lastclick >= date_sub(now(), interval 3 day)", "order by uid");
+}
+
+########################################################
+
+sub getSubscriberCrawlers {
+	my($self, $uids) = @_;
+	return [] unless @$uids;
+	my $uid_list = join(',',@$uids);
+	return $self->sqlSelectAllHashrefArray("uid, count(*) as cnt", "accesslog_temp", 
+						"uid in ($uid_list) and op='users' and query_string like '\%min_comment\%'",
+						" group by uid having cnt >= 5 order by cnt desc limit 10");
+
+
+}
+
+########################################################
+
+sub getTopEarlyInactiveDownmodders {
+	my($self, $options) = @_;
+	$options ||= {};
+	my $constants = getCurrentStatic();
+	my %user_hits;
+	my $limit = $options->{limit};
+	my $token_cutoff = $constants->{m2_mintokens} || 0;
+	my $mods = $self->sqlSelectAllHashrefArray("id,moderatorlog.cid as cid, moderatorlog.uid as uid",
+				"moderatorlog,comments,users_info",
+				"comments.cid=moderatorlog.cid and moderatorlog.uid=users_info.uid AND points<=1 AND active=0 AND val=-1 AND tokens>=$token_cutoff");
+
+	foreach my $m (@$mods) {
+		my $first_mod = $self->sqlSelectColArrayref("id", "moderatorlog", "cid=$m->{cid}", "order by ts asc limit 2");
+		for my $id (@$first_mod) {
+			$user_hits{$m->{uid}}++ if $id == $m->{id};
+		}
+	}
+	
+	my @uids =  sort {$user_hits{$b} <=> $user_hits{$a}} keys %user_hits;
+	@uids = splice(@uids, 0, $limit) if $limit;
+
+	my $top_users;
+	foreach (@uids) {
+        	push @$top_users, { uid => $_, count=> $user_hits{$_}, nickname=> $self->getUser($_, "nickname")};
+
+	}
+	return $top_users;
+}
+
+sub getTopModdersNearArchive {
+	my($self, $options) = @_;
+	$options ||= {};
+	my $constants = getCurrentStatic();
+	my $archive_delay = $constants->{archive_delay};
+	return [] unless $archive_delay;
+
+	my($token_cutoff, $limit_clause);
+	$token_cutoff = $constants->{m2_mintokens} || 0;
+	$limit_clause = " limit $options->{limit}" if $options->{limit};
+
+	my $top_users = $self->sqlSelectAllHashrefArray("count(moderatorlog.uid) as count, moderatorlog.uid as uid, nickname",
+							"discussions,moderatorlog,users_info,users",
+							"moderatorlog.sid=discussions.id and type='archived' and users_info.uid = moderatorlog.uid 
+							and moderatorlog.ts > date_add(discussions.ts, interval $archive_delay - 3 day) and tokens >= $token_cutoff
+							and users_info.uid = users.uid",
+                                			"group by moderatorlog.uid order by count desc $limit_clause");
+	return $top_users;
+
+}
+
 
 ########################################################
 sub setGraph {
@@ -1287,14 +1577,21 @@ sub getAllStats {
 	my $sel   = 'name, value+0 as value, section, day';
 	my $extra = 'ORDER BY section, day, name';
 	my @where;
+	my @name_where;
 
 	if ($options->{section}) {
 		push @where, 'section = ' . $self->sqlQuote($options->{section});
 	}
 
 	if ($options->{name}) {
-		push @where, 'name = ' . $self->sqlQuote($options->{name});
+		push @name_where, 'name = ' . $self->sqlQuote($options->{name});
 	}
+
+	if ($options->{name_pre}) {
+		push @name_where, 'name like '. $self->sqlQuote($options->{name_pre} . '%');
+	}
+	
+	my $sep_name_select = $options->{separate_name_select};
 
 	# today is no good
 	my $offset = 1;
@@ -1314,16 +1611,26 @@ sub getAllStats {
 		) if $options->{days};
 	}
 
-	my $data = $self->sqlSelectAll($sel, $table, join(' AND ', @where), $extra) or return;
+	my $data = $self->sqlSelectAll($sel, $table, join(' AND ', @where, @name_where), $extra) or return;
 	my %returnable;
 
 	for my $d (@$data) {
 		# $returnable{SECTION}{DAY}{NAME} = VALUE
 		$returnable{$d->[2]}{$d->[3]}{$d->[0]} = $d->[1];
-
-		$returnable{$d->[2]}{names} ||= [];
-		push @{$returnable{$d->[2]}{names}}, $d->[0]
-			unless grep { $_ eq $d->[0] } @{$returnable{$d->[2]}{names}};
+		if (!$sep_name_select) {
+			$returnable{$d->[2]}{names} ||= [];
+			push @{$returnable{$d->[2]}{names}}, $d->[0]
+				unless grep { $_ eq $d->[0] } @{$returnable{$d->[2]}{names}};
+		}
+	}
+	
+	if ($sep_name_select) {
+		my $names = $self->sqlSelectAll("DISTINCT name, section", $table, join(' AND ', @where));
+		foreach my $name (@$names){
+			$returnable{$name->[1]}{names} ||= [];
+			push @{$returnable{$name->[1]}{names}}, $name->[0]
+				unless grep { $_ eq $name->[0] } @{$returnable{$name->[1]}{names}};
+		}
 	}
 
 	return \%returnable;

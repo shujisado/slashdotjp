@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -145,24 +145,18 @@ sub csv {
 		Return		=> 1,
 	});
 
-	my $filename = join '-',
+	my $filename = join('-',
 		$constants->{sitename},
 		$form->{stats_days},
-		$form->{title};
-	$filename =~ s/[^\w_.-]+//g;
+		$form->{title}) . '.csv';
 
-	my $r = Apache->request;
-	$r->content_type('text/csv');
-	$r->header_out('Cache-control', 'private');
-	$r->header_out('Pragma', 'no-cache');
-	$r->header_out('Content-Disposition', "attachment; filename=$filename.csv");
-	$r->status(200);
-	$r->send_http_header;
-	return 1 if $r->header_only;
-	$r->rflush;
-	$r->print($content);
-	$r->status(200);
-	return 1;
+	http_send({
+		content_type	=> 'text/csv',
+		filename	=> $filename,
+		attachment	=> 1,
+		do_etag		=> 1,
+		content		=> $content
+	});
 }
 
 sub graph {
@@ -175,6 +169,7 @@ sub graph {
 		: {};
 	my $content = $image->{data};
 	my $type    = $image->{content_type} || 'image/png';
+	(my $ext    = $type) =~ s|^.+/||;
 
 	# make image if we don't have it ...
 	if (! $content) {
@@ -193,17 +188,17 @@ sub graph {
 		});
 	}
 
-	my $r = Apache->request;
-	$r->content_type($type);
-	$r->header_out('Cache-control', 'private');
-	$r->header_out('Pragma', 'no-cache');
-	$r->status(200);
-	$r->send_http_header;
-	return 1 if $r->header_only;
-	$r->rflush;
-	$r->print($content);
-	$r->status(200);
-	return 1;
+	my $filename = join('-',
+		$constants->{sitename},
+		$form->{stats_days},
+		$form->{title}) . '.' . $ext;
+
+	http_send({
+		content_type	=> $type,
+		filename	=> $filename,
+		do_etag		=> 1,
+		content		=> $content
+	});
 }
 
 sub report {
@@ -218,9 +213,30 @@ sub list {
 	my($slashdb, $constants, $user, $form, $stats) = @_;
 
 	my $stats_data = {};
+	my($stats_name, $sep_name_select, $stats_name_pre);
+	my $days = $form->{stats_days} || 1;
+	
+	#############################################################
+	# Using this 2 select method with the new index 
+	# should be fast for all date ranges and much faster at 
+	# a high number of days.  If it turns out to be slower at
+	# the small-sized date ranges we could just use this method
+	# for days > 7 or 14 for instance also remeber that days<0 
+	# refers to forever if we do this.    --vroom 2004/01/27
+	##############################################################
+
+	
+	$stats_name 	 = $form->{stats_name};
+	$stats_name_pre  = $form->{stats_name_pre};
+	# only do a separate select if we are limiting the names of the data coming back
+	$sep_name_select = ($form->{stats_name_pre} || $form->{stats_name});
+
 	$stats_data = $stats->getAllStats({
-		section	=> $form->{stats_section},
-		days	=> $form->{stats_days} || 1,
+		section	 		=> $form->{stats_section},
+		days	 		=> $form->{stats_days} || 1,
+		name	 		=> $stats_name,
+		name_pre 		=> $stats_name_pre,
+		separate_name_select 	=> $sep_name_select 
 	}) unless $form->{type} eq 'graphs';
 
 	slashDisplay('list', {

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -42,10 +42,11 @@ sub createStatDaily {
 	my($self, $name, $value, $options) = @_;
 	$value = 0 unless $value;
 	$options ||= {};
+	my $day = $options->{day} || $self->{_day};
 
 	my $section = $options->{section} || 'all';
 	my $insert = {
-		'day'	=> $self->{_day},
+		'day'	=> $day,
 		'name'	=> $name,
 		'value'	=> $value,
 	};
@@ -53,18 +54,21 @@ sub createStatDaily {
 
 	my $overwrite = $self->{_overwrite} || $options->{overwrite};
 	if ($overwrite) {
-		my $where = "day=" . $self->sqlQuote($self->{_day})
+		my $where = "day=" . $self->sqlQuote($day)
 			. " AND name=" . $self->sqlQuote($name);
 		$where .= " AND section=" . $self->sqlQuote($section);
-		$self->{_dbh}{AutoCommit} = 0;
+#		$self->{_dbh}{AutoCommit} = 0;
+		$self->sqlDo("SET AUTOCOMMIT=0");
 		$self->sqlDelete('stats_daily', $where);
 	}
 
 	$self->sqlInsert('stats_daily', $insert, { ignore => 1 });
 
 	if ($overwrite) {
-		$self->{_dbh}->commit;
-		$self->{_dbh}{AutoCommit} = 1;
+#		$self->{_dbh}->commit;
+#		$self->{_dbh}{AutoCommit} = 1;
+		$self->sqlDo("COMMIT");
+		$self->sqlDo("SET AUTOCOMMIT=1");
 	}
 }
 

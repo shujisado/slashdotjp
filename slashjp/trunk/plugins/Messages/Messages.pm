@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -323,11 +323,26 @@ sub checkMessageCodes {
 	return \@newuids;
 }
 
+
+# verify user can receive message
+sub checkMessageUser {
+	my($self, $code, $userm) = @_;
+	my $coderef = $self->getMessageCode($code) or return [];
+	my $ok = ($userm->{seclev} >= $coderef->{seclev}
+		||
+	   ($coderef->{acl} && $userm->{acl}{ $coderef->{acl} })
+		||
+	   ($coderef->{subscribe} && isSubscriber($userm))
+	);
+	return $ok;
+}
+
+
 # must return an array ref
 sub getMessageUsers {
 	my($self, $code) = @_;
 	my $coderef = $self->getMessageCode($code) or return [];
-	my $users = $self->_getMessageUsers($code, $coderef->{seclev}, $coderef->{subscribe});
+	my $users = $self->_getMessageUsers($code, $coderef->{seclev}, $coderef->{subscribe}, $coderef->{acl});
 	return $users || [];
 }
 
@@ -340,10 +355,7 @@ sub getMode {
 	my $coderef = $self->getMessageCode($code) or return MSG_MODE_NOCODE;
 
 	# user not allowed to receive this message type
-	return MSG_MODE_NOCODE if
-		( $msg->{user}{seclev} < $coderef->{seclev} )
-			||
-		( $coderef->{subscribe} && !isSubscriber($msg->{user}) );
+	return MSG_MODE_NOCODE unless $self->checkMessageUser($code, $msg->{user});
 
 	# user has no delivery mode set
 	return MSG_MODE_NONE if	$mode == MSG_MODE_NONE
@@ -570,8 +582,9 @@ sub getWebByUID {
 	my($self, $uid) = @_;
 	$uid ||= $ENV{SLASH_USER};
 
+	my $msguser = $self->getUser($uid);
 	my $msgs = $self->_get_web_by_uid($uid) or return 0;
-	$self->render($_, 1) for @$msgs;
+	$self->render($_, 1, $msguser) for @$msgs;
 	return $msgs;
 }
 
@@ -640,7 +653,14 @@ sub gets {
 	my($self, $count, $extra) = @_;
 
 	my $msgs = $self->_gets($count, $extra) or return 0;
-	$self->render($_) for @$msgs;
+
+	my %users;  # cache
+	for my $msg (@$msgs) {
+		my $uid = $msg->{user};
+		$users{$uid} ||= $self->getUser($uid);
+		$self->render($msg, 0, $users{$uid});
+	}
+
 	return $msgs;
 }
 
@@ -733,7 +753,7 @@ sub delete {
 
 #========================================================================
 
-=head2 render(MESSAGE [, NOTEMPLATE])
+=head2 render(MESSAGE [, NOTEMPLATE, MSG_USER])
 
 Given message data from the database, renders the message by filling
 in the user's information from the database, getting the description
@@ -762,6 +782,10 @@ getWeb() and getWebByUID() methods, the templates have already been
 rendered and stored in the messages_web table, so the templates
 should not be processed.
 
+=item MSG_USER
+
+A complete user from getUser, so we don't call getUser on our own (optimization).
+
 =back
 
 =item Return value
@@ -774,11 +798,18 @@ The hashref containing the rendered message data.
 
 
 sub render {
-	my($self, $msg, $notemplate) = @_;
+	my($self, $msg, $notemplate, $msguser) = @_;
 	my $constants = getCurrentStatic();
 	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
 
-	$msg->{user}		= $msg->{user}  ? $slashdb->getUser($msg->{user})  : { uid => 0 };
+	# use supplied user if possible, else see if we can use current user
+	$msg->{user} = $msguser || ($msg->{user}
+		? $msg->{user} == $user->{uid}
+			? $user
+			: $slashdb->getUser($msg->{user})
+		: { uid => 0 }
+	);
 	$msg->{user}{prefs}	= $self->getPrefs($msg->{user}{uid} || $constants->{anonymous_coward_uid});
 	$msg->{fuser}		= $msg->{fuser} ? $slashdb->getUser($msg->{fuser}) : 0;
 	$msg->{type}		= $self->getDescription('messagecodes', $msg->{code});
@@ -985,6 +1016,70 @@ goto() is used, so this function will not show up in a stack trace.
 sub messagedLog {
 	goto &main::messagedLog if defined &main::messagedLog;
 	goto &errorLog;
+}
+
+
+##################################################################
+# Send messages regarding this moderation to user who posted
+# comment if they have that bit set.
+#
+# This piece of code moved here so both admin.pl and comments.pl
+# could use it
+
+sub send_mod_msg {
+	my($self, $mod) = @_;
+
+	my $constants	= getCurrentStatic();
+	my $slashdb	= getCurrentDB();
+	my $user	= getCurrentUser();
+
+	my $sid		= $mod->{sid};
+	my $cid		= $mod->{cid};
+	my $val		= $mod->{val};
+	my $reason	= $mod->{reason};
+	my $type	= $mod->{type}    || 'mod_msg';
+	my $comment	= $mod->{comment} || $slashdb->getComment($cid);
+
+	my $comm	= $slashdb->getCommentReply($sid, $cid);
+	my $users	= $self->checkMessageCodes(
+		MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]
+	);
+
+	if (@$users) {
+		my $discussion = $slashdb->getDiscussion($sid);
+		if ($discussion->{sid}) {
+			# Story discussion, link to it.
+			$discussion->{realurl} = "/article.pl?sid=$discussion->{sid}";
+		} else {
+			# Some other kind of discussion,
+			# probably poll, journal entry, or
+			# user-created;  don't trust its url. -- jamie
+			# I really don't like this.  I want users
+			# to be able to go to the poll or journal
+			# directly.  we could consider matching a pattern
+			# for journal.pl or pollBooth.pl etc.,
+			# but that is not great.  maybe a field in discussions
+			# for whether or not url is trusted. -- pudge
+			$discussion->{realurl} = "/comments.pl?sid=$discussion->{id}";
+		}
+
+		my $data  = {
+			template_name	=> $type,
+			subject		=> {
+				template_name => $type . '_subj'
+			},
+			comment		=> $comm,
+			discussion	=> $discussion,
+			moderation	=> {
+				value	=> $val,
+				reason	=> $reason,
+			},
+			reasons		=> $slashdb->getReasons(),
+		};
+		$self->create($users->[0],
+			MSG_CODE_COMMENT_MODERATE, $data, 0, '', 'collective'
+		);
+	}
 }
 
 1;

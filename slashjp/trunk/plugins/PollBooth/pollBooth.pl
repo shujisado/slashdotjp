@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -24,7 +24,9 @@ sub main {
 		vote		=> \&vote,
 		vote_return	=> \&vote_return,
 		get		=> \&poll_booth,
-                preview         => \&editpoll
+		preview         => \&editpoll,
+		detach		=> \&detachpoll,
+		linkstory	=> \&link_story_to_poll
 	);
 
 	my $op = $form->{op};
@@ -99,11 +101,78 @@ sub default {
 }
 
 #################################################################
+sub link_story_to_poll {
+	my($form, $slashdb, $constants) = @_;
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $qid  = $form->{'qid'};
+	my $sid  = $form->{'sid'};
+	my $user = getCurrentUser();
+	my $min = $form->{min} || 0;
+	my $questions = $reader->getPollQuestionList($min);
+	
+
+	unless ($user->{'is_admin'}) {
+		default(@_);
+		return;
+	}
+	
+	# clear current story.qid
+	$slashdb->sqlUpdate("stories", { qid=>"" }, "sid = ".$slashdb->sqlQuote($form->{sid}));
+
+	slashDisplay('linkstory', {
+		questions	=> $questions,
+		startat		=> $min + @$questions,
+		admin		=> getCurrentUser('seclev') >= 100,
+		title		=> "Link story to poll",
+		width		=> '99%',
+		sid		=> $sid
+	});
+}
+
+#################################################################
+sub detachpoll {
+	my($form, $slashdb, $constants) = @_;
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $qid  = $form->{'qid'};
+	my $sid  = $form->{'sid'};
+	my $user = getCurrentUser();
+	my $warning;
+	
+
+	unless ($user->{'is_admin'}) {
+		default(@_);
+		return;
+	}
+	if($sid){
+		my $where = "sid=".$slashdb->sqlQuote($sid)." AND qid=".$slashdb->sqlQuote($qid);
+		my $count=$slashdb->sqlCount("stories",$where);
+		print STDERR "count $count\n";
+		if($count){
+			$slashdb->sqlUpdate("stories",{ qid => "" } , $where); 
+		} elsif ( $form->{force} ){
+			$slashdb->sqlUpdate("stories",{ qid => "" } ,"sid=".$slashdb->sqlQuote($sid)); 
+		} else {
+			$warning->{no_sid_qid_match}=1;
+		} 
+	} else {
+		$warning->{no_sid} = 1;
+	}
+	
+	slashDisplay('detachpoll', {
+		title   => "Detaching Poll from Story",
+		sid     => $sid,
+		qid     => $qid,
+		warning => $warning
+	});
+}
+
+#################################################################
 sub editpoll {
 	my($form, $slashdb, $constants) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $qid  = $form->{'qid'};
 	my $user = getCurrentUser();
+	my $warning;
 
 	unless ($user->{'is_admin'}) {
 		default(@_);
@@ -115,10 +184,22 @@ sub editpoll {
 		foreach (qw/question voters date section topic polltype/) {
 			$question->{$_} = $form->{$_};
 		}
+		
 		$story_ref = $reader->sqlSelectHashref("sid,qid,time,section,tid,displaystatus",
 			"stories",
 			"sid=" . $reader->sqlQuote($form->{sid})
 		) if $form->{sid};
+
+		$warning->{invalid_sid} = 1 if $form->{sid} and !$story_ref;
+
+		if ($form->{sid}) {
+			if ($form->{qid}) {
+				$warning->{attached_to_other} = 1 if $slashdb->sqlCount("stories","sid=".$slashdb->sqlQuote($form->{sid})." AND qid > 0 and qid != ".$slashdb->sqlQuote($form->{qid}));
+			} else {
+				$warning->{attached_to_other} = 1 if $slashdb->sqlCount("stories","sid=".$slashdb->sqlQuote($form->{sid})." AND qid > 0");
+			}
+		}
+
 		if ($story_ref) {
 			$question->{'date'}	= $story_ref->{'time'};
 			$question->{topic}	= $story_ref->{'tid'};
@@ -129,7 +210,7 @@ sub editpoll {
 		$question->{polltype} ||= "section";
  
 		my $disp_answers;
-		for my $n (1..8){
+		for my $n (1..8) {
 			$answers->[$n-1] = [ $form->{"aid$n"}, $form->{"votes$n"} ];
 			$disp_answers->[$n-1] = {
 				aid	=> $n,
@@ -139,8 +220,7 @@ sub editpoll {
 		}
 	
 		$question->{sid} = $form->{sid};
-		$checked=$form->{currentqid};
-
+		$checked = $form->{currentqid};
 
 		my $raw_pollbooth = slashDisplay('pollbooth', {
 			qid		=> -1,
@@ -162,7 +242,9 @@ sub editpoll {
 		$question = $slashdb->getPollQuestion($qid);
 		$question->{sid} = $slashdb->getSidForQID($qid)
 			unless $question->{autopoll} eq "yes";
-
+		
+		$question->{sid} = $form->{override_sid} if $form->{override_sid};
+		
 		if ($question->{sid}) {
 			$story_ref = $reader->sqlSelectHashref("sid,qid,time,section,tid,displaystatus",
 				"stories",
@@ -229,7 +311,8 @@ sub editpoll {
 		checked		=> $checked,
                 date		=> $date,
 		story		=> $story_ref,
-		topics		=> $topics
+		topics		=> $topics,
+		warning		=> $warning
 	});
 }
 
@@ -255,6 +338,26 @@ sub savepoll {
 		}
 		if (!$q) {
 			print getData('noanswer');
+			editpoll(@_);
+			return;
+		}
+	}
+	if ($form->{sid}) {
+		if ($form->{qid}) {
+			if ($slashdb->sqlCount("stories","sid=".$slashdb->sqlQuote($form->{sid})." AND qid > 0 and qid != ".$slashdb->sqlQuote($form->{qid}))) {
+				print getData('attached_to_other');
+				editpoll(@_);
+				return;
+			}
+		} else {
+			if ($slashdb->sqlCount("stories","sid=".$slashdb->sqlQuote($form->{sid})." AND qid > 0")) {
+				print getData('attached_to_other');
+				editpoll(@_);
+				return;
+			}
+		}
+		if (!$slashdb->sqlCount("stories","sid = ".$slashdb->sqlQuote($form->{sid}))) {
+			print getData("invalid_sid");
 			editpoll(@_);
 			return;
 		}
@@ -352,7 +455,7 @@ sub vote {
 
 	my $question = $reader->getPollQuestion($qid, ['voters', 'question']);
 	my $notes = getData('display');
-	if (getCurrentUser('is_anon') && !getCurrentStatic('allow_anonymous')) {
+	if (getCurrentUser('is_anon') && !getCurrentStatic('allow_anon_poll_voting')) {
 		$notes = getData('anon');
 	} elsif ($aid > 0) {
 		my $poll_open = $reader->isPollOpen($qid);
@@ -412,7 +515,8 @@ sub listpolls {
 	my($form) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $min = $form->{min} || 0;
-	my $questions = $reader->getPollQuestionList($min);
+	my $type = $form->{type};
+	my $questions = $reader->getPollQuestionList($min, { type => $type });
 	my $sitename = getCurrentStatic('sitename');
 
 	# Just me, but shouldn't title be in the template?
@@ -423,7 +527,8 @@ sub listpolls {
 		admin		=> getCurrentUser('seclev') >= 100,
 		title		=> "$sitename Polls",
 		width		=> '99%',
-                curtime         => $reader->getTime()
+                curtime         => $reader->getTime(),
+		type		=> $type 
 	});
 }
 

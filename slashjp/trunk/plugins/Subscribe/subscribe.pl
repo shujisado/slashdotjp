@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -40,6 +40,14 @@ sub main {
 		pause		=> {
 			function	=> \&pause,
 			seclev		=> 1,
+		},
+		grant		=> {
+			function	=> \&grant,
+			seclev		=> 100
+		},
+		confirm 	=> {
+			function	=> \&confirm,
+			seclev		=> 1
 		},
 	};
 
@@ -174,6 +182,8 @@ sub save {
 	1;
 }
 
+# for gift subscriptions pass puid (the uid of the purchaser)
+# in addition to uid
 sub makepayment {
 	my($form, $slashdb, $user, $constants) = @_;
 
@@ -184,7 +194,7 @@ sub makepayment {
 	}
 
 	my @keys = qw( uid email payment_gross payment_net
-		method transaction_id data memo );
+		method transaction_id data memo puid);
 	my $payment = { };
 	for my $key (@keys) {
 		$payment->{$key} = $form->{$key} || '';
@@ -192,16 +202,22 @@ sub makepayment {
 	if (!defined($payment->{payment_net})) {
 		$payment->{payment_net} = $payment->{payment_gross};
 	}
+	$payment->{puid} ||= $payment->{uid};
+	$payment->{payment_type} = ($payment->{puid} == $payment->{uid})
+		? "user" : "gift";
 
 	my $subscribe = getObject('Slash::Subscribe');
 	my $num_pages = $subscribe->convertDollarsToPages($payment->{payment_gross});
 	$payment->{pages} = $num_pages;
+
 	my $rows = $subscribe->insertPayment($payment);
 	if ($rows == 1) {
 		$slashdb->setUser($payment->{uid}, {
 			"-hits_paidfor" => "hits_paidfor + $num_pages"
 		});
 		print "<p>makepayment: Payment confirmed\n";
+		send_gift_msg($payment->{uid}, $payment->{puid}, $payment->{pages}, $form->{from})
+			if $payment->{payment_type} eq "gift";
 	} else {
 		use Data::Dumper;
 		my $warning = "DEBUG: Payment accepted but record "
@@ -221,6 +237,67 @@ sub pause {
 	sleep 5;
 	redirect("$constants->{rootdir}/subscribe.pl");
 }
+
+sub grant {
+	my($form, $slashdb, $user, $constants) = @_;
+	titlebar("100%", "Granting pages to user");
+	if (!$user->{is_admin}){
+		print "<p>Insufficient permission -- you aren't an admin\n";
+		return;
+	}
+	
+	my $subscribe = getObject('Slash::Subscribe');
+	my $uid = $form->{uid};
+	my $pages = $form->{pages};
+	my $grant_recipient = $slashdb->getUser($uid);
+	my $grant_success;
+
+	if ($pages and $grant_recipient){
+		$grant_success = $subscribe->grantPagesToUID($pages,$grant_recipient->{uid});
+
+	}
+	slashDisplay("grant", {
+		uid		=> $uid,
+		pages		=> $pages,
+		grant_recipient	=> $grant_recipient,
+		grant_success 	=> $grant_success
+	});
+	
+}
+
+sub confirm {
+	my($form, $slashdb, $user, $constants) = @_;
+	titlebar("100%", "Confirm subscription and choose payment type");
+	my $type = $form->{subscription_type};
+	my $uid = $form->{uid};
+	my $sub_user = $slashdb->getUser($uid);
+	slashDisplay("confirm", {
+		type     => $type,
+		uid      => $uid,
+		sub_user => $sub_user,
+		from 	 => $form->{from}
+	});
+}
+
+sub send_gift_msg {
+	my ($uid, $puid, $pages, $from) = @_;
+	
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	my $receiving_user  = $slashdb->getUser($uid);
+	my $purchasing_user = $slashdb->getUser($puid);
+
+	my $message = slashDisplay('gift_msg', {
+			receiving_user  => $receiving_user,
+			purchasing_user => $purchasing_user,
+			pages 		=> $pages,
+			from		=> $from	
+		}, { Return => 1, Nocomm => 1 } );
+	my $title = "Gift subscription to $constants->{sitename}\n";
+	doEmail($uid, $title, $message);
+}
+
 
 createEnvironment();
 main();

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -33,10 +33,16 @@ sub new {
 ########################################################
 sub countStories {
 	my($self) = @_;
+	my $dnc = getCurrentStatic("hof_do_not_count") || "";
+	my $dnc_clause = "";
+	my @dnc = map { $self->sqlQuote($_) } split / /, $dnc;
+	if (@dnc) {
+		$dnc_clause = " AND stories.sid NOT IN (" . join (",", @dnc) . ") ";
+	}
 	my $stories = $self->sqlSelectAll(
 		'stories.sid, stories.title, stories.section as section, stories.commentcount, nickname',
 		'stories, users, discussions',
-		'stories.uid=users.uid AND stories.discussion=discussions.id',
+		"stories.uid=users.uid AND stories.discussion=discussions.id $dnc_clause",
 		'ORDER BY commentcount DESC LIMIT 10'
 	);
 	return $stories;

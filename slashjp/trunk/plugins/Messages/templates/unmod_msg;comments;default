@@ -11,6 +11,10 @@ en_US
 __name__
 unmod_msg
 __template__
+[% 
+	cur_score = comment.points + comment.tweak;
+	cur_score = Slash.constrain_score(cur_score);
+%]
 [% IF msg.mode == 1 %]
 
 <P>
@@ -19,13 +23,13 @@ your comment, <B><A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid
 %]">[% comment.subject %]</A></B>, attached to
 <B><A HREF="[% constants.rootdir %][% discussion.realurl %]">[% discussion.title %]</A></B>.  That moderation has now been undone,
 probably due to the user posting in the discussion after moderating in it.
-Your comment is currently scored <B>[% reasons.${comment.reason}.name %] ([% comment.points %])</B>.
+Your comment is currently scored <B>[% reasons.${comment.reason}.name %] ([% cur_score %])</B>.
 </P>
 
 [% ELSE %]
 
 A user had given a moderation of "[% reasons.${moderation.reason}.name %]" ([% moderation.value %]) to your comment.
-    [% comment.subject | decode_entities %]    
+    [% comment.subject | decode_entities %]
     [% absolutedir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]
 
 Attached to:

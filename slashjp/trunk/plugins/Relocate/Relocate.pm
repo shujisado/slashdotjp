@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -45,66 +45,75 @@ sub create {
 	if (!$found) {
 		$values->{$prime} = $id;
 		$self->sqlInsert($table, {
-				id => $id,
-				-last_seen => 'now()',
-				url => $values->{url},
-				});
+			id		=> $id,
+			-last_seen	=> 'now()',
+			url		=> $values->{url},
+			stats_type	=> $values->{stats_type}
+		});
 	}
 
 	if ($values->{sid}) {
 		my $where = "$prime='$id' AND sid='$values->{sid}'";
 		my $found  = $self->sqlSelect($prime, 'links_for_stories', $where);
 		$self->sqlInsert('links_for_stories', {
-				id => $id,
-				sid => $values->{sid},
-				}) unless $found;
+			id	=> $id,
+			sid	=> $values->{sid},
+		}) unless $found;
 	}
 
 	return $id ;
 }
 
 sub getStoriesForLinks {
-	my ($self) = @_;
+	my($self) = @_;
 	$self->sqlSelectAllHashrefArray('*', 'links_for_stories', '', "ORDER BY sid");
+}
+
+sub increment_count {
+	my($self, $id) = @_;
+	my $id_q = $self->sqlQuote($id);
+	$self->sqlUpdate("links_for_stories", {
+		-count	=> "count + 1",
+	}, "id = $id_q");
 }
 
 #========================================================================
 sub href2SlashTag {
 	my($self, $text, $sid, $options) = @_;
 	my $user = getCurrentUser();
-	return $text unless $text && $sid;
+	return $text unless $text && $sid && getCurrentStatic('relocate_href2slash');
 	my $tokens = HTML::TokeParser->new(\$text);
 	if ($tokens) {
 		while (my $token = $tokens->get_tag(qw| a slash |)) {
 			# Go on and test to see if URL's have changed
 			if ($token->[0] eq 'slash') {
 				#Skip non HREF links
-				next unless $token->[1]->{href};
-				if (!$token->[1]->{id}) {
-					my $link = $self->create({ sid => $sid, url => $token->[1]->{href}});
-					my $href = strip_attribute($token->[1]->{href});
-					my $title = strip_attribute($token->[1]->{title});
+				next unless $token->[1]{href} && $token->[1]{type} eq 'link';
+				if (!$token->[1]{id}) {
+					my $link = $self->create({ sid => $sid, url => $token->[1]{href}});
+					my $href = strip_attribute($token->[1]{href});
+					my $title = strip_attribute($token->[1]{title});
 					$text =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="LINK">#is;
 				} else {
-					my $url = $self->get($token->[1]->{id}, 'url');
-					next if $url eq $token->[1]->{href};
-					my $link = $self->create({ sid => $sid, url => $token->[1]->{href}});
-					my $href = strip_attribute($token->[1]->{href});
-					my $title = strip_attribute($token->[1]->{title});
+					my $url = $self->get($token->[1]{id}, 'url');
+					next if $url eq $token->[1]{href};
+					my $link = $self->create({ sid => $sid, url => $token->[1]{href}});
+					my $href = strip_attribute($token->[1]{href});
+					my $title = strip_attribute($token->[1]{title});
 					$text =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="LINK">#is;
 				}
 			# New links to convert!!!!
 			} else {
 				# We ignore some types of href
-				next if $token->[1]->{name};
-				next if $token->[1]->{href} eq '__SLASHLINK__';
-				next if ($token->[1]->{href} =~ /^mailto/i);
+				next if $token->[1]{name};
+				next if $token->[1]{href} eq '__SLASHLINK__';
+				next if ($token->[1]{href} =~ /^mailto/i);
 				#This allows you to have a link bypass this system
-				next if ($token->[1]->{FORCE} && $user->{is_admin});
-				my $link = $self->create({ sid => $sid, url => $token->[1]->{href}});
+				next if ($token->[1]{FORCE} && $user->{is_admin});
+				my $link = $self->create({ sid => $sid, url => $token->[1]{href}});
 				my $data = $tokens->get_text("/a");
-				my $href = strip_attribute($token->[1]->{href});
-				my $title = strip_attribute($token->[1]->{title});
+				my $href = strip_attribute($token->[1]{href});
+				my $title = strip_attribute($token->[1]{title});
 				$text =~ s#\Q$token->[3]$data</a>\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="LINK">$data</SLASH>#is;
 			}
 		}

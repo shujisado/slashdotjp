@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -60,7 +60,7 @@ sub getMessageCode {
 		return $self->{$cache}{$code};
 	}
 
-	my $row = $self->sqlSelectHashref('code,type,seclev,modes,send,subscribe',
+	my $row = $self->sqlSelectHashref('code,type,seclev,modes,send,subscribe,acl',
 		'message_codes', "code=$code");
 	$codeBank->{$code} = $row if $row;
 
@@ -325,8 +325,8 @@ sub deleteMessages {
 	# set defaults
 	my $constants = getCurrentStatic();
 	my $sendx = $constants->{message_send_expire}  || 7;
-	my $webx  = $constants->{message_web_expire}   || 31;
-	my $webmx = $constants->{message_web_maxtotal} || 50;
+	my $webx  = $constants->{message_web_expire}   || 14;
+	my $webmx = $constants->{message_web_maxtotal} || 25;
 	my $logx  = $constants->{archive_delay}        || 14;
 
 	# delete message log entries
@@ -446,20 +446,33 @@ sub _getMailingUsers {
 }
 
 sub _getMessageUsers {
-	my($self, $code, $seclev, $subscribe) = @_;
+	my($self, $code, $seclev, $subscribe, $acl) = @_;
 	return unless $code =~ /^-?\d+$/;
 	my $cols  = "users_messages.uid";
 	my $table = "users_messages";
 	my $where = "users_messages.code=$code AND users_messages.mode >= 0";
 
+	my @users;
 	if ($seclev && $seclev =~ /^-?\d+$/) {
-		$table .= ",users";
-		$where .= " AND users.uid = users_messages.uid AND seclev >= $seclev";
+		my $seclevt = "$table,users";
+		my $seclevw = "$where AND users.uid = users_messages.uid AND seclev >= $seclev";
+		my $seclevu = $self->sqlSelectColArrayref($cols, $seclevt, $seclevw) || [];
+		push @users, @$seclevu;
 	}
 
-	my $users = $self->sqlSelectColArrayref($cols, $table, $where) || [];
-	$users = [ grep { isSubscriber($_) } @$users ] if $subscribe;
-	return $users;
+	if ($acl) {
+		my $acl_q = $self->sqlQuote($acl);
+		my $aclt = "$table,users_acl";
+		my $aclw = " users_acl.uid = users_messages.uid AND users_acl.acl=$acl_q";
+		my $aclu = $self->sqlSelectColArrayref($cols, $aclt, $aclw) || [];
+		push @users, @$aclu;
+	}
+
+
+	my %seen;
+	@users = grep { !$seen{$_}++     } @users;
+	@users = grep { isSubscriber($_) } @users if $subscribe;
+	return \@users;
 }
 
 1;

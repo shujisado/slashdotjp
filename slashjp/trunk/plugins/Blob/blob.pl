@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -27,15 +27,12 @@ sub main {
 		return;
 	}
 
-	my $r = Apache->request;
-	$r->header_out('Cache-Control', 'private');
-	$r->content_type($data->{content_type});
-	$r->status(200);
-	$r->send_http_header;
-	$r->rflush;
-	$r->print($data->{data});
-	$r->rflush;
-	$r->status(200);
+	http_send({
+		content_type	=> $data->{content_type},
+		filename	=> $data->{filename},
+		do_etag		=> 1,
+		content		=> $data->{data}
+	});
 }
 main();
 

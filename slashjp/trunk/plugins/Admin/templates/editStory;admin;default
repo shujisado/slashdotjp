@@ -105,7 +105,7 @@ __template__
 
 [% IF similar_stories.size > 0 %]
 	<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
-		<TR><TD COLSPAN="5" ALIGN="CENTER"><B>Similar Stories:</B></TD></TR>
+		<TR><TD COLSPAN="5" ALIGN="CENTER"><B>Similar Stories</B> -- <FONT SIZE="-1">check words below before submitting or previewing to mark words as common and not for use in determining similar stories</FONT></TD></TR>
 		[% FOREACH story = similar_stories %]
 			<TR>
 			<TD VALIGN="TOP">[% IF story.displaystatus == 0;
@@ -119,7 +119,12 @@ __template__
 			<TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">
 			[% story.title %]</A></TD>
 			<TD VALIGN="TOP">[% Slash.timeCalc(story.time) %]</TD>
-			<TD VALIGN="TOP">[% story.words.join(" ") %]</TD>
+			<TD VALIGN="TOP">
+			[% FOREACH word = story.words %]
+				[%- word -%][% UNLESS words_seen.$word %]<INPUT TYPE="checkbox" name="set_common_word" value="[% word %]">[%- END -%]
+				[% words_seen.$word = 1; %]
+			[% END %]
+			</TD>
 			</TR>
 		[% END %]
 	</TABLE>
@@ -184,23 +189,18 @@ __template__
 	[% FOR extra = extras %]
 	<TR>
 		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
-		[% # yeah, I know... %]
-		<!-- extra.2 [% extra.2 %] -->
 		<B>[% extra.0 %]</B> </FONT></TD>
+		<TD BGCOLOR="[% user.bg.2 %]">
 		[% IF extra.2 == 'text' %]
-		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="[% extra.1 %]" VALUE="[% storyref.${extra.1} | strip_attribute %]" SIZE="50">
+			<INPUT TYPE="TEXT" NAME="[% extra.1 %]" VALUE="[% storyref.${extra.1} | strip_attribute %]" SIZE="50">
 		[% ELSIF extra.2 == 'list' %]
-		<TD BGCOLOR="[% user.bg.2 %]">
-		[% # section:value %]
-		[% pulldown = "$extra.3:$extra.1" %]
-		[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',pulldown), storyref.${extra.1}, 1, 1) %]	
+			[% pulldown = "$extra.3:$extra.1" %]
+			[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',pulldown), storyref.${extra.1}, 1, 1) %]	
 		[% ELSE %]
-		[% pulldown = extra.1 %]
-		<TD BGCOLOR="[% user.bg.2 %]">
-		[% pulldown_section = form.section || user.section || storyref.section %]
-		<!-- pulldown [% pulldown %] pulldown section [% pulldown_section %] -->
-		[% Slash.createSelect(pulldown, Slash.db.getDescriptions('topics_section_type', pulldown_section, pulldown), storyref.$pulldown, 1, 1) %]	
+			[% pulldown = extra.1 %]
+			<TD BGCOLOR="[% user.bg.2 %]">
+			[% pulldown_section = form.section || user.section || storyref.section %]
+			[% Slash.createSelect(pulldown, Slash.db.getDescriptions('topics_section_type', pulldown_section, pulldown), storyref.$pulldown, 1, 1) %]
 		[% END %]
 		</TD>
 	</TR>
@@ -218,17 +218,23 @@ __template__
 		[% commentstatus_select %]
 		<INPUT TYPE="TEXT" NAME="time" VALUE="[% storyref.time %]" size="19"><BR>
 
+		[% IF constants.plugin.PollBooth %]
+			[ Poll ID:  [% storyref.qid %]
+			[% IF storyref.qid %] 
+				<A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;qid=[% storyref.qid %]&amp;op=edit">Related Poll</A> | <A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;qid=[% storyref.qid %]&amp;op=detach">Detach Related Poll</A> | 
+<A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;op=linkstory">Link Story to Different Poll</A>
+			[% ELSE %]
+				<A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;qid=[% storyref.qid %]&amp;op=preview&amp;question=[% storyref.title | fixparam %]&amp;polltype=story&amp;date=[% storyref.time | fixparam %]&amp;section=[% storyref.section | fixparam %]&amp;topic=[% storyref.tid | fixparam %]">Create Poll</A>
+| <A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;op=linkstory">Link Story to Existing Poll</A>			
+			[% END %] ]<BR>
+		[% END %]
+
 		[ <INPUT TYPE="checkbox" NAME="fixquotes" [% fixquotes_check %]>fixquotes
 		| <INPUT TYPE="checkbox" NAME="autonode" [% autonode_check %]>autonode
 		| <INPUT TYPE="checkbox" NAME="shortcuts" [% shortcuts_check %]>story shortcuts
 
 		[% IF sid %]
-		| <INPUT TYPE="checkbox" NAME="fastforward" [% fastforward_check %]>fastforward | 
-			[% IF storyref.qid %] 
-				<A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;qid=[% storyref.qid %]&amp;op=edit">Related Poll</A>
-			[% ELSE %]
-				<A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;qid=[% storyref.qid %]&amp;op=preview&amp;question=[% storyref.title | fixparam %]&amp;polltype=story&amp;date=[% storyref.time | fixparam %]&amp;section=[% storyref.section | fixparam %]&amp;topic=[% storyref.tid | fixparam %]">Create Poll</A>
-			[% END %]
+		| <INPUT TYPE="checkbox" NAME="fastforward" [% fastforward_check %]>fastforward  
 			[% IF constants.plugin.Blob && constants.story_files %]
 				| <A HREF="[% constants.real_rootdir %]/fileadmin.pl?op=editBySid&amp;sid=[% sid %]">Attach File</A>
 			[% END %]

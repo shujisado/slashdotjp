@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -12,11 +12,13 @@ use Slash 2.003;	# require Slash 2.3.x
 use Slash::Constants qw(:web :messages);
 use Slash::Display;
 use Slash::Utility;
+use Time::HiRes;
 use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
+my $start_time = Time::HiRes::time;
 	my $messages  = getObject('Slash::Messages');
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
@@ -50,7 +52,9 @@ sub main {
 	}
 
 	# dispatch of op
+#printf STDERR scalar(localtime) . " messages.pl before $$ op $op uid $user->{uid} elapsed %5.3f\n", (Time::HiRes::time - $start_time);
 	$ops{$op}[FUNCTION]->($messages, $constants, $user, $form);
+#printf STDERR scalar(localtime) . " messages.pl after  $$ op $op uid $user->{uid} elapsed %5.3f\n", (Time::HiRes::time - $start_time);
 
 	# writeLog('SOME DATA');	# if appropriate
 }
@@ -234,9 +238,10 @@ sub save_prefs {
 	my $messagecodes = $messages->getDescriptions('messagecodes');
 	for my $code (keys %$messagecodes) {
 		my $coderef = $messages->getMessageCode($code);
-		if ($user->{seclev} < $coderef->{seclev} || !exists($form->{"deliverymodes_$code"})) {
-			$params{$code} = MSG_MODE_NONE;
-		} elsif ($coderef->{subscribe} && !isSubscriber($user)) {
+		if (!exists($form->{"deliverymodes_$code"})
+			||
+		    !$messages->checkMessageUser($code, $slashdb->getUser($uid))
+		) {
 			$params{$code} = MSG_MODE_NONE;
 		} else {
 			$params{$code} = fixint($form->{"deliverymodes_$code"});

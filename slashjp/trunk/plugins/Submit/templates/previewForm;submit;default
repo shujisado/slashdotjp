@@ -22,7 +22,7 @@ __template__
 [% IF submission.comment && admin_flag %]
 <P>Submission Notes:
 <TABLE WIDTH="95%"><TR><TD BGCOLOR="[% user.bg.2 %]">
-	<FONT SIZE="-1" COLOR="[% user.fg.2 %]">[% submission.comment %]</FONT>
+	<FONT SIZE="-1" COLOR="[% user.fg.2 %]">[% submission.comment | strip_literal %]</FONT>
 </TD></TR></TABLE>
 [% END %]
 [% IF submission.sid %]
@@ -49,7 +49,7 @@ TITLE="[% topic.alttext %]"></A>
 	<FORM ACTION="[% constants.rootdir %]/admin.pl" METHOD="POST">
 		<INPUT TYPE="HIDDEN" NAME="subid" VALUE="[% subid %]">
 		<INPUT TYPE="HIDDEN" NAME="submitter" VALUE="[% submitter %]">
-		<BR>title <INPUT TYPE="text" NAME="title" VALUE="[% submission.subj %]" SIZE="50">
+		<BR>title <INPUT TYPE="text" NAME="title" VALUE="[% submission.subj %]" SIZE="50" MAXLENGTH="50">
 		<BR>[% lockTest %]
 	[% IF constants.use_dept %]
 		dept <INPUT TYPE="text" NAME="dept" SIZE="50">
@@ -59,12 +59,11 @@ TITLE="[% topic.alttext %]"></A>
 		[% IF extra.2 == 'text' %]
 			<INPUT TYPE="text" NAME="[% extra.1 %]" VALUE="[% submission.${extra.1} | strip_attribute %]" SIZE="50">
 		[% ELSIF extra.2 == 'list' %]
-			[% # section:value %]
 			[% pulldown = "$extra.3:$extra.1" %]
-			[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',pulldown), submission.${extra.1}, 1, 1) %]	
+			[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',pulldown), submission.${extra.1}, 1, 1) %]
 		[% ELSE %]
 			[% type = extra.1 %]
-			[% Slash.createSelect(type, Slash.db.getDescriptions('topics_section_type', section, type), submission.$type, 1, 1) %]	
+			[% Slash.createSelect(type, Slash.db.getDescriptions('topics_section_type', section, type), submission.$type, 1, 1) %]
 		[% END %]
 	[% END %]
 		<BR>
@@ -76,10 +75,9 @@ TITLE="[% topic.alttext %]"></A>
 	<TEXTAREA NAME="introtext" ROWS="[% user.textarea_rows || constants.textarea_rows %]" COLS="[% user.textarea_cols || constants.textarea_cols %]" WRAP="VIRTUAL"
 >[% subtext | strip_literal %]</TEXTAREA><BR>
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"><BR>
-	</FORM>
 [% IF similar_stories.size > 0 %]
 	<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
-		<TR><TD COLSPAN="5" ALIGN="CENTER"><B>Similar Stories:</B></TD></TR>
+		<TR><TD COLSPAN="5" ALIGN="CENTER"><B>Similar Stories --</B> <FONT SIZE="-1">check words below before submitting or previewing to mark words as common and not for use in determining similar stories</FONT></TD></TR>
 		[% FOREACH story = similar_stories %]
 			<TR>
 			<TD VALIGN="TOP">[% IF story.displaystatus == 0;
@@ -93,11 +91,17 @@ TITLE="[% topic.alttext %]"></A>
 			<TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">
 			[% story.title %]</A></TD>
 			<TD VALIGN="TOP">[% Slash.timeCalc(story.time) %]</TD>
-			<TD VALIGN="TOP">[% story.words.join(" ") %]</TD>
+			<TD VALIGN="TOP">
+			[% FOREACH word = story.words %]
+				[%- word -%][% UNLESS words_seen.$word %]<INPUT TYPE="checkbox" name="set_common_word" value="[% word %]">[%- END -%]
+				[% words_seen.$word = 1; %]
+			[% END %]
+			</TD>
 			</TR>
 		[% END %]
 	</TABLE>
 [% END %]
+</FORM>
 [% END %]
 
 __seclev__

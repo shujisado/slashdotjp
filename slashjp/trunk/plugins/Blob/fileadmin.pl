@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -105,6 +105,7 @@ sub addFileForStory {
 				local $/;
 				$data = <$fh>;
 			}
+			$form->{file_content} =~ s|^.+?([^/:\\]+)$|$1|;
 		}
 
 		my $content = {

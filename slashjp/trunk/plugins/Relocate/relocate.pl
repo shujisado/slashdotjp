@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -23,6 +23,13 @@ sub main {
 		printDeadPage($link);
 		footer();
 	} else {
+		if (getCurrentStatic("relocate_keep_count")) {
+			my $relocate_writer = getObject("Slash::Relocate");
+			my $success = $relocate_writer->increment_count($link->{id});
+			if (!$success) {
+				warn "did not increment links_for_stories.count for id '$link->{id}'";
+			}
+		}
 		redirect($link->{url});
 	}
 }
@@ -30,7 +37,7 @@ sub main {
 main();
 
 sub printDeadPage {
-	my ($link) = @_;
+	my($link) = @_;
 	slashDisplay("deadPage", { link => $link });
 }
 

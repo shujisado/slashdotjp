@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -262,7 +262,7 @@ sub saveSection {
 	my $found = $slashdb->getSection($section, 'section', 1);
 	if ($found) {
 		$slashdb->setSection($section, {
-			qid		=> $form->{qid},
+			qid		=> $form->{qid} || 0,
 			title		=> $form->{title},
 			issue		=> $form->{issue},
 			artcount	=> $form->{artcount},
@@ -278,7 +278,7 @@ sub saveSection {
 	} else {
 		my $return = $slashdb->createSection({
 			section		=> $section,
-			qid		=> $form->{qid},
+			qid		=> $form->{qid} || 0,
 			title		=> $form->{title},
 			issue		=> $form->{issue},
 			artcount	=> $form->{artcount},

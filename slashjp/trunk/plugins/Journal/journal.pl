@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -32,7 +32,9 @@ sub main {
 				}
 				$user->{state}{packagename} = __PACKAGE__;
 				return SOAP::Transport::HTTP::Apache->dispatch_to
-					('Slash::Journal::SOAP')->handle;
+					('Slash::Journal::SOAP')->handle(
+						Apache->request->pnotes('filterobject')
+					);
 			}
 		}
 	}
@@ -208,9 +210,10 @@ sub displayRSS {
 	my @items;
 	for my $article (@$articles) {
 		push @items, {
+			story		=> {
+				'time'		=> $article->[0],
+			},
 			title		=> $article->[2],
-# needs a var controlling this ... what to use as desc?
-#			description	=> timeCalc($article->[0]),
 			description	=> strip_mode($article->[1], $article->[4]),
 			'link'		=> "$constants->{absolutedir}/~" . fixparam($nickname) . "/journal/$article->[3]"
 		};
@@ -551,13 +554,18 @@ sub saveArticle {
 	$form->{description} =~ s/[\r\n].*$//s;  # strip anything after newline
 	my $description = strip_notags($form->{description});
 
-	unless ($description ne "" && $form->{article} ne "") {
-		unless ($ws) {
-			_printHead("mainhead") or return;
-			print getData('no_desc_or_article');
-			editArticle(@_, 1);
+	# from comments.pl
+	for ($description, $form->{article}) {
+		my $d = decode_entities($_);
+		$d =~ s/&#?[a-zA-Z0-9]+;//g;	# remove entities we don't know
+		if ($d !~ /\S/) {		# require SOME non-whitespace
+			unless ($ws) {
+				_printHead("mainhead") or return;
+				print getData('no_desc_or_article');
+				editArticle(@_, 1);
+			}
+			return 0;
 		}
-		return 0;
 	}
 
 	return 0 unless _validFormkey($ws ? qw(max_post_check interval_check) : ());
@@ -571,7 +579,7 @@ sub saveArticle {
 		# note: comments_on is a special case where we are
 		# only turning on comments, not saving anything else
 		if ($constants->{journal_comments} && $form->{journal_discuss} ne 'disabled' && !$article->{discussion}) {
-			my $rootdir = $constants->{'rootdir'};
+			my $rootdir = $constants->{real_rootdir};
 			if ($form->{comments_on}) {
 				$description = $article->{description};
 				$form->{tid} = $article->{tid};
@@ -820,6 +828,8 @@ sub modify_entry {
 	my $user      = getCurrentUser();
 	my $slashdb   = getCurrentDB();
 
+	$id =~ s/\D+//g;
+
 	return if $user->{is_anon};
 
 	my $entry = $journal->get($id);
@@ -866,6 +876,8 @@ sub delete_entry {
 	my $journal   = getObject('Slash::Journal');
 	my $user      = getCurrentUser();
 
+	$id =~ s/\D+//g;
+
 	return if $user->{is_anon};
 	return $journal->remove($id);
 }
@@ -875,6 +887,8 @@ sub get_entry {
 	my $journal   = getObject('Slash::Journal');
 	my $constants = getCurrentStatic();
 	my $slashdb   = getCurrentDB();
+
+	$id =~ s/\D+//g;
 
 	my $entry = $journal->get($id);
 	return unless $entry->{id};
@@ -896,9 +910,13 @@ sub get_entries {
 	my $user      = getCurrentUser();
 	my $slashdb   = getCurrentDB();
 
+	$uid =~ s/\D+//g;
+	$num =~ s/\D+//g;
+
 	$user		= $slashdb->getUser($uid, ['nickname']) if $uid;
 	$uid		= $uid || $user->{uid};
 	my $nickname	= $user->{nickname};
+
 	return unless $uid;
 
 	my $articles = $journal->getsByUid($uid, 0, $num || 15);
@@ -918,7 +936,7 @@ sub get_entries {
 # SOAP working (this will be in the Search SOAP API, i think)
 sub get_uid_from_nickname {
 	my($self, $nick) = @_;
-	return getCurrentDB->getUserUID($nick);
+	return getCurrentDB()->getUserUID($nick);
 }
 
 sub _save_params {
@@ -945,6 +963,7 @@ sub _save_params {
 	}
 
 	$form{journal_discuss} = 'discuss' if $form{journal_discuss} == 1;
+	$form{tid} =~ s/\D+//g;
 
 	return \%form;
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -69,18 +69,30 @@ $task{$me}{code} = sub {
 
 			# perhaps put these formatting things in templates?
 			if ($mode == MSG_MODE_EMAIL) {
-				$message = join "\n\n" . ('=' x 80) . "\n\n", map {
-					$_->{message}
-				} @$coll;
-
+				$message = join "\n\n" . ('=' x 80) . "\n\n",
+					grep { $_ }
+					map { $_->{message} }
+					@$coll;
 			} elsif ($mode == MSG_MODE_WEB) {
-				$message = join "\n\n<P><HR><P>\n\n", map {
-					$_->{message}
-				} @$coll;
-
+				$message = join "\n\n<P><HR><P>\n\n",
+					grep { $_ }
+					map { $_->{message} }
+					@$coll;
 			} else {
 				next;
 			}
+
+			if ($constants->{message_delivery_debug} > 0) {
+				use Data::Dumper;
+				foreach my $m (@$coll) {
+					delete $m->{user}{people};
+					messagedLog("Empty message: " . Dumper($m))
+						unless $m->{message};
+					messagedLog("Good message: " . Dumper($m))
+						if $m->{message};
+				}
+			}
+			
 
 			$to_delete{ $msg->{id} } = [ map {
 					$_->{id}

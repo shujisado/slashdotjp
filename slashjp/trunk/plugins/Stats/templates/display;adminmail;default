@@ -57,17 +57,26 @@ gstatic total:        -          -   [% grand_total_static %]
 [% IF other_page > 0 -%]
         other: [% other_uids %]   [% other_ipids %]   [% other_page %] ([% other_bytes %])
 [% END -%]
+[%- FOREACH pagetype = extra_pagetypes -%]
+[% pt_uids = pagetype _ "_uids"; pt_ipids = pagetype _ "_ipids" ; pt_page = pagetype _ "_page" ; pt_bytes = pagetype _ "_bytes"; pt_label = pagetype _ "_label"; -%]
+[% IF $pt_page > 0 -%]
+     [% $pt_label %]: [% $pt_uids %]   [% $pt_ipids %]   [% $pt_page %] ([% $pt_bytes %])
+[% END -%]
+[% END %]
 
     accesslog: [% accesslog %] rows total
      formkeys: [% formkeys %] rows total
      comments: [% comments %] posted yesterday
   submissions: [% submissions %] submissions 
  sub/comments: [% sub_comments %]% of the submissions came from comment posters from this day
+
+                          
+
 [% IF error_count > 0 -%]
-       errors: [% error_count %] pages generated errors
+       errors: [% error_count %] pages logged 5xx errors
 [% END -%]
 [% IF not_found > 0 -%]
-    not found: [% not_found %] pages were not found
+    not found: [% not_found %] pages sent with status 404 (not found)
 [% END -%]
 [% IF status_202 > 0 -%]
    status 202: [% status_202 %] pages sent with status 202 (rejected RSS)
@@ -75,11 +84,26 @@ gstatic total:        -          -   [% grand_total_static %]
 
    total hits: [% total_hits %]
 
-[% admin_clearpass_warning %][% backup_lag %]
+[% admin_clearpass_warning %]
+[% bad_password_warning %]
+[% backup_lag %]
+
+------------------------
+                            Yesterday   | 2 days ago | 3 days ago
+    Avg Hits Per Article:   [% avg_hits_per_story.0 %]|[% avg_hits_per_story.1 %]|[% avg_hits_per_story.2 %]
+Avg Comments Per Article:   [% avg_comments_per_story.0 %]|[% avg_comments_per_story.1 %]|[% avg_comments_per_story.2 %]
 
 -----------------------
 [% rand_users_yest.size %] random users created yesterday:
 [% FOREACH ru = rand_users_yest %][% ru.nickname %] ([% ru.uid %]) <[% ru.realemail %]>[% IF !loop.last %]  [% IF loop.count mod 2 == 0; "\n"; END %][% END %][% END %]
+
+Recent top [% top_recent_domains.size %] email domains over last [% top_recent_domains_daysback %] ([% top_recent_domains_newaccounts %] Accounts):
+[% FOREACH trd = top_recent_domains; trd.c; "  "; trd.initdomain; "\n"; END %]
+
+[% IF top_relocated_urls %]
+Top Relocated URLS
+[% FOREACH tru = top_relocated_urls; tru.count; "  "; tru.stats_type; "  "; tru.url; "\n"; END %]
+[% END %]
 
 -----------------------
 [% FOREACH section = sections -%]
@@ -111,6 +135,11 @@ For [% section.section_name %]
 [% IF section.other.pages > 0 -%]
         other: [% section.other.pages %] [% section.other.ipids %] [% section.other.bytes %] [% section.other.users %]
 [% END -%]
+[%- FOREACH pagetype = extra_pagetypes -%]
+[% IF section.${pagetype}.pages > 0 -%]
+     [% section.${pagetype}.label %]: [% section.${pagetype}.pages %] [% section.${pagetype}.ipids %] [% section.${pagetype}.bytes %] [% section.${pagetype}.users %]
+[% END -%]
+[% END %]
 [% END -%]
 
 -----------------------
@@ -139,7 +168,7 @@ Page           Status              Count
 
 -----------------------      
 
-[% tailslash %]      
+[% tailslash %]
 
 -----------------------
 
@@ -153,8 +182,14 @@ Page           Status              Count
                 " total\n";
         END;
 END %]
------------------------
+[% IF crawling_subscribers %]
+---------------------------------
+Possible Subscriber Comment Crawlers
 
+Count  Nickname
+[% crawling_subscribers %]
+
+[% END %]
 __seclev__
 100
 __version__

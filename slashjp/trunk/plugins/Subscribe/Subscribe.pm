@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -64,11 +64,12 @@ sub new {
 # start seeing ads on bought page types, but as long as their max is
 # at least the default, those bought page types are still considered
 # "plumworthy" or (and this is an ugly term but it's short) "plummy."
+# And image hits are their own thing.
 #
 # So:
 #
-# adless = A && (B || C) && D
-# buying = A &&  B       && D
+# adless = A && (B || C) && D      && !I
+# buying = A &&  B       && D      && !I
 # plummy = A && (B || C)      && E
 #
 # Where:
@@ -85,6 +86,7 @@ sub new {
 #         one of those checkboxes checked)
 # [D] User has pages remaining for today before hitting the max
 # [E] User's max pages per day to buy is set >= the default (10)
+# [I] This hit is an image, not an actual page.
 #
 sub _subscribeDecisionPage {
 	my($self, $trueOnOther, $useMaxNotToday, $r, $user) = @_;
@@ -118,6 +120,14 @@ sub _subscribeDecisionPage {
 		return 0 if !$user->{hits_paidfor}
 			|| ( $user->{hits_bought}
 				&& $user->{hits_bought} >= $user->{hits_paidfor} );
+	}
+
+	# If we're on an image hit, not a page, then there may be
+	# a simple answer.
+	if (!$useMaxNotToday) {
+		my($status, $uri) = ($r->status, $r->uri);
+		my($op) = getOpAndDatFromStatusAndURI($status, $uri);
+		return 0 if $op eq 'image';
 	}
 
 	my $today_max_def = $constants->{subscribe_hits_btmd} || 10;
@@ -218,9 +228,12 @@ sub plummyPage {
 # By default, allow readers to buy x pages for $y, 2x pages for $2y,
 # etc.  If you want to have n-for-the-price-of-m sales or whatever,
 # change the logic here.
+# Also, if someone hacks the HTML to purchase less than one
+# subscription, they get nothing.
 sub convertDollarsToPages {
 	my($self, $amount) = @_;
 	my $constants = getCurrentStatic();
+	$amount = 0 if $amount < $constants->{paypal_amount};
 	return sprintf("%0.0f", $amount*$constants->{paypal_num_pages}/
 		$constants->{paypal_amount});
 }
@@ -244,9 +257,20 @@ sub convertPagesToDollars {
 #	method		(optional) string representing payment method
 #	data		(optional) any additional data
 #	memo		(optional) subscriber's memo
+#	payment_type    (optional) defaults to "user" 
+#                                  other options are "gift"  or "grant"
+#       puid		(optional) purchaser uid for gifts or grants this
+#				   will be different than the uid.  If
+#				   none is provided it defaults to uid
+
 sub insertPayment {
 	my($self, $payment) = @_;
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $t_id_len  = $constants->{subscribe_gen_transaction_id_length} || 17;
+	
+	$payment->{payment_type} ||= "user";
+	$payment->{puid} ||= $payment->{uid};
 
 	# Can't buy pages for an Anonymous Coward.
 	return 0 if isAnon($payment->{uid});
@@ -264,7 +288,7 @@ sub insertPayment {
 				Digest::MD5::md5_hex(join(":",
 					$payment->{uid}, $payment->{data},
 					time, $$, rand(2**30)
-				)), 0, 17
+				)), 0, $t_id_len
 			);
 		}
 		$success = $slashdb->sqlInsert("subscribe_payments", $payment);
@@ -274,20 +298,68 @@ sub insertPayment {
 	return $success;
 }
 
+sub grantPagesToUID {
+	my ($self, $pages, $uid) = @_;
+	my $user = getCurrentUser();
+	my $slashdb = getCurrentDB();
+	my $grant = {
+		pages	      => $pages,
+		uid	      => $uid,
+		payment_net   => 0,
+		payment_gross => 0,
+		payment_type  => "grant",
+		puid	      => $user->{uid}		
+
+	};
+	my $rows = $self->insertPayment($grant);
+	if ($rows == 1) {
+		$slashdb->setUser($uid, {
+			"-hits_paidfor" => "hits_paidfor + $pages"
+		});
+	}
+	return $rows;
+}
+
 sub getSubscriptionsForUser {
 	my($self, $uid) = @_;
 	my $slashdb = getCurrentDB();
 	my $uid_q = $slashdb->sqlQuote($uid);
 	my $sp = $slashdb->sqlSelectAll(
-		"ts, email, payment_gross, pages, method, transaction_id",
+		"ts, email, payment_gross, pages, method, transaction_id, puid, payment_type",
 		"subscribe_payments",
 		"uid = $uid_q",
 		"ORDER BY spid",
 	);
 	$sp ||= [ ];
-	formatDate($sp, 0);
+	formatDate($sp, 0, 0, "%m-%d-%y @%I:%M %p");
 	return $sp;
 }
+
+sub getSubscriptionsPurchasedByUser {
+	my($self, $puid,$options) = @_;
+	my $slashdb = getCurrentDB();
+	my $restrict;
+	if ($options->{only_types}) {
+		if (ref($options->{only_types}) eq "ARRAY") {
+			$restrict .= " AND payment_type IN ("
+				. join(',', map { $slashdb->sqlQuote($_) }
+					@{$options->{only_types}}
+				)
+				. ")";
+		} 
+	}
+	my $puid_q = $slashdb->sqlQuote($puid);
+	my $sp = $slashdb->sqlSelectAll(
+		"ts, email, payment_gross, pages, method, transaction_id, uid, payment_type",
+		"subscribe_payments",
+		"puid = $puid_q $restrict",
+		"ORDER BY spid",
+	);
+	$sp ||= [ ];
+	formatDate($sp, 0, 0, "%m-%d-%y @%I:%M %p");
+	return $sp;
+}
+
 
 1;
 
