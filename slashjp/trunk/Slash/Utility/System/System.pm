@@ -203,6 +203,12 @@ sub bulkEmail {
 
 	my @list = grep { emailValid($_) } @$addrs;
 
+	# Character Code Conversion; see comments in sendEmail()
+	my $b_code = $constants->{mail_charset_body} || "UTF-8";
+	my $h_code = $constants->{mail_charset_header} || "MIME-Header";
+	$content = encode( $b_code, $content, Encode::FB_PERLQQ );
+	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
+
 	my $bulk = Slash::Custom::Bulkmail->new(
 		From    => $constants->{mailfrom},
 		Smtp	=> $constants->{smtp_server},
@@ -213,7 +219,7 @@ sub bulkEmail {
 		BAD	=> $badfile,
 		ERRFILE	=> $errfile,
 		# put in vars ... ?
-		'Content-type'			=> 'text/plain; charset="us-ascii"',
+		'Content-type'			=> qq|text/plain; charset="$b_code"|,
 		'Content-transfer-encoding'	=> '8bit',
 		'Message-Id'			=> messageID(),
 	);
