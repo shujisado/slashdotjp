@@ -582,7 +582,7 @@ sub displayStories {
 				$url = $gSkin->{rootdir} . '/' . $gSkin->{index_handler} . '?section=' . $skin->{name};
 			}
 
-			push @links, [ $url, $skin->{hostname} || $skin->{title} ];
+			push @links, [ $url, $skin->{title} ];
 		}
 
 		if ($user->{seclev} >= 100) {
