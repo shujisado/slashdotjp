@@ -3243,11 +3243,14 @@ sub findWords {
 	my $use_stemming = $constants->{stem_uncommon_words};
 	my $language = $constants->{rdflanguage} || "EN-US";
 	$language = uc($language);
-	my $stemmer = Lingua::Stem->new(-locale => $language);
-	$stemmer->stem_caching({ -level => 2 });
+	my $stemmer;
 	my $text_return_hr = {};
 	my @word_stems;
 
+	if ($use_stemming){
+		$stemmer = Lingua::Stem->new(-locale => $language);
+		$stemmer->stem_caching({ -level => 2 });
+	}
 
 	# Return a hashref;  keys are the words, values are hashrefs
 	# with the number of times they appear and so on.
@@ -3348,7 +3351,7 @@ sub findWords {
 			$wordcount->{$word}{count}++;
 		}
 	}
-	$stemmer->clear_stem_cache();
+	$stemmer->clear_stem_cache() if $use_stemming;
 
 	return $wordcount;
 }
