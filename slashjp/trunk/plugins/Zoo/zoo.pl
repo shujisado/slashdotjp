@@ -824,7 +824,7 @@ sub _foaf {
 	my $constants	= getCurrentStatic();
 	my $form	= getCurrentForm();
 	my $reader	= getObject('Slash::DB', { db_type => 'reader' });
-	my $user	= $reader->getUser($uid, ['nickname', 'realemail','homepage', 'journal_last_entry_date']);
+	my $user	= $reader->getUser($uid, ['nickname', 'realemail','homepage', 'journal_last_entry_date', 'emaildisplay']);
 	my $nickname	= $user->{nickname};
 	my $userpage	= "$constants->{rootdir}/~" . fixparam($nickname) . "/";
 
@@ -840,20 +840,25 @@ sub _foaf {
 				},
 			}
 		};
+
 	# add various field is defined
-	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail};
+	# email address depending on display setting
+	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail} && $user->{emaildisplay} >= 1;
+        $person->{mbox} = "mailto:" . $user->{realemail} if $user->{realemail} && $user->{emaildisplay} >= 2; 
 	$person->{homepage} = $user->{homepage} if $user->{homepage};
 	$person->{weblog} = $userpage . "journal/" if $user->{journal_last_entry_date};
 
 	# add person's relationship
 	my @knows; 
 	for my $entry (@$entries) {
-		my $p = $reader->getUser( $entry->[0] , ['nickname','realemail'] );
-		push @knows, { Person => {
+		my $p = $reader->getUser( $entry->[0] , ['nickname','realemail','emaildisplay'] );
+		my $other = { Person => {
 			nick		=> $p->{nickname},
-			mbox_sha1sum	=>  Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}),
 			seeAlso		=> "$constants->{rootdir}/~" . fixparam($p->{nickname}) . "/$type.rdf",
 		}};
+		$other->{Person}{mbox_sha1sum} = Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}) if $p->{emaildisplay} >= 1;
+		push @knows, $other;
+	
 	}
 	$person->{knows} = \@knows;
 

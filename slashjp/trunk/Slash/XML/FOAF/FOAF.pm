@@ -41,6 +41,7 @@ my %foaf_elements = (
 	Document	=> "",
 	Person		=> "",
 	mbox_sha1sum	=> "",
+	mbox		=> "resource",
 	nick		=> "",
 	weblog		=> "resource",
 	page		=> "resource",
