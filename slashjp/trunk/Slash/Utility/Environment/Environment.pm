@@ -2477,7 +2477,7 @@ sub determineCurrentSkin {
 			if (!$skin) {
 				errorLog("determineCurrentSkin called but no skin found (even default) for $hostname\n");
 			} else {
-				errorLog("determineCurrentSkin called but no skin found (so using default) for $hostname\n");
+				#errorLog("determineCurrentSkin called but no skin found (so using default) for $hostname\n");
 			}
 		}
 	} else {
