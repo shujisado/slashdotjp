@@ -1,0 +1,86 @@
+__section__
+default
+__description__
+* min_id
+* min_id_ts
+* max_id
+* thresh_count, thresh_hps
+* data
+
+__title__
+admin interface recent template
+__page__
+admin
+__lang__
+en_US
+__name__
+recent_requests
+__template__
+[% PROCESS titlebar title="Recent Requests" width='100%' %]
+
+	<BR><TABLE BORDER=0 CELLSPACING="0" CELLPADDING="0">
+<FORM ACTION="[% constants.rootdir %]/admin.pl?op=recent_requests" method="GET">
+<INPUT TYPE="hidden" NAME="op" VALUE="recent_requests">
+	<TR><TD>Min ID</TD><TD><INPUT TYPE="text" NAME="min_id" VALUE="[% min_id %]" SIZE="15"></TD></TR>
+	<TR><TD>Max ID</TD><TD>[% max_id %]</TD></TR>
+	<TR><TD>Min ID Time</TD><TD>[% min_id_ts %]</TD></TR>
+	<TR><TD>Current&nbsp;Time&nbsp;</TD><TD>[% Slash.db.getTime %]</TD></TR>
+	<TR><TD>Hits&nbsp;Threshold&nbsp;</TD><TD><INPUT TYPE="text"
+		NAME="thresh_count" VALUE="[% thresh_count | strip_attribute %]" SIZE="8"></TD></TR>
+	<TR><TD>Hits/Sec&nbsp;Threshold&nbsp;</TD><TD><INPUT TYPE="text"
+		NAME="thresh_hps" VALUE="[% thresh_hps | strip_attribute %]" SIZE="8"></TD></TR>
+	<TR><TD>&nbsp;</TD><TD><INPUT TYPE="SUBMIT" NAME="none" VALUE="Reload"></TD></TR>
+	</TABLE>
+	<BR><FONT SIZE="-1"><B>Caution:</B> type in too small of a
+	<B>Min ID</B> and you can hang the (backup) DB for many seconds.
+	<B>Min ID</B> represents the position in the accesslog we start
+	looking; <B>Min ID Time</B> is the timestamp of that id.
+	If you blank the entry it will update to the current MAX(id)
+	value minus 10,000.
+	Each of the thresholds must be met for an IPID/Page pair to make
+	it onto the list below.
+	E.g., if thresh_count is 100 and the IPID only hit that Page 99
+	times, then no matter how quickly the clicks occurred, this will
+	not be listed.</FONT>
+[% IF data.size %]
+	<P><FONT SIZE="-1">This data took [% select_secs %] seconds to retrieve:</FONT>
+	<BR>
+	<TABLE>
+		<TR>
+			<TH>&nbsp;Count&nbsp;</TH>
+			<TH>&nbsp;Secs&nbsp;</TH>
+			<TH>&nbsp;Hits/Sec&nbsp;</TH>
+			<TH>&nbsp;Page&nbsp;</TH>
+			<TH>&nbsp;IPID&nbsp;</TH>
+			<TH>&nbsp;MIN(ts)&nbsp;</TH>
+			<TH>&nbsp;MAX(ts)&nbsp;</TH>
+		</TR>
+		[% FOREACH row = data %]
+			<TR>
+				<TD ALIGN="RIGHT">[% row.c %]&nbsp;</TD>
+				<TD ALIGN="RIGHT">&nbsp;[% row.secs %]&nbsp;</TD>
+				<TD ALIGN="RIGHT">&nbsp;[% row.hps %]&nbsp;</TD>
+				<TD ALIGN="LEFT">&nbsp;[% row.op %]&nbsp;</TD>
+				<TD>&nbsp;<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% row.ipid | strip_attribute %]&amp;fieldname=ipid">[% row.ipid_vis %]</A>&nbsp;</TD>
+				<TD>&nbsp;[% row.mints.substr(5) %]&nbsp;</TD>
+				<TD>&nbsp;[% row.maxts.substr(5) %]&nbsp;</TD>
+			</TR>
+			[% IF row.bannedts %]
+			<TR>
+				<TD COLSPAN="4">&nbsp;</TD>
+				<TD COLSPAN="3"><FONT SIZE="-1">Banned:&nbsp;[% row.bannedts %]&nbsp;[% row.bannedreason %]</FONT></TD>
+			</TR>
+			[% END %]
+		[% END %]
+	</TABLE>
+[% ELSE %]
+	<P><FONT SIZE="-1">No matches over threshold. Select took
+	[% select_secs %] seconds to run.</FONT>
+[% END %]
+	
+</FORM>
+
+__seclev__
+100
+__version__
+$Id$

@@ -1,0 +1,407 @@
+#!/usr/bin/perl
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2003 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
+
+use File::Basename;
+use Getopt::Std;
+use Slash::Utility;
+use Slash::DB;
+use Time::HiRes;
+
+use strict;
+
+use vars qw(
+	$PROGNAME	$VERSION
+	%opts
+	$virtuser	$width	$height	$sleep	$min_pl_time
+	$weed_out_images
+	@abbreviations	%abbreviations
+	$slashdb	$constants	$logdb
+	@db
+	$time_last	$maxlog_last
+	$time_first	$maxlog_first
+	$time_new	$maxlog_new
+	$pages		$loadavg	$num_cycles
+	$pages_total	$loadavg_sum
+	$lines_since_header
+);
+
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+
+init();
+run();
+
+exit 0;
+
+############################################################
+
+sub init {
+
+	$PROGNAME = basename($0);
+
+	usage('Options used incorrectly') unless getopts('hviu:w:r:s:t:', \%opts);
+	usage() if $opts{h};
+	version() if $opts{v};
+
+	$weed_out_images = $opts{i} ? 1 : 0;
+	$virtuser = $opts{u} || 'slashdot';
+	$width = $opts{w} || 106;
+	$height = $opts{r} || 20;
+	$sleep = $opts{s} || 10;
+	$min_pl_time = defined($opts{t}) ? $opts{t} : 1;
+
+	createEnvironment($virtuser);
+
+	# Why is the word "abbreviation" so long?
+	# And why do we drive on parkways, but park on driveways?
+	@abbreviations = qw( SELECT FROM WHERE INSERT DELETE UPDATE );
+	%abbreviations = map { ( $_, uc substr($_,0,1) ) } @abbreviations;
+
+	$slashdb = getCurrentDB();
+	$constants = getCurrentStatic();
+
+	my $vus = [ (
+		$slashdb->{virtual_user},
+		sort { $a cmp $b }
+		grep { $_ ne $slashdb->{virtual_user} }
+		@{$slashdb->sqlSelectColArrayref('virtual_user', 'dbs')}
+	)];
+	my $log_db = $slashdb->getDBs()->{log}[0]{virtual_user} || '';
+
+	# Set up the @db array based on what virtual users we have.
+	@db = ( );
+	for my $vu (@$vus) {
+		my $db = getObject("Slash::DB", $vu);
+		my($version) = $db->sqlSelect("VERSION()") =~ /(\d)/;
+		push @db, {
+			vu => $vu,
+			db => $db,
+			version => $version,
+		};
+	}
+
+	# If no virtual users are defined, we have just the one.
+	if (!@db) {
+		my($version) = $slashdb->sqlSelect("VERSION()") =~ /(\d)/;
+		@db = ( {
+			vu => $virtuser,
+			db => $slashdb,
+			version => $version,
+		} );
+	}
+
+	# We already have a handle to the DB that writes accesslog, but let's get
+	# a separate copy in this special var for it.
+	$logdb = getObject('Slash::DB', { db_type => "log" });
+
+	$lines_since_header = 999999;
+	$num_cycles = 0;
+	$loadavg_sum = 0;
+	$pages_total = 0;
+
+	$maxlog_first = $logdb->sqlSelect("MAX(id)", "accesslog");
+	$maxlog_last = $maxlog_first;
+
+	$time_first = Time::HiRes::time;
+	$time_last = $time_first;
+
+	for my $db (@db) {
+		$db->{status_sth} = $db->{db}->sqlShowStatus();
+		$db->{innostatus_sth} = $db->{db}->sqlShowInnodbStatus()
+			if $db->{version} == 4
+				&& $db->{vu} ne 'search'; # hack, hack
+		$db->{proclist_sth} = $db->{db}->sqlShowProcessList();
+		($db->{queries_first}, $db->{slow_queries_first})
+			= ($db->{queries_last}, $db->{slow_queries_last})
+			= getQueries($db->{status_sth});
+	}
+
+}
+
+sub run {
+
+	# Drop the starting time onto the console just in case we later
+	# want to correlate times.
+	print scalar(gmtime) . "\n";
+
+	while (1) {
+
+		print_header() if $lines_since_header > $height;
+		++$num_cycles;
+		sleep_until();
+
+		$time_new = Time::HiRes::time;
+		$maxlog_new = $logdb->sqlSelect("MAX(id)", "accesslog");
+
+		update_db_ary();
+
+		$loadavg = getLoadavg();
+		$loadavg_sum += $loadavg;
+
+		print_first_line($time_new);
+		print_second_line($time_new);
+		print_proclist();
+
+		print "\n"; ++$lines_since_header;
+
+		$time_last = $time_new;
+		$maxlog_last = $maxlog_new;
+		for my $db (@db) {
+			$db->{queries_last} = $db->{queries_new};
+			$db->{slow_queries_last} = $db->{slow_queries_new};
+		}
+	}
+
+}
+
+############################################################
+
+sub print_header {
+	# First line of header: spaces over the global stuff, headers for DBs
+	printf("%4s %4s %4s", "", "", "");
+	for my $db (@db) {
+		my $wid = 14;
+		$wid += 2 if $db->{innostatus_sth};
+		my $name = $db->{vu};
+		my $len = length($name);
+		print join("",
+			" ",
+			"-" x (int(($wid-$len-1)/2)),
+			$name,
+			"-" x (int(($wid-$len-0)/2)));
+	}
+	print "\n";
+
+	# Second line of header: names for the globals, names for DB columns
+	printf("%4s %4s %4s", "time", "load", "pps");
+	for my $db (@db) {
+		printf(" %4s %3s %4s", "qps", "sps", "qpp");
+		print " h" if $db->{innostatus_sth};
+	}
+	print "\n";
+
+	$lines_since_header = 0;
+}
+
+sub sleep_until {
+	my $sleep_time = $sleep * $num_cycles - (Time::HiRes::time - $time_first);
+	return if $sleep_time <= 0;
+	Time::HiRes::sleep($sleep_time);
+}
+
+sub update_db_ary {
+	for my $db (@db) {
+		($db->{queries_new}, $db->{slow_queries_new}) = getQueries($db->{status_sth});
+		($db->{hitrate}) = getHitRate($db->{innostatus_sth}) if $db->{innostatus_sth};
+		getProclist($db);
+	}
+}
+
+sub print_first_line {
+	# First line: stats for the last $time_elapsed seconds
+	if ($weed_out_images) {
+		$pages = $logdb->sqlCount("accesslog",
+			"id BETWEEN " . ($maxlog_last+1) . " AND $maxlog_new"
+			. " AND op != 'image'");
+	} else {
+		$pages = $maxlog_new - $maxlog_last;
+	}
+	$pages_total += $pages;
+	my $time_elapsed = $time_new - $time_last;
+	$time_elapsed = 0.01 if $time_elapsed < 0.01;
+	printf("%4s %4.2f %4.1f",
+		"",
+		$loadavg,
+		$pages / $time_elapsed
+	);
+	$pages = 1 if $pages < 1; # Below it's used in a denominator
+	for my $db (@db) {
+		my $slow = sprintf("%4.2f", ($db->{slow_queries_new} - $db->{slow_queries_last}) / $time_elapsed);
+		$slow =~ s/^0\././; $slow = substr($slow, 0, 3);
+		printf(" %4d $slow %4.1f",
+			($db->{queries_new} - $db->{queries_last}) / $time_elapsed,
+			($db->{queries_new} - $db->{queries_last}) / $pages,
+		);
+		if ($db->{innostatus_sth}) {
+			if (!defined($db->{hitrate})) {
+				print " ?";
+			} elsif ($db->{hitrate} >= 98) {
+				print "  ";
+			} elsif ($db->{hitrate} >= 94) {
+				print " -";
+			} else {
+				print " X";
+			}
+		}
+	}
+	print "\n"; ++$lines_since_header;
+}
+
+sub print_second_line {
+	# Second line: stats since slashmon started running
+	my $pt = $pages_total || 1;
+	my $time_elapsed = $time_new - $time_first;
+	$time_elapsed = 0.01 if $time_elapsed < 0.01;
+	printf("%4d %4.2f %4.1f",
+		$time_new - $time_first,
+		$loadavg_sum / $num_cycles,
+		$pt / $time_elapsed,
+	);
+	for my $db (@db) {
+		my $slow = sprintf("%4.2f", ($db->{slow_queries_new} - $db->{slow_queries_first}) / $time_elapsed);
+		$slow =~ s/^0\././; $slow = substr($slow, 0, 3);
+		printf(" %4d $slow %4.1f",
+			($db->{queries_new} - $db->{queries_first}) / $time_elapsed,
+			($db->{queries_new} - $db->{queries_first}) / $pt,
+		);
+		print "  " if $db->{version} == 4;
+	}
+	print "\n"; ++$lines_since_header;
+}
+
+sub print_proclist {
+	OUTER: for my $db (@db) {
+		my $db_lines = 0;
+		my $pl = $db->{proclist};
+		INNER: for my $line (@$pl) {
+			my $text = substr($line->{text}, 0, $width - 13);
+			printf "%-8s %4d %s\n", $line->{vu}, $line->{Time}, $text;
+			++$lines_since_header;
+			++$db_lines; last INNER if $db_lines >= 8;
+		}
+	}
+}
+
+############################################################
+
+sub getLoadavg {
+	open(my $fh, "</proc/loadavg") || return -1;
+	my $line = <$fh>;
+	my($loadavg) = split / /, $line;
+	$loadavg;
+}
+
+sub getQueries {
+	my($sth) = @_;
+	$sth->execute();
+	my($q, $sq);
+	while (my($key, $val) = $sth->fetchrow()) {
+		$q = $val, next	if $key eq "Questions";
+		$sq = $val	if $key eq "Slow_queries";
+	}
+	$sth->finish();
+	return($q, $sq);
+}
+
+sub getHitRate {
+	my($sth) = @_;
+	$sth->execute();
+	my($text) = $sth->fetchrow();
+	my($num, $denom) = $text =~ /Buffer pool hit rate (\d+)[ \/]+(\d+)/;
+	return undef unless $denom;
+	return 100*$num/$denom;
+}
+
+sub getProclist {
+	my($db) = @_;
+	my $sth = $db->{proclist_sth};
+	my $threads = 0;
+	my $active = 0;
+	my $proclist = [ ];
+
+	$sth->execute();
+	while (my $S = $sth->fetchrow_hashref()) {
+
+		++$threads;
+
+		my $info = $$S{Info};
+		next if !$info;
+		next if $info =~ /SHOW.*PROCESSLIST/i;
+		next if $$S{Command} eq "Sleep";
+		next if $$S{Time} < $min_pl_time;
+
+		++$active;
+
+		$info =~ s/\s+/ /g;
+		$info =~ s/[^_\'\-\+\.A-Z0-9\(\)<> ,=\|]//gi;
+		$info =~ s/ +/ /g;
+		$info =~ s/, /,/g;
+		$info =~ s/\) /\)/g;
+		$info =~ s/DATE_ADD\((.*)\)/DA($1)/g;
+		$info =~ s/DATE_FORMAT\((.*)\)/DF($1)/g;
+		for my $abbr (@abbreviations) {
+			$info =~ s/\b$abbr\b/$abbreviations{$abbr}/gi;
+		}
+		push @$proclist, {
+			Time	=> $$S{Time},
+			vu	=> $db->{vu},
+			text	=> $info,
+		};
+
+	}
+	$sth->finish();
+
+	@$proclist = sort {
+		$b->{Time} <=> $a->{Time}
+		||
+		$a->{text} <=> $b->{text}
+	} @$proclist;
+
+	$db->{threads} = $threads;
+	$db->{threads_active} = $active;
+	$db->{proclist} = $proclist;
+}
+
+############################################################
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] ... [UIDs]
+
+Monitor the Slash site's database.
+
+Main options:
+	-h      Help (this message)
+	-v      Version
+	-i	Accesslog may contain images; do a SELECT from it to
+		weed them out when counting pages
+
+	-u      Virtual user (default "slashdot")
+	-w	Width max in columns (default 76)
+	-r	Height max in (r)ows (default 20)
+	-s	Sleep time (default 10)
+	-t	Min time before showing slow DB queries (default 1)
+
+Global stats are the left 3 columns:
+	time	Elapsed seconds
+	load	CPU load on this machine
+	pps	Pages per second
+
+For each DB, the data is:
+	qps	Queries per second
+	sps	Slow queries per second
+	qpp	Queries per page
+	h	Cache hit rate percent (MySQL 4.x only)
+		("+" means 98% or better, "-" means not)
+EOT
+	exit 0;
+}
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2003 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit 0;
+}
+

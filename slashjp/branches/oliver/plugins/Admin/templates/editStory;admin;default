@@ -1,0 +1,278 @@
+__section__
+default
+__description__
+
+Added to storyref, introtext_wordcount and bodytext_wordcount. These
+fields are inserted by admin.pl before this template is displayed.
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+editStory
+__template__
+<FORM ACTION="[% constants.rootdir %]/admin.pl" METHOD="POST" enctype="multipart/form-data">
+[% IF form.subid %]
+	<INPUT TYPE="HIDDEN" NAME="subid" VALUE="[% form.subid | strip_attribute %]">
+[% END %]
+
+[% IF storyref.title %]
+	<TABLE>
+		<TR VALIGN=TOP>
+			<TD>
+			[% storycontent %]
+			</TD>
+
+			<TD WIDTH="220">
+
+			[% IF constants.plugin.Events && Slash.getObject('Slash::Events') %]
+				[% PROCESS fancybox
+					title = "Set an Event for this Story"
+					contents = "<A HREF=\"$constants.rootdir/eventsadmin.pl?op=edit&amp;sid=$sid\">Make Event</A>"
+				%]
+			[% END %]
+
+			[% IF attached_files %]
+				[% PROCESS fancybox
+					title = "Attached Files"
+					contents = attached_files
+				%]
+			[% END %]
+			
+			[% PROCESS fancybox
+				title = "Related Links"
+				contents = storyref.relatedtext
+			%]
+			<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
+
+			[% PROCESS fancybox
+				title = "Story Admin"
+				contents = authortext
+			%]
+			[% PROCESS fancybox
+				title = "Slashd Status"
+				contents = slashdtext
+			%]
+
+			</TD>
+		</TR>
+	</TABLE>
+	<P><IMG SRC="[% constants.imagedir %]/greendot.gif" WIDTH="80%" ALIGN="CENTER" HSPACE="20" HEIGHT="1"></P>
+
+[% ELSIF sid %]
+<TABLE>
+	<TR VALIGN=TOP>
+		<TD>
+		[% story %]
+		</TD>
+		<TD WIDTH="220">
+
+		[% IF constants.plugin.Events && Slash.getObject('Slash::Events') %]
+			[% PROCESS fancybox
+				title = "Set an Event for this Story"
+				contents = "<A HREF=\"$constants.rootdir/eventsadmin.pl?op=edit&amp;sid=$sid\">Make Event</A>"
+			%]
+		[% END %]
+
+		[% IF attached_files %]
+			[% PROCESS fancybox
+				title = "Attached Files"
+				contents = attached_files
+			%]
+		[% END %]
+
+		[% PROCESS fancybox
+			title = "Related Links"
+			contents = storyref.relatedtext
+		%]
+		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
+
+		[% PROCESS fancybox
+			title = "Story Admin"
+			contents = authortext
+		%]
+		[% PROCESS fancybox
+			title = "Slashd Status"
+			contents = slashdtext
+		%]
+
+		</TD>
+	</TR>
+</TABLE>
+[% END %]
+
+[% IF similar_stories.size > 0 %]
+	<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+		<TR><TD COLSPAN="5" ALIGN="CENTER"><B>Similar Stories:</B></TD></TR>
+		[% FOREACH story = similar_stories %]
+			<TR>
+			<TD VALIGN="TOP">[% IF story.displaystatus == 0;
+				"&nbsp;";
+				ELSIF story.displaystatus == 1;
+					"<I>sect</I>";
+				ELSE;
+					"<I>ND</I>";
+				END; %]</TD>
+			<TD ALIGN="RIGHT" VALIGN="TOP">[% story.weight %]</TD>
+			<TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">
+			[% story.title %]</A></TD>
+			<TD VALIGN="TOP">[% Slash.timeCalc(story.time) %]</TD>
+			<TD VALIGN="TOP">[% story.words.join(" ") %]</TD>
+			</TR>
+		[% END %]
+	</TABLE>
+[% END %]
+
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR>
+		<TD BGCOLOR="[% user.bg.3 %]">&nbsp; </TD>
+		<TD BGCOLOR="[% user.bg.3 %]">
+		<FONT COLOR="[% user.fg.3 %]">
+		[% PROCESS editbuttons %]
+
+		[% UNLESS user.section %]
+			[% section_select %]
+		[% END %]
+
+		[% author_select %]
+
+		[% IF subsection_select %]
+			[% subsection_select %]
+		[% END %]
+
+		[% IF storyref.sid %]
+			<INPUT TYPE="HIDDEN" NAME="sid" VALUE="[% storyref.sid %]">
+		[% END %]
+		<INPUT TYPE="HIDDEN" NAME="writestatus" VALUE="[% storyref.writestatus | strip_attribute %]">
+		<INPUT TYPE="HIDDEN" NAME="submitter" VALUE="[% storyref.submitter | strip_attribute %]">
+		</FONT></TD>
+	</TR>
+	<TR>
+		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
+		<B>Topics</B> </FONT></TD>
+		<TD BGCOLOR="[% user.bg.3 %]">
+		<FONT COLOR="[% user.fg.3 %]">
+		[% IF topic_select %]
+			[% topic_select %]
+		[% END %]
+		[% FOREACH select=topic_select_sec %]
+			[% select %]
+		[% END %]
+		</FONT></TD>
+	</TR>
+
+	<TR>
+		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
+		<B>Title</B> </FONT></TD>
+		<TD BGCOLOR="[% user.bg.2 %]">
+		<INPUT TYPE="TEXT" NAME="title" VALUE="[% storyref.title | strip_attribute %]" SIZE="50">
+		</TD>
+	</TR>
+
+	[% IF constants.use_dept %]
+	<TR>
+		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
+		<B>Dept</B> </FONT></TD>
+		<TD BGCOLOR="[% user.bg.2 %]">
+		<INPUT TYPE="TEXT" NAME="dept" VALUE="[% storyref.dept | strip_attribute %]" SIZE="50">
+		</TD>
+	</TR>
+	[% END %]
+
+	[% FOR extra = extras %]
+	<TR>
+		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
+		[% # yeah, I know... %]
+		<!-- extra.2 [% extra.2 %] -->
+		<B>[% extra.0 %]</B> </FONT></TD>
+		[% IF extra.2 == 'text' %]
+		<TD BGCOLOR="[% user.bg.2 %]">
+		<INPUT TYPE="TEXT" NAME="[% extra.1 %]" VALUE="[% storyref.${extra.1} | strip_attribute %]" SIZE="50">
+		[% ELSIF extra.2 == 'list' %]
+		<TD BGCOLOR="[% user.bg.2 %]">
+		[% # section:value %]
+		[% pulldown = "$extra.3:$extra.1" %]
+		[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',pulldown), storyref.${extra.1}, 1, 1) %]	
+		[% ELSE %]
+		[% pulldown = extra.1 %]
+		<TD BGCOLOR="[% user.bg.2 %]">
+		[% pulldown_section = form.section || user.section || storyref.section %]
+		<!-- pulldown [% pulldown %] pulldown section [% pulldown_section %] -->
+		[% Slash.createSelect(pulldown, Slash.db.getDescriptions('topics_section_type', pulldown_section, pulldown), storyref.$pulldown, 1, 1) %]	
+		[% END %]
+		</TD>
+	</TR>
+	[% END %]
+
+	<TR>
+		<TD BGCOLOR="[% user.bg.3 %]">&nbsp; </TD>
+		<TD BGCOLOR="[% user.bg.2 %]"><FONT COLOR="[% user.fg.2 %]">
+		[% locktest %]
+
+		[% # UNLESS user.section %]
+		[% displaystatus_select %]
+		[% # END %]
+
+		[% commentstatus_select %]
+		<INPUT TYPE="TEXT" NAME="time" VALUE="[% storyref.time %]" size="19"><BR>
+
+		[ <INPUT TYPE="checkbox" NAME="fixquotes" [% fixquotes_check %]>fixquotes
+		| <INPUT TYPE="checkbox" NAME="autonode" [% autonode_check %]>autonode
+		| <INPUT TYPE="checkbox" NAME="shortcuts" [% shortcuts_check %]>story shortcuts
+
+		[% IF sid %]
+		| <INPUT TYPE="checkbox" NAME="fastforward" [% fastforward_check %]>fastforward | 
+			[% IF storyref.qid %] 
+				<A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;qid=[% storyref.qid %]&amp;op=edit">Related Poll</A>
+			[% ELSE %]
+				<A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;qid=[% storyref.qid %]&amp;op=preview&amp;question=[% storyref.title | fixparam %]&amp;polltype=story&amp;date=[% storyref.time | fixparam %]&amp;section=[% storyref.section | fixparam %]&amp;topic=[% storyref.tid | fixparam %]">Create Poll</A>
+			[% END %]
+			[% IF constants.plugin.Blob && constants.story_files %]
+				| <A HREF="[% constants.real_rootdir %]/fileadmin.pl?op=editBySid&amp;sid=[% sid %]">Attach File</A>
+			[% END %]
+		[% END %]
+		[% IF subid %]
+		| <A HREF="[% constants.rootdir %]/submit.pl?op=viewsub&amp;subid=[% subid %]">submission</A>
+		[% END %]
+
+		]
+
+		</FONT>
+		</TD>
+	</TR>
+</TABLE>
+
+<BR>Intro Copy[% IF storyref.introtext_wordcount %] ([%
+storyref.introtext_wordcount %] word[% IF storyref.introtext_wordcount != 1; "s"; END %])[% END %]<BR>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR>
+<TD><TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="[% user.textarea_cols || constants.textarea_cols %]" ROWS="10">[% storyref.introtext | strip_literal %]</TEXTAREA></TD>
+<TD valign="top">[% ispell_comments.introtext %]</TD>
+</TR></TABLE><BR>
+
+[% PROCESS editbuttons %]
+
+<BR>Upload a file for bodytext: <input type="FILE" name="bodytext_file">
+<BR>Extended Copy[% IF storyref.bodytext_wordcount %] ([%
+storyref.bodytext_wordcount %] word[% IF storyref.bodytext_wordcount != 1; "s"; END %])[% END %]<BR>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR>
+		<TD>
+		<TEXTAREA NAME="bodytext" ROWS="[% user.textarea_rows || constants.textarea_rows %]" COLS="[% user.textarea_cols || constants.textarea_cols %]" WRAP="VIRTUAL">[% storyref.bodytext | strip_literal %]</TEXTAREA>
+		</TD>
+		<TD valign="top">[% ispell_comments.bodytext %]</TD>
+	</TR>
+</TABLE>
+<BR>
+
+
+[% PROCESS editbuttons %]
+
+</FORM>
+
+__seclev__
+10000
+__version__
+$Id$

@@ -1,0 +1,7 @@
+name=Print
+htdoc=print.pl
+image=images/print.gif
+description="provides a printable story display"
+template=templates/dispStory;print;default
+template=templates/footer;print;default
+template=templates/header;print;default
