@@ -1,0 +1,101 @@
+__section__
+default
+__description__
+Main page for submissions list
+
+* submissions = arrayref of hashrefs of submissions (subid, subj, time, tid, note, email, name, section, comment, uid, karma)
+* selection = hashref for note selection popup
+__title__
+
+__page__
+submit
+__lang__
+en_US
+__name__
+subEdAdmin
+__template__
+<META HTTP-EQUIV="Refresh" CONTENT="900; URL=[% env.script_name %]?op=list&amp;note=[% form.note | strip_attribute %]&amp;section=[% form.section | strip_attribute %]">
+<FORM ACTION="[% env.script_name %]" METHOD="POST">
+<INPUT TYPE="HIDDEN" NAME="note" VALUE="[% form.note | strip_attribute %]">
+<INPUT TYPE="HIDDEN" NAME="section" VALUE="[% form.section | strip_attribute %]">
+
+<TABLE WIDTH="100%" CELLPADDING="0" CELLSPACING="0" BORDER="0">
+
+[%# # temporarily disable %]
+[% IF 0 && weighted.size -%]
+	<TR><TD COLSPAN=4 ALIGN="CENTER"><NOBR>
+	Top Submissions by Weight
+	</NOBR></TD></TR>
+	[%	count = 0;
+			FOR sub = weighted;
+				PROCESS sub_display;
+				"\n";
+				count = count + 1;
+				LAST IF count > constants.submit_num_weighted;
+		END -%]
+	<TR><TD COLSPAN=4 ALIGN="CENTER"><HR NOSHADE></TD></TR>
+[% END -%]
+
+[% separatecount = 0 %]
+[% FOREACH sub = submissions -%]
+	[% IF !sub.separate;
+		PROCESS sub_display;
+	ELSE;
+		separatecount = separatecount + 1;
+	END %]
+[% END %]
+
+[% IF separatecount %]
+	<TR><TD COLSPAN="4"><HR></TD></TR>
+	[% FOREACH sub = submissions -%]
+		[% IF sub.separate;
+			PROCESS sub_display;
+		END %]
+	[% END %]
+[% END %]
+
+
+</TABLE>
+
+<P>
+
+<INPUT TYPE="SUBMIT" NAME="op" VALUE="Update">
+<INPUT TYPE="SUBMIT" NAME="op" VALUE="Delete">
+<INPUT TYPE="SUBMIT" NAME="op" VALUE="Merge">
+
+</FORM>
+
+[% # Now we define that enignatic "sub_display" we referred to, earlier.
+BLOCK sub_display -%]
+	[% this_note = sub.note || '' %]
+
+	<TR><TD><NOBR>
+		<FONT SIZE="1"><INPUT TYPE="text" NAME="comment_[% sub.subid | strip_attribute %]" VALUE="[% sub.comment | strip_attribute %]" SIZE="20">
+		[% Slash.createSelect("note_${sub.subid}", selection, this_note, 1) %]
+		[% Slash.selectSection("section_$sub.subid", sub.section, 0, 1) %]
+
+		[%# this is called del_ for legacy reasons, but is also use for merging %]
+		</FONT><INPUT TYPE="CHECKBOX" NAME="del_[% sub.subid %]">
+	</NOBR></TD><TD>
+	[% IF constants.submiss_ts %]
+		[% sub.time %]&nbsp;
+	[% END %]
+	</TD><TD>
+		<A HREF="[% env.script_name %]?op=viewsub&amp;table_section=[% form.section | strip_attribute %]&amp;table_note=[% form.note | strip_attribute %]&amp;subid=[% sub.subid | strip_attribute %]&amp;note=[% form.note | strip_attribute %][% sub.stitle | strip_attribute %][% sub.ssection | strip_attribute %]"
+		>[% sub.strs.0 %]&nbsp;</A>
+		[% IF constants.submit_show_weight %]
+			[% IF sub.keywords %]<BR><FONT SIZE="2">[% sub.keywords %] [% END %]
+			[% IF sub.weight %] ([% sub.weight %])[% END %]
+			[% IF sub.url %] <B><A HREF="[% sub.url | strip_attribute %]">L</A></B>[% END %]
+			[% IF sub.keywords %]</FONT>[% END %]
+		[% END %]
+	</TD><TD><FONT SIZE="2">[% sub.strs.1 %]
+	[% UNLESS sub.is_anon %]
+		([% sub.karma || 0 %])
+	[% END %]
+		<BR>[% sub.strs.2 %]</FONT></TD></TR>
+[% END %]
+__seclev__
+10000
+__version__
+$Id$

@@ -1,0 +1,31 @@
+__section__
+default
+__description__
+The block that has the login fields for the user
+
+* return_url = specific URL to return to after log-in (default is rootdir/)
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+userlogin
+__template__
+<FORM ACTION="/users.pl" METHOD="POST">
+<B>Nickname:</B><BR>
+<INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE=""><BR>
+<B>Password:</B><BR>
+<INPUT TYPE="HIDDEN" NAME="returnto" VALUE="[% FILTER strip_urlattr; return_url ? return_url : "/"; END %]">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="userlogin">
+<INPUT TYPE="PASSWORD" NAME="upasswd" SIZE="20"><BR>
+<INPUT TYPE="CHECKBOX" NAME="login_temp" VALUE="yes"> Public Terminal<BR>
+<INPUT TYPE="SUBMIT" NAME="userlogin" VALUE="Log in">
+</FORM>
+
+<P>[ <B><A HREF="/users.pl?op=newuserform">Create a new account</A></B> ]
+__seclev__
+10000
+__version__
+$Id$

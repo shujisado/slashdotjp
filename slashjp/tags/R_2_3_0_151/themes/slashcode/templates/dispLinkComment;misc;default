@@ -1,0 +1,69 @@
+__section__
+default
+__description__
+Display a comment link string (reply, parent, etc.), included by
+dispComment
+
+It's silly to do the complex check over and over to see whether the user
+can delete comments.  This is done in several templates but this one's
+the worst.  We should have a _can_del in Slash.pm and pass a can_del in
+to this template in a field, just like can_mod.
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+dispLinkComment
+__template__
+[% USE Slash %]
+[% IF user.mode != 'metamod' %]
+	[% IF user.is_admin || original_pid || !user.state.discussion_archived %]
+		<TR><TD><FONT SIZE="2">
+
+		[ [% IF !user.state.discussion_archived && !user.state.discussion_future_nopost %][% Slash.linkComment({
+			sid	=> sid,
+			pid	=> cid,
+			op	=> 'Reply',
+			subject	=> 'Reply to This',
+			subject_only => 1,
+		}) %][% END %]
+
+		[% IF user.mode == 'parents' && !form.pid %][%# should this be in a template? -- pudge %]
+			| <a href="[% constants.rootdir %]/comments.pl?sid=[% sid %]&amp;threshold=[% user.threshold %]&amp;commentsort=[% user.commentsort %]&amp;mode=[% user.mode %]&amp;cid=[% cid %]&amp;pid=[% cid %]">View this thread</a>
+		[% END %]
+
+		[% IF !(user.state.discussion_archived) && ( original_pid || can_mod || ((constants.authors_unlimited && user.seclev >= constants.authors_unlimited) || user.acl.candelcomments_always) ) %] | [% END %]
+
+		[% IF original_pid %][% Slash.linkComment({
+			sid	=> sid,
+			cid	=> original_pid,
+			pid	=> original_pid,
+			subject	=> 'Parent',
+			subject_only => 1,
+		}, 1) %][% END %]
+		
+		[% IF original_pid && ( can_mod || ((constants.authors_unlimited && user.seclev >= constants.authors_unlimited) || user.acl.candelcomments_always) ) %] | [% END %]
+
+		[% IF can_mod %]
+		[% Slash.createSelect("reason_$cid", reasons, '', 1, 1) 
+		%][% END %]
+
+		[% IF can_mod && ((constants.authors_unlimited && user.seclev >= constants.authors_unlimited) || user.acl.candelcomments_always) %] | [% END %]
+
+		[% IF (constants.authors_unlimited && user.seclev >= constants.authors_unlimited)
+			|| user.acl.candelcomments_always %]
+		<INPUT TYPE="CHECKBOX" NAME="del_[% cid %]">
+		[% END %]
+		]
+		</FONT></TD></TR>
+
+	[% END %]
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id$

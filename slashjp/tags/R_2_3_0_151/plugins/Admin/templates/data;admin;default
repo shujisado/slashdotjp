@@ -1,0 +1,147 @@
+__section__
+default
+__description__
+Repository for random data elements.
+
+* value = the name of the data element to retrieve
+
+Each data element may have any number of other variables.
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+data
+__template__
+[% SWITCH value %]
+
+[% CASE 'keywordDelete-message' %]
+	[% returnme.data_constant = 1 %]
+	Keyword has been deleted
+
+[% CASE 'keywordSave-message' %]
+	[% returnme.data_constant = 1 %]
+	Keyword has been saved
+
+[% CASE 'aclSave-message' %]
+Created new user ACL <tt>[% form.thisname %]</tt><BR>
+
+[% CASE 'varSave-message' %]
+Saved [% form.thisname %]<BR>
+
+[% CASE 'varDelete-message' %]
+<B>Deleted [% form.thisname %]!</B><BR>
+
+[% CASE 'authorInsert-message' %]
+	Inserted [% form.thisaid %]<BR>
+
+[% CASE 'authorSave-message' %]
+	Saved [% form.thisaid %]<BR>
+
+[% CASE 'authorDelete-message' %]
+	<B>Deleted [% form.thisaid %]!</B><BR>
+
+[% CASE 'authorDelete-confirm-message' %]
+	<B>Do you really want to delete [% aid %]?</B><BR>
+	<INPUT TYPE="HIDDEN" VALUE="[% aid %]" NAME="thisaid">
+	<INPUT TYPE="SUBMIT" VALUE="Cancel delete [% aid %]" NAME="authordelete_cancel">
+	<INPUT TYPE="SUBMIT" VALUE="Delete [% aid %]" NAME="authordelete_confirm">
+
+[% CASE 'authorDelete-deleted-message' %]
+	<B>Deleted [% aid %]!</B><BR>
+
+[% CASE 'authorDelete-cancel-message' %]
+	<B>Canceled Deletion of [% aid %]!</B><BR>
+
+[% CASE 'blockSave-exists-message' %]
+	<P><B>This block, [% bid %], already exists! <BR>Hit the "back" button, and try another bid (look at the blocks pulldown to see if you are using an existing one.)</P>
+
+[% CASE 'templateSave-exists-message' %]
+	<P><B>This template, [% name %], TPID [% tpid %], already exists! <BR>Hit the "back" button, and try another bid (loo
+
+[% CASE 'blockSave-inserted-message' %]
+	Inserted [% bid %]<BR>
+
+[% CASE 'templateSave-inserted-message' %]
+	Inserted template [% name %], TPID [% tpid %]<BR>
+
+[% CASE 'blockSave-saved-message' %]
+	Saved [% bid %]<BR>
+
+[% CASE 'templateSave-saved-message' %]
+	Saved template [% name %], TPID [% tpid %]<BR>
+
+[% CASE 'seclev-message' %]
+	You don't have privileges to template name [% name %], TPID [% tpid %]<BR>
+	
+[% CASE 'blockDelete-message' %]
+	<B>Deleted [% bid %]!</B><BR>
+
+[% CASE 'templateDelete-message' %]
+	<B>Deleted [% name %], TPID [% tpid %]!</B><BR>
+
+[% CASE 'topicSave-message' %]
+	<B>Saved [% form.tid %]!</B><BR>
+
+[% CASE 'updateFilter-message' %]
+
+	[% IF ! form.regex %]
+	<B>You haven't typed in a regex.</B><BR>
+	[% END %]
+
+	[% IF ! form.field %]
+	<B>You haven't typed in a form field.</B><BR>
+	[% END %]
+
+[% CASE 'topicDelete-message' %]
+	<B>Deleted [% tid %]!</B><BR>
+
+[% CASE 'clearpass-warning' %]
+	<BLOCKQUOTE><P ALIGN="CENTER"><B>**&nbsp;Your admin password has been sent
+	in the clear. Please return to
+	<A HREF="[% constants.absolutedir_secure %]">the secure site</A>
+	and then
+	<A HREF="[% constants.absolutedir_secure %]/users.pl?op=changepasswd">change
+	your password</A>
+	immediately! If you have additional problems, please contact the
+	<A HREF="mailto:[% constants.adminmail | strip_attribute %]">site admin</a>.[%
+	IF moreinfo %] More info: "[% moreinfo | strip_literal %]".[%
+	END %]&nbsp;**</B></P></BLOCKQUOTE>
+
+[% # NO POINTS.
+CASE "no points" %]
+	You don't have any moderator points.<BR>
+
+[% # NO POINTS.
+CASE "not enough points" %]
+	You don't have enough moderator points.<BR>
+
+[% CASE "unknown_moderation_warning" %]
+	An unknown error occurred while moderating.<BR>
+
+[% CASE "moderate_recent_message" %]
+	<P>Return to the set of
+	<A HREF="[% constants.rootdir %]/admin.pl?op=recent&amp;startat=[% startat %]">recent comments</A>
+	you were just moderating.</P>
+
+[% CASE "moderate_recent_message_returnto" %]
+	<P>Return to the set of
+	<A HREF="[% Slash.cleanRedirectUrl(returnto) %]">comments</A> you were just moderating.</P>
+
+[% CASE "no-mcd-stats" %]
+	<p>Looks like memcached is not running, it's turned off in vars,
+	or Cache::Memcached does not support the <tt>stats()</tt> call.
+	No stats are available.
+
+[% # COMMENT TABLE NOT AVAILABLE FOR WRITING
+CASE "comment_db_down" %]
+Database maintenance is currently taking place.  Some items such
+as comment posting and moderation are currently unavailable.
+
+[% END %]
+__seclev__
+10000
+__version__
+$Id$

@@ -1,0 +1,107 @@
+__section__
+default
+__description__
+Template handles listing of comments for both IPIDs and UIDS
+Also can interleave moderations performed against the
+comments if they're provided and the user is an admin
+
+* admin_flag    - whether or not the user is an admin
+* title         - title to display
+* submissions   - structure containing submissions
+* stories	- structure containing stories
+
+__title__
+listSubmissions;users;default
+__page__
+users
+__lang__
+en_US
+__name__
+listSubmissions
+__template__
+[%
+light_text_color = "#AAAAAA";
+approved = 0;
+count = 0;
+bg_toggle = 0;
+bg_col_1 = "DDDDDD";
+bg_col_2 = user.bg.2;
+cur_time = Slash.db.getTime();
+%]
+[% admin_link_user = admin_flag && !useredit.uid && !useredit.nickname %]
+[% admin_link_ipid = admin_flag && !useredit.ipid %]
+[% IF submissions.size > 0 %]
+	[% PROCESS titlebar width="100%" title = title -%]
+	<TABLE width=100% border=0 cellpadding=3 cellspacing=0 bgcolor="[% user.bg.2 %]">
+		<TR bgcolor="[% user.bg.3 %]">
+			<TH ALIGN="LEFT"><FONT SIZE=-1 COLOR="[% user.fg.3 %]">Title</FONT></TH>
+			<TH ALIGN="LEFT"><FONT SIZE=-1 COLOR="[% light_text_color %]">[% IF admin_link_user %]User[% END %]</FONT></TH>
+			<TH ALIGN="LEFT"><FONT SIZE=-1 COLOR="[% light_text_color %]">[% IF admin_link_ipid %]IPID[% END %]</FONT></TH>
+			<TH ALIGN="LEFT"><FONT SIZE=-1 COLOR="[% user.fg.3 %]">Datestamp</FONT></TH>
+			<TH ALIGN="LEFT"><FONT SIZE=-1 COLOR="[% light_text_color %]">[% IF admin_flag %]State[% END %]</FONT></TH>
+		</TR>
+		[% FOREACH sub = submissions %]
+		[% story_viewable = sub.del == 2 and sub.sid and sub.story_time.lt(cur_time) and sub.displaystatus!=-1 %]
+		[% link_sid = sub.del == 2 and sub.sid and story_viewable %]
+		[% link_subid = admin_flag and !link_sid %]
+		<TR bgcolor="[% bg_toggle ? bg_col_1 : bg_col_2 %]">
+			[% bg_toggle = !bg_toggle %]
+			<TD>
+				[%- IF link_sid -%]
+					<A HREF="[% constants.rootdir %]/article.pl?sid=[% sub.sid %]">[% sub.story_title %]</A>
+				[%- ELSIF link_subid -%]
+					<A HREF="[% constants.rootdir %]/submit.pl?op=viewsub&amp;subid=[% sub.subid %]">[% sub.subj %]</A>
+				[%- ELSE -%]
+					[% sub.subj %]
+				[%- END -%]
+			</TD>
+			<TD>[% IF admin_link_user %][% PROCESS nick_and_uid uid=sub.uid nickname=Slash.db.getUser(sub.uid, 'nickname'); %][% END %]</TD>
+			<TD>[% IF admin_link_ipid %][% PROCESS link_ipid ipid = sub.ipid ipid_vis=Slash.vislenify(ipid); %][% END %]</TD>
+			<TD>[% Slash.timeCalc(sub.time) %]</TD>
+			<TD>[% IF admin_flag || user.uid == sub.uid %]
+				[% SWITCH sub.del %]
+					[%- CASE 0 -%]
+						Pending
+					[%- CASE 1 -%]
+						Rejected
+					[%- CASE 2 -%]
+						[% IF story_viewable %]
+							Accepted
+						[% ELSE %]
+							Pending
+						[% END %]
+					[% approved = approved + 1; %]	
+				[%- END -%]
+			     [%-  END -%]
+			</TD>
+		</TR>
+		[% total = total + 1 %]
+		[% END %]
+		[% IF admin_flag %]
+		<TR><TD colspan="5">[% PROCESS horiz_rule %]</TD></TR>
+		<TR><TD colspan="2"><B>Total: [% total %]</TD><TD COLSPAN="3"><B>Accepted: [% Slash.getData('percentage',{ sum => approved, count=> total},"misc") %]</B></TD></TR>
+		[% END %]
+	</TABLE>
+[% END %]
+
+[% BLOCK nick_and_uid;
+	nickname | strip_literal;
+	IF uid != constants.anonymous_coward_uid;
+		' (<A HREF="';
+		constants.rootdir;
+		'/users.pl?op=userinfo&amp;fieldname=uid&amp;userfield=';
+		uid;
+		'">';
+		uid;
+		'</A>)';
+	END;
+END %]
+
+[% BLOCK link_ipid %]
+<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% ipid | strip_attribute %]&amp;fieldname=ipid">[% ipid_vis %]</A>
+[% END %]
+__seclev__
+10000
+__version__
+$Id$
+

@@ -1,0 +1,21 @@
+__section__
+default
+__description__
+Display an image using Slash::Blob
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+imageLink
+__template__
+[% IF id %]
+	<IMG SRC="[% constants.real_rootdir %]/blob.pl?id=[% id | strip_attribute %]" TITLE="[% title | strip_attribute %]" ALT="[% title | strip_attribute %]" [% IF width %] WIDTH="[% width | strip_attribute %]"[% END %] [% IF height %] HEIGHT="[% height | strip_attribute %]"[% END %] [% IF align %] ALIGN="[% align | strip_attribute %]"[% END %]>
+[% END %]
+__seclev__
+10000
+__version__
+$Id$

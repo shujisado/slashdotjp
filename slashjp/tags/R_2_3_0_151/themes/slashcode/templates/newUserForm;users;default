@@ -1,0 +1,99 @@
+__section__
+default
+__description__
+Form for new user.
+
+No specially passed variables.
+__title__
+New User Form
+__page__
+users
+__lang__
+en_US
+__name__
+newUserForm
+__template__
+[% PROCESS titlebar title=title width="100%" %]
+<FORM ACTION="[% env.script_name %]" METHOD="POST">
+<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]">
+[% PROCESS formkey_tag %]
+	<TR>
+		<TD><P>(Note: only the characters <TT>0-9a-zA-Z_.+!*'(),-$</TT>, plus space,
+		are allowed in nicknames, and all others will be stripped out.)<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+		<B>Nick Name</B><BR>
+		<INPUT TYPE="TEXT" NAME="newusernick" VALUE="">
+		</TD>
+	</TR>
+	<TR>
+	 	<TD>
+		<P>Email address to send your registration information to.
+		This address will <B>not</B> be displayed on [% constants.sitename %]
+		without you setting your preferences to display it.</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+		<B>Real Email</B> <BR>
+		<INPUT TYPE="HIDDEN" NAME="op" VALUE="newuser">
+		<INPUT TYPE="TEXT" NAME="email" VALUE="" SIZE="40"><BR>
+		<B>Retype Real Email</B> (these two email addresses must match)<BR>
+		<INPUT TYPE="TEXT" NAME="email2" VALUE="" SIZE="40"><BR>
+		<INPUT TYPE="CHECKBOX" NAME="comment_reply" VALUE="1" CHECKED> Replies to my comments will be mailed to me<BR>
+		<INPUT TYPE="CHECKBOX" NAME="newsletter" VALUE="1"> Send me the newsletter<BR>
+		<INPUT TYPE="CHECKBOX" NAME="headlines" VALUE="1"> Send me the daily headlines<BR>
+		My timezone is [%
+			USE this_format = format('%+0.4d %s');
+			this_tzdescs = Slash.db.getDescriptions('tzdescription');
+			this_tzcodes = Slash.db.getDescriptions('tzcodes');
+        	        these_tzdescs = {};
+			FOREACH tz = this_tzcodes.keys;
+				this_num = this_tzcodes.$tz / 36;
+				this_num = this_num.replace('50$', '30');
+				these_tzdescs.$tz = this_format(this_num, this_tzdescs.$tz);
+			END;
+
+			this_tzcode = user.tzcode_orig || user.tzcode;
+			Slash.createSelect('tzcode',
+				these_tzdescs, this_tzcode, 1, 0, this_tzcodes.nsort
+			);
+		%]<BR>
+[% IF constants.plugin.HumanConf && constants.hc && constants.hc_sw_newuser && user.state.hc %]
+        [% IF user.state.hcinvalid %]
+                [% user.state.hcerror %]
+        [% ELSE %]
+                <TABLE CELLSPACING=1 BORDER=0><TR VALIGN="MIDDLE">
+                <TD>[% user.state.hcquestion %]</TD>
+                <TD>[% user.state.hchtml %]</TD>
+                <TD><INPUT TYPE="TEXT" NAME="hcanswer"
+                        VALUE=""
+                        SIZE=8 MAXLENGTH=8></TD>
+                </TR></TABLE>
+		<P>Click the button to create your account and be mailed a password.</P>
+		<INPUT TYPE="SUBMIT" NAME="newuser" VALUE="Create Account">
+        [% END %]
+[% ELSE %]
+		<INPUT TYPE="SUBMIT" NAME="newuser" VALUE="Create Account">
+[% END %]
+
+		</TD>
+	</TR>
+</TABLE>
+</FORM>
+
+<P>
+[% IF ! suadmin_flag %]
+	[% IF ! logged_in %]
+<A HREF="[% env.script_name %]?op=userlogin">Log in to [% constants.sitename %]</A>.<BR>
+	[% END %]
+Forget your password? <A HREF="[% env.script_name %]?op=mailpasswdform">Have your
+password mailed to you</A> by entering your nickname, uid, or email address.
+</P>
+[% END %]
+__seclev__
+10000
+__version__
+$Id$

@@ -1,0 +1,49 @@
+__section__
+default
+__description__
+* reasons = hashref from $slashdb->getReasons()
+* moderation = hashref describing moderation
+
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+mod_msg
+__template__
+[% 
+	cur_score = comment.points + comment.tweak;
+	cur_score = Slash.constrain_score(cur_score);
+%]
+[% IF msg.mode == 1 %]
+
+<P>
+<B><A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]"
+>[% comment.subject %]</A></B>, posted to
+<B><A HREF="[% constants.rootdir %][% discussion.realurl %]">[% discussion.title %]</A></B>, has been moderated
+<B>[% reasons.${moderation.reason}.name %] ([% moderation.value %])</B>.
+</P>
+
+<P>
+It is currently scored <B>[% reasons.${comment.reason}.name %] ([% cur_score %])</B>.
+</P>
+
+[% ELSE %]
+
+A user has moderated your comment "[% reasons.${moderation.reason}.name %]" ([% moderation.value %]).
+    [% comment.subject | decode_entities %]
+    [% absolutedir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]
+
+Attached to:
+    [% discussion.title | decode_entities %]
+    [% absolutedir %][% discussion.realurl %]
+    
+It is currently scored [% reasons.${comment.reason}.name %] ([% cur_score %]).
+[% END %]
+
+__seclev__
+500
+__version__
+$Id$
