@@ -1,0 +1,60 @@
+__section__
+default
+__description__
+Template snippets used for Slash::Email
+
+	* parameters vary
+__title__
+Data template for Slash::Email
+__page__
+email
+__lang__
+en_US
+__name__
+data
+__seclev__
+5000
+__template__
+[% SWITCH value;
+
+CASE 'header';
+	returnme.data_constant = 1;
+	"Email Story to a Friend";
+
+CASE 'invalid_email';
+	returnme.data_constant = 1;
+	"I'm sorry. The email address that you have entered is invalid.";
+
+CASE 'optout_email';
+	returnme.data_constant = 1;
+	"I'm sorry. The email address that you have entered has opted out of this service.";
+
+CASE 'optout_added';
+	email = form.email | strip_attribute;
+	"Address <TT>$email</TT> added to opt-out list.<BR>";
+
+CASE 'optout_removed';
+	email = form.email | strip_attribute;
+	"Address <TT>$email</TT> removed from opt-out list.<BR>";
+
+CASE 'mail_result';
+	UNLESS rc;
+		"Story mailed successfully.";
+	ELSE;
+"An error occured while attempting to mail the story.  Please check that
+the email address is valid.  If you believe this error is due to a
+bug, please send email to $constants.adminmail";
+	END;
+
+CASE 'formkeyError';
+	linkop = 'email_send' ? 'email_form' : 'optout_form'; -%]
+	<P>Please return back to the <A HREF="[% constants.rootdir
+	-%]/email.pl?op=[% linkop %]">originating form</A> and try again.
+	<!-- op=[% operation %], check=[% check %] -->
+	[%
+
+END  # SWITCH / CASE
+
+-%]
+__version__
+$Id$

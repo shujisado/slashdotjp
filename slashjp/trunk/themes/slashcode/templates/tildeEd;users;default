@@ -1,0 +1,89 @@
+__section__
+default
+__description__
+Edit all those checkboxes for authors, topics, sections, slashboxes
+
+* title = passed to titlebar
+* tilded_customize_msg = some message
+* tilded_box_msg = some message
+* aidref = hashref of authors
+* aid_order = arrayref of author order
+* tidref = hashref of topics
+* tid_order = arrayref of topic order
+* sectionref = hashref of sections
+* section_descref = hashref of slashboxes
+* box_order = arrayref of slashbox order
+* userspace = text for userspace
+* customize_title = title for "customize" titlebar
+
+__title__
+
+__page__
+users
+__lang__
+en_US
+__name__
+tildeEd
+__template__
+[% PROCESS titlebar title=title width="100%" %]
+
+<TABLE WIDTH="95%" BORDER="0" CELLPADDING="3" CELLSPACING="3" ALIGN="CENTER">
+	<TR BGCOLOR="[% user.bg.3 %]">
+		<TH><FONT COLOR="[% user.fg.3 %]">Authors</FONT></TH>
+		<TH><FONT COLOR="[% user.fg.3 %]">Topics</FONT></TH>
+		<TH><FONT COLOR="[% user.fg.3 %]">Sections</FONT></TH>
+	</TR>
+	<TR BGCOLOR="[% user.bg.2 %]">
+		<TD VALIGN="TOP">
+
+[% FOREACH aid = aid_order %]
+		<INPUT TYPE="CHECKBOX" NAME="exaid_[% aid %]"[% aidref.$aid.checked %]>[% aidref.$aid.nickname %]<BR>
+[% END %]
+
+		</TD>
+		<TD VALIGN="TOP"><MULTICOL COLS="3">
+
+[% FOREACH tid = tid_order %]
+		<INPUT TYPE="CHECKBOX" NAME="extid_[% tid %]"[% tidref.$tid.checked %]>[% tidref.$tid.alttext %]<BR>
+[% END %]
+
+		</MULTICOL></TD>
+		<TD VALIGN="TOP"><MULTICOL COLS="3">
+[% FOREACH section = sectionref.keys.sort %]
+		<INPUT TYPE="CHECKBOX" NAME="exsect_[% section %]"[% sectionref.$section.checked %]>[% sectionref.$section.title %]<BR>
+[% END %]
+		</MULTICOL>
+		</TD>
+	</TR>
+</TABLE>
+[% PROCESS titlebar width='100%' title=customize_title %]
+[% tilded_customize_msg %]
+
+[% FOREACH bid = box_order %]
+	[% IF section_descref.$bid.boldflag %]
+		<B>
+	[% END %]
+
+		<INPUT TYPE="CHECKBOX" NAME="exboxes_[% bid %]"[% section_descref.$bid.checked %]>
+		<A HREF="[% env.script_name %]?op=previewbox&amp;bid=[% bid %]">
+
+	[% IF bid == 'srandblock' %]
+		Semi-Random Box
+	[% ELSE %]
+		[% section_descref.$bid.title or bid %]
+	[% END %]
+
+	 	</A><BR>
+
+	[% IF section_descref.$bid.boldflag %]
+		</B>
+	[% END %]
+
+[% END %]
+
+[% tilded_box_msg %]
+
+__seclev__
+500
+__version__
+$Id$

@@ -1,0 +1,85 @@
+__section__
+default
+__description__
+Template which describes the layout of the article display (and included comments if preferred).
+
+* poll = pollbooth block
+* section = section hashref
+* section_block = section block hashref
+* show_poll = boolean for showing poll or not
+* story = story data structure
+* next = data structure for next story
+* prev = data structure for previous story
+
+__title__
+
+__page__
+article
+__lang__
+en_US
+__name__
+display
+__template__
+[% Slash.displayStory(story.sid, 'Full') %]
+
+<P>
+
+[% n = BLOCK; PROCESS nextStory s=next; END %]
+[% p = BLOCK; PROCESS nextStory s=prev; END %]
+[% IF p %] &lt;&nbsp; [% p %][% END %]
+[% IF n %] [% IF p %] | [% END %][% n %] &nbsp;&gt; [% END %]
+<P>&nbsp;</TD>
+
+[% PROCESS maintable_td %]&nbsp;</TD>
+[% PROCESS maintable_td mt_width=(constants.fancyboxwidth + 10) mt_height="1" mt_align="CENTER" mt_valign="TOP" %]
+
+[% PROCESS userboxes;
+
+IF show_poll;
+	PROCESS fancybox
+		title		= 'Article Poll'
+		contents	= poll
+		center		= 1;
+END;
+
+IF story.relatedtext;
+	PROCESS fancybox
+		title		= 'Related Links'
+		contents	= story.relatedtext
+		center		= 1;
+END;
+
+IF section_block.block;
+	PROCESS fancybox
+		title		= section.title
+		contents	= section_block.block
+		center		= 1;
+END %]
+
+</TD>
+[% PROCESS maintable_tr_end %]
+
+[% PROCESS maintable_tr %]
+[% PROCESS maintable_td mt_colspan="4" %]
+
+[% BLOCK nextStory;
+	IF !s;
+		RETURN;
+	ELSIF s.title == story.title;
+		RETURN;
+	ELSE;
+		ls = {
+			link	=> s.title,
+			sid	=> s.sid,
+			tid	=> s.tid,
+			section	=> s.section
+		};
+		storylinks = Slash.linkStory(ls) -%]
+<A HREF="[% storylinks.0 %]"[% IF storylinks.2 %] TITLE="[% storylinks.2 %]"[% END %]>[% storylinks.1 %]</A>
+	[%- END;
+END %]
+
+__seclev__
+1000
+__version__
+$Id$

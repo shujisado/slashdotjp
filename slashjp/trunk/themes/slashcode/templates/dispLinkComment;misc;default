@@ -1,0 +1,59 @@
+__section__
+default
+__description__
+Display a comment link string (reply, parent, etc.), included by
+dispComment
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+dispLinkComment
+__template__
+[% USE Slash %]
+[% IF user.mode != 'metamod' %]
+	[% IF user.is_admin || original_pid || !user.state.discussion_archived %]
+		<TR><TD><FONT SIZE="2">
+
+		[ [% IF !user.state.discussion_archived && !user.state.discussion_future_nopost %][% Slash.linkComment({
+			sid	=> sid,
+			pid	=> cid,
+			op	=> 'Reply',
+			subject	=> 'Reply to This',
+			subject_only => 1,
+		}) %][% END %]
+
+		[% IF !(user.state.discussion_archived) && (original_pid || can_mod || user.is_admin) %] | [% END %]
+
+		[% IF original_pid %][% Slash.linkComment({
+			sid	=> sid,
+			cid	=> original_pid,
+			pid	=> original_pid,
+			subject	=> 'Parent',
+			subject_only => 1,
+		}, 1) %][% END %]
+		
+		[% IF original_pid && ( can_mod || user.is_admin) %] | [% END %]
+
+		[% IF can_mod %]
+		[% Slash.createSelect("reason_$cid", reasons, '', 1, 1) 
+		%][% END %]
+
+		[% IF can_mod && user.is_admin %] | [% END %]
+
+		[% IF user.is_admin %]
+		<INPUT TYPE="CHECKBOX" NAME="del_[% cid %]">
+		[% END %]
+		]
+		</FONT></TD></TR>
+	<TR><TD>
+
+	[% END %]
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id$
