@@ -1358,8 +1358,7 @@ sub moderate {
 	my $total_deleted = 0;
 	my $hasPosted;
 
-	# The content here should also probably go into a template.
-	titlebar("100%", "Moderating...");
+	titlebar("100%", getData('moderating'));
 
 	$hasPosted = $slashdb->countCommentsBySidUID($sid, $user->{uid})
 		unless $constants->{authors_unlimited}

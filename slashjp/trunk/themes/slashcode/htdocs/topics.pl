@@ -105,7 +105,7 @@ sub topTopics {
 	}
 
 	slashDisplay('topTopics', {
-		title		=> 'Recent Topics',
+		title		=> getData("recent_topics"),
 		width		=> '90%',
 		topics		=> $topics,
 		currtime	=> timeCalc(scalar localtime),
@@ -130,7 +130,7 @@ sub listTopics {
 	}
 
 	slashDisplay('listTopics', {
-		title		=> 'Current Topic Categories',
+		title		=> getData('current_topics'),
 		width		=> '90%',
 		topic_admin	=> getCurrentUser('seclev') >= 500,
 		topics		=> [ values %$topics ],

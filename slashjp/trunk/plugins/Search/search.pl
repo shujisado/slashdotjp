@@ -82,7 +82,7 @@ sub main {
 		# Yep, these are hardcoded, and someday this should change... -Brian 
 		my $text = strip_notags($form->{query});
 		header("$constants->{sitename}: Search  $text") or return;
-		titlebar("100%", "Searching For:  $text");
+		titlebar("100%", getData('search_result', {text=>$text} ) ); 
 		$form->{op} = 'stories' if !exists($ops{$form->{op}});
 
 		# Here, panic mode is handled without needing to call the
