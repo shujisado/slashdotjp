@@ -1,0 +1,167 @@
+<HTML>
+<HEAD>
+        <TITLE>Slashdot FAQ (日本語版) - アカウント</TITLE>
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="metamod.shtml">前のセクション</A>
+		<TD><A HREF="slashmeta.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+<HR><BR>
+
+<A NAME="ac100">
+<H2>ニックネームは変更できますか?</H2> 
+
+	<P>残念ながらできません。乱用が多発するので。自分のコメントは
+	自分で削除できません、名前も変更できません。これについて
+	は一切例外はありません。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/19/00 <BR>
+	</SMALL></I>
+
+<A NAME="ac105">
+<H2>パスワードを変更するにはどうすればよいですか?</H2>
+
+	<P>ログインしてから<A
+	HREF="http://slashdot.jp/users.pl?op=edituser">
+	[ユーザ情報の編集]</A>ページに移動し、表示されるパスワードの
+	フォームに記入します。
+<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:pater@slashdot.org">CowboyNeal</A> <BR>
+        Last Modified: 1/10/01 <BR>
+        </SMALL></I>
+	 
+<A NAME="ac200">
+<H2>自分のアカウントを削除するにはどうすればよいですか?</H2> 
+
+	<P>削除できません。システムでユーザの記録を保持する必要がある
+	ので、一度作ったアカウントは永久に保管されます。幽霊アカウント
+	が残ってても別に問題ないので心配は要りません。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+
+<A NAME="ac300">
+<H2>パスワードを忘れた! (または)パスワードが送られてこない!</H2> 
+
+	パスワードを忘れたら、<A HREF=/users.pl>ユーザログインページ
+	</A>でニックネームを入力して [mailpasswd] をクリックすれば、す
+	ぐに電子メールで送られるはずです。これでダメなときはCowboyNeal
+	に直接メールを書いて、パスワードを送れと言ってください。
+	CowboyNeal はときどき人を噛むので注意 ;)<BR>
+	(注意：CowboyNealは日本語を読めませんし、そもそもスラッシュドッ
+	トジャパンは<A HREF="mailto:slashmaster@slashdot.jp">スラッシュ
+	チーム</A>で運営し
+	ているので彼にはメールを送らないでね。本当に噛まれますよ。)
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+	
+	
+
+<A NAME="ac400">
+<H2>ログインできません</H2> 
+
+	<P>クッキーは無効になっていませんか? 無効になっているとログイン
+	できません。たまにプロキシ サーバの問題が原因となっているケー
+	スもありますが、非常にまれです。クッキーを有効にしてログインし
+	てみて、それでもだめなら CowboyNeal にメールを。彼が解決してく
+	れるでしょう。
+
+	<P>でも毎日何千人もの人が問題なくシステムを利用しているので、
+	大抵はユーザ側の問題ですよ ;)
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+
+<A NAME="ac500">
+<H2>クッキーを受け付けたくありません!</H2> 
+
+
+	<P>大した理由もなくクッキーに神経質になっている人が多いようで
+	すが、クッキーというのは単に、状態を維持しないプロトコルで持続
+	性を実現するための手法です。
+	クッキーについてはいろんな考えがあることも理解し、反対意見も考慮した上
+	で、クッキーを使うべきだという結論に達しました。
+	
+	<P>クッキーを使いたくないなら、使わなくても投稿は可能です。その
+	代わり匿名で投稿するか、またはコメントを送るたびにパスワードを
+	入力しなければなりません。それから、クッキーを使わないと、ストー
+	リーのフィルタリング、スラッシュボックスのカスタマイズ、ユーザ
+	設定というよう	なスラッシュドットの高度な機能は使えません。こ
+	れらの代償を払ってもクッキーを使いたくないというなら...ご自由に。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="ac600">
+<H2>偽のID や別人に見せかけたアカウントで投稿している奴がいます</H2>
+
+	<P>システムには、悪意で作られたアカウントがいっぱいあります。
+	'CmdrTaco' や 'Hemos' に似せた名前や、企業の社長、ライターな
+	どを騙る名前も山のようにある。すでに存在してしまっているアカウ
+	ントはいじらないことにしているので、この問題についてはどうしよ
+	うもありません。この2〜3年の間に、こういうことをできなくするた
+	めのいろいろな制限がアカウントに課せられたので、たとえば
+	'CmdrTaco' のようなすでに存在する名前と同じアカウントは作れな
+	くなりました。しかしだからといって、何百人というアホ野郎がアホ
+	なことをするのを完全に防ぐことは不可能です。
+
+	<P>こういう輩はいずれ<A
+	HREF="com-mod.shtml#cm600">モデレーション</A>に引っかかって、
+	はっきりペテン師とわかるような<A HREF="com-mod.shtml#cm700">カ
+	ルマ</A>を背負うことになります。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/19/00 <BR>
+	</SMALL></I> 
+
+<A NAME="ac700">
+<H2>突然ログアウトになってしまうことがよくあるのですが…</H2>
+
+	<P>ちゃんと<A
+	HREF="http://slashdot.jp">http://slashdot.jp</A>にログインして
+	いますか? <I>http://www.slashdot.jp</I>では<B>ありません</B>よ。
+	面倒に思うかもしれないけど、これには意味があるんです。<BR>
+	[注意：スラッシュドットジャパンの場合、<A
+	HREF="http://slashdot.jp">http://slashdot.jp</A>が正しく、www
+	やne.jpは使いません。とりあえずページは見えちゃうので勘違いし
+	やすいんですけどね]
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/19/00 <BR>
+	</SMALL></I> 	
+
+<BR><HR>
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="metamod.shtml">前のセクション</A>
+		<TD><A HREF="slashmeta.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->

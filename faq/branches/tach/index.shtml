@@ -1,0 +1,535 @@
+<HTML>
+<HEAD>
+	<TITLE>Slashdot FAQ (日本語版)</TITLE>
+<!--#include virtual="/slashhead.inc"-->
+
+<!--
+
+This is the index page to the revised Slashdot FAQ. This rewrite is intended to meet several goals:
+
+	1) Improved readability,
+	2) Unify several existing sources of information
+	3) Provide a coherent framework for future revisions
+	4) Get the ball rolling on further Slashdot documentation projects
+	
+This FAQ is divided into several sections, each contained in a separate file in the same directory as this index. For the time being, this structure needs to be preserved in order for the relative linking to work. These sections are:
+
+	FAQ-meta
+		Information about this FAQ.
+		
+	Editorial
+		Information about Slashdot's editorial policies and 
+		procedures
+		
+	UI
+		Information about using the Slashdot user interface
+		
+	Comments and Moderation
+		Information about the system of posting and moderating
+		comments. 
+		
+	Metamoderation 
+		This section contains information about metamoderation
+		(M2). 
+
+	Accounts
+		Information about the creation, care, and feeding of
+		Slashdot user accounts.
+		
+	Slashdot Meta
+		Information about Slashdot in general. 
+		
+	Tech
+		Information about the hardware and software that runs
+		Slashdot.
+		
+	Advertising
+		Information about the ads on Slashdot, and how you can
+		advertise here.
+		
+	Suggestions
+		Answers to common suggestions that have been made over the 
+		years.
+		
+
+
+-->
+
+<H1>Slashdot FAQ</H1>
+
+<P>
+このFAQはスラッシュドットジャパンではなく本家SlashdotのFAQを翻訳したも
+のです。したがって、スラッシュドットジャパンとは異なる部分もありますが、
+それなりには参考になるでしょう。
+</P>
+
+<!-- FAQ Meta -->
+<H2><B><A HREF="faq-meta.shtml">メタFAQ</B></A></H2>
+
+<UL>
+	<LI><A HREF="faq-meta.shtml#fm100"><B>この文書は何ですか?</B></A><BR>
+	
+	<LI><A HREF="faq-meta.shtml#fm200"><B>知りたいことがあるけど、
+	この FAQ に載ってません。誰に聞けばいいですか?</B></A><BR>
+
+	<LI><A HREF="faq-meta.shtml#fm300"><B>この FAQ の責任者は誰で
+	すか?</B></A><BR>
+	
+	<LI><A HREF="faq-meta.shtml#fm400"><B>この FAQ やほかの場所で、
+	"TODO list" のことが書かれています。今見れるんですか?</B></A><BR>
+	
+</UL>
+
+
+<!-- Editorial -->
+<H2><B><A HREF="editorial.shtml">編集、執筆関連</A></B></H2>
+
+<UL>
+
+	<LI><A HREF="editorial.shtml#ed100"><B>スラッシュドットにストー
+	リーをタレコむ方法は?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed105"><B>ストーリーを匿名でタレ
+	コむことはできますか?</B></A><BR>
+	
+	<LI><A HREF="editorial.shtml#ed150"><B>スラッシュドットに聞け!
+	にはどうすればよいの?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed200"><B>なぜわたしのストーリー
+	を投稿してくれないの?</B></A><BR>
+	
+	<LI><A HREF="editorial.shtml#ed220"><B>なぜわたしのストーリー
+	はまだ採用も却下もされないの?</B></A><BR>
+	
+	<LI><A HREF="editorial.shtml#ed230"><B>インデックスには表示さ
+	れるのにホームページに表示されないストーリーがあるのはなぜ?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed240"><B>わたしのタレコミは "採
+	用" されたのになぜ表示されないの?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed250"><B>たまにスラッシュドット
+	の中で同じストーリーが載ってることがあります。なぜ?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed300"><B>もう 1 か月も前にタレコ
+	んだネタなのに!</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed400"><B>わたしがタレコんだネタ
+	なのに、別の人がタレコんだことになってる!</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed500"><B>論説を書くにはどうすれ
+	ば?</B></A><BR> 
+
+	<LI><A HREF="editorial.shtml#ed501"><B>書評を書くにはどうすれ
+	ば?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed600"><B>誤字脱字や文法ミスだら
+	けなのはなぜ?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed700"><B>何で○○なストーリーな
+	んか投稿したの?
+	</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed750"><B>スラッシュドットのストー
+	リーはどうやってウラを取っているのか?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed850"><B>スラッシュドットはアメ
+	リカ中心主義ですね。もうちょっと国際的になろうという考えは?</B></A><BR> 
+
+	<LI><A HREF="editorial.shtml#ed860"><B>ほかの言語のミラーサイ
+	トを作って、だれかに記事を翻訳させては? それぞれのサイトに別の
+	記事を載せるとか?</B></A><BR> 
+
+	<LI><A HREF="editorial.shtml#ed900"><B>"オムレツのような..."</B></A>
+
+
+
+</UL>
+
+
+<!-- UI -->
+<H2><B><A HREF="UI.shtml">UI</A></B></H2>
+<UL>
+	<LI><A HREF="UI.shtml#ui100"><B>○○するためのスラッシュボック
+	スが欲しいのだけど…</B></A> 
+
+	<LI><A HREF="UI.shtml#ui200"><B>ストーリーの中にある小さな [?]
+	は何ですか?</B></A> 
+	
+	<LI><A HREF="UI.shtml#ui300"><B>古いストーリーを見るにはどうす
+	ればよいですか?</B></A>
+	
+</UL>
+
+<!-- Comments and Moderation -->
+<H2><B><A HREF="com-mod.shtml">コメントとモデレーション</A></B></H2>
+<UL>
+
+	<LI><A HREF="com-mod.shtml#cm100"><B>平坦/スレッド/ネスト、そ
+	れぞれのコメント表示の違いは何?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm200"><B>わたしのコメントはなぜ削
+	除されたのでしょう? 
+	</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm300"><B>わたしのコメントが表示さ
+	れるのに時間がかかるのはなぜでしょう?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm400"><B>"First Post" コメントとは
+	何ですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm500"><B>コメントの質が落ちてきて
+	いるようですが、何か対策は?</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm510"><B>モデレーションのような制
+	限は必要ですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm515"><B>荒らしや役立たずな情報の
+	ほとんどは "Anonymous Coward"(匿名の臆病者)から送られています。
+	匿名の投稿を廃止しては?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm516"><B>このオープンな投稿ポリシー
+	で問題が起こったことはないのですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm520"><B>モデレーションシステムは
+	どうやって開発されたのですか?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm600"><B>モデレーションの仕組みを
+	教えてください</B></A> 
+	
+	<LI><A HREF="com-mod.shtml#cm610"><B>しきい値とは何ですか?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm700"><B>カルマとは何ですか?</B></A> 
+	
+	<LI><A HREF="com-mod.shtml#cm710"><B>カルマの上限はありますか?
+	</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm720"><B>どんなに点数を稼いでもカ
+	ルマが頭打ちというのは理不尽では?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm750"><B>Quickie や Slashback ストー
+	リーではなぜカルマが増えないのですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm800"><B>カルマは何のためにあるの?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm900"><B>カルマが自分で思っていた
+	値と違いますが? 
+	</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm950"><B>カルマはどこまで下がりま
+	すか? 
+	</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1000"><B>+1 のボーナスを使うたび
+	にモデレーションの評価が低くなってカルマが減るのはなぜだ!</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1100"><B>今モデレータ アクセスが
+	与えられたけど、何をすればいいの?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1200"><B>なぜわたしはもうモデレー
+	トできなくなったの?</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm1250"><B>モデレータ アクセスはな
+	ぜ 5 ポイントに制限されているの? 5 つのストーリーに対して無制
+	限のアクセスを与えるほうがよいのでは?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1300"><B>コメントが不当にモデレー
+	トされている!</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1320"><B>レート(+1や-1)とモデレー
+	ションのオプション(オフトピック、おもしろい等)を分離しては? フ
+	レームのもとだけど質の高い投稿とかもあると思いますが。</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1400"><B>これって検閲?</B></A> 
+	
+	<LI><A HREF="com-mod.shtml#cm1450"><B>これまでに出入り禁止になっ
+	た人はいますか? または、そういうことは今後あり得ますか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1500"><B>スコアが -2 とか 6 とか
+	になってるコメントがある!</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1600"><B>良いコメントってどういう
+	コメント? 悪いコメントは?</B></A>   
+
+	<LI><A HREF="com-mod.shtml#cm1700"><B>3 日間じゃモデレートでき
+	ません!</B></A>  
+
+	<LI><A HREF="com-mod.shtml#cm1800"><B>自分がモデレートしたディ
+	スカッションに投稿しても、なぜポイントが戻らないのでしょう?</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm1900"><B>カルマを上げるにはどうす
+	ればよいですか?
+	</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1910"><B>ほんとうはそうでもないの
+	に、役に立つ とか するどい洞察 に見えて、モデレーションで高く
+	評価されてしまう投稿が多いと思います。作成者が自信たっぷりだと、
+	ついポイントを与えてしまうのでは。本当に するどい洞察 なコメン
+	トが投稿されたときにはもう遅い。これはモデレーション システム
+	で解決できないのですか?</B></A> 
+	
+	<LI><A HREF="com-mod.shtml#cm2000"><B>荒らし防止のフィルタには
+	どんなものがありますか?</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm2100"><B>なぜアーカイブされたストー
+	リーを検索したりフィルタしたりできないのですか?</B></A>
+
+</UL>
+
+<!--M2-->
+<H2><B><A HREF="metamod.shtml">メタモデレーション</A></B></H2>
+
+<UL> 
+
+	<LI><A HREF="metamod.shtml#mm100"><B>"M1" とか "M2" はどういう
+	意味ですか?</A></B>
+
+	<LI><A HREF="metamod.shtml#mm200"><B>メタモデレーションとは何
+	ですか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm300"><B>メタモデレーション システ
+	ムはなぜ作られたのですか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm350"><B>誰が M2 できるのですか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm400"><B>メタモデレートの仕方を教
+	えてください</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm500"><B>M2 はどのくらいの頻度でで
+	きますか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm600"><B>M2 はモデレータのカルマに
+	どのように影響しますか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm700"><B>モデレーションはどのくら
+	いの頻度で M2 の対象になりますか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm800"><B>なぜ同じコメントが出てく
+	るのですか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm900"><B>わたしの index.pl にはな
+	ぜ M2 へのリンクがないのでしょうか?</A></B>
+	
+	<LI><A HREF="metamod.shtml#mm1000"><B>モデレータが "するどい洞
+	察" と評価しているが、わたしは "役に立つ"だと思う場合、どう M2
+	すればよいですか?</A></B>
+
+	<LI><A HREF="metamod.shtml#mm1100"><B>M2 しているストーリーに
+	投稿できますか?</A></B>
+
+	<LI><A HREF="metamod.shtml#mm1200"><B>M2 はわたしのカルマに影
+	響しますか?</A></B>
+
+</UL>
+
+<!-- Accounts -->
+<H2><B><A HREF="accounts.shtml">アカウント</A></B></H2>
+<UL>
+
+	<LI><B><A HREF="accounts.shtml#ac100">ニックネームは変更できま
+	すか?</A></B> 
+
+	<LI><B><A HREF="accounts.shtml#ac105">パスワードを変更するには
+	どうすればよいですか?</A></B>
+
+	<LI><B><A HREF="accounts.shtml#ac200">自分のアカウントを削除す
+	るにはどうすればよいですか?</A></B> 
+
+	<LI><B><A HREF="accounts.shtml#ac300">パスワードを忘れた! (ま
+	たは)パスワードが送られてこない!</A></B> 
+
+	<LI><B><A HREF="accounts.shtml#ac400">ログインできません</A></B> 
+	
+	<LI><B><A HREF="accounts.shtml#ac500">クッキーを受け付けたくあ
+	りません!</A></B> 
+	
+	<LI><B><A HREF="accounts.shtml#ac600">偽のID や別人に見せかけ
+	たアカウントで投稿している奴がいます</A></B>
+	
+	<LI><B><A HREF="accounts.shtml#ac700">突然ログアウトになってし
+	まうことがよくあるのですが…</A></B> 
+	
+</UL>
+
+<!-- Slashdot Meta -->
+<H2><B><A HREF="slashmeta.shtml">Slashdotについて</A></B></H2>
+
+<UL>
+	<LI><B><A HREF="slashmeta.shtml#sm100">スラッシュドットの主催
+	者は誰ですか?</A></B> 
+	
+	<LI><B><A HREF="slashmeta.shtml#sm150">スラッシュドットってど
+	ういう意味?</A></B>
+	
+	<LI><B><A HREF="slashmeta.shtml#sm120">Rob と Jeff は、スラッ
+	シュドットを売却したことを後悔している?</A></B> 
+	
+	<LI><B><A HREF="slashmeta.shtml#sm121">売却して、退屈な会社オ
+	ヤジになったんですか?</A></B>
+	
+	<LI><B><A HREF="slashmeta.shtml#sm122">だったらスラッシュドッ
+	トPTクルーザーなんて誰が考えたんだ?</A></B>
+
+	<LI><B><A HREF="slashmeta.shtml#sm200">スラッシュドットに○○
+	して欲しい。
+	</A></B> 
+
+	<LI><B><A HREF="slashmeta.shtml#sm250">スラッシュドットの読者
+	の声を聞くより、言い争ってるほうが多いんじゃない? 自分ではどう
+	思ってるの? もしそうじゃないというなら、なぜこんなに大勢の人が
+	そう思ってるのか説明して欲しい。</A></B> 
+
+	<LI><B><A HREF="slashmeta.shtml#sm260">スラッシュドット読者の
+	中には、スラッシュドットの方針決定にもっと参加したいと思ってる
+	人も多いです。スラッシュドットの運営についてもっとメタディスカッ
+	ションする機会を持つ可能性はありますか?</A></B> 
+
+	<LI><B><A HREF="slashmeta.shtml#sm300">スラッシュドットのトラ
+	フィックはどれくらいですか?</A></B> 
+	
+	<LI><B><A HREF="slashmeta.shtml#sm330">なぜスラッシュドットは
+	こんなに成功したのですか?</A></B> 
+
+	<LI><B><A HREF="slashmeta.shtml#sm400">"CmdrTaco" と "Hemos"
+	というニックネームはどういう意味?</A></B>
+
+	<LI><B><A HREF="slashmeta.shtml#sm500">何でレポーターはあなた
+	たちのニックネームの由来を知りたがるのでしょう?</A></B>
+	
+	<LI><B><A HREF="slashmeta.shtml#sm550">コメントによく出てくる
+	"Free Speech/Free Beer" とは何のことですか?</A></B>
+
+	<LI><B><A HREF="slashmeta.shtml#sm600">"スラッシュドット効果"
+	って何ですか?</A></B>
+	
+	<LI><B><A HREF="slashmeta.shtml#sm700">これまでのスラッシュドッ
+	ト ストーリーの中で一番面白かったものは?</A></B>
+	
+	<LI><B><A HREF="slashmeta.shtml#sm800">"Geeks in Space" の続き
+	は作らないのですか?</A></B>
+	
+	<LI><B><A HREF="slashmeta.shtml#sm800">hidden sidsについてはど
+	う考えているの?</A></B>
+	
+</UL>
+
+<!-- Tech -->
+<H2><B><A HREF="tech.shtml">Tech</A></B></H2>
+
+<UL>
+	<LI><B><A HREF="tech.shtml#te050">What kind of hardware does Slashdot 
+	run on?</A></B>
+
+	<LI><B><A HREF="tech.shtml#te100">Why doesn't Slashdot display in browser
+	X? </A></B> 
+
+	<LI><B><A HREF="tech.shtml#te200">Where/why do you use cookies? </A></B>
+
+	<LI><B><A HREF="tech.shtml#te250">What kind of logging does Slashdot do 
+	with regard to its readers?</A></B>
+
+	<LI><B><A HREF="tech.shtml#te300">Can I have your poll scripts? </A></B>
+
+	<LI><B><A HREF="tech.shtml#te400">Why are you generating so many pages 
+	dynamically? </A></B>
+
+	<LI><B><A HREF="tech.shtml#te500">What about the source code to this
+	site? </A></B>
+
+	<LI><B><A HREF="tech.shtml#te600">If you were just starting to code 
+	Slashdot.org today, what would you code the site in PHP or mod_perl?</A></B>
+	
+	<LI><B><A HREF="tech.shtml#te700">Do you guys ever worry that some site 	
+	might steal Slashcode and try and outdo Slashdot?</A></B>
+	
+	<LI><B><A HREF="tech.shtml#te800">How did it feel when you opensourced 
+	slashcode, allowing people to tinker with your 'baby' as it were?  Are 
+	you still involved with the process as much, or is your time taken up by
+	reading email and such?</A></B>
+	
+	<LI><B><A HREF="tech.shtml#te900">What's the biggest benefit to come out 
+	of the opening of Slash so far?  Better efficiency?  Tighter 
+	security?</A></B>
+	
+
+</UL>
+
+<!-- Advertising -->
+<H2><B><A HREF="advertising.shtml">Advertising</A></B></H2>
+<UL>
+	<LI><B><A HREF="advertising.shtml#ad100">Can I advertise on Slashdot?
+	</A></B>
+
+	<LI><B><A HREF="advertising.shtml#ad400">What is AdFu?</A></B> 
+
+	<LI><B><A HREF="advertising.shtml#ad500">Why aren't you using AdFu any 
+	more?</A></B>
+
+	<LI><B><A HREF="advertising.shtml#ad600">A banner ad is screwing up my 
+	browser!</A></B>
+</UL>
+
+<!-- Suggestions -->
+<H2><B><A HREF="suggestions.shtml">Suggestions</A></B></H2>
+<UL>
+	<LI><B><A HREF="suggestions.shtml#su100">How about an NNTP news gateway? 
+	</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su200">Have you considered rewriting
+	Slashdot in C? </A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su300">Have you considered PHP?
+	</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su400">How about a page for rejected or
+	pending story submissions? </A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su500">How about giving us a reason for
+	rejecting submissions?</A></B> 
+
+	<LI><B><A HREF="suggestions.shtml#su600">How about allowing readers to
+	directly administer the submissions bin?</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su700">How about an AvantGo channel, or
+	some other PDA interface?</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su800">How about a WAP
+	interface?</A></B>
+	
+	<LI><B><A HREF="suggestions.shtml#su850">Getting the Slashdot headlines 
+	by 'finger @www.slashdot.org' would be nice, don't you think?</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su900">Slashdot should cache pages to
+	prevent the Slashdot Effect! </A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su910">Is is possible to have META tags
+	that Slashdot looks for in a story link before allowing it to be 
+	submitted/posted? Many times a server can't handle the load of a
+	Slashdotting. So can the site have tags to prevent it from being added 
+	to a slashdot story?</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su920">It seems that many moderators, 
+	because of the way they read comments, (higher thresholds, older 
+	comments first), only see comments that are posted with a bonus, or have
+	already been moderated up. Wouldn't it make more sense to require 
+	moderators to read at a threshold of 0 with newest comments 
+	first?</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su930"> Have you ever thought about 
+	hiding comment scores when people are moderating? It might help 
+	alleviate "Group Think."</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su1000">I have a suggestion for 
+	improving moderation.</A></B> 
+	
+	<LI><B><A HREF="suggestions.shtml#su1100">What about other moderation 
+	models such as those used by Kuro5hin, everything2, or
+	advogato.org?</A></B>
+
+	<LI><B><A HREF="suggestions.shtml#su1200">Will some of the subsections 	
+	spin off as sites in their own right? For example, it would be cool if 
+	the YRO section were to hit dead tree form in some way like soon. It's 
+	too important to remain outside the radars of 9-5ers in  Pleasantville. 
+	</A></B>	
+</UL>
+
+<!--#include virtual="/slashfoot.inc"-->
