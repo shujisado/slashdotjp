@@ -211,7 +211,8 @@ sub display_prefs {
 	slashDisplay('prefs_titlebar', {
 		nickname => $user->{nickname},
 		uid => $user->{uid},
-		tab_selected => 'messages'
+		tab_selected => 'messages',
+		title => getData( 'prefshead' )
 	});
 	print createMenu('messages');
 	slashDisplay('journuserboxes');
