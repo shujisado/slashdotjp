@@ -28,7 +28,7 @@ __template__
 <INPUT TYPE="HIDDEN" NAME="formname" VALUE="editmiscopts">
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="savemiscopts">
 
-<TABLE ALIGN="CENTER" WIDTH="100%" BGCOLOR="[% user.bg.5 %]">
+<TABLE ALIGN="CENTER" WIDTH="100%" BGCOLOR="[% user.colors.bg_5 %]">
 	<TR>
 		<TD>
 
@@ -37,9 +37,9 @@ __template__
 	<P><B>[% opt.short_desc %]</B>
 	[% opt.long_desc %]<BR>
 	&nbsp;&nbsp;&nbsp;<INPUT TYPE="RADIO" NAME="opt_[% opt.name %]" value="0"
-		[% IF !opt.checked; "CHECKED"; END %]>&nbsp;Off
+		[% IF !opt.checked; constants.markup_checked_attribute; END %]>&nbsp;Off
 	&nbsp;&nbsp;&nbsp;<INPUT TYPE="RADIO" NAME="opt_[% opt.name %]" value="1"
-		[% IF opt.checked; "CHECKED"; END %]>&nbsp;On<BR>
+		[% IF opt.checked; constants.markup_checked_attribute; END %]>&nbsp;On<BR>
 [% END %]
 
 		<INPUT TYPE="SUBMIT" VALUE="Save">

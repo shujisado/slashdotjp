@@ -22,6 +22,7 @@ sub main {
 	my $slashdb   = getCurrentDB();
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
+	my $gSkin     = getCurrentSkin();
 	my $formname = 'zoo';
 	my $formkey = $form->{formkey};
 
@@ -124,11 +125,11 @@ sub main {
 	errorLog("zoo.pl error_flag '$error_flag'") if $error_flag;
 
 	if (!$op || !exists $ops->{$op} || !$ops->{$op}->{check}) {
-		redirect("$constants->{rootdir}/");
+		redirect("$gSkin->{rootdir}/");
 		return;
 	}
 
-	$ops->{$op}->{function}->($zoo, $constants, $user, $form, $slashdb);
+	$ops->{$op}->{function}->($zoo, $constants, $user, $form, $slashdb, $gSkin);
 	my $r;
 	if ($r = Apache->request) {
 		return if $r->header_only;
@@ -137,10 +138,10 @@ sub main {
 }
 
 sub list {
-	my($zoo, $constants, $user, $form, $slashdb) = @_;
+	my($zoo, $constants, $user, $form, $slashdb, $gSkin) = @_;
 	# This was never linked to, but basically we send people to search who try to just hit the blank URL
 	# -Brian
-	redirect("$constants->{rootdir}/search.pl?op=users");
+	redirect("$gSkin->{rootdir}/search.pl?op=users");
 	return 1;
 }
 
@@ -628,7 +629,7 @@ sub all {
 }
 
 sub action {
-	my($zoo, $constants, $user, $form, $slashdb) = @_;
+	my($zoo, $constants, $user, $form, $slashdb, $gSkin) = @_;
 
 	if ($form->{uid} == $user->{uid} || $form->{uid} == $constants->{anonymous_coward_uid}  ) {
 		_printHead("mainhead", { nickname => $user->{nick}, uid => $user->{uid} }) or return;
@@ -688,9 +689,9 @@ sub action {
 	}
 	# This is just to make sure the next view gets it right
 	if ($form->{type} eq 'foe') {
-		redirect("$constants->{rootdir}/my/foes/");
+		redirect("$gSkin->{rootdir}/my/foes");
 	} else {
-		redirect("$constants->{rootdir}/my/friends/");
+		redirect("$gSkin->{rootdir}/my/friends");
 	}
 
 	return 1;
@@ -704,8 +705,8 @@ sub check {
 
 	if (!$uid || $nickname eq '') {
         	# See comment in plugins/Journal/journal.pl for its call of
-        	# getSectionColors() as well.
-                Slash::Utility::Anchor::getSectionColors();
+        	# getSkinColors() as well.
+                Slash::Utility::Anchor::getSkinColors();
 
 		my $title = getData("no_uid");
 		header($title) or return;
@@ -782,8 +783,8 @@ sub _printHead {
 	my($head, $data) = @_;
 	my $slashdb = getCurrentDB();
 	# See comment in plugins/Journal/journal.pl for its call of
-	# getSectionColors() as well.
-	Slash::Utility::Anchor::getSectionColors();
+	# getSkinColors() as well.
+	Slash::Utility::Anchor::getSkinColors();
 	my $user = getCurrentUser();
 	my $useredit = $data->{uid}
 		? $slashdb->getUser($data->{uid})
@@ -798,24 +799,26 @@ sub _printHead {
 }
 
 sub _rss {
-	my ($entries, $nick, $type) = @_;
+	my($entries, $nick, $type) = @_;
 	my $constants = getCurrentStatic();
+	my $gSkin     = getCurrentSkin();
 	my @items;
 	for my $entry (@$entries) {
 		push @items, {
 			title	=> $entry->[1],
-			'link'	=> ($constants->{absolutedir} . '/~' . fixparam($entry->[1])  . "/"),
+			'link'	=> ($gSkin->{absolutedir} . '/~' . fixparam($entry->[1])  . "/"),
 		};
 	}
 
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} $nick's ${type}",
-			'link'		=> "$constants->{absolutedir}/",
+			'link'		=> "$gSkin->{absolutedir}/",
 			description	=> "$constants->{sitename} $nick's ${type}",
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc => 1,
 	});
 }
 
@@ -875,9 +878,9 @@ sub _foaf {
 }
 
 sub testSocialized {
-	my ($zoo, $constants, $user) = @_;
-	return 0 
-		if $user->{is_admin};
+	my($zoo, $constants, $user) = @_;
+	return 0 if $user->{is_admin};
+
 	if ($user->{is_subscriber} && $constants->{people_max_subscriber}) {
 		return ($zoo->count($user->{uid}) > $constants->{people_max_subscriber}) ? 1 : 0;
 	} else {

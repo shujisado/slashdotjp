@@ -39,7 +39,7 @@ __template__
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="savecomm">
 <INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% user_edit.uid %]">
 
-<TABLE ALIGN="CENTER" WIDTH="100%" BGCOLOR="[% user.bg.5 %]">
+<TABLE ALIGN="CENTER" WIDTH="100%" BGCOLOR="[% user.colors.bg_5 %]">
 	<TR>
 		<TD VALIGN=MIDDLE>
         	<P><B>Email Display</B>
@@ -56,7 +56,7 @@ __template__
 			user_edit.emaildisplay = 0;
 		END;
 		IF user_edit.emaildisplay.defined;
-			emaildisplay.${user_edit.emaildisplay} = 'CHECKED';
+			emaildisplay.${user_edit.emaildisplay} = constants.markup_checked_attribute;
 		END %]
                 &nbsp;&nbsp;&nbsp;
 		<INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.0 %] 
@@ -65,7 +65,7 @@ __template__
                 &nbsp;&nbsp;&nbsp;
                 <INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.1 %] 
 		VALUE=1>&nbsp;
-                Show your email with random SPAM-armoring applied (this
+                Show your email address with random SPAM-armoring applied (this
 		changes weekly).<BR> &nbsp;&nbsp;&nbsp;
                 <INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.2 %] 
 		VALUE=2>&nbsp;
@@ -96,7 +96,7 @@ __template__
 		Anonymous posts start at 0, logged in posts start
 		at 1.  Moderators add and subtract points according to
 		the <A 
-		HREF="[% constants.rootdir %]/moderation.shtml">Guidelines</A>)
+		HREF="[% gSkin.rootdir %]/moderation.shtml">Guidelines</A>)
 
 		<P><B>Highlight Threshold</B>
 
@@ -117,12 +117,8 @@ __template__
 		They still <B>apply</B> you just don't see them.)
 		<INPUT TYPE="CHECKBOX" NAME="noscores"[% n_check %]>
 
-		<P><B>Signature Dash</B> (Prefix everyone's signature with "--" to make
-		it blazingly obvious where comment ends and sig begins)
-		<INPUT TYPE="CHECKBOX" NAME="sigdash"[% d_check %]>
-
-		[%# doesn't this need to be flexible for sites that
-		    already have different reasons, in the code?  why
+		[%# XXX this needs to be flexible for sites that
+		    already have different reasons, in the code.  why
 		    not just loop over the reasons already existing,
 		    like it did before?
 		 %]
@@ -265,7 +261,7 @@ __template__
 
 
 [% UNLESS user_edit.domaintags.defined; user_edit.domaintags=2; END %]
-[% domaintags.${user_edit.domaintags} = 'CHECKED' -%]
+[% domaintags.${user_edit.domaintags} = constants.markup_checked_attribute -%]
 		<P><B>Display Link Domains?</B> (shows the actual domain of any link in brackets)<BR>
 		&nbsp;&nbsp;&nbsp;
 		<INPUT TYPE="RADIO" NAME="domaintags" [% domaintags.0 %] 
@@ -281,7 +277,7 @@ __template__
 		Always show link domains<BR>
 		<P><B>User Page Comment Listing</B></P>
 		[% UNLESS user_edit.user_comment_sort_type.defined; user_edit.user_comment_sort_type=2; END %]
-		[% user_comment_sort_type.${user_edit.user_comment_sort_type} = 'CHECKED' -%]
+		[% user_comment_sort_type.${user_edit.user_comment_sort_type} = constants.markup_checked_attribute -%]
 		&nbsp;&nbsp;&nbsp;<INPUT TYPE="RADIO" NAME="user_comment_sort_type" [% user_comment_sort_type.1 %] VALUE="1"> Selected by create time descending<BR>
 		&nbsp;&nbsp;&nbsp;<INPUT TYPE="RADIO" NAME="user_comment_sort_type" [% user_comment_sort_type.2 %] VALUE="2"> Selected by create time descending, results grouped by discussion, newest discussion first.
 		[% IF user.is_admin %]

@@ -59,7 +59,7 @@ $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 ########################################################
 # Behold, the beast that is threaded comments
 sub selectComments {
-	my($header, $cid, $options) = @_;
+	my($discussion, $cid, $options) = @_;
 	my $slashdb = getCurrentDB();
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
@@ -82,8 +82,8 @@ sub selectComments {
 	# When we pull comment text from the DB, we only want to cache it if
 	# there's a good chance we'll use it again.
 	my $cache_read_only = 0;
-	$cache_read_only = 1 if $header->{type} eq 'archived';
-	$cache_read_only = 1 if timeCalc($header->{ts}, '%s') <
+	$cache_read_only = 1 if $discussion->{type} eq 'archived';
+	$cache_read_only = 1 if timeCalc($discussion->{ts}, '%s') <
 		time - 3600 * $constants->{comment_cache_max_hours};
 
 	my $thisComment;
@@ -92,13 +92,13 @@ sub selectComments {
 		one_cid_only	=> $options->{one_cid_only},
 	};
 	if ($options->{force_read_from_master}) {
-		$thisComment = $slashdb->getCommentsForUser($header->{id}, $cid, $gcfu_opt);
+		$thisComment = $slashdb->getCommentsForUser($discussion->{id}, $cid, $gcfu_opt);
 	} else {
-		$thisComment = $reader->getCommentsForUser($header->{id}, $cid, $gcfu_opt);
+		$thisComment = $reader->getCommentsForUser($discussion->{id}, $cid, $gcfu_opt);
 	}
 
 	if (!$thisComment) {
-		_print_cchp($header);
+		_print_cchp($discussion);
 		return ( {}, 0 );
 	}
 
@@ -141,23 +141,10 @@ sub selectComments {
 		} @$thisComment;
 	}
 
-	my $forum_desc;
-	if ($constants->{ubb_like_forums} && $user->{mode} eq 'parents') {
-		# don't display the comment that describes the forums
-		# we get the comment here and save it for later use
-		$forum_desc = $slashdb->getForumFirstPostHashref($header->{id});
-	}
-
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# is in the index of the hash (based on its cid).
 	for my $C (@$thisComment) {
-		# If this is a forum, we skip the first comment in a
-		# discussion, since it's the description
-		next if $constants->{ubb_like_forums}
-			&& ($user->{mode} eq 'parents')
-			&& ($C->{cid} == $forum_desc->{cid});
-
 		# So we save information. This will only have data if we have 
 		# happened through this cid while it was a pid for another
 		# comments. -Brian
@@ -201,7 +188,7 @@ sub selectComments {
 	# get the total visible kids for each comment --Pater
 	countTotalVisibleKids($comments);
 
-	_print_cchp($header, $count, $comments->{0}{totals});
+	_print_cchp($discussion, $count, $comments->{0}{totals});
 
 	reparentComments($comments, $reader);
 	return($comments, $count);
@@ -319,10 +306,11 @@ sub _get_points {
 }
 
 sub _print_cchp {
-	my($header, $count, $hp_ar) = @_;
-	return unless $header->{sid};
+	my($discussion, $count, $hp_ar) = @_;
+	return unless $discussion->{stoid};
 	my $form = getCurrentForm();
 	return unless $form->{ssi} eq 'yes' && $form->{cchp};
+	my $file_suffix = $form->{cchp};
 	$count ||= 0;
 	$hp_ar ||= [ ];
 	my $constants = getCurrentStatic();
@@ -340,7 +328,7 @@ sub _print_cchp {
 	# pass in a cchp value without having created a file that
 	# we can write to, it will be ignored).
 	my $filename = File::Spec->catfile($constants->{logdir},
-		"cchp.$form->{cchp}");
+		"cchp.$file_suffix");
 	if (!-e $filename || !-w _
 		|| ((stat _)[2] & 0007)) {
 		warn "_print_cchp not trying to open '$filename': "
@@ -657,7 +645,7 @@ sub printComments {
 		# MemCached key prefix "ctp" means "comment_text, parsed".
 		# Prepend our site key prefix to try to avoid collisions
 		# with other sites that may be using the same servers.
-		$mcdkey = "$mcd->{keyprefix}ctp:";
+		$mcdkey = "$slashdb->{_mcd_keyprefix}:ctp:";
 		$mcdkeylen = length($mcdkey);
 		if ($constants->{memcached_debug}) {
 			$mcd_debug = { start_time => Time::HiRes::time };
@@ -914,6 +902,8 @@ sub moderatorCommentLog {
 		}
 		@$mods = sort {
 			$a->{reason} <=> $b->{reason}
+				||
+			$b->{active} <=> $a->{active}
 				||
 			$a->{m2_identity} cmp $b->{m2_identity}
 		} @$mods;
@@ -1205,25 +1195,28 @@ The 'dispComment' template block.
 =cut
 
 sub dispComment {
-	my($comment) = @_;
+	my($comment, $options) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $gSkin = getCurrentSkin();
+	my $maxcommentsize = $options->{maxcommentsize} || $user->{maxcommentsize};
 
 	my($comment_shrunk, %reasons);
 
 	if ($form->{mode} ne 'archive'
-		&& $comment->{len} > $user->{maxcommentsize}
+		&& $comment->{len} > $maxcommentsize
 		&& $form->{cid} ne $comment->{cid})
 	{
 		$comment_shrunk = 1;
 	}
 
 	$comment->{sig} = parseDomainTags($comment->{sig}, $comment->{fakeemail});
-	if ($user->{sigdash} && $comment->{sig}) {
+	if ($comment->{sig}) {
 		$comment->{sig} =~ s/^\s*-{1,5}\s*<(?:P|BR)>//i;
-		$comment->{sig} = "--<BR>$comment->{sig}";
+		$comment->{sig} = getData('sigdash', {}, 'comments')
+			. $comment->{sig};
 	}
 
 	my $reasons = $reader->getReasons();
@@ -1257,13 +1250,6 @@ EOT
 	# we need a display-friendly fakeemail string
 	$comment->{fakeemail_vis} = ellipsify($comment->{fakeemail});
 	push @{$user->{state}{cids}}, $comment->{cid};
-
-	# stats for clampe
-	if ($constants->{clampe_stats} && $ENV{SCRIPT_NAME}) {
-		my $fname = catfile('clampe', $user->{ipid});
-		my $comlog = "IPID: $user->{ipid} UID: $user->{uid} SID: $comment->{sid} CID: $comment->{cid} Dispmode: $user->{mode} Thresh: $user->{threshold} CIPID: $comment->{ipid} CUID: $comment->{uid}";
-		doLog($fname, [$comlog]);	
-	}
 
 	return _hard_dispComment(
 		$comment, $constants, $user, $form, $comment_shrunk,
@@ -1330,7 +1316,8 @@ The 'dispStory' template block.
 sub dispStory {
 	my($story, $author, $topic, $full, $other) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $constants    = getCurrentStatic();
+	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
 	my $template_name = $other->{story_template}
 		? $other->{story_template} : 'dispStory';
 
@@ -1338,23 +1325,24 @@ sub dispStory {
 	# is aesthetics.
 	$other->{magic} = !$full
 			&& index($story->{title}, ':') == -1
-			&& $story->{section} ne $constants->{defaultsection}
-			&& $story->{section} ne $constants->{section}
+			&& $story->{primaryskid} ne $gSkin->{skid}
+			&& $story->{primaryskid} ne $constants->{mainpage_skid}
 		if !exists $other->{magic};
 
-	my $section = $reader->getSection($story->{section});
 	$other->{preview} ||= 0;
 	my %data = (
 		story	=> $story,
-		section => $section,
 		topic	=> $topic,
 		author	=> $author,
 		full	=> $full,
 		stid	=> $other->{stid},
+		topics	=> $other->{topics_chosen},
+		topiclist => $other->{topiclist},
 		magic	=> $other->{magic},
 		width	=> $constants->{titlebar_width},
 		preview => $other->{preview}
 	);
+#use Data::Dumper; print STDERR scalar(localtime) . " dispStory data: " . Dumper(\%data);
 
 	return slashDisplay($template_name, \%data, 1);
 }
@@ -1396,34 +1384,44 @@ Rendered story
 =cut
 
 sub displayStory {
-	my($sid, $full, $options) = @_;	
+	my($stoid, $full, $options, $story_cache) = @_;	
 
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $gSkin = getCurrentSkin();
 	
 	my $return;
 	my $story;
-	if ($options->{get_cacheable}) {
+	if ($story_cache && $story_cache->{$stoid}) {
+		# If the caller passed us a ref to a cache of all the
+		# story data we need, great!  Use it.
+		$story = $story_cache->{$stoid};
+	} elsif ($options->{force_cache_freshen}) {
+		# If the caller is insisting that we go to the main DB
+		# rather than using any cached data or even a reader,
+		# then do that.  This is done when e.g. freshenup.pl
+		# wants to write the "rendered" version of a story.
 		my $slashdb = getCurrentDB();
-		$story = $slashdb->getStory($sid, "", $options->{get_cacheable});
+		$story = $slashdb->getStory($stoid, "", $options->{force_cache_freshen});
 		$story->{is_future} = 0;
 	} else {
-		$story = $reader->getStory($sid);
+		# The above don't apply;  just use a reader (and maybe
+		# its cache will save a trip to the actual DB).
+		$story = $reader->getStory($stoid);
 	}
 
 	# There are many cases when we'd not want to return the pre-rendered text
 	# from the DB.
 	if (	   !$constants->{no_prerendered_stories}
 		&& $constants->{cache_enabled}
-		&& $story->{rendered} && !$options->{get_cacheable}
+		&& $story->{rendered} && !$options->{force_cache_freshen}
 		&& !$form->{light} && !$user->{light}
 		&& (!$form->{ssi} || $form->{ssi} ne 'yes')
 		&& !$user->{noicons}
 		&& !$form->{issue}
-		&& $constants->{section} eq 'index'
-		&& $user->{currentSection} eq 'index'
+		&& $gSkin->{skid} == $constants->{mainpage_skid}
 		&& !$full
 		&& !$options->{is_future}	 # can $story->{is_future} ever matter?
 	) {
@@ -1440,7 +1438,7 @@ sub displayStory {
 		if ($full) {
 			$story->{bodytext} = parseSlashizedLinks($story->{bodytext});
 			$story->{bodytext} = processSlashTags($story->{bodytext}, { break => 1 });
-			$options->{stid} = $reader->getStoryTopicsJustTids($story->{sid});
+			$options->{topiclist} = $reader->getTopiclistForStory($story->{sid});
 			# if a secondary page, put bodytext where introtext would normally go
 			# maybe this is not the right thing, but is what we are doing for now;
 			# let me know if you have another idea -- pudge
@@ -1450,7 +1448,7 @@ sub displayStory {
 		$return = dispStory($story, $author, $topic, $full, $options);
 
 	}
-	my $df = ($user->{mode} eq "archive" || ($story->{writestatus} eq "archived" && $user->{is_anon}))
+	my $df = ($user->{mode} eq "archive" || ($story->{is_archived} eq "yes" && $user->{is_anon}))
 		? $constants->{archive_dateformat} : "";
 	my $storytime = timeCalc($story->{'time'}, $df);
 	my $atstorytime;
@@ -1459,7 +1457,7 @@ sub displayStory {
 	} else {
 		$atstorytime = $user->{aton} . " " . timeCalc($story->{'time'}, $df);
 	}
-	$return =~ s/\Q__TIME_TAG__\E/$atstorytime/ unless $options->{get_cacheable};
+	$return =~ s/\Q__TIME_TAG__\E/$atstorytime/ unless $options->{force_cache_freshen};
 
 	return $return;
 }
@@ -1510,8 +1508,9 @@ sub getOlderStories {
 	my $months = $reader->getDescriptions('months');
 
 	for my $story (@$stories) {
-		#Use one call and parse it, its cheaper :) -Brian
-		my($day_of_week, $month, $day, $secs) = split m/ /, timeCalc($story->{time}, "%A %m %d %s");
+		# Use one call and parse it, it's cheaper :) -Brian
+		my($day_of_week, $month, $day, $secs) =
+			split m/ /, timeCalc($story->{time}, "%A %B %d %s");
 		$day =~ s/^0//;
 		$month =~ s/^0//;
 		$story->{day_of_week} = $day_of_week;
@@ -1649,7 +1648,6 @@ sub getData {
 	my $var  = $cache->{getdata}{ $name->{tempdata}{tpid} } ||= { };
 
 	if (defined $var->{$value}) {
-#		print STDERR "getData $$ value='$value' tpid='$name->{tempdata}{tpid}' len=" . length($var->{$value}) . " cache_hit\n";
 		return $var->{$value};
 	}
 
@@ -1660,7 +1658,6 @@ sub getData {
 		$cache->{getdata}{_last_refresh} ||= time;
 		$var->{$value} = $str;
 	}
-#	print STDERR "getData $$ value='$value' tpid='$name->{tempdata}{tpid}' len=" . length($str) . " cache_miss\n";
 	return $str;
 }
 
@@ -1677,6 +1674,7 @@ sub _dataCacheRefresh {
 # this sucks, but it is here for now
 sub _hard_dispComment {
 	my($comment, $constants, $user, $form, $comment_shrunk, $can_mod, $reasons) = @_;
+	my $gSkin = getCurrentSkin();
 
 	my($comment_to_display, $score_to_display,
 		$user_nick_to_display, $zoosphere_display, $user_email_to_display,
@@ -1710,7 +1708,7 @@ sub _hard_dispComment {
 	}
 
 	if ($comment->{sid} && $comment->{cid}) {
-		$comment_link_to_display = qq| (<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}&amp;cid=$comment->{cid}">#$comment->{cid}</A>)|;
+		$comment_link_to_display = qq| (<A HREF="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}&amp;cid=$comment->{cid}">#$comment->{cid}</A>)|;
 	} else {
 		$comment_link_to_display = " ";
 	}
@@ -1765,39 +1763,39 @@ sub _hard_dispComment {
 	unless ($user->{is_anon} || isAnon($comment->{uid}) || $comment->{uid} == $user->{uid}) {
 		my $person = $comment->{uid};
 		if (!$user->{people}{FRIEND()}{$person} && !$user->{people}{FOE()}{$person} && !$user->{people}{FAN()}{$person} && !$user->{people}{FREAK()}{$person} && !$user->{people}{FOF()}{$person} && !$user->{people}{EOF()}{$person}) {
-				$zoosphere_display .= qq|<A HREF="$constants->{rootdir}/zoo.pl?op=check&amp;type=friend&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/neutral.gif" ALT="Alter Relationship" TITLE="Alter Relationship"></A>|;
+				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;type=friend&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/neutral.gif" ALT="Alter Relationship" TITLE="Alter Relationship"></A>|;
 		} else {
 			if ($user->{people}{FRIEND()}{$person}) {
 				my $title = $user->{people}{people_bonus_friend} ? "Friend ($user->{people}{people_bonus_friend})" : "Friend";
-				$zoosphere_display .= qq|<A HREF="$constants->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/friend.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/friend.gif" ALT="$title" TITLE="$title"></A>|;
 			}
 			if ($user->{people}{FOE()}{$person}) {
 				my $title = $user->{people}{people_bonus_foe} ? "Foe ($user->{people}{people_bonus_foe})" : "Foe";
-				$zoosphere_display .= qq|<A HREF="$constants->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/foe.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/foe.gif" ALT="$title" TITLE="$title"></A>|;
 			}
 			if ($user->{people}{FAN()}{$person}) {
 				my $title = $user->{people}{people_bonus_fan} ? "Fan ($user->{people}{people_bonus_fan})" : "Fan";
-				$zoosphere_display .= qq|<A HREF="$constants->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/fan.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/fan.gif" ALT="$title" TITLE="$title"></A>|;
 			}
 			if ($user->{people}{FREAK()}{$person}) {
 				my $title = $user->{people}{people_bonus_freak} ? "Freak ($user->{people}{people_bonus_freak})" : "Freak";
-				$zoosphere_display .= qq|<A HREF="$constants->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/freak.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/freak.gif" ALT="$title" TITLE="$title"></A>|;
 			}
 			if ($user->{people}{FOF()}{$person}) {
 				my $title = $user->{people}{people_bonus_fof} ? "Friend of a Friend ($user->{people}{people_bonus_fof})" : "Friend of a Friend";
-				$zoosphere_display .= qq|<A HREF="$constants->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/fof.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/fof.gif" ALT="$title" TITLE="$title"></A>|;
 			}
 			if ($user->{people}{EOF()}{$person}) {
 				my $title = $user->{people}{people_bonus_eof} ? "Foe of a Friend ($user->{people}{people_bonus_eof})" : "Foe of a Friend";
-				$zoosphere_display .= qq|<A HREF="$constants->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/eof.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/eof.gif" ALT="$title" TITLE="$title"></A>|;
 			}
 		}
 	}
 	
 	my $title = qq|<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>|;
 	my $return = <<EOT;
-			<TR><TD BGCOLOR="$user->{bg}[2]">
-				<FONT SIZE="3" COLOR="$user->{fg}[2]">
+			<TR><TD BGCOLOR="$user->{colors}{bg_2}">
+				<FONT SIZE="3" COLOR="$user->{colors}{fg_2}">
 				$title $score_to_display
 				</FONT>
 				<BR>by $user_nick_to_display$zoosphere_display$user_email_to_display

@@ -19,10 +19,25 @@ sub main {
 	my $story;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
-	$story = $reader->getStory($form->{sid});
+	my $sid = $form->{sid};
+	if ($sid =~ /^\d+$/) {
+		# Don't accept a stoid;  we need to be fed a sid to
+		# get to the right story.  This prevents crawling
+		# through article.pl?sid=1, article.pl?sid=2, etc.
+		$sid = "";
+	}
 
+	$story = $reader->getStory($sid);
+
+	# Set the $future_err flag if a story would be available to be
+	# displayed, except it is in the future, and the user is not
+	# allowed to see stories in the future.  This is only used to
+	# decide what kind of error message to report to the user,
+	# later on, if they can't see the story.
 	my $future_err = 0;
-	if ($story && $story->{is_future} && !($user->{is_admin} || $user->{author})) {
+	if ($story
+		&& $story->{is_future} && !$story->{neverdisplay}
+		&& !($user->{is_admin} || $user->{author})) {
 		$future_err = 1 if !$constants->{subscribe}
 			|| !$user->{is_subscriber}
 			|| !$user->{state}{page_plummy};
@@ -30,16 +45,20 @@ sub main {
 			$story = '';
 		}
 	}
+	my $stoid = 0;
+	$stoid = $story->{stoid} if $story && $story->{stoid};
 
 	# Yeah, I am being lazy and paranoid  -Brian
 	# Always check the main DB for story status since it will always be accurate -Brian
 	if ($story
 		&& !($user->{author} || $user->{is_admin})
-		&& !$slashdb->checkStoryViewable($form->{sid})) {
+		#XXXSECTIONTOPICS verify this is still correct 
+		&& !$slashdb->checkStoryViewable($stoid)) {
 		$story = '';
 	}
 
 	if ($story) {
+		# XXXSECTIONTOPICS this needs to be updated
 		my $SECT = $reader->getSection($story->{section});
 		# This should be a getData call for title
 		my $title = "$constants->{sitename} | $story->{title}";
@@ -65,12 +84,12 @@ sub main {
 			# section and series links must be defined as separate
 			# constants in vars
 			my($use_section, $use_series);
-			$use_section = $story->{section} if
-				$constants->{use_prev_next_link_section} &&
-				$SECT->{type} eq 'contained';
+#			$use_section = $story->{section} if
+#				$constants->{use_prev_next_link_section} &&
+#				$SECT->{type} eq 'contained';
 			$use_series  = $story->{tid}     if 
 				$constants->{use_prev_next_link_series} &&
-				$reader->getTopic($story->{tid})->{series};
+				$reader->getTopic($story->{tid})->{series} eq 'yes';
 
 			$stories{'prev'}   = $reader->getStoryByTime('<', $story);
 			$stories{'next'}   = $reader->getStoryByTime('>', $story)
@@ -106,7 +125,7 @@ sub main {
 			},
 		};
 
-		my $topics = $reader->getStoryTopics($form->{sid}, 1);
+		my $topics = $reader->getStoryTopics($stoid, 1);
 		my @topic_desc = values %$topics;
 		my $a;
 		if (@topic_desc == 1) {
@@ -119,7 +138,10 @@ sub main {
 		}
 		my $meta_desc = "$story->{title} -- article related to $a.";
 
-		header($links, $story->{section}, { meta_desc => $meta_desc }) or return;
+		header($links, $story->{section}, {
+			story_title	=> $story->{title},
+			meta_desc	=> $meta_desc,
+		}) or return;
 
 		# Can't do this before getStoryByTime because
 		# $story->{time} is passed to an SQL request.
@@ -146,7 +168,7 @@ sub main {
 			if ($constants->{tids_in_urls}) {
 				# This is to get tid in comments. It would be a mess to
 				# pass it directly to every comment -Brian
-				my $tids = $reader->getStoryTopicsJustTids($story->{sid}); 
+				my $tids = $reader->getTopiclistForStory($stoid); 
 				my $tid_string = join('&amp;tid=', @$tids);
 				$user->{state}{tid} = $tid_string;
 			}
@@ -172,7 +194,7 @@ sub main {
 			# is being called by slashd, and we need to write
 			# that file, then here's where we print an empty
 			# file that will satisfy slashd. - Jamie
-			Slash::_print_cchp({ sid => "dummy" });
+			Slash::_print_cchp({ stoid => "dummy" });
 		}
 	} else {
 		header('Error', $form->{section}) or return;
@@ -187,9 +209,9 @@ sub main {
 
 	footer();
 	if ($story) {
-		writeLog($story->{sid} || $form->{sid});
+		writeLog($story->{sid} || $sid);
 	} else {
-		writeLog($form->{sid});
+		writeLog($sid);
 	}
 }
 

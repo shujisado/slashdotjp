@@ -51,6 +51,8 @@ HTML::ElementTable	- required by HTML::CalendarMonth
 
 HTML::CalendarMonth	- used for Events plugin
 
+HTML::PopupTreeSelect   - topic selection on admin.pl
+
 Mail::Sendmail
 
 Mail::Address
@@ -105,14 +107,18 @@ Template		- Template Toolkit
 
 LWP::Parallel
 
+Lingua::Stem
+
 
 =head1 DESCRIPTION
 
 mod_perl must be installed by hand, because of the special configuration
 required for it.
 
-Optional but recommended modules include:  Cache::Memcached Silly::Werder
-GD GD::Text Apache::SSI Apache::RegistryFilter
-
+Our optional modules, which are not required for a default install
+and thus not installed by default, but which may become required as
+you edit your site configuration, are: Cache::Memcached Silly::Werder
+GD GD::Text GD::Graph Apache::SSI Apache::RegistryFilter GraphViz
+Net::IRC Proc::ProcessTable
 
 =cut

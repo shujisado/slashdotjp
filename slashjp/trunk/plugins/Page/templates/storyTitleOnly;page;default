@@ -16,7 +16,7 @@ __template__
 	link	=> story.title,
 	sid	=> story.sid,
 	section => story.section
-}) %]<a href="[% storylinks.0 %]"[% IF storylinks.2 %] title="[% storylinks.2 %]"[% END %]>[% storylinks.1 %]</a></b></p>
+}) %]<a href="[% storylinks.0 | strip_attribute %]"[% IF storylinks.2 %] title="[% storylinks.2 | strip_attribute %]"[% END %]>[% storylinks.1 | strip_html %]</a></b></p>
 __seclev__
 100
 __version__

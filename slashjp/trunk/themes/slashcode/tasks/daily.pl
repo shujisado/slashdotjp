@@ -54,9 +54,12 @@ sub daily_generateDailyMailees {
 		for my $uid (keys %$users) {
 			my $user = $users->{$uid};
 
-			my $key  = $user->{sectioncollapse};
-			for (@{$user}{qw(exaid extid exsect)}) {
-				$key .= '|' . join(',', sort m/'(.+?)'/g);
+			my $key  = $user->{sectioncollapse} || "";
+			for my $value (@{$user}{qw(
+				story_never_topic	story_never_author	story_never_nexus
+				story_always_topic	story_always_author	story_always_nexus
+			)}) {
+				$key .= '|' . join(',', sort( $value =~ /'(.+?)'/g ));
 			}
 			# allow us to make certain emails sent individually,
 			# by including a unique value in users_param for
@@ -75,7 +78,12 @@ sub daily_generateDailyMailees {
 				$mkeys->{$key}{user}  = {
 					uid => $uid,
 					map { ($_ => $user->{$_}) }
-					qw(sectioncollapse exaid extid exsect daily_mail_special)
+					qw(
+						sectioncollapse
+						story_never_topic	story_never_author	story_never_nexus
+						story_always_topic	story_always_author	story_always_nexus
+						daily_mail_special
+					)
 				};
 				$mkeys->{$key}{user}{is_admin} = $is_admin;
 			}
@@ -87,6 +95,7 @@ sub daily_generateDailyMailees {
 
 sub daily_generateDailyMail {
 	my($mailing, $user, $constants, $slashdb) = @_;
+	my $gSkin = getCurrentSkin();
 
 	my $stories;
 	# get data if not gotten yet
@@ -114,12 +123,12 @@ sub daily_generateDailyMail {
 	}
 
 	my $absolutedir = $user->{is_admin}
-		? $constants->{absolutedir_secure}
-		: $constants->{absolutedir};
+		? $gSkin->{absolutedir_secure}
+		: $gSkin->{absolutedir};
 
 	return slashDisplay($mailing,
 		{ stories => $stories, urlize => \&daily_urlize, absolutedir => $absolutedir },
-		{ Return => 1, Nocomm => 1, Page => 'messages', Section => 'NONE' }
+		{ Return => 1, Nocomm => 1, Page => 'messages', Skin => 'NONE' }
 	);
 }
 
@@ -131,15 +140,18 @@ sub daily_mailingList {
 
 	my $mailings	= daily_generateDailyMailees($n_users, $h_users) or return;
 
-	for my $mailing (keys %$mailings) {
+	for my $mailing (sort keys %$mailings) {
 		my $subj  = $mailings->{$mailing}{subj};
 		my $code  = $mailings->{$mailing}{code};
 		my $mkeys = $mailings->{$mailing}{mkeys};
 
-		slashdLog("Daily Mail ($mailing) begin");
-		for my $key (keys %$mkeys) {
-			my $user  = $mkeys->{$key}{user};
+		slashdLog("Daily Mail ($mailing) begin for " . scalar(keys %$mkeys) . " mkeys");
+		for my $key (sort keys %$mkeys) {
+			my $user = $mkeys->{$key}{user};
 			my $text = daily_generateDailyMail($mailing, $user, $constants, $slashdb) or next;
+			if (my $n_users = scalar(@{ $mkeys->{$key}{mails} }) >= 100) {
+				slashdLog("Sending " . length($text) . " bytes to $n_users users: '$key'");
+			}
 			$messages->bulksend(
 				$mkeys->{$key}{mails}, $subj,
 				$text, $code, $user->{uid}

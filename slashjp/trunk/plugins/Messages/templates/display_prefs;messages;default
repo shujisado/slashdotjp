@@ -25,7 +25,7 @@ __template__
 <P><B>[% note %]</B></P>
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
-<TABLE ALIGN="CENTER" WIDTH="100%" BGCOLOR="[% user.bg.5 %]">
+<TABLE ALIGN="CENTER" WIDTH="100%" BGCOLOR="[% user.colors.bg_5 %]">
 <TR><TD>
 
 <P>
@@ -40,7 +40,7 @@ Not all options are available for all message types.
 
 </TD></TR>
 
-	<TR><TD><TABLE ALIGN="LEFT" BGCOLOR="[% user.bg.2 %]">
+	<TR><TD><TABLE ALIGN="LEFT" BGCOLOR="[% user.colors.bg_2 %]">
 [% messages = Slash.getObject('Slash::Messages');
    FOR code = messagecodes.sort;
       moderef = { $modenone => deliverymodes.$modenone };
@@ -99,18 +99,18 @@ messages, disable it above.
 
 	[%# default_ium = user.messages_interuser_receive || Slash.MSG_IUM_FRIENDS %]
 
-	[[TR]][[TD]][[TABLE ALIGN="LEFT" BGCOLOR="[%# user.bg.2 %]"]]
+	[[TR]][[TD]][[TABLE ALIGN="LEFT" BGCOLOR="[%# user.colors.bg_2 %]"]]
 [[TR]]
 	[[TD]][[B]]Only Your Friends[[/B]][[/TD]]
-	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_FRIENDS %]"[%# default_ium == Slash.MSG_IUM_FRIENDS ? 'CHECKED' : '' %]]][[/TD]]
+	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_FRIENDS %]"[%# IF default_ium == Slash.MSG_IUM_FRIENDS; constants.markup_checked_attribute; END %]]][[/TD]]
 [[/TR]]
 [[TR]]
 	[[TD]][[B]]Anyone[[/B]][[/TD]]
-	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_ANYONE %]"[%# default_ium == Slash.MSG_IUM_ANYONE ? 'CHECKED' : '' %]]][[/TD]]
+	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_ANYONE %]"[%# IF default_ium == Slash.MSG_IUM_ANYONE; constants.markup_checked_attribute; END %]]][[/TD]]
 [[/TR]]
 [[TR]]
 	[[TD]][[B]]Anyone except for foes[[/B]][[/TD]]
-	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_NOFOES %]"[%# default_ium == Slash.MSG_IUM_NOFOES ? 'CHECKED' : '' %]]][[/TD]]
+	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_NOFOES %]"[%# IF default_ium == Slash.MSG_IUM_NOFOES; constants.markup_checked_attribute; END %]]][[/TD]]
 [[/TR]]
 	[[/TABLE]][[/TD]][[/TR]]
 -->

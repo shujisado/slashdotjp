@@ -49,9 +49,11 @@ use vars qw($VERSION @EXPORT);
 
 # really, these should not be used externally, but we leave them
 # here for reference as to what is in the package
+# The above sentence is a very old comment;  still true, or is it
+# OK to export these? - Jamie 2004/07/08
 # @EXPORT_OK = qw(
 # 	getSectionBlock
-# 	getSectionColors
+# 	getSkinColors
 # );
 
 #========================================================================
@@ -102,10 +104,11 @@ The 'html-header' and 'header' template blocks.
 =cut
 
 sub header {
-	my($data, $section, $options) = @_;
+	my($data, $skin_name, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
 
 	my $adhtml = '';
 	my $display;
@@ -143,12 +146,24 @@ sub header {
 		return if $r->header_only;
 	}
 
-	$user->{currentSection} = $section || $constants->{section};
-	getSectionColors();
+	my $skid = 0;
+	if ($skin_name) {
+		my $skin = $slashdb->getSkin($skin_name);
+		$skid = $skin->{skid} if $skin;
+	}
+#print STDERR scalar(localtime) . " $$ header skin_name='$skin_name' skid='$skid' det='" . determineCurrentSkin() . "'\n";
+	setCurrentSkin($skid || determineCurrentSkin());
+	getSkinColors();
 
-	# This is ALWAYS displayed. Let the template handle title.
+	# This is ALWAYS displayed. Let the template handle the title
+	# of the whole webpage itself.
 	my $template_vars = { title => $data->{title} };
-	$template_vars->{meta_desc} = $options->{meta_desc} if $options->{meta_desc};
+	# Other data that the template may want:  the text for the
+	# meta-description tag, and if a story is being displayed,
+	# the title of the story.
+	for my $key (qw( meta_desc story_title )) {
+		$template_vars->{$key} = $options->{$key} if $options->{$key};
+	}
 	slashDisplay('html-header', $template_vars, { Nocomm => 1,  Return => $options->{Return}, Page => $options->{Page} })
 		unless $options->{noheader};
 
@@ -159,7 +174,7 @@ sub header {
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
 	# ...which is silly. - Jamie 2002/06/26
 	if ($form->{ssi} && $form->{ssi} eq 'yes') {
-		ssiHeadFoot('header', $section, $options);
+		ssiHeadFoot('header', $options);
 		# Since $form->{ssi} is set by freshenup.pl, we're being run
 		# from a task.  We do want to generate the rest of the page,
 		# so return true.
@@ -188,8 +203,11 @@ sub header {
 	if ($constants->{admin_check_clearpass}
 		&& ($user->{state}{admin_clearpass_thisclick} || $user->{admin_clearpass})
 	) {
-		if ($user->{currentPage} eq 'users'
-			&& $form->{op} eq 'savepasswd') {
+		if (
+			($user->{currentPage} eq 'login' && $form->{op} eq 'saveprefs')
+				||
+			($user->{currentPage} eq 'users' && $form->{op} eq 'savepasswd')
+		) {
 			# The user is trying to save a new password with this
 			# very click. They may or may not succeed. Their admin
 			# privs for this click were already taken away in
@@ -321,8 +339,7 @@ sub footer {
 	my $display;
 
         if ($form->{ssi} && $form->{ssi} eq 'yes') {
-		my $section = $user->{currentSection} || $constants->{section};
-                ssiHeadFoot('footer', $section, $options);
+                ssiHeadFoot('footer', $options);
                 return 1;
         }
 
@@ -400,28 +417,28 @@ The 'ssihead' template block.
 =cut
 
 sub ssiHeadFoot {
-	my($headorfoot, $section, $options) = @_;
+	my($headorfoot, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $slashdb = getCurrentDB();
-	(my $dir = $constants->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
-#	my $hostname = $slashdb->getSection($user->{currentSection}, 'hostname')
-#		if $user->{currentSection};
+	my $gSkin = getCurrentSkin();
+	(my $dir = $gSkin->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
+	my $hostname = $gSkin->{hostname};
 	my $page = $options->{Page} || $user->{currentPage} || 'misc';
 
 	# if there's a special .inc header for this page, use it, else it's
 	# business as usual.
 	$page = '' unless ($page ne 'misc' && $slashdb->existsTemplate({
-		name    => $headorfoot,
-	        section => $user->{currentSection},
-	        page    => $user->{currentPage} }));
+		name	=> $headorfoot,
+	        skin	=> $gSkin->{name},
+	        page	=> $user->{currentPage} }));
 
 	my $ssiheadorfoot = 'ssi' . substr($headorfoot, 0, 4);
 
 	slashDisplay($ssiheadorfoot, {
 		dir	=> $dir,
-		section => $user->{currentSection} ? "$user->{currentSection}/" : "",
-		page    => $page,
+		skin	=> $gSkin->{skid} == $constants->{mainpage_skid} ? "" : "$gSkin->{name}/",
+		page	=> $page,
 	}, { Return => $options->{Return}, Page => $options->{Page} });
 }
 
@@ -638,7 +655,7 @@ EOT
 			# if we're called from shtml, we won't have colors
 			# set, so we should get some set before making a
 			# box.				-- Pater
-			getSectionColors() unless $user->{bg};
+			getSkinColors() unless $user->{colors};
 
 			return fancybox($constants->{fancyboxwidth}, 'Advertisement', "<CENTER>" . $user->{state}{ad}{$num} . "</CENTER>", 1, 1);
 		} else { return ""; }
@@ -670,24 +687,44 @@ sub getSectionBlock {
 
 
 ########################################################
-# Sets the appropriate @fg and @bg color pallete's based
-# on what section you're in.  Used during initialization
-sub getSectionColors {
-	my $constants = getCurrentStatic();
+# Sets the appropriate @fg and @bg color palettes based
+# on what skin you're in.  Used during initialization.
+# Also used after resetting the current skin to something
+# else (which happens pretty rarely, but still).
+# This is here for reverse compatibility only, we hope it
+# will go away eventually. - Jamie 2004/06
+# Also, it's kinda misnamed, since it only returns success/failure,
+# the actual color data is put into $user->{colors}
+sub getSkinColors {
 	my $user = getCurrentUser();
-	my @colors;
-	my $colorblock = getCurrentForm('colorblock');
 
-	# they damn well better be legit
+	# If this data is funky, bad colors result.  But we filter it
+	# (both here and in filter_params) so it cannot be used
+	# against us.
+	my $colorblock = getCurrentForm('colorblock');
 	if ($colorblock) {
-		@colors = map { s/[^\w#]+//g ; $_ } split m/,/, $colorblock;
-	} else {
-		@colors = split m/,/, getSectionBlock('colors') || $constants->{colors};
+		my @tempcolors = map { s/[^\w#]+//g ; $_ } split m/,/, $colorblock;
+		my $n_colors = scalar(@tempcolors);
+
+		my $colors = {};
+		for (my $i=0; $i < $n_colors/2; $i++) {
+			my $j = $i + $n_colors/2;
+			$colors->{"fg_$i"} = $tempcolors[$i];
+			$colors->{"bg_$i"} = $tempcolors[$j];
+		}
+		$user->{colors} = $colors;
+		return 1;
 	}
 
-	my $n_colors = scalar(@colors);
-	$user->{fg} = [@colors[0..$n_colors/2-1]];
-	$user->{bg} = [@colors[$n_colors/2..$n_colors-1]];
+	# The normal situation (no colorblock param in the URL).
+	if (my $gSkin = getCurrentSkin()) {
+		$user->{colors} = $gSkin->{hexcolors};
+		return 1;
+	}
+
+	# The current skin must not be defined, we can't do this yet.
+	errorLog("cannot call getSkinColors yet, current skin not defined");
+	return 0;
 }
 
 1;

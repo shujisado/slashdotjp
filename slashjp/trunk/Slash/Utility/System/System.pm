@@ -25,7 +25,6 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use Email::Valid;
 use Fcntl qw(:flock :seek);
 use File::Basename;
 use File::Path;
@@ -33,6 +32,7 @@ use File::Spec::Functions;
 use File::Temp 'tempfile';
 use Mail::Sendmail;
 use Slash::Custom::Bulkmail;	# Mail::Bulkmail
+use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Symbol 'gensym';
 use Time::HiRes ();
@@ -46,9 +46,11 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 	doEmail
 	sendEmail
 	doLog
+	doClampeLog
 	doLogInit
 	doLogPid
 	doLogExit
+	save2file
 	prog2file
 	makeDir
 );
@@ -112,7 +114,7 @@ sub sendEmail {
 	# of verbosity -- pudge
 	my $log_error = defined &main::verbosity ? main::verbosity() >= 3 : 1;
 
-	unless (Email::Valid->rfc822($addr)) {
+	unless (emailValid($addr)) {
 		errorLog("Can't send mail '$subject' to $addr: Invalid address")
 			if $log_error;
 		return 0;
@@ -151,9 +153,9 @@ sub sendEmail {
 
 { my($localhost);
 sub messageID {
-	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
 
-	my $host = $constants->{basedomain};
+	my $host = $gSkin->{basedomain};
 	if (!$localhost) {
 		chomp($localhost = `hostname`);
 		$localhost ||= '';
@@ -161,9 +163,9 @@ sub messageID {
 
 	my $msg_id;
 	if ($host eq $localhost || !length($localhost)) {
-		$msg_id = sprintf('%f-%d-slash@%s', Time::HiRes::time(), $$, $host);
+		$msg_id = sprintf('<%f-%d-slash@%s>', Time::HiRes::time(), $$, $host);
 	} else {
-		$msg_id = sprintf('%f-%d-slash-%s@%s', Time::HiRes::time(), $$, $localhost, $host);
+		$msg_id = sprintf('<%f-%d-slash-%s@%s>', Time::HiRes::time(), $$, $localhost, $host);
 	}
 	return $msg_id;
 }}
@@ -187,8 +189,7 @@ sub bulkEmail {
 			$subject, scalar localtime;
 	}
 
-	my $valid = Email::Valid->new();
-	my @list = grep { $valid->rfc822($_) } @$addrs;
+	my @list = grep { emailValid($_) } @$addrs;
 
 	my $bulk = Slash::Custom::Bulkmail->new(
 		From    => $constants->{mailfrom},
@@ -210,7 +211,8 @@ sub bulkEmail {
 	for my $fh ($goodfile, $badfile, $errfile) {
 		printf $fh "Ending bulkmail   '%s': %s\n\n",
 			$subject, scalar localtime;
-		close $fh;
+		# will close when $bulk goes anyway anyway
+		#close $fh;
 	}
 
 	return $return;
@@ -233,9 +235,13 @@ sub doEmail {
 	}
 }
 
+{
+my $exit_func;
 sub doLogPid {
-	my($fname, $nopid, $sname) = @_;
-	$sname ||= $fname;
+	my($fname, $options) = @_;
+	my $nopid = $options->{nopid};
+	my $sname = $options->{sname} || $fname;
+	$exit_func = $options->{exit_func};
 
 	my $fh      = gensym();
 	my $dir     = getCurrentStatic('logdir');
@@ -264,6 +270,7 @@ sub doLogPid {
 
 	# do this for all things, not just ones needing a .pid
 	$SIG{TERM} = $SIG{INT} = sub {
+		&$exit_func() if $exit_func;
 		doLog($fname, ["Exiting $sname ($_[0]) with pid $$"]);
 		# Don't delete the .pid file unless we wrote it.
 		# Yes, this next line does what you'd expect;  $nopid is
@@ -278,23 +285,33 @@ sub doLogPid {
 		exit 0;
 	};
 }
+}
 
 sub doLogInit {
-	my($fname, $nopid, $sname) = @_;
-	$sname ||= $fname;
+	my($fname, $options) = @_;
+	$options ||= { };
+	my $nopid = $options->{nopid};
+	my $sname = $options->{sname} || $fname;
+	my $exit_func = $options->{exit_func};
 
 	my $dir     = getCurrentStatic('logdir');
 	my $file    = catfile($dir, "$fname.log");
 
 	mkpath $dir, 0, 0775;
-	doLogPid($fname, $nopid, $sname);
+	doLogPid($fname, {
+		nopid => $nopid,
+		sname => $sname,
+		exit_func => $exit_func
+	});
 	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
 	doLog($fname, ["Starting $sname with pid $$"]);
 }
 
 sub doLogExit {
-	my($fname, $nopid, $sname) = @_;
-	$sname ||= $fname;
+	my($fname, $options) = @_;
+	$options ||= { };
+	my $nopid = $options->{nopid};
+	my $sname = $options->{sname} || $fname;
 
 	my $dir     = getCurrentStatic('logdir');
 	my $file    = catfile($dir, "$fname.pid");
@@ -328,6 +345,61 @@ sub doLog {
 	print     $log_msg if $stdout;
 	close $fh;
 }
+
+# this is a temporary function needed to log to an arbitrary directory for
+# stats gathering. It can probably be deleted once clampe's research is done
+# but is needed for now, since I don't want to hack up doLog() just for some
+# temporary stats. --Pater
+sub doClampeLog {
+        my($fname, $msg, $stdout, $sname) = @_;
+        my @msg;
+        if (ref($msg) && ref($msg) eq 'ARRAY') {
+                @msg = @$msg;
+        } else {
+                @msg = ( $msg );
+        }       
+        chomp(@msg);
+                
+        $sname    ||= '';
+        $sname     .= ' ' if $sname;
+        my $fh      = gensym();
+        my $dir     = getCurrentStatic('clampe_stats_dir') || '/var/local/logs';
+        my $file    = catfile($dir, "$fname.log");
+        my $log_msg = scalar(localtime) . " $sname@msg\n";
+
+        open $fh, ">> $file\0" or die "Can't append to $file: $!\nmsg: @msg\n";
+        # flock($fh, LOCK_EX);
+        seek($fh, 0, SEEK_END);
+        print $fh $log_msg;
+        print     $log_msg if $stdout;
+        close $fh;
+}
+
+# Originally from open_backend.pl
+# will write out any data to a given file, but first check to see
+# if the data has changed, so clients don't
+# re-FETCH the file; if they send an If-Modified-Since, Apache
+# will just return a header saying the file has not been modified
+
+# $fudge is an optional coderef to munge the data before comparison
+
+sub save2file {
+	my($file, $data, $fudge) = @_;
+
+	if (open my $fh, '<', $file) {
+		my $current = do { local $/; <$fh> };
+		close $fh;
+		my $new = $data;
+		($current, $new) = $fudge->($current, $new) if $fudge;
+		return if $current eq $new;
+	}
+
+	open my $fh, '>', $file or die "Can't open > $file: $!";
+	print $fh $data;
+	close $fh;
+}
+
+
 
 # Originally from slashd/runtask
 #
@@ -390,22 +462,34 @@ sub prog2file {
 	}
 	my $bytes = length $data;
 
-	my $dir = dirname($filename);
-	my @created = mkpath($dir, 0, 0775) unless -e $dir;
-	if (!-e $dir or !-d _ or !-w _) {
-		$err_str .= " mkpath($dir) failed '"
-			. (-e _) . (-d _) . (-w _)
-			. " '@created'";
-	} elsif ($bytes == 0) {
-		$err_str .= " no data";
-	} else {
-		my $fh = gensym();
-		if (!open $fh, "> $filename\0") {
-			$err_str .= " could not write to '$filename': '$!'";
+	if ($stderr_text =~ /\b(ID \d+, \w+;\w+;\w+) :/) {
+		my $template = $1;
+		my $error = "task operation aborted, error in template $template";
+		$err_str .= " $error";
+		# template error, don't write file
+		if (defined &main::slashdErrnote) {
+			main::slashdErrnote("$error: $stderr_text");
 		} else {
-			print $fh $data;
-			close $fh;
-			$success = 1;
+			doLog('slashd', ["$error: $stderr_text"]);
+		}
+	} else {
+		my $dir = dirname($filename);
+		my @created = mkpath($dir, 0, 0775) unless -e $dir;
+		if (!-e $dir or !-d _ or !-w _) {
+			$err_str .= " mkpath($dir) failed '"
+				. (-e _) . (-d _) . (-w _)
+				. " '@created'";
+		} elsif ($bytes == 0) {
+			$err_str .= " no data";
+		} else {
+			my $fh = gensym();
+			if (!open $fh, "> $filename\0") {
+				$err_str .= " could not write to '$filename': '$!'";
+			} else {
+				print $fh $data;
+				close $fh;
+				$success = 1;
+			}
 		}
 	}
 

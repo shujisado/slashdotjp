@@ -34,7 +34,7 @@ Some of your past moderations have been meta-moderated by other
 [% IF msg.mode == 1%]
 <UL>
 [% FOREACH m2item = m2 -%]
-	<LI> "<A HREF="[% constants.rootdir; m2item.url | strip_attribute %]">[% m2item.subj %]</A>" from the discussion
+	<LI> "<A HREF="[% gSkin.rootdir; m2item.url | strip_attribute %]">[% m2item.subj %]</A>" from the discussion
 	"[% m2item.title %]" which you moderated as <B>[% m2item.reason.name %]</B> was voted 
 	<B>[% vote_result.${m2item.vote} %]</B>.
 
@@ -52,6 +52,12 @@ Some of your past moderations have been meta-moderated by other
 [%- END %]
 [% END %]
 [%- END -%]
+[% IF (m2_summary.fair + m2_summary.unfair) > 0;
+	"Summary of your recent moderation: " ;
+	Slash.getData("percentage", { sum => m2_summary.fair, count => (m2_summary.fair + m2_summary.unfair )}, "misc");
+	" Fair";
+	IF msg.mode == 1; "<P>"; END;
+END %]
 [%
 	msg1 = '';
 	msg2 = '';

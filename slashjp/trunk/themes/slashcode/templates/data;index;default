@@ -36,7 +36,7 @@ __template__
 	%]
 
 [% CASE 'userboxhead' %]
-	[% user.nickname %]'s Slashbox
+	[% user.nickname | strip_literal %]'s Slashbox
 
 [% CASE 'friends_journal_head' %]
 	[% returnme.data_constant = 1 %] 
@@ -70,6 +70,9 @@ __template__
 
 [% CASE 'edit' %]
 	Edit
+
+[% CASE 'remark_thanks' %]
+	<p><b>Thanks for your remark to our editors!</b><p>
 
 [% END %]
 

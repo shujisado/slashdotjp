@@ -20,6 +20,7 @@ sub main {
 	my $reader    = getObject('Slash::DB', { db_type => 'reader' });
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
+	my $gSkin     = getCurrentSkin();
 
 	if ($constants->{journal_soap_enabled}) {
 		my $r = Apache->request;
@@ -76,6 +77,7 @@ sub main {
 	# journal.pl waits until it's inside the op's subroutine to print
 	# its header.  Headers are bottlenecked through _printHead.
 
+	# XXXSECTIONTOPICS might want to check if these calls are still necessary after section topics is complete
 	# this is a hack, think more on it, OK for now -- pudge
 	# I think this needs to be part of cramming all possible
 	# user init code into getUser(). Saving a few nanoseconds
@@ -85,7 +87,7 @@ sub main {
 	# and that determines color.  we could set the color in the
 	# user init code, and then change it later in header() only
 	# if section is defined, perhaps. -- pudge
-	Slash::Utility::Anchor::getSectionColors();
+	Slash::Utility::Anchor::getSkinColors();
 
 	my $op = $form->{'op'};
 	if (!$op || !exists $ops{$op} || !$ops{$op}[ALLOWED]) {
@@ -95,12 +97,12 @@ sub main {
 	# hijack RSS feeds
 	if ($form->{content_type} eq 'rss') {
 		if ($op eq 'top' && $top_ok) {
-			displayTopRSS($journal, $constants, $user, $form, $reader);
+			displayTopRSS($journal, $constants, $user, $form, $reader, $gSkin);
 		} else {
-			displayRSS($journal, $constants, $user, $form, $reader);
+			displayRSS($journal, $constants, $user, $form, $reader, $gSkin);
 		}
 	} else {
-		$ops{$op}[FUNCTION]->($journal, $constants, $user, $form, $reader);
+		$ops{$op}[FUNCTION]->($journal, $constants, $user, $form, $reader, $gSkin);
 		my $r;
 		if ($r = Apache->request) {
 			return if $r->header_only;
@@ -136,10 +138,12 @@ sub displayTop {
 }
 
 sub displayFriends {
-	my($journal, $constants, $user, $form, $reader) = @_;
+	my($journal, $constants, $user, $form, $reader, $gSkin) = @_;
 
-	redirect("$constants->{rootdir}/search.pl?op=journals") 
+	redirect("$gSkin->{rootdir}/search.pl?op=journals") 
 		if $user->{is_anon};
+
+	_validFormkey('generate_formkey') or return;
 
 	_printHead("mainhead") or return;
 
@@ -199,42 +203,85 @@ sub searchUsers {
 }
 
 sub displayRSS {
-	my($journal, $constants, $user, $form, $reader) = @_;
+	my($journal, $constants, $user, $form, $reader, $gSkin) = @_;
 
-	my $uid		= $form->{uid} ? $form->{uid} : $reader->getUserUID($form->{nick});
-	$user		= $reader->getUser($uid, ['nickname', 'fakeemail']) if $uid;
-	$uid		= $uid || $user->{uid};
-	my $nickname	= $user->{nickname};
+	my($juser, $articles);
+	if ($form->{uid} || $form->{nick}) {
+		my $uid = $form->{uid} ? $form->{uid} : $reader->getUserUID($form->{nick});
+		$juser  = $reader->getUser($uid);
+	}
+	$juser ||= $user;
 
-	my $articles = $journal->getsByUid($uid, 0, 15);
+	if ($form->{op} eq 'friendview') {
+		my $zoo   = getObject('Slash::Zoo');
+		my $uids  = $zoo->getFriendsUIDs($juser->{uid});
+		$articles = $journal->getsByUids($uids, 0, $constants->{journal_default_display} * 3);
+	} else {
+		# give an extra 3 * the normal HTML default display ... we can
+		# make a new var if we really need one -- pudge
+		$articles = $journal->getsByUid($juser->{uid}, 0, $constants->{journal_default_display} * 3);
+	}
+
 	my @items;
 	for my $article (@$articles) {
+		my($nickname, $juid);
+		if ($form->{op} eq 'friendview') {
+			$nickname = $article->[8];
+			$juid     = $article->[7];
+		} else {
+			$nickname = $juser->{nickname};
+			$juid     = $juser->{uid};
+		}
+
 		push @items, {
 			story		=> {
 				'time'		=> $article->[0],
+				uid		=> $juid,
+				tid		=> $article->[5],
 			},
 			title		=> $article->[2],
 			description	=> strip_mode($article->[1], $article->[4]),
-			'link'		=> "$constants->{absolutedir}/~" . fixparam($nickname) . "/journal/$article->[3]"
+			'link'		=> root2abs() . '/~' . fixparam($nickname) . "/journal/$article->[3]",
 		};
 	}
 
-	my $usertext = $nickname;
-	$usertext .= " <$user->{fakeemail}>" if $user->{fakeemail};
+	my $rss_html = $constants->{journal_rdfitemdesc_html} && (
+		$user->{is_admin}
+			||
+		($constants->{journal_rdfitemdesc_html} == 1)
+			||
+		($constants->{journal_rdfitemdesc_html} > 1 && $user->{is_subscriber})
+			||
+		($constants->{journal_rdfitemdesc_html} > 2 && !$user->{is_anon})
+	);
+
+	my($title, $journals, $link);
+	if ($form->{op} eq 'friendview') {
+		$title    = "$juser->{nickname}'s Friends'";
+		$journals = 'Journals';
+		$link     = '/journal/friends/';
+	} else {
+		$title    = "$juser->{nickname}'s";
+		$journals = 'Journal';
+		$link     = '/journal/';
+	}
+
 	xmlDisplay(rss => {
 		channel => {
-			title		=> "$constants->{sitename} Journals",
-			description	=> "${nickname}'s Journal",
-			'link'		=> "$constants->{absolutedir}/~" . fixparam($nickname) . "/journal/",
-			creator		=> $usertext,
+			title		=> "$title $journals",
+			description	=> "$title $constants->{sitename} $journals",
+			'link'		=> root2abs() . '/~' . fixparam($juser->{nickname}) . $link,
+			creator		=> $juser->{nickname},
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc		=> $constants->{journal_rdfitemdesc},
+		rdfitemdesc_html	=> $rss_html,
 	});
 }
 
 sub displayTopRSS {
-	my($journal, $constants, $user, $form, $reader) = @_;
+	my($journal, $constants, $user, $form, $reader, $gSkin) = @_;
 
 	my $journals;
 	my $type;
@@ -261,7 +308,7 @@ sub displayTopRSS {
 
 		push @items, {
 			title	=> $title,
-			'link'	=> "$constants->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/"
+			'link'	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/"
 		};
 	}
 
@@ -269,7 +316,7 @@ sub displayTopRSS {
 		channel => {
 			title		=> "$constants->{sitename} Journals",
 			description	=> "Top $constants->{journal_top} Journals",
-			'link'		=> "$constants->{absolutedir}/journal.pl?op=top",
+			'link'		=> "$gSkin->{absolutedir}/journal.pl?op=top",
 		},
 		image	=> 1,
 		items	=> \@items
@@ -280,7 +327,7 @@ sub displayArticleFriends {
 	my($journal, $constants, $user, $form, $reader) = @_;
 	my($date, $forward, $back, $nickname, $uid);
 	my @collection;
-	my $zoo   = getObject('Slash::Zoo');
+	my $zoo = getObject('Slash::Zoo');
 
 	if ($form->{uid} || $form->{nick}) {
 		$uid		= $form->{uid} ? $form->{uid} : $reader->getUserUID($form->{nick});
@@ -550,7 +597,7 @@ sub listArticle {
 }
 
 sub saveArticle {
-	my($journal, $constants, $user, $form, $reader, $ws) = @_;
+	my($journal, $constants, $user, $form, $reader, $gSkin, $ws) = @_;
 	$form->{description} =~ s/[\r\n].*$//s;  # strip anything after newline
 	my $description = strip_notags($form->{description});
 
@@ -579,13 +626,12 @@ sub saveArticle {
 		# note: comments_on is a special case where we are
 		# only turning on comments, not saving anything else
 		if ($constants->{journal_comments} && $form->{journal_discuss} ne 'disabled' && !$article->{discussion}) {
-			my $rootdir = $constants->{real_rootdir};
+			my $rootdir = $gSkin->{rootdir};
 			if ($form->{comments_on}) {
 				$description = $article->{description};
 				$form->{tid} = $article->{tid};
 			}
 			my $did = $slashdb->createDiscussion({
-				section	=> $constants->{real_section}, # for now, journals should be section-agnostic
 				title	=> $description,
 				topic	=> $form->{tid},
 				commentstatus	=> $form->{journal_discuss},
@@ -623,9 +669,8 @@ sub saveArticle {
 		}
 
 		if ($constants->{journal_comments} && $form->{journal_discuss} ne 'disabled') {
-			my $rootdir = $constants->{'rootdir'};
+			my $rootdir = $gSkin->{rootdir};
 			my $did = $slashdb->createDiscussion({
-				section	=> $constants->{real_section}, # for now, journals should be section-agnostic
 				title	=> $description,
 				topic	=> $form->{tid},
 				commentstatus	=> $form->{journal_discuss},
@@ -687,7 +732,7 @@ sub removeArticle {
 }
 
 sub editArticle {
-	my($journal, $constants, $user, $form, $reader, $nohead) = @_;
+	my($journal, $constants, $user, $form, $reader, $gSkin, $nohead) = @_;
 	# This is where we figure out what is happening
 	my $article = {};
 	my $posttype;
@@ -756,9 +801,16 @@ sub editArticle {
 
 sub _validFormkey {
 	my(@checks) = @_ ? @_ : qw(max_post_check interval_check formkey_check);
+	my $form = getCurrentForm();
 	my $error;
+
+	my $formname = 0;
+	my @caller = caller(1);
+	$formname = 'zoo' if $checks[0] eq 'generate_formkey'
+		&& $caller[3] =~ /\bdisplayFriends$/;
+
 	for (@checks) {
-		last if formkeyHandler($_, 0, 0, \$error);
+		last if formkeyHandler($_, $formname, 0, \$error);
 	}
 
 	if ($error) {
@@ -767,7 +819,7 @@ sub _validFormkey {
 		return 0;
 	} else {
 		# why does anyone care the length?
-		getCurrentDB()->updateFormkey(0, length(getCurrentForm()->{article}));
+		getCurrentDB()->updateFormkey(0, length($form->{article}));
 		return 1;
 	}
 }
@@ -827,6 +879,7 @@ sub modify_entry {
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
 	my $slashdb   = getCurrentDB();
+	my $gSkin     = getCurrentSkin();
 
 	$id =~ s/\D+//g;
 
@@ -842,7 +895,7 @@ sub modify_entry {
 
 	no strict 'refs';
 	my $saveArticle = *{ $user->{state}{packagename} . '::saveArticle' };
-	my $newid = $saveArticle->($journal, $constants, $user, $entry, $slashdb, 1);
+	my $newid = $saveArticle->($journal, $constants, $user, $entry, $slashdb, $gSkin, 1);
 	return $newid == $id ? $id : undef;
 }
 
@@ -852,6 +905,7 @@ sub add_entry {
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
 	my $slashdb   = getCurrentDB();
+	my $gSkin     = getCurrentSkin();
 
 	return if $user->{is_anon};
 
@@ -866,7 +920,7 @@ sub add_entry {
 	my $saveArticle = *{ $user->{state}{packagename} . '::saveArticle' };
 	$slashdb->createFormkey('journal');
 	my $reader = getObject('Slash::DB', { db_type => 'reader' }); # We need it for the eventual display
-	my $id = $saveArticle->($journal, $constants, $user, $form, $reader, 1);
+	my $id = $saveArticle->($journal, $constants, $user, $form, $reader, $gSkin, 1);
 	return $id;
 }
 
@@ -887,6 +941,7 @@ sub get_entry {
 	my $journal   = getObject('Slash::Journal');
 	my $constants = getCurrentStatic();
 	my $slashdb   = getCurrentDB();
+	my $gSkin     = getCurrentSkin();
 
 	$id =~ s/\D+//g;
 
@@ -894,9 +949,9 @@ sub get_entry {
 	return unless $entry->{id};
 
 	$entry->{nickname} = $slashdb->getUser($entry->{uid}, 'nickname');
-	$entry->{url} = "$constants->{absolutedir}/~" . fixparam($entry->{nickname}) . "/journal/$entry->{id}";
+	$entry->{url} = "$gSkin->{absolutedir}/~" . fixparam($entry->{nickname}) . "/journal/$entry->{id}";
 	$entry->{discussion_id} = delete $entry->{'discussion'};
-	$entry->{discussion_url} = "$constants->{absolutedir}/comments.pl?sid=$entry->{discussion_id}"
+	$entry->{discussion_url} = "$gSkin->{absolutedir}/comments.pl?sid=$entry->{discussion_id}"
 		if $entry->{discussion_id};
 	$entry->{body} = delete $entry->{article};
 	$entry->{subject} = delete $entry->{description};
@@ -909,6 +964,7 @@ sub get_entries {
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
 	my $slashdb   = getCurrentDB();
+	my $gSkin     = getCurrentSkin();
 
 	$uid =~ s/\D+//g;
 	$num =~ s/\D+//g;
@@ -924,7 +980,7 @@ sub get_entries {
 	for my $article (@$articles) {
 		push @items, {
 			subject	=> $article->[2],
-			url	=> "$constants->{absolutedir}/~" . fixparam($nickname) . "/journal/$article->[3]",
+			url	=> "$gSkin->{absolutedir}/~" . fixparam($nickname) . "/journal/$article->[3]",
 			id	=> $article->[3],
 		};
 	}
@@ -962,7 +1018,7 @@ sub _save_params {
 		return;
 	}
 
-	$form{journal_discuss} = 'discuss' if $form{journal_discuss} == 1;
+	$form{journal_discuss} = 'enabled' if $form{journal_discuss} == 1;
 	$form{tid} =~ s/\D+//g;
 
 	return \%form;

@@ -11,7 +11,7 @@ use Slash::Constants ':slashd';
 
 use strict;
 
-use vars qw( %task $me );
+use vars qw( %task $me $task_exit_flag );
 
 my $total_freshens = 0;
 
@@ -21,17 +21,21 @@ $task{$me}{timespec_panic_2} = '';
 $task{$me}{on_startup} = 1;
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
-	my($virtual_user, $constants, $slashdb, $user, $info) = @_;
+	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin) = @_;
 	my $start_time = time;
 	my $basedir = $constants->{basedir};
 	my $vu = "virtual_user=$virtual_user";
 	my $args = "$vu ssi=yes";
-	my %updates;
+	my %dirty_skins = ( );
+	my $stories;
 
-	# Every third invocation, we do a big chunk of work.  But the
-	# other two times, we just update the top three stories and
-	# the front page, skipping sectional stuff and other stories.
-	my $do_all = ($info->{invocation_num} % 3 == 1) || 0;
+	# Every tenth invocation, we do a big chunk of work.  The other
+	# nine times, we update the top three stories and the front
+	# page, skipping all other nexuses and other stories -- and to
+	# preserve the stories table's query cache, we only update
+	# commentcount/hitparades if at least one of those three stories
+	# had a small commentcount.
+	my $do_all = ($info->{invocation_num} % 10 == 1) || 0;
 
 	# If run with runtask, you can specify some options on the comand
 	# line, e.g. to chew through writing .shtml files to disk for up
@@ -47,42 +51,95 @@ $task{$me}{code} = sub {
 		: 100;
 	$max_stories = 3 unless $do_all;
 
+	############################################################
+	# deletions
+	############################################################
+
 	if ($do_all) {
 		my $x = 0;
-		# this deletes stories that have a writestatus of 'delete'
-		my $deletable = $slashdb->getStoriesWithFlag(
-			'delete',
-			'ASC',
-			$max_stories
-		);
+		my $deletable = $slashdb->getStoriesToDelete($max_stories);
 		for my $story (@$deletable) {
 			$x++;
-			$updates{$story->{section}} = 1;
-			$slashdb->deleteStoryAll($story->{sid});
+			$dirty_skins{$story->{primaryskid}} = 1;
+			$slashdb->deleteStoryAll($story->{stoid});
 			slashdLog("Deleting $story->{sid} ($story->{title})")
 				if verbosity() >= 1;
 		}
 	}
 
-	my $stories;
-	
+	############################################################
+	# users_count update (memcached and var)
+	############################################################
+
+	$slashdb->countUsers({ write_actual => 1 });
+
+	############################################################
+	# story_topics_rendered updates
+	############################################################
+
+	# Write new values into story_topics_rendered for any stories
+	# which may have been affected by a topic tree change.  There
+	# may be a large number of these (thousands?) and while we
+	# can't do them all at once, we don't want to kill performance
+	# by nuking the story_topics_rendered query cache every minute
+	# while we do them piecemeal.  So instead, we try to take a
+	# big bite out of what needs to be done while there are stories
+	# within the latest 1000 that need this, and then afterwards,
+	# take a smaller bite every 10 minutes at a do_all.  These
+	# actually get processed pretty fast.
+	$stories = $slashdb->getSRDsWithinLatest(1000);
+	if (!@$stories) {
+		if ($do_all) {
+			# Try the smaller bite.
+			$stories = $slashdb->getSRDs($max_stories);
+		} else {
+			# Either there's nothing to be done or there's
+			# nothing urgent enough to be done.  Leave the
+			# arrayref empty, do nothing now.
+		}
+	}
+	# We're going to build up a hash that contains everything we
+	# want to do, and apply it all at once, because if we're going
+	# to nuke the query cache we might as well get it over with
+	# quickly.
+	if ($stories && @$stories) {
+		my $update_hr = $slashdb->buildStoryRenderHashref($stories);
+		$slashdb->applyStoryRenderHashref($update_hr)
+			if !$task_exit_flag;
+		$slashdb->markStoriesRenderClean($stories)
+			if !$task_exit_flag;
+	}
+
+	############################################################
+	# story_text.rendered updates
+	############################################################
+
 	# Render any stories that need rendering.  This used to be done
 	# by admin.pl;  now admin.pl just sets story_text.rendered=NULL
 	# and lets this task do it.
 
-	$stories = $slashdb->getStoriesNeedingRender(
+	my %story_set = ( );
+	my $story_update_ar = $slashdb->getStoriesNeedingRender(
 		$do_all ? 10 : 3
 	);
-	STORIES_RENDER: for my $sid (@$stories) {
+	STORIES_RENDER: for my $story_hr (@$story_update_ar) {
+
+		my $stoid = $story_hr->{stoid};
+		my $last_update = $story_hr->{last_update};
 
 		# Don't run forever...
 		if (time > $start_time + $timeout_render) {
 			slashdLog("Aborting stories at render, too much elapsed time");
 			last STORIES_RENDER;
 		}
+		if ($task_exit_flag) {
+			slashdLog("Aborting stories at render, got SIGUSR1");
+			last STORIES_RENDER;
+		}
 
 		my $rendered;
 		{
+			# XXXSKIN - not sure what to do here yet ...
 			local $user->{currentSection} = "index";
 			local $user->{noicons} = "";
 			local $user->{light} = "";
@@ -90,29 +147,54 @@ $task{$me}{code} = sub {
 			# ugly hack, but for now, needed: without it, when an
 			# editor edits in foo.sitename.com, saved stories get
 			# rendered with that section
-			Slash::Utility::Anchor::getSectionColors();
+			Slash::Utility::Anchor::getSkinColors();
 
-			$rendered = displayStory($sid, '', { get_cacheable => 1 });
+			$rendered = displayStory($stoid,
+				'', { force_cache_freshen => 1 });
 		}
-		$slashdb->setStory($sid, {
-			rendered =>	$rendered,
-			writestatus =>	'dirty',
-		});
+		$story_set{$stoid}{last_update} = $last_update;
+		$story_set{$stoid}{rendered} = $rendered;
+		$story_set{$stoid}{writestatus} = 'dirty';
 
 	}
+
+	############################################################
+	# rewrite .shtml files for stories
+	############################################################
 
 	# Freshen the static versions of any stories that have changed.
 	# This means writing the .shtml files.
 
-	$stories = $slashdb->getStoriesWithFlag(
-		$do_all ? 'all_dirty' : 'mainpage_dirty',
-		'DESC',
-		$max_stories
-	);
+	$stories = [ ];
+	if (!$task_exit_flag) {
+		my $mp_tid = $constants->{mainpage_nexus_tid};
+		$stories = $slashdb->getStoriesToRefresh($max_stories,
+			$do_all ? 0 : $mp_tid);
+	}
 
 	my $bailed = 0;
 	my $totalChangedStories = 0;
+	my $do_log;
+	my $logmsg;
+
+	# If 100 or more stories are marked as dirty, there is a backlog
+	# that we aren't able to get to in the 90-second chunks here.
+	# So extend more time to complete that work.  Note that since we
+	# cue off the number of stories returned, this will only be
+	# triggered during a $do_all pass, since otherwise the number of
+	# stories to process is capped at 3.
+	my $extra_minutes = int( scalar(@$stories)/100 );
+	if ($extra_minutes) {
+		$extra_minutes = 5 if $extra_minutes > 5;
+		$timeout_shtml += 60 * $extra_minutes;
+		slashdLog("Will process for $extra_minutes extra minutes, "
+			. scalar(@$stories) . " stories");
+	}
+
 	STORIES_FRESHEN: for my $story (@$stories) {
+
+		$do_log = (verbosity() >= 2);
+		$logmsg = "";
 
 		# Don't run forever freshening stories.  Before we
 		# stomp on too many other invocations of freshenup.pl,
@@ -120,20 +202,38 @@ $task{$me}{code} = sub {
 		# Since this task is run every minute, quitting after
 		# 90 seconds of work should mean we only stomp on the
 		# one invocation following.
+		# (But if there are many backlogged dirty stories, we
+		# may stomp on 2, 3, or more invocations -- oh well.)
 		if (time > $start_time + $timeout_shtml) {
 			slashdLog("Aborting stories at freshen, too much elapsed time");
 			last STORIES_FRESHEN;
 		}
+		if ($task_exit_flag) {
+			slashdLog("Aborting stories at freshen, got SIGUSR1");
+			last STORIES_FRESHEN;
+		}
 
-		my($sid, $title, $section, $displaystatus) =
-			@{$story}{qw( sid title section displaystatus )};
+		my($stoid, $sid, $title, $skid) =
+			@{$story}{qw( stoid sid title primaryskid )};
+		my $skinname = '';
+		my $story_skin = $slashdb->getSkin($skid) if $skid;
+		if (!$story_skin || !%$story_skin) {
+			slashdLog("skipping, nonexistent primaryskid '$skid' for $sid: $title");
+			next STORIES_FRESHEN;
+		}
+		$skinname = $story_skin->{name};
+
+		my $mp_tid = $constants->{mainpage_nexus_tid};
+		my $displaystatus = $slashdb->_displaystatus($story->{stoid});
+		
 		slashdLog("Updating $sid") if verbosity() >= 3;
-		$updates{$section} = 1;
+		# XXXSKIN no -- we should dirty *all* skins that this story is on
+		$dirty_skins{$skid} = 1;
 		if ($displaystatus == 0) {
 			# If this story goes on the mainpage, its being
 			# dirty means the main page is dirty too,
 			# regardless of which section the story is in.
-			$updates{$constants->{defaultsection}} = 1;
+			$dirty_skins{$constants->{mainpage_skid}} = 1;
 		}
 		$totalChangedStories++;
 
@@ -144,12 +244,14 @@ $task{$me}{code} = sub {
 
 		# Now call prog2file().
 		$args = "$vu ssi=yes sid='$sid'$cchp_param";
-		my($filename, $logmsg);
-		if ($section) {
-			$filename = "$basedir/$section/$sid.shtml";
-			$args .= " section='$section'";
-			$logmsg = "$me updated $section:$sid ($title)";
-			makeDir($basedir, $section, $sid);
+		my $filename;
+		if ($skid) {
+			# XXXSKIN - more hardcoding (see Slash::Utility::Display)
+			my $this_skinname = $skinname eq 'mainpage' ? 'articles' : $skinname;
+			$filename = "$basedir/$this_skinname/$sid.shtml";
+			$args .= " section='$skinname'";
+			$logmsg = "$me updated $stoid $skinname:$sid ($title)";
+			makeDir($basedir, $this_skinname, $sid);
 		} else {
 			$filename = "$basedir/$sid.shtml";
 			$logmsg = "$me updated $sid ($title)";
@@ -162,7 +264,6 @@ $task{$me}{code} = sub {
 				verbosity =>	verbosity(),
 				handle_err =>	1,
 			} );
-		my $do_log = (verbosity() >= 2);
 		if (!$success) {
 			$logmsg .= " success='$success'";
 			$do_log ||= (verbosity() >= 1);
@@ -171,56 +272,72 @@ $task{$me}{code} = sub {
 			$stderr_text =~ s/\s+/ /g;
 			$logmsg .= " stderr: '$stderr_text'";
 			$do_log ||= (verbosity() >= 1);
-		}
-
-		# if we wrote a section page previously replace
-		# old pages with a redirect to the current
-		# article
-
-		my @old_sect = $slashdb->getPrevSectionsForSid($sid);
-		if (@old_sect) {
-			for my $old_sect (@old_sect) {
-				next if $old_sect eq $section;
-				my $url = "$constants->{rootdir}/$section/$sid.shtml";
-				my $fn = "$basedir/$old_sect/$sid.shtml";
-				if (-e $fn) {
-					my $fh = gensym();
-					if (!open($fh, ">", $fn)) {
-						warn("Couldn't open file: $fn for writing");
-					} else {
-						print $fh slashDisplay("articlemoved", { url => $url },
-							{ Return => 1 } );
-						close $fh;
-					}
-				}
+			if ($stderr_text =~ /\b(ID \d+, \w+;\w+;\w+) :/) {
+				# template error, skip
+				slashdErrnote("template error updating $sid: $stderr_text");
+				next STORIES_FRESHEN;
 			}
-			$slashdb->clearPrevSectionsForSid($sid);
 		}
+
 		# Now we extract what we need from the file we created
-		my $set_ok = 0;
 		my($cc, $hp) = _read_and_unlink_cchp_file($cchp_file, $cchp_param);
 		if (defined($cc)) {
-			# all is well, data was found
-			$set_ok = $slashdb->setStory($sid, { 
-				writestatus  => 'ok',
-				commentcount => $cc,
-				hitparade    => $hp,
-			});
-		}
-		if (!$set_ok) {
-			$logmsg .= " setStory retval is '$set_ok'";
-			$do_log ||= (verbosity() >= 1);
+			$story_set{$stoid}{writestatus} = 'ok';
+			$story_set{$stoid}{commentcount} = $cc;
+			$story_set{$stoid}{hitparade} = $hp;
 		}
 
-		slashdLog($logmsg) if $do_log;
+		slashdLog($logmsg) if $logmsg && $do_log;
 	}
+
+	############################################################
+	# bulk-update commentcount and hitparade
+	############################################################
+
+	$do_log = (verbosity() >= 2);
+	$logmsg = "";
+	my $min_cc = "";
+	my $do_setstories = $do_all;
+	if (!$do_setstories) {
+		# We may still want to do it:  if one or more of the
+		# stories affected has a small commentcount, we want
+		# to get that updated.  Once numbers get larger,
+		# small increments don't matter as much.
+		my $stoids = [ keys %story_set ];
+		$min_cc = $slashdb->getMinCommentcount($stoids);
+		$do_setstories = 1 if $min_cc <= ($constants->{freshenup_small_cc} || 30);
+	}
+	if ($do_setstories) {
+		for my $stoid (sort { $a <=> $b } keys %story_set) {
+			my $options = undef;
+			$options->{last_updated} = $story_set{last_updated}
+				if $story_set{last_updated};
+			my $set_ok = $slashdb->setStory($stoid, $story_set{$stoid}, $options);
+			if (!$set_ok) {
+				$logmsg .= "; setStory($stoid) '$set_ok'";
+				$do_log ||= (verbosity() >= 1);
+			}
+		}
+		my $min_cc_msg = "";
+		if (!$do_all) {
+			$min_cc_msg = " (min_cc was $min_cc)";
+		}
+		slashdLog("setStory on " . scalar(keys %story_set) . " stories$min_cc_msg$logmsg")
+			if $do_log && keys %story_set;
+	}
+
+	############################################################
+	# rewrite .shtml files for mainpage index
+	############################################################
 
 	my $w = $slashdb->getVar('writestatus', 'value', 1);
 
-	my($base) = split(/\./, $constants->{index_handler});
+	my($base) = split(/\./, $gSkin->{index_handler});
 
 	# Does the homepage need to be freshened whether we think it's
 	# necessary or not?
+	# XXXSKIN I don't think this is useful anymore, with the dirty_skins
+	# loop below.  Should we nuke this and the 'writestatus' var? - Jamie
 	my $min_days = $constants->{freshen_homepage_min_minutes} || 0;
 	if ($min_days) {
 		# It's actually in minutes right now;  convert to days for -M.
@@ -234,55 +351,69 @@ $task{$me}{code} = sub {
 	# to keep track of it.  This may also affect whether we think we
 	# have to write the homepage out.
 	my $top_sid = $slashdb->getVar('top_sid', 'value', 1);
-	my $stories_ess = $slashdb->getStoriesEssentials(1);
+	my $stories_ess = $slashdb->getStoriesEssentials({ limit => 1, limit_extra => 0 });
 	my $new_top_sid = $stories_ess->[0]{sid};
 	if ($new_top_sid ne $top_sid) {
 		$w = 'notok';
 		$slashdb->setVar('top_sid', $new_top_sid);
 	}
 
-	my $dirty_sections;
+	my $skins_logmsg = "";
+	my $skins = $slashdb->getSkins();
+	my $dirty_skins = [ ];
 	if ($constants->{task_options}{run_all}) {
-		my $sections = $slashdb->getDescriptions('sections-all');
-		for (keys %$sections) {
-			push @$dirty_sections, $_;
-		}
+		$dirty_skins = [ keys %{ $skins                    } ];
 	} else {
-		$dirty_sections = $slashdb->getSectionsDirty();
+		$dirty_skins = $slashdb->getSkinsDirty();
 	}
-	for my $cleanme (@$dirty_sections) { $updates{$cleanme} = 1 }
+	for my $cleanme (@$dirty_skins) { $dirty_skins{$cleanme} = 1 }
 
 	$args = "$vu ssi=yes";
-	if ($updates{$constants->{defaultsection}} ne "" || $w ne "ok") {
-		my($base) = split(/\./, $constants->{index_handler});
+	if ($dirty_skins{$constants->{mainpage_skid}} ne "" || $w ne "ok") {
+		my $mp_skid = $constants->{mainpage_skid};
+		my($base) = split(/\./, $gSkin->{index_handler});
 		$slashdb->setVar("writestatus", "ok");
 		prog2file(
-			"$basedir/$constants->{index_handler}", 
+			"$basedir/$gSkin->{index_handler}", 
 			"$basedir/$base.shtml", {
-				args =>		"$args section='$constants->{section}'",
+				args =>		"$args section='$gSkin->{name}'",
 				verbosity =>	verbosity(),
 				handle_err =>	0
 		});
+		$slashdb->markSkinClean($mp_skid);
+		delete $dirty_skins{$mp_skid};
+		$skins_logmsg = "rewrote static skin pages for $skins->{$mp_skid}{name}";
 	}
 
+	############################################################
+	# rewrite .shtml files for other skins' indexes
+	############################################################
+
 	if ($do_all) {
-		for my $key (keys %updates) {
-			my $section = $slashdb->getSection($key);
-			createCurrentHostname($section->{hostname});
+		for my $key (sort { $a <=> $b } keys %dirty_skins) {
 			next unless $key;
-			my $index_handler = $section->{index_handler}
-				|| $constants->{index_handler};
+			my $skin = $slashdb->getSkin($key);
+			createCurrentHostname($skin->{hostname});
+			my $index_handler = $skin->{index_handler}
+				|| $gSkin->{index_handler};
 			next if $index_handler eq 'IGNORE';
 			my($base) = split(/\./, $index_handler);
+			# XXXSKIN - more hardcoding (see Slash::Utility::Display)
+			my $skinname = $skin->{name} eq 'mainpage' ? 'articles' : $skin->{name};
 			prog2file(
 				"$basedir/$index_handler", 
-				"$basedir/$key/$base.shtml", {
-					args =>		"$args section='$key'",
+				"$basedir/$skinname/$base.shtml", {
+					args =>		"$args section='$skin->{name}'",
 					verbosity =>	verbosity(),
 					handle_err =>	0
 			});
-			$slashdb->setSection($key, { writestatus => 'ok' });
+			$slashdb->markSkinClean($key);
+			$skins_logmsg ||= "rewrote static skin pages for";
+			$skins_logmsg .= " $skins->{$key}{name}";
 		}
+	}
+	if ($skins_logmsg) {
+		slashdLog($skins_logmsg) if verbosity() >= 1;
 	}
 
 	return $totalChangedStories ?

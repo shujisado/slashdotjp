@@ -300,15 +300,22 @@ You might find something that refutes, or supports, the story in the main.
 <h2>
 Slashdot seems to be very U.S.-centric. Do you have any plans to be more
 international in your scope?</h2>
-Slashdot <i>is</i> U.S.-centric. We readily admit this, and really don't
-see it as a problem. Slashdot is run by Americans, after all, and the <i>vast</i>
-majority of our readership is in the U.S. We're certainly not opposed to
-doing more international stories, but we don't have any formal plans for
-making that happen. All we can really tell you is that if you're outside
-the U.S. and you have news,&nbsp;<link>submit it, and if it looks interesting,
-we'll post it.
+
+Slashdot <i>is</i> U.S.-centric. We readily admit this, and really don't see it
+as a problem. Slashdot is run by Americans, after all, and the <i>vast</i>
+majority of our readership is in the U.S. We're certainly not opposed to doing
+more international stories, but we don't have any formal plans for making that
+happen. All we can really tell you is that if you're outside the U.S. and you
+have news,&nbsp;<link>submit it, and if it looks interesting, we'll post it.
+
+<P>It is worth noting that there is a <A href=http://slashdot.jp>Japanese
+Slashdot</A> run by VA Japan.  While we helped them a little in their early
+days, they essentially run their own content without any real involvement
+from us... none of us can read Kanji! There are currently no plans to do other 
+language or nation specific Slashdot sites.
+
 <p><i><font size=-1>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
-<br><i><font size=-1>Last Modified: 10/28/00</font></i>
+<br><i><font size=-1>Last Modified: 10/3/04</font></i>
 <br><a NAME="ed860"></a>
 <h2>
 Would you be interested in creating mirror sites in other languages and
@@ -353,12 +360,12 @@ clear things up.  Some sections have specific editors associated with them.
 Feel free to directly contact those editors with specific questions about
 the section.
 
-<H3>Articles</H3>
+<H3>Index</H3>
 This is Slashdot's catch-all category. If your submission
 doesn't fit better into one of the sections described below, you can
-always choose "Articles."  Of course, if you choose an appropriate
-section, your submission will be more quickly put in the hands of the
-right person.
+always choose "Index." Most submissions should go in this section, but if
+there is a more appropriate section, choosing it will get it into the
+hands of the right person more quickly.
 
 
 <H3>Apache</H3> The Apache section is for anything about the <a
@@ -389,7 +396,6 @@ in submitting book reviews to slashdot, make sure you've read through the
 guidelines</a>, too.
 <P><B>Editor</B> <A href=mailto:timothy@slashdot.org>timothy@slashdot.org</A>
 
-
 <H3>BSD</H3>
 The BSD section hosts news about the various modern UNIXes derived
 from Berkeley's distribution (like Free, Open and NetBSD).
@@ -407,15 +413,26 @@ are good you should be choosing Games.
 <P>Editors <A href=mailto:games@slashdot.org>games@slashdot.org</A>
 
 <H3>Geeks in Space</H3>
-Don't select this topic! Geeks in Space is an occasional
-web audio broadcast featuring several of the editors of Slashdot.
-If you select this as your section, it will almost certainly be
-laughed at and deleted unread.
+We've disabled this section for submissions (Geeks in Space is a web
+audio broadcast featuring several of the editors of Slashdot, which you
+may have forgotten since it hasn't had fresh episodes recently).
 
 <H3>Interviews</H3> This is a good place to suggest possible Slashdot interviewees
 (with contact information, if possible, and background material for
 un-informed editors).
 <P>Editor <A href=mailto:roblimo@slashdot.org>roblimo@slashdot.org</A>
+
+<H3>IT</H3>
+Anything that people with "Information Technology" in their job
+description might be interested to know.
+
+<H3>Linux</H3>
+The Linux section is for news specific to every penguin's favorite OS.
+
+<H3>Politics</H3>
+This section is for news relevant to United States government politics.
+It was created primarily to cover the 2004 US Presidential Election, but
+today exists for occasional stories that fit the bill.
 
 <H3>Polls</H3> 
 Submit your most thought-provoking poll questions here. Suggestion:
@@ -434,7 +451,7 @@ Spam, invasions of privacy, onerous licenses -- they all go here.
 
 
 <P><I><Font size=-1>Answered by: <A href="mailto:malda@slashdot.org">CmdrTaco</A></FONT>
-<BR><I><Font size=-1>Last Modified: 5/9/03</FONT></I>
+<BR><I><Font size=-1>Last Modified: 12/1/04</FONT></I>
 <P>
 
 

@@ -35,16 +35,33 @@ sub countStories {
 	my($self) = @_;
 	my $dnc = getCurrentStatic("hof_do_not_count") || "";
 	my $dnc_clause = "";
-	my @dnc = map { $self->sqlQuote($_) } split / /, $dnc;
-	if (@dnc) {
-		$dnc_clause = " AND stories.sid NOT IN (" . join (",", @dnc) . ") ";
+	my @dnc_sid   = map { $self->sqlQuote($_) } grep { /^[\d\/]+$/ } split / /, $dnc;
+	my @dnc_stoid = map { $self->sqlQuote($_) } grep { /^\d+$/   }   split / /, $dnc;
+	if (@dnc_sid) {
+		$dnc_clause .= " AND stories.sid NOT IN ("   . join (",", @dnc_sid)   . ") ";
+	}
+	if (@dnc_stoid) {
+		$dnc_clause .= " AND stories.stoid NOT IN (" . join (",", @dnc_stoid) . ") ";
 	}
 	my $stories = $self->sqlSelectAll(
-		'stories.sid, stories.title, stories.section as section, stories.commentcount, nickname',
-		'stories, users, discussions',
-		"stories.uid=users.uid AND stories.discussion=discussions.id $dnc_clause",
+		'stories.sid, story_text.title,
+		 stories.primaryskid, stories.commentcount,
+		 nickname',
+		'stories, story_text, users, discussions',
+		"stories.uid=users.uid
+		 AND stories.discussion=discussions.id
+		 AND stories.stoid=story_text.stoid
+		 $dnc_clause",
 		'ORDER BY commentcount DESC LIMIT 10'
 	);
+
+	# XXXSKIN - not sure if this is the best way to do this, but
+	# i figure it is fine ... please change or advise if should be changed ...
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	for (@$stories) {
+		$_->[2] = $reader->getSkin($_->[2])->{name};
+	}
+
 	return $stories;
 }
 
@@ -59,13 +76,10 @@ sub countPollquestions {
 
 ########################################################
 # Not used currently
-sub countUsersIndexExboxesByBid {
+sub countUsersIndexSlashboxesByBid {
 	my($self, $bid) = @_;
-	my($count) = $self->sqlSelect("count(*)", "users_index",
-		qq!exboxes like "%'$bid'%" !
-	);
-
-	return $count;
+	my $bid_q = $self->sqlQuote("\%$bid\%");
+	return $self->sqlCount("users_index", "slashboxes LIKE $bid_q");
 }
 
 ########################################################
@@ -80,7 +94,7 @@ sub countStorySubmitters {
 	my $in_list = join(',', @{$uid}, $ac_uid);
 
 	my $submitters = $self->sqlSelectAll(
-		'count(*) as c, users.nickname',
+		'COUNT(*) AS c, users.nickname',
 		'stories, users', 
 		"users.uid=stories.submitter AND submitter NOT IN ($in_list)",
 		'GROUP BY users.uid ORDER BY c DESC LIMIT 10'
@@ -104,10 +118,26 @@ sub countStoriesAuthors {
 ########################################################
 sub countStoriesTopHits {
 	my($self) = @_;
-	my $stories = $self->sqlSelectAll('sid,title,section,hits,users.nickname',
-		'stories,users', 'stories.uid=users.uid',
+	my $stories = $self->sqlSelectAll(
+		'stories.sid, title, primaryskid, hits, users.nickname',
+		"stories, story_text, users
+		 LEFT JOIN story_param
+			ON stories.stoid=story_param.stoid AND story_param.name='neverdisplay'",
+		'stories.stoid=story_text.stoid
+		 AND story_param.name IS NULL
+		 AND primaryskid > 0
+		 AND stories.uid=users.uid',
 		'ORDER BY hits DESC LIMIT 10'
 	);
+
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	for my $story (@$stories) {
+		my $primaryskid = $story->[2];
+		my $skin = $reader->getSkin($primaryskid);
+		next unless $skin;
+		$story->[2] = $skin->{name};
+	}
+
 	return $stories;
 }
 
@@ -115,7 +145,7 @@ sub countStoriesTopHits {
 # counts the number of stories
 sub countStory {
 	my($self, $tid) = @_;
-	my($value) = $self->sqlSelect("count(*)",
+	my($value) = $self->sqlSelect("COUNT(*)",
 		'stories',
 		"tid=" . $self->sqlQuote($tid));
 
@@ -135,15 +165,22 @@ sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
 
-	my $where = 'stories.sid=comments.sid AND stories.uid=users.uid';
+	my $where = 'stories.discussion=comments.sid AND stories.uid=users.uid';
 	$where .= ' AND stories.sid=' . $self->sqlQuote($sid) if $sid;
 	my $stories = $self->sqlSelectAll(
-		'section, stories.sid, users.nickname, title,
+		'primaryskid, stories.sid, users.nickname, title,
 		pid, subject, date, time, comments.uid, cid, points',
 		'stories, comments, users',
 		$where,
 		' ORDER BY points DESC, date DESC LIMIT 10 '
 	);
+
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	# XXXSKIN - not sure if this is the best way to do this, but
+	# i figure it is fine ... please change or advise if should be changed ...
+	for (@$stories) {
+		$_->[0] = $reader->getSkin($_->[0])->{name};
+	}
 
 	# First select the top scoring comments (which on Slashdot or
 	# any big site will just be the latest score:5 comments).

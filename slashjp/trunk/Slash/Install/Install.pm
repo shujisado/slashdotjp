@@ -51,6 +51,9 @@ sub get {
 	my($self, $key) = @_;
 	my $count = $self->sqlCount('site_info', "name=" . $self->sqlQuote($key));
 	my $hash;
+	# This "if count > 1" thing is pretty dumb, even lamer than
+	# checking wantarray.  Be nice if we could make this smarter.
+	# Jamie 2004/05
 	if ($count > 1) {
 		$hash = $self->sqlSelectAllHashref('param_id', '*', 'site_info', "name=" . $self->sqlQuote($key));
 	} else {
@@ -102,6 +105,7 @@ sub readTemplateFile {
 	for (@file) {
 		if (/^__(.*)__$/) {
 			$latch = $1;
+			$latch = 'skin' if $latch eq 'section';
 			next;
 		}
 		$val{$latch} .= $_ if $latch;
@@ -112,7 +116,7 @@ sub readTemplateFile {
 		# fields are used in ways that may be sensitive to
 		# extraneous whitespace.
 		local $/ = "";
-		for (qw| name page section lang seclev version |) {
+		for (qw| name page skin lang seclev version |) {
 			chomp($val{$_}) if $val{$_};
 		}
 	}
@@ -127,7 +131,7 @@ sub writeTemplateFile {
 	my($self, $filename, $template) = @_;
 	my $fh = gensym;
 	open($fh, "> $filename\0") or die "Can't open $filename to write to: $!";
-	for (qw(section description title page lang name template seclev version)) { #(keys %$template) {
+	for (qw(skin description title page lang name template seclev version)) { #(keys %$template) {
 		next if $_ eq 'tpid';
 		print $fh "__${_}__\n";
 		$template->{$_} =~ s/\015\012/\n/g;
@@ -362,7 +366,7 @@ sub _install {
 		$statement =~ s/;\s*$//;
 		my $rows = $self->sqlDo($statement);
 		if (!$rows && $statement !~ /^INSERT\s+IGNORE\b/i) {
-			print "Failed on :$statement:\n";
+			print "=== ($hash->{name}) Failed on :$statement:\n";
 		}
 	}
 	@sql = ();
@@ -407,7 +411,7 @@ sub _install {
 			    warn "Template file $hash->{'dir'}/$_ could not be opened: $!\n";
 			    next;
 			}
-			my $key = "$template->{name};$template->{page};$template->{section}";
+			my $key = "$template->{name};$template->{page};$template->{skin}";
 			# This is not actually needed since cleanup occurs at the end -Brian
 			if ($hash->{'no-template'} && ref($hash->{'no-template'}) eq 'ARRAY') {
 				next if (grep { $key eq $_ }  @{$hash->{'no-template'}} );
@@ -435,7 +439,7 @@ sub _install {
 		next unless $_;
 		s/;$//;
 		unless ($self->sqlDo($_)) {
-			print "Failed on :$_:\n";
+			print "=== ($hash->{name}) Failed on :$_:\n";
 		}
 	}
 	@sql = ();
@@ -454,10 +458,13 @@ sub _install {
 	unless ($is_plugin) {
 		# This is where we cleanup any templates that don't belong
 		for (@{$hash->{'no-template'}}) {
-			my ($name, $page, $section) = split /;/, $_;
-			my $tpid = $self->{slashdb}->getTemplateByName($name, 'tpid', '', $page, $section);
-			$self->{slashdb}->deleteTemplate($tpid)
-				if $tpid;
+			my($name, $page, $skin) = split /;/, $_;
+			my $tpid = $self->{slashdb}->getTemplateByName($name, {
+				values  => 'tpid',
+				page    => $page,
+				skin    => $skin
+			});
+			$self->{slashdb}->deleteTemplate($tpid) if $tpid;
 		}
 	}
 }
@@ -493,8 +500,12 @@ sub getSiteTemplates {
 	# it might be nice if this looks in the THEME file ... -- pudge
 	my $include_theme = $self->get('include_theme');
 	if ($include_theme) {
-		my @no_templates; # Not current used -Brian
-		_parseFilesForTemplates("$slash_prefix/themes/$include_theme->{value}/THEME", \%templates, \@no_templates);
+#		my @no_templates; # Not current used -Brian
+		# Do we mean to not pass in the first @my_templates
+		# that was used? I don't know what was intended here.
+		# - Jamie 2004/05
+		my @no_templates_2;
+		_parseFilesForTemplates("$slash_prefix/themes/$include_theme->{value}/THEME", \%templates, \@no_templates_2);
 	}
 	$theme = $theme->{value};
 	_parseFilesForTemplates("$slash_prefix/themes/$theme/THEME", \%templates, \@no_templates);

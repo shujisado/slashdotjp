@@ -9,6 +9,7 @@ use Slash 2.003;	# require Slash 2.3.x
 use Slash::Constants qw(:messages :strip);
 use Slash::Display;
 use Slash::Utility;
+use Slash::Hook;
 
 ##################################################################
 sub main {
@@ -16,6 +17,7 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
+	my $gSkin = getCurrentSkin();
 
 	my $error_flag = 0;
 	my $postflag = $user->{state}{post};
@@ -41,51 +43,12 @@ sub main {
 			formname		=> 'discussions',
 			checks			=> ($form->{sid} || $user->{is_anon}) ? [] : ['generate_formkey'],
 		},
-		'index'			=> {
-			function		=> \&commentIndex,
-			seclev			=> 0,
-			formname 		=> 'discussions',
-			checks			=> ($form->{sid} || $user->{is_anon}) ? [] : ['generate_formkey'],
-		},
-		creator_index			=> {
-			function		=> \&commentIndexCreator,
-			seclev			=> 0,
-			formname 		=> 'discussions',
-			checks			=> ['generate_formkey'],
-		},
-		personal_index			=> {
-			function		=> \&commentIndexPersonal,
-			seclev			=> 1,
-			formname 		=> 'discussions',
-			checks			=> ['generate_formkey'],
-		},
-		user_created_index			=> {
-			function		=> \&commentIndexUserCreated,
-			seclev			=> 0,
-			formname 		=> 'discussions',
-			checks			=> ['generate_formkey'],
-		},
 		moderate		=> {
 			function		=> \&moderate,
 			seclev			=> 1,
 			post			=> 1,
 			formname		=> 'moderate',
 			checks			=> ['generate_formkey'],	
-		},
-		create_discussion	=> {
-			function		=> \&createDiscussion,
-			seclev			=> 1,
-			post			=> 1,
-			formname 		=> 'discussions',
-			checks			=> 
-			[ qw ( max_post_check valid_check interval_check 
-				formkey_check regen_formkey ) ],
-		},
-		delete_forum		=> {
-			function		=> \&deleteForum,
-			seclev			=> 1000,
-			formname		=> 'discussions',
-			checks			=> ['generate_formkey'],
 		},
 		reply			=> {
 			function		=> \&editComment,
@@ -124,8 +87,17 @@ sub main {
 			[ qw ( response_check update_formkeyid max_post_check valid_check interval_check formkey_check ) ],
 		},
 	};
-	$ops->{default} = $ops->{display} ;
-	
+	$ops->{default} = $ops->{display};
+
+	# no user-submitted discussions any longer, except in journals
+	# newdiscussion is used to denote that we are creating a new discussion;
+	# we need to eventually remove references to it throughout the code, but
+	# for now, we just delete it so it can't be used -- pudge
+	delete $form->{newdiscussion};
+	if ($op =~ /^(?:creator_index|personal_index|user_created_index|index|create_discussion|delete_forum)/) {
+		redirect($gSkin->{rootdir} . '/journal.pl');
+	}
+
 	# This is here to save a function call, even though the
 	# function can handle the situation itself
 	my ($discussion, $section);
@@ -137,7 +109,7 @@ sub main {
 			$discussion = $slashdb->getDiscussionBySid($form->{sid});
 			$section = $discussion->{section};
 			if ($constants->{tids_in_urls}) {
-				my $tids = $slashdb->getStoryTopicsJustTids($form->{sid}); 
+				my $tids = $slashdb->getTopiclistForStory($form->{sid});
 				my $tid_string = join('&amp;tid=', @$tids);
 				$user->{state}{tid} = $tid_string;
 			}
@@ -163,6 +135,7 @@ sub main {
 				if (!$constants->{subscribe} || !$user->{is_subscriber}) {
 					$future_err = 1;
 					$null_it_out = 1;
+					#XXXSECTIONTOPICS verify checkStoryViewable is still correct 
 				} elsif (!$slashdb->checkStoryViewable($discussion->{sid})) {
 					# If a discussion is in the future, it can only be
 					# viewed if it's attached to a story (not a journal
@@ -175,6 +148,7 @@ sub main {
 					$future_err = 1;
 					$null_it_out = 1;
 				}
+				#XXXSECTIONTOPICS verify checkStoryViewable is still correct 
 			} elsif ($discussion->{sid} && !$slashdb->checkStoryViewable($discussion->{sid})) {
 				# Probably a Never Display'd story.
 				$null_it_out = 1;
@@ -190,21 +164,24 @@ sub main {
 
 	$form->{pid} ||= "0";
 
-	my $title = 'Comments';
+	# If this is a comment post, we can't write the header yet,
+	# because submitComment() _may_ want to do a redirect
+	# instead of emitting a webpage.
 
-	if ($discussion && $constants->{ubb_like_forums}
-		&& ($discussion->{type} eq 'recycle')) {
-		$title = $constants->{sitename} . ": Forums - "
-			. $discussion->{'title'};
-	} elsif ($discussion) {
-		$title = $discussion->{'title'};
-	} elsif ((!$discussion) && $constants->{ubb_like_forums}) {
-		$title = 'Forums';
+	my $header_emitted = 0;
+	my $title = $discussion ? $discussion->{'title'} : 'Comments';
+	if ($op ne 'submit') {
+		header($title, $section) or return;
+		$header_emitted = 1;
 	}
 
-	header($title, $section) or return;
+#print STDERR scalar(localtime) . " $$ A op=$op header_emitted=$header_emitted\n";
 
 	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
+		if (!$header_emitted) {
+			header($title, $section) or return;
+			$header_emitted = 1;
+		}
 		print getError('login error');
 		$op = 'preview';
 	}
@@ -212,8 +189,14 @@ sub main {
 	$op = 'default' if (! $postflag && $ops->{$op}{post});
 
 	if ($future_err) {
+		if (!$header_emitted) {
+			header($title, $section) or return;
+			$header_emitted = 1;
+		}
 		print getError("nosubscription");
 	}
+
+#print STDERR scalar(localtime) . " $$ B op=$op header_emitted=$header_emitted\n";
 
 	# Admins don't jump through these formkey hoops.
 	if ($user->{is_admin}) {
@@ -227,6 +210,7 @@ sub main {
 	# Admins should only jump through the remaining formkey hoops
 	# if this var is set.  (Should we leave this as a seclev<100
 	# check, or just check {is_admin}?)
+	my $formkey_msg = "";
 	if ($constants->{admin_formkeys} || $user->{seclev} < 100) {
 		$formkey = $form->{formkey};
 
@@ -247,7 +231,19 @@ sub main {
 			for my $check (@{$ops->{$op}{checks}}) {
 				$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
 				$error_flag = formkeyHandler($check, $formname, $formkey,
-					undef, $options);
+					\$formkey_msg, $options);
+				# If there was an error, we have it stored in $formkey_msg
+				# instead of printed directly.  Now that we know whether
+				# there was one or not, we can print the header if need be
+				# and then print the msg if need be.
+				if ($error_flag) {
+					if (!$header_emitted) {
+						header($title, $section) or return;
+						$header_emitted = 1;
+					}
+#print STDERR scalar(localtime) . " $$ B2 op=$op header_emitted=$header_emitted formkey_msg='$formkey_msg'\n";
+					print $formkey_msg;
+				}
 				if ($error_flag == -1) {
 					# Special error:  submit failed, go back to     
 					# previewing.  If the error was retryable,
@@ -280,6 +276,8 @@ sub main {
 			$hc->reloadFormkeyHC($formname) if $hc;
 		}
 	}
+
+#print STDERR scalar(localtime) . " $$ C op=$op header_emitted=$header_emitted\n";
 
 	if (!$error_flag) {
 		# CALL THE OP
@@ -384,385 +382,11 @@ sub displayComments {
 		printComments($discussion, $form->{cid}, $form->{cid});
 	} elsif ($form->{sid}) {
 		printComments($discussion, $form->{pid});
-	} elsif ($constants->{ubb_like_forums}) {
-		commentIndexUserCreated(@_);
 	} else {
-		commentIndex(@_);
+		print getData('try_journals');
 	}
 }
 
-
-##################################################################
-# Index of recent discussions: Used if comments.pl is called w/ no
-# parameters
-sub commentIndex {
-	my($form, $slashdb, $user, $constants, $error_message) = @_;
-
-	my $label = getData('label');
-
-	my $searchdb = getObject('Slash::Search', $constants->{search_db_user});
-	if ($form->{all}) {
-		titlebar("100%", getData('all_discussions'));
-		my $start = $form->{start} || 0;
-		my $discussions = $searchdb->findDiscussion({ section => $form->section }, $start,
-			$constants->{discussion_display_limit} + 1, $constants->{discussion_sort_order}
-		);
-		if ($discussions && @$discussions) {
-			my $forward;
-			if (@$discussions == $constants->{discussion_display_limit} + 1) {
-				pop @$discussions;
-				$forward = $start + $constants->{discussion_display_limit};
-			} else {
-				$forward = 0;
-			}
-
-			# if there are less than discussion_display_limit remaning,
-			# just set it to 0
-			my $back;
-			if ($start > 0) {
-				$back = $start - $constants->{discussion_display_limit};
-				$back = $back > 0 ? $back : 0;
-			} else {
-				$back = -1;
-			}
-
-			slashDisplay('discuss_list', {
-				discussions	=> $discussions,
-				error_message	=> $error_message,
-				label		=> $label,
-				forward		=> $forward,
-				args		=> _buildargs($form),
-				start		=> $start,
-				back		=> $back,
-			});
-		} else {
-			print getData('nodiscussions');
-			slashDisplay('discreate', {
-				topic => $constants->{discussion_default_topic},
-				label => $label,
-			}) if $user->{seclev} >= $constants->{discussion_create_seclev};
-		}
-	} else {
-		titlebar("100%", getData('active_discussions'));
-		my $start = $form->{start} || 0;
-		my $discussions = $searchdb->findDiscussion({ section => $form->{section}, type => 'open' },
-			$start, $constants->{discussion_display_limit} + 1, $start, $constants->{discussion_sort_order}
-		);
-		if ($discussions && @$discussions) {
-			my $forward;
-			if (@$discussions == $constants->{discussion_display_limit} + 1) {
-				pop @$discussions;
-				$forward = $start + $constants->{discussion_display_limit};
-			} else {
-				$forward = 0;
-			}
-
-			# if there are less than discussion_display_limit remaning,
-			# just set it to 0
-			my $back;
-			if ($start > 0) {
-				$back = $start - $constants->{discussion_display_limit};
-				$back = $back > 0 ? $back : 0;
-			} else {
-				$back = -1;
-			}
-
-			slashDisplay('discuss_list', {
-				discussions	=> $discussions,
-				error_message	=> $error_message,
-				label		=> $label,
-				forward		=> $forward,
-				args		=> _buildargs($form),
-				start		=> $start,
-				back		=> $back,
-			});
-		} else {
-			print getData('nodiscussions');
-			slashDisplay('discreate', {
-				topic => $constants->{discussion_default_topic},
-				label	=> $label,
-			}) if $user->{seclev} >= $constants->{discussion_create_seclev};
-		}
-	}
-}
-
-##################################################################
-# Index of recent discussions: Used if comments.pl is called w/ no
-# parameters
-sub commentIndexUserCreated {
-	my($form, $slashdb, $user, $constants, $error_message) = @_;
-	my $label = getData('label');
-
-	# titlebar("100%", getData('user_discussions'));
-	my $searchdb = getObject('Slash::Search', $constants->{search_db_user});
-	my $start    = $form->{start} || 0;
-	my $hashref  = {};
-	my $sections;
-	$hashref->{section}  = $form->{section} if $form->{section};
-	$hashref->{tid}      = $form->{tid} if $form->{tid};
-	$hashref->{type}     = 'recycle'; 
-	$hashref->{approved} = '1'; 
-
-	my $discussions = $searchdb->findDiscussion(
-		$hashref, 
-		$constants->{discussion_display_limit} + 1, 
-		$start, $constants->{discussion_sort_order});
-
-	my $section_select;	
-	if ($constants->{ubb_like_forums}) {
-		$sections = $slashdb->getDescriptions('forums');
-		$section_select = createSelect('section', $sections, $form->{section}, 1);
-		for (my $i=0; $i < @$discussions; $i++) {
-			$discussions->[$i]{comment} = $slashdb->getForumDescription($discussions->[$i]{id});
-			$discussions->[$i]{num_parents} = $slashdb->getForumParents($discussions->[$i]{id});
-			$discussions->[$i]{last_comment} = $slashdb->getForumLastPostHashref($discussions->[$i]{id});
-		}
-	}
-
-	if ($discussions && @$discussions) {
-		my $forward;
-		if (@$discussions == $constants->{discussion_display_limit} + 1) {
-			pop @$discussions;
-			$forward = $start + $constants->{discussion_display_limit};
-		} else {
-			$forward = 0;
-		}
-
-		# if there are less than discussion_display_limit remaning,
-		# just set it to 0
-		my $back;
-		if ($start > 0) {
-			$back = $start - $constants->{discussion_display_limit};
-			$back = $back > 0 ? $back : 0;
-		} else {
-			$back = -1;
-		}
-
-# REMOVE ?
-
-#		$title .= ": " . $slashdb->getTopic($form->{tid},'alttext') . " ($form->{tid})" if $form->{tid};
-
-		slashDisplay('udiscuss_list', {
-			discussions	=> $discussions,
-			error_message	=> $error_message,
-			title 		=> getData('user_discussions'),
-			'label'		=> $label,
-			forward		=> $forward,
-			args		=> _buildargs($form),
-			start		=> $start,
-			back		=> $back,
-			sections	=> $sections,
-			section_select  => $section_select,
-		});
-	} else {
-		print getData('nodiscussions');
-		slashDisplay('edit_comment', {
-			newdiscussion	=> 1,
-			label		=> $label,
-			section_select  => $section_select,
-		}) if $user->{seclev} >= $constants->{discussion_create_seclev};
-	}
-}
-
-##################################################################
-# Index of recent discussions: Used if comments.pl is called w/ no
-# parameters
-sub commentIndexCreator {
-	my($form, $slashdb, $user, $constants, $error_message) = @_;
-
-	my $label = getData('label');
-	my($uid, $nickname);
-	if ($form->{uid} or $form->{nick}) {
-		$uid		= $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
-		$nickname	= $slashdb->getUser($uid, 'nickname');
-	} else {
-		$uid		= $user->{uid};
-		$nickname	= $user->{nickname};
-	}
-
-	if (isAnon($uid)) {
-		return displayComments(@_);
-	}
-	my $searchdb = getObject('Slash::Search', $constants->{search_db_user});
-
-	titlebar("100%", getData('user_discussion', { name => $nickname}));
-	my $start = $form->{start} || 0;
-	my $discussions = $searchdb->findDiscussion({ section => $form->{section}, type => 'recycle', uid => $uid },
-		$start, $constants->{discussion_display_limit} + 1, $constants->{discussion_sort_order}
-	);
-	if ($discussions && @$discussions) {
-		my $forward;
-		if (@$discussions == $constants->{discussion_display_limit} + 1) {
-			pop @$discussions;
-			$forward = $start + $constants->{discussion_display_limit};
-		} else {
-			$forward = 0;
-		}
-
-		# if there are less than discussion_display_limit remaning,
-		# just set it to 0
-		my $back;
-		if ($start > 0) {
-			$back = $start - $constants->{discussion_display_limit};
-			$back = $back > 0 ? $back : 0;
-		} else {
-			$back = -1;
-		}
-
-		slashDisplay('discuss_list', {
-			discussions	=> $discussions,
-			indextype	=> 'creator',
-			error_message	=> $error_message,
-			'label'		=> $label,
-			forward		=> $forward,
-			args		=> _buildargs($form),
-			start		=> $start,
-			suppress_create	=> 1,
-			back		=> $back,
-		});
-	} else {
-		print getData('users_no_discussions');
-	}
-}
-
-##################################################################
-# Index of recent discussions: Used if comments.pl is called w/ no
-# parameters
-sub commentIndexPersonal {
-	my($form, $slashdb, $user, $constants, $error_message) = @_;
-
-	my $label = getData('label');
-
-	titlebar("100%", getData('user_discussion', { name => $user->{nickname}}));
-	my $start = $form->{start} || 0;
-	my $searchdb = getObject('Slash::Search', $constants->{search_db_user});
-	my $discussions = $searchdb->findDiscussion({ section => $form->{section}, type => 'recycle', uid => $user->{uid} },
-		$start, $constants->{discussion_display_limit} + 1, $constants->{discussion_sort_order}
-	);
-	if ($discussions && @$discussions) {
-		my $forward;
-		if (@$discussions == $constants->{discussion_display_limit} + 1) {
-			pop @$discussions;
-			$forward = $start + $constants->{discussion_display_limit};
-		} else {
-			$forward = 0;
-		}
-
-		# if there are less than discussion_display_limit remaning,
-		# just set it to 0
-		my $back;
-		if ($start > 0) {
-			$back = $start - $constants->{discussion_display_limit};
-			$back = $back > 0 ? $back : 0;
-		} else {
-			$back = -1;
-		}
-
-		slashDisplay('discuss_list', {
-			discussions	=> $discussions,
-			indextype	=> 'personal', 
-			error_message	=> $error_message,
-			'label'		=> $label,
-			forward		=> $forward,
-			args		=> _buildargs($form),
-			start		=> $start,
-			suppress_create	=> 1,
-			back		=> $back,
-		});
-	} else {
-		print getData('users_no_discussions');
-	}
-}
-
-##################################################################
-# for ubb_like_forums
-sub deleteForum {
-	my($form, $slashdb, $user, $constants, $error_message) = @_;
-
-	$slashdb->deleteDiscussion($form->{sid}) if $constants->{ubb_like_forums};
-	commentIndexUserCreated(@_);
-
-	return;
-}
-
-##################################################################
-# This is where all of the real discussion creation occurs 
-# Returns the discussion id of the created discussion
-# -Brian
-sub _createDiscussion {
-	my($form, $slashdb, $user, $constants) = @_;
-	my $id;
-
-	if ($user->{seclev} >= $constants->{discussion_create_seclev} || $user->{is_admin}) {
-		# if form.url is empty, try the referrer.  if it
-		# matches comments.pl without any query string,
-		# then (later, down below) set url to point to discussion
-		# itself.
-		# this only catches URLs without query string ...
-		# we don't want to override prefs too easily.  this
-		# can be modified to become more inclusive later,
-		# if needed.  -- pudge
-		my $newurl	   = $form->{url}
-			? $form->{url}
-			: $ENV{HTTP_REFERER} =~ m|\Q$constants->{rootdir}/comments.pl\E$|
-				? ""
-				: $ENV{HTTP_REFERER};
-		$form->{url}	   = fudgeurl($newurl);
-		# $form->{title}	= strip_notags($form->{title});
-		$form->{title}	   = strip_notags($form->{postersubj});
-		$form->{topic}   ||= $constants->{defaulttopic};
-		$form->{section} ||= $constants->{defaultsection};
-
-
-		# for now, use the postersubj filters; problem is,
-		# the error messages can come out a bit funny.
-		# oh well.  -- pudge
-		my($error, $err_message);
-		if (! filterOk('comments', 'postersubj', $form->{title}, \$err_message)) {
-			$error = getError('filter message', {
-				err_message	=> $err_message
-			});
-		} elsif (! compressOk('comments', 'postersubj', $form->{title})) {
-			$error = getError('compress filter', {
-				ratio	=> 'postersubj',
-			});
-		} else {
-			# BTW we are not setting section since at this point we wouldn't
-			# trust users to set it correctly -Brian
-			$id = $slashdb->createDiscussion({
-				title	=> $form->{title},
-				topic	=> $form->{topic},
-				section => $form->{section},
-				url	=> $form->{url} || 1,
-				type	=> "recycle"
-			});
-
-			# fix URL to point to discussion if no referrer
-			if (!$form->{url}) {
-				$newurl = $constants->{rootdir} . "/comments.pl?sid=$id";
-				$slashdb->setDiscussion($id, { url => $newurl });
-			}
-		}
-	} else {
-		slashDisplay('newdiscussion', {
-			error => getError('seclevtoolow'),
-		});
-	}
-
-	return $id;
-}
-
-##################################################################
-# Yep, I changed the l33t method of adding discussions.
-# "The Slash job, keeping trolls on their toes"
-# -Brian
-sub createDiscussion {
-	my($form, $slashdb, $user, $constants) = @_;
-
-	my $label = getData('label');
-	my $id = _createDiscussion($form, $slashdb, $user, $constants);
-	commentIndex(@_);
-}
 
 ##################################################################
 # Welcome to one of the ancient beast functions.  The comment editor
@@ -779,11 +403,25 @@ sub editComment {
 	$form->{nosubscriberbonus} = $user->{is_subscriber} && $user->{nosubscriberbonus}
 						unless $form->{nosubscriberbonus_present};
 
+	if ($form->{lookup_sid}) {
+		slashHook('comment_reply_lookup_sid', {} );
+	}
+	# The sid param is only stripped down to A-Za-z0-9/._ by
+	# filter_params;  make sure it's numeric and exists.
+	my $sid = $form->{sid};
+	if ($sid) { $sid =~ /(\d+)/; $sid = $1 }
+	if (!$sid) {
+		# Need a discussion ID to reply to, or there's no point.
+		print getError('no sid');
+		return;
+	}
+
 	# Get the comment we may be responding to. Remember to turn off
 	# moderation elements for this instance of the comment.
-	my $reply = $slashdb->getCommentReply($form->{sid}, $form->{pid});
+	my $pid = $form->{pid} || 0; # this is guaranteed numeric, from filter_params
+	my $reply = $slashdb->getCommentReply($sid, $pid);
 
-	if (!$constants->{allow_anonymous} && $user->{is_anon}) {
+	if ($user->{is_anon} && !$slashdb->checkAllowAnonymousPosting($user->{uid})) {
 		print getError('no anonymous posting');
 		return;
 	}
@@ -797,18 +435,20 @@ sub editComment {
 		$preview = previewForm(\$error_message) or $error_flag++;
 	}
 
-	if ($form->{pid} && !$form->{postersubj}) {
+	if ($pid && !$form->{postersubj}) {
 		$form->{postersubj} = decode_entities($reply->{subject});
 		$form->{postersubj} =~ s/^Re://i;
 		$form->{postersubj} =~ s/\s\s/ /g;
 		$form->{postersubj} = "Re:$form->{postersubj}";
 	}
-
-	my($sections, $section_select);
-	if ($constants->{ubb_like_forums} && $form->{section} && $form->{newdiscussion}) {
-		$sections = $slashdb->getDescriptions('forums');
-		$section_select = createSelect('section', $sections, $form->{section}, 1);
-	}
+	
+	my $extras = [];	
+	my $disc_skin = $slashdb->getSkin($discussion->{primaryskid});
+	
+	$extras =  $slashdb->getNexusExtrasForChosen(
+		{ $disc_skin->{nexus} => 1 },
+		{ content_type => "comment" })
+		if $disc_skin && $disc_skin->{nexus};
 
 	my $gotmodwarning;
 	$gotmodwarning = 1 if (($error_message eq getError("moderations to be lost")) || $form->{gotmodwarning});
@@ -821,7 +461,7 @@ sub editComment {
 		reply		=> $reply,
 		gotmodwarning	=> $gotmodwarning,
 		newdiscussion	=> $form->{newdiscussion},
-		section_select  => $section_select,
+		extras		=> $extras
 	});
 }
 
@@ -835,7 +475,8 @@ sub validateComment {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	
 	my $form_success = 1;
 	my $message = '';
 
@@ -895,10 +536,13 @@ sub validateComment {
 	# controls it (that var is turned into a hashref in MySQL.pm when
 	# the vars table is read in, whose keys we loop over to find the
 	# appropriate level).
+	
+	my $min_cid_1_day_old = $slashdb->getVar('min_cid_last_1_days','value', 1) || 0;
+	
 	if ($user->{is_anon} && $constants->{comments_perday_anon}
 		&& !$user->{is_admin}) {
-		my($num_comm, $sum_mods) = $slashdb->getNumCommPostedAnonByIPID(
-			$user->{ipid}, 24);
+		my($num_comm, $sum_mods) = $reader->getNumCommPostedAnonByIPID(
+			$user->{ipid}, 24, $min_cid_1_day_old);
 		my $num_allowed = $constants->{comments_perday_anon};
 		if ($sum_mods - $num_comm + $num_allowed <= 0) {
 
@@ -911,8 +555,8 @@ sub validateComment {
 		}
 	} elsif (!$user->{is_anon} && $constants->{comments_perday_bykarma}
 		&& !$user->{is_admin}) {
-		my($num_comm, $sum_mods) = $slashdb->getNumCommPostedByUID(
-			$user->{uid}, 24);
+		my($num_comm, $sum_mods) = $reader->getNumCommPostedByUID(
+			$user->{uid}, 24, $min_cid_1_day_old);
 		my $num_allowed = 9999;
 		K_CHECK: for my $k (sort { $a <=> $b }
 			keys %{$constants->{comments_perday_bykarma}}) {
@@ -938,32 +582,41 @@ sub validateComment {
 		});
 		return;
 	}
-	
-	if (!$constants->{allow_anonymous} && ($user->{is_anon} || $form->{postanon})) {
-		$$error_message = getError('anonymous disallowed');
+
+	if ($user->{is_anon} || $form->{postanon}) {
+		my $uid_to_check = $user->{uid};
+		if (!$user->{is_anon}) {
+			$uid_to_check = getCurrentAnonymousCoward('uid');
+		}
+		if (!$slashdb->checkAllowAnonymousPosting($uid_to_check)) {
+			$$error_message = getError('anonymous disallowed');
+			return;
+		}
+	}
+
+	if (!$user->{is_anon} && $form->{postanon} && $user->{karma} < 0) {
+		$$error_message = getError('postanon_option_disabled');
 		return;
 	}
-	
-	my $subnet_karma_comments_needed = $constants->{subnet_comments_posts_needed};
-	my ($subnet_karma, $subnet_post_cnt) = $slashdb->getNetIDKarma("subnetid", $user->{subnetid});
-	my ($sub_anon_max, $sub_anon_min, $sub_all_max, $sub_all_min ) = @{$constants->{subnet_karma_post_limit_range}};
-	
-	if ($subnet_post_cnt >= $subnet_karma_comments_needed) {
-		if (($user->{is_anon} || $form->{postanon}) && $constants->{allow_anonymous} && $subnet_karma >= $sub_anon_min && $subnet_karma <= $sub_anon_max ) {
-			my $logged_in_allowed = ($subnet_karma >= $sub_all_min && $subnet_karma <= $sub_all_max) ? 0 : 1;
+
+	my $post_restrictions = $reader->getNetIDPostingRestrictions("subnetid", $user->{subnetid});
+	if ($user->{is_anon} || $form->{postanon}) {
+		if ($post_restrictions->{no_anon}) {
+			my $logged_in_allowed = !$post_restrictions->{no_post};
 			$$error_message = getError('troll message', {
 				unencoded_ip 		=> $ENV{REMOTE_ADDR},
 				logged_in_allowed 	=> $logged_in_allowed      
 			});
 			return;
-		} elsif ($subnet_karma >= $sub_all_min && $subnet_karma <= $sub_all_max) {
-			$$error_message = getError('troll message', {
-				unencoded_ip 		=> $ENV{REMOTE_ADDR},
-			});
-			return;
 		}
-	} 
-	
+	}
+
+	if (!$user->{is_admin} && $post_restrictions->{no_post}) {
+		$$error_message = getError('troll message', {
+			unencoded_ip 		=> $ENV{REMOTE_ADDR},
+		});
+		return;
+	}
 
 
 	$$subj =~ s/\(Score(.*)//i;
@@ -997,9 +650,7 @@ sub validateComment {
 	my $kickin = $constants->{comments_min_line_len_kicks_in};
 	if ($constants->{comments_min_line_len} && length($$comm) > $kickin) {
 
-		my $max_comment_len = $slashdb->getUser(
-			$constants->{anonymous_coward_uid},                  
-			'maxcommentsize');
+		my $max_comment_len = getCurrentAnonymousCoward('maxcommentsize');
 		my $check_prefix = substr($$comm, 0, $max_comment_len);
 		my $check_prefix_len = length($check_prefix);
 		my $min_line_len_max = $constants->{comments_min_line_len_max}
@@ -1007,7 +658,7 @@ sub validateComment {
 		my $min_line_len = $constants->{comments_min_line_len}
 			+ ($min_line_len_max - $constants->{comments_min_line_len})
 				* ($check_prefix_len - $kickin)
-				/ ($max_comment_len - $kickin);
+				/ ($max_comment_len - $kickin); # /
 
 		my $check_notags = strip_nohtml($check_prefix);
 		# Don't count & or other chars used in entity tags;  don't count
@@ -1130,14 +781,25 @@ sub previewForm {
 		or return;
 
 	$tempComment = addDomainTags($tempComment);
+
+	# XXX We really should be calling dispComment() here, rather than
+	# duplicating code.
+
 	$tempComment = parseDomainTags($tempComment,
 		!$form->{postanon} && $user->{fakeemail});
 
 	my $sig = $user->{sig};
-	if ($user->{sigdash} && $user->{sig}) {
+	if ($sig) {
 		$sig =~ s/^\s*-{1,5}\s*<(?:P|BR)>//i;
-		$sig = "--<BR>$sig";
+		$sig = getData('sigdash', {}, 'comments')
+			. $sig;
 	}
+
+	my $discussion = $slashdb->getDiscussion($form->{sid}) || 0;	
+	my $extras = [];	
+	my $disc_skin = $slashdb->getSkin($discussion->{primaryskid});
+	
+	$extras =  $slashdb->getNexusExtrasForChosen({$disc_skin->{nexus} => 1}, {content_type => "comment"}) if $disc_skin && $disc_skin->{nexus};
 
 	my $preview = {
 		nickname		=> $form->{postanon}
@@ -1153,6 +815,10 @@ sub previewForm {
 		comment			=> $tempComment,
 		sig			=> $sig,
 	};
+
+	foreach my $extra (@$extras) {
+		$preview->{$extra->[1]} = $form->{$extra->[1]};
+	}
 
 	if ($constants->{plugin}{Subscribe}) {
 		$preview->{subscriber_bonus} = $user->{is_subscriber} && $form->{nosubscriberbonus} ne 'on'
@@ -1179,8 +845,10 @@ sub previewForm {
 
 ##################################################################
 # Saves the Comment
-# A note, right now form->{sid} is a discussion id, not a
-# story id.
+# Here, $form->{sid} is a discussion id, not a story id.
+# Also, header() is NOT called before this function is called,
+# so (assuming we don't want to do a redirect) it must be
+# called manually.
 sub submitComment {
 	my($form, $slashdb, $user, $constants, $discussion) = @_;
 
@@ -1189,6 +857,7 @@ sub submitComment {
 	$form->{nosubscriberbonus} = $user->{nosubscriberbonus}
 						unless $form->{nosubscriberbonus_present};
 
+	my $header_emitted = 0;
 	my $id = $form->{sid};
 	my $label = getData('label');
 
@@ -1196,6 +865,7 @@ sub submitComment {
 	$discussion->{type} = isDiscussionOpen($discussion);
 
 	if ($discussion->{type} eq 'archived') {
+		header('Comments', $discussion->{section}) or return;
 		print getData('archive_error');
 		return;
 	}
@@ -1219,6 +889,10 @@ sub submitComment {
 			? $constants->{comments_codemode_wsfactor}
 			: $constants->{comments_wsfactor} || 1) )
 	) {
+		# The comment did not validate.  We're not actually going to
+		# post the comment this time around, we are (probaly) just
+		# going to walk through the editing cycle again.
+		header('Comments', $discussion->{section}) or return;
 		$slashdb->resetFormkey($form->{formkey});
 		if (! $form->{newdiscussion}) {
 			editComment(@_, $error_message);
@@ -1239,9 +913,13 @@ sub submitComment {
 	$tempComment = addDomainTags($tempComment);
 
 	if ($form->{newdiscussion}) {
+		header('Comments', $discussion->{section}) or return;
+		$header_emitted = 1;
 		$id = _createDiscussion($form, $slashdb, $user, $constants);
 		return 1 unless $id;
 	}
+
+#print STDERR scalar(localtime) . " $$ D header_emitted=$header_emitted\n";
 
 #	# Slash is not a file exchange system
 #	# still working on this...stay tuned for real commit
@@ -1249,15 +927,36 @@ sub submitComment {
 # 	# maybe during the next glacial cycle.
 #	$tempComment = distressBinaries($tempComment);
 
-	unless ($form->{newdiscussion}) {
+	# If we want a redirect to a new URL after comment posting success,
+	# set some vars to indicate that.  Note that cleanRedirectUrlFromForm
+	# both reads the URL from $form and confirms that it's been signed
+	# with the correct confirmation password ('returnto_passwd').
+	my $do_emit_html = 1;
+	my $redirect_to = undef;
+	if ($redirect_to = cleanRedirectUrlFromForm("commentpostsuccess")) {
+		$do_emit_html = 0;
+	}
+	if ($do_emit_html) {
+		header('Comments', $discussion->{section}) or return;
+		$header_emitted = 1;
+	}
+
+	if (!$form->{newdiscussion} && $header_emitted) {
 		titlebar("100%", getData('submitted_comment'));
 	}
 
-	my $pts = 0;
+#print STDERR scalar(localtime) . " $$ E header_emitted=$header_emitted do_emit_html=$do_emit_html redirect_to=" . (defined($redirect_to) ? $redirect_to : "undef") . "\n";
+
+	# Set starting points to the AC's starting points, by default.
+	# If the user is posting under their own name, we'll reset this
+	# value (and add other modifiers) in a moment.
+	my $pts = getCurrentAnonymousCoward('defaultpoints');
+
 	my $karma_bonus = 0;
 	my $subscriber_bonus = 0;
 	my $tweak = 0;
 	if (!$user->{is_anon} && !$form->{postanon}) {
+
 		$pts = $user->{defaultpoints};
 
 		if ($constants->{karma_posting_penalty_style} == 0) {
@@ -1281,14 +980,22 @@ sub submitComment {
 	# This is here to prevent posting to discussions that don't exist/are nd -Brian
 	unless ($user->{is_admin} || $form->{newdiscussion}) {
 		unless ($slashdb->checkDiscussionPostable($id)) {
+			if (!$header_emitted) {
+				header('Comments', $discussion->{section}) or return;
+			}
 			print getError('submission error');
 			return(0);
 		}
 	}
 	my $posters_uid = $user->{uid};
-	if ($form->{postanon} && $constants->{allow_anonymous} && $user->{karma} > -1 && $discussion->{commentstatus} eq 'enabled') {
-		$posters_uid = $constants->{anonymous_coward_uid} ;
+	if ($form->{postanon}
+		&& $slashdb->checkAllowAnonymousPosting()
+		&& $user->{karma} > -1
+		&& $discussion->{commentstatus} eq 'enabled') {
+		$posters_uid = getCurrentAnonymousCoward('uid');
 	}
+
+#print STDERR scalar(localtime) . " $$ F header_emitted=$header_emitted do_emit_html=$do_emit_html\n";
 
 	my $clean_comment = {
 		subject		=> $tempSubject,
@@ -1303,11 +1010,14 @@ sub submitComment {
 		tweak_orig	=> $tweak,
 		karma_bonus	=> $karma_bonus ? 'yes' : 'no',
 	};
+	
 	if ($constants->{plugin}{Subscribe}) {
 		$clean_comment->{subscriber_bonus} = $subscriber_bonus ? 'yes' : 'no';
 	}
 
 	my $maxCid = $slashdb->createComment($clean_comment);
+
+#print STDERR scalar(localtime) . " $$ G maxCid=$maxCid\n";
 
 	# make the formkeys happy
 	$form->{maxCid} = $maxCid;
@@ -1318,6 +1028,9 @@ sub submitComment {
 
 	if ($maxCid == -1) {
 		# What vars should be accessible here?
+		if (!$header_emitted) {
+			header('Comments', $discussion->{section}) or return;
+		}
 		print getError('submission error');
 		return(0);
 
@@ -1326,16 +1039,31 @@ sub submitComment {
 		#	- $maxCid?
 		# What are the odds on this happening? Hmmm if it is we should
 		# increase the size of int we used for cid.
+		if (!$header_emitted) {
+			header('Comments', $discussion->{section}) or return;
+		}
 		print getError('maxcid exceeded');
 		return(0);
 	} else {
-		slashDisplay('comment_submit', {
-			metamod_elig => scalar $slashdb->metamodEligible($user),
-		}) if ! $form->{newdiscussion};
+		if (!$form->{newdiscussion} && $do_emit_html) {
+			if (!$header_emitted) {
+				header('Comments', $discussion->{section}) or return;
+			}
+			slashDisplay('comment_submit', {
+				metamod_elig => scalar $slashdb->metamodEligible($user),
+			});
+		}
+
+		my $saved_comment = $slashdb->getComment($maxCid);
+
+		slashHook('comment_save_success', { comment => $saved_comment });
+		
 		undoModeration($id);
-		printComments($discussion, $maxCid, $maxCid,
-			{ force_read_from_master => 1, just_submitted => 1 }
-		) if !$form->{newdiscussion};
+		if (!$form->{newdiscussion} && $do_emit_html) {
+			printComments($discussion, $maxCid, $maxCid,
+				{ force_read_from_master => 1, just_submitted => 1 }
+			);
+		}
 
 		my $tc = $slashdb->getVar('totalComments', 'value', 1);
 		$slashdb->setVar('totalComments', ++$tc);
@@ -1411,7 +1139,11 @@ sub submitComment {
 				$users{$usera}++;
 			}
 		}
+		# If discussion created
 		if ($form->{newdiscussion}) {
+			if (!$header_emitted) {
+				header('Comments', $discussion->{section}) or return;
+			}
 			if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 				slashDisplay('newdiscussion', { 
 					error 		=> $error_message, 
@@ -1433,6 +1165,20 @@ sub submitComment {
 				commentIndexCreator(@_, $error_message);
 			} else {
 				commentIndex(@_,$error_message);
+			}
+		}
+
+		# OK -- if we make it all the way here, and there were
+		# no errors so no header has been emitted, and we were
+		# asked to redirect to a new URL, NOW we can finally
+		# do it.
+		if ($redirect_to) {
+#print STDERR scalar(localtime) . " $$ H redirecting to '$redirect_to'\n";
+			redirect($redirect_to);
+		} else {
+#print STDERR scalar(localtime) . " $$ H not redirecting, emitted=$header_emitted\n";
+			if (!$header_emitted) {
+				header('Comments', $discussion->{section}) or return;
 			}
 		}
 	}
@@ -1485,34 +1231,26 @@ sub moderate {
 	my $was_touched = 0;
 
 	my $meta_mods_performed = 0;
-	if ($user->{is_admin}) {
-		$meta_mods_performed = metaModerate();		
-	}
 
-	if ($form->{meta_mod_only}) {
-		titlebar("100%", getData('metamoderating'));
-		print getData("metamoderate_message");
-		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
-		return;
-	}
+	my $skip_moderation = $form->{meta_mod_only} || 0;
 
+	my $message = "";
+	
 	if (!dbAvailable("write_comments")) {
 		print getError("comment_db_down");
+		return;
+	}
+	
+	if (! $constants->{allow_moderation}) {
+		print getData('no_moderation');
 		return;
 	}
 
 	if ($discussion->{type} eq 'archived'
 		&& !$constants->{comments_moddable_archived}) {
-		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
-		print getData('archive_error');
-		return;
+		$message .= getData('archive_error');
 	}
 
-	if (! $constants->{allow_moderation}) {
-		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
-		print getData('no_moderation');
-		return;
-	}
 
 	my $total_deleted = 0;
 	my $hasPosted;
@@ -1524,51 +1262,67 @@ sub moderate {
 				&& $user->{seclev} >= $constants->{authors_unlimited})
 			|| $user->{acl}{modpoints_always};
 
-	slashDisplay('mod_header');
-	print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
 
-	# Handle Deletions, Points & Reparenting
-	# It would be nice to sort these by current score of the comments
-	# ascending, maybe also by val ascending, or some way to try to
-	# get the single-point-spends first and then to only do the
-	# multiple-point-spends if the user still has points.
-	my $can_del = ($constants->{authors_unlimited} && $user->{seclev} >= $constants->{authors_unlimited})
-		|| $user->{acl}{candelcomments_always};
-	for my $key (sort keys %{$form}) {
-		if ($can_del && $key =~ /^del_(\d+)$/) {
-			$total_deleted += deleteThread($sid, $1);
-		} elsif (!$hasPosted && $key =~ /^reason_(\d+)$/) {
-			my $cid = $1;
-			my $ret_val = $slashdb->moderateComment($sid, $cid, $form->{$key});
-			# If an error was returned, tell the user what
-			# went wrong.
-			if ($ret_val < 0) {
-				if ($ret_val == -1) {
-					print getError('no points');
-				} elsif ($ret_val == -2){
-					print getError('not enough points');
+	if ($skip_moderation) {
+		print $message;
+		if ($user->{is_admin}) {
+			$meta_mods_performed = metaModerate();		
+		}
+		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
+		return;
+	} else {
+		slashDisplay('mod_header');
+
+		# Handle Deletions, Points & Reparenting
+		# It would be nice to sort these by current score of the comments
+		# ascending, maybe also by val ascending, or some way to try to
+		# get the single-point-spends first and then to only do the
+		# multiple-point-spends if the user still has points.
+		my $can_del = ($constants->{authors_unlimited} && $user->{seclev} >= $constants->{authors_unlimited})
+			|| $user->{acl}{candelcomments_always};
+		for my $key (sort keys %{$form}) {
+			if ($can_del && $key =~ /^del_(\d+)$/) {
+				$total_deleted += deleteThread($sid, $1);
+			} elsif (!$hasPosted && $key =~ /^reason_(\d+)$/) {
+				my $cid = $1;
+				my $ret_val = $slashdb->moderateComment($sid, $cid, $form->{$key});
+				# If an error was returned, tell the user what
+				# went wrong.
+				if ($ret_val < 0) {
+					if ($ret_val == -1) {
+						print getError('no points');
+					} elsif ($ret_val == -2){
+						print getError('not enough points');
+					}
+				} else {
+					$was_touched += $ret_val;
 				}
-			} else {
-				$was_touched += $ret_val;
 			}
 		}
-	}
-	$slashdb->setDiscussionDelCount($sid, $total_deleted);
-	$was_touched = 1 if $total_deleted;
+		$slashdb->setDiscussionDelCount($sid, $total_deleted);
+		$was_touched = 1 if $total_deleted;
+		
+		if ($user->{is_admin}) {
+			$meta_mods_performed = metaModerate();		
+		}
+		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
 
-	slashDisplay('mod_footer', {
-		metamod_elig => scalar $slashdb->metamodEligible($user),
-	});
-
-	if ($hasPosted && !$total_deleted) {
-		print getError('already posted');
-
-	} elsif ($user->{seclev} && $total_deleted) {
-		slashDisplay('del_message', {
-			total_deleted	=> $total_deleted,
-			comment_count	=> $slashdb->countCommentsBySid($sid),
+		slashDisplay('mod_footer', {
+			metamod_elig => scalar $slashdb->metamodEligible($user),
 		});
+
+		if ($hasPosted && !$total_deleted) {
+			print getError('already posted');
+	
+		} elsif ($user->{seclev} && $total_deleted) {
+			slashDisplay('del_message', {
+				total_deleted	=> $total_deleted,
+				comment_count	=> $slashdb->countCommentsBySid($sid),
+			});
+		}
+
 	}
+
 	printComments($discussion, $form->{pid}, $form->{cid},
 		{ force_read_from_master => 1 } );
 

@@ -31,36 +31,16 @@ sub main {
 
 	my $op = $form->{op};
 	$op = 'default' unless $ops{$form->{op}};
-	if (defined $form->{'aid'} && $form->{'aid'} !~ /^\-?\d$/) {
-		undef $form->{'aid'};
+
+	if (defined $form->{aid}) {
+		# Only allow a short range of answer ids here.
+		# (aid is used as the uid of an author elsewhere
+		# in the code, so at least as far as filter_param
+		# allows, it can be any integer.)
+		$form->{aid} += 0;
+		undef $form->{aid} if $form->{aid} < -1 || $form->{aid} > 8;
 	}
-# This is unfinished and has been hacked. I don't trust it anymore and
-# the site that it was written for does not use it currently -Brian
-#
-#	# Paranoia is fine, but why can't this be done from the handler 
-#	# rather than hacking in special case code? - Cliff
-#	if ($op eq "vote_return") {
-#		$ops{$op}->($form, $slashdb);
-#		# Why not do this in a more generic manner you say? 
-#		# Because I am paranoid about this being abused. -Brian
-#		#
-#		# This doesn't answer my question. How is doing this here
-#		# any better or worse than doing it at the end of vote_return()
-#		# -Cliff
-#		my $SECT = $slashdb->getSection();
-#		if ($SECT) {
-#			my $url = $SECT->{rootdir} || $constants->{real_rootdir};
-#
-#			# Remove the scheme and authority portions, if present.
-#			$form->{returnto} =~ s{^(?:.+?)?//.+?/}{/};
-#			
-#			# Form new absolute URL based on section URL and then
-#			# redirect the user.
-#			my $refer = URI->new_abs($form->{returnto}, $url);
-#			redirect($refer->as_string);
-#		}
-#	}
-#
+
 	header(getData('title'), $form->{section}, { tab_selected => 'poll'}) or return;
 
 	$ops{$op}->($form, $slashdb, $constants);
@@ -117,6 +97,7 @@ sub link_story_to_poll {
 	}
 	
 	# clear current story.qid
+	# XXX this needs to call setStory_delete_memcached
 	$slashdb->sqlUpdate("stories", { qid=>"" }, "sid = ".$slashdb->sqlQuote($form->{sid}));
 
 	slashDisplay('linkstory', {
@@ -147,6 +128,7 @@ sub detachpoll {
 		my $where = "sid=".$slashdb->sqlQuote($sid)." AND qid=".$slashdb->sqlQuote($qid);
 		my $count=$slashdb->sqlCount("stories",$where);
 		print STDERR "count $count\n";
+		# XXX this needs to call setStory_delete_memcached
 		if($count){
 			$slashdb->sqlUpdate("stories",{ qid => "" } , $where); 
 		} elsif ( $form->{force} ){
@@ -181,15 +163,17 @@ sub editpoll {
 
 	my($question, $answers, $pollbooth, $checked, $story_ref);
 	if ($form->{op} eq "preview") {
-		foreach (qw/question voters date section topic polltype/) {
+		foreach (qw/question voters date primaryskid topic polltype/) {
 			$question->{$_} = $form->{$_};
 		}
 		
-		$story_ref = $reader->sqlSelectHashref("sid,qid,time,section,tid,displaystatus",
+		$story_ref = $reader->sqlSelectHashref("stoid,sid,qid,time,primaryskid,tid",
 			"stories",
 			"sid=" . $reader->sqlQuote($form->{sid})
 		) if $form->{sid};
 
+		$story_ref->{displaystatus} = $reader->_displaystatus($story_ref->{stoid}) if $story_ref;
+		
 		$warning->{invalid_sid} = 1 if $form->{sid} and !$story_ref;
 
 		if ($form->{sid}) {
@@ -201,9 +185,9 @@ sub editpoll {
 		}
 
 		if ($story_ref) {
-			$question->{'date'}	= $story_ref->{'time'};
-			$question->{topic}	= $story_ref->{'tid'};
-			$question->{section}	= $story_ref->{section};
+			$question->{'date'}		= $story_ref->{'time'};
+			$question->{topic}		= $story_ref->{'tid'};
+			$question->{primaryskid}	= $story_ref->{primaryskid};
 			$question->{polltype}	= $story_ref->{displaystatus} >= 0 ? "story" : "nodisplay";
 		}
                 
@@ -228,7 +212,7 @@ sub editpoll {
 			poll_open 	=> ($form->{date} le $slashdb->getTime()),
 			question	=> $question->{question},
 			answers		=> $disp_answers,
-			sect		=> $question->{section},
+			primaryskid	=> $question->{primaryskid},
                         has_activated   => 1 
 		}, 1);
 		$pollbooth = fancybox(
@@ -246,14 +230,14 @@ sub editpoll {
 		$question->{sid} = $form->{override_sid} if $form->{override_sid};
 		
 		if ($question->{sid}) {
-			$story_ref = $reader->sqlSelectHashref("sid,qid,time,section,tid,displaystatus",
+			$story_ref = $reader->sqlSelectHashref("sid,qid,time,primaryskid,tid,displaystatus",
 				"stories",
 				"sid=" . $reader->sqlQuote($question->{sid})
 			);
 			if ($story_ref) {
-				$question->{'date'}	= $story_ref->{'time'};
-				$question->{topic}	= $story_ref->{'tid'};
-				$question->{section}	= $story_ref->{section};
+				$question->{'date'}		= $story_ref->{'time'};
+				$question->{topic}		= $story_ref->{'tid'};
+				$question->{primaryskid}	= $story_ref->{primaryskid};
 				$question->{polltype}	= $story_ref->{displaystatus} >= 0 ? "story" : "nodisplay";
 			}
                 }
@@ -264,7 +248,8 @@ sub editpoll {
 			$qid, [qw( answer votes aid )]
 		);
                 $question->{polltype} ||= "section";
-		$checked = ($slashdb->getSection($question->{section}, 'qid', 1) == $qid) ? 1 : 0;
+		my $current_qid = $slashdb->getCurrentQidForSkid($question->{primaryskid});
+		$checked = ($current_qid == $qid) ? 1 : 0;
 		my $poll_open = $slashdb->isPollOpen($qid);
 
 		# Just use the DB method, it's too messed up to rebuild the logic
@@ -301,7 +286,7 @@ sub editpoll {
 	my $date = $question->{date};
         $date ||= $form->{date};
         $date ||= $slashdb->getTime();
-        my $topics = $reader->getDescriptions('topics_section');
+        my $topics = $reader->getDescriptions('non_nexus_topics');
 	slashDisplay('editpoll', {
 		title		=> getData('edit_poll_title', { qid=>$qid }),
 		qid		=> $qid,
@@ -321,6 +306,7 @@ sub savepoll {
 	my($form, $slashdb, $constants) = @_;
 
 	my $user = getCurrentUser();
+	my $gSkin = getCurrentSkin();
 
 	unless ($user->{'is_admin'}) {
 		default(@_);
@@ -394,7 +380,7 @@ sub savepoll {
 				title		=> $form->{question},
 				topic		=> $form->{topic},
 				approved	=> 1, # Story discussions are always approved -Brian
-				url		=> "$constants->{rootdir}/pollBooth.pl?qid=$qid&aid=-1",
+				url		=> "$gSkin->{rootdir}/pollBooth.pl?qid=$qid&aid=-1",
 			});
 		} elsif ($poll->{discussion}) {
 			# Yep, this is lazy -Brian

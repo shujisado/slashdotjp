@@ -71,9 +71,10 @@ sub new {
 		$self->sqlDo($create_sql);
 
 		# Add in the indexes we need.
-		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX uid(uid)");
-		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX section(section)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX status(status)");
+		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX uid (uid)");
+		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX skid (skid)");
+		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX op_uid_skid (op, uid, skid)");
+		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX status_op_skid (status, op, skid)");
 
 		return undef unless $self->_do_insert_select(
 			"accesslog_temp",
@@ -284,6 +285,7 @@ sub getRepeatMods {
 	my $constants = getCurrentStatic();
 	my $ac_uid = $constants->{anonymous_coward_uid};
 
+	my $lookback = $options->{lookback_days} || 30;
 	my $within = $options->{within_hours} || 96;
 	my $limit = $options->{limit} || 50;
 	my $min_count = $options->{min_count}
@@ -311,6 +313,7 @@ sub getRepeatMods {
 		 AND usersorgi.tokens >= -50
 		 AND usersorg.seclev < 100
 		 AND moderatorlog.cuid=usersdest.uid
+		 AND moderatorlog.ts >= DATE_SUB(NOW(), INTERVAL $lookback DAY)
 		 AND usersdest.uid=usersdesti.uid
 		 AND usersdest.uid != $ac_uid",
 		"GROUP BY usersorg.uid, usersdest.uid, val
@@ -433,7 +436,7 @@ sub getErrorStatuses {
 
 	my $where = "status BETWEEN 500 AND 599";
 	$where .= " AND op='$op'"			if $op;
-	$where .= " AND section='$options->{section}'"	if $options->{section};
+	$where .= " AND skid='$options->{skid}'"	if $options->{skid};
 
 	$self->sqlSelectAllHashrefArray(
 		"status, COUNT(op) AS count, op",
@@ -456,7 +459,7 @@ sub getDaysOfUnarchivedStories {
 	my $days = $self->sqlSelectColArrayref(
 		"day_published",
 		"stories",
-		"writestatus != 'archived' AND displaystatus != -1",
+		"is_archived = 'no' AND primaryskid != 0",
 		"GROUP BY day_published ORDER BY day_published DESC LIMIT $max_days");
 	return $days;
 }
@@ -466,7 +469,7 @@ sub getAverageCommentCountPerStoryOnDay {
 	my($self, $day, $options) = @_;
 	my $col = "AVG(commentcount)";
 	my $where = " DATE_FORMAT(time,'%Y-%m-%d') = '$day' ";
-	$where .= " AND section = '$options->{section}' " if $options->{section};
+	$where .= " AND primaryskid = '$options->{skid}' " if $options->{skid};
 	return $self->sqlSelect($col, "stories", $where);
 }
 
@@ -482,7 +485,7 @@ sub getNumberStoriesPerDay {
 	my($self, $day, $options) = @_;
 	my $col = "COUNT(*)";
 	my $where = " DATE_FORMAT(time,'%Y-%m-%d') = '$day' ";
-	$where .= " AND section = '$options->{section}' " if $options->{section};
+	$where .= " AND primaryskid = '$options->{skid}' " if $options->{skid};
 	return $self->sqlSelect($col, "stories", $where);
 
 }
@@ -493,11 +496,11 @@ sub getCommentsByDistinctIPID {
 
 	my $where = "date $self->{_day_between_clause}";
 	$where .= " AND discussions.id = comments.sid
-		    AND discussions.section = '$options->{section}'"
-		if $options->{section};
+		    AND discussions.primaryskid= '$options->{skid}'"
+		if $options->{skid};
 
 	my $tables = 'comments';
-	$tables .= ", discussions" if $options->{section};
+	$tables .= ", discussions" if $options->{skid};
 
 	my $used = $self->sqlSelectColArrayref(
 		'ipid',
@@ -515,11 +518,11 @@ sub countCommentsByDistinctIPIDPerAnon {
 
 	my $where = "date $self->{_day_between_clause}";
 	$where .= " AND discussions.id = comments.sid
-		    AND discussions.section = '$options->{section}'"
-		if $options->{section};
+		    AND discussions.primaryskid = '$options->{skid}'"
+		if $options->{skid};
 
 	my $tables = 'comments';
-	$tables .= ", discussions" if $options->{section};
+	$tables .= ", discussions" if $options->{skid};
 
 	my $ipid_uid_hr = $self->sqlSelectAllHashref(
 		[qw( ipid uid )],
@@ -564,11 +567,11 @@ sub countCommentsFromProxyAnon {
 
 	my $where = "date $self->{_day_between_clause}";
 	$where .= " AND discussions.id = comments.sid
-		    AND discussions.section = '$options->{section}'"
-		if $options->{section};
+		    AND discussions.primaryskid = '$options->{skid}'"
+		if $options->{skid};
 
 	my $tables = 'comments, accesslist';
-	$tables .= ", discussions" if $options->{section};
+	$tables .= ", discussions" if $options->{skid};
 
 	my $c = $self->sqlCount(
 		$tables,
@@ -636,18 +639,18 @@ sub countCommentsByDiscussionType {
 sub getCommentsByDistinctUIDPosters {
 	my($self, $options) = @_;
 
-	my $section_where = "";
-	$section_where = " AND discussions.id = comments.sid
-			   AND discussions.section = '$options->{section}'"
-		if $options->{section};
+	my $skid_where = "";
+	$skid_where = " AND discussions.id = comments.sid
+			   AND discussions.primaryskid = '$options->{skid}'"
+		if $options->{skid};
 
 	my $tables = 'comments';
-	$tables .= ", discussions" if $options->{section};
+	$tables .= ", discussions" if $options->{skid};
 
 	my $used = $self->sqlSelect(
 		"COUNT(DISTINCT uid)", $tables, 
 		"date $self->{_day_between_clause}
-		$section_where",
+		$skid_where",
 		'',
 		{ }
 	);
@@ -657,26 +660,45 @@ sub getCommentsByDistinctUIDPosters {
 sub getAdminModsInfo {
 	my($self) = @_;
 
+	# First get the list of admins.
+	my $admin_uids_ar = $self->sqlSelectColArrayref(
+		"uid", "users", "seclev > 1");
+	my $admin_uids_str = join(",", sort { $a <=> $b } @$admin_uids_ar);
+	my $nickname_hr = $self->sqlSelectAllKeyValue(
+		"uid, nickname",
+		"users",
+		"uid IN ($admin_uids_str)");
+
 	# First get the count of upmods and downmods performed by each admin.
 	my $m1_uid_val_hr = $self->sqlSelectAllHashref(
 		[qw( uid val )],
-		"moderatorlog.uid AS uid, val, nickname, COUNT(*) AS count",
-		"moderatorlog, users",
-		"users.seclev > 1 AND moderatorlog.uid=users.uid 
+		"uid, val, COUNT(*) AS count",
+		"moderatorlog",
+		"uid IN ($admin_uids_str)
 		 AND ts $self->{_day_between_clause}",
 		"GROUP BY moderatorlog.uid, val"
 	);
+	for my $uid (keys %$m1_uid_val_hr) {
+		for my $val (keys %{ $m1_uid_val_hr->{$uid} }) {
+			$m1_uid_val_hr->{$uid}{$val}{nickname} = $nickname_hr->{$uid};
+		}
+	}
 
 	# Now get a count of fair/unfair counts for each admin.
 	my $m2_uid_val_hr = $self->sqlSelectAllHashref(
 		[qw( uid val )],
-		"users.uid AS uid, metamodlog.val AS val, users.nickname AS nickname, COUNT(*) AS count",
-		"metamodlog, moderatorlog, users",
-		"users.seclev > 1 AND moderatorlog.uid=users.uid
+		"moderatorlog.uid AS uid, metamodlog.val AS val, COUNT(*) AS count",
+		"moderatorlog, metamodlog",
+		"moderatorlog.uid IN ($admin_uids_str)
 		 AND metamodlog.mmid=moderatorlog.id 
-		 AND metamodlog.ts $self->{_day_between_clause} ",
-		"GROUP BY users.uid, metamodlog.val"
+		 AND metamodlog.ts $self->{_day_between_clause}",
+		"GROUP BY moderatorlog.uid, metamodlog.val"
 	);
+	for my $uid (keys %$m2_uid_val_hr) {
+		for my $val (keys %{ $m2_uid_val_hr->{$uid} }) {
+			$m2_uid_val_hr->{$uid}{$val}{nickname} = $nickname_hr->{$uid};
+		}
+	}
 
 	# If nothing for either, no data to return.
 	return { } if !%$m1_uid_val_hr && !%$m2_uid_val_hr;
@@ -702,8 +724,10 @@ sub getAdminModsInfo {
 			$m2_history_mo_hr->{$name}{count};
 	}
 	if (%$m2_uid_val_mo_hr) {
-		my $m2_uid_nickname = $self->sqlSelectAllHashref(
-			"uid",
+		# Get nicknames for every user that shows up in the stats
+		# for the last 30 days (which may be different from the
+		# admins we have now).
+		my $m2_uid_nickname = $self->sqlSelectAllKeyValue(
 			"uid, nickname",
 			"users",
 			"uid IN (" . join(",", keys %$m2_uid_val_mo_hr) . ")"
@@ -711,7 +735,7 @@ sub getAdminModsInfo {
 		for my $uid (keys %$m2_uid_nickname) {
 			for my $fairness (qw( -1 1 )) {
 				$m2_uid_val_mo_hr->{$uid}{$fairness}{nickname} =
-					$m2_uid_nickname->{$uid}{nickname};
+					$m2_uid_nickname->{$uid};
 				$m2_uid_val_mo_hr->{$uid}{$fairness}{count} +=
 					$m2_uid_val_hr->{$uid}{$fairness}{count};
 			}
@@ -819,7 +843,7 @@ sub countSubmissionsByDay {
 	my($self, $options) = @_;
 
 	my $where = "time $self->{_day_between_clause}";
-	$where .= " AND section = '$options->{section}'" if $options->{section};
+	$where .= " AND skid = '$options->{skid}'" if $options->{skid};
 
 	my $used = $self->sqlCount(
 		'submissions', 
@@ -837,7 +861,7 @@ sub countSubmissionsByCommentIPID {
 
 	my $where = "time $self->{_day_between_clause}
 		AND ipid IN ($in_list)";
-	$where .= " AND section = '$options->{section}'" if $options->{section};
+	$where .= " AND skid = '$options->{skid}'" if $options->{skid};
 
 	my $used = $self->sqlCount(
 		'submissions', 
@@ -866,12 +890,11 @@ sub countCommentsDaily {
 	my($self, $options) = @_;
 
 	my $tables = 'comments';
-	$tables .= ", submissions" if $options->{section};
 
-	my $section_where = "";
-	$section_where = " AND discussions.id = comments.sid
-			   AND discussions.section = '$options->{section}'"
-		if $options->{section};
+	my $skid_where = "";
+	$skid_where = " AND discussions.id = comments.sid
+			   AND discussions.primaryskid = '$options->{skid}'"
+		if $options->{skid};
 	
 	# Count comments posted yesterday... using a primary key,
 	# if it'll save us a table scan.  On Slashdot this cuts the
@@ -880,7 +903,7 @@ sub countCommentsDaily {
 	my $max_cid = $self->sqlSelect("MAX(comments.cid)", $tables);
 	if ($max_cid > 300_000) {
 		# No site can get more than 100K comments a day in
-		# all its sections combined.  It is decided.  :)
+		# all its skins combined.  It is decided.  :)
 		$cid_limit_clause = " AND cid > " . ($max_cid-100_000);
 	}
 
@@ -888,7 +911,7 @@ sub countCommentsDaily {
 		"COUNT(*)",
 		"comments",
 		"date $self->{_day_between_clause}
-		 $cid_limit_clause $section_where"
+		 $cid_limit_clause $skid_where"
 	);
 
 	return $comments; 
@@ -901,8 +924,8 @@ sub countBytesByPage {
 	my $where = "1=1 ";
 	$where .= " AND op='$op'"
 		if $op;
-	$where .= " AND section='$options->{section}'"
-		if $options->{section};
+	$where .= " AND skid='$options->{skid}'"
+		if $options->{skid};
 
 	# The "no_op" option can take either a scalar for one op to exclude,
 	# or an arrayref of multiple ops to exclude.
@@ -917,16 +940,28 @@ sub countBytesByPage {
 }
 
 ########################################################
+sub countBytesByPages {
+	my($self, $options) = @_;
+	$self->sqlSelectAllHashref("op","op, SUM(bytes) as bytes", "accesslog_temp", '', "GROUP BY op");
+}
+
+########################################################
 sub countUsersByPage {
 	my($self, $op, $options) = @_;
 	my $where = "1=1 ";
 	$where .= "AND op='$op' "
 		if $op;
-	$where .= " AND section='$options->{section}' "
-		if $options->{section};
+	$where .= " AND skid='$options->{skid}' "
+		if $options->{skid};
 	$where = "($where) AND $options->{extra_where_clause}"
 		if $options->{extra_where_clause};
 	$self->sqlSelect("COUNT(DISTINCT uid)", "accesslog_temp", $where);
+}
+
+########################################################
+sub countUsersByPages {
+	my($self, $options) = @_;
+	$self->sqlSelectAllHashref("op", "op, COUNT(DISTINCT uid) AS uids", "accesslog_temp", '', "GROUP BY op");
 }
 
 ########################################################
@@ -938,8 +973,8 @@ sub countDailyByPage {
 	my $where = "1=1 ";
 	$where .= " AND op='$op'"
 		if $op;
-	$where .= " AND section='$options->{section}'"
-		if $options->{section};
+	$where .= " AND skid='$options->{skid}'"
+		if $options->{skid};
 	$where .= " AND static='$options->{static}'"
 		if $options->{static};
 	$where .=" AND uid = $constants->{anonymous_coward_uid} " if $options->{user_type} eq "anonymous";
@@ -958,6 +993,21 @@ sub countDailyByPage {
 }
 
 ########################################################
+sub countDailyByPages {
+	my($self, $options) = @_;
+	my $constants = getCurrentStatic();
+	$options ||= {};
+
+	$self->sqlSelectAllHashref("op", "op,count(*) AS cnt", "accesslog_temp", "", "GROUP BY op");
+}
+
+########################################################
+sub countFromRSSStatsBySections {
+	my ($self) = @_;
+	$self->sqlSelectAllHashref("skid", "skid,count(*) AS cnt, count(DISTINCT uid) AS uids, count(DISTINCT host_addr) as ipids", "accesslog_temp", 'referer="rss"', "GROUP By skid");
+}
+
+########################################################
 sub countDailyByPageDistinctIPID {
 	# This is so lame, and so not ANSI SQL -Brian
 	my($self, $op, $options) = @_;
@@ -966,12 +1016,22 @@ sub countDailyByPageDistinctIPID {
 	my $where = "1=1 ";
 	$where .= "AND op='$op' "
 		if $op;
-	$where .= " AND section='$options->{section}' "
-		if $options->{section};
+	$where .= " AND skid='$options->{skid}' "
+		if $options->{skid};
 	$where .=" AND uid = $constants->{anonymous_coward_uid} " if $options->{user_type} eq "anonymous";
 	$where .=" AND uid != $constants->{anonymous_coward_uid} " if $options->{user_type} eq "logged-in";
 	$self->sqlSelect("COUNT(DISTINCT host_addr)", "accesslog_temp", $where);
 }
+
+########################################################
+sub countDailyByPageDistinctIPIDs {
+	my($self, $options) = @_;
+	my $constants = getCurrentStatic();
+	
+	$self->sqlSelectAllHashref("op", "op, COUNT(DISTINCT host_addr) AS cnt", "accesslog_temp", "", "GROUP BY op");
+}
+
+
 
 ########################################################
 sub countDailyStoriesAccess {
@@ -1221,11 +1281,15 @@ sub _calc_percentiles {
 }
 
 ########################################################
-sub getDailyScoreTotal {
-	my($self, $score) = @_;
+sub getDailyScoreTotals {
+	my($self, $scores) = @_;
 
-	return $self->sqlCount('comments',
-		"points=$score AND date $self->{_day_between_clause}");
+	return $self->sqlSelectAllHashref(
+		"points",
+		"points, COUNT(*) AS c",
+		"comments",
+		"date $self->{_day_between_clause}",
+		"GROUP BY points");
 }
 
 
@@ -1317,8 +1381,8 @@ sub getTopReferers {
 	if ($options->{include_local}) {
 		$where = "";
 	} else {
-		my $constants = getCurrentStatic();
-		$where = " AND referer NOT REGEXP '$constants->{basedomain}'";
+		my $gSkin = getCurrentSkin();
+		$where = " AND referer NOT REGEXP '$gSkin->{basedomain}'";
 	}
 
 	return $self->sqlSelectAll(
@@ -1459,14 +1523,17 @@ sub getTopModdersNearArchive {
 
 	my($token_cutoff, $limit_clause);
 	$token_cutoff = $constants->{m2_mintokens} || 0;
-	$limit_clause = " limit $options->{limit}" if $options->{limit};
+	$limit_clause = " LIMIT $options->{limit}" if $options->{limit};
 
-	my $top_users = $self->sqlSelectAllHashrefArray("count(moderatorlog.uid) as count, moderatorlog.uid as uid, nickname",
-							"discussions,moderatorlog,users_info,users",
-							"moderatorlog.sid=discussions.id and type='archived' and users_info.uid = moderatorlog.uid 
-							and moderatorlog.ts > date_add(discussions.ts, interval $archive_delay - 3 day) and tokens >= $token_cutoff
-							and users_info.uid = users.uid",
-                                			"group by moderatorlog.uid order by count desc $limit_clause");
+	my $top_users = $self->sqlSelectAllHashrefArray(
+		"COUNT(moderatorlog.uid) AS count, moderatorlog.uid AS uid, nickname",
+		"discussions, moderatorlog, users_info, users",
+		"moderatorlog.sid=discussions.id AND type='archived'
+		 AND users_info.uid = moderatorlog.uid 
+		 AND moderatorlog.ts > DATE_ADD(discussions.ts, INTERVAL $archive_delay - 3 DAY)
+		 AND tokens >= $token_cutoff
+		 AND users_info.uid = users.uid",
+		"GROUP BY moderatorlog.uid ORDER BY count DESC $limit_clause");
 	return $top_users;
 
 }
@@ -1574,13 +1641,13 @@ sub cleanGraphs {
 sub getAllStats {
 	my($self, $options) = @_;
 	my $table = 'stats_daily';
-	my $sel   = 'name, value+0 as value, section, day';
-	my $extra = 'ORDER BY section, day, name';
+	my $sel   = 'name, value+0 as value, skid, day';
+	my $extra = 'ORDER BY skid, day, name';
 	my @where;
 	my @name_where;
 
-	if ($options->{section}) {
-		push @where, 'section = ' . $self->sqlQuote($options->{section});
+	if ($options->{skid}) {
+		push @where, 'skid = ' . $self->sqlQuote($options->{skid});
 	}
 
 	if ($options->{name}) {
@@ -1625,7 +1692,7 @@ sub getAllStats {
 	}
 	
 	if ($sep_name_select) {
-		my $names = $self->sqlSelectAll("DISTINCT name, section", $table, join(' AND ', @where));
+		my $names = $self->sqlSelectAll("DISTINCT name, skid", $table, join(' AND ', @where));
 		foreach my $name (@$names){
 			$returnable{$name->[1]}{names} ||= [];
 			push @{$returnable{$name->[1]}{names}}, $name->[0]

@@ -30,15 +30,15 @@ CASE "login error" %]
 [% # NO ANONYMOUS POSTING.
 CASE "no anonymous posting" %]
 Sorry, anonymous posting has been turned off. Please
-<A HREF="[% constants.rootdir %]/users.pl">register and log in</A>.
+<A HREF="[% gSkin.rootdir %]/users.pl">register and log in</A>.
 
 [% # OPEN PROXY.
 CASE "open proxy" %]
-Sorry, but according to our tests, you are trying to post anonymously
-from an open HTTP proxy.  Please close the proxy or ask your sysadmin
+Sorry, but according to our tests, you are trying to post [% IF !constants.comments_portscan==2 %]anonymously [% END %]
+from an open HTTP proxy.  Please close the proxy or ask your sysadmin or ISP 
 to do so, because open proxies are used to spam web boards like this
-one. If you really can't close it and still want to post, you'll have to
-<A HREF="[% constants.rootdir %]/users.pl">register and log in</A>.
+one. [% IF constants.comments_portscan!=2 %]If you really can't close it and still want to post, you'll have to
+<A HREF="[% gSkin.rootdir %]/users.pl">register and log in</A>.[% END %]
 <p>If you have questions, mention that your proxy is at
 <tt>[% unencoded_ip %]</tt> on port <tt>[% port %]</tt>.
 
@@ -54,7 +54,11 @@ You've already posted something in this discussion<BR>
 [% # ANONYMOUS DISALLOWED.
 CASE "anonymous disallowed" %]
 Sorry, anonymous posting has been turned off.
-Please <A HREF="[% constants.rootdir %]/users.pl">register and log in</A>.
+Please <A HREF="[% gSkin.rootdir %]/users.pl">register and log in</A>.
+
+[% # POST ANON OPTION DISABLED.
+CASE "postanon_option_disabled" %]
+Anonymous posting is not available to your user.  
 
 [% # NO BODY.
 CASE "no body" %]
@@ -135,7 +139,7 @@ with your
 [% IF user.is_anon %]
 MD5'd IPID, which is <tt>[% user.ipid %]</tt>[%
 ELSE %]
-username "<tt>[% user.nickname %]</tt>"[%
+username "<tt>[% user.nickname | strip_literal %]</tt>"[%
 END %]. Let us know how many comments <em>you</em> think you've
 posted in the last 24 hours.
 
@@ -158,7 +162,7 @@ with your MD5'd IPID and SubnetID, which are
 "<tt>[% user.ipid %]</tt>" and "<tt>[% user.subnetid %]</tt>"[%
 IF !user.is_anon %]
 and (optionally, but preferably) your IP number
-"<tt>[% unencoded_ip %]</tt>" and your username "<tt>[% user.nickname %]</tt>"[%
+"<tt>[% unencoded_ip %]</tt>" and your username "<tt>[% user.nickname | strip_literal %]</tt>"[%
 END %].
 
 [% # NESTING TOO DEEP
@@ -222,12 +226,19 @@ have indicated you don't want comments pages ad-free, or you have
 set your daily limit of ad-free pages to lower than
 the default [% constants.subscribe_hits_btmd %].
 Any of these three possible issues can be resolved at
-<A HREF="[% constants.rootdir %]/subscribe.pl">your subscription page</A>.<P>
+<A HREF="[% gSkin.rootdir %]/subscribe.pl">your subscription page</A>.<P>
 
 [% CASE "moderations to be lost" %]
 [% PROCESS titlebar width="100%" title="You've Already Moderated this Discussion" %]
 If you continue to post this comment, all moderations done to this discussion will
 be undone!  Are you sure you want to post?
+
+[% # NO DISCUSSION ID SPECIFIED
+CASE "no sid" %]
+[% PROCESS titlebar width="100%" title="No Discussion Specified" %]
+You did not specify a discussion ID. If you clicked on a link internal
+to [% constants.sitename %], this is a bug. If not, someone sent you
+to a silly invalid URL.
 
 [% CASE %]
 An unexpected error has occurred.<BR><B>[% value %]</B><BR>

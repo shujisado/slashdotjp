@@ -62,14 +62,15 @@ sub handler {
 	my $constants = getCurrentStatic();
 	my $slashdb = $dbcfg->{slashdb};
 	my $apr = Apache::Request->new($r);
+	my $gSkin = getCurrentSkin();
 
 	$r->header_out('X-Powered-By' => "Slash $Slash::VERSION");
 	random($r);
 
 	# let pass unless / or .pl
 	my $uri = $r->uri;
-	if ($constants->{rootdir}) {
-		my $path = URI->new($constants->{rootdir})->path;
+	if ($gSkin->{rootdir}) {
+		my $path = URI->new($gSkin->{rootdir})->path;
 		$uri =~ s/^\Q$path//;
 	}
 
@@ -129,6 +130,7 @@ sub handler {
 	# later -- pudge
 	my $user_temp = getCurrentUser();
 	$user_temp->{state}{login_temp} = 'no';
+	$user_temp->{state}{login_failed_reason} = 0;
 
 	if ((($op eq 'userlogin' || $form->{rlogin}) && length($form->{upasswd}) > 1)
 		||
@@ -164,9 +166,19 @@ sub handler {
 		my $newpass;
 		if ($read_only || !$tmpuid) {
 			# We know we can't log in, don't even try.
+			# We should provide a way here for the loginForm template
+			# to emit a more informative error message than its
+			# standard "Danger, Will Robinson".  That error assumes
+			# that if a unickname is specified, the only way a login
+			# could fail is if the unickname doesn't exist (!$tmpuid)
+			# or the password is wrong.  That's no longer the case
+			# since $read_only can bring us here..  Maybe set a flag
+			# in $user->{state} that the template reads? - Jamie
 			$uid = 0;
+			$user_temp->{state}{login_failed_reason} = $read_only ? 'nopost' : 1;
 		} else {
 			($uid, $newpass) = userLogin($tmpuid, $passwd, $logtoken);
+			$slashdb->clearAccountVerifyNeededFlags($uid) if $uid;
 		}
 
 		# here we want to redirect only if the user has requested via
@@ -176,10 +188,10 @@ sub handler {
 			$form->{returnto} =~ s/%3D/=/;
 			$form->{returnto} =~ s/%3F/?/;
 			my $absolutedir = $is_ssl
-				? $constants->{absolutedir_secure}
-				: $constants->{absolutedir};
+				? $gSkin->{absolutedir_secure}
+				: $gSkin->{absolutedir};
 			$form->{returnto} = url2abs(($newpass
-				? "$constants->{rootdir}/users.pl?op=changepasswd" .
+				? "$gSkin->{rootdir}/login.pl?op=changeprefs" .
 					# XXX This "note" field is ignored now...
 					# right?  - Jamie 2002/09/17
 					# YYY I made it so it is just a silly code,
@@ -210,14 +222,19 @@ sub handler {
 			# only allow this for certain pages/ops etc.
 			# and that page must doublecheck for permissions etc., still,
 			# redirecting user back to a main page upon failure
-			if ($constants->{rss_allow_index} && $form->{content_type} eq 'rss' && $uri =~ m{^/index\.pl$}) {
+			if (
+				($constants->{rss_allow_index} && $form->{content_type} eq 'rss' && $uri =~ m{^/index\.pl$})
+					||
+				# hmmm ... journal.pl no work, because can be called as /journal/
+				($constants->{journal_rdfitemdesc_html} && $form->{content_type} eq 'rss' && $uri =~ m{\bjournal\b})
+			) {
 				$logtoken = $form->{logtoken};
 			} else {
 				delete $form->{logtoken};
 			}
 		}
 
-		my($tmpuid, $value) = eatUserCookie($logtoken || $cookies->{user}->value);
+		my($tmpuid, $value) = eatUserCookie($logtoken || ($cookies->{user} && $cookies->{user}->value));
 		my $cookvalue;
 		if ($tmpuid && $tmpuid > 0 && $tmpuid != $constants->{anonymous_coward_uid}) {
 			($uid, $cookvalue) =
@@ -275,7 +292,14 @@ sub handler {
 	# This has happened to me a couple of times.
 	delete $cookies->{user} if $cookies->{user} && !$cookies->{user}->value;
 
-	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
+	if (!$uid) {
+		if ($gSkin && $gSkin->{ac_uid}) {
+			$uid = $gSkin->{ac_uid};
+		} else {
+			$uid = $constants->{anonymous_coward_uid};
+		}
+	}
+#print STDERR scalar(localtime) . " $$ User handler uid=$uid gSkin->skid=$gSkin->{skid}\n";
 
 	# Ok, yes we could use %ENV here, but if we did and
 	# if someone ever wrote a module in another language
@@ -331,6 +355,7 @@ sub handler {
 		$user->{state}{_dynamic_page} = 1;
 	}
 	$user->{state}{login_temp} = $user_temp->{state}{login_temp};
+	$user->{state}{login_failed_reason} = $user_temp->{state}{login_failed_reason};
 	$user->{state}{ssl} = $is_ssl;
 	createCurrentUser($user);
 	createCurrentForm($form);
@@ -386,7 +411,7 @@ sub handler {
 		my $newloc = $uri;
 		$newloc .= "?" . $r->args if $r->args;
 		$r->err_header_out(Location =>
-			URI->new_abs($newloc, $constants->{absolutedir}));
+			URI->new_abs($newloc, $gSkin->{absolutedir}));
 		return REDIRECT;
 	}
 
@@ -468,7 +493,10 @@ sub userLogin {
 			$slashdb->getUser($uid, 'session_login'));
 		return($uid, $newpass);
 	} else {
-		return getCurrentStatic('anonymous_coward_uid');
+		my $gSkin = getCurrentSkin();
+		return $gSkin && $gSkin->{ac_uid}
+			? $gSkin->{ac_uid}
+			: getCurrentStatic('anonymous_coward_uid');
 	}
 }
 
@@ -479,6 +507,7 @@ sub userdir_handler {
 	return DECLINED unless $r->is_initial_req;
 
 	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
 
 	# note that, contrary to the RFC, a + in this handler
 	# will be treated as a space; the only way to get a +
@@ -490,8 +519,8 @@ sub userdir_handler {
 	my $saveuri = $uri;
 	$uri =~ s/%([a-fA-F0-9]{2})/pack('C', hex($1))/ge;
 
-	if ($constants->{rootdir}) {
-		my $path = URI->new($constants->{rootdir})->path;
+	if ($gSkin->{rootdir}) {
+		my $path = URI->new($gSkin->{rootdir})->path;
 		$uri =~ s/^\Q$path//;
 	}
 
@@ -566,13 +595,13 @@ sub userdir_handler {
 				$r->uri('/users.pl');
 				$r->filename($constants->{basedir} . '/users.pl');
 			} elsif ($op eq 'password') {
-				$r->args("op=changepasswd");
-				$r->uri('/users.pl');
-				$r->filename($constants->{basedir} . '/users.pl');
+				$r->args("op=changeprefs");
+				$r->uri('/login.pl');
+				$r->filename($constants->{basedir} . '/login.pl');
 			} elsif ($op eq 'logout') {
 				$r->args("op=userclose");
-				$r->uri('/users.pl');
-				$r->filename($constants->{basedir} . '/users.pl');
+				$r->uri('/login.pl');
+				$r->filename($constants->{basedir} . '/login.pl');
 			} elsif ($op eq 'misc') {
 				$r->args("op=editmiscopts");
 				$r->uri('/users.pl');
@@ -588,8 +617,8 @@ sub userdir_handler {
 			}
 			return OK;
 		} else {
-			$r->uri('/users.pl');
-			$r->filename($constants->{basedir} . '/users.pl');
+			$r->uri('/login.pl');
+			$r->filename($constants->{basedir} . '/login.pl');
 			return OK;
 		}
 	}
@@ -599,8 +628,12 @@ sub userdir_handler {
 	# will change if somehow Apache/mod_perl no longer decodes before
 	# returning the data. -- pudge
 	if ($saveuri =~ m[^/(?:%7[eE]|~)(.+)]) {
-		my($nick, $op, $extra) = split /\//, $1, 4;
-		for ($nick, $op, $extra) {
+		my($string, $query) = ($1, '');
+		if ($string =~ s/\?(.+)$//) {
+			$query = $1;
+		}
+		my($nick, $op, $extra, $more) = split /\//, $string, 4;
+		for ($nick, $op, $extra, $more) {
 			s/%([a-fA-F0-9]{2})/pack('C', hex($1))/ge;
 		}
 
@@ -615,24 +648,31 @@ sub userdir_handler {
 		# $r->args($ops{$op}[1] . "&nick=$nick");
 		# $r->uri($ops{$op}[0]);
 		# $r->filename($constants->{basedir} . $ops{$op}[0]);
-		# Not against it, or something like it. This is getting a bit long. 
-		# I would rather prefer it did not turn out like ops have though. -Brian
-		# what do you mean? -- pudge
 
-		unless ($uid) {
+		if (!$uid) {
 			$r->args("op=no_user");
 			$r->uri('/users.pl');
 			$r->filename($constants->{basedir} . '/users.pl');
 
 		} elsif ($op eq 'journal') {
 			my $args = "op=display&nick=$nick&uid=$uid";
-			if ($extra && $extra =~ /^\d+$/) {
-				$args .= "&id=$extra";
-			} elsif ($extra && $extra =~ /^rss$/) {
-				$args .= "&content_type=rss";
-			} elsif ($extra && $extra =~ /^friends$/) {
-				$args =~ s/display/friendview/;
+			$extra .= '/' . $more;
+			if ($extra) {
+				if ($extra =~ /^(\d+)\/$/) {
+					$args .= "&id=$1";
+				}
+				if ($extra =~ s/^friends\///) {
+					$args =~ s/display/friendview/;
+				}
+				if ($extra =~ /^rss(\/(\d+::\w+)?)?$/) {
+					if ($2) {
+						(my $logtoken = $2) =~ s/::/%3A%3A/;
+						$args .= "&logtoken=$logtoken";
+					}
+					$args .= "&content_type=rss";
+				}
 			}
+			$args .= "&$query";
 			$r->args($args);
 			$r->uri('/journal.pl');
 			$r->filename($constants->{basedir} . '/journal.pl');

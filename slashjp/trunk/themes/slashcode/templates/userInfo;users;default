@@ -42,7 +42,7 @@ up top there, where you can customize [% constants.sitename %],
 change your password, or just click pretty widgets to kill time.
 
 [% IF ! useredit.registered %]
-<P>This account is currently expired. Please <A HREF="[% constants.rootdir %]/users.pl?op=validateuser">re-register</A> at your earliest opportunity.<BR><P>
+<P>This account is currently expired. Please <A HREF="[% gSkin.rootdir %]/users.pl?op=validateuser">re-register</A> at your earliest opportunity.<BR><P>
 [% END %]
 
 <P>[% PROCESS horiz_rule %]</P>
@@ -55,7 +55,7 @@ change your password, or just click pretty widgets to kill time.
 
 [% IF lastjournal %]
 <P>Last journal entry:
-<B><A HREF="[% constants.rootdir %]/~[% useredit.nick_plain | fixparam %]/journal/">[%
+<B><A HREF="[% gSkin.rootdir %]/~[% useredit.nick_plain | fixparam %]/journal/">[%
 lastjournal.description | strip_notags %]</A></B>,
 [% Slash.timeCalc(useredit.journal_last_entry_date) %]
 ([% lastjournal.commentcount || 0 %] comment[% IF lastjournal.commentcount != 1 %]s[% END %])
@@ -98,12 +98,17 @@ lastjournal.description | strip_notags %]</A></B>,
 [% END %]
 
 <P>
-[%
+[% IF admin_flag;
 	m2_title = "${useredit.nickname}'s Recent M2s";
 	m2_listing = form.m2_listing.defined ? form.m2_listing : user.show_m2_listing;
-%]
-[% PROCESS listMetamods title = m2_title m2_listing = m2_listing metamods = metamods the_user = useredit %]
-<P>
+	PROCESS listMetamods
+		title = m2_title 
+		m2_listing = m2_listing 
+		metamods = metamods 
+		the_user = useredit;
+	"<P>";
+END %]
+
 [% IF submissions.size > 0  %]
 [% IF admin_flag or useredit.uid == user.uid;
 	title = "${useredit.nickname}'s Recent Submissions";

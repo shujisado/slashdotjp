@@ -29,13 +29,13 @@ $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my $basedir = $constants->{basedir};
 
-	# Takes approx. 10 seconds on Slashdot
+	# Takes approx. 90 seconds on Slashdot
 	# (approx. 6 minutes if subscribe_hits_only is set)
 	slashdLog('Updating User Logins Begin');
 	$slashdb->updateLastaccess();
 	slashdLog('Updating User Logins End');
 
-	# Takes approx. 2 seconds on Slashdot
+	# Takes approx. 7 seconds on Slashdot
 	slashdLog('Decaying User Tokens Begin');
 	my $decayed = $slashdb->decayTokens();
 	slashdLog("Decaying User Tokens End ($decayed decayed)");
@@ -43,7 +43,7 @@ $task{$me}{code} = sub {
 		$statsSave->addStatDaily("mod_tokens_lost_decayed", $decayed);
 	}
 
-	# Takes approx. 60 seconds on Slashdot
+	# Takes approx. 190 seconds on Slashdot
 	my $logdb = getObject('Slash::DB', { db_type => 'log_slave' });
 	slashdLog('Update Total Counts Begin');
 	# I'm pulling the value out with "+0" because that returns us an
@@ -54,7 +54,7 @@ $task{$me}{code} = sub {
 	$slashdb->setVar("totalhits", $totalHits);
 	slashdLog('Update Total Counts End');
 
-	# Takes approx. 70 minutes on Slashdot
+	# Takes approx. 30 seconds on Slashdot
 	slashdLog('Daily Deleting Begin');
 	$slashdb->deleteDaily();
 	slashdLog('Daily Deleting End');
@@ -74,7 +74,7 @@ $task{$me}{code} = sub {
 		slashdLog("Daily Archival End ($count[0] of $count[1] articles in $count[2]s)");
 	}
 
-	# Takes approx. 15 seconds on Slashdot
+	# Takes approx. 5 seconds on Slashdot
 	slashdLog('Begin Daily Comment Recycle');
 	my $msg = $slashdb->deleteRecycledComments();
 	slashdLog("End Daily Comment Recycle ($msg recycled)");
@@ -89,8 +89,9 @@ sub archiveStories {
 	
 	my $totalTriedStories = 0;
 	my $totalChangedStories = 0;
-	for (@{$to_archive}) {
-		my($sid, $title, $section) = @{$_};
+	for my $story (@$to_archive) {
+		# XXXSECTIONTOPICS - now $section is NOT set here - Jamie
+		my($stoid, $sid, $title, $section) = @$story;
 
 		slashdLog("Archiving $sid") if verbosity() >= 2;
 		$totalTriedStories++;
@@ -125,7 +126,7 @@ sub archiveStories {
 		my($cc, $hp) = _read_and_unlink_cchp_file($cchp_file);
 		if (defined($cc)) {
 			# all is well, data was found
-			$slashdb->setStory($sid, {
+			$slashdb->setStory($stoid, {
 				writestatus  => 'archived',
 				commentcount => $cc,
 				hitparade    => $hp,

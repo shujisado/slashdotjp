@@ -45,19 +45,32 @@ __template__
 	<B>passwd</B>=mailed to [% form.email | strip_literal %]<BR>
 	[% IF suadmin_flag %]
 		<P>Now you can edit the newly created user  
-		<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% uid %]">
+		<A HREF="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% uid %]">
 		[% form.newusernick %], UID [% uid %]</A></P>
 	[% ELSE %]
 	<P>Once you receive your password, you can
-	<A HREF="[% constants.rootdir %]/users.pl">log in and set your account up.</A>
+	<A HREF="[% gSkin.rootdir %]/login.pl">log in and set your account up.</A>
 	[% END %]
+
+[% CASE 'reset_acct_msg' %]
+This message has been sent to to verify your registration and the associated email address.
+
+Your password has been set to: [% newpasswd %].  Go to the URL below to log in:
+
+<[% gSkin.absolutedir %]/index.pl?op=userlogin&upasswd=[% newpasswd %]&unickname=[% tempnick | fixparam %]&returnto=%2Flogin.pl%3Fop=changeprefs>
+
+Make sure you then CHANGE YOUR PASSWORD!
+
+We apologize for any inconvenience this may have caused.  If you have any problems
+with or suggestions for improving this procedure feel free to email the 
+administrator ([% constants.adminmail %]).
 
 [% CASE 'mailpasswd_msg' %]
 
 Your new password is [% newpasswd %].  Your old password will still work until
 this password is used.  Go to the URL below to log in:
 
-<[% constants.absolutedir %]/index.pl?op=userlogin&upasswd=[% newpasswd %]&unickname=[% tempnick | fixparam %]&returnto=%2Fusers.pl%3Fop=changepasswd>
+<[% gSkin.absolutedir %]/index.pl?op=userlogin&upasswd=[% newpasswd %]&unickname=[% tempnick | fixparam %]&returnto=%2Flogin.pl%3Fop=changeprefs>
 
 Make sure you then CHANGE YOUR PASSWORD!
 
@@ -84,29 +97,26 @@ and probably would be more interested in the Preferences links you see
 up top there, where you can customize [% constants.sitename %],
 change your password, or just click pretty widgets to kill time.
 
-[% CASE 'tilded_customize_msg' %]
-<TABLE WIDTH="100%" BGCOLOR="[% user.bg.2 %]" ALIGN="CENTER" BORDER="0">
-	<TR><TD>
-	<P>Look ma, I'm configurable!
-	<B>Important:</B> If you leave these all unchecked, it means you
-	want the <I>default</I> selection of boxes.  If you start selecting
-	boxes, remember to set <B>all</B> of them that you want because the
-	default selection will be <B>ignored</B>.  Default entries are bolded.
+[% CASE 'tilded_criteria_msg' %]
+	<p>[% constants.sitename %] posts stories into topical groups
+	we call Sections. Many of these sections include extra content
+	not normally displayed when you visit [% constants.sitename %].
+	Here is where you can choose to ignore subjects you have no
+	interest in, or to include all that extra sectional content
+	right alongside the rest of our stories.<p>
 
-	<P><B>User Space</B> (check 'user space' below and whatever
-	you place here will appear your custom [% constants.sitename %])<BR>
-	<TEXTAREA NAME="mylinks" rows=5 COLS="60" WRAP="VIRTUAL">[% userspace | strip_literal %]</TEXTAREA>
-	<P><MULTICOL COLS="3">
+[% CASE 'tilded_customize_msg' %]
+	<TABLE WIDTH="100%" BGCOLOR="[% user.colors.bg_2 %]" BORDER="0"><TR><TD>
+	<P><P>You can choose at most [% constants.slashboxes_maxnum %] boxes.
+	<BR>If you choose 
+	'<B>User Space</B>' above, the contents of this box will be inside:
+	<BR><TEXTAREA NAME="mylinks" rows=8 COLS="40" WRAP="VIRTUAL">[% userspace | strip_literal %]</TEXTAREA>
 
 [% CASE 'tilded_box_msg' %]
-	</MULTICOL><P>
-	If you have reasonable suggestions for boxes that can be added
-	here, or a problem with one of the boxes already here,
-	email <A HREF="mailto:[% constants.adminmail | strip_attribute %]">[% constants.siteadmin_name %]</A>.
+	<P>If you find a problem, or have a reasonable suggestion
+	for new RSS feeds, please contact
+	<A HREF="mailto:[% constants.adminmail | strip_attribute %]">[% constants.siteadmin_name %]</A>.
 
-	<P>The preferred format is the Netscape RDF format that is
-	rapidly becoming the de facto format for exchanging headlines
-	between sites.
 	<P></TD></TR></TABLE>
 
 [% CASE 'saveuser_email_msg' %]
@@ -129,6 +139,15 @@ please contact the site administrator immediately.
 	so, run this at the command line: <tt>[% basedir %]/bin/runtask -u
 	[% virtuser %] refresh_authors_cache</tt> and then restart your
 	webserver.</p>
+
+[% CASE 'reset_acct_complete' %]
+	[% IF useredit.uid %]
+	<p>The account for user [% useredit.nickname | strip_literal %] has been reset.  The password
+	has been changed and an e-mail has been sent with the new password to verify
+	the e-mail account associated with this account. 
+	[% ELSE %]
+	<p><b>Error:</b> Non-existent UID given.  Account could not be reset.
+	[% END %]
 
 [% CASE 'dispform_new_msg_1' %]
 	If your registration attempt is failing, it is most likely because
@@ -161,7 +180,7 @@ please contact the site administrator immediately.
 	<P>Option(s) changed.<BR>
 
 [% CASE 'no_registration_needed' %]
-	<P>Hello, [% user.nickname %]. Your account is currently registered with
+	<P>Hello, [% user.nickname | strip_literal %]. Your account is currently registered with
 	the system. No re-registration is necessary at this time.<BR>
 
 [% CASE DEFAULT %]

@@ -130,6 +130,8 @@ sub formkeyError {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
+	$formname =~ s|/\w+$||;  # remove /nu, /mp, etc.
+
 	my $abuse_reasons = { usedform => 1, invalid => 1, maxposts => 1,
 		invalidhc => 1 };
 	my $hashref = {};
@@ -760,7 +762,8 @@ sub isDiscussionOpen {
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $people = $slashdb->getUser($discussion->{uid}, 'people');
-	if ($discussion->{commentstatus} eq 'friends_only' || $discussion->{commentstatus} eq 'friends_fof_only') {
+	if ($discussion->{commentstatus} eq 'friends_only'
+		|| $discussion->{commentstatus} eq 'friends_fof_only') {
 		my $orig = $discussion->{type};
 		$discussion->{type} = 'archived';
 		if ($people) {
@@ -769,6 +772,8 @@ sub isDiscussionOpen {
 				$discussion->{commentstatus} eq 'friends_fof_only'
 					&&
 				$people->{FOF()}{$user->{uid}}
+					&&
+				!$people->{FOE()}{$user->{uid}}
 				)
 			);
 		}

@@ -16,21 +16,6 @@ use base 'Slash::DB::Utility';
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
 #################################################################
-sub SelectDataBases {
-	my $search_db_user = getCurrentStatic('search_db_user');
-	my($slashdb, $searchDB);
-	if ($search_db_user) {
-		$slashdb  = getObject('Slash::DB', $search_db_user);
-		$searchDB = getObject('Slash::Search', $search_db_user);
-	} else {
-		$slashdb  = getCurrentDB();
-		$searchDB = Slash::Search->new(getCurrentVirtualUser());
-	}
-
-	return ($slashdb, $searchDB);
-}
-
-#################################################################
 sub new {
 	my($class, $user) = @_;
 	my $self = {};
@@ -56,10 +41,12 @@ sub findComments {
 	my $query = $self->sqlQuote($form->{query});
 	my $constants = getCurrentStatic();
 	my $columns;
-	$columns .= "discussions.section as section, discussions.url as url, discussions.uid as author_uid,";
-	$columns .= "discussions.title as title, pid, subject, ts, date, comments.uid as uid, ";
-	$columns .= "comments.cid as cid, discussions.id as did ";
-	$columns .= ", TRUNCATE( " . $self->_score('comments.subject', $form->{query}, $constants->{search_method}) . ", 1) as score "
+	$columns .= "primaryskid, url, discussions.uid AS author_uid, discussions.title AS title, ";
+	$columns .= "pid, subject, ts, date, comments.uid AS uid, cid, ";
+	$columns .= "discussions.id AS did";
+	$columns .= ", TRUNCATE( "
+		. $self->_score('comments.subject', $form->{query}, $constants->{search_method})
+		. ", 1) AS score "
 		if $form->{query};
 
 	my $tables = "comments, discussions";
@@ -69,14 +56,13 @@ sub findComments {
 	# Welcome to the join from hell -Brian
 	my $where;
 	$where .= " comments.sid = discussions.id ";
-	$where .= "	  AND $key "
-			if $form->{query};
+	$where .= " AND $key " if $form->{query};
 
 	if ($form->{sid}) {
 		if ($form->{sid} !~ /^\d+$/) {
-			$where .= "     AND discussions.sid=" . $self->sqlQuote($form->{sid})
+			$where .= " AND discussions.sid=" . $self->sqlQuote($form->{sid})
 		} else {
-			$where .= "     AND discussions.id=" . $self->sqlQuote($form->{sid})
+			$where .= " AND discussions.id=" . $self->sqlQuote($form->{sid})
 		}
 	}
 	if (defined $form->{threshold}){
@@ -86,13 +72,11 @@ sub findComments {
 		
 	}
 
+	my $gSkin = getCurrentSkin();
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $SECT = $reader->getSection($form->{section});
-	if ($SECT->{type} eq 'collected') {
-		$where .= " AND discussions.section IN ('" . join("','", @{$SECT->{contained}}) . "')" 
-			if $SECT->{contained} && @{$SECT->{contained}};
-	} else {
-		$where .= " AND discussions.section = " . $self->sqlQuote($SECT->{section});
+	my $skin = $reader->getSkin($form->{section} || $gSkin->{skid});
+	if ($skin->{skid} != $constants->{mainpage_skid}) {
+		$where .= " AND primaryskid = $skin->{skid}";
 	}
 
 	my $other;
@@ -110,59 +94,6 @@ sub findComments {
 
 	return $search;
 }
-
-
-####################################################################################
-# This has been changed. Since we no longer delete comments
-# it is safe to have this run against stories.
-# Original with comment body
-#sub findComments {
-#	my($self, $form, $start, $limit) = @_;
-#	# select comment ID, comment Title, Author, Email, link to comment
-#	# and SID, article title, type and a link to the article
-#	my $query = $self->sqlQuote($form->{query});
-#	my $columns = "section, stories.sid, stories.uid as author, discussions.title as title, pid, subject, stories.writestatus as writestatus, time, date, comments.uid as uid, comments.cid as cid ";
-#	$columns .= ", TRUNCATE((((MATCH (comments.subject) AGAINST($query) + (MATCH (comment_text.comment) AGAINST($query)))) / 2), 1) as score "
-#		if $form->{query};
-#
-#	my $tables = "stories, comments, comment_text, discussions";
-#
-#	my $key = " (MATCH (comments.subject) AGAINST ($query) or MATCH (comment_text.comment) AGAINST ($query)) ";
-#
-#
-#	$limit = " LIMIT $start, $limit" if $limit;
-#
-#	# Welcome to the join from hell -Brian
-#	my $where;
-#	$where .= " comments.cid = comment_text.cid ";
-#	$where .= " AND comments.sid = discussions.id ";
-#	$where .= " AND discussions.sid = stories.sid ";
-#	$where .= "	  AND $key "
-#			if $form->{query};
-#
-#	$where .= "     AND stories.sid=" . $self->sqlQuote($form->{sid})
-#			if $form->{sid};
-#	$where .= "     AND points >= $form->{threshold} "
-#			if $form->{threshold};
-#	$where .= "     AND section=" . $self->sqlQuote($form->{section})
-#			if $form->{section};
-#
-#	my $other;
-#	if ($form->{query}) {
-#		$other = " ORDER BY score DESC, time DESC ";
-#	} else {
-#		$other = " ORDER BY date DESC, time DESC ";
-#	}
-#
-#
-#	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
-#
-#	my $cursor = $self->{_dbh}->prepare($sql);
-#	$cursor->execute;
-#
-#	my $search = $cursor->fetchall_arrayref;
-#	return $search;
-#}
 
 ####################################################################################
 # I am beginning to hate all the options.
@@ -212,16 +143,16 @@ sub findStory {
 	$form->{query} = $self->_cleanQuery($form->{query});
 	my $query = $self->sqlQuote($form->{query});
 	my $columns;
-	$columns .= "title, stories.sid as sid, "; 
-	$columns .= "time, commentcount, stories.section as section,";
-	$columns .= "stories.tid as tid, ";
+	$columns .= "title, stories.stoid AS stoid, sid, "; 
+	$columns .= "time, commentcount, stories.primaryskid AS skid, ";
 	$columns .= "introtext ";
-	$columns .= ", TRUNCATE((( " . $self->_score('title', $form->{query}, $constants->{search_method}) . "  + " .  $self->_score('introtext,bodytext', $form->{query}, $constants->{search_method}) .") / 2), 1) as score "
-		if $form->{query};
+	if ($form->{query}) {
+		$columns .= ", TRUNCATE((( " . $self->_score('title', $form->{query}, $constants->{search_method}) . "  + " .  $self->_score('introtext,bodytext', $form->{query}, $constants->{search_method}) .") / 2), 1) AS score "
+	}
 
-	my $tables = "stories,story_text";
+	my $tables = "stories, story_text LEFT JOIN story_param ON stories.stoid=story_param.stoid AND story_param.name='neverdisplay'";
 
-	my $other;
+	my $other = '';
 	$other .= " HAVING score > 0 "
 		if $form->{query};
 	if ($form->{query} && $sort == 2) {
@@ -231,26 +162,32 @@ sub findStory {
 	}
 
 	# The big old searching WHERE clause, fear it
-	my $where = "stories.sid = story_text.sid ";
-	$where .= " AND  (MATCH (stories.title) AGAINST ($query) or MATCH (introtext,bodytext) AGAINST ($query)) "
+	# XXXSECTIONTOPICS This can be a single MATCH now if we do
+	# a FULLTEXT index on all three columns.  Of course the
+	# _score() call above would still have to be done twice,
+	# which depending on search_method could be the same
+	# thing, so it might not matter. - Jamie 2004/04/06
+	my $where = "stories.stoid = story_text.stoid";
+	$where .= " AND story_param.name IS NULL";
+	$where .= " AND ( MATCH (title) AGAINST ($query)
+		OR MATCH (introtext,bodytext) AGAINST ($query) ) "
 		if $form->{query};
 
-	$where .= " AND time < now() AND stories.writestatus != 'delete' ";
+	$where .= " AND time < NOW() AND stories.in_trash = 'no' AND primaryskid != 0";
 	$where .= " AND stories.uid=" . $self->sqlQuote($form->{author})
 		if $form->{author};
 	$where .= " AND stories.submitter=" . $self->sqlQuote($form->{submitter})
 		if $form->{submitter};
-	$where .= " AND stories.subsection=" . $self->sqlQuote($form->{subsection})
-		if $form->{subsection};
-	$where .= " AND displaystatus != -1";
 
+	my $gSkin = getCurrentSkin();
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $SECT = $reader->getSection($form->{section});
-	if ($SECT->{type} eq 'collected') {
-		$where .= " AND stories.section IN ('" . join("','", @{$SECT->{contained}}) . "')" 
-			if $SECT->{contained} && @{$SECT->{contained}};
-	} else {
-		$where .= " AND stories.section = " . $self->sqlQuote($SECT->{section});
+
+	my $skin = $reader->getSkin($form->{section});
+	$skin ||= $reader->getSkin($gSkin->{skid} || $constants->{mainpage_skid});
+	if ($skin->{skid} && $skin->{skid} != $constants->{mainpage_skid}) {
+		# XXXSKIN this is wrong, we want to join on story_topics_rendered
+		# by putting $skin->{nexus} into the list of tids we demand
+		$where .= " AND stories.primaryskid = $skin->{skid}";
 	}
 
 	# Here we find the possible sids that could have this tid and
@@ -291,20 +228,21 @@ sub findStory {
 		}
 		my $string = join(',', @{$self->sqlQuote(\@tids)});
 		if ($constants->{topic_search_use_join}) {
-			$tables.= " LEFT JOIN story_topics ON stories.sid = story_topics.sid ";
-			$where .= " AND story_topics.id IS NOT NULL";
-			$where .= " AND story_topics.tid IN ($string)";
-			$other = "GROUP by sid $other";
+			$tables.= " LEFT JOIN story_topics_rendered ON stories.stoid = story_topics_rendered.stoid";
+# XXXSKIN - no more id in schema, just yank?
+#			$where .= " AND story_topics_rendered.id IS NOT NULL";
+			$where .= " AND story_topics_rendered.tid IN ($string)";
+			$other = "GROUP by stoid $other";
 		} else {
 			my $topic_search_sid_limit = $constants->{topic_search_sid_limit} || 1000;
 			my $sids = $self->sqlSelectColArrayref(
-				'story_topics.sid',
-				'story_topics, stories', 
-				"story_topics.sid = stories.sid AND story_topics.tid IN ($string)",
+				'story_topics_rendered.stoid',
+				'story_topics_rendered, stories', 
+				"story_topics_rendered.stoid = stories.stoid AND story_topics_rendered.tid IN ($string)",
 				"ORDER BY time DESC LIMIT $topic_search_sid_limit");
 			if ($sids && @$sids) {
 				$string = join(',', @{$self->sqlQuote($sids)});
-				$where .= " AND stories.sid IN ($string) ";
+				$where .= " AND stories.stoid IN ($string) ";
 			} else {
 				return; # No results could possibly match
 			}
@@ -312,7 +250,13 @@ sub findStory {
 	}
 	
 	$other .= " LIMIT $start, $limit" if $limit;
-	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other);
+
+	# Don't return just one topic id in tid, also return an arrayref
+	# in tids, with all topic ids in the preferred order.
+	for my $story (@$stories) {
+		$story->{tids} = $reader->getTopiclistForStory($story->{stoid});
+	}
 
 	return $stories;
 }
@@ -407,22 +351,14 @@ sub findPollQuestion {
 	$where .= " AND topic=" . $self->sqlQuote($form->{tid})
 		if $form->{tid};
 
-#	Sections are not right here, I need to work out logic for this -Brian
-#	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-#	my $SECT = $reader->getSection($form->{section});
-#	if ($SECT->{type} eq 'collected') {
-#		$where .= " AND pollquestions.section IN ('" . join("','", @{$SECT->{contained}}) . "')" 
-#			if $SECT->{contained} && @{$SECT->{contained}};
-#	} else {
-#		$where .= " AND pollquestions.section = " . $self->sqlQuote($SECT->{section});
-#	}
-	$where .= " AND pollquestions.section = " . $self->sqlQuote($form->{section}) 
-		if $form->{section};
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $skid   = $reader->getSkidFromName($form->{section});
+	$where .= " AND pollquestions.primaryskid = " . $skid if $skid;
 	
 	my $sql = "SELECT $columns FROM $tables WHERE $where $other";
 
 	$other .= " LIMIT $start, $limit" if $limit;
-	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other);
 
 	return $stories;
 }
@@ -432,6 +368,7 @@ sub findSubmission {
 	my($self, $form, $start, $limit, $sort) = @_;
 	$start ||= 0;
 	my $constants = getCurrentStatic();
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
 	$form->{query} = $self->_cleanQuery($form->{query});
 	my $query = $self->sqlQuote($form->{query});
@@ -453,13 +390,17 @@ sub findSubmission {
 	$where .= " AND $key" if $form->{query};
 	$where .= " AND uid=" . $self->sqlQuote($form->{uid})
 		if $form->{uid};
-	$where .= " AND tid=" . $self->sqlQuote($form->{tid})
-		if $form->{tid};
+# XXXSKIN - needs to be replaced with select on submission_topics_rendered
+# not sure why need to have multiple topics for submissions though ...
+# regardless, tid must end up as an arrayref now, in $stories
+#	$where .= " AND tid=" . $self->sqlQuote($form->{tid})
+#		if $form->{tid};
 	$where .= " AND note=" . $self->sqlQuote($form->{note})
 		if $form->{note};
-	$where .= " AND section=" . $self->sqlQuote($form->{section})
-		if $form->{section};
-	
+
+	my $skid = $reader->getSkidFromName($form->{section});
+	$where .= " AND primaryskid=$skid" if $skid;
+
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
 
@@ -533,14 +474,14 @@ sub findDiscussion {
 		if $form->{type};
 	$where .= " AND topic=" . $self->sqlQuote($form->{tid})
 		if $form->{tid};
+
+	my $gSkin = getCurrentSkin();
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $SECT = $reader->getSection($form->{section});
-	if ($SECT->{type} eq 'collected') {
-		$where .= " AND section IN ('" . join("','", @{$SECT->{contained}}) . "')" 
-			if $SECT->{contained} && @{$SECT->{contained}};
-	} else {
-		$where .= " AND section = " . $self->sqlQuote($SECT->{section});
+	my $skin = $reader->getSkin($form->{section} || $gSkin->{skid});
+	if ($skin->{skid} != $constants->{mainpage_skid}) {
+		$where .= " AND discussions.primaryskid = $skin->{skid}";
 	}
+
 	$where .= " AND uid=" . $self->sqlQuote($form->{uid})
 		if $form->{uid};
 	$where .= " AND approved = " . $self->sqlQuote($form->{approved})

@@ -8,7 +8,7 @@ Template which renders the comment editor.
 * reply = hashref of comment replying to
 * hide_name = hide name / log out link
 * hide_email = hide email display
-
+* extras = array of any extras associated with this comment
  
 __title__
 
@@ -46,10 +46,16 @@ __template__
 	[% PROCESS titlebar width="100%" title="Post Comment" %]
 [% END %]
 
-<FORM ACTION="[% constants.rootdir %]/comments.pl" METHOD="POST">
+<FORM ACTION="[% gSkin.rootdir %]/comments.pl" METHOD="POST">
 
 	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="[% form.sid || sid %]">
 	<INPUT TYPE="HIDDEN" NAME="pid" VALUE="[% form.pid %]">
+	[% IF form.returnto_commentpostsuccess && form.returnto_commentpostsuccess_confirm %]
+		<INPUT TYPE="HIDDEN" NAME="returnto_commentpostsuccess"
+			VALUE="[% form.returnto_commentpostsuccess | strip_attribute %]">
+		<INPUT TYPE="HIDDEN" NAME="returnto_commentpostsuccess_confirm"
+			VALUE="[% form.returnto_commentpostsuccess_confirm | strip_attribute %]">
+	[% END %]
 	<INPUT TYPE="HIDDEN" NAME="mode" VALUE="[% user.mode %]">
 	<INPUT TYPE="HIDDEN" NAME="startat" VALUE="[% user.startat %]">
 	<INPUT TYPE="HIDDEN" NAME="threshold" VALUE="[% user.threshold %]">
@@ -67,12 +73,12 @@ __template__
 [% userlink = '' %]
 [% IF user.is_anon %]
 <!-- anon login code -->
-	[% userlink = "<A HREF=\"${constants.rootdir}/users.pl\">Create an Account</A>" %]
+	[% userlink = "<A HREF=\"${gSkin.rootdir}/users.pl\">Create an Account</A>" %]
 	<TR><TD> </TD><TD>
 		You are not logged in.  You can log in now using the
 		convenient form below, or
-		<A HREF="[% constants.rootdir %]/users.pl">Create an Account</A>,
-		or post as <B>[% user.nickname %]</B>.
+		<A HREF="[% gSkin.rootdir %]/users.pl">Create an Account</A>,
+		or post as <B>[% user.nickname | strip_literal %]</B>.
 	</TD></TR>
 	<INPUT TYPE="HIDDEN" NAME="rlogin" VALUE="1">
 
@@ -85,11 +91,11 @@ __template__
 
 	</TD></TR>
 [% ELSE;
-	userlink = "<A HREF=\"${constants.rootdir}/users.pl?op=userclose\">Log Out</A>";
+	userlink = "<A HREF=\"${gSkin.rootdir}/login.pl?op=userclose\">Log Out</A>";
 END %]
 	[% UNLESS hide_name %]
 	<TR><TD WIDTH="130" ALIGN="RIGHT">[% PROCESS formLabel value => 'Name' %]</TD><TD WIDTH="500">
-		<A HREF="[% constants.rootdir %]/users.pl">[% user.nickname %]</A> [ [% userlink %] ]</TD></TR>
+		<A HREF="[% gSkin.rootdir %]/users.pl">[% user.nickname | strip_literal %]</A> [ [% userlink %] ]</TD></TR>
 	[% END %]
 [% IF user.fakeemail %]
 	[% UNLESS hide_email %]
@@ -129,6 +135,19 @@ END %]
 	<TR><TD ALIGN="RIGHT">[% PROCESS formLabel value => 'Subject' %]</TD>
 		<TD><INPUT TYPE="text" NAME="postersubj" VALUE="[% form.postersubj | strip_attribute %]" SIZE=50 MAXLENGTH=50></TD>
 	</TR>
+	[% FOR extra = extras %]
+	<TR>
+		<TD ALIGN="RIGHT"> <B>[% extra.0 %]</TD>
+		<TD>
+		[% IF extra.2 == 'text' %]
+			<INPUT TYPE="TEXT" NAME="[% extra.1 %]" VALUE="[% form.${extra.1} | strip_attribute %]" SIZE="50">
+		[% ELSIF extra.2 == 'list' %]
+			[% pulldown = extra.1 %]
+			[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',pulldown), form.${extra.1}, 1, 1) %]	
+		[% END %]
+		</TD>
+	</TR>
+	[% END %]
 	<TR>
 		<TD ALIGN="RIGHT" VALIGN="TOP">[% PROCESS formLabel value => 'Comment' %]</TD>
 		<TD><TEXTAREA WRAP="VIRTUAL" NAME="postercomment" ROWS="[% user.textarea_rows || constants.textarea_rows %]" COLS="[% user.textarea_cols || constants.textarea_cols %]">[% form.postercomment | strip_literal %]</TEXTAREA>
@@ -140,7 +159,7 @@ END %]
 			"Score: 0 (Logged-in users start at Score: 1)."
 		]%]
 		<BR>[% anon_messages.rand %]
-		<B><A HREF="[% constants.rootdir %]/users.pl">Create an Account!</A>
+		<B><A HREF="[% gSkin.rootdir %]/users.pl">Create an Account!</A>
 		[% END %]
 	</TD></TR>
 
@@ -148,15 +167,15 @@ END %]
 
 [% IF !user.is_anon && user.karma > constants.goodkarma %]
 		<INPUT TYPE="hidden" NAME="nobonus_present" VALUE="1">
-		<INPUT TYPE="checkbox" NAME="nobonus"[% form.nobonus ? " CHECKED" : "" %]> No Karma Bonus
+		<INPUT TYPE="checkbox" NAME="nobonus"[% IF form.nobonus; constants.markup_checked_attribute ; END %]> No Karma Bonus
 [% do_br = 1; END;
 IF !user.is_anon && user.is_subscriber %]
 		<INPUT TYPE="hidden" NAME="nosubscriberbonus_present" VALUE="1">
-		<INPUT TYPE="checkbox" NAME="nosubscriberbonus"[% form.nosubscriberbonus ? " CHECKED" : "" %]> No Subscriber Bonus
+		<INPUT TYPE="checkbox" NAME="nosubscriberbonus"[% IF form.nosubscriberbonus; constants.markup_checked_attribute ; END %]> No Subscriber Bonus
 [% do_br = 1; END;
 IF constants.allow_anonymous && user.karma > -1 && !user.is_anon && discussion.commentstatus == 'enabled'  %]
 		<INPUT TYPE="hidden" NAME="postanon_present" VALUE="1">
-		<INPUT TYPE="checkbox" NAME="postanon"[% form.postanon ? " CHECKED" : "" %]> Post Anonymously
+		<INPUT TYPE="checkbox" NAME="postanon"[% IF form.postanon; constants.markup_checked_attribute ; END %]> Post Anonymously
 [% do_br = 1; END;
 IF do_br %]<BR>[% END %]
 
@@ -196,15 +215,19 @@ IF do_br %]<BR>[% END %]
 [% END %]
 
 	</TD></TR><TR>
-		<TD VALIGN="TOP" ALIGN="RIGHT"><font color="[% user.bg.3 %]"><B>Allowed HTML</B></font></TD><TD><FONT SIZE="1">
+		<TD VALIGN="TOP" ALIGN="RIGHT"><font color="[% user.colors.bg_3 %]"><B>Allowed HTML</B></font></TD><TD><FONT SIZE="1">
 			&lt;[% constants.approvedtags.join("&gt;			&lt;") %]&gt;
 		[% IF constants.approvedtags.grep("ECODE").0 %]
 			(Use "ECODE" instead of "PRE" or "CODE".)
 		[% END %]
 		</FONT>
 	</TD></TR>
+	<tr>
+		<td valign="top" align="right"><font color="[% user.colors.bg_3 %]"><b>URLs</b></font></td>
+		<td><code>&lt;URL:http://example.com/&gt;</code> will auto-link a URL</td>
+	</tr>
 	<TR>
-		<TD VALIGN="TOP" ALIGN="RIGHT"><font color="[% user.bg.3 %]"><B>Important Stuff</B></font></TD>
+		<TD VALIGN="TOP" ALIGN="RIGHT"><font color="[% user.colors.bg_3 %]"><B>Important Stuff</B></font></TD>
 		<TD><P>
 			<LI>Please try to keep posts on topic.
 		<LI>Try to reply to other people's comments instead of starting new threads.
@@ -216,8 +239,8 @@ IF do_br %]<BR>[% END %]
 		threshold on the User Preferences Page)
 		[% IF user.is_anon %]
 			<LI>If you want replies to your comments sent to you, consider
-			<A HREF="[% constants.rootdir %]/my/">logging in</A> or
-			<A HREF="[% constants.rootdir %]/users.pl?op=newuserform">creating
+			<A HREF="[% gSkin.rootdir %]/my/">logging in</A> or
+			<A HREF="[% gSkin.rootdir %]/login.pl?op=newuserform">creating
 			an account</A>.
 		[% END %]
 

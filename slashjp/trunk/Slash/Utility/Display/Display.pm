@@ -221,10 +221,13 @@ true/false if operation is successful.
 sub selectTopic {
 	my($label, $default, $section, $return) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	# XXXSKIN defaultsection should likely be mainpage_skid, but
+	# what of defaulttopic?
 	$section ||= getCurrentStatic('defaultsection');
 	$default ||= getCurrentStatic('defaulttopic');
 
-	my $topics = $reader->getDescriptions('topics_section', $section);
+	# XXXSKIN this doesn't work to return topics by skin/section
+	my $topics = $reader->getDescriptions('non_nexus_topics', $section);
 
 	createSelect($label, $topics, $default, $return, 0, 1);
 }
@@ -251,8 +254,7 @@ Default topic for the list.
 
 =item SECT
 
-Hashref for current section.  If SECT->{isolate} is true,
-list is not created, but hidden value is returned instead.
+Hashref for current section.
 
 =item RETURN
 
@@ -269,10 +271,6 @@ Boolean for including "All Topics" item.
 If RETURN is true, the text of the list is returned.
 Otherwise, list is just printed, and returns
 true/false if operation is successful.
-
-=item Dependencies
-
-The 'sectionisolate' template block.
 
 =back
 
@@ -417,11 +415,12 @@ sub linkStory {
 	my $reader    = $other->{reader} || getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = $other->{constants} || getCurrentStatic();
 	my $user      = $other->{user} || getCurrentUser();
+	my $gSkin     = getCurrentSkin();
 
-	my($url, $script, $title, $section, %params);
+	my($url, $script, $title, %params);
 	$script = 'article.pl';
 	$params{sid} = $story_link->{sid};
-	$params{mode} = $story_link->{mode} || $user->{mode};
+	$params{mode} = $story_link->{mode} if $story_link->{mode};
 	$params{threshold} = $story_link->{threshold} if exists $story_link->{threshold};
 
 	# Setting $dynamic properly is important.  When generating the
@@ -431,19 +430,21 @@ sub linkStory {
 
 	# if we REALLY want dynamic
 	my $dynamic = $story_link->{dynamic} || 0;
+	# takes precedence over dynamic
+	my $static  = $story_link->{static}  || 0;
 
-	if ($ENV{SCRIPT_NAME} || !$user->{is_anon}) {
+	if (!$static && ($ENV{SCRIPT_NAME} || !$user->{is_anon})) {
 		# Whenever we're invoked from Apache, use dynamic links.
 		# This test will be true 99% of the time we come through
 		# here, so it's first.
 		$dynamic = 1;
-	} elsif ($params{mode}) {
+	} elsif (!$static && $params{mode}) {
 		# If we're an AC script, but this is a link to e.g.
 		# mode=nocomment, then we need to have it be dynamic.
 		$dynamic = 1 if $params{mode} ne getCurrentAnonymousCoward('mode');
 	}
 
-	if (!$dynamic && defined($params{threshold})) {
+	if (!$static && (!$dynamic && defined($params{threshold}))) {
 		# If we still think we can get away with a nondynamic link,
 		# we need to check one more thing.  Even an AC linking to
 		# an article needs to make the link dynamic if it's the
@@ -452,49 +453,70 @@ sub linkStory {
 		$dynamic = 1 if $params{threshold} != getCurrentAnonymousCoward('threshold');
 	}
 
-	# We need to make sure we always get the right link -Brian
-	$story_link->{'link'} = $reader->getStory($story_link->{sid}, 'title') if $story_link->{'link'} eq '';
-	$title       = $story_link->{'link'};
-	$section     = $story_link->{section} ||= $reader->getStory($story_link->{sid}, 'section');
+	my $story_ref = $reader->getStory($story_link->{stoid} || $story_link->{sid});
+
+	$story_link->{link} = $story_ref->{title} if $story_link->{'link'} eq '';
+	$title = $story_link->{link};
+	$story_link->{skin} ||= $story_link->{section} || $story_ref->{primaryskid};
 	if ($constants->{tids_in_urls}) {
-		$params{tid} = $reader->getStoryTopicsJustTids($story_link->{sid});
+		if ($story_link->{tids} && @{$story_link->{tids}}) {
+			$params{tids} = $story_link->{tids};
+		} else {
+			$params{tids} = $reader->getTopiclistForStory(
+				$story_link->{stoid} || $story_link->{sid});
+		}
 	}
 
-	my $SECT = $reader->getSection($story_link->{section});
-	$url = $SECT->{rootdir} || $constants->{real_rootdir} || $constants->{rootdir};
+	my $skin = $reader->getSkin($story_link->{skin});
+	$url = $skin->{rootdir} || $constants->{real_rootdir} || $gSkin->{rootdir};
 
-	if ($dynamic) {
-		$url .= '/' . $script . '?';
-		for my $key (keys %params) {
+	if (!$static && $dynamic) {
+		$url .= "/$script?";
+		sub _paramsort { return -1 if $a eq 'sid'; return 1 if $b eq 'sid'; $a cmp $b }
+		for my $key (sort _paramsort keys %params) {
+			my $urlkey = $key;
+			$urlkey = 'tid' if $urlkey eq 'tids';
 			if (ref $params{$key} eq 'ARRAY') {
-				$url .= "$key=$_&" for @{$params{$key}};
+				$url .= "$urlkey=$_&" for @{$params{$key}};
 			} else {
-				$url .= "$key=$params{$key}&";
+				$url .= "$urlkey=$params{$key}&";
 			}
 		}
 		chop $url;
 	} else {
-		$url .= '/' . $section . '/' . $story_link->{sid} . '.shtml';
+		# XXXSKIN - hardcode 'articles' so /articles/foo.shtml links stay same as now
+		# we don't NEED to do this ... 404.pl can redirect appropriately if necessary,
+		# but we would need to `mv articles mainpage`, or ln -s, and it just seems better
+		# to me to keep the same URL scheme if possible
+		my $skinname = $skin->{name} eq 'mainpage' ? 'articles' : $skin->{name};
+		$url .= "/$skinname/$story_link->{sid}.shtml";
 		# manually add the tid(s), if wanted
-		if ($constants->{tids_in_urls} && $params{tid}) {
+		if ($constants->{tids_in_urls} && $params{tids}) {
 			$url .= '?';
-			if (ref $params{tid} eq 'ARRAY') {
-				$url .= 'tid=' . fixparam($_) . '&' for @{$params{tid}};
+			if (ref $params{tids} eq 'ARRAY') {
+				$url .= 'tid=' . join( "&tid=", map { fixparam($_) } @{$params{tids}} )
+					if @{$params{tids}};
 			} else {
-				$url .= 'tid=' . fixparam($params{tid}) . '&';
+				$url .= 'tid=' . fixparam($params{tids});
 			}
-			chop $url;
 		}
 	}
 
+	my @extra_attrs_allowed = qw( title class id );
 	if ($render) {
-		my $rendered = '<A HREF="' . strip_attribute($url) . '"';
-		$rendered .= ' TITLE="' . strip_attribute($story_link->{title}) . '"'
-			if $story_link->{title} ne '';
-		$rendered .= '>' . strip_html($title) . '</A>';
+		my $rendered = '<a href="' . strip_attribute($url) . '"';
+		for my $attr (@extra_attrs_allowed) {
+			my $val = $story_link->{$attr};
+			next unless $val;
+			$rendered .=
+				  qq{ $attr="}
+				. strip_attribute($val)
+				. qq{"};
+		}
+		$rendered .= '>' . strip_html($title) . '</a>';
 		return $rendered;
 	} else {
-		return [$url, $title, $story_link->{title}];
+		return [$url, $title, @{$story_link}{@extra_attrs_allowed}];
 	}
 }
 
@@ -545,14 +567,21 @@ The 'pollbooth' template block.
 
 =cut
 
+#XXXSKIN getCurrentSkin doesn't seem to be returning anything
+# on portald runs.  It defaults to mainpage skid if nothing
+# is returned.  However perhaps getCurrentSkin needs more
+# attention
+
 sub pollbooth {
 	my($qid, $no_table, $center, $returnto) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
-	my $sect = $reader->getSection();
-
+	my $gSkin = getCurrentSkin();
 	# This special qid means to use the current (sitewide) poll.
-	$qid = $sect->{qid} if $qid eq '_currentqid';
+	if ($qid eq "_currentqid") {
+		$qid = $reader->getCurrentQidForSkid($gSkin->{skid});
+	}
+	
 	# If no qid (or no sitewide poll), short-circuit out.
 	return '' if $qid eq '';
 
@@ -575,7 +604,6 @@ sub pollbooth {
 		can_vote	=> $can_vote,
 		voters		=> $poll->{pollq}{voters},
 		comments	=> $n_comments,
-		sect		=> $sect->{section},
 		returnto	=> $returnto,
 	}, 1);
 }
@@ -759,6 +787,14 @@ should be centered.
 Boolean for whether to return or print the
 fancybox.
 
+=item CLASS
+
+Value of the HTML 4.0 and up CLASS attribute.
+
+=item ID
+
+Value of the HTML 4.0 and up ID attribute.
+
 =back
 
 =item Return value
@@ -775,7 +811,7 @@ The 'fancybox' template block.
 =cut
 
 sub fancybox {
-	my($width, $title, $contents, $center, $return) = @_;
+	my($width, $title, $contents, $center, $return, $class, $id) = @_;
 	return unless $title && $contents;
 
 	my $tmpwidth = $width;
@@ -797,6 +833,8 @@ sub fancybox {
 		center		=> $center,
 		mainwidth	=> $mainwidth,
 		insidewidth	=> $insidewidth,
+		class           => $class,
+		id              => $id,
 	}, $return);
 }
 
@@ -825,6 +863,12 @@ Title of the portalbox.
 
 Contents of the portalbox.
 
+=item GETBLOCKS
+
+If set to 'index' (or blank), adds the down/X/up arrows to the
+right hand side of the portalbox title (displayed only on an
+index page).
+
 =item BID
 
 The block ID for the portal in question.
@@ -849,7 +893,7 @@ The 'fancybox', 'portalboxtitle', and
 =cut
 
 sub portalbox {
-	my($width, $title, $contents, $bid, $url, $getblocks) = @_;
+	my($width, $title, $contents, $bid, $url, $getblocks, $class, $id) = @_;
 	return unless $title && $contents;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -860,15 +904,17 @@ sub portalbox {
 		url	=> $url,
 	}, { Return => 1, Nocomm => 1 });
 
-	if (($user->{exboxes} && $getblocks eq 'index') ||
-		($user->{exboxes} && $constants->{slashbox_sections})) {
+	if (
+		   ($user->{slashboxes} && $getblocks == $constants->{mainpage_skid})
+		|| ($user->{slashboxes} && $constants->{slashbox_sections})
+	) {
 		$title = slashDisplay('portalmap', {
 			title	=> $title,
 			bid	=> $bid,
 		}, { Return => 1, Nocomm => 1 });
 	}
 
-	fancybox($width, $title, $contents, 0, 1);
+	fancybox($width, $title, $contents, 0, 1, $class, $id);
 }
 
 #========================================================================
@@ -1030,6 +1076,7 @@ sub createMenu {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $gSkin = getCurrentSkin();
 
 	# The style of menu desired.  While we're "evolving" the way we do
 	# menus, createMenu() handles several different styles.
@@ -1058,7 +1105,7 @@ sub createMenu {
 		my $nick_fix = fixparam($ll_nick);
 		my $nick_attribute = strip_attribute($ll_nick);
 		push @$menu_items, {
-			value =>	"$constants->{rootdir}/~$nick_fix",
+			value =>	"$gSkin->{rootdir}/~$nick_fix",
 			label =>	"~$nick_attribute ($user->{lastlookuid})",
 			sel_label =>	"otheruser",
 			menuorder =>	99999,
@@ -1120,7 +1167,10 @@ sub createMenu {
 		# with that name is available (or $menu;misc;default,
 		# or $menu;menu;light or whatever the fallbacks are)
 		# then punt and go with "users;menu;default".
-		my $nm = $reader->getTemplateByName($menu, 0, 0, "menu", "", 1);
+		my $nm = $reader->getTemplateByName($menu, {
+			page            => 'menu',
+			ignore_errors   => 1
+		});
 		$menu = "users" unless $nm->{page} eq "menu";
 		if (@$items) {
 			$menu_text .= slashDisplay($menu,
@@ -1195,12 +1245,13 @@ sub _hard_linkComment {
 	my($comment, $printcomment, $date) = @_;
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
 
 	my $subject = $comment->{color}
 	? qq|<FONT COLOR="$comment->{color}">$comment->{subject}</FONT>|
 		: $comment->{subject};
 
-	my $display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}|;
+	my $display = qq|<A HREF="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}|;
 	$display .= "&amp;op=$comment->{op}" if $comment->{op};
 # $comment->{threshold}? Hmm. I'm not sure what it
 # means for a comment to have a threshold. If it's 0,

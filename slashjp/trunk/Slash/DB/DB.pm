@@ -308,28 +308,6 @@ No defined value.
 
 =back
 
-=head2 getDiscussions(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
 =head2 getSessionInstance(KEY)
 
 I am the default documentation, short and stout.
@@ -416,11 +394,11 @@ datecodes
 commentmodes
 threshcodes
 postmodes
-isolatemodes
 issuemodes
 vars
 topics
 maillist
+(this list is WAY out of date)
 
 =over 4
 
@@ -2087,7 +2065,7 @@ new point score is 0, "0 but true" is returned.
 
 =back
 
-=head2 countUsersIndexExboxesByBid(KEY)
+=head2 countUsersIndexSlashboxesByBid(KEY)
 
 I am the default documentation, short and stout.
 

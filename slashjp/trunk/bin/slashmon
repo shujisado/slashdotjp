@@ -16,7 +16,6 @@ use vars qw(
 	$PROGNAME	$VERSION
 	%opts
 	$virtuser	$width	$height	$sleep	$min_pl_time
-	$weed_out_images
 	@abbreviations	%abbreviations
 	$slashdb	$constants	$logdb
 	@db
@@ -46,11 +45,10 @@ sub init {
 	usage() if $opts{h};
 	version() if $opts{v};
 
-	$weed_out_images = $opts{i} ? 1 : 0;
 	$virtuser = $opts{u} || 'slash';
 	$width = $opts{w} || 106;
 	$height = $opts{r} || 20;
-	$sleep = $opts{s} || 10;
+	$sleep = $opts{'s'} || 10;
 	$min_pl_time = defined($opts{t}) ? $opts{t} : 1;
 
 	createEnvironment($virtuser);
@@ -63,17 +61,21 @@ sub init {
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
 
-	my $vus_hr = {
-		map { ( $_, 1 ) }
-		@{$slashdb->sqlSelectColArrayref('virtual_user', 'dbs')}
-	};
+	my $dbs = $slashdb->getDBs;
+
+	my %vus_hash = ( );
+	my @dbids = sort { $a <=> $b } keys %$dbs;
+	for my $dbid (@dbids) {
+		my $vu = $dbs->{$dbid}{virtual_user};
+		$vus_hash{$vu} = 1;
+	}
+
 	my $vus = [ (
 		$slashdb->{virtual_user},
 		sort { $a cmp $b }
 		grep { $_ ne $slashdb->{virtual_user} }
-		keys %$vus_hr
+		keys %vus_hash
 	) ];
-	my $log_db = $slashdb->getDBs()->{log}[0]{virtual_user} || '';
 
 	# Set up the @db array based on what virtual users we have.
 	@db = ( );
@@ -138,7 +140,7 @@ sub run {
 
 	# And print the key for the hitrate column because it's not
 	# very intuitive.
-	print "InnoDB cache (h)itrate key:   + >98%   - 94-98%   X <94%   ? unknown\n";
+	print "InnoDB cache (h)itrate key:   + >99%   - 96-99%   X <96%   ? unknown\n";
 
 	while (1) {
 
@@ -217,13 +219,9 @@ sub update_db_ary {
 
 sub print_first_line {
 	# First line: stats for the last $time_elapsed seconds
-	if ($weed_out_images) {
-		$pages = $logdb->sqlCount("accesslog",
-			"id BETWEEN " . ($maxlog_last+1) . " AND $maxlog_new"
-			. " AND op != 'image'");
-	} else {
-		$pages = $maxlog_new - $maxlog_last;
-	}
+	$pages = $logdb->sqlCount("accesslog",
+		"id BETWEEN " . ($maxlog_last+1) . " AND $maxlog_new"
+		. " AND op != 'image' AND (op != 'rss' OR static = 'no')");
 	$pages_total += $pages;
 	$comments = $maxcid_new - $maxcid_last;
 	$comments_total = $maxcid_new - $maxcid_first;
@@ -252,9 +250,9 @@ sub print_first_line {
 		if ($db->{innostatus_query}) {
 			if (!defined($db->{hitrate})) {
 				print " ?";
-			} elsif ($db->{hitrate} >= 98) {
+			} elsif ($db->{hitrate} >= 99) {
 				print " +";
-			} elsif ($db->{hitrate} >= 94) {
+			} elsif ($db->{hitrate} >= 96) {
 				print " -";
 			} else {
 				print " X";
@@ -313,16 +311,21 @@ sub getLoadavg {
 sub getQueries {
 	my($db) = @_;
 	my $query = $db->{status_query};
+	$db->{db}->sqlConnect();
 	my $sth = $db->{db}{_dbh}->prepare($query);
 	my($q, $sq);
 	$sth->execute();
+	my $n_rows = 0;
 	while (my($key, $val) = $sth->fetchrow()) {
 		$q = $val, next if $key eq "Questions";
 		$sq = $val      if $key eq "Slow_queries";
+		++$n_rows;
 	}
 	$sth->finish();
 	if (!$q) {
-		print STDERR "getQueries returning q='$q' sq='$sq' for '$query'\n";
+		my $err = $DBI::errstr;
+		$err =~ s/\s+/ /g;
+		print STDERR "getQueries returning q='$q' sq='$sq' ($n_rows rows) for '$query', err '$err'\n";
 	}
 	return($q, $sq);
 }
@@ -404,8 +407,6 @@ Monitor the Slash site's database.
 Main options:
 	-h	Help (this message)
 	-v	Version
-	-i	Accesslog may contain images; do a SELECT from it to
-		weed them out when counting pages
 
 	-u	Virtual user (default "slash")
 	-w	Width max in columns (default 76)
@@ -425,7 +426,7 @@ For each DB, the data is:
 	sps	Slow queries per second
 	qpp	Queries per page
 	h	InnoDB cache hit rate percent (MySQL 4.x only)
-		("+" means > 98%, "-" means 94-98%, "X" means < 94%)
+		("+" means > 99%, "-" means 96-99%, "X" means < 96%)
 EOT
 	exit 0;
 }

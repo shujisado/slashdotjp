@@ -36,7 +36,6 @@ More to come.
 use strict;
 use base qw(Slash::Messages::DB::MySQL);
 use vars qw($VERSION);
-use Email::Valid;
 use Slash 2.003;	# require Slash 2.3.x
 use Slash::Constants ':messages';
 use Slash::Display;
@@ -108,6 +107,7 @@ Whatever templates are passed in.
 
 sub create {
 	my($self, $uid, $type, $data, $fid, $altto, $send) = @_;
+	my $gSkin = getCurrentSkin();
 	my $message;
 
 	# must not contain non-numeric
@@ -147,11 +147,11 @@ sub create {
 		}
 
 		my $user = getCurrentUser();
-		$data->{_NAME}    = delete($data->{template_name});
-		$data->{_PAGE}    = delete($data->{template_page})
+		$data->{_NAME} = delete($data->{template_name});
+		$data->{_PAGE} = delete($data->{template_page})
 			|| $user->{currentPage};
-		$data->{_SECTION} = delete($data->{template_section})
-			|| $user->{currentSection};
+		$data->{_SKIN} = delete($data->{template_skin})
+			|| $gSkin->{name};
 
 		# set subject
 		if (exists $data->{subject} && ref($data->{subject}) eq 'HASH') {
@@ -163,11 +163,11 @@ sub create {
 				return 0;
 			}
 
-			$data->{subject}{_NAME}    = delete($data->{subject}{template_name});
-			$data->{subject}{_PAGE}    = delete($data->{subject}{template_page})
+			$data->{subject}{_NAME} = delete($data->{subject}{template_name});
+			$data->{subject}{_PAGE} = delete($data->{subject}{template_page})
 				|| $data->{_PAGE}    || $user->{currentPage};
-			$data->{subject}{_SECTION} = delete($data->{subject}{template_section})
-				|| $data->{_SECTION} || $user->{currentSection};
+			$data->{subject}{_SKIN} = delete($data->{subject}{template_skin})
+				|| $data->{_SKIN} || $gSkin->{name};
 		}
 
 		$data->{_templates}{email}{content}	||= 'msg_email';
@@ -440,7 +440,7 @@ sub send {
 		}
 
 		$addr    = $msg->{altto} || $msg->{user}{realemail};
-		unless (Email::Valid->rfc822($addr)) {
+		unless (emailValid($addr)) {
 			messagedLog(getData("send mail error", {
 				addr	=> $addr,
 				uid	=> $msg->{user}{uid},
@@ -850,7 +850,7 @@ sub render {
 =head2 callTemplate(DATA, MESSAGE)
 
 A wrapper for calling templates in Slash::Messages.  It tries to figure
-out the right page/section to call the template in, etc.  It sets the
+out the right page/skin to call the template in, etc.  It sets the
 Nocomm parameter in its call to slashDisplay().
 
 =over 4
@@ -863,7 +863,7 @@ Nocomm parameter in its call to slashDisplay().
 
 This can either be a template name, or a hashref of template data.
 If a hashref, the _NAME parameter is the template name.  The
-_PAGE and _SECTION parameters may also be set.  These will all be
+_PAGE and _SKIN parameters may also be set.  These will all be
 set appropriately by the create() method.  The rest of
 the key/value pairs will be passed to the template.
 
@@ -888,6 +888,7 @@ sub callTemplate {
 	my($self, $data, $msg) = @_;
 	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
+	my $gSkin     = getCurrentSkin();
 	my $name;
 
 	if (ref($data) eq 'HASH' && exists $data->{_NAME}) {
@@ -903,12 +904,12 @@ sub callTemplate {
 		Return  => 1,
 		Nocomm  => 1,
 		Page    => 'messages',
-		Section => 'NONE',
+		Skin    => 'NONE',
 	};
 
-	# set Page and Section as from the caller
-	$opt->{Page}    = delete($data->{_PAGE})    if exists $data->{_PAGE};
-	$opt->{Section} = delete($data->{_SECTION}) if exists $data->{_SECTION};
+	# set Page and Skin as from the caller
+	$opt->{Page} = delete($data->{_PAGE}) if exists $data->{_PAGE};
+	$opt->{Skin} = delete($data->{_SKIN}) if exists $data->{_SKIN};
 
 	# $msg->{user} could be a ref to some, but not all, user info, or a UID.  heh.
 	my $seclev = ref $msg->{user}
@@ -922,8 +923,8 @@ sub callTemplate {
 			: 0;
 
 	$data->{absolutedir} = $seclev && $seclev >= 100
-		? $constants->{absolutedir_secure}
-		: $constants->{absolutedir};
+		? $gSkin->{absolutedir_secure}
+		: $gSkin->{absolutedir};
 
 	my $new = slashDisplay($name, { %$data, msg => $msg }, $opt);
 	return $new;

@@ -451,6 +451,7 @@ Slash::Constants
 slashd and tasks
 	freshenup and the importance of rendered .shtml pages
 	adminmail and stats_daily
+	"task_timespec_foo" vars to override tasks/foo.pl's timespec
 users
 	the users_* tables, why so many?
 	the A.C.
@@ -752,8 +753,11 @@ report.
 =head1 CHANGES
 
 $Log$
-Revision 1.1  2004/01/27 21:54:09  oliver
-Initial revision
+Revision 1.2  2004/12/31 12:35:50  oliver
+merging upstream changes R_2_3_0_151 -> R_2_5_0_41
+
+Revision 1.1.1.1  2004/01/27 21:54:09  oliver
+Initial Import of Slashcode R_2_3_0_113
 
 Revision 1.6  2003/07/07 22:18:24  jamie
 Filled in skeleton for themes/plugins, templates, page layout and replication.

@@ -146,6 +146,7 @@ sub create {
 	return unless exists $param->{items};
 
 	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
 
 	my $version  = $param->{version} && $param->{version} =~ /^\d+\.?\d*$/
 		? $param->{version}
@@ -158,10 +159,6 @@ sub create {
 		? $param->{rdfitemdesc_html}
 		: $constants->{rdfitemdesc_html};
 
-	# since we do substr if rdfitemdesc != 1, and that would break HTML,
-	# do it for that too (can be fixed later) -- pudge
-	$self->{rdfitemdesc_html} = 0 unless $self->{rdfitemdesc} == 1;
-
 	my $rss = XML::RSS->new(
 		version		=> $version,
 		encoding	=> $encoding,
@@ -169,8 +166,8 @@ sub create {
 
 	my $absolutedir = defined &Slash::Apache::ConnectionIsSSL
 	                  && Slash::Apache::ConnectionIsSSL()
-		? $constants->{absolutedir_secure}
-		: $constants->{absolutedir};
+		? $gSkin->{absolutedir_secure}
+		: $gSkin->{absolutedir};
 
 	# set defaults
 	my %channel = (
@@ -303,7 +300,11 @@ sub create {
 						$encoded_item->{$key} = $desc if $desc;
 					}
 				} else {
-					$encoded_item->{$key} = $self->encode($item->{$key}, $key);
+					my $data = $item->{$key};
+					if ($key eq 'link') {
+						$data = _tag_link($data);
+					}
+					$encoded_item->{$key} = $self->encode($data, $key);
 				}
 			}
 
@@ -363,14 +364,29 @@ sub rss_story {
 	# delete it so it won't be processed later
 	my $story = delete $item->{story};
 	my $constants = getCurrentStatic();
-	my $slashdb   = getCurrentDB();
+	my $reader    = getObject('Slash::DB', { db_type => 'reader' });
 
-	my $topics = $slashdb->getTopics();
+	my $topics = $reader->getTopics();
 
 	$encoded_item->{title}  = $self->encode($story->{title})
 		if $story->{title};
-	$encoded_item->{'link'} = $self->encode("$channel->{'link'}article.pl?sid=$story->{sid}", 'link')
-		if $story->{sid};
+	if ($story->{sid}) {
+		if ($story->{primaryskid}) {
+			my $dir = url2abs(
+				$reader->getSkin($story->{primaryskid})->{rootdir},
+				$channel->{'link'}
+			);
+			$encoded_item->{'link'} = $self->encode(
+                                _tag_link("$dir/article.pl?sid=$story->{sid}"),
+                                'link'
+                        );
+		} else {
+			$encoded_item->{'link'} = $self->encode(
+				_tag_link("$channel->{'link'}article.pl?sid=$story->{sid}"),
+				'link'
+			);
+		}
+	}
 
 	if ($version >= 0.91) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
@@ -378,23 +394,25 @@ sub rss_story {
 	}
 
 	if ($version >= 1.0) {
-		my $slashdb   = getCurrentDB();
-
 		$encoded_item->{dc}{date}    = $self->encode($self->date2iso8601($story->{'time'}))
 			if $story->{'time'};
-		$encoded_item->{dc}{subject} = $self->encode($topics->{$story->{tid}}{name})
+		$encoded_item->{dc}{subject} = $self->encode($topics->{$story->{tid}}{keyword})
 			if $story->{tid};
-		$encoded_item->{dc}{creator} = $self->encode($slashdb->getUser($story->{uid}, 'nickname'))
+		$encoded_item->{dc}{creator} = $self->encode($reader->getUser($story->{uid}, 'nickname'))
 			if $story->{uid};
 
-		$encoded_item->{slash}{section}    = $self->encode($story->{section})
-			if $story->{section};
 		$encoded_item->{slash}{comments}   = $self->encode($story->{commentcount})
 			if $story->{commentcount};
 		$encoded_item->{slash}{hitparade}  = $self->encode($story->{hitparade})
 			if $story->{hitparade};
 		$encoded_item->{slash}{department} = $self->encode($story->{dept})
 			if $story->{dept} && $constants->{use_dept};
+
+		if ($story->{primaryskid}) {
+			$encoded_item->{slash}{section} = $self->encode(
+				$reader->getSkin($story->{primaryskid})->{name}
+			);
+		}
 	}
 
 	return $encoded_item;
@@ -436,8 +454,15 @@ sub rss_item_description {
 	my $constants = getCurrentStatic();
 
 	if ($self->{rdfitemdesc}) {
-		# no HTML, unless we specify HTML allowed
-		unless ($self->{rdfitemdesc_html}) {
+		if ($self->{rdfitemdesc_html}) {
+			# this should not hurt things that don't have
+			# slashized links or slash tags ... but if
+			# we do have a problem, we can move this to
+			# rss_story() -- pudge
+			$desc = parseSlashizedLinks($desc);
+			$desc = processSlashTags($desc);
+
+		} else {
 			$desc = strip_notags($desc);
 			$desc =~ s/\s+/ /g;
 			$desc =~ s/ $//;
@@ -447,7 +472,12 @@ sub rss_item_description {
 		if ($self->{rdfitemdesc} != 1) {
 			if (length($desc) > $self->{rdfitemdesc}) {
 				$desc = substr($desc, 0, $self->{rdfitemdesc});
-				$desc =~ s/\S+$//;
+				$desc =~ s/[\w'-]+$//;  # don't trim in middle of word
+				if ($self->{rdfitemdesc_html}) {
+					$desc =~ s/<[^>]*$//;
+					$desc = balanceTags($desc);
+				}
+				$desc =~ s/\s+$//;
 				$desc .= '...';
 			}
 		}
@@ -458,6 +488,15 @@ sub rss_item_description {
 	}
 
 	return $desc;
+}
+
+sub _tag_link {
+	my($link) = @_;
+	if ($link =~ /\?/) {
+		$link .= '&from=rss';
+	} else {
+		$link .= '?from=rss';
+	}
 }
 
 1;

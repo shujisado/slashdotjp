@@ -6,7 +6,7 @@ Form for previewing a user's submission
 * submission = submission hashref (email, name, subj, tid, story, time, comment)
 * subid = submission id
 * lockTest = string describing other admins looking at similar submissions
-* section = name of section
+* skin = name of skin
 
 __title__
 
@@ -21,33 +21,61 @@ __template__
 
 [% IF submission.comment && admin_flag %]
 <P>Submission Notes:
-<TABLE WIDTH="95%"><TR><TD BGCOLOR="[% user.bg.2 %]">
-	<FONT SIZE="-1" COLOR="[% user.fg.2 %]">[% submission.comment | strip_literal %]</FONT>
+<TABLE WIDTH="95%"><TR><TD BGCOLOR="[% user.colors.bg_2 %]">
+	<FONT SIZE="-1" COLOR="[% user.colors.fg_2 %]">[% submission.comment | strip_literal %]</FONT>
 </TD></TR></TABLE>
 [% END %]
+
 [% IF submission.sid %]
 	<P><A HREF="[% constants.real_rootdir %]/article.pl?sid=[% submission.sid %]">Link to Story</A>
 [% END %]
 
 [% PROCESS titlebar width="100%" title=submission.subj %]
-[% image = Slash.db.getTopicImageBySection(topic, constants.section) %]
-<A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]"><IMG
-SRC="[% constants.imagedir %]/topics/[% image.image %]"
-WIDTH="[% image.width %]" HEIGHT="[% image.height %]" BORDER="0"
+<A HREF="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"><IMG
+SRC="[% constants.imagedir %]/topics/[% topic.image %]"
+WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]" BORDER="0"
 ALIGN="RIGHT" HSPACE="20" VSPACE="10"
-ALT="[% topic.alttext %]"
-TITLE="[% topic.alttext %]"></A>
+ALT="[% topic.textname %]"
+TITLE="[% topic.textname %]"></A>
 [% submission_state = Slash.db.getDescriptions('submission-state') %]
 [% del = submission.del; submission_state.$del %] submission by <B>[% submission.name %] <A HREF="[% submission.email %]">[% submission.email %]</A></B>
-	at [% submission.time %] [% IF admin_flag %]<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% ipid %]&amp;fieldname=ipid">[% ipid_vis %]</A>[% END %]
+	at [% submission.time %] [% IF admin_flag %]<A HREF="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% ipid %]&amp;fieldname=ipid">[% ipid_vis %]</A>[% END %]
+
+[% IF admin_flag && (submission.uid != constants.anonymous_coward_uid || submission.emaildomain) %]
+	<p>In the last [% constants.submission_count_days %] days, there
+	[% IF submission.uid != constants.anonymous_coward_uid && num_from_uid != 1
+		|| submission.uid == constants.anonymous_coward_uid && num_with_emaildomain != 1 %]
+		have been
+	[% ELSE %]
+		has been
+	[% END %]
+	[% IF submission.uid != constants.anonymous_coward_uid %]
+		[% IF num_from_uid >= 20 %]<B>[% END %]
+		[% num_from_uid %] submission[% IF num_from_uid != 1 %]s[% END %]
+		from this user
+		[%- IF num_from_uid >= 20 %]</B>[% END -%]
+		[%- IF submission.emaildomain %]
+			and
+		[% END -%]
+	[%- END -%]
+	[%- IF submission.emaildomain %]
+		[% IF num_with_emaildomain >= 15 %]<B>[% END %]
+		[% num_with_emaildomain %] submission[% IF num_with_emaildomain != 1 %]s[% END %]
+		with this link domain
+		[%- IF num_with_emaildomain >= 15 %]</B>[% END -%]
+	[%- END -%]
+	.
+[% END %]
 
 <P>[% subtext %]</P>
 
 [% IF admin_flag %]
-	[ <A HREF="[% env.script_name %]?op=Delete&amp;subid=[% subid %]&amp;section=[% form.table_section | strip_attribute %]&amp;note=[% form.table_note | strip_attribute %]">Delete Submission</A> ]<BR>
+	[ <A HREF="[% env.script_name %]?op=Delete&amp;subid=[% subid %]&amp;skin=[% form.table_skin | strip_attribute %]&amp;note=[% form.table_note | strip_attribute %]">Delete Submission</A> ]<BR>
 
-	<FORM ACTION="[% constants.rootdir %]/admin.pl" METHOD="POST">
+	<FORM ACTION="[% gSkin.rootdir %]/admin.pl" METHOD="POST">
+		<INPUT TYPE="HIDDEN" NAME="firstpreview" VALUE="1">
 		<INPUT TYPE="HIDDEN" NAME="subid" VALUE="[% subid %]">
+		<INPUT TYPE="HIDDEN" NAME="topic_source" VALUE="submission">
 		<INPUT TYPE="HIDDEN" NAME="submitter" VALUE="[% submitter %]">
 		<BR>title <INPUT TYPE="text" NAME="title" VALUE="[% submission.subj %]" SIZE="50" MAXLENGTH="50">
 		<BR>[% lockTest %]
@@ -58,17 +86,16 @@ TITLE="[% topic.alttext %]"></A>
 		<BR>[% extra.1 %]
 		[% IF extra.2 == 'text' %]
 			<INPUT TYPE="text" NAME="[% extra.1 %]" VALUE="[% submission.${extra.1} | strip_attribute %]" SIZE="50">
+		[% ELSIF extra.2 == 'textarea' %]
+			<TEXTAREA WRAP="VIRTUAL" ROWS="[% user.textarea_rows || constants.textarea_rows %]" COLS="[% user.textarea_cols || constants.textarea_cols %]" NAME="[% extra.1 %]">[% submission.${extra.1} | strip_literal %]</TEXTAREA><BR>
 		[% ELSIF extra.2 == 'list' %]
-			[% pulldown = "$extra.3:$extra.1" %]
-			[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',pulldown), submission.${extra.1}, 1, 1) %]
-		[% ELSE %]
-			[% type = extra.1 %]
-			[% Slash.createSelect(type, Slash.db.getDescriptions('topics_section_type', section, type), submission.$type, 1, 1) %]
+			[% pulldown = "$extra.1" %]
+			[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring', pulldown), submission.${extra.1}, 1, 1) %]
 		[% END %]
 	[% END %]
 		<BR>
-	[% Slash.selectTopic('tid', submission.tid, section, 1) %]
-	[% Slash.selectSection('section', section, 0, 1) %]
+	[% Slash.createSelect('primaryskid', Slash.db.getDescriptions('skins'), submission.primaryskid, 1, 0, 1) %]
+	[% Slash.createSelect('tid', Slash.db.getDescriptions('highlighted-topics-submittable'), submission.tid, 1, 0, 1) %]
 
 		<INPUT TYPE="submit" NAME="op" VALUE="preview"><BR>
 		<BR>Intro Copy<BR>
@@ -88,7 +115,7 @@ TITLE="[% topic.alttext %]"></A>
 					"<I>ND</I>";
 				END; %]</TD>
 			<TD ALIGN="RIGHT" VALIGN="TOP">[% story.weight %]</TD>
-			<TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">
+			<TD VALIGN="TOP"><A HREF="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
 			[% story.title %]</A></TD>
 			<TD VALIGN="TOP">[% Slash.timeCalc(story.time) %]</TD>
 			<TD VALIGN="TOP">

@@ -29,6 +29,7 @@ use Date::Format qw(time2str);
 use Date::Language;
 use Date::Parse qw(str2time);
 use Digest::MD5 qw(md5_hex md5_base64);
+use Email::Valid;
 use HTML::Entities qw(:DEFAULT %char2entity);
 use HTML::FormatText;
 use HTML::TreeBuilder;
@@ -38,6 +39,7 @@ use Slash::Constants qw(:strip);
 use Slash::Utility::Environment;
 use URI;
 use XML::Parser;
+use Lingua::Stem;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -54,11 +56,14 @@ use vars qw($VERSION @EXPORT);
 	changePassword
 	chopEntity
 	cleanRedirectUrl
+	cleanRedirectUrlFromForm
 	commify
 	countTotalVisibleKids
 	countWords
+	createSid
 	decode_entities
 	ellipsify
+	emailValid
 	encryptPassword
 	findWords
 	fixHref
@@ -72,8 +77,10 @@ use vars qw($VERSION @EXPORT);
 	createLogToken
 	grepn
 	html2text
+	issueAge
 	nickFix
 	nick2matchname
+	regexSid
 	root2abs
 	roundrand
 	set_rootdir
@@ -90,8 +97,10 @@ use vars qw($VERSION @EXPORT);
 	strip_plaintext
 	strip_paramattr
 	strip_urlattr
+	submitDomainAllowed
 	timeCalc
 	url2abs
+	urlFromSite
 	xmldecode
 	xmlencode
 	xmlencode_plain
@@ -112,8 +121,9 @@ use vars qw($VERSION @EXPORT);
 sub nickFix {
 	my($nick) = @_;
 	my $constants = getCurrentStatic();
+	my $nc = $constants->{nick_chars} || join("", 'a' .. 'z');
 	$nick =~ s/\s+/ /g;
-	$nick =~ s/[^$constants->{nick_chars}]+//g;
+	$nick =~ s/[^$nc]+//g;
 	$nick = substr($nick, 0, $constants->{nick_maxlen});
 	return $nick;
 }
@@ -127,6 +137,127 @@ sub nick2matchname {
 	return $nick;
 }
 
+#========================================================================
+# If you change createSid() for your site, change regexSid() too.
+# If your site will have multiple formats of sids, you'll want this
+# to continue matching the old formats too.
+sub regexSid {
+	return qr{\b(\d{2}/\d{2}/\d{2}/\d{3,8}|\d{1,8})\b};
+}
+
+#========================================================================
+
+=head2 emailValid(EMAIL)
+
+Returns true if email is valid, false otherwise.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item EMAIL
+
+Email address to check.
+
+=back
+
+=item Return value
+
+True if email is valid, false otherwise.
+
+=back
+
+=cut
+
+sub emailValid {
+	my($email) = @_;
+
+	my $constants = getCurrentStatic();
+	return 0 if $constants->{email_domains_invalid}
+		&& ref($constants->{email_domains_invalid})
+		&& $email =~ $constants->{email_domains_invalid};
+
+	my $valid = Email::Valid->new;
+	return 0 unless $valid->rfc822($email);
+
+	return 1;
+}
+
+#========================================================================
+
+=head2 issueAge(ISSUE)
+
+Returns the "age" in days of an issue, given in issue mode form: yyyymmdd.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item ISSUE
+
+Which issue, in yyyymmdd form (matches /^\d{8}$/)
+
+=back
+
+=item Return value
+
+Age in days of that issue (a decimal number).  Takes current user's
+timezone into account.  Return value of 0 indicates error.
+
+=back
+
+=cut
+
+sub issueAge {
+	my($issue) = @_;
+	return 0 unless $issue =~ /^\d{8}$/;
+	my $user = getCurrentUser();
+	my $issue_unix_timestamp = timeCalc("${issue}0000", "%s", -$user->{off_set});
+	my $age = (time - $issue_unix_timestamp) / 86400;
+	$age = 0.00001 if $age == 0; # don't return 0 on success
+	return $age;
+}
+
+#========================================================================
+
+=head2 submitDomainAllowed(DOMAIN)
+
+Returns true if domain is allowed, false otherwise.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item DOMAIN
+
+host domain to check.
+
+=back
+
+=item Return value
+
+True if domain is valid, false otherwise.
+
+=back
+
+=cut
+
+sub submitDomainAllowed {
+        my($domain) = @_;
+
+        my $constants = getCurrentStatic();
+        return 0 if $constants->{submit_domains_invalid}
+                && ref($constants->{submit_domains_invalid})
+                && $domain =~ $constants->{submit_domains_invalid};
+
+        return 1;
+}
 #========================================================================
 
 =head2 root2abs()
@@ -151,9 +282,9 @@ sub root2abs {
 	my $user = getCurrentUser();
 
 	if ($user->{state}{ssl}) {
-		return getCurrentStatic('absolutedir_secure');
+		return getCurrentSkin('absolutedir_secure');
 	} else {
-		return getCurrentStatic('absolutedir');
+		return getCurrentSkin('absolutedir');
 	}
 }
 
@@ -247,33 +378,66 @@ Fixed URL.
 
 sub cleanRedirectUrl {
 	my($redirect) = @_;
+	my $gSkin = getCurrentSkin();
+
+	if (urlFromSite($redirect)) {
+		my $base = root2abs();
+		return URI->new_abs($redirect || $gSkin->{rootdir}, $base);
+	} else {
+		return url2abs($gSkin->{rootdir});
+	}
+}
+
+
+sub urlFromSite {
+	my($url) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $gSkin = getCurrentSkin();
 
-	# We absolutize the return-to URL to our homepage just to
+	# We absolutize the return-to URL to our domain just to
 	# be sure nobody can use the site as a redirection service.
 	# We decide whether to use the secure homepage or not
 	# based on whether the current page is secure.
 	my $base = root2abs();
-	my $clean = URI->new_abs($redirect || $constants->{rootdir}, $base);
+	my $clean = URI->new_abs($url || $gSkin->{rootdir}, $base);
 
-	my $site_domain = $constants->{basedomain};
-	$site_domain =~ s/^www\.//;
+	my @site_domain = split m/\./, $gSkin->{basedomain};
+	my $site_domain = join '.', @site_domain[-2, -1];
 	$site_domain =~ s/:.+$//;	# strip port, if available
 
-	my $host = $clean->can('host') ? $clean->host : '';
-	$host =~ s/^www\.//;
+	my @host = split m/\./, ($clean->can('host') ? $clean->host : '');
+	my $host = join '.', @host[-2, -1];
 
-	if ($site_domain eq $host) {
-		# Cool, it goes to our site.  Send the user there.
-		$clean = $clean->as_string;
+	return $site_domain eq $host;
+}
+
+#========================================================================
+
+sub cleanRedirectUrlFromForm {
+	my($redirect_formname) = @_;
+	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
+	my $form = getCurrentForm();
+
+	my $formname = $redirect_formname ? "returnto_$redirect_formname" : "returnto";
+	my $formname_confirm = "${formname}_confirm";
+	my $returnto = $form->{$formname} || "";
+	return undef if !$returnto;
+
+	my $returnto_confirm = $form->{$formname_confirm} || "";
+
+	my $returnto_passwd = $constants->{returnto_passwd};
+	my $confirmed = md5_hex("$returnto$returnto_passwd") eq $returnto_confirm;
+	if ($confirmed) {
+		# The URL and the password have been concatted together
+		# and confirmed with the MD5, so we know it comes from a
+		# trusted source.  Approve it.
+		return $returnto;
 	} else {
-		# Bogus, it goes to another site.  op=userlogin is not a
-		# URL redirection service, sorry.
-		$clean = url2abs($constants->{rootdir});
+		# There is no proper MD5, so don't redirect.
+		return undef;
 	}
-
-	return $clean;
 }
 
 #========================================================================
@@ -1385,7 +1549,8 @@ sub fixHref {  # I don't like this.  we need to change it. -- pudge
 		}
 	}
 
-	my $rootdir = getCurrentStatic('rootdir');
+	my $gSkin = getCurrentSkin();
+	my $rootdir = $gSkin->{rootdir};
 	if ($rel_url =~ /^www\.\w+/) {
 		# errnum 1
 		$abs_url = "http://$rel_url";
@@ -1827,7 +1992,10 @@ sub fudgeurl {
 		# XXX Rethink this -- it could probably be put lower down, in
 		# the "if" that handles stripping the userinfo.  We don't
 		# really need to add the scheme for most URLs. - Jamie
-		$uri->scheme("http");
+
+		# and we should only add scheme if not a local site URL
+		my($from_site) = urlFromSite($uri->as_string);
+		$uri->scheme('http') unless $from_site;
 	}
 	if (!$uri) {
 
@@ -1929,8 +2097,8 @@ sub html2text {
 	my($html, $col) = @_;
 	my($text, $tree, $form, $refs);
 
-	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
+	my $gSkin     = getCurrentSkin();
 
 	$col ||= 74;
 
@@ -1944,7 +2112,7 @@ sub html2text {
 	$text = $form->format($tree);
 	1 while chomp($text);
 
-	return $text, $refs->get_refs($constants->{absolutedir});
+	return $text, $refs->get_refs($gSkin->{absolutedir});
 }
 
 sub HTML::FormatText::AddRefs::new {
@@ -2187,9 +2355,9 @@ sub parseDomainTags {
 		);
 
 	if ($want_tags && !$notags) {
-		$html =~ s{</A ([^>]+)>}{</A> [$1]}gi;
+		$html =~ s{</a ([^<>]+)>}{</a> [$1]}gi;
 	} else {
-		$html =~ s{</A[^>]+>}{</A>}gi;
+		$html =~ s{</a[^<>]+>}   {</a>}gi;
 	}
 
 	return $html;
@@ -2240,51 +2408,58 @@ sub parseSlashizedLinks {
 
 sub _slashlink_to_link {
 	my($sl, $options) = @_;
+	my $constants = getCurrentStatic();
 	my $ssi = getCurrentForm('ssi') || 0;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $constants = getCurrentStatic();
-	my $root = $constants->{rootdir};
 	my %attr = $sl =~ / (\w+)="([^"]+)"/g;
 	# We should probably de-strip-attribute the values of %attr
 	# here, but it really doesn't matter.
 
 	# Load up special values and delete them from the attribute list.
 	my $sn = delete $attr{sn} || "";
-	my $sect = delete $attr{sect} || "";
-	my $section = $sect ? $reader->getSection($sect) : {};
-	my $sect_root = $section->{rootdir} || $root;
+	my $skin_id = delete $attr{sect} || "";
+
+	# skin_id could be a name, a skid, or blank, or invalid.
+	# In any case, get its skin hashref and its name.
+	my $skin;
+	if ($skin_id) {
+		$skin = $reader->getSkin($skin_id);
+	} else {
+		$skin = $reader->getSkin($constants->{mainpage_skid});
+	}
+	my $skin_name = $skin->{name};
+	my $skin_root = $skin->{rootdir};
 	if ($options && $options->{absolute}) {
-		$sect_root = URI->new_abs($sect_root, $options->{absolute})
+		$skin_root = URI->new_abs($skin_root, $options->{absolute})
 			->as_string;
 	}
 	my $frag = delete $attr{frag} || "";
 	# Generate the return value.
-	my $retval = q{<A HREF="};
+	my $url = "";
 	if ($sn eq 'comments') {
-		$retval .= qq{$sect_root/comments.pl?};
-		$retval .= join("&",
+		$url .= qq{$skin_root/comments.pl?};
+		$url .= join("&",
 			map { qq{$_=$attr{$_}} }
 			sort keys %attr);
-		$retval .= qq{#$frag} if $frag;
+		$url .= qq{#$frag} if $frag;
 	} elsif ($sn eq 'article') {
 		# Different behavior here, depending on whether we are
 		# outputting for a dynamic page, or a static one.
 		# This is the main reason for doing slashlinks at all!
 		if ($ssi) {
-			$retval .= qq{$sect_root/};
-			$retval .= qq{$sect/$attr{sid}.shtml};
-			$retval .= qq{?tid=$attr{tid}} if $attr{tid};
-			$retval .= qq{#$frag} if $frag;
+			$url .= qq{$skin_root/};
+			$url .= qq{$skin_name/$attr{sid}.shtml};
+			$url .= qq{?tid=$attr{tid}} if $attr{tid};
+			$url .= qq{#$frag} if $frag;
 		} else {
-			$retval .= qq{$sect_root/article.pl?};
-			$retval .= join("&",
+			$url .= qq{$skin_root/article.pl?};
+			$url .= join("&",
 				map { qq{$_=$attr{$_}} }
 				sort keys %attr);
-			$retval .= qq{#$frag} if $frag;
+			$url .= qq{#$frag} if $frag;
 		}
 	}
-	$retval .= q{">};
-	return $retval;
+	return q{<A HREF="} . strip_urlattr($url) . q{">};
 }
 
 #========================================================================
@@ -2396,7 +2571,7 @@ sub fullhost_to_domain {
 
 sub _url_to_domain_tag {
 	my($href, $link, $body) = @_;
-	my $absolutedir = getCurrentStatic('absolutedir');
+	my $absolutedir = getCurrentSkin('absolutedir');
 	my $uri = URI->new_abs($link, $absolutedir);
 	my $uri_str = $uri->as_string;
 
@@ -2450,7 +2625,7 @@ sub _url_to_domain_tag {
 
 	# Add a title tag to make this all friendly for those with vision
 	# and similar issues -Brian
-	$href =~ s/>/ TITLE="$info">/ if $info ne '?';
+	$href =~ s/>/ title="$info">/ if $info ne '?';
 	return "$href$body</a $info>";
 }
 
@@ -2507,23 +2682,27 @@ sub _link_to_slashlink {
 	my($pre, $url, $post) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
 	my $virtual_user = getCurrentVirtualUser();
 	my $retval = "$pre$url$post";
-	my $abs = $constants->{absolutedir};
+	my $abs = $gSkin->{absolutedir};
+	my $skins = $reader->getSkins();
 #print STDERR "_link_to_slashlink begin '$url'\n";
 
 	if (!defined($urla{$virtual_user})) {
-		# URLs may show up in any section, which means when absolutized
+		# URLs may show up in any skins, which means when absolutized
 		# their host may be either the main one or a sectional one.
 		# We have to allow for any of those possibilities.
-		my $sections = $reader->getSections();
-		my @sect_urls = grep { $_ }
-			map { $sections->{$_}{rootdir} }
-			sort keys %$sections;
+		my @skin_urls = grep { $_ }
+			map { $skins->{$_}{rootdir} }
+			sort keys %$skins;
 		my %all_urls = ( );
-		for my $url ($abs, @sect_urls) {
+		for my $url ($abs, @skin_urls) {
 			my $new_url = URI->new($url);
 			# Remove the scheme to make it relative (schemeless).
+			# XXXSECTIONTOPICS hey, skin urls should already be schemeless, test this
+			# XXXSKIN - no, urls are not schemeless, rootdirs are
+			# (and they are generated, at this point, from urls)
 			$new_url->scheme(undef);
 			my $new_url_q = quotemeta($new_url->as_string);
 			$all_urls{"(?:https?:)?$new_url"} = 1;
@@ -2578,14 +2757,18 @@ sub _link_to_slashlink {
 		# Section and topic attributes get thrown in too.
 		if ($attr{sn} eq 'comments') {
 			# sid is actually a discussion id!
-			$attr{sect} = $reader->getDiscussion(
-				$attr{sid}, 'section');
+			# XXXSECTIONTOPICS
+			my $primaryskid = $reader->getDiscussion(
+				$attr{sid}, 'primaryskid');
+			$attr{sect} = $skins->{$primaryskid}{name};
 			$attr{tid} = $reader->getDiscussion(
 				$attr{sid}, 'topic');
 		} else {
 			# sid is a story id
-			$attr{sect} = $reader->getStory( 
-				$attr{sid}, 'section', 1);
+			# XXXSECTIONTOPICS
+			my $primaryskid = $reader->getStory( 
+				$attr{sid}, 'primaryskid', 1);
+			$attr{sect} = $skins->{$primaryskid}{name};
 			$attr{tid} = $reader->getStory(
 				$attr{sid}, 'tid', 1);
 		}
@@ -3011,6 +3194,43 @@ sub countWords {
 }
 
 ########################################################
+# If you change createSid() for your site, change regexSid() too.
+sub createSid {
+	my($bogus_sid) = @_;
+	# yes, this format is correct, don't change it :-)
+	my $sidformat = '%02d/%02d/%02d/%02d%0d2%02d';
+	# Create a sid based on the current time.
+	my @lt;
+	my $start_time = time;
+	if ($bogus_sid) {
+		# If we were called being told that there's at
+		# least one sid that is invalid (already taken),
+		# then look backwards in time until we find it,
+		# then go one second further.
+		my $loops = 1000;
+		while (--$loops) {
+			$start_time--;
+			@lt = localtime($start_time);
+			$lt[5] %= 100; $lt[4]++; # year and month
+			last if $bogus_sid eq sprintf($sidformat, @lt[reverse 0..5]);
+		}
+		if ($loops) {
+			# Found the bogus sid by looking
+			# backwards.  Go one second further.
+			$start_time--;
+		} else {
+			# Something's wrong.  Skip ahead in
+			# time instead of back (not sure what
+			# else to do).
+			$start_time = time + 1;
+		}
+	}
+	@lt = localtime($start_time);
+	$lt[5] %= 100; $lt[4]++; # year and month
+	return sprintf($sidformat, @lt[reverse 0..5]);
+}
+
+########################################################
 # A very careful extraction of all the words from HTML text.
 # URLs count as words.  (A different algorithm than countWords
 # because countWords just has to be fast; this has to be
@@ -3019,6 +3239,15 @@ sub countWords {
 sub findWords {
 	my($args_hr) = @_;
 	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
+	my $use_stemming = $constants->{stem_uncommon_words};
+	my $language = $constants->{rdflanguage} || "EN-US";
+	$language = uc($language);
+	my $stemmer = Lingua::Stem->new(-locale => $language);
+	$stemmer->stem_caching({ -level => 2 });
+	my $text_return_hr = {};
+	my @word_stems;
+
 
 	# Return a hashref;  keys are the words, values are hashrefs
 	# with the number of times they appear and so on.
@@ -3044,7 +3273,7 @@ sub findWords {
 			([^"<>]+)
 		}gxi;
 		foreach my $url (@urls_ahref, @urls_imgsrc) {
-			my $uri = URI->new_abs($url, $constants->{absolutedir})
+			my $uri = URI->new_abs($url, $gSkin->{absolutedir})
 				->canonical;
 			$url = $uri->as_string;
 			# Tiny URLs don't count.
@@ -3089,13 +3318,37 @@ sub findWords {
 			# Ignore *all* words less than 3 chars.
 			next if length($word) < 3;
 			my $ww = $weight_factor * ($cap ? 1.3 : 1);
-			$wordcount->{lc $word}{weight} += $ww;
+			my $log_word = $word;
+			if ($use_stemming) {
+				# For performance reasons we don't want to stem story text for all 
+				# stories we are comparing to in getSimilarStories.
+				# Instead we make sure the stems we save are substrings of the word
+				# anchored at the beginning
+				#
+				# A breakdown of stem/word comparisons based on /usr/dict/words
+				# 70%    $stem eq $word
+				# 93%    $stem is a substring of $word anchored at the beginning
+				# 100%   $stem w/o its last letter is a substring of $word anchored at the beginning
+				#
+				# For now use the stem only if it a substring of the word anchored at the beginning
+				# otherwise use the complete word.  That way we can do a pattern match to check against
+				# older stories rather than stemming them for comparison
+				
+
+				my $stems = $stemmer->stem($word);
+				$log_word = $stems->[0];
+				$log_word = $word if $word!~/^\Q$log_word\E/i;
+				push @word_stems, $log_word;
+			}
+
+			$wordcount->{lc $log_word}{weight} += $ww;
 		}
-		my %uniquewords = map { ( lc($_), 1 ) } @words;
+		my %uniquewords = map { ( lc($_), 1 ) } $use_stemming ? @word_stems: @words;
 		for my $word (keys %uniquewords) {
 			$wordcount->{$word}{count}++;
 		}
 	}
+	$stemmer->clear_stem_cache();
 
 	return $wordcount;
 }
@@ -3178,13 +3431,15 @@ sub grepn {
 	return;
 }
 
-#========================================================================
-# Removed from openbackend
+##################################################################
 sub sitename2filename {
 	my($section) = @_;
 	my $filename = '';
 
-	if ($section ne 'light') {
+	# XXXSKIN - hardcode 'index' for the sake of RSS feeds
+	if ($section eq 'mainpage') {
+		$filename = 'index';
+	} elsif ($section ne 'light') {
 		$filename = $section || lc getCurrentStatic('sitename');
 	} else {
 		$filename = lc getCurrentStatic('sitename');
@@ -3207,34 +3462,14 @@ sub countTotalVisibleKids {
 	$pid               ||= 0;
 
 	$total += $comments->{$pid}{visiblekids};
-	if ($constants->{ubb_like_forums}) {
-		$last_updated     = $comments->{$pid}{date};
-		$last_updated_uid = $comments->{$pid}{uid};
-	}
 
 	for my $cid (@{$comments->{$pid}{kids}}) {
 		my($num_kids, $date_test, $uid) =
 			countTotalVisibleKids($comments, $cid);
 		$total += $num_kids;
-
-		if ($constants->{ubb_like_forums}) {
-			if ($date_test gt $last_updated) {
-				$last_updated     = $date_test;
-				$last_updated_uid = $uid;
-			}
-			if ($comments->{$cid}{date} gt $last_updated) {
-				$last_updated     = $comments->{$cid}{date};
-				$last_updated_uid = $comments->{$cid}{uid};
-			}
-		}
 	}
 
 	$comments->{$pid}{totalvisiblekids} = $total;
-	# don't do the next two if pid=0
-	if ($pid && $constants->{ubb_like_forums}) {
-		$comments->{$pid}{last_updated}     = $last_updated;
-		$comments->{$pid}{last_updated_uid} = $last_updated_uid;
-	}
 
 	return($total, $last_updated, $last_updated_uid);
 }

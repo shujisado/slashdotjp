@@ -6,6 +6,7 @@
 package Slash::Apache;
 
 use strict;
+use Time::HiRes;
 use Apache;
 use Apache::SIG ();
 use Apache::ModuleConfig;
@@ -42,7 +43,7 @@ sub SlashVirtualUser ($$$) {
 	createCurrentVirtualUser($cfg->{VirtualUser} = $user);
 	createCurrentDB		($cfg->{slashdb} = Slash::DB->new($user));
 	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf());
-	$cfg->{constants}{section} = 'index'; # This is in here till I finish up some work -Brian
+#	$cfg->{constants}{section} = 'index'; # This is in here till I finish up some work -Brian
 
 	# placeholders ... store extra placeholders in DB?  :)
 	for (qw[user form themes template cookie objects cache site_constants]) {
@@ -68,35 +69,26 @@ sub SlashVirtualUser ($$$) {
 	createCurrentUser($anonymous_coward);
 
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
-	my $sections = $cfg->{slashdb}->getSections();
-	for (values %$sections) {
-		if ($_->{hostname} && $_->{url}) {
-			my $new_cfg;
-			for (keys %{$cfg->{constants}}) {
-				$new_cfg->{$_} = $cfg->{constants}{$_}
-					unless $_ eq 'form_override';
-			}
-			# Must not just copy the form_override info
-			$new_cfg->{form_override} = {}; 
-			$new_cfg->{absolutedir} = $_->{url};
-			$new_cfg->{absolutedir_secure} = set_rootdir($_->{url}, $cfg->{constants}{absolutedir_secure});
-			$new_cfg->{rootdir} = set_rootdir($_->{url}, $cfg->{constants}{rootdir});
-			$new_cfg->{cookiedomain} = $_->{cookiedomain} if $_->{cookiedomain};
-			$new_cfg->{defaultsubsection} = $_->{defaultsubsection} if $_->{defaultsubsection};
-			$new_cfg->{defaulttopic} = $_->{defaulttopic} if $_->{defaulttopic};
-			$new_cfg->{defaultdisplaystatus} = $_->{defaultdisplaystatus} if $_->{defaultdisplaystatus};
-			$new_cfg->{defaultcommentstatus} = $_->{defaultcommentstatus} if $_->{defaultcommentstatus};
-			$new_cfg->{defaultsection} = $_->{defaultsection} || $_->{section};
-			$new_cfg->{section} = $_->{section};
-			$new_cfg->{basedomain} = $_->{hostname};
-			$new_cfg->{static_section} = $_->{section};
-			$new_cfg->{index_handler} = $_->{index_handler};
 
-# Should no longer be needed -Brian
-			#$new_cfg->{form_override}{section} = $_->{section};
-			$cfg->{site_constants}{$_->{hostname}} = $new_cfg;
-		}
-	}
+	########################################
+	# Skip the nonsense that used to be here.  Previously we
+	# were copying the whole set of constants, and then putting
+	# sectional data into it as well, for each section that had
+	# a hostname defined.  First of all, of course, sections
+	# have become skins so the data can be found in getSkin().
+	# But also, we're not doing this stuff with separate sets of
+	# constants for each hostname.  Because the skin-specific
+	# data is split off into getSkin()'s hashref, we only need
+	# one set of data for $constants.  These fields were moved
+	# from constants to skins:
+	# absolutedir, rootdir, cookiedomain, defaulttopic,
+	# defaultdisplaystatus, defaultcommentstatus,
+	# basedomain, index_handler, and though I'm not sure
+	# it was ever used, absolutedir_secure.
+	# These fields are gone because they are now obviated:
+	# defaultsubsection, defaultsection, static_section.
+	########################################
+
 	$cfg->{slashdb}->{_dbh}->disconnect if $cfg->{slashdb}->{_dbh};
 }
 
@@ -118,64 +110,64 @@ sub SlashSetForm ($$$$) {
 	$cfg->{constants}{form_override}{$key} = $value;
 }
 
-sub SlashSetVarHost ($$$$$) {
-	my($cfg, $params, $key, $value, $hostname) = @_;
-	unless ($cfg->{constants}) {
-		print STDERR "SlashSetVarHost must be called after call SlashVirtualUser \n";
-		exit(1);
-	}
-	my $new_cfg;
-	for (keys %{$cfg->{constants}}) {
-		$new_cfg->{$_} = $cfg->{constants}{$_}
-			unless $_ eq 'form_override';
-	}
-	$new_cfg->{$key} = $value;
-	$cfg->{site_constants}{$hostname} = $new_cfg;
-}
-
-sub SlashSetFormHost ($$$$$) {
-	my($cfg, $params, $key, $value, $hostname) = @_;
-	unless ($cfg->{constants}) {
-		print STDERR "SlashSetFormHost must be called after call SlashVirtualUser \n";
-		exit(1);
-	}
-	my $new_cfg;
-	for (keys %{$cfg->{constants}}) {
-		$new_cfg->{$_} = $cfg->{constants}{$_}
-			unless $_ eq 'form_override';
-	}
-	$new_cfg->{form_override}{$key} = $value;
-	$cfg->{site_constants}{$hostname} = $new_cfg;
-}
-
-sub SlashSectionHost ($$$$) {
-	my($cfg, $params, $section, $url)  = @_;
-	my $hostname = $url;
-	$hostname =~ s/.*\/\///;
-	unless ($cfg->{constants}) {
-		print STDERR "SlashSectionHost must be called after call SlashVirtualUser \n";
-		exit(1);
-	}
-	# Yes, this looks slower then the other method but I was getting different results.
-	# Bad results, and it's Friday. Bad results on Friday is a bad thing.
-	# -Brian
-	my $new_cfg;
-	for (keys %{$cfg->{constants}}) {
-		$new_cfg->{$_} = $cfg->{constants}{$_}
-			unless $_ eq 'form_override';
-	}
-	# Must not just copy the form_override info
-	$new_cfg->{form_override} = {};
-	$new_cfg->{absolutedir} = $url;
-	$new_cfg->{absolutedir_secure} = set_rootdir($url, $cfg->{constants}{absolutedir_secure});
-	$new_cfg->{rootdir} = set_rootdir($url, $cfg->{constants}{rootdir});
-	$new_cfg->{basedomain} = $hostname;
-	$new_cfg->{defaultsection} = $section;
-	$new_cfg->{static_section} = $section;
-	# Should no longer be needed -Brian
-	#$new_cfg->{form_override}{section} = $section;
-	$cfg->{site_constants}{$hostname} = $new_cfg;
-}
+#sub SlashSetVarHost ($$$$$) {
+#	my($cfg, $params, $key, $value, $hostname) = @_;
+#	unless ($cfg->{constants}) {
+#		print STDERR "SlashSetVarHost must be called after call SlashVirtualUser \n";
+#		exit(1);
+#	}
+#	my $new_cfg;
+#	for (keys %{$cfg->{constants}}) {
+#		$new_cfg->{$_} = $cfg->{constants}{$_}
+#			unless $_ eq 'form_override';
+#	}
+#	$new_cfg->{$key} = $value;
+#	$cfg->{site_constants}{$hostname} = $new_cfg;
+#}
+#
+#sub SlashSetFormHost ($$$$$) {
+#	my($cfg, $params, $key, $value, $hostname) = @_;
+#	unless ($cfg->{constants}) {
+#		print STDERR "SlashSetFormHost must be called after call SlashVirtualUser \n";
+#		exit(1);
+#	}
+#	my $new_cfg;
+#	for (keys %{$cfg->{constants}}) {
+#		$new_cfg->{$_} = $cfg->{constants}{$_}
+#			unless $_ eq 'form_override';
+#	}
+#	$new_cfg->{form_override}{$key} = $value;
+#	$cfg->{site_constants}{$hostname} = $new_cfg;
+#}
+#
+#sub SlashSectionHost ($$$$) {
+#	my($cfg, $params, $section, $url)  = @_;
+#	my $hostname = $url;
+#	$hostname =~ s/.*\/\///;
+#	unless ($cfg->{constants}) {
+#		print STDERR "SlashSectionHost must be called after call SlashVirtualUser \n";
+#		exit(1);
+#	}
+#	# Yes, this looks slower then the other method but I was getting different results.
+#	# Bad results, and it's Friday. Bad results on Friday is a bad thing.
+#	# -Brian
+#	my $new_cfg;
+#	for (keys %{$cfg->{constants}}) {
+#		$new_cfg->{$_} = $cfg->{constants}{$_}
+#			unless $_ eq 'form_override';
+#	}
+#	# Must not just copy the form_override info
+#	$new_cfg->{form_override} = {};
+#	$new_cfg->{absolutedir} = $url;
+#	$new_cfg->{absolutedir_secure} = set_rootdir($url, $cfg->{constants}{absolutedir_secure});
+#	$new_cfg->{rootdir} = set_rootdir($url, $cfg->{constants}{rootdir});
+#	$new_cfg->{basedomain} = $hostname;
+#	$new_cfg->{defaultsection} = $section;
+#	$new_cfg->{static_section} = $section;
+#	# Should no longer be needed -Brian
+#	#$new_cfg->{form_override}{section} = $section;
+#	$cfg->{site_constants}{$hostname} = $new_cfg;
+#}
 
 sub SlashCompileTemplates ($$$) {
 	my($cfg, $params, $flag) = @_;
@@ -189,7 +181,9 @@ sub SlashCompileTemplates ($$$) {
 	return unless $constants->{cache_enabled}
 		  && !$constants->{template_cache_size};
 
-	print STDERR "$cfg->{VirtualUser} ($$): Compiling All Templates Begin\n";
+	my $start_time = Time::HiRes::time;
+	my $begin_printed = 0;
+	my $elapsed_time = 0;
 
 	my $templates = $slashdb->getTemplateNameCache();
 
@@ -208,20 +202,39 @@ sub SlashCompileTemplates ($$$) {
 	# then be compiled; now, we will get errors in
 	# the error log for templates that don't check
 	# the input values; that can't easily be helped
-	for my $t (keys %$templates) {
-		my($name, $page, $section) = split /$;/, $t;
+	my @templates = ( );
+	for my $name (sort keys %$templates) {
+		for my $page (sort keys %{$templates->{$name}}) {
+			for my $skin (sort keys %{$templates->{$name}{$page}}) {
+				push @templates, [$name, $page, $skin];
+			}
+		}
+	}
+	for my $i (0..$#templates) {
+		my($name, $page, $skin) = @{$templates[$i]};
 		slashDisplay($name, 0, {
 			Page	=> $page,
-			Section	=> $section,
+			Skin	=> $skin,
 			Return	=> 1,
 			Nocomm	=> 1
 		});
+		$elapsed_time = Time::HiRes::time - $start_time;
+		if (!$begin_printed
+			&& ( $i < $#templates * 0.5 && $elapsed_time > 6 * 0.5
+			  || $i > 2 && $elapsed_time * $#templates / $i > 6	)
+		) {
+			# Only bother to print the begin (and done) message
+			# if this is taking a while and we're not almost done
+			# anyway.
+			printf STDERR "%s (%d): Compiling All Templates Begin\n",
+				$cfg->{VirtualUser}, $$;
+			$begin_printed = 1;
+		}
 	}
 
-	# Pudge, any reason we still need this Begin/Done debug log? - Jamie
-	# Yes, sometimes it takes a long time to do it, and you want to know
-	# what is going on ... -- pudge
-	print STDERR "$cfg->{VirtualUser} ($$): Compiling All Templates Done\n";
+	printf STDERR "%s (%d): Compiling All Templates Done in %0.3f secs\n",
+		$cfg->{VirtualUser}, $$, Time::HiRes::time - $start_time
+		if $begin_printed;
 
 	$cfg->{template} = Slash::Display::get_template(0, 0, 1);
 	# let's make sure
@@ -316,11 +329,16 @@ sub IndexHandler {
 
 	return DECLINED unless $r->is_main;
 	my $constants = getCurrentStatic();
+
+#print STDERR scalar(localtime) . " $$ IndexHandler A\n";
+	setCurrentSkin(determineCurrentSkin());
+	my $gSkin     = getCurrentSkin();
+
 	my $uri = $r->uri;
 	my $is_user = $r->header_in('Cookie') =~ $USER_MATCH;
 
-	if ($constants->{rootdir}) {
-		my $path = URI->new($constants->{rootdir})->path;
+	if ($gSkin->{rootdir}) {
+		my $path = URI->new($gSkin->{rootdir})->path;
 		$uri =~ s/^\Q$path//;
 	}
 
@@ -330,13 +348,13 @@ sub IndexHandler {
 	# my $dbon = $slashdb->sqlConnect(); 
 	my $dbon = dbAvailable();
 
-	if ($uri eq '/' && $constants->{index_handler} ne 'IGNORE') {
+	if ($uri eq '/' && $gSkin->{index_handler} ne 'IGNORE') {
 		my $basedir = $constants->{basedir};
 
 		# $USER_MATCH defined above
 		if ($dbon && $is_user) {
-			$r->uri("/$constants->{index_handler}");
-			$r->filename("$basedir/$constants->{index_handler}");
+			$r->uri("/$gSkin->{index_handler}");
+			$r->filename("$basedir/$gSkin->{index_handler}");
 			return OK;
 		} elsif (!$dbon) {
 			# no db (you may wish to symlink index.shtml to your real
@@ -348,16 +366,15 @@ sub IndexHandler {
 	
 			# consider using File::Basename::basename() here
 			# for more robustness, if it ever matters -- pudge
-			my($base) = split(/\./, $constants->{index_handler});
+			my($base) = split(/\./, $gSkin->{index_handler});
 			$base = $constants->{index_handler_noanon}
 				if $constants->{index_noanon};
-
-			if ($constants->{static_section}) {
-				$r->filename("$basedir/$constants->{static_section}/$base.shtml");
-				$r->uri("/$constants->{static_section}/$base.shtml");
-			} else {
+			if ($gSkin->{skid} == $constants->{mainpage_skid}) {
 				$r->filename("$basedir/$base.shtml");
 				$r->uri("/$base.shtml");
+			} else {
+				$r->filename("$basedir/$gSkin->{name}/$base.shtml");
+				$r->uri("/$gSkin->{name}/$base.shtml");
 			}
 			writeLog('shtml');
 			return OK;
@@ -374,16 +391,35 @@ sub IndexHandler {
 		}
 
 		my $slashdb = getCurrentDB();
-		my $section = $slashdb->getSection($key);
-		my $index_handler = $section->{index_handler}
-			|| $constants->{index_handler};
-		if ($section && $section->{id} && $index_handler ne 'IGNORE') {
+		my $new_skin = $slashdb->getSkin($key);
+		my $new_skid = $new_skin->{skid} || $constants->{mainpage_skid};
+#print STDERR scalar(localtime) . " $$ IndexHandler B new_skid=$new_skid\n";
+		setCurrentSkin($new_skid);
+		$gSkin = getCurrentSkin();
+
+		my $index_handler = $gSkin->{index_handler};
+		if ($index_handler ne 'IGNORE') {
 			my $basedir = $constants->{basedir};
 
 			# $USER_MATCH defined above
 			if ($dbon && $is_user) {
 				$r->args("section=$key");
-				$r->uri("/$index_handler");
+				# For any directory which can be accessed by a
+				# logged-in user in the URI form /foo or /foo/,
+				# but which is not a skin's directory, there
+				# is a problem;  we cannot simply bounce the uri
+				# back to /index.pl or whatever, since the
+				# index handler will not recognize the section
+				# key argument above and will just present the
+				# ordinary homepage.  I don't know the best way
+				# to handle this situation at the moment, so
+				# instead I'm hardcoding in the solution for the
+				# most common problem. - Jamie 2004/07/17
+				if ($key eq "faq" || $key eq "palm") {
+					$r->uri("/$key/index.shtml");
+				} else {
+					$r->uri("/$index_handler");
+				}
 				$r->filename("$basedir/$index_handler");
 				return OK;
 			} else {
@@ -429,7 +465,7 @@ sub IndexHandler {
 	# * referrer exists AND is external to our site
 	if ($constants->{referrer_external_static_redirect} && !$is_user && $uri eq '/article.pl') {
 		my $referrer = $r->header_in("Referer");
-		my $referrer_domain = $constants->{referrer_domain} || $constants->{basedomain};
+		my $referrer_domain = $constants->{referrer_domain} || $gSkin->{basedomain};
 		my $the_request = $r->the_request;
 		if ($referrer
 			&& $referrer !~ m{^(?:https?:)?(?://)?(?:[\w-.]+\.)?$referrer_domain(?:/|$)}

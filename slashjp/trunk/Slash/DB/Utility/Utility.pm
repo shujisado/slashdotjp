@@ -433,8 +433,8 @@ sub sqlSelectMany {
 	if ($sth->execute) {
 		return $sth;
 	} else {
-		$sth->finish;
 		$self->sqlErrorLog($sql);
+		$sth->finish;
 		$self->sqlConnect;
 		return undef;
 	}
@@ -500,11 +500,6 @@ sub sqlSelectHash {
 }
 
 ##########################################################
-# selectCount 051199
-# inputs: scalar string table, scaler where clause
-# returns: via ref from input
-# Simple little function to get the count of a table
-##########################################################
 sub sqlCount {
 	my($self, $table, $where) = @_;
 
@@ -558,6 +553,11 @@ sub sqlSelectColArrayref {
 	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $sth = $self->{_dbh}->prepare($sql);
+	unless ($sth) {
+		$self->sqlErrorLog($sql);
+		$self->sqlConnect;
+		return;
+	}
 
 	my $array = $self->{_dbh}->selectcol_arrayref($sth);
 	unless (defined($array)) {
@@ -684,16 +684,66 @@ sub sqlSelectAllHashrefArray {
 }
 
 ########################################################
+# sqlSelectAllKeyValue - this function returns the entire
+# set of rows in a hashref, where the keys are the first
+# column requested and the values are the second.
+# (Name collisions are the caller's problem)
+#
+# inputs:
+# select - exactly 2 columns to select
+# from - tables
+# where - where clause
+# other - limit, asc ...
+#
+# returns:
+# hashref, keys first column, values the second
+sub sqlSelectAllKeyValue {
+	my($self, $select, $from, $where, $other) = @_;
+
+	my $sql = "SELECT $select ";
+	$sql .= "FROM $from " if $from;
+	$sql .= "WHERE $where " if $where;
+	$sql .= "$other" if $other;
+
+	my $qlid = $self->_querylog_start("SELECT", $from);
+	my $H = $self->{_dbh}->selectall_arrayref($sql);
+	unless ($H) {
+		$self->sqlErrorLog($sql);
+		$self->sqlConnect;
+		return undef;
+	}
+	$self->_querylog_finish($qlid);
+
+	my $hashref = { };
+	for my $duple (@$H) {
+		$hashref->{$duple->[0]} = $duple->[1];
+	}
+	return $hashref;
+}
+
+########################################################
 sub sqlUpdate {
-	my($self, $table, $data, $where, $options) = @_;
+	my($self, $tables, $data, $where, $options) = @_;
 
 	# If no changes were passed in, there's nothing to do.
 	# (And if we tried to proceed we'd generate an SQL error.)
 	return 0 if !keys %$data;
 
-	my $sql = "UPDATE $table SET ";
+	my $sql = "UPDATE ";
+	# What's inside /*! */ will be treated as a comment by most
+	# other SQL servers, but MySQL will parse it.  Kinda pointless
+	# since we've basically given up on ever supporting DBs other
+	# than MySQL, but what the heck.
+	$sql .= "/*! IGNORE */ " if $options->{ignore};
 
-	my @data_fields = ( );
+	my $table_str;
+	if (ref $tables) {
+		$table_str = join(",", @$tables);
+	} else {
+		$table_str = $tables;
+	}
+	$sql .= $table_str;
+
 	my $order_hr = { };
 	if ($options && $options->{assn_order}) {
 		# Reorder the data fields into the order given.  Any
@@ -712,23 +762,27 @@ sub sqlUpdate {
 	# behavior as of August 2002.  It should not break anything,
 	# because nothing previous should have relied on perl's
 	# natural hash key sort order!
+	my @data_fields = ( );
 	@data_fields = sort {
 		($order_hr->{$a} || 9999) <=> ($order_hr->{$b} || 9999)
 		||
 		$a cmp $b
 	} keys %$data;
-
+	my @set_clauses = ( );
 	for my $field (@data_fields) {
 		if ($field =~ /^-/) {
 			$field =~ s/^-//;
-			$sql .= "\n  $field = $data->{-$field},";
+			push @set_clauses, "$field = $data->{-$field}";
 		} else {
-			$sql .= "\n $field = " . $self->sqlQuote($data->{$field}) . ',';
+			my $data_q = $self->sqlQuote($data->{$field});
+			push @set_clauses, "$field = $data_q";
 		}
 	}
-	chop $sql; # lose the terminal ","
-	$sql .= "\nWHERE $where\n" if $where;
-	my $qlid = $self->_querylog_start("UPDATE", $table);
+	$sql .= " SET " . join(", ", @set_clauses) if @set_clauses;
+
+	$sql .= " WHERE $where" if $where;
+
+	my $qlid = $self->_querylog_start("UPDATE", $table_str);
 	my $rows = $self->sqlDo($sql);
 	$self->_querylog_finish($qlid);
 	return $rows;
@@ -751,9 +805,11 @@ sub sqlDelete {
 sub sqlInsert {
 	my($self, $table, $data, $options) = @_;
 	my($names, $values);
-	# oddly enough, this hack seems to work for all DBs -- pudge
-	# Its an ANSI sql comment I believe -Brian
 	# Hmmmmm... we can trust getCurrentStatic here? - Jamie
+	# What's inside /*! */ will be treated as a comment by most
+	# other SQL servers, but MySQL will parse it.  Kinda pointless
+	# since we've basically given up on ever supporting DBs other
+	# than MySQL, but what the heck.
 	my $delayed = ($options->{delayed} && !getCurrentStatic('delayed_inserts_off'))
 		? " /*! DELAYED */" : "";
 	my $ignore = $options->{ignore} ? " /*! IGNORE */" : "";

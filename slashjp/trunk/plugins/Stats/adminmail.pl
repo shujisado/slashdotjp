@@ -48,6 +48,7 @@ $task{$me}{code} = sub {
 	my $stats = getObject('Slash::Stats', { db_type => 'reader' });
 	my $backupdb = getObject('Slash::DB', { db_type => 'reader' });
 
+	# 1.5 hours
 	my $logdb = getObject('Slash::Stats', {
 		db_type	=> 'log_slave',
 		nocache		=> 1,
@@ -163,9 +164,13 @@ EOT
 	$data{bad_password_warning} = $bp_warning;
 
 	slashdLog("Moderation Stats Begin");
+
+	# 0.25 hours
+	slashdLog("row counting Begin");
 	my $comments = $stats->countCommentsDaily();
 	my $accesslog_rows = $logdb->sqlCount('accesslog');
 	my $formkeys_rows = $stats->sqlCount('formkeys');
+	slashdLog("row counting End");
 
 	slashdLog("countModeratorLog Begin");
 	my $modlogs = $stats->countModeratorLog({
@@ -241,10 +246,11 @@ EOT
 	my $mod_tokens_pool_pos = $stats->getTokensInPoolPos();
 	my $mod_tokens_pool_neg = $stats->getTokensInPoolNeg();
 	slashdLog("Points and Token Pool End");
-	
+
+	# 0.25 hours
+	slashdLog("Comment Posting Stats Begin");
 	my $used = $stats->countModeratorLog();
 	my $modlog_yest_hr = $stats->countModeratorLogByVal();
-	slashdLog("Comment Posting Stats Begin");
 	my $distinct_comment_ipids = $stats->getCommentsByDistinctIPID();
 	my($distinct_comment_ipids_anononly,
 	   $distinct_comment_ipids_loggedinonly,
@@ -256,6 +262,7 @@ EOT
 	my $distinct_comment_posters_uids = $stats->getCommentsByDistinctUIDPosters();
 	my $comments_discussiontype_hr = $stats->countCommentsByDiscussionType();
 	slashdLog("Comment Posting Stats End");
+
 	slashdLog("Submissions Stats Begin");
 	my $submissions = $stats->countSubmissionsByDay();
 	my $submissions_comments_match = $stats->countSubmissionsByCommentIPID($distinct_comment_ipids);
@@ -288,6 +295,7 @@ EOT
 	
 	slashdLog("Moderation Stats End");
 
+	# 2 hours
 	slashdLog("Page Counting Begin");
 	my $sdTotalHits = $backupdb->getVar('totalhits', 'value', 1);
 	my $daily_total = $logdb->countDailyByPage('', {
@@ -308,7 +316,7 @@ EOT
 	# Need to figure in the main section plus what the handler is.
 	# This doesn't work for the other sites... -Brian
 	my $homepage = $logdb->countDailyByPage('index', {
-		section => 'index',
+		skid    => $constants->{mainpage_skid},
 		no_op   => $constants->{op_exclude_from_countdaily},
 	});
 
@@ -318,14 +326,14 @@ EOT
 	my $logged_in_ips = $logdb->countDailyByPageDistinctIPID("", { user_type => 'logged-in'});
 
 	my $grand_total = $logdb->countDailyByPage('');
-	$data{grand_total} =  sprintf("%8d", $grand_total);
+	$data{grand_total} =  sprintf("%8u", $grand_total);
 	my $grand_total_static = $logdb->countDailyByPage('',{ static => 'yes' } );
-	$data{grand_total_static} = sprintf("%8d", $grand_total_static);
+	$data{grand_total_static} = sprintf("%8u", $grand_total_static);
 	my $total_static = $logdb->countDailyByPage('', {
 		static => 'yes',
 		no_op => $constants->{op_exclude_from_countdaily}
 	} );
-	$data{total_static} = sprintf("%8d", $total_static);
+	$data{total_static} = sprintf("%8u", $total_static);
 	my $recent_subscribers = $stats->getRecentSubscribers();
 	my $recent_subscriber_uidlist = "";
 	$recent_subscriber_uidlist = join(", ", @$recent_subscribers)
@@ -336,16 +344,23 @@ EOT
 		extra_where_clause	=> "uid IN ($recent_subscriber_uidlist)"
 	}) if $recent_subscriber_uidlist;
 	my $total_secure = $logdb->countDailySecure();
+
+	my $op_uniq  = $logdb->countDailyByPageDistinctIPIDs();
+	my $op_pages = $logdb->countDailyByPages();
+	my $op_bytes = $logdb->countBytesByPages();
+	my $op_uids  = $logdb->countUsersByPages();
+
 	for my $op (@PAGES) {
-		my $uniq = $logdb->countDailyByPageDistinctIPID($op);
-		my $pages = $logdb->countDailyByPage($op);
-		my $bytes = $logdb->countBytesByPage($op);
-		my $uids = $logdb->countUsersByPage($op);
+		my $uniq  = $op_uniq->{$op}{cnt};
+		my $pages = $op_pages->{$op}{cnt};
+		my $bytes = $op_bytes->{$op}{bytes};
+		my $uids  = $op_uids->{$op}{uids};
+
 		$data{"${op}_label"} = sprintf("%8s", $op);
-		$data{"${op}_uids"} = sprintf("%8d", $uids);
-		$data{"${op}_ipids"} = sprintf("%8d", $uniq);
+		$data{"${op}_uids"} = sprintf("%8u", $uids);
+		$data{"${op}_ipids"} = sprintf("%8u", $uniq);
 		$data{"${op}_bytes"} = sprintf("%0.1f MB",$bytes/(1024*1024));
-		$data{"${op}_page"} = sprintf("%8d", $pages);
+		$data{"${op}_page"} = sprintf("%8u", $pages);
 		# Section is problematic in this definition, going to store
 		# the data in "all" till this is resolved. -Brian
 		$statsSave->createStatDaily("${op}_uids", $uids);
@@ -364,10 +379,10 @@ EOT
 		my $pages = $logdb->countDailyByPage('', $options);
 		my $bytes = $logdb->countBytesByPage('', $options);
 		my $uids = $logdb->countUsersByPage('', $options);
-		$data{"other_uids"} = sprintf("%8d", $uids);
-		$data{"other_ipids"} = sprintf("%8d", $uniq);
+		$data{"other_uids"} = sprintf("%8u", $uids);
+		$data{"other_ipids"} = sprintf("%8u", $uniq);
 		$data{"other_bytes"} = sprintf("%0.1f MB",$bytes/(1024*1024));
-		$data{"other_page"} = sprintf("%8d", $pages);
+		$data{"other_page"} = sprintf("%8u", $pages);
 		# Section is problematic in this definition, going to store
 		# the data in "all" till this is resolved. -Brian
 		$statsSave->createStatDaily("other_uids", $uids);
@@ -384,93 +399,102 @@ EOT
 #		my $people = $stats->countDailyMessagesByUID($_, );
 #		my $uses = $stats->countDailyMessagesByCode($_, );
 #		my $mode = $stats->countDailyMessagesByMode($_, );
-#		$temp->{people} = sprintf("%8d", $people);
-#		$temp->{uses} = sprintf("%8d", $uses);
-#		$temp->{mode} = sprintf("%8d", $mode);
+#		$temp->{people} = sprintf("%8u", $people);
+#		$temp->{uses} = sprintf("%8u", $uses);
+#		$temp->{mode} = sprintf("%8u", $mode);
 #		$statsSave->createStatDaily("message_${_}_people", $people);
 #		$statsSave->createStatDaily("message_${_}_uses", $uses);
 #		$statsSave->createStatDaily("message_${_}_mode", $mode);
 #		push(@{$data{messages}}, $temp);
 #	}
 
+	# 1 hour
 	slashdLog("Sectional Stats Begin");
-	my $sections =  $slashdb->getDescriptions('sections-all');
-	$sections->{index} = 'index';
-	for my $section (sort keys %$sections) {
-		my $index = $constants->{defaultsection} eq $section ? 1 : 0;
+	my $skins =  $slashdb->getDescriptions('skins');
+	my $stats_from_rss = $logdb->countFromRSSStatsBySections();
+	#XXXSECTIONTOPICS - don't think we need this anymore but just making sure
+	#$sections->{index} = 'index';
+	for my $skid (sort keys %$skins) {
 		my $temp = {};
-		$temp->{section_name} = $section;
-		my $uniq = $logdb->countDailyByPageDistinctIPID('', { section => $section });
+		$temp->{skin_name} = $skins->{$skid};
+		my $uniq = $logdb->countDailyByPageDistinctIPID('', { skid => $skid });
 		my $pages = $logdb->countDailyByPage('', {
-			section		=> $section,
+			skid		=> $skid,
 			no_op		=> $constants->{op_exclude_from_countdaily}
 		} );
-		my $bytes = $logdb->countBytesByPage('', { section => $section });
-		my $users = $logdb->countUsersByPage('', { section => $section });
+		my $bytes = $logdb->countBytesByPage('', { skid => $skid });
+		my $users = $logdb->countUsersByPage('', { skid => $skid });
 		my $users_subscriber = 0;
 		$users_subscriber = $logdb->countUsersByPage('', {
-			section			=> $section,
+			skid			=> $skid,
 			extra_where_clause	=> "uid IN ($recent_subscriber_uidlist)"
 		}) if $recent_subscriber_uidlist;
-		$temp->{ipids} = sprintf("%8d", $uniq);
+		$temp->{ipids} = sprintf("%8u", $uniq);
 		$temp->{bytes} = sprintf("%8.1f MB",$bytes/(1024*1024));
-		$temp->{pages} = sprintf("%8d", $pages);
-		$temp->{site_users} = sprintf("%8d", $users);
-		$statsSave->createStatDaily("ipids", $uniq, { section => $section });
-		$statsSave->createStatDaily("bytes", $bytes, { section => $section } );
-		$statsSave->createStatDaily("page", $pages, { section => $section });
-		$statsSave->createStatDaily("users", $users, { section => $section });
-		$statsSave->createStatDaily("users_subscriber", $users_subscriber, { section => $section });
+		$temp->{pages} = sprintf("%8u", $pages);
+		$temp->{site_users} = sprintf("%8u", $users);
+		$statsSave->createStatDaily("ipids", $uniq, { skid => $skid });
+		$statsSave->createStatDaily("bytes", $bytes, { skid => $skid } );
+		$statsSave->createStatDaily("page", $pages, { skid => $skid });
+		$statsSave->createStatDaily("users", $users, { skid => $skid });
+		$statsSave->createStatDaily("users_subscriber", $users_subscriber, { skid => $skid });
 			
 		foreach my $d (@$cc_days) {
-			my $avg_comments = $stats->getAverageCommentCountPerStoryOnDay($d, { section => $section }) || 0;
+			my $avg_comments = $stats->getAverageCommentCountPerStoryOnDay($d, { skid => $skid }) || 0;
 			$statsSave->createStatDaily("avg_comments_per_story", $avg_comments, 
-							{ section => $section, overwrite => 1, day => $d });
+							{ skid => $skid, overwrite => 1, day => $d });
 		}
 
 		for my $op (@PAGES) {
-			my $uniq = $logdb->countDailyByPageDistinctIPID($op, { section => $section });
+			my $uniq = $logdb->countDailyByPageDistinctIPID($op, { skid => $skid });
 			my $pages = $logdb->countDailyByPage($op, {
-				section => $section,
-				no_op => $constants->{op_exclude_from_countdaily}
+				skid => $skid,
 			} );
-			my $bytes = $logdb->countBytesByPage($op, { section => $section });
-			my $users = $logdb->countUsersByPage($op, { section => $section });
+			my $bytes = $logdb->countBytesByPage($op, { skid => $skid });
+			my $users = $logdb->countUsersByPage($op, { skid => $skid });
 			$temp->{$op}{label} = sprintf("%8s", $op);
-			$temp->{$op}{ipids} = sprintf("%8d", $uniq);
+			$temp->{$op}{ipids} = sprintf("%8u", $uniq);
 			$temp->{$op}{bytes} = sprintf("%8.1f MB",$bytes/(1024*1024));
-			$temp->{$op}{pages} = sprintf("%8d", $pages);
-			$temp->{$op}{users} = sprintf("%8d", $users);
-			$statsSave->createStatDaily("${op}_ipids", $uniq, { section => $section});
-			$statsSave->createStatDaily("${op}_bytes", $bytes, { section => $section});
-			$statsSave->createStatDaily("${op}_page", $pages, { section => $section});
-			$statsSave->createStatDaily("${op}_user", $users, { section => $section});
+			$temp->{$op}{pages} = sprintf("%8u", $pages);
+			$temp->{$op}{users} = sprintf("%8u", $users);
+			$statsSave->createStatDaily("${op}_ipids", $uniq, { skid => $skid});
+			$statsSave->createStatDaily("${op}_bytes", $bytes, { skid => $skid});
+			$statsSave->createStatDaily("${op}_page", $pages, { skid => $skid});
+			$statsSave->createStatDaily("${op}_user", $users, { skid => $skid});
 
 			if ($op eq "article") {
-				my $avg = $stats->getAverageHitsPerStoryOnDay($yesterday, $pages, { section => $section });
-				$statsSave->createStatDaily("avg_hits_per_story", $avg, { section => $section });
+				my $avg = $stats->getAverageHitsPerStoryOnDay($yesterday, $pages, { skid => $skid });
+				$statsSave->createStatDaily("avg_hits_per_story", $avg, { skid => $skid });
 			}
 		}
 		#Other not recorded
 		{
-			my $options = { no_op => \@PAGES , section => $section };
+			my $options = { no_op => \@PAGES , skid => $skid };
 			my $uniq = $logdb->countDailyByPageDistinctIPID('', $options);
 			my $pages = $logdb->countDailyByPage('', $options);
 			my $bytes = $logdb->countBytesByPage('', $options);
 			my $uids = $logdb->countUsersByPage('', $options);
 			my $op = 'other';
-			$temp->{$op}{ipids} = sprintf("%8d", $uniq);
+			$temp->{$op}{ipids} = sprintf("%8u", $uniq);
 			$temp->{$op}{bytes} = sprintf("%8.1f MB",$bytes/(1024*1024));
-			$temp->{$op}{pages} = sprintf("%8d", $pages);
-			$temp->{$op}{users} = sprintf("%8d", $users);
-			$statsSave->createStatDaily("${op}_ipids", $uniq, { section => $section});
-			$statsSave->createStatDaily("${op}_bytes", $bytes, { section => $section});
-			$statsSave->createStatDaily("${op}_page", $pages, { section => $section});
-			$statsSave->createStatDaily("${op}_user", $users, { section => $section});
+			$temp->{$op}{pages} = sprintf("%8u", $pages);
+			$temp->{$op}{users} = sprintf("%8u", $users);
+			$statsSave->createStatDaily("${op}_ipids", $uniq, { skid => $skid});
+			$statsSave->createStatDaily("${op}_bytes", $bytes, { skid => $skid});
+			$statsSave->createStatDaily("${op}_page", $pages, { skid => $skid});
+			$statsSave->createStatDaily("${op}_user", $users, { skid => $skid});
 		}
 
-		push(@{$data{sections}}, $temp);
+		$statsSave->createStatDaily( "page_from_rss", $stats_from_rss->{$skid}->{cnt}, {skid => $skid});
+		$statsSave->createStatDaily( "uid_from_rss", $stats_from_rss->{$skid}->{uids}, {skid => $skid});
+		$statsSave->createStatDaily( "ipid_from_rss", $stats_from_rss->{$skid}->{ipids}, {skid => $skid});
+		$temp->{page_from_rss} = sprintf("%8u", $stats_from_rss->{$skid}->{cnt});
+		$temp->{uid_from_rss} = sprintf("%8u", $stats_from_rss->{$skid}->{uids});
+		$temp->{ipid_from_rss} = sprintf("%8u", $stats_from_rss->{$skid}->{ipids});
+
+		push(@{$data{skins}}, $temp);
 	}
+
 	slashdLog("Sectional Stats End");
 
 	slashdLog("Story Comment Counts Begin");
@@ -481,7 +505,7 @@ EOT
 
 		my $stories = $stats->getStoryHitsForDay($d);
 		my %topic_hits;
-		foreach my $st (@$stories){
+		foreach my $st (@$stories) {
 			my $topics = $slashdb->getStoryTopics($st->{sid}, 2);
 			foreach my $tid (keys %$topics){
 				$topic_hits{$tid."_".$topics->{$tid}} += $st->{hits};
@@ -495,24 +519,27 @@ EOT
 	
 	foreach my $day (@ah_days){
 		my $avg = $stats->sqlSelect("value", "stats_daily",
-			"day='$day' AND section='all' AND name='avg_comments_per_story'");
+			"day='$day' AND skid='0' AND name='avg_comments_per_story'");
 		push @{$data{avg_comments_per_story}}, sprintf("%12.1f", $avg);
 	}
 	slashdLog("Story Comment Counts End");
 
-
+	slashdLog("Byte Counts Begin");
 	my $total_bytes = $logdb->countBytesByPage('', {
 		no_op => $constants->{op_exclude_from_countdaily}
 	} );
 	my $grand_total_bytes = $logdb->countBytesByPage('');
+	slashdLog("Byte Counts End");
 
+	slashdLog("Mod Info Begin");
 	my $admin_mods = $stats->getAdminModsInfo();
 	my $admin_mods_text = getAdminModsText($admin_mods);
-
 	$mod_data{repeat_mods} = $stats->getRepeatMods({
-		min_count => $constants->{mod_stats_min_repeat}
+		min_count => $constants->{mod_stats_min_repeat},
+		lookback_days => $constants->{mod_stats_repeat_lookback},
 	});
 	$mod_data{reverse_mods} = $stats->getReverseMods();
+	slashdLog("Mod Info End");
 
 	slashdLog("Duration Stats Begin");
 	my $static_op_hour = $logdb->getDurationByStaticOpHour({});
@@ -626,9 +653,10 @@ EOT
 	$statsSave->createStatDaily("youngest_modelig_uid", sprintf("%d", $youngest_modelig_uid));
 	$statsSave->createStatDaily("youngest_modelig_created", sprintf("%11s", $youngest_modelig_created));
 
-	foreach my $i ($constants->{comment_minscore}..$constants->{comment_maxscore}) {
-		$statsSave->createStatDaily("comments_score_$i",
-			$stats->getDailyScoreTotal($i));
+	my $scores = [ $constants->{comment_minscore} .. $constants->{comment_maxscore} ];
+	my $scores_hr = $stats->getDailyScoreTotals($scores);
+	for my $i (sort { $a <=> $b } keys %$scores_hr) {
+		$statsSave->createStatDaily("comments_score_$i", $scores_hr->{$i}{c});
 	}
 
 	for my $nickname (keys %$admin_mods) {
@@ -651,45 +679,45 @@ EOT
 	}
 	
 	foreach my $day (@ah_days){
-		my $avg = $stats->sqlSelect("value", "stats_daily", "day='$day' and section='all' and name='avg_hits_per_story'");
+		my $avg = $stats->sqlSelect("value", "stats_daily", "day='$day' and skid='0' and name='avg_hits_per_story'");
 		push @{$data{avg_hits_per_story}}, sprintf("%12.1f", $avg);
 	}
 
-	$data{total} = sprintf("%8d", $daily_total);
+	$data{total} = sprintf("%8u", $daily_total);
 	$data{total_bytes} = sprintf("%0.1f MB",$total_bytes/(1024*1024));
 	$data{grand_total_bytes} = sprintf("%0.1f MB",$grand_total_bytes/(1024*1024));
-	$data{total_subscriber} = sprintf("%8d", $total_subscriber);
-	$data{total_secure} = sprintf("%8d", $total_secure);
-	$data{unique} = sprintf("%8d", $unique_ips), 
-	$data{users} = sprintf("%8d", $unique_users);
-	$data{accesslog} = sprintf("%8d", $accesslog_rows);
-	$data{formkeys} = sprintf("%8d", $formkeys_rows);
-	$data{error_count} = sprintf("%8d", $data{error_count});
-	$data{not_found} = sprintf("%8d", $data{not_found});
-	$data{status_202} = sprintf("%8d", $data{status_202});
+	$data{total_subscriber} = sprintf("%8u", $total_subscriber);
+	$data{total_secure} = sprintf("%8u", $total_secure);
+	$data{unique} = sprintf("%8u", $unique_ips), 
+	$data{users} = sprintf("%8u", $unique_users);
+	$data{accesslog} = sprintf("%8u", $accesslog_rows);
+	$data{formkeys} = sprintf("%8u", $formkeys_rows);
+	$data{error_count} = sprintf("%8u", $data{error_count});
+	$data{not_found} = sprintf("%8u", $data{not_found});
+	$data{status_202} = sprintf("%8u", $data{status_202});
 
-	$mod_data{comments} = sprintf("%8d", $comments);
-	$mod_data{modlog} = sprintf("%8d", $modlogs);
+	$mod_data{comments} = sprintf("%8u", $comments);
+	$mod_data{modlog} = sprintf("%8u", $modlogs);
 	$mod_data{modlog_inactive_percent} = sprintf("%.1f", $modlog_inactive_percent);
-	$mod_data{modlog_yest} = sprintf("%8d", $modlogs_yest);
+	$mod_data{modlog_yest} = sprintf("%8u", $modlogs_yest);
 	$mod_data{modlog_inactive_percent_yest} = sprintf("%.1f", $modlog_inactive_percent_yest);
-	$mod_data{metamodlog} = sprintf("%8d", $metamodlogs);
+	$mod_data{metamodlog} = sprintf("%8u", $metamodlogs);
 	$mod_data{metamodlog_inactive_percent} = sprintf("%.1f", $metamodlog_inactive_percent);
-	$mod_data{metamodlog_yest} = sprintf("%8d", $metamodlogs_yest_total);
+	$mod_data{metamodlog_yest} = sprintf("%8u", $metamodlogs_yest_total);
 	$mod_data{metamodlog_inactive_percent_yest} = sprintf("%.1f", $metamodlog_inactive_percent_yest);
 	$mod_data{xmodlog} = sprintf("%.1fx", ($modlogs_needmeta ? $metamodlogs/$modlogs_needmeta : 0));
 	$mod_data{xmodlog_yest} = sprintf("%.1fx", ($modlogs_needmeta_yest ? $metamodlogs_yest_total/$modlogs_needmeta_yest : 0));
-	$mod_data{consensus} = sprintf("%8d", $consensus);
+	$mod_data{consensus} = sprintf("%8u", $consensus);
 	$mod_data{oldest_unm2d_days} = $oldest_unm2d_days;
 	$mod_data{youngest_modelig_uid} = sprintf("%d", $youngest_modelig_uid);
 	$mod_data{youngest_modelig_created} = sprintf("%11s", $youngest_modelig_created);
-	$mod_data{mod_points_pool} = sprintf("%8d", $mod_points_pool);
-	$mod_data{used_total} = sprintf("%8d", $modlog_count_yest_total);
+	$mod_data{mod_points_pool} = sprintf("%8u", $mod_points_pool);
+	$mod_data{used_total} = sprintf("%8u", $modlog_count_yest_total);
 	$mod_data{used_total_pool} = sprintf("%.1f", ($mod_points_pool ? $modlog_spent_yest_total*100/$mod_points_pool : 0));
 	$mod_data{used_total_comments} = sprintf("%.1f", ($comments ? $modlog_count_yest_total*100/$comments : 0));
-	$mod_data{used_minus_1} = sprintf("%8d", $modlog_yest_hr->{-1}{count});
+	$mod_data{used_minus_1} = sprintf("%8u", $modlog_yest_hr->{-1}{count});
 	$mod_data{used_minus_1_percent} = sprintf("%.1f", ($modlog_count_yest_total ? $modlog_yest_hr->{-1}{count}*100/$modlog_count_yest_total : 0) );
-	$mod_data{used_plus_1} = sprintf("%8d", $modlog_yest_hr->{1}{count});
+	$mod_data{used_plus_1} = sprintf("%8u", $modlog_yest_hr->{1}{count});
 	$mod_data{used_plus_1_percent} = sprintf("%.1f", ($modlog_count_yest_total ? $modlog_yest_hr->{1}{count}*100/$modlog_count_yest_total : 0));
 	$mod_data{mod_points_avg_spent} = $modlog_count_yest_total ? sprintf("%12.3f", $modlog_spent_yest_total/$modlog_count_yest_total) : "(n/a)";
 	$mod_data{day} = $yesterday;
@@ -697,17 +725,17 @@ EOT
 	$mod_data{m2_text} = $m2_text;
 
 	$data{comments} = $mod_data{comments};
-	$data{IPIDS} = sprintf("%8d", scalar(@$distinct_comment_ipids));
-	$data{submissions} = sprintf("%8d", $submissions);
+	$data{IPIDS} = sprintf("%8u", scalar(@$distinct_comment_ipids));
+	$data{submissions} = sprintf("%8u", $submissions);
 	$data{sub_comments} = sprintf("%8.1f", ($submissions ? $submissions_comments_match*100/$submissions : 0));
-	$data{total_hits} = sprintf("%8d", $sdTotalHits);
+	$data{total_hits} = sprintf("%8u", $sdTotalHits);
 
 	$statsSave->createStatDaily("sub_comments", $data{sub_comments});
 	$statsSave->createStatDaily("total_hits", $sdTotalHits);
 
-	$data{homepage} = sprintf("%8d", $homepage);
+	$data{homepage} = sprintf("%8u", $homepage);
 	$data{day} = $yesterday ;
-	$data{distinct_comment_posters_uids} = sprintf("%8d", $distinct_comment_posters_uids);
+	$data{distinct_comment_posters_uids} = sprintf("%8u", $distinct_comment_posters_uids);
 
 	my @top_articles =
 		grep { $articles->{$_} >= 100 }
@@ -772,7 +800,7 @@ EOT
 		- $slashdb->getNumNewUsersSinceDaysback(0);
 	$statsSave->createStatDaily('users_created', $new_users_yest);
 	$data{rand_users_yest} = $slashdb->getRandUsersCreatedYest(10, $yesterday);
-	($data{top_recent_domains}, $data{top_recent_domains_daysback}, $data{top_recent_domains_newaccounts}) = $slashdb->getTopRecentRealemailDomains($yesterday);
+	($data{top_recent_domains}, $data{top_recent_domains_daysback}, $data{top_recent_domains_newaccounts}, $data{top_recent_domains_newnicks}) = $slashdb->getTopRecentRealemailDomains($yesterday);
 
 	my $relocate = getObject('Slash::Relocate');
 

@@ -14,7 +14,6 @@ use Slash 2.003;	# require Slash 2.3.x
 use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':messages';
-use Email::Valid;
 use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -28,6 +27,7 @@ sub main {
 	my $constants	= getCurrentStatic();
 	my $user	= getCurrentUser();
 	my $form	= getCurrentForm();
+	my $gSkin       = getCurrentSkin();
 
 	# Primary fields.
 	my $sid		= $form->{sid};
@@ -102,7 +102,7 @@ sub main {
 		Messages	=> getObject('Slash::Messages'),
 	);
 	unless ($Plugins{Email} && $Plugins{Messages}) {
-		redirect("$constants->{rootdir}/");
+		redirect("$gSkin->{rootdir}/");
 		return;
 	}
 
@@ -130,7 +130,8 @@ sub main {
 			$constants, 
 			$user, 
 			$form,
-			\%Plugins
+			$gSkin,
+			\%Plugins,
 		);
 	} else {
 		print getData('formkeyError', {
@@ -144,11 +145,11 @@ sub main {
 }
 
 sub emailStoryForm {
-	my($slashdb, $constants, $user, $form) = @_;
+	my($slashdb, $constants, $user, $form, $gSkin) = @_;
 
 	unless ($constants->{email_allow_anonymous} || !$user->{is_anon}) {
 		print getData('not_logged_in');
-		my $url = "$constants->{rootdir}/email.pl?op=email_form&sid=$form->{sid}";
+		my $url = "$gSkin->{rootdir}/email.pl?op=email_form&sid=$form->{sid}";
 		slashDisplay('userlogin', { return_url => $url });
 		return;
 	}
@@ -160,12 +161,12 @@ sub emailStoryForm {
 }
 
 sub emailStory {
-	my($slashdb, $constants, $user, $form, $Plugins) = @_;
+	my($slashdb, $constants, $user, $form, $gSkin, $Plugins) = @_;
 	my($Email, $Messages) = @{$Plugins}{qw(Email Messages)};
 
 	# Check input for valid RFC822 email address.
 	my $email = decode_entities($form->{email});
-	if (!Email::Valid->rfc822($email)) {
+	if (!emailValid($email)) {
 		print getData('invalid_email');
 		return;
 	}
@@ -232,17 +233,17 @@ sub emailStory {
 }
 
 sub emailOptoutForm {
-	my($slashdb, $constants, $user, $form) = @_;
+	my($slashdb, $constants, $user, $form, $gSkin) = @_;
 
 	slashDisplay('emailOptoutForm');
 }
 
 sub emailOptout {
-	my($slashdb, $constants, $user, $form, $Plugins) = @_;
+	my($slashdb, $constants, $user, $form, $gSkin, $Plugins) = @_;
 	my($Email, $Messages) = @{$Plugins}{qw(Email Messages)};
 
 	my $email = decode_entities($form->{email});
-	if (Email::Valid->rfc822($email)) {
+	if (emailValid($email)) {
 		# Send final confirmation email to the address being removed
 		# as another form of abuse protection.
 		my $msg_data = {
@@ -271,13 +272,13 @@ sub emailOptout {
 }
 
 sub removeOptoutForm {
-	my($slashdb, $constants, $user, $form) = @_;
+	my($slashdb, $constants, $user, $form, $gSkin) = @_;
 
 	slashDisplay('removeOptoutForm');
 }
 
 sub removeOptout {
-	my($slashdb, $constants, $user, $form, $Plugins) = @_;
+	my($slashdb, $constants, $user, $form, $gSkin, $Plugins) = @_;
 
 	my $email = decode_entities($form->{email});
 	my $rc = $Plugins->{Email}->removeFromOptoutList($form->{email});

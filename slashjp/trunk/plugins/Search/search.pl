@@ -33,33 +33,31 @@ sub main {
 	);
 
 	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
-	my $user = getCurrentUser();
-	# Backwards compatibility, we now favor tid over topic 
-	$form->{tid} ||= $form->{topic};
+	my $form      = getCurrentForm();
+	my $user      = getCurrentUser();
+	my $gSkin     = getCurrentSkin();
+	my $slashdb   = getCurrentDB();
+	my $searchDB  = getObject('Slash::Search', { db_type => 'search' });
 
-	my($slashdb, $searchDB) = Slash::Search::SelectDataBases();
+	# Backwards compatibility, we now favor tid over topic 
+	if ($form->{topic}) {
+		if ($form->{topic} =~ s/^([+-]?[\d.]+).*$/$1/s) {
+			$form->{tid} ||= $form->{topic};
+		}
+		delete $form->{topic};
+	}
 
 	# Set some defaults
 	$form->{query}		||= '';
 	$form->{'sort'}		||= 1;
-	# this makes it so *no* results get returned, so i changed it back
-	#$form->{section}	||= $constants->{section}; # Set to our current section if section is not passed in
 
-	# if we're on a sectional page, default to that section unless another
-	# is specified. If someone needs to search on all sections, they
-	# shouldn't be in one.				--Pater
-	$form->{section}	||= $user->{currentSection} || '';
-
-	# switch search mode to poll if in polls section and other
+	# switch search mode to poll if in polls skin and other
 	# search type isn't specified
-	if ($user->{currentSection} eq 'polls' and !$form->{op}) {
+	if ($gSkin->{name} eq 'polls' && !$form->{op}) {
 		$form->{op} = 'polls';
 		$form->{section} = '';
 	}
          
-	# This next line could be removed -Brian
-	$form->{section}	= '' if $form->{section} eq 'index';
 	$form->{threshold}	= getCurrentUser('threshold') if !defined($form->{threshold});
 
 	# The default search operation is to search stories.
@@ -77,13 +75,15 @@ sub main {
 		# We want to return valid (though empty) RSS data even
 		# when search is down.
 		$form->{op} = 'stories' if !exists($ops_rss{$form->{op}});
-		$ops_rss{$form->{op}}->($form, $constants, $slashdb, $searchDB);
+		$ops_rss{$form->{op}}->($form, $constants, $slashdb, $searchDB, $gSkin);
 	} else {
-		# Yep, these are hardcoded, and someday this should change... -Brian 
 		my $text = strip_notags($form->{query});
-		header("$constants->{sitename}: Search  $text") or return;
-		titlebar("100%", getData('search_result', { text => $text })); 
-		$form->{op} = 'stories' unless exists($ops{$form->{op}});
+		my $header_title   = getData('search_header_title',   { text => $text });
+		my $titlebar_title = getData('search_titlebar_title', { text => $text });
+		header($header_title) or return;
+		titlebar("100%", $titlebar_title);
+
+		$form->{op} = 'stories' unless exists $ops{$form->{op}};
 
 		# Here, panic mode is handled without needing to call the
 		# individual search subroutines;  we're going to tell the
@@ -92,7 +92,7 @@ sub main {
 			slashDisplay('nosearch');
 		} else {
 			if ($ops{$form->{op}}) {
-				$ops{$form->{op}}->($form, $constants, $slashdb, $searchDB);
+				$ops{$form->{op}}->($form, $constants, $slashdb, $searchDB, $gSkin);
 			}
 		}
 
@@ -105,7 +105,6 @@ sub main {
 
 
 #################################################################
-# Ugly isn't it?
 sub _authors {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $authors = $reader->getDescriptions('all-authors');
@@ -116,18 +115,10 @@ sub _authors {
 }
 
 #################################################################
-# Ugly isn't it?
 sub _topics {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $section = getCurrentForm('section');
 
-	my $topics;
-	if ($section) {
-		$topics = $reader->getDescriptions('topics_section', $section);
-	} else {
-		$topics = $reader->getDescriptions('topics');
-	}
-
+	my $topics = $reader->getDescriptions('topics-searchable');
 	my %newtopics = %$topics;
 	$newtopics{''} = getData('all_topics');
 
@@ -143,29 +134,14 @@ sub _sort {
 }
 
 #################################################################
-# Ugly isn't it?
-sub _sections {
+sub _skins {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $sections = $reader->getDescriptions('sections');
-	my %newsections = %$sections;
-	$newsections{''} = getData('all_sections');
-	delete $newsections{'polls'};
-	return \%newsections;
-}
 
-#################################################################
-# Ugly isn't it?
-sub _subsections {
-	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $form = getCurrentForm();
-	my $subsections = $reader->getDescriptions('section_subsection', $form->{section}, 1)
-		if $form->{section};
-	return undef
-		unless (keys %$subsections);
-	my %newsections = %$subsections;
-	$newsections{''} = getData('all_subsections');
+	my $skins = $reader->getDescriptions('skins-searchable');
+	my %newskins = %$skins;
+	$newskins{''} = getData('all_sections');  # keep Sections name for public
 
-	return \%newsections;
+	return \%newskins;
 }
 
 #################################################################
@@ -173,7 +149,7 @@ sub _buildargs {
 	my($form) = @_;
 	my $uri;
 
-	for (qw[threshold query author op topic tid section sort journal_only]) {
+	for (qw[threshold query author op tid section sort journal_only]) {
 		my $x = "";
 		$x =  $form->{$_} if defined $form->{$_} && $x eq "";
 		$x =~ s/ /+/g;
@@ -197,8 +173,8 @@ sub commentSearch {
 	);
 
 	slashDisplay('searchform', {
-		sections	 => _sections(),
-		topics		 => _topics(),
+#		sections	 => 1, # _skins(),
+#		topics		 => 1, # _topics(),
 		tref		 => $slashdb->getTopic($form->{tid}),
 		op		 => $form->{op},
 		'sort'		 => _sort(),
@@ -293,9 +269,8 @@ sub storySearch {
 	my $stories = $searchDB->findStory($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 
 	slashDisplay('searchform', {
-		sections	=> _sections(),
-		subsections	=> _subsections(),
-		topics		=> _topics(),
+		sections	=> 1, # _skins(),
+		topics		=> 1, # _topics(),
 		tref		=> $slashdb->getTopic($form->{tid}),
 		op		=> $form->{op},
 		authors		=> _authors(),
@@ -315,8 +290,7 @@ sub storySearch {
 		}
 
 		for (@$stories) {
-			$_->{introtext} = substr(strip_notags($_->{introtext}),0,$constants->{search_text_length});
-			$_->{introtext} =~ s/(.*) .*$/$1.../g;
+			$_->{introtext} = _shorten(strip_notags($_->{introtext}));
 		}
 
 		# if there are less than search_default_display remaning,
@@ -349,8 +323,8 @@ sub pollSearch {
 	my $polls = $searchDB->findPollQuestion($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 	slashDisplay('searchform', {
 		op		=> $form->{op},
-		topics		=> _topics(),
-		sections	=> _sections(),
+#		topics		=> 1, # _topics(),
+#		sections	=> 1, # _skins(),
 		tref		=> $slashdb->getTopic($form->{tid}),
 		'sort'		=> _sort(),
 	});
@@ -391,7 +365,7 @@ sub pollSearch {
 
 #################################################################
 sub commentSearchRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
+	my($form, $constants, $slashdb, $searchDB, $gSkin) = @_;
 
 	my $start = $form->{start} || 0;
 	my $comments;
@@ -406,14 +380,14 @@ sub commentSearchRSS {
 		my $time = timeCalc($entry->{date});
 		push @items, {
 			title	=> "$entry->{subject} ($time)",
-			'link'	=> ($constants->{absolutedir} . "/comments.pl?sid=$entry->{did}&cid=$entry->{cid}"),
+			'link'	=> ($gSkin->{absolutedir} . "/comments.pl?sid=$entry->{did}&cid=$entry->{cid}"),
 		};
 	}
 
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} Comment Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
+			'link'		=> "$gSkin->{absolutedir}/search.pl",
 			description	=> "$constants->{sitename} Comment Search",
 		},
 		image	=> 1,
@@ -423,7 +397,7 @@ sub commentSearchRSS {
 
 #################################################################
 sub userSearchRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
+	my($form, $constants, $slashdb, $searchDB, $gSkin) = @_;
 
 	my $start = $form->{start} || 0;
 	my $users;
@@ -438,14 +412,14 @@ sub userSearchRSS {
 		my $time = timeCalc($entry->{journal_last_entry_date});
 		push @items, {
 			title	=> $entry->{nickname},
-			'link'	=> ($constants->{absolutedir} . '/users.pl?nick=' . $entry->{nickname}),
+			'link'	=> ($gSkin->{absolutedir} . '/users.pl?nick=' . $entry->{nickname}),
 		};
 	}
 
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} User Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
+			'link'		=> "$gSkin->{absolutedir}/search.pl",
 			description	=> "$constants->{sitename} User Search",
 		},
 		image	=> 1,
@@ -455,7 +429,7 @@ sub userSearchRSS {
 
 #################################################################
 sub storySearchRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
+	my($form, $constants, $slashdb, $searchDB, $gSkin) = @_;
 
 	my $start = $form->{start} || 0;
 	my $stories;
@@ -469,9 +443,10 @@ sub storySearchRSS {
 	for my $entry (@$stories) {
 		my $time = timeCalc($entry->{time});
 		# Link should be made to be sectional -Brian
+		# so why didn't make it sectional?
 		push @items, {
 			title	=> $entry->{title},
-			'link'	=> ($constants->{absolutedir} . '/article.pl?sid=' . $entry->{sid}),
+			'link'	=> ($gSkin->{absolutedir} . '/article.pl?sid=' . $entry->{sid}),
 			description	=> $entry->{introtext}
 		};
 	}
@@ -479,17 +454,19 @@ sub storySearchRSS {
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} Story Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
+			'link'		=> "$gSkin->{absolutedir}/search.pl",
 			description	=> "$constants->{sitename} Story Search",
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc		=> $constants->{search_rdfitemdesc},
+		rdfitemdesc_html	=> $constants->{search_rdfitemdesc_html},
 	});
 }
 
 #################################################################
 sub pollSearchRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
+	my($form, $constants, $slashdb, $searchDB, $gSkin) = @_;
 
 	my $start = $form->{start} || 0;
 	my $stories;
@@ -502,8 +479,8 @@ sub pollSearchRSS {
 	my @items;
 	for my $entry (@$stories) {
 		my $time = timeCalc($entry->{date});
-		my $url = $slashdb->getSection($entry->{section}, 'url');
-		my $link = $url || $constants->{absolutedir};
+		my $url = $slashdb->getSkin($entry->{primaryskid})->{url};
+		my $link = $url || $gSkin->{absolutedir};
 		push @items, {
 			title	=> "$entry->{question} ($time)",
 			'link'	=> ($link . '/pollBooth.pl?qid=' . $entry->{qid}),
@@ -513,75 +490,8 @@ sub pollSearchRSS {
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} Poll Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
+			'link'		=> "$gSkin->{absolutedir}/search.pl",
 			description	=> "$constants->{sitename} Poll Search",
-		},
-		image	=> 1,
-		items	=> \@items
-	});
-}
-
-#################################################################
-# Do not enable -Brian
-sub findRetrieveSite {
-	my($form, $constants, $slashdb, $searchDB) = @_;
-
-	my $start = $form->{start} || 0;
-	my $feeds = $searchDB->findRetrieveSite($form->{query}, $start, $constants->{search_default_display} + 1, $form->{sort});
-
-	# check for extra feeds ... we request one more than we need
-	# and if we get the extra one, we know we have extra ones, and
-	# we pop it off
-	my $forward;
-	if (@$feeds == $constants->{search_default_display} + 1) {
-		pop @$feeds;
-		$forward = $start + $constants->{search_default_display};
-	} else {
-		$forward = 0;
-	}
-
-	# if there are less than search_default_display remaning,
-	# just set it to 0
-	my $back;
-	if ($start > 0) {
-		$back = $start - $constants->{search_default_display};
-		$back = $back > 0 ? $back : 0;
-	} else {
-		$back = -1;
-	}
-
-	slashDisplay('retrievedsites', {
-		feeds		=> $feeds,
-		back		=> $back,
-		forward		=> $forward,
-		start		=> $start,
-	});
-}
-
-
-#################################################################
-# Do not enable -Brian
-sub findRetrieveSiteRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
-
-	my $start = $form->{start} || 0;
-	my $feeds = $searchDB->findFeeds($form->{query}, $start, 15, $form->{sort});
-
-	# I am aware that the link has to be improved.
-	my @items;
-	for my $entry (@$feeds) {
-		my $time = timeCalc($entry->{'time'});
-		push @items, {
-			title	=> "$entry->{title} ($time)",
-			'link'	=> ($constants->{absolutedir} . "/users.pl?op=preview&bid=entry->{bid} %]"),
-		};
-	}
-
-	xmlDisplay(rss => {
-		channel => {
-			title		=> "$constants->{sitename} Retrieve Site Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
-			description	=> "$constants->{sitename} Retrieve Site Search",
 		},
 		image	=> 1,
 		items	=> \@items
@@ -612,8 +522,7 @@ sub journalSearch {
 		}
 
 		for (@$entries) {
-			$_->{article} = substr(strip_notags($_->{article}),0,$constants->{search_text_length});
-			$_->{article} =~ s/(.*) .*$/$1.../g;
+			$_->{article} = _shorten(strip_notags($_->{article}));
 		}
 
 		# if there are less than search_default_display remaning,
@@ -640,7 +549,7 @@ sub journalSearch {
 
 #################################################################
 sub journalSearchRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
+	my($form, $constants, $slashdb, $searchDB, $gSkin) = @_;
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findJournalEntry($form, $start, 15, $form->{sort});
@@ -650,7 +559,7 @@ sub journalSearchRSS {
 		my $time = timeCalc($entry->{date});
 		push @items, {
 			title	=> "$entry->{description} ($time)",
-			'link'	=> ($constants->{absolutedir} . '/~' . fixparam($entry->{nickname}) . '/journal/' . $entry->{id}),
+			'link'	=> ($gSkin->{absolutedir} . '/~' . fixparam($entry->{nickname}) . '/journal/' . $entry->{id}),
 			description	=> $constants->{article},
 		};
 	}
@@ -658,11 +567,13 @@ sub journalSearchRSS {
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} Journal Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
+			'link'		=> "$gSkin->{absolutedir}/search.pl",
 			description	=> "$constants->{sitename} Journal Search"
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc		=> $constants->{search_rdfitemdesc},
+		rdfitemdesc_html	=> $constants->{search_rdfitemdesc_html},
 	});
 }
 
@@ -674,8 +585,8 @@ sub submissionSearch {
 	my $entries = $searchDB->findSubmission($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 	slashDisplay('searchform', {
 		op		=> $form->{op},
-		sections	=> _sections(),
-		topics		=> _topics(),
+		sections	=> 1, # _skins(),
+		topics		=> 1, # _topics(),
 		submission_notes => $slashdb->getDescriptions('submission-notes'),
 		tref		=> $slashdb->getTopic($form->{tid}),
 		'sort'		=> _sort(),
@@ -694,8 +605,7 @@ sub submissionSearch {
 		}
 
 		for (@$entries) {
-			$_->{story} = substr(strip_notags($_->{story}),0,$constants->{search_text_length});
-			$_->{story} =~ s/(.*) .*$/$1.../g;
+			$_->{story} = _shorten(strip_notags($_->{story}));
 		}
 
 		# if there are less than search_default_display remaning,
@@ -722,7 +632,7 @@ sub submissionSearch {
 
 #################################################################
 sub submissionSearchRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
+	my($form, $constants, $slashdb, $searchDB, $gSkin) = @_;
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findSubmission($form, $start, 15, $form->{sort});
@@ -732,7 +642,7 @@ sub submissionSearchRSS {
 		my $time = timeCalc($entry->{time});
 		push @items, {
 			title		=> "$entry->{subj} ($time)",
-			'link'		=> ($constants->{absolutedir} . '/submit.pl?subid=' . $entry->{subid}),
+			'link'		=> ($gSkin->{absolutedir} . '/submit.pl?subid=' . $entry->{subid}),
 			'description'	=> $entry->{story},
 		};
 	}
@@ -740,11 +650,13 @@ sub submissionSearchRSS {
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} Submission Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
+			'link'		=> "$gSkin->{absolutedir}/search.pl",
 			description	=> "$constants->{sitename} Submission Search",
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc		=> $constants->{search_rdfitemdesc},
+		rdfitemdesc_html	=> $constants->{search_rdfitemdesc_html},
 	});
 }
 
@@ -764,8 +676,8 @@ sub rssSearch {
 	# we pop it off
 	if ($entries && @$entries) {
 		for (@$entries) {
-			$_->{title} = strip_plaintext($_->{title});
-			$_->{description} = substr(strip_plaintext($_->{description}),0,$constants->{search_text_length});
+			$_->{title} = strip_plaintext($_->{introtext});
+			$_->{description} = _shorten(strip_notags($_->{description}));
 		}
 		my $forward;
 		if (@$entries == $constants->{search_default_display} + 1) {
@@ -799,7 +711,7 @@ sub rssSearch {
 
 #################################################################
 sub rssSearchRSS {
-	my($form, $constants, $slashdb, $searchDB) = @_;
+	my($form, $constants, $slashdb, $searchDB, $gSkin) = @_;
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findRSS($form, $start, 15, $form->{sort});
@@ -817,12 +729,23 @@ sub rssSearchRSS {
 	xmlDisplay(rss => {
 		channel => {
 			title		=> "$constants->{sitename} RSS Search",
-			'link'		=> "$constants->{absolutedir}/search.pl",
+			'link'		=> "$gSkin->{absolutedir}/search.pl",
 			description	=> "$constants->{sitename} RSS Search",
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc		=> $constants->{search_rdfitemdesc},
+		rdfitemdesc_html	=> $constants->{search_rdfitemdesc_html},
 	});
+}
+
+sub _shorten {
+	my($text) = @_;
+	my $length = getCurrentStatic('search_text_length');
+	return $text if length($text) <= $length;
+	$text = chopEntity($text, $length);
+	$text =~ s/(.*) .*$/$1.../g;
+	return $text;
 }
 
 #################################################################

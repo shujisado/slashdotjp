@@ -256,7 +256,7 @@ ALTER TABLE sections ADD COLUMN index_handler varchar(30) DEFAULT "index.pl" NOT
 ALTER TABLE sections ADD COLUMN writestatus ENUM("ok","dirty") DEFAULT 'ok' NOT NULL;
 
 #slashd_log table
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Slashd','[% constants.rootdir %]/admin.pl?op=slashd',500,17);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Slashd','[% gSkin.rootdir %]/admin.pl?op=slashd',500,17);
 
 # Note this is different than what Brian committed Wednesday morning;
 # were any sites updated with that?
@@ -543,7 +543,7 @@ source /tmp/qidproblem;
 
 
 # For plugins/Admin (ignore if you're not using that plugin):
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Recent','[% constants.rootdir %]/admin.pl?op=recent',500,18);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Recent','[% gSkin.rootdir %]/admin.pl?op=recent',500,18);
 
 INSERT INTO code_param (type, code, name) VALUES ('displaycodes_sectional', -1,'Don\'t Display');
 INSERT INTO code_param (type, code, name) VALUES ('displaycodes_sectional', 1,'Display');
@@ -721,10 +721,10 @@ UPDATE section_topics SET type = 'topic_3' where type = 3;
 UPDATE section_topics SET type = 'topic_4' where type = 4;
 
 
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes','[% constants.rootdir %]/my/foes/',1,1);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Freaks','[% constants.rootdir %]/my/freaks/',1,1);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Friends of Friends','[% constants.rootdir %]/my/friends/friends',1,1);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes of Friends','[% constants.rootdir %]/my/friends/foes',1,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes','[% gSkin.rootdir %]/my/foes',1,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Freaks','[% gSkin.rootdir %]/my/freaks',1,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Friends of Friends','[% gSkin.rootdir %]/my/friends/friends',1,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes of Friends','[% gSkin.rootdir %]/my/friends/foes',1,1);
 
 DELETE FROM vars WHERE name='m2_consensus_waitmult';
 INSERT INTO vars (name, value, description) VALUES ('m2_consensus_waitpow', '0.8', 'Positive real number, 0.2 to 5 is sensible. Between 0 and 1, older mods are chosen for M2 preferentially. Greater than 1, newer');
@@ -732,12 +732,12 @@ INSERT INTO vars (name, value, description) VALUES ('m2_consensus_waitpow', '0.8
 # End of T_2_3_0_45, Start of T_2_3_0_46
 
 # One more time!
-REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Friends','[% constants.rootdir %]/my/friends/',1,1);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Fans','[% constants.rootdir %]/my/fans/',1,2);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes','[% constants.rootdir %]/my/foes/',1,3);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Freaks','[% constants.rootdir %]/my/freaks/',1,4);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Friends of Friends','[% constants.rootdir %]/my/friends/friends',1,5);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes of Friends','[% constants.rootdir %]/my/friends/foes',1,6);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Friends','[% gSkin.rootdir %]/my/friends',1,1);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Fans','[% gSkin.rootdir %]/my/fans',1,2);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes','[% gSkin.rootdir %]/my/foes',1,3);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Freaks','[% gSkin.rootdir %]/my/freaks',1,4);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Friends of Friends','[% gSkin.rootdir %]/my/friends/friends',1,5);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('zoo','Foes of Friends','[% gSkin.rootdir %]/my/friends/foes',1,6);
 
 # For plugins/Zoo (ignore if you're not using that plugin)
 # Run the script "plugins/Zoo/rebuildPeople"
@@ -756,7 +756,7 @@ ALTER TABLE accesslog ADD INDEX op_part (op(12), section);
 
 INSERT INTO vars (name, value, description) VALUES ('mod_unm2able_token_cost','1','What is the token cost of performing an un-M2able mod?');
 
-REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('journal','Friend\'s Journals','[% constants.rootdir %]/journal.pl?op=friends',0,5);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) VALUES ('journal','Friend\'s Journals','[% gSkin.rootdir %]/journal.pl?op=friends',0,5);
 DELETE FROM menus WHERE menu="journal" AND label="Friends";
 DELETE FROM menus WHERE menu="zoo";
 
@@ -781,7 +781,7 @@ UPDATE menus SET menu='adv-admin', menuorder=9 WHERE label='Site' AND menu='admi
 UPDATE menus SET menuorder=9 WHERE label='Slashd' AND menu='admin';
 UPDATE menus SET menuorder=10 WHERE label='Recent' AND menu='admin';
 
-REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('admin', 'Advanced', '[% constants.rootdir %]/topics.pl', 500, 11);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('admin', 'Advanced', '[% gSkin.rootdir %]/topics.pl', 500, 11);
 
 # none of these existed for me previously, so no rows were updated -- pudge
 # That's fine. Only sites that updated in a brief window would have these -- jamie
@@ -814,17 +814,17 @@ DELETE FROM vars WHERE name='stir';
 
 # split the 2 admin menus into 3
 # adv-admin is now config
-UPDATE menus SET label='Config', value='[% constants.rootdir %]/admin.pl?op=topics' WHERE label='Advanced';
+UPDATE menus SET label='Config', value='[% gSkin.rootdir %]/admin.pl?op=topics' WHERE label='Advanced';
 UPDATE menus SET menu='info' WHERE label='Site' AND menu='adv-admin';
 UPDATE menus SET menu='config' WHERE menu='adv-admin';
 UPDATE menus SET menu='info' WHERE label='Recent';
 UPDATE menus SET menu='info' WHERE label='Slashd';
 
-REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('admin', 'Info', '[% constants.rootdir %]/admin.pl?op=recent', 500, 12);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('config', 'Normal', '[% constants.rootdir %]/admin.pl', 500, 9);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('config', 'Info', '[% constants.rootdir %]/admin.pl?op=recent', 500, 10);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('info', 'Normal', '[% constants.rootdir %]/admin.pl', 500, 12);
-REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('info', 'Config', '[% constants.rootdir %]/admin.pl?op=topics', 500, 13);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('admin', 'Info', '[% gSkin.rootdir %]/admin.pl?op=recent', 500, 12);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('config', 'Normal', '[% gSkin.rootdir %]/admin.pl', 500, 9);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('config', 'Info', '[% gSkin.rootdir %]/admin.pl?op=recent', 500, 10);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('info', 'Normal', '[% gSkin.rootdir %]/admin.pl', 500, 12);
+REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('info', 'Config', '[% gSkin.rootdir %]/admin.pl?op=topics', 500, 13);
 INSERT INTO vars (name, value, description) VALUES ('content_type_webpage','text/html','The Content-Type field for webpages');
 
 # This needs to be set for all OSDN sites, and we should make sure that sites are using the right DB. -Brian
@@ -851,7 +851,7 @@ UPDATE menus SET sel_label=label;
 DELETE FROM menus WHERE menu='users';
 INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Logout', 'logout', '/my/logout', 1, 0, 10);
 INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Preferences', 'preferences', '/users.pl?op=edituser', 1, 0, 20);
-INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Password', 'password', '/users.pl?op=changepasswd', 1, 0, 40);
+INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Password', 'password', '/login.pl?op=changeprefs', 1, 0, 40);
 INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', '[% USE Slash; user.nickname | strip_literal %]', 'me', '/~[% user.nickname | fixparam %]', 1, 0, 50);
 
 # Change for plugins/Subscribe (ignore if not using that plugin)
@@ -1040,7 +1040,7 @@ ALTER TABLE sections DROP extras;
 DELETE FROM templates WHERE section="admin";
 
 # Change for plugins/Journal (ignore if not using that plugin)
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('journal','Edit Preferences','[% constants.rootdir %]/journal.pl?op=editprefs',1,4);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('journal','Edit Preferences','[% gSkin.rootdir %]/journal.pl?op=editprefs',1,4);
 
 # End of T_2_3_0_59, Start of T_2_3_0_60
 
@@ -1491,11 +1491,11 @@ INSERT INTO vars (name, value, description) VALUES ('subscribe_future_plug','0',
 
 # End of T_2_3_0_93, Start of T_2_3_0_94 - 2003/05/08
 
-INSERT INTO menus (menu, label, sel_label, value, seclev, menuorder) VALUES ('info','Stats','Stats','[% constants.rootdir %]/stats.pl',1,2);
+INSERT INTO menus (menu, label, sel_label, value, seclev, menuorder) VALUES ('info','Stats','Stats','[% gSkin.rootdir %]/stats.pl',1,2);
 
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('stats', 'Reports', '[% constants.rootdir %]/stats.pl?op=report', 1, 1);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('stats', 'Graphs',  '[% constants.rootdir %]/stats.pl?op=list&amp;type=graphs', 1, 2);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('stats', 'Dumps',   '[% constants.rootdir %]/stats.pl?op=list', 1, 3);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('stats', 'Reports', '[% gSkin.rootdir %]/stats.pl?op=report', 1, 1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('stats', 'Graphs',  '[% gSkin.rootdir %]/stats.pl?op=list&amp;type=graphs', 1, 2);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('stats', 'Dumps',   '[% gSkin.rootdir %]/stats.pl?op=list', 1, 3);
 
 # Change for plugins/Subscribe (ignore if not using that plugin)
 ALTER TABLE subscribe_payments ADD COLUMN memo VARCHAR(255) NOT NULL AFTER method;
@@ -1719,7 +1719,7 @@ ALTER TABLE people TYPE=InnoDB;
 # End of T_2_3_0_103, Start of T_2_3_0_104 - 2003/07/01
 
 DELETE FROM menus WHERE menu="topics" AND label="Recent Topics";
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'topics','Topic Hierarchy','','[% constants.rootdir %]/topics.pl?op=hierarchy ',0,1,1);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'topics','Topic Hierarchy','','[% gSkin.rootdir %]/topics.pl?op=hierarchy ',0,1,1);
 
 # End of T_2_3_0_104, Start of T_2_3_0_105 - 2003/07/09
 
@@ -1789,7 +1789,7 @@ ALTER TABLE sections CHANGE COLUMN defaultsubsection defaultsubsection SMALLINT 
 
 ALTER TABLE discussions CHANGE topic topic smallint UNSIGNED NOT NULL DEFAULT '0';
 ALTER TABLE discussions ADD INDEX topic (topic);
-ALTER TABLE discussions ADD FOREIGN KEY (topic) REFERENCES topics(tid);
+#ALTER TABLE discussions ADD FOREIGN KEY (topic) REFERENCES topics(tid);
 
 ALTER TABLE metamodlog CHANGE COLUMN mmid mmid INT UNSIGNED DEFAULT '0' NOT NULL;
 ALTER TABLE metamodlog ADD FOREIGN KEY (mmid) REFERENCES moderatorlog(id);
@@ -2039,6 +2039,8 @@ ALTER TABLE moderatorlog ADD COLUMN points_orig tinyint DEFAULT NULL;
 ### do these ONLY IF you want cookies to work everywhere by default ...
 ### it may invalidate existing user cookies if you've previously
 ### been using logtokens, so beware -- pudge
+# If your MySQL is a version prior to 4.0.1, the next command will
+# fail;  the fix is simple, just eliminate the "AFTER session_login".
 ALTER TABLE users_info MODIFY COLUMN cookie_location enum("classbid","subnetid","ipid","none") DEFAULT "none" NOT NULL AFTER session_login;
 REPLACE INTO vars (name, value, description) VALUES ('cookie_location','none','Default for user\'s cookie_location value (also see users_info schema!)');
 
@@ -2188,21 +2190,25 @@ DELETE from vars where name = "submissions_listing_page_size";
 INSERT INTO vars (name, value, description) VALUES ('submissions_accepted_only_page_size', 20, "Number of submissions shown per page when only accepted submissions are shown.  Set to 0 to show all");
 INSERT INTO vars (name, value, description) VALUES ('submissions_all_page_size', 40, "Number of submissions shown per page on a user page when all submission statuses are shown.  Set to 0 to show all");
 
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Stories','stories','[% constants.rootdir %]/admin.pl',100,0,1);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Mods','recent_mods','[% constants.rootdir %]/admin.pl?op=recent_mods',500,0,2);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Reqs','requests','[% constants.rootdir %]/admin.pl?op=recent_requests',500,0,3);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Posting','recent','[% constants.rootdir %]/admin.pl?op=recent',500,0,4);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Abusers','abusers','[% constants.rootdir %]/users.pl?op=topabusers',100,0,5);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Read&nbsp;Only','readonly','[% constants.rootdir %]/users.pl?op=listreadonly',100,0,6);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Banned','banned','[% constants.rootdir %]/users.pl?op=listbanned',100,0,7);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Info','stats','[% constants.rootdir %]/stats.pl',100,0,8);
-INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Config','config','[% constants.rootdir %]/admin.pl?op=topics',10000,0,9);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Stories','stories','[% gSkin.rootdir %]/admin.pl',100,0,1);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Mods','recent_mods','[% gSkin.rootdir %]/admin.pl?op=recent_mods',500,0,2);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Reqs','requests','[% gSkin.rootdir %]/admin.pl?op=recent_requests',500,0,3);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Posting','recent','[% gSkin.rootdir %]/admin.pl?op=recent',500,0,4);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Abusers','abusers','[% gSkin.rootdir %]/users.pl?op=topabusers',100,0,5);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Read&nbsp;Only','readonly','[% gSkin.rootdir %]/users.pl?op=listreadonly',100,0,6);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Banned','banned','[% gSkin.rootdir %]/users.pl?op=listbanned',100,0,7);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Info','stats','[% gSkin.rootdir %]/stats.pl',100,0,8);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Config','config','[% gSkin.rootdir %]/admin.pl?op=topics',10000,0,9);
 
 # End of T_2_3_0_144, Start of T_2_3_0_145 - 2004/03/23
 
 ALTER TABLE users_info ADD COLUMN csq_bonuses FLOAT NOT NULL DEFAULT '0';
 
 ALTER TABLE moderatorlog ADD COLUMN m2needed MEDIUMINT UNSIGNED DEFAULT '0' AFTER m2count;
+# If your MySQL is a version prior to 4.0.2, the next command
+# will fail;  just do it by hand:
+#    SELECT value FROM vars WHERE name='m2_consensus';
+#    UPDATE moderatorlog SET m2needed=(that value) WHERE m2needed=0;
 UPDATE moderatorlog, vars SET moderatorlog.m2needed = vars.value WHERE vars.name='m2_consensus' AND m2needed=0;
 
 INSERT INTO vars (name, value, description) VALUES ('comments_portscan_anon_for_proxy', '0', 'If true, when anonymous posting is attempted, try to access our own site ok.txt using incoming IP as a proxy, and forbid posting if successful');
@@ -2258,12 +2264,6 @@ ALTER TABLE users_info ADD COLUMN up_fair MEDIUMINT UNSIGNED DEFAULT '0' NOT NUL
 
 INSERT INTO vars (name, value, description) VALUES ('karma_posting_penalty_style', '0', '0=old (starting score decremented), 1=new (display score shown lower, comment can suffer results of additional downvotes)');
 
-# SLASHCODE/USEPERL LAST UPDATED HERE
-
-# SLASHDOT LAST UPDATED HERE
-
-# SLASHCLUSTER LAST UPDATED HERE
-
 # End of T_2_3_0_149, Start of T_2_3_0_150 - 2004/04/13
 
 # End of T_2_3_0_150, Start of T_2_3_0_151 - 2004/04/20
@@ -2275,4 +2275,541 @@ INSERT INTO vars (name, value, description) VALUES ('subnet_karma_comments_neede
 INSERT INTO vars (name, value, description) VALUES ('maxtokens_add','3','Max tokens to give any one user per pass');
 
 # End of T_2_3_0_151, Start of T_2_3_0_152 - 2004/04/27
+
+# only if using HumanConf, and you want to have a better value ...
+UPDATE vars SET value = 10 WHERE name = "hc_pool_secs_before_use";
+INSERT INTO vars (name, value, description) VALUES ('hc_image_format','jpeg','Format for HC images (png, jpeg)');
+
+INSERT INTO vars (name, value, description) VALUES ('m2_wait_hours','12','Number of hours to wait before a mod is available for m2');
+
+UPDATE menus SET value='[% gSkin.rootdir %]/my/password' WHERE menu='users' AND label='Password';
+
+### everyone should run install-plugin to install the Login theme
+
+ALTER TABLE open_proxies ADD COLUMN ipid char(32) DEFAULT '' NOT NULL;
+ALTER TABLE open_proxies ADD INDEX ipid (ipid);
+UPDATE open_proxies SET ipid=md5(ip);
+
+INSERT INTO vars (name, value, description) VALUES ('login_speed_limit', '20', 'How fast a user can create users, etc.');
+INSERT INTO vars (name, value, description) VALUES ('max_login_allowed', '10', 'How many forms a user can submit');
+# be wary of this, make sure you've not modified it on your own; if so, add 'login' yourself
+UPDATE vars SET value = '^(?:comments|(?:login|users)/(?:nu|mp))$' WHERE name = 'hc_formname_regex';
+
+INSERT INTO vars (name, value, description) VALUES ('email_domains_invalid', 'example.com mailinator.com', 'space separated list of domains that are not valid for email addresses');
+
+# Apparently on some installations jpg() works, but the name of the
+# method is GD::Image::jpeg() and that's more compatible.
+UPDATE vars SET description='Format for HC images (png, jpeg)' WHERE name='hc_image_format';
+UPDATE vars SET value='jpeg' WHERE name='hc_image_format' AND value='jpg';
+
+# End of T_2_3_0_153, Start of T_2_3_0_154 - 2004/05/11
+
+INSERT INTO vars (name, value, description) VALUES ('submit_domains_invalid', 'example.com peoplesprimary.com', 'space separated list of domains that are not valid for submitting stories');
+
+# Install Lingua::Stem
+INSERT INTO vars (name, value, description) VALUES ('stem_uncommon_words', '1', 'Use stems of words for detecting similar stories instead of whole words?');
+
+INSERT INTO vars (name, value, description) VALUES ('m2_oldest_wanted', '10', 'How old can un-M2d mods get before they are considered important to get fully reconciled?');
+INSERT INTO vars (name, value, description) VALUES ('m2_oldest_zone_percentile', '2', 'What percentile of the oldest un-M2d mods are to be considered highest priority?');
+INSERT INTO vars (name, value, description) VALUES ('m2_oldest_zone_mult', '2', 'How many times the normal amount of M2s are applied to the oldest un-M2d mods?');
+INSERT INTO vars (name, value, description) VALUES ('m2_oldzone', '0', 'Starting id (youngest) of the old-zone of moderations that still require M2 (the oldest certain percentile)');
+
+# End of T_2_3_0_154, Start of T_2_3_0_155 - 2004/05/18
+
+INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats', '', 'Stores current performance stats in a var for display to admins');
+INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_disp', '1', 'Show current performance stats?');
+INSERT INTO vars (name, value, description) VALUES ('cur_performance_stat_ops', 'article|comments|index', 'ops to show current performance stats for');
+INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_lastid', '0', 'accesslogid to start searching at');
+INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_weeks', '8', 'number of weeks back to compare current stats to');
+
+ALTER TABLE comments ADD INDEX uid_date (uid,date);
+
+# Switching this on may help performance on large sites.  Don't turn on until you've created the uid_date index
+INSERT INTO vars (name, value, description) VALUES ('user_comments_force_index', '0', 'Give user comments query hint to use specific index?');
+
+# End of T_2_3_0_155, Start of T_2_3_0_156 - 2004/05/25
+
+INSERT INTO vars (name, value, description) VALUES ('ignore_uid_date_index', '1', 'Ignore uid_date index on comments where it may slow performance');
+
+# End of T_2_3_0_156, Start of T_2_3_0_157 - 2004/06/01
+
+######################################################################
+
+# End of T_2_3_0_157, Start of T_2_5_0_1 - 2004/07/01
+
+# End of T_2_5_0_1, Start of T_2_5_0_2 - 2004/07/02
+
+# End of T_2_5_0_2, Start of T_2_5_0_3 - 2004/07/02
+
+# End of T_2_5_0_3, Start of T_2_5_0_4 - 2004/07/02
+
+# You want to run utils/convertDBto200406 here, then follow its
+# instructions, read its output.  Shut your site down and execute
+# the commands it gives.  Then if all looks well, do a 'make install'
+# and run utils/convertDBto200406_suggest and execute whatever of
+# _its_ commands you see fit to.  Finally, run
+# utils/convertDBto200406_render.  Of course, you need more detailed
+# instructions than this because without them you don't know what
+# the heck you're reading or what you "see fit to," but we're working
+# on those instructions, they aren't written yet.  This is the fun
+# part about cutting-edge code, isn't it!
+
+# You probably want to install the CPAN module GraphViz here, along
+# with whatever it needs;  see plugins/Admin/README for details.
+# If you don't, set topic_tree_draw to 0 instead of 1.
+
+# Changes for plugins/Admin (which you are almost certainly using)
+INSERT INTO vars (name, value, description) VALUES ('topic_tree_draw', '1', 'Draw the images/topic_tree.png?');
+INSERT INTO vars (name, value, description) VALUES ('topic_tree_draw_fontname', 'freefont/FreeMono', 'Name of font used for labels in the topic tree');
+INSERT INTO vars (name, value, description) VALUES ('topic_tree_draw_fontsize', '10', 'Size of font used for labels in the topic tree');
+INSERT INTO vars (name, value, description) VALUES ('topic_tree_lastchange', '1', 'Unix timestamp of last change to the topic tree');
+INSERT INTO vars (name, value, description) VALUES ('topic_tree_lastdraw', '1', 'Unix timestamp of last time topic_tree_draw.pl redrew images/topic_tree.png');
+INSERT INTO menus (menu, label, sel_label, value, seclev, menuorder) VALUES ('info','Tree','Tree','[% gSkin.rootdir %]/admin.pl?op=topictree',100,9);
+
+
+UPDATE menus SET label = '[% user.nickname | strip_literal %]\'s Journal' WHERE label = '[% user.nickname %]\'s Journal' AND menu = 'journal';
+
+# End of T_2_5_0_4, Start of T_2_5_0_5 - 2004/07/06
+
+INSERT INTO vars (name, value, description) VALUES ('admin_story_lookahead_mainpage', 72*3600, 'In the admin.pl storylist, how many seconds to look into the future for stories on the mainpage');
+INSERT INTO vars (name, value, description) VALUES ('admin_story_lookahead_default', 365*86400, 'In the admin.pl storylist, how many seconds to look into the future for all stories by default (but see skins_admin_story_lookahead_mainpage)');
+UPDATE vars SET name='admin_story_lookahead_infinite', description='In the admin.pl storylist, always show all future stories no matter how far in the future?' WHERE name='show_all_future_stories_admin';
+INSERT IGNORE INTO vars (name, value, description) VALUES ('admin_story_lookahead_infinite', '0', 'In the admin.pl storylist, always show all future stories no matter how far in the future?');
+
+# End of T_2_5_0_5, Start of T_2_5_0_6 - 2004/07/08
+
+UPDATE IGNORE blocks SET bid='mainpage_more' WHERE bid LIKE '%more' AND skin='mainpage' AND ordernum > -1;
+DELETE FROM blocks WHERE bid LIKE '%more' AND skin='mainpage' AND bid != 'mainpage_more';
+
+# End of T_2_5_0_6, Start of T_2_5_0_7 - 2004/07/08
+
+UPDATE vars SET description = 'default code for article comments- normally "enabled"' WHERE name = 'defaultcommentstatus';
+UPDATE vars SET value = 'enabled' WHERE name = 'defaultcommentstatus' AND value  = '0';
+
+# End of T_2_5_0_7, Start of T_2_5_0_8 - 2004/07/12
+
+# This next line may throw an error if the spurious column has
+# already been removed.  That's OK.
+ALTER TABLE skins DROP COLUMN min_weight;
+
+ALTER TABLE topic_parents ALTER COLUMN min_weight SET DEFAULT 10;
+UPDATE topic_parents         SET min_weight = min_weight * 10 WHERE min_weight < 10;
+UPDATE story_topics_chosen   SET weight = weight * 10         WHERE weight < 10;
+# If this next line throws an error saying there is no 'weight' column,
+# that's OK, ignore it.
+UPDATE story_topics_rendered SET weight = weight * 10         WHERE weight < 10;
+
+# Changes for plugins/Admin (which you are almost certainly using)
+INSERT INTO vars (name, value, description) VALUES ('topic_popup_defaultweight', '10', 'Default weight for new topics in the popup menu (should probably match default for topic_parents.min_weight)');
+
+# End of T_2_5_0_8, Start of T_2_5_0_9 - 2004/07/13
+
+ALTER TABLE stories_old ADD COLUMN stoid MEDIUMINT UNSIGNED DEFAULT '0';
+UPDATE stories_old, stories SET stories_old.stoid=stories.stoid WHERE stories_old.sid=stories.sid;
+INSERT IGNORE INTO story_param (stoid, name, value) SELECT stoid, 'neverdisplay', 1 FROM stories_old WHERE displaystatus=-1;
+
+# Run this perl script to make sure stories set to Never Display have the
+# appropriate value in story_param.
+# perl -MSlash::Test=YOURVIRTUALUSER -le '$nd_hr = $slashdb->displaystatusForStories($slashdb->sqlSelectColArrayref("stoid", "stories")); @nd = grep { $nd_hr->{$_} == -1 } keys %$nd_hr; for my $stoid (@nd) { $slashdb->sqlInsert("story_param", { stoid => $stoid, name => "neverdisplay", value => "1" }, { ignore => 1 }); }'
+
+DELETE FROM templates WHERE name = 'skinindexd' AND skin != 'default';
+
+ALTER TABLE skins ADD COLUMN submittable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL AFTER issue;
+UPDATE skins SET submittable='no' WHERE name='search';
+
+# Changes for plugins/Admin (which you are almost certainly using)
+INSERT INTO vars (name, value, description) VALUES ('admin_maxdays_divider', '14', 'Max number of days on the admin.pl story list to bother showing the day-dividers');
+
+# End of T_2_5_0_9, Start of T_2_5_0_10 - 2004/07/16
+
+INSERT INTO vars (name, value, description) VALUES ('gse_min_stoid', '0', 'Minimum stoid that getStoriesEssentials - important index.pl optimization - this value set automatically');
+
+# End of T_2_5_0_10, Start of T_2_5_0_11 - 2004/07/17
+
+# End of T_2_5_0_11, Start of T_2_5_0_12 - 2004/07/19
+
+
+# End of T_2_5_0_12, Start of T_2_5_0_13 - 2004/07/19
+
+INSERT INTO vars (name, value, description) VALUES ('freshenup_small_cc','30','How many comments is considered a small commentcount, indicating a story needs its commentcount updated frequently?');
+
+# End of T_2_5_0_13, Start of T_2_5_0_14 - 2004/07/19
+
+INSERT INTO vars (name, value, description) VALUES ('cur_performance_pps', '', 'Pages per second the site is running at');
+
+# End of T_2_5_0_14, Start of T_2_5_0_15 - 2004/07/20
+
+# End of T_2_5_0_15, Start of T_2_5_0_16 - 2004/07/22
+
+# End of T_2_5_0_16, Start of T_2_5_0_17 - 2004/07/26
+
+INSERT INTO vars (name, value, description) VALUES ('submission_default_skid', '0', 'Skid you would like selected by default for submissions, 0 or empty string for none');
+INSERT INTO vars (name, value, description) VALUES ('submission_force_default', '0', 'Force selection of default skid for all submissions, takes away menu of options');
+
+# End of T_2_5_0_17, Start of T_2_5_0_18 - 2004/08/01
+
+ALTER TABLE dbs ADD COLUMN weight tinyint UNSIGNED NOT NULL DEFAULT 1;
+INSERT INTO vars (name, value, description) VALUES ('debughash_getSkins','','false = no debugging; default regex = ^\d+$');
+INSERT INTO vars (name, value, description) VALUES ('debughash_getTopicTree','','false = no debugging; default regex = ^\d+$');
+
+# End of T_2_5_0_18, Start of T_2_5_0_19 - 2004/08/03
+
+ALTER TABLE story_topics_chosen ADD INDEX tid_stoid (tid, stoid), DROP INDEX tid;
+# If this next line throws an error saying the indexes already
+# exist and don't, respectively, that's OK, ignore it.
+ALTER TABLE story_topics_rendered ADD INDEX tid_stoid (tid, stoid), DROP INDEX tid;
+
+# End of T_2_5_0_19, Start of T_2_5_0_20 - 2004/08/05
+
+INSERT INTO vars (name, value, description) VALUES ('gse_precache_mins_ahead','2','How many minutes ahead to precache getStoriesEssentials data in the query cache and memcached?');
+
+# End of T_2_5_0_20, Start of T_2_5_0_21 - 2004/08/05
+
+ALTER TABLE comments ADD INDEX date_sid (date, sid);
+ALTER TABLE stories ADD INDEX discussion_stoid (discussion, stoid);
+ALTER TABLE moderatorlog ADD INDEX ts_uid_sid (ts, uid, sid);
+
+DROP TABLE IF EXISTS topic_param;
+CREATE TABLE topic_param (
+	param_id mediumint UNSIGNED NOT NULL auto_increment,
+	tid SMALLINT UNSIGNED NOT NULL,
+	name varchar(32) DEFAULT '' NOT NULL,
+	value text DEFAULT '' NOT NULL,
+	UNIQUE topic_key (tid,name),
+	PRIMARY KEY (param_id)
+) TYPE=InnoDB;
+
+# It's suggested you don't log image requests to accesslog for performance reasons with the new
+# log_db_qps task.  If your site isn't very busy it may not matter
+# To turn off image logging:
+# UPDATE vars set value = 'NONE' where name='accesslog_imageregex';
+
+UPDATE vars SET name='m1_pointgrant_factor_upfairratio', description='Factor of upmods fairness ratio in deciding who is eligible for moderation (1=irrelevant, 2=top user twice as likely)' WHERE name='m1_pointgrant_factor_fairratio';
+INSERT INTO vars (name,value,description) SELECT 'm1_pointgrant_factor_downfairratio', value, 'Factor of downmods fairness ratio in deciding who is eligible for moderation (1=irrelevant, 2=top user twice as likely)' FROM vars WHERE name='m1_pointgrant_factor_upfairratio';
+
+INSERT INTO vars (name, value, description) VALUES ('top10comm_days','1','Look back (n) days to display the Top 10 Comments slashbox');
+INSERT INTO vars (name, value, description) VALUES ('dbs_revive_seconds','30','After a DB goes from isalive=no to yes, ramp up accesses to it over how many seconds?');
+
+# Only run these on your search db.  If the latter throws a
+# "Duplicate key" error, that's fine.
+ALTER TABLE submissions TYPE=MyISAM;
+ALTER TABLE submissions ADD FULLTEXT subj (subj,story);
+
+# Depending on when you converted your site to section/topics 
+# you may or may not need to run these.  If your stats_daily 
+# table has a section column you need to run these
+
+UPDATE stats_daily set skid=0 where section='all';
+ALTER TABLE stats_daily DROP COLUMN section;
+
+ALTER TABLE topic_nexus_extras MODIFY COLUMN extras_id MEDIUMINT UNSIGNED NOT NULL auto_increment;
+
+INSERT INTO vars (name, value, description) VALUES ('topic_popup_open', '1', 'Expand all topics by default, or not');
+
+# End of T_2_5_0_22, Start of T_2_5_0_23 - 2004/08/31
+
+INSERT INTO vars (name, value, description) VALUES ('gse_table_join_row_cutoff', '1000', 'Number of stoids below which getStoriesEssentials performs 2 separate selects and above which it performs a JOIN');
+
+# End of T_2_5_0_23, Start of T_2_5_0_24 - 2004/09/01
+
+ALTER TABLE topic_nexus_extras ADD COLUMN content_type ENUM("story","comment") NOT NULL DEFAULT 'story';
+
+# End of T_2_5_0_24, Start of T_2_5_0_25 - 2004/09/03
+
+INSERT INTO vars (name, value, description) VALUES ('gse_skip_count_if_no_min_stoid', '0', 'If no min_stoid is available, skip counting the s_t_r rows and go straight to the one-table select? Rule of thumb, set this to true for sites with many stories (say, over 10,000)');
+
+ALTER TABLE topic_nexus_extras MODIFY COLUMN type ENUM('text', 'list') NOT NULL DEFAULT 'text';
+
+# End of T_2_5_0_25, Start of T_2_5_0_26 - 2004/09/09
+
+# If this next line throws an error saying there is no 'weight' column,
+# that's OK, ignore it.
+ALTER TABLE story_topics_rendered DROP COLUMN weight;
+
+DROP TABLE IF EXISTS story_render_dirty;
+CREATE TABLE story_render_dirty (
+        stoid MEDIUMINT UNSIGNED NOT NULL,
+        PRIMARY KEY (stoid)
+) TYPE=InnoDB;
+
+# End of T_2_5_0_26, Start of T_2_5_0_27 - 2004/09/14
+
+ALTER TABLE skins ADD COLUMN ac_uid mediumint UNSIGNED DEFAULT '0' NOT NULL;
+
+INSERT INTO vars (name, value, description) VALUES ('returnto_passwd',CONCAT('changeme', rand()),'Password used to sign MD5s for returnto URLs from remote sites');
+
+ALTER TABLE topics ADD COLUMN submittable ENUM('no', 'yes') DEFAULT 'yes';
+
+# If your 'allow_anonymous' var is 0, then replace __AC_UID__ with
+# the value of your 'anonymous_coward_uid' var and do this.
+INSERT INTO accesslist (uid, ipid, subnetid, ts, reason, now_nopost) values (__AC_UID__, NULL, NULL, NOW(), 'anonymous_coward_uid', 'yes');
+# If it is 1, then do nothing.  If you are using multiple anon cowards
+# with skins.ac_uid, then add rows for those that should not be able to
+# post.  Yes, there will be an admin interface for this eventually.
+
+# End of T_2_5_0_27, Start of T_2_5_0_28 - 2004/09/21
+
+# End of T_2_5_0_28, Start of T_2_5_0_29 - 2004/09/28
+
+# Changes for plugins/Admin (which you are almost certainly using)
+DROP TABLE IF EXISTS uncommonstorywords;
+CREATE TABLE uncommonstorywords (
+	word VARCHAR(255) NOT NULL,
+	PRIMARY KEY (word)
+) TYPE=InnoDB;
+
+# Run this perl script for each of your sites' virtual users
+# perl -MSlash::Test=virtusername -e '@usw = split / /, $constants->{uncommonstorywords}; for $w (@usw) { $slashdb->sqlInsert("uncommonstorywords", { word => $w }) }'
+
+DELETE FROM vars WHERE name='uncommonstorywords';
+
+# need something here to convert exsect into extid data
+# and losing the ' from extid and exaid data wouldn't be a bad idea either
+# and maybe make them both params? that can probably wait
+# then just edit users.pl and tildeEd templates.
+
+ALTER TABLE users_index CHANGE COLUMN extid story_never_topic TEXT NOT NULL DEFAULT '', CHANGE COLUMN exaid story_never_author VARCHAR(255) NOT NULL DEFAULT '', CHANGE COLUMN exsect story_never_nexus VARCHAR(255) NOT NULL DEFAULT '', CHANGE COLUMN exboxes slashboxes TEXT NOT NULL DEFAULT '', ADD COLUMN story_always_topic TEXT NOT NULL DEFAULT '', ADD COLUMN story_always_author VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN story_always_nexus VARCHAR(255) NOT NULL DEFAULT '';
+
+INSERT INTO string_param (type, code, name) VALUES ('story023','0','Never');
+INSERT INTO string_param (type, code, name) VALUES ('story023','2','Often');
+INSERT INTO string_param (type, code, name) VALUES ('story023','3','Always');
+
+INSERT INTO vars (name, value, description) VALUES ('issue_lookback_days','90','Number of days to look back in issue mode');
+
+# use of _29 is not recommended
+# End of T_2_5_0_29, Start of T_2_5_0_30 - 2004/10/06
+
+INSERT INTO vars (name, value, description) VALUES ('slashd_errnote_lastrun','','Last time slashd_errnote ran');
+
+# Changed my mind :)
+DELETE FROM string_param WHERE type='story023';
+INSERT INTO string_param (type, code, name) VALUES ('story023','0','None');
+INSERT INTO string_param (type, code, name) VALUES ('story023','2','Best');
+INSERT INTO string_param (type, code, name) VALUES ('story023','3','All');
+
+# run `perl utils/sectioncollapse_convert.plx VIRTUAL_USER`
+
+# use of _30 is not recommended
+# End of T_2_5_0_30, Start of T_2_5_0_31 - 2004/10/07
+
+INSERT INTO vars (name, value, description) VALUES ('story_never_topic_allow','0','Allow story_never_topic data to be edited and passed to getStoriesEssentials? 0=no, 1=subscriber-only, 2=yes');
+
+UPDATE users_index SET slashboxes = INSERT(slashboxes, LOCATE('index_more', slashboxes), LENGTH('index_more'), 'mainpage_more') WHERE LOCATE('index_more', slashboxes) > 0;
+
+INSERT INTO vars (name, value, description) VALUES ('slashboxes_maxnum','25','Maximum number of slashboxes to allow');
+
+DELETE FROM users_param WHERE value =  0  AND name IN ('clbig_bonus', 'clsmall_bonus', 'postanon', 'subscriber_bonus');
+DELETE FROM users_param WHERE value ='+1' AND name IN ('karma_bonus');
+DELETE FROM users_param WHERE value =  2  AND name IN ('domaintags');
+
+# End of T_2_5_0_31, Start of T_2_5_0_32 - 2004/10/10
+
+INSERT INTO vars (name, value, description) VALUES ('markup_checked_attribute',' CHECKED','The checked attribute that is used on the "input" HTML element, CHECKED for HTML 3.2 and checked="checked" for HTML 4.0 and beyond. Must include leading space!');
+
+ALTER TABLE topic_nexus_extras ADD COLUMN required ENUM("no","yes") NOT NULL DEFAULT 'no';
+ALTER TABLE topic_nexus_extras ADD COLUMN ordering TINYINT UNSIGNED NOT NULL DEFAULT 0;
+ALTER TABLE topic_nexus_extras MODIFY COLUMN type ENUM('text', 'list', 'textarea') NOT NULL DEFAULT 'text';
+
+INSERT INTO string_param (type, code, name) VALUES ('extra_types','text','Text');
+INSERT INTO string_param (type, code, name) VALUES ('extra_types','textarea','Text Area');
+INSERT INTO string_param (type, code, name) VALUES ('extra_types','list','List');
+INSERT INTO string_param (type, code, name) VALUES ('extra_content_types','story','Story');
+INSERT INTO string_param (type, code, name) VALUES ('extra_content_types','comment','Comment');
+
+# End of T_2_5_0_32, Start of T_2_5_0_33 - 2004/10/12
+
+############################################################
+# If you are using MySQL 3.23.x, do not proceed beyond this
+# point.  MySQL 4.0.4 or later is required for T_2_5_0_33
+# and later releases of Slash.
+############################################################
+
+INSERT INTO vars (name, value, description) VALUES ('ircslash','0','Enable the ircslash task and connect to an IRC channel whenever slashd starts');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_channel','#ircslash','Which channel to join');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_ircname','','Name to use on IRC server (defaults to "(slashsite) slashd")');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_lastremarktime','','Last time a remark was seen');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_nick','','Nick to use on IRC server (has a reasonable default)');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_port','6667','Port to use on IRC server');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_server','irc.slashnet.org','Which IRC server to connect to');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_ssl','0','Try to connect over SSL?');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_username','','Username to use on IRC server (has a reasonable default)');
+
+DROP TABLE IF EXISTS remarks;
+CREATE TABLE remarks (
+	uid mediumint UNSIGNED NOT NULL,
+	stoid MEDIUMINT UNSIGNED NOT NULL,
+	time DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	remark varchar(100),
+	INDEX uid (uid),
+	INDEX stoid (stoid),
+	INDEX time (time)
+) TYPE=InnoDB;
+
+INSERT INTO vars (name, value, description) VALUES ('task_timespec_freshenup', '* * * * *', 'Custom timespec (in cron style) for the freshenup task. Add more task_timespec_ vars if you want to override other task timespecs.');
+
+ALTER TABLE skins ADD COLUMN searchable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL AFTER submittable;
+ALTER TABLE skins ADD COLUMN storypickable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL AFTER searchable;
+
+ALTER TABLE topics ADD COLUMN searchable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL after submittable;
+ALTER TABLE topics ADD COLUMN storypickable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL after searchable;
+
+INSERT INTO vars (name, value, description) VALUES ('freshenup_text_render_daysback','7','Oldest stories to write a story_text.rendered field for, in days');
+
+# End of T_2_5_0_33, Start of T_2_5_0_34 - 2004/10/19
+
+# Changes for plugins/Relocate (ignore if not using that plugin)
+ALTER TABLE links DROP INDEX url_index;
+ALTER TABLE links TYPE=InnoDB;
+
+INSERT INTO vars (name, value, description) VALUES ('ircslash_channel_password','','Password for ircslash_channel');
+
+INSERT INTO vars (name, value, description) VALUES ('users_count','1','(Approximate) number of users registered on this slash site');
+DROP TABLE IF EXISTS users_count;
+
+INSERT INTO vars (name, value, description) VALUES ('topic_popup_weights', '40=0|30=Mainpage|20=0|10=Sectional|0=0', 'The dividing lines etc. for the topic select box in the story editor');
+
+# These next five changes should not be done if you have the Search plugin
+# installed (you almost certainly do), on your _search_ database.  If you
+# have multiple databases, you might issue these commands on your master,
+# and then check your slave DBs to see if your search DB or others had
+# replication stopped by a (harmless) error.  Restarting it is simple:
+# "SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; SLAVE START;"
+# If you have only one DB, skip these next five lines (or just ignore
+# their errors).
+ALTER TABLE comments TYPE=InnoDB;
+ALTER TABLE comment_text TYPE=InnoDB;
+ALTER TABLE pollquestions TYPE=InnoDB;
+ALTER TABLE story_text TYPE=InnoDB;
+ALTER TABLE users TYPE=InnoDB;
+# (We're going to change searching soon, so this last MyISAM requirement
+# may go away.  Stay tuned.)
+
+# End of T_2_5_0_34, Start of T_2_5_0_35 - 2004/10/26
+
+ALTER TABLE remarks ADD COLUMN rid mediumint UNSIGNED NOT NULL auto_increment PRIMARY KEY FIRST;
+DELETE FROM vars WHERE name='ircslash_lastremarktime';
+INSERT INTO vars (name, value, description) VALUES ('ircslash_lastremarkid','','Id of the last remark seen');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_remarks_delay','5','How often, in seconds, to poll for new remarks');
+UPDATE vars SET name='ircslash_nextremarkid' WHERE name='ircslash_lastremarkid';
+INSERT INTO vars (name, value, description) VALUES ('ircslash_remarks_max_day','10','How many remarks a single user can send, in a day, before we start ignoring them');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_remarks_max_month','20','How many remarks a single user can send, in a month, before we start ignoring them');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_remarks_max_year','100','How many remarks a single user can send, in a year, before we start ignoring them');
+
+ALTER TABLE users_info ADD INDEX tokens (tokens);
+ALTER TABLE users_comments ADD INDEX points (points);
+
+# End of T_2_5_0_35, Start of T_2_5_0_36 - 2004/11/03
+
+### DEFINE THESE!!
+# set these vars to taste ... reasonable values for journal/search
+# varities are the same as the normal ones
+INSERT INTO vars (name, value, description) VALUES ('rdfitemdesc_html','0','1 == include HTML in item description; 0 == strip HTML (plain text only)');
+INSERT INTO vars (name, value, description) VALUES ('journal_rdfitemdesc','0','1 == include introtext in item description; 0 == don\'t.  Any other number is substr() of introtext to use');
+INSERT INTO vars (name, value, description) VALUES ('journal_rdfitemdesc_html','0','1 == include HTML in item description; 0 == strip HTML (plain text only); 2 == HTML for subscribers only');
+INSERT INTO vars (name, value, description) VALUES ('search_rdfitemdesc','0','1 == include introtext in item description; 0 == don\'t.  Any other number is substr() of introtext to use');
+INSERT INTO vars (name, value, description) VALUES ('search_rdfitemdesc_html','0','1 == include HTML in item description; 0 == strip HTML (plain text only)');
+
+INSERT INTO vars (name, value, description) VALUES ('ircslash_remarks','0','Boolean - are remarks passed along or not?');
+
+UPDATE pollquestions SET discussion=0 WHERE discussion IS NULL;
+ALTER TABLE pollquestions CHANGE COLUMN discussion discussion mediumint UNSIGNED NOT NULL, ADD INDEX uid (uid), ADD INDEX discussion (discussion);
+
+# End of T_2_5_0_36, Start of T_2_5_0_37 - 2004/11/08
+
+INSERT INTO vars (name, value, description) VALUES ('mod_stats_lookback_days','30','Number of days to look back for repeat mods');
+
+DROP TABLE IF EXISTS dbs_readerstatus;
+CREATE TABLE dbs_readerstatus (
+	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	dbid mediumint UNSIGNED NOT NULL,
+	was_alive enum("no","yes") DEFAULT "yes" NOT NULL,
+	was_reachable enum("no","yes") DEFAULT "yes",
+	was_running enum("no","yes") DEFAULT "yes",
+	slave_lag_secs float DEFAULT '0',
+	query_bog_secs float DEFAULT '0',
+	bog_rsqid mediumint UNSIGNED DEFAULT NULL,
+	KEY ts_dbid (ts, dbid),
+	KEY ts_bog (ts, bog_rsqid, query_bog_secs)
+) TYPE=InnoDB;
+
+DROP TABLE IF EXISTS dbs_readerstatus_queries;
+CREATE TABLE dbs_readerstatus_queries (
+	rsqid mediumint UNSIGNED NOT NULL auto_increment,
+	text varchar(255),
+	PRIMARY KEY (rsqid),
+	KEY text (text)
+) TYPE=InnoDB;
+
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_adjust_delay','5','Number of seconds between each adjustment of reader DB weights');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_expire_secs', 86400 * 7,'Number of seconds worth of dbs_readerstatus log to keep around');
+
+INSERT INTO vars (name, value, description) VALUES ('mod_token_assignment_delay', '2', 'Pause in seconds between batches of assigning token changes');
+
+# End of T_2_5_0_37, Start of T_2_5_0_38 - 2004/11/16
+
+ALTER TABLE submissions ADD COLUMN emaildomain varchar(255) DEFAULT '' NOT NULL AFTER email;
+#perl -MSlash::Test=virtusername -le '$e = $slashdb->sqlSelectAllKeyValue("subid, email", "submissions"); for my $subid (sort { $a <=> $b } keys %$e) { $u = URI->new($e->{$subid}) or next; next unless $u->can("host"); $slashdb->sqlUpdate("submissions", { emaildomain => fullhost_to_domain($u->host()) }, "subid=$subid") }'
+ALTER TABLE submissions ADD INDEX emaildomain (emaildomain);
+
+INSERT INTO vars (name, value, description) VALUES ('submission_count_days','60','Number of days back to count submissions made by the same UID or domain');
+
+ALTER TABLE dbs ADD COLUMN weight_adjust float UNSIGNED NOT NULL DEFAULT 1.0;
+
+DELETE FROM vars WHERE name='search_db_user';
+
+ALTER TABLE discussions ADD COLUMN archivable enum("no","yes") DEFAULT 'yes' NOT NULL;
+
+UPDATE vars SET value=300 WHERE name='freshenup_max_stories';
+
+# End of T_2_5_0_38, Start of T_2_5_0_39 - 2004/11/23
+
+ALTER TABLE dbs ADD UNIQUE type_vu (type, virtual_user);
+ALTER TABLE dbs_readerstatus ADD COLUMN had_weight tinyint UNSIGNED NOT NULL DEFAULT 1, ADD COLUMN had_weight_adjust float UNSIGNED NOT NULL default 1, DROP INDEX ts_bog;
+
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_bog_secs_start','5','Number of seconds of reader DB bog at which balance_readers.pl should start to reduce its weight');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_bog_secs_end','60','Number of seconds of reader DB bog at which balance_readers.pl hits the minimum weight');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_bog_weight_min','0.2','The minimum weight to multiply a reader DB\'s base weight by once its bog hits dbs_reader_bog_secs_end');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_lag_secs_start','5','Number of seconds of reader DB lag at which balance_readers.pl should start to reduce its weight');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_lag_secs_end','30','Number of seconds of reader DB lag at which balance_readers.pl hits the minimum weight');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_lag_weight_min','0.1','The minimum weight to multiply a reader DB\'s base weight by once its lag hits dbs_reader_lag_secs_end');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_weight_reduce_max','2.0','The maximum number of units per minute to reduce weight down to the minimum');
+INSERT INTO vars (name, value, description) VALUES ('dbs_reader_weight_increase_max','1.0','The maximum number of units per minute to restore weight back up to 1');
+
+# run `perl utils/users_index_cleanup.plx VIRTUAL_USER`
+
+ALTER TABLE submissions ADD INDEX time_emaildomain (time, emaildomain);
+
+# SLASHCLUSTER LAST UPDATED HERE
+
+# End of T_2_5_0_39, Start of T_2_5_0_40 - 2004/11/24
+
+DELETE FROM users_param WHERE name='sigdash';
+
+
+#   Extra var cleanup below.  Deleting vars that are no longer used in Slash.
+#
+#   Just to be on the safe side you may want to take a dump of all the vars being deleted.  If any unexpected issues arise as a result
+#   you'll have a backup of the previous values.
+#
+#   Replace values in CAPS with values appropriate for your environment
+#
+#   mysqldump -u USER DATABASE -t vars  -w 'name in ( "archive_use_backup_db", "comment_cache_debug", "comment_cache_max_keys", "comment_cache_newstyle", 
+#   "comment_cache_purge_max_frac", "comment_cache_purge_min_comm", "comment_cache_purge_min_req", "currentqid", "daily_last", "daily_tz", 
+#   "discussionrecycle", "get_titles", "m2_if_smoother", "m2_range_offset", "messages_send_maxsize", "mod_elig_hoursback", "paypal", 
+#   "prepuser_backup_prob", "selectcomm_backup_prob", "siteowner", "submissions_listing_page_size", "subnet_karma_comments_needed", "test", "today", "zoo_process_limit", "zoo_timer")'  > VAR_BACKUP.SQL 
+
+
+DELETE FROM vars where name in 
+( "archive_use_backup_db", "comment_cache_debug", "comment_cache_max_keys", "comment_cache_newstyle", 
+"comment_cache_purge_max_frac", "comment_cache_purge_min_comm", "comment_cache_purge_min_req", "currentqid", "daily_last", "daily_tz", 
+"discussionrecycle", "get_titles", "m2_if_smoother", "m2_range_offset", "messages_send_maxsize", "mod_elig_hoursback", "paypal", 
+"prepuser_backup_prob", "selectcomm_backup_prob", "siteowner", "submissions_listing_page_size", "subnet_karma_comments_needed", "test", "today", "zoo_process_limit", "zoo_timer");
+
+# SLASHCODE/USEPERL LAST UPDATED HERE
+
+# SLASHDOT LAST UPDATED HERE
+
+# End of T_2_5_0_40, Start of T_2_5_0_41 - 2004/11/30
+
+# End of T_2_5_0_41, Start of T_2_5_0_42 - 2004/12/07
 

@@ -19,7 +19,7 @@ __template__
 		<INPUT TYPE="hidden" NAME="id" VALUE="[% article.id %]">
 		<INPUT TYPE="hidden" NAME="state" VALUE="editing">
 		<INPUT TYPE="hidden" NAME="preview" VALUE="active">
-		<INPUT TYPE="hidden" NAME="formkey" VALUE="[% form.formkey %]">
+		[% PROCESS formkey_tag %]
 
 		[% PROCESS formLabel value => "Subject", comment => "This is required" %]
 		<INPUT TYPE="text" NAME="description" SIZE="60" MAXLENGTH="60" VALUE="[% article.description | strip_attribute %]">
@@ -60,6 +60,10 @@ __template__
 		[% END %]
 		</FONT>
 	</TD></TR>
+	<tr>
+		<td valign="top" align="right"><font color="[% user.colors.bg_3 %]"><b>URLs</b></font></td>
+		<td><code>&lt;URL:http://example.com/&gt;</code> will auto-link a URL</td>
+	</tr>
 </TABLE>
 
 __seclev__

@@ -1,7 +1,8 @@
 __section__
 default
 __description__
-
+* storylistref
+* ndays_represented = the number of days that appear in the listing
 __title__
 
 __page__
@@ -18,12 +19,7 @@ __template__
 		<TD><B>Preview</B></TD>
 		<TD><B>Author</B></TD>
 		<TD><B>Topic</B></TD>
-
-			[% UNLESS user.section || form.section %]
-		<TD><B>Section</B></TD>
-			[% END %]
-
-		<TD><B>Subsection</B></TD>
+		<TD><B>Skin</B></TD>
 		<TD><B>Hits</B></TD>
 		<TD><B>Comments</B></TD>
 		<TD><B>Date</B></TD>
@@ -31,22 +27,27 @@ __template__
 		[% END %]
 
 [% IF storylistref && storylistref.size > 0;
-storiestoday = 0;
-FOREACH story = storylistref %]
 
-[% IF story.td != yesterday && !form.section;
-	storiestoday = storiestoday > 1 ? storiestoday : '';
+storiestoday = 0;
+IF ndays_represented > (constants.admin_maxdays_divider || 10);
+	showdayboundaries = 0;
+ELSE;
+	showdayboundaries = 1;
+END;
+FOREACH story = storylistref;
+	IF showdayboundaries && story.td != yesterday;
+		storiestoday = storiestoday > 1 ? storiestoday : '';
 %]
 	<TR>
-		<TD ALIGN="RIGHT" BGCOLOR="[% user.bg.2 %]">
+		<TD ALIGN="RIGHT" BGCOLOR="[% user.colors.bg_2 %]">
 			<FONT SIZE="2">[% storiestoday %]</FONT>
 		</TD>
-		<TD COLSPAN="7" ALIGN="right" BGCOLOR="[% user.bg.3 %]">
-			<FONT COLOR="[% user.fg.3 %]" SIZE="2">[% story.td %]</FONT>
+		<TD COLSPAN="7" ALIGN="right" BGCOLOR="[% user.colors.bg_3 %]">
+			<FONT COLOR="[% user.colors.fg_3 %]" SIZE="2">[% story.td %]</FONT>
 		</TD>
 	</TR>
-[%	storiestoday = 0;
-END;
+[%		storiestoday = 0;
+	END;
 
 	yesterday = story.td;
 	storiestoday = storiestoday + 1;
@@ -54,49 +55,40 @@ END;
 	bgcolor = '#FFFFFF';
 	IF story.displaystatus > 0;
 		bgcolor = '#CCCCCC';
-	ELSIF story.writestatus == 'delete' || story.displaystatus < 0;
+	ELSIF story.in_trash == 'yes' || story.displaystatus < 0;
 		bgcolor = '#999999';
-END %]
+	END %]
 
-	<TR BGCOLOR="[% bgcolor %]" ALT="[% story.displaystatus %]">
-
+	<TR BGCOLOR="[% bgcolor %]">
 		<TD ALIGN="RIGHT">
 		<FONT SIZE="2">
-		[<A HREF="[% constants.rootdir %]/admin.pl?op=edit&amp;sid=[% story.sid %]">[% story.x %]</A>]
+		[<A HREF="[% gSkin.rootdir %]/admin.pl?op=edit&amp;sid=[% story.sid %]">[% story.x %]</A>]
 		</FONT>
 
 		</TD>
 		<TD>
 		<FONT SIZE="2">
-		<A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">
-		[% IF story.writestatus == 'delete' %]<S>[% END; story.title; IF story.writestatus == 'delete' %]</S>[% END %]&nbsp;</A>
+		<A HREF="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
+		[% IF story.in_trash == 'yes' %]<S>[% END; story.title; IF story.in_trash == 'yes' %]</S>[% END %]&nbsp;</A>
 		</FONT>
 		</TD>
 		<TD><FONT SIZE="2"><B>[% story.aid %]</B></FONT></TD>
 
 		<TD><FONT SIZE="2">[% story.topic.substr(0, 5) %]</FONT></TD>
 
-	[% UNLESS user.section || form.section %]
+	[% # Here we used to exclude the name of the section if this was
+	   # a section-only listing.  But now the primaryskin may indeed
+	   # differ from the section being displayed.  So list it. %]
 		<TD>
 		<FONT SIZE="2">
-		<A HREF="[% env.script_name %]?section=[% story.section %]">
-		[% story.section.substr(0, 5) %]</A>
+		[% IF story.skinname.match("^_") %]
+			[% story.skinname.substr(0, 5) %]
+		[% ELSE %]
+			<A HREF="[% env.script_name %]?section=[% story.skinname %]">
+				[% story.skinname.substr(0, 5) %]</A>
+		[% END %]
 		</FONT>
 		</TD>
-	[% END %]
-	[% IF constants.enable_index_topic %]
-		<TD>
-		<FONT SIZE="2">
-		<!-- subsection [% story.subsection %] -->
-		[% IF story.subsection ; subsection_name = Slash.db.getSubSection(story.subsection,'title'); %]
-		[% subsection_name %] ([% story.subsection %])
-			[% ELSE ;%]
-		n/a
-			[% END;
-		%]
-		</FONT>
-		</TD>
-	[% END %]
 
 		<TD>
 		<FONT SIZE="2">
@@ -108,7 +100,7 @@ END %]
 		</FONT>
 		</TD>
 		<TD>
-		<FONT SIZE="2">[% story.comments %]</FONT>
+		<FONT SIZE="2">[% story.commentcount %]</FONT>
 		</TD>
 
 		<TD><FONT SIZE="2">[% story.td2 %]&nbsp;
