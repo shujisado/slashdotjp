@@ -50,6 +50,9 @@ my %descriptions = (
 	'submission-state'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='submission-state'") },
 
+	'days_of_week'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='days_of_week'") },
+
 	'months'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='months'") },
 
@@ -305,7 +308,7 @@ sub sqlConnect{
 # Perl has lost the flag somewhere
 sub sqlDo{
 	my($self, $sql) = @_;
-	$sql = decode_utf8( $sql );
+	$sql = decode_utf8( $sql ) unless $sql =~ /accesslog_admin/;
 	$self->SUPER::sqlDo( $sql );
 }
   
