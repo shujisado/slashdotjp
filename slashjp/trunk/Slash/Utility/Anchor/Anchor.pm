@@ -266,7 +266,7 @@ sub http_send {
 
 	if ($opt->{etag} || $opt->{do_etag}) {
 		if ($opt->{do_etag} && $opt->{content}) {
-			$opt->{etag} = encode_utf8(md5_hex($opt->{content}));
+			$opt->{etag} = md5_hex(encode_utf8($opt->{content})); 
 		}
 		$r->header_out('ETag', $opt->{etag});
 
