@@ -1,0 +1,34 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+search
+__lang__
+en_US
+__name__
+pollsearch
+__template__
+[% USE Slash %]
+[% FOREACH poll=polls %]
+	[% section_url = Slash.db.getSection(poll.section, 'url') %]
+	[% link = section_url ? section_url : constants.rootdir %]
+	<B><A HREF="[% link %]/pollBooth.pl?qid=[% poll.qid %]">[% poll.question %]</A></B><BR>
+	<FONT SIZE="-1">
+	On [% Slash.timeCalc(poll.date) %]<BR>
+	Voters: [% poll.voters %]<BR>
+	[% IF poll.score %]
+			Score: [% poll.score %]
+	[% END %]
+	</FONT>
+	<P>
+[% END %]
+[% PROCESS pagination %]
+<P>
+
+__seclev__
+100
+__version__
+$Id$

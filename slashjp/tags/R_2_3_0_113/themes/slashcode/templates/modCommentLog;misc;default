@@ -1,0 +1,167 @@
+__section__
+default
+__description__
+Prints table detailing history of moderation of a comment, or a user, or
+	an IPID or SubnetID, or the mods a user did
+
+* type = type of id being logged (cid, uid, ipid, etc.)
+* mod_admin = boolean for if current user is an admin
+* mods = arrayref of hashref of comment moderations (sid, cid, val, reason,
+	score, ts, active, uid, cuid, nickname)
+* reasonTotal = total moderations
+* reasonHist = arrayref of number of moderations at each reason
+* show_cid = show the cid of each comment?
+* show_modder = show who modded each comment?
+* mod_to_from = "to" means each nickname/uid is who the moderation was
+	done to; "from" means each nickname/uid is the moderator
+* both_mods = if true (1), this is an ipid or subnetid page, and both
+	moderator and moderatee columns are needed
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+modCommentLog
+__template__
+
+[% IF mod_admin %]
+
+<TABLE BGCOLOR="[% user.bg.2 %]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	[% IF mods.size > 0  %]
+	<TR BGCOLOR="[% user.bg.3 %]">
+[% IF show_cid %]<TH><FONT COLOR="[% user.fg.3 %]"> cid </FONT></TH>
+		<TH><FONT COLOR="[% user.fg.3 %]"> score </FONT></TH>[% END %]
+		<TH><FONT COLOR="[% user.fg.3 %]"> val </FONT></TH>
+		<TH><FONT COLOR="[% user.fg.3 %]"> reason </FONT></TH>
+[% IF show_modder %]<TH COLSPAN="2"><FONT COLOR="[% user.fg.3 %]"> 
+		[% IF mod_to_from == 'to' %]moderatee[% ELSE %]moderator[% END %]
+</FONT></TH>
+		[% IF both_mods %]<TH COLSPAN="2"><FONT COLOR="[% user.fg.3 %]">moderatee</FONT></TH>[% END %]
+[% END %]
+		<TH><FONT COLOR="[% user.fg.3 %]"> time </FONT></TH>
+		<TH>&nbsp;</FONT></TH>
+	</TR>
+
+		[% FOREACH moderation = mods %]
+	<TR>
+[% IF show_cid %]
+		<TD ALIGN="RIGHT">
+			<A HREF="[% constants.rootdir %]/comments.pl?sid=[%
+			moderation.sid %]&amp;cid=[% moderation.cid %]">[%
+			moderation.cid %]</A>
+		</TD>
+		<TD ALIGN="RIGHT">
+			[% moderation.score %]
+		</TD>
+[% END %]
+		<TD ALIGN="RIGHT"> <B>[% IF moderation.val > 0; "+"; END; moderation.val %]</B> </TD>
+		<TD> [% reasons.${moderation.reason}.name %] </TD>
+[% IF show_modder %]
+		<TD> &nbsp; <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% moderation.ipid | strip_attribute %]&amp;fieldname=ipid">[% moderation.ipid_vis %]</A> </TD>
+		<TD> [% moderation.nickname | strip_literal %] (<A HREF="[%
+			constants.rootdir %]/users.pl?op=userinfo&amp;fieldname=uid&amp;userfield=[%
+			moderation.uid %]">[% moderation.uid %]</A>) &nbsp; </TD>
+[% IF both_mods %]<TD> &nbsp; <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% moderation.ipid2 | strip_attribute %]&amp;fieldname=ipid">[% moderation.ipid2_vis %]</A> </TD>
+		<TD> [% moderation.nickname2 | strip_literal %] (<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;fieldname=uid&amp;userfield=[% moderation.uid2 %]">[% moderation.uid2 %]</A>) &nbsp; </TD>[% END %]
+[% END %]
+		<TD> [% moderation.ts %]</TD>
+		<TD>[% IF moderation.active %] &nbsp; [% ELSE %] <i>in</i> [% END %] </TD>
+	</TR>
+		[% END %]
+	[% END %]
+
+</TABLE>
+
+[% END %]
+
+[% modifiers = [
+	{ label = "moderations",		edit = 0,	name = "Moderation" },
+	{ label = "reason_bonus",		edit = 1,	name = "Extra '" _ reasons.$reason.name _ "' Modifier" },
+	{ label = "clbig",			edit = 1,	name = "Long Comment Modifier" },
+	{ label = "clsmall",			edit = 1,	name = "Small Comment Modifier" },
+	{ label = "people_bonus_anonymous",	edit = 1,	name = "Anonymous Modifier" },
+	{ label = "new_user_bonus",		edit = 1,	name = "New User Modifier" },
+	{ label = "people_bonus_friend",	edit = 1,	name = "Friend Modifier" },
+	{ label = "people_bonus_foe",		edit = 1,	name = "Foe Modifier" },
+	{ label = "people_bonus_freak",		edit = 1,	name = "Freak Modifier" },
+	{ label = "people_bonus_fan",		edit = 1,	name = "Fan Modifier" },
+	{ label = "people_bonus_fof",		edit = 1,	name = "Friend-of-Friend Modifier" },
+	{ label = "people_bonus_eof",		edit = 1,	name = "Foe-of-Friend Modifier" },
+	{ label = "karma_bonus",		edit = 1,	name = "Karma-Bonus Modifier" },
+	{ label = "subscriber_bonus",		edit = 1,	name = "Subscriber-Bonus Modifier" },
+	{ label = "score_end",			edit = 0,	name = "Total Score:" },
+];
+num_modifiers = 0;
+IF type == 'cid' && (reasonTotal > 0 || reason);
+	num_modifiers = 1;
+ELSE;
+	FOREACH modifier = modifiers;
+		IF modifier.label != 'score_end' && modifier_hr.${modifier.label};
+			num_modifiers = num_modifiers + 1;
+		END;
+	END;
+END;
+
+IF num_modifiers > 0 %]
+
+<TABLE BGCOLOR="[% user.bg.2 %]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="300">
+
+	<TR BGCOLOR="[% user.bg.3 %]">
+		<TH ALIGN="LEFT"><FONT COLOR="[% user.fg.3 %]">Starting Score:&nbsp;&nbsp;&nbsp;</FONT></TH>
+		<TH COLSPAN="2" ALIGN="RIGHT"><FONT COLOR="[% user.fg.3 %]">[% modifier_hr.score_start || 0 %]</FONT></TH>
+		<TH ALIGN="LEFT"><FONT COLOR="[% user.fg.3 %]">&nbsp;point[% IF modifier_hr.score_start != 1 %]s[% END %]</FONT></TH>
+	</TR>
+
+[% FOREACH modifier = modifiers %]
+	[% IF type == 'cid' && (
+			    modifier.label == 'score_end'
+			|| (modifier.label == 'moderations' && reasonTotal > 0)
+			|| (modifier.label == 'reason_bonus' && reason)
+	)	|| modifier_hr.${modifier.label} %]
+	<TR>
+		<TD ALIGN="LEFT">[% modifier.name %]</TD>
+		<TD>&nbsp;</TD>
+		<TD ALIGN="RIGHT">[% modifier_hr.${modifier.label} || 0 %]</TD>
+		<TD>
+		[%- IF modifier.edit && !user.is_anon -%]
+			<FONT SIZE="-1">(<A HREF="/my/comments/#[% modifier.label | strip_attribute %]">Edit</A>)</FONT>
+		[%- ELSE -%]
+			&nbsp;
+		[%- END -%]
+		</TD>
+
+		[% IF modifier.label == 'moderations' && reasonTotal > 0 %]
+			</TR><TR><TD COLSPAN="4"><FONT SIZE="-1">
+			[% IF constants.comments_mod_totals_exact -%]
+				&nbsp;&nbsp;
+				[% FOREACH i = [0 .. reasonHist.max] %]
+					[% IF reasonHist.$i %]
+						[% reasons.$i.name %]=[% reasonHist.$i %],[% " " %]
+					[% END %]
+				[% END %]
+				<B>Total=[% reasonTotal %]</B>
+			[% ELSE %]
+				[% seen_first = 0; FOREACH rtop = reasonsTop %]
+					[% NEXT UNLESS rtop.percent > 0 %]
+					[% IF seen_first %]<BR>[% END; seen_first=1 %]&nbsp;&nbsp;[% rtop.percent %]%
+					[% reasons.${rtop.reason}.name %]
+				[% END %]
+			[% END %]
+			</FONT></TD>
+		[% END %]
+
+	</TR>
+	[% END;
+END %]
+
+</TABLE>
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id$

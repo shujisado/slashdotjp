@@ -1,0 +1,77 @@
+__section__
+default
+__description__
+Prints a pollbooth
+
+* question = question text
+* answers = arrayref of hashrefs (answer, aid, votes)
+* qid = question ID
+* has_activated = has this poll become active?
+* poll_open = is this poll still open?
+* has_voted = has this user already voted?
+* can_vote = can this user still vote?
+* voters = number of voters
+* comments = number of comments
+* sect = section
+* returnto = Optional URL to return to once vote is registered.
+
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+pollbooth
+__template__
+[% IF has_activated or user.is_admin %]
+[% IF user.is_admin %]       
+	[% IF !has_activated %]
+	(Poll not yet active)<BR>
+	[% END %]
+[% END %]
+[% IF !can_vote %]
+
+	<B>[% question %]</B>
+
+	[% FOREACH ans = answers %]
+		<BR>&middot; [% ans.answer %] ([% ans.votes %])
+	[% END %]
+
+	<P><EM>[% IF has_voted %](You've already voted.)[% ELSIF !poll_open %](Poll is closed.)[% END %]</EM><BR>
+	[ <A HREF="[% constants.rootdir %]/pollBooth.pl?qid=[% qid %]&amp;aid=-1"><B>Results</B></A> |
+	<A HREF="[% constants.rootdir %]/pollBooth.pl?"><B>Polls</B></A> ] <BR>
+	Comments:<B>[% comments %]</B> | Votes:<B>[% voters %]</B>
+
+[% ELSE %]
+
+	<FORM ACTION="[% constants.rootdir %]/pollBooth.pl">
+		[%- IF returnto -%]
+		<INPUT TYPE="HIDDEN" NAME="op" VALUE="vote_return">
+		<INPUT TYPE="HIDDEN" NAME="returnto" VALUE="[% returnto %]">
+		[%- END -%]
+		<INPUT TYPE="hidden" NAME="qid" VALUE="[% qid | strip_attribute %]">
+		[% IF user.currentSection %]
+		<INPUT TYPE="hidden" NAME="section" VALUE="[% user.currentSection | strip_attribute %]">
+		[% END %]
+	<B>[% question %]</B>
+
+	[% FOREACH ans = answers %]
+		<BR><INPUT TYPE="radio" NAME="aid"
+		VALUE="[% ans.aid | strip_attribute %]">[% ans.answer | strip_html %]
+	[% END %]
+
+	<BR><INPUT TYPE="submit" VALUE="Vote">
+	[ <A HREF="[% constants.rootdir %]/pollBooth.pl?qid=[% qid %]&amp;aid=-1"><B>Results</B></A> |
+	<A HREF="[% constants.rootdir %]/pollBooth.pl"><B>Polls</B></A> ] <BR>
+	Comments:<B>[% comments %]</B> | Votes:<B>[% voters %]</B>
+	</FORM>
+
+[% END %]
+[% END %]
+__seclev__
+10000
+__version__
+$Id$
+
