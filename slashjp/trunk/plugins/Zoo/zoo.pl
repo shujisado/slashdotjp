@@ -11,6 +11,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Zoo;
 use Slash::XML;
+use Digest::SHA1;
 use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -87,6 +88,10 @@ sub main {
 			check => 1,			
 			function => \&all		
 		},
+		foaf		=> {
+			check => 1,
+			function => \&foaf
+		},
 		default		=> { 
 			check => 0,			
 			function => \&list	
@@ -128,7 +133,7 @@ sub main {
 	if ($r = Apache->request) {
 		return if $r->header_only;
 	}
-	footer() unless $form->{content_type} eq 'rss';
+	footer() unless $form->{content_type} eq 'rss' or  $form->{content_type} eq 'foaf' or $op eq 'foaf';
 }
 
 sub list {
@@ -166,6 +171,8 @@ sub friends {
 		
 	if ($form->{content_type} eq 'rss') {
 		_rss($friends, $nick, 'friends');
+	} elsif ($form->{content_type} eq 'foaf') {
+		_foaf( $friends, $uid, 'friends' );
 	} else {
 		my $implied;
 		if ($editable) {
@@ -371,6 +378,8 @@ sub foes {
 
 	if ($form->{content_type} eq 'rss') {
 		_rss($foes, $nick, 'foes');
+	} elsif ($form->{content_type} eq 'foaf') {
+		_foaf($foes, $uid, "foes" );
 	} else {
 		my $implied;
 		if ($editable) {
@@ -536,6 +545,26 @@ sub freaks {
 	}
 
 	return 1;
+}
+
+sub foaf {
+	my($zoo, $constants, $user, $form, $slashdb) = @_;
+       
+	my ($uid, $nick);
+	if ($form->{uid} || $form->{nick}) {
+		$uid = $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
+		$nick = $form->{nick} ? $form->{nick} : $slashdb->getUser($uid, 'nickname');
+	} else {
+		$uid = $user->{uid};
+		$nick = $user->{nick};
+	}
+
+	my $known = $zoo->getRelationships($uid, FRIEND);
+	my $foes = $zoo->getRelationships($uid, FOE);
+	push( @$known,  @$foes );
+	
+	_foaf($known, $uid, "foaf" );
+
 }
 
 sub all {
@@ -787,6 +816,56 @@ sub _rss {
 		},
 		image	=> 1,
 		items	=> \@items
+	});
+}
+
+sub _foaf {
+	my( $entries, $uid, $type) = @_;
+	my $constants	= getCurrentStatic();
+	my $form	= getCurrentForm();
+	my $reader	= getObject('Slash::DB', { db_type => 'reader' });
+	my $user	= $reader->getUser($uid, ['nickname', 'realemail','homepage', 'journal_last_entry_date']);
+	my $nickname	= $user->{nickname};
+	my $userpage	= "$constants->{rootdir}/~" . fixparam($nickname) . "/";
+
+
+	# basic foaf:Person
+	my $person = {
+			nick		=> $nickname,
+			holdsAccount => {
+				OnlineAccount => {
+					accountName => $nickname,
+					page => $userpage,
+					accountServiceHomepage => $constants->{rootdir},
+				},
+			}
+		};
+	# add various field is defined
+	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail};
+	$person->{homepage} = $user->{homepage} if $user->{homepage};
+	$person->{weblog} = $userpage . "journal/" if $user->{journal_last_entry_date};
+
+	# add person's relationship
+	my @knows; 
+	for my $entry (@$entries) {
+		my $p = $reader->getUser( $entry->[0] , ['nickname','realemail'] );
+		push @knows, { Person => {
+			nick		=> $p->{nickname},
+			mbox_sha1sum	=>  Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}),
+			seeAlso		=> "$constants->{rootdir}/~" . fixparam($p->{nickname}) . "/$type.rdf",
+		}};
+	}
+	$person->{knows} = \@knows;
+
+	# output RDF
+	$type = $type eq "foaf" ? "Friends and Foes" : $type;
+	xmlDisplay("foaf" ,{
+		Document => {
+			title	=> "FOAF File for $nickname, with $type",
+			maker   => "Slashcode zoo.pl $VERSION",
+		},
+		Person => $person, 
+		
 	});
 }
 

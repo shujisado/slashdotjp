@@ -526,6 +526,11 @@ sub userdir_handler {
 				$r->uri('/zoo.pl');
 				$r->filename($constants->{basedir} . '/zoo.pl');
 			}
+		} elsif ($op eq 'friends.rdf') {
+			$r->args("op=friends&nick=$nick&uid=$uid&content_type=foaf");
+			$r->uri('/zoo.pl');
+			$r->filename($constants->{basedir} . '/zoo.pl');
+
 		} elsif ($op eq 'fans') {
 			$r->args("op=fans&nick=$nick&uid=$uid");
 			$r->uri('/zoo.pl');
@@ -541,10 +546,20 @@ sub userdir_handler {
 			$r->uri('/zoo.pl');
 			$r->filename($constants->{basedir} . '/zoo.pl');
 
+		} elsif ($op eq 'foes.rdf') {
+			$r->args("op=foes&nick=$nick&uid=$uid&content_type=foaf");
+			$r->uri('/zoo.pl');
+			$r->filename($constants->{basedir} . '/zoo.pl');
+
 		} elsif ($op eq 'amigos') {
 			$r->args("op=friendview&nick=$nick&uid=$uid");
 			$r->uri('/journal.pl');
 			$r->filename($constants->{basedir} . '/journal.pl');
+
+		} elsif ($op eq 'foaf.rdf') {
+			$r->args("op=foaf&nick=$nick&uid=$uid");
+			$r->uri('/zoo.pl');
+			$r->filename($constants->{basedir} . '/zoo.pl');
 
 		} else {
 			$r->args("nick=$nick&uid=$uid");
