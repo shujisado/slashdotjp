@@ -452,7 +452,8 @@ sub displayArticle {
 	}
 
 	push @sorted_articles, $collection;
-	my $theme = _checkTheme($reader->getUser($uid, 'journal_theme'));
+	my $theme = $form->{theme} || $reader->getUser($uid, 'journal_theme'); 
+	$theme = _checkTheme($theme);
 
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');
