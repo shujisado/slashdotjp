@@ -1224,6 +1224,9 @@ sub _get_lastjournal {
 		my $approvedtags_break = $constants->{approvedtags_break}
 			|| [qw(HR BR LI P OL UL BLOCKQUOTE DIV)];
 		my $break_tag = join '|', @$approvedtags_break;
+		#### ADD_J
+                $art_shrunk = Encode::decode("EUC-JP", $art_shrunk);
+		#### END_J
 		if (scalar(() = $art_shrunk =~ /<(?:$break_tag)>/gi) > 2) {
 			$art_shrunk =~ s/\A
 			(
@@ -1242,6 +1245,9 @@ sub _get_lastjournal {
 		if (length($art_shrunk) < length($lastjournal->{article})) {
 			$art_shrunk .= " ...";
 		}
+		#### ADD_J
+                $art_shrunk = Encode::encode("EUC-JP", $art_shrunk);
+		#### END_J
 		$lastjournal->{article_shrunk} = $art_shrunk;
 
 		# Now default:  normalize the text and count comments.
