@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -9,13 +9,16 @@ use Socket;
 use Digest::MD5 'md5_hex';
 use Time::HiRes;
 use Date::Format qw(time2str);
+use Data::Dumper;
 use Slash::Utility;
 use Storable qw(thaw freeze);
 use URI ();
+use Slash::Custom::ParUserAgent;
+use vars qw($VERSION $_proxy_port);
 use Encode;
-use vars qw($VERSION);
 use base 'Slash::DB';
 use base 'Slash::DB::Utility';
+use Slash::Constants ':messages';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
@@ -92,9 +95,6 @@ my %descriptions = (
 	'topics'
 		=> sub { $_[0]->sqlSelectMany('tid,alttext', 'topics') },
 
-	'topic_images_section'
-		=> sub { $_[0]->sqlSelectMany('concat(tid, "|", section), topic_image', 'topic_image_sections') },
-
 	'topics_all'
 		=> sub { $_[0]->sqlSelectMany('tid,alttext', 'topics') },
 
@@ -126,6 +126,9 @@ my %descriptions = (
 
 	'session_login'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='session_login'") },
+
+	'cookie_location'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'string_param', "type='cookie_location'") },
 
 	'sortorder'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='sortorder'") },
@@ -238,6 +241,9 @@ my %descriptions = (
 		);
 	},
 
+	'forums'
+		=> sub { $_[0]->sqlSelectMany('subsections.id, subsections.title', 'section_subsections, subsections', "section_subsections.subsection=subsections.id AND section_subsections.section='forums'") },
+	
 );
 
 ########################################################
@@ -339,22 +345,26 @@ sub sqlTransactionCancel {
 # Bad need of rewriting....
 sub createComment {
 	my($self, $comment) = @_;
-
+	return -1 unless dbAvailable("write_comments");
 	my $comment_text = $comment->{comment};
 	delete $comment->{comment};
 	$comment->{signature} = md5_hex(encode_utf8($comment_text));
 	$comment->{-date} = 'NOW()';
 	$comment->{len} = length($comment_text);
 	$comment->{pointsorig} = $comment->{points} || 0;
+	$comment->{pointsmax}  = $comment->{points} || 0;
 
-	$self->{_dbh}->{AutoCommit} = 0;
+#	$self->{_dbh}{AutoCommit} = 0;
+	$self->sqlDo("SET AUTOCOMMIT=0");
 
 	my $cid;
 	if ($self->sqlInsert('comments', $comment)) {
 		$cid = $self->getLastInsertId();
 	} else {
-		$self->{_dbh}->rollback;
-		$self->{_dbh}->{AutoCommit} = 1;
+#		$self->{_dbh}->rollback;
+#		$self->{_dbh}{AutoCommit} = 1;
+		$self->sqlDo("ROLLBACK");
+		$self->sqlDo("SET AUTOCOMMIT=1");
 		errorLog("$DBI::errstr");
 		return -1;
 	}
@@ -363,8 +373,10 @@ sub createComment {
 			cid	=> $cid,
 			comment	=>  $comment_text,
 	})) {
-		$self->{_dbh}->rollback;
-		$self->{_dbh}->{AutoCommit} = 1;
+#		$self->{_dbh}->rollback;
+#		$self->{_dbh}{AutoCommit} = 1;
+		$self->sqlDo("ROLLBACK");
+		$self->sqlDo("SET AUTOCOMMIT=1");
 		errorLog("$DBI::errstr");
 		return -1;
 	}
@@ -379,14 +391,18 @@ sub createComment {
 		{ -commentcount	=> 'commentcount+1' },
 		"id=$comment->{sid}",
 	)) {
-		$self->{_dbh}->rollback;
-		$self->{_dbh}->{AutoCommit} = 1;
+#		$self->{_dbh}->rollback;
+#		$self->{_dbh}{AutoCommit} = 1;
+		$self->sqlDo("ROLLBACK");
+		$self->sqlDo("SET AUTOCOMMIT=1");
 		errorLog("$DBI::errstr");
 		return -1;
 	} 
 
-	$self->{_dbh}->commit;
-	$self->{_dbh}->{AutoCommit} = 1;
+#	$self->{_dbh}->commit;
+#	$self->{_dbh}{AutoCommit} = 1;
+	$self->sqlDo("COMMIT");
+	$self->sqlDo("SET AUTOCOMMIT=1");
 
 	return $cid;
 }
@@ -406,84 +422,40 @@ sub getModPointsNeeded {
 }
 
 ########################################################
-# Given a fractional value representing the fraction of fair M2
-# votes, returns the token/karma consequences of that fraction
-# in a hashref.  Makes the very complex var m2_consequences a
-# little easier to use.  Note that the value returned has three
-# fields:  a float, its sign, and an SQL expression which may be
-# either an integer or an IF().
-sub getM2Consequences {
-	my($self, $frac) = @_;
-	my $constants = getCurrentStatic();
-	my $c = $constants->{m2_consequences};
-	my $retval = { };
-	for my $ckey (sort { $a <=> $b } keys %$c) {
-		if ($frac <= $ckey) {
-			my @vals = @{$c->{$ckey}};
-			for my $key (qw(	m2_fair_tokens
-						m2_unfair_tokens
-						m1_tokens
-						m1_karma )) {
-				$retval->{$key}{num} = shift @vals;
-			}
-			for my $key (keys %$retval) {
-				$self->_set_csq($key, $retval->{$key});
-			}
-			last;
-		}
-	}
-	return $retval;
-}
-
-sub _set_csq {
-	my($self, $key, $hr) = @_;
-	my $n = $hr->{num};
-	if (!$n) {
-		$hr->{chance} = $hr->{sign} = 0;
-		$hr->{sql_base} = $hr->{sql_possible} = "";
-		$hr->{sql_and_where} = undef;
-		return ;
-	}
-
-	my $constants = getCurrentStatic();
-	my $column = 'tokens';
-	$column = 'karma' if $key =~ /karma$/;
-	my $max = ($column eq 'tokens')
-		? $constants->{m2_consequences_token_max}
-		: $constants->{m2_maxbonus_karma};
-	my $min = ($column eq 'tokens')
-		? $constants->{m2_consequences_token_min}
-		: $constants->{minkarma};
-
-	my $sign = 1; $sign = -1 if $n < 0;
-	$hr->{sign} = $sign;
-	
-	my $a = abs($n);
-	my $i = int($a);
-
-	$hr->{chance} = $a - $i;
-	$hr->{num_base} = $i * $sign;
-	$hr->{num_possible} = ($i+1) * $sign;
-	if ($sign > 0) {
-		$hr->{sql_and_where}{$column} = "$column < $max";
-		$hr->{sql_base} = $i ? "LEAST($column+$i, $max)" : "";
-		$hr->{sql_possible} = "LEAST($column+" . ($i+1) . ", $max)"
-			if $hr->{chance};
-	} else {
-		$hr->{sql_and_where}{$column} = "$column > $min";
-		$hr->{sql_base} = $i ? "GREATEST($column-$i, $min)" : "";
-		$hr->{sql_possible} = "GREATEST($column-" . ($i+1) . ", $min)"
-			if $hr->{chance};
-	}
-}
-
-########################################################
+# At the time of creating a moderation, the caller can decide
+# whether this moderation needs more or fewer M2 votes to
+# reach consensus.  Passing in 0 for $m2needed means to use
+# the default.  Passing in a positive or negative value means
+# to add that to the default.  Fractional values are fine;
+# the result will always be rounded to an odd number.
 sub createModeratorLog {
-	my($self, $comment, $user, $val, $reason, $active, $points_spent) = @_;
+	my($self, $comment, $user, $val, $reason, $active, $points_spent, $m2needed) = @_;
+	
+	my $constants = getCurrentStatic();
 
 	$active = 1 unless defined $active;
 	$points_spent = 1 unless defined $points_spent;
-	$self->sqlInsert("moderatorlog", {
+
+	my $m2_base = 0;
+	if ($constants->{m2_inherit}) {
+		my $mod = $self->getModForM2Inherit($user->{uid}, $comment->{cid}, $reason);
+		if ($mod) {
+			$m2_base = $mod->{m2needed};
+		} else {
+			$m2_base = $self->getBaseM2Needed($comment->{cid}, $reason) || getCurrentStatic('m2_consensus');
+		}
+	} else {
+		$m2_base = $self->getBaseM2Needed($comment->{cid}, $reason) || getCurrentStatic('m2_consensus');
+	}
+
+	$m2needed ||= 0;
+	$m2needed += $m2_base;
+	$m2needed = 1 if $m2needed < 1;		# minimum of 1
+	$m2needed = int($m2needed/2)*2+1;	# always an odd number
+
+	$m2needed = 0 unless $active;
+
+	my $ret_val = $self->sqlInsert("moderatorlog", {
 		uid	=> $user->{uid},
 		ipid	=> $user->{ipid} || "",
 		subnetid => $user->{subnetid} || "",
@@ -495,8 +467,104 @@ sub createModeratorLog {
 		-ts	=> 'NOW()',
 		active 	=> $active,
 		spent	=> $points_spent,
+		points_orig => $comment->{points},
+		m2needed => $m2needed,
 	});
+
+	my $mod_id = $self->getLastInsertId();
+	
+	# inherit and apply m2s if necessary
+	if ($constants->{m2_inherit}) {
+		my $i_m2s = $self->getInheritedM2sForMod($user->{uid}, $comment->{cid}, $reason, $active, $mod_id);
+		$self->applyInheritedM2s($mod_id, $i_m2s);
+	}	
+	# cid_reason count changed, update m2needed for related mods
+	if ($constants->{m2_use_sliding_consensus} and $active) {
+		# Note: this only updates m2needed for moderations that have m2status=0 not those that have already reached consensus.
+		# If we're strictly enforcing like mods sharing one group of m2s this behavior might have to change.  If so it's likely to
+		# be var controlled.  A better solution is likely to inherit m2s when a new mod is created of a given cid-reason if we
+		# want to have the same m2s across all like m1s.  If the mod whose m2s we are inheriting from has already reached consensus
+                # we probably just want to inherit those m2s and not up the m2needed value for either mods.
+
+		my $post_m2_base = $self->getBaseM2Needed($comment->{cid}, $reason);
+
+		$self->sqlUpdate("moderatorlog", { m2needed => $post_m2_base }, "cid=".$self->sqlQuote($comment->{cid})." and reason=".$self->sqlQuote($reason)." and m2status=0 and active=1" );
+	}
+	return $ret_val;
 }
+
+sub getBaseM2Needed {
+	my($self, $cid, $reason, $options) = @_;
+	my $constants = getCurrentStatic();
+	my $consensus;
+	if ($constants->{m2_use_sliding_consensus}) {
+		my $count = $self->sqlCount("moderatorlog", "cid=".$self->sqlQuote($cid)." and reason=".$self->sqlQuote($reason)." and active=1");
+		$count += $options->{count_modifier} if defined $options->{count_modifier};
+		my $index = $count - 1;
+		$index = 0 if $index < 1;
+		$index = @{$constants->{m2_sliding_consensus}} - 1
+		if $index > (@{$constants->{m2_sliding_consensus}} - 1);
+		$consensus = $constants->{m2_sliding_consensus}[$index];
+	} else {
+		$consensus = $constants->{'m2_consensus'};
+	}
+
+	return $consensus;
+}
+
+
+# Pass the id if we've already created the mod for which we are inheriting mods.
+# If getting the inherited m2s before the mod is created omit passing the id
+# as a parameter. 
+sub getInheritedM2sForMod {
+	my($self, $mod_uid, $cid, $reason, $active, $id) = @_;
+	return [] unless $active;
+	my $mod = $self->getModForM2Inherit($mod_uid, $cid, $reason, $id);
+	my $p_mid = defined $mod ? $mod->{id} : undef;
+	return [] unless $p_mid;
+	my $m2s = $self->sqlSelectAllHashrefArray("*", "metamodlog", "mmid=$p_mid ");
+	return $m2s;
+}
+
+sub getModForM2Inherit {
+	my($self, $mod_uid, $cid, $reason, $id) = @_;
+	my $mod_uid_q = $self->sqlQuote($mod_uid);
+	my $reasons = $self->getReasons();
+	my $m2able_reasons = join(",",
+		sort grep { $reasons->{$_}{m2able} }
+		keys %$reasons);
+	return [] if !$m2able_reasons;
+	
+	my $id_str = $id ? " AND id!=".$self->sqlQuote($id) : "";
+
+	# Find the earliest active moderation that we can inherit m2s from
+        # which isn't the mod we are inheriting them into.  This uses the
+	# same criteria as multiMetaMod for determining which mods we can
+	# propagate m2s to, or from in the case of inheriting
+	my ($mod) = $self->sqlSelectHashref("*","moderatorlog",
+				"cid=".$self->sqlQuote($cid).
+				" AND reason=".$self->sqlQuote($reason).
+				" AND uid!=$mod_uid_q AND cuid!=$mod_uid_q".
+				" AND reason in($m2able_reasons)".
+				" AND active=1 $id_str",
+				" ORDER BY id ASC LIMIT 1"
+			);
+	return $mod;
+}
+
+sub applyInheritedM2s {
+	my($self, $mod_id, $m2s) = @_;
+	
+	foreach my $m2(@$m2s){
+		my $m2_user=$self->getUser($m2->{uid});
+		my $cur_m2 = { 
+				$mod_id => 	{ is_fair => $m2->{val} == 1 ? 1 : 0 }
+			     };
+		$self->createMetaMod($m2_user, $cur_m2, 0, { inherited => 1});
+	}	
+
+}
+
 
 ########################################################
 # A friendlier interface to the "mods_saved" param.  Has probably
@@ -718,6 +786,8 @@ sub getMetamodsForUserRaw {
 	my $consensus = $constants->{m2_consensus};
 	my $waitpow = $constants->{m2_consensus_waitpow} || 1;
 
+	my $if_smoother = $constants->{m2_if_smoother} || 5;	
+
 	my $days_back = $constants->{archive_delay_mod};
 	my $days_back_cushion = int($days_back/10);
 	$days_back_cushion = $constants->{m2_min_daysbackcushion} || 2
@@ -815,7 +885,7 @@ EOT
 		$mod_hr = $reader->sqlSelectAllHashref(
 			"id",
 			"id, cid,
-			 m2count + $consensus * $if_expr + RAND() AS rank",
+			 (m2count/m2needed) * $if_smoother + $if_smoother * $if_expr + RAND() AS rank",
 			"moderatorlog",
 			"uid != $uid_q AND cuid != $uid_q
 			 AND m2status=0
@@ -854,7 +924,6 @@ EOT
 		$num_needed -= scalar(@new_ids);
 	}
 	if ($getmods_loops > 3) {
-		use Data::Dumper;
 		print STDERR "GETMODS looped the max number of times,"
 			. " returning '@ids' for uid '$uid'"
 			. " num_needed '$num_needed'"
@@ -887,12 +956,25 @@ sub getTemplateList {
 }
 
 ########################################################
-sub getModeratorCommentLog {
-	my($self, $asc_desc, $limit, $type, $value) = @_;
+sub countUserModsInDiscussion {
+	my($self, $uid, $disc_id) = @_;
+	my $uid_q = $self->sqlQuote($uid);
+	my $disc_id_q = $self->sqlQuote($disc_id);
+	return $self->sqlCount(
+		"moderatorlog",
+		"uid=$uid_q AND active=1 AND sid=$disc_id_q");
+}
 
+########################################################
+sub getModeratorCommentLog {
+	my($self, $asc_desc, $limit, $t, $value, $options) = @_;
+	# $t tells us what type of data $value is, and what type of
+	# information we're looking to retrieve
+	$options ||= {};
 	$asc_desc ||= 'ASC';
 	$asc_desc = uc $asc_desc;
 	$asc_desc = 'ASC' if $asc_desc ne 'DESC';
+	my $order_col = $options->{order_col} || "ts";
 
 	if ($limit and $limit =~ /^(\d+)$/) {
 		$limit = "LIMIT $1";
@@ -900,43 +982,156 @@ sub getModeratorCommentLog {
 		$limit = "";
 	}
 
-	my $select_extra = (($type =~ /ipid/) || ($type =~ /subnetid/)) ? ", comments.uid as uid2, comments.ipid as ipid2" : "";
+	my $cidlist;	
+	if ($t eq "cidin") {
+		if (ref $value eq "ARRAY" and @$value) {
+			$cidlist = join(',', @$value);
+		} elsif (!ref $value and $value) {
+			$cidlist = $value;
+		} else {
+			return [];
+		}
+	}
+
+	my $select_extra = (($t =~ /ipid/) || ($t =~ /subnetid/) || ($t =~ /global/))
+		? ", comments.uid AS uid2, comments.ipid AS ipid2"
+		: "";
 
 	my $vq = $self->sqlQuote($value);
 	my $where_clause = "";
 	my $ipid_table = "moderatorlog";
-	   if ($type eq 'uid') {	$where_clause = "moderatorlog.uid=$vq      AND comments.uid=users.uid";
-					$ipid_table = "comments"							}
-	elsif ($type eq 'cid') {	$where_clause = "moderatorlog.cid=$vq      AND moderatorlog.uid=users.uid"	}
-	elsif ($type eq 'cuid') {	$where_clause = "moderatorlog.cuid=$vq     AND moderatorlog.uid=users.uid"	}
-	elsif ($type eq 'subnetid') {	$where_clause = "comments.subnetid=$vq     AND moderatorlog.uid=users.uid"	}
-	elsif ($type eq 'ipid') {	$where_clause = "comments.ipid=$vq         AND moderatorlog.uid=users.uid"	}
-	elsif ($type eq 'bsubnetid') {	$where_clause = "moderatorlog.subnetid=$vq AND moderatorlog.uid=users.uid"	}
-	elsif ($type eq 'bipid') {	$where_clause = "moderatorlog.ipid=$vq     AND moderatorlog.uid=users.uid"	}
+	   if ($t eq 'uid')       { $where_clause = "comments.uid=users.uid AND     moderatorlog.uid=$vq";
+				    $ipid_table = "comments"							    }
+	elsif ($t eq 'cid')       { $where_clause = "moderatorlog.uid=users.uid AND moderatorlog.cid=$vq"	    }
+	elsif ($t eq 'cuid')      { $where_clause = "moderatorlog.uid=users.uid AND moderatorlog.cuid=$vq"	    }
+	elsif ($t eq 'cidin')     { $where_clause = "moderatorlog.uid=users.uid AND moderatorlog.cid IN ($cidlist)" }
+	elsif ($t eq 'subnetid')  { $where_clause = "moderatorlog.uid=users.uid AND comments.subnetid=$vq"	    }
+	elsif ($t eq 'ipid')      { $where_clause = "moderatorlog.uid=users.uid AND comments.ipid=$vq"		    }
+	elsif ($t eq 'bsubnetid') { $where_clause = "moderatorlog.uid=users.uid AND moderatorlog.subnetid=$vq"	    }
+	elsif ($t eq 'bipid')     { $where_clause = "moderatorlog.uid=users.uid AND moderatorlog.ipid=$vq"	    }
+	elsif ($t eq 'global')    { $where_clause = "moderatorlog.uid=users.uid"				    }
 	return [ ] unless $where_clause;
 
+	my $time_clause = "";
+	$time_clause = " AND ts > DATE_SUB(NOW(), INTERVAL $options->{hours_back} HOUR)" if $options->{hours_back};
+
 	my $qlid = $self->_querylog_start("SELECT", "moderatorlog, users, comments");
-	my $sth = $self->sqlSelectMany("comments.sid AS sid,
+	my $sth = $self->sqlSelectMany(
+		"comments.sid AS sid,
 		 comments.cid AS cid,
+		 comments.pid AS pid,
 		 comments.points AS score,
+		 comments.karma AS karma,
+		 comments.tweak AS tweak,
+		 comments.tweak_orig AS tweak_orig,
 		 users.uid AS uid,
 		 users.nickname AS nickname,
 		 $ipid_table.ipid AS ipid,
 		 moderatorlog.val AS val,
 		 moderatorlog.reason AS reason,
 		 moderatorlog.ts AS ts,
-		 moderatorlog.active AS active
+		 moderatorlog.active AS active,
+		 moderatorlog.m2status AS m2status,
+		 moderatorlog.id AS id,
+		 moderatorlog.points_orig AS points_orig 
 		 $select_extra",
 		"moderatorlog, users, comments",
 		"$where_clause
-		 AND moderatorlog.cid=comments.cid",
-		"ORDER BY ts $asc_desc $limit"
+		 AND moderatorlog.cid=comments.cid 
+		 $time_clause",
+		"ORDER BY $order_col $asc_desc $limit"
 	);
-	my(@comments, $comment);
-	push @comments, $comment while ($comment = $sth->fetchrow_hashref);
+	my(@comments, $comment,@ml_ids);
+	while ($comment = $sth->fetchrow_hashref) {
+		push @ml_ids, $comment->{id};
+		push @comments, $comment;
+	}
 	$self->_querylog_finish($qlid);
-
+	my $m2_fair = $self->getMetamodCountsForModsByType("fair", \@ml_ids);
+	my $m2_unfair = $self->getMetamodCountsForModsByType("unfair", \@ml_ids);
+	foreach my $c (@comments) {
+		$c->{m2fair}   = $m2_fair->{$c->{id}}{count} || 0;
+		$c->{m2unfair} = $m2_unfair->{$c->{id}}->{count} || 0;
+	}
 	return \@comments;
+}
+
+sub getMetamodCountsForModsByType {
+	my($self, $type, $ids) = @_;
+	my $id_str = join ',', @$ids;
+	return {} unless @$ids;
+
+	my($cols, $where);
+	$cols = "mmid, COUNT(*) AS count";
+	$where = "mmid IN ($id_str) AND active=1 ";
+	if ($type eq "fair") {
+		$where .= " AND val > 0 ";
+	} elsif ($type eq "unfair") {
+		$where .= " AND val < 0 ";
+	}
+	my $modcounts = $self->sqlSelectAllHashref('mmid',
+		$cols,
+		'metamodlog',
+		$where,
+		'GROUP BY mmid');
+	return $modcounts;	
+}
+
+
+# Given an arrayref of moderation ids, a hashref
+# keyed by moderation ids is returned.  The moderation ids 
+# point to arrays containing info metamoderations for that 
+# particular moderation id.
+
+sub getMetamodsForMods {
+	my($self, $ids, $limit) = @_;
+	my $id_str = join ',', @$ids;
+	return {} unless @$ids;
+	# If the limit param is missing or zero, all matching
+	# rows are returned.
+	$limit = " LIMIT $limit" if $limit;
+	$limit ||= "";
+
+	my $m2s = $self->sqlSelectAllHashrefArray(
+		"id, mmid, metamodlog.uid AS uid, val, ts, active, nickname",
+		"metamodlog, users",
+		"mmid IN ($id_str) AND metamodlog.uid=users.uid",
+		"ORDER BY mmid DESC $limit");
+
+	my $mods_to_m2s = {};
+	for my $m2 (@$m2s) {
+		push @{$mods_to_m2s->{$m2->{mmid}}}, $m2;
+	}
+	return $mods_to_m2s;
+}
+
+########################################################
+sub getMetamodlogForUser {
+	my($self, $uid, $limit) = @_;
+	my $uid_q = $self->sqlQuote($uid);
+	my $limit_clause = $limit ? " LIMIT $limit" : "";
+	my $m2s = $self->sqlSelectAllHashrefArray(
+			"metamodlog.id, metamodlog.mmid, metamodlog.ts, metamodlog.val, metamodlog.active, 
+			 comments.subject, comments.cid, comments.sid,  
+			 moderatorlog.m2status, moderatorlog.reason, moderatorlog.val as modval",
+			"metamodlog, moderatorlog, comments",
+			"metamodlog.mmid = moderatorlog.id AND comments.cid = moderatorlog.cid AND metamodlog.uid = $uid_q ",
+			"GROUP BY moderatorlog.cid, moderatorlog.reason ORDER BY moderatorlog.ts desc"
+		  );
+	my @m2_ids;
+	foreach my $m (@$m2s) {
+		push @m2_ids, $m->{mmid};	
+	}
+	
+	my $m2_fair = $self->getMetamodCountsForModsByType("fair", \@m2_ids);
+	my $m2_unfair = $self->getMetamodCountsForModsByType("unfair", \@m2_ids);
+
+	foreach my $m (@$m2s) {
+		$m->{m2fair}   = $m2_fair->{$m->{mmid}}{count} || 0;
+		$m->{m2unfair} = $m2_unfair->{$m->{mmid}}->{count} || 0;
+	}
+	
+	return $m2s;
 }
 
 ########################################################
@@ -953,6 +1148,11 @@ sub getModeratorLogID {
 sub undoModeration {
 	my($self, $uid, $sid) = @_;
 	my $constants = getCurrentStatic();
+
+	# The chances of getting here when comments are slim 
+	# since comment posting and moderation should be halted.  
+	# Regardless check just in case.
+	return [] unless dbAvailable("write_comments");
 
 	# querylog isn't going to work for this sqlSelectMany, since
 	# we do multiple other queries while the cursor runs over the
@@ -983,33 +1183,31 @@ sub undoModeration {
 			"cid=$cid and uid=$uid"
 		);
 
-		my $comm_update = { };
-
-		# Adjust the comment score up or down, but don't push it beyond the
-		# maximum or minimum.
+		# Restore modded user's karma, again within the proper boundaries.
 		my $adjust = -$val;
 		$adjust =~ s/^([^+-])/+$1/;
-		$comm_update->{-points} =
-			$adjust > 0
-			? "LEAST($max_score, points $adjust)"
-			: "GREATEST($min_score, points $adjust)";
-
-		# Recalculate the comment's reason.
-		$comm_update->{reason} = $self->getCommentMostCommonReason($cid)
-			|| 0; # no active moderations? reset reason to empty
-
-		$self->sqlUpdate("comments", $comm_update, "cid=$cid");
-
-		# Restore modded user's karma, again within the proper boundaries.
-		# XXX If we don't care about tracking the Anonymous Coward's karma,
-		# here's a place to take it out.
+		my $adjust_abs = abs($adjust);
 		$self->sqlUpdate(
 			"users_info",
 			{ -karma =>	$adjust > 0
 					? "LEAST($max_karma, karma $adjust)"
 					: "GREATEST($min_karma, karma $adjust)" },
 			"uid=$cuid"
-		);
+		) unless isAnon($cuid);
+
+		# Adjust the comment score up or down, but don't push it
+		# beyond the maximum or minimum.  Also recalculate its reason.
+		# Its pointsmax logically can't change.
+		my $points = $adjust > 0
+			? "LEAST($max_score, points $adjust)"
+			: "GREATEST($min_score, points $adjust)";
+		my $new_reason = $self->getCommentMostCommonReason($cid)
+			|| 0; # no active moderations? reset reason to empty
+		my $comm_update = {
+			-points =>	$points,
+			reason =>	$new_reason,
+		};
+		$self->sqlUpdate("comments", $comm_update, "cid=$cid");
 
 		push @removed, {
 			cid	=> $cid,
@@ -1357,11 +1555,18 @@ sub createAccessLog {
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $r = Apache->request;
-	my $hostip = $r->connection->remote_ip; 
 	my $bytes = $r->bytes_sent; 
 
 	$user ||= {};
 	$user->{state} ||= {};
+
+	if ($op eq 'image' && $constants->{accesslog_imageregex}) {
+		return if $constants->{accesslog_imageregex} eq 'NONE';
+		my $uri = $r->uri;
+		print STDERR scalar(localtime) . " createAccessLog image url '" . ($r->uri) . "'\n";
+		return unless $uri =~ $constants->{accesslog_imageregex};
+		$dat ||= $uri;
+	}
 
 	my $uid;
 	if ($ENV{SLASH_USER}) {
@@ -1377,10 +1582,14 @@ sub createAccessLog {
 			: $constants->{section};
 	}
 
-	my $ipid = getCurrentUser('ipid') || md5_hex($hostip);
-	$hostip =~ s/^(\d+\.\d+\.\d+)\.\d+$/$1.0/;
-	$hostip = md5_hex($hostip);
-	my $subnetid = getCurrentUser('subnetid') || $hostip;
+	my($ipid, $subnetid) = (getCurrentUser('ipid'), getCurrentUser('subnetid'));
+	if (!$ipid || !$subnetid) {
+		($ipid, $subnetid) = get_ipids($r->connection->remote_ip);
+	}
+
+	if ($op eq 'index' && $dat =~ m|^([^/]*)/|) {
+		$section = $1;
+	}
 
 	if ($dat =~ /(.*)\/(\d{2}\/\d{2}\/\d{2}\/\d{4,7}).*/) {
 		$section = $1;
@@ -1394,6 +1603,8 @@ sub createAccessLog {
 	my $duration;
 	if ($Slash::Apache::User::request_start_time) {
 		$duration = Time::HiRes::time - $Slash::Apache::User::request_start_time;
+		$Slash::Apache::User::request_start_time = 0;
+		$duration = 0 if $duration < 0; # sanity check
 	} else {
 		$duration = 0;
 	}
@@ -1436,10 +1647,13 @@ sub _writeAccessLogCache {
 	my($self) = @_;
 	return unless ref($self->{_accesslog_insert_cache})
 		&& @{$self->{_accesslog_insert_cache}};
+#	$self->{_dbh}{AutoCommit} = 0;
 	$self->sqlDo("SET AUTOCOMMIT=0");
 	while (my $hr = shift @{$self->{_accesslog_insert_cache}}) {
 		$self->sqlInsert('accesslog', $hr, { delayed => 1 });
 	}
+#	$self->{_dbh}->commit;
+#	$self->{_dbh}{AutoCommit} = 1;
 	$self->sqlDo("COMMIT");
 	$self->sqlDo("SET AUTOCOMMIT=1");
 }
@@ -1514,6 +1728,7 @@ sub getDescriptions {
 	# accounts for, as you might expect, a miniscule amount of DB traffic.
 	my $qlid = $self->_querylog_start('SELECT', 'descriptions');
 	my $sth = $descref->(@_);
+	return { } if !$sth;
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
@@ -1543,68 +1758,186 @@ sub deleteUser {
 		seclev		=> 0
 	});
 	my $rows = $self->sqlDelete("users_param", "uid=$uid");
+	$self->setUser_delete_memcached($uid);
 	return $rows;
 }
 
 ########################################################
 # Get user info from the users table.
 sub getUserAuthenticate {
-	my($self, $user, $passwd, $kind) = @_;
-	my($uid, $cookpasswd, $newpass, $user_db,
-		$cryptpasswd, @pass);
+	my($self, $uid_try, $passwd, $kind, $temp_ok) = @_;
+	my($newpass, $cookpasswd);
 
-	return unless $user && $passwd;
+	return undef unless $uid_try && $passwd;
 
 	# if $kind is 1, then only try to auth password as plaintext
 	# if $kind is 2, then only try to auth password as encrypted
-	# if $kind is undef or 0, try as encrypted
-	#	(the most common case), then as plaintext
-	my($EITHER, $PLAIN, $ENCRYPTED) = (0, 1, 2);
+	# if $kind is 3, then only try to auth user with logtoken
+	# if $kind is undef or 0, try as logtoken (the most common case),
+	#	then encrypted, then as plaintext
+	my($EITHER, $PLAIN, $ENCRYPTED, $LOGTOKEN) = (0, 1, 2, 3);
 	my($UID, $PASSWD, $NEWPASSWD) = (0, 1, 2);
 	$kind ||= $EITHER;
 
-	# RECHECK LOGIC!!  -- pudge
+	my $uid_try_q = $self->sqlQuote($uid_try);
+	my $uid_verified = 0;
 
-	$user_db = $self->sqlQuote($user);
-	$cryptpasswd = encryptPassword($passwd);
-	@pass = $self->sqlSelect(
-		'uid,passwd,newpasswd',
-		'users',
-		"uid=$user_db"
-	);
-
-	# try ENCRYPTED -> ENCRYPTED
-	if ($kind == $EITHER || $kind == $ENCRYPTED) {
-		if ($passwd eq $pass[$PASSWD]) {
-			$uid = $pass[$UID];
+	if ($kind == $LOGTOKEN || $kind == $EITHER) {
+		# get existing logtoken, if exists
+		if ($passwd eq $self->getLogToken($uid_try) || (
+			$temp_ok && $passwd eq $self->getLogToken($uid_try, 0, 1)
+		)) {
+			$uid_verified = $uid_try;
 			$cookpasswd = $passwd;
 		}
-	}
 
-	# try PLAINTEXT -> ENCRYPTED
-	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		if ($cryptpasswd eq $pass[$PASSWD]) {
-			$uid = $pass[$UID];
-			$cookpasswd = $cryptpasswd;
+	}
+		
+	if ($kind != $LOGTOKEN && !$uid_verified) {
+		my $cryptpasswd = encryptPassword($passwd);
+		my @pass = $self->sqlSelect(
+			'uid,passwd,newpasswd',
+			'users',
+			"uid=$uid_try_q"
+		);
+
+		# try ENCRYPTED -> ENCRYPTED
+		if ($kind == $EITHER || $kind == $ENCRYPTED) {
+			if ($passwd eq $pass[$PASSWD]) {
+				$uid_verified = $pass[$UID];
+				# get existing logtoken, if exists, or new one
+				$cookpasswd = $self->getLogToken($uid_verified, 1);
+			}
+		}
+
+		# try PLAINTEXT -> ENCRYPTED
+		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
+			if ($cryptpasswd eq $pass[$PASSWD]) {
+				$uid_verified = $pass[$UID];
+				# get existing logtoken, if exists, or new one
+				$cookpasswd = $self->getLogToken($uid_verified, 1);
+			}
+		}
+
+		# try PLAINTEXT -> NEWPASS
+		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
+			if ($passwd eq $pass[$NEWPASSWD]) {
+				$self->sqlUpdate('users', {
+					newpasswd	=> '',
+					passwd		=> $cryptpasswd
+				}, "uid=$uid_try_q");
+				$newpass = 1;
+
+				$uid_verified = $pass[$UID];
+				# delete existing logtokens
+				$self->deleteLogToken($uid_verified, 1);
+				# create new logtoken
+				$cookpasswd = $self->setLogToken($uid_verified);
+			}
 		}
 	}
 
-	# try PLAINTEXT -> NEWPASS
-	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		if ($passwd eq $pass[$NEWPASSWD]) {
-			$self->sqlUpdate('users', {
-				newpasswd	=> '',
-				passwd		=> $cryptpasswd
-			}, "uid=$user_db");
-			$newpass = 1;
-
-			$uid = $pass[$UID];
-			$cookpasswd = $cryptpasswd;
-		}
+	# If we tried to authenticate and failed, log this attempt to
+	# the badpasswords table.
+	if (!$uid_verified) {
+		$self->createBadPasswordLog($uid_try, $passwd);
 	}
 
 	# return UID alone in scalar context
-	return wantarray ? ($uid, $cookpasswd, $newpass) : $uid;
+	return wantarray ? ($uid_verified, $cookpasswd, $newpass) : $uid_verified;
+}
+
+########################################################
+# Log a bad password in a login attempt.
+sub createBadPasswordLog {
+	my($self, $uid, $password_wrong) = @_;
+	my $constants = getCurrentStatic();
+
+	# Failed login attempts as the anonymous coward don't count.
+	return if !$uid || $uid == $constants->{anonymous_coward_uid};
+
+	# Bad passwords that don't come through the web,
+	# we don't bother to log.
+	my $r = Apache->request;
+	return unless $r;
+
+	# We also store the realemail field of the actual user account
+	# at the time the password was tried, so later, if the password
+	# is cracked and the account stolen, there is a record of who
+	# the real owner is.
+	my $realemail = $self->getUser($uid, 'realemail');
+
+	my($ip, $subnet) = get_ipids($r->connection->remote_ip, 1);
+	$self->sqlInsert("badpasswords", {
+		uid =>          $uid,
+		password =>     $password_wrong,
+		ip =>           $ip,
+		subnet =>       $subnet,
+		realemail =>	$realemail,
+	} );
+
+	my $warn_limit = $constants->{bad_password_warn_user_limit} || 0;
+	my $bp_count = $self->getBadPasswordCountByUID($uid);
+
+	# We only warn a user at the Xth bad password attempt.  We don't want to
+	# generate a message for every bad attempt over a threshold
+	if ($bp_count && $bp_count == $warn_limit) {
+
+		my $messages = getObject("Slash::Messages");
+		return unless $messages;
+		my $users = $messages->checkMessageCodes(
+			MSG_CODE_BADPASSWORD, [$uid]
+		);
+		if (@$users) {
+			my $uid_q = $self->sqlQuote($uid);
+			my $nick = $self->sqlSelect("nickname", "users", "uid=$uid_q");
+			my $bp = $self->getBadPasswordIPsByUID($uid);
+			my $data  = {
+				template_name =>	'badpassword_msg',
+				subject =>		'Bad login attempts warning',
+				nickname =>		$nick,
+				uid =>			$uid,
+				bp_count =>		$bp_count,
+				bp_ips =>		$bp
+			};
+
+			$messages->create($users->[0],
+				MSG_CODE_BADPASSWORD, $data, 0, '', 'now'
+			);
+		}
+	}
+}
+
+########################################################
+sub getBadPasswordsByUID {
+	my($self, $uid) = @_;
+	my $uid_q = $self->sqlQuote($uid);
+	my $ar = $self->sqlSelectAllHashrefArray(
+		"ip, password, DATE_FORMAT(ts, '%Y-%m-%d %h:%i:%s') AS ts",
+		"badpasswords",
+		"uid=$uid_q AND ts > DATE_SUB(NOW(), INTERVAL 1 DAY)");
+	return $ar;
+}
+
+########################################################
+sub getBadPasswordCountByUID {
+	my($self, $uid) = @_;
+	my $uid_q = $self->sqlQuote($uid);
+	return $self->sqlCount("badpasswords",
+		"uid=$uid_q AND ts > DATE_SUB(NOW(), INTERVAL 1 DAY)");
+}
+
+########################################################
+sub getBadPasswordIPsByUID {
+	my($self, $uid) = @_;
+	my $uid_q = $self->sqlQuote($uid);
+	my $ar = $self->sqlSelectAllHashrefArray(
+		"ip, COUNT(*) AS c,
+		 MIN(DATE_FORMAT(ts, '%Y-%m-%d %h:%i:%s')) AS mints,
+		 MAX(DATE_FORMAT(ts, '%Y-%m-%d %h:%i:%s')) AS maxts",
+		"badpasswords",
+		"uid=$uid_q AND ts > DATE_SUB(NOW(), INTERVAL 1 DAY)",
+		"GROUP BY ip ORDER BY c DESC");
 }
 
 ########################################################
@@ -1618,6 +1951,100 @@ sub getNewPasswd {
 	return $newpasswd;
 }
 
+########################################################
+# get proper cookie location
+sub _getLogTokenCookieLocation {
+	my($self, $uid) = @_;
+	my $user = getCurrentUser();
+
+	my $temp_str = $user->{state}{login_temp} || 'no';
+
+	my $cookie_location = $temp_str eq 'yes'
+		? 'classbid'
+		: $self->getUser($uid, 'cookie_location');
+	my $locationid = get_ipids('', '', $cookie_location);
+	return($locationid, $temp_str);
+}
+
+########################################################
+# Get a logtoken from the DB, or create a new one
+sub getLogToken {
+	my($self, $uid, $new, $force_temp) = @_;
+
+	my $uid_q = $self->sqlQuote($uid);
+
+	# set the temp value for login_temp, if forced
+	my $user = getCurrentUser();
+	my $temp = $user->{state}{login_temp};
+	$user->{state}{login_temp} = 'yes' if $temp eq 'no' && $force_temp;
+
+	my($locationid, $temp_str) = $self->_getLogTokenCookieLocation($uid);
+
+	my $where = "uid=$uid_q AND " .
+	            "locationid='$locationid' AND " .
+	            "temp='$temp_str'";
+
+	my $value = $self->sqlSelect(
+		'value', 'users_logtokens',
+		$where . ' AND expires >= NOW()'
+	);
+
+	# reset the temp value for login_temp, if forced
+	$user->{state}{login_temp} = 'no' if $temp eq 'no' && $force_temp && !$value;
+
+	# bump expiration for temp logins
+	if ($value && $temp_str eq 'yes') {
+		my $minutes = getCurrentStatic('login_temp_minutes');
+		$self->sqlUpdate('users_logtokens', {
+			-expires 	=> "DATE_ADD(NOW(), INTERVAL $minutes MINUTE)"
+		}, $where);
+	}
+
+	# if $new, then create a new value if none exists
+	$value ||= $self->setLogToken($uid) if $new;
+
+	return $value;
+}
+
+########################################################
+# Make a new logtoken, save it in the DB, and return it 
+sub setLogToken {
+	my($self, $uid) = @_;
+
+	my $logtoken = createLogToken();
+	my($locationid, $temp_str) = $self->_getLogTokenCookieLocation($uid);
+
+	my $interval = '1 YEAR';
+	if ($temp_str eq 'yes') {
+		my $minutes = getCurrentStatic('login_temp_minutes');
+		$interval = "$minutes MINUTE";
+	}
+
+	$self->sqlReplace('users_logtokens', {
+		uid		=> $uid,
+		value		=> $logtoken,
+		locationid	=> $locationid,
+		temp		=> $temp_str,
+		-expires 	=> "DATE_ADD(NOW(), INTERVAL $interval)"
+	});
+	return $logtoken;
+}
+
+########################################################
+# Delete logtoken(s)
+sub deleteLogToken {
+	my($self, $uid, $all) = @_;
+
+	my $uid_q = $self->sqlQuote($uid);
+	my $where = "uid=$uid_q";
+
+	if (!$all) {
+		my($locationid, $temp_str) = $self->_getLogTokenCookieLocation($uid);
+		$where .= " AND locationid='$locationid' AND temp='$temp_str'";
+	}
+
+	$self->sqlDelete('users_logtokens', $where);
+}
 
 ########################################################
 # Get user info from the users table.
@@ -1662,36 +2089,45 @@ sub getUserEmail {
 	return $uid;
 }
 
+
 #################################################################
 # Corrected all of the above (those messages will go away soon.
 # -Brian, Tue Jan 21 14:49:30 PST 2003
 # 
 sub getCommentsByGeneric {
-	my($self, $where_clause, $num, $min) = @_;
+	my($self, $where_clause, $num, $min, $options) = @_;
+	$options ||= {};
 	$min ||= 0;
 	my $limit = " LIMIT $min, $num " if $num;
+	$where_clause = "($where_clause) AND date > DATE_SUB(NOW(), INTERVAL $options->{limit_days} DAY)"
+		if $options->{limit_days};
+	$where_clause .= " AND cid >= $options->{cid_at_or_after} " if $options->{cid_at_or_after};
+	my $sort_field = $options->{sort_field} || "date";
+	my $sort_dir = $options->{sort_dir} || "DESC";
 
-	my $comments = $self->sqlSelectAllHashrefArray('*','comments', $where_clause, " ORDER BY date DESC $limit");
+	my $comments = $self->sqlSelectAllHashrefArray(
+		'*', 'comments', $where_clause,
+		"ORDER BY $sort_field $sort_dir $limit");
 
 	return $comments;
 }
 
 #################################################################
 sub getCommentsByUID {
-	my($self, $uid, $num, $min) = @_;
-	return $self->getCommentsByGeneric("uid=$uid", $num, $min);
+	my($self, $uid, $num, $min, $options) = @_;
+	return $self->getCommentsByGeneric("uid=$uid", $num, $min, $options);
 }
 
 #################################################################
 sub getCommentsByIPID {
-	my($self, $id, $num, $min) = @_;
-	return $self->getCommentsByGeneric("ipid='$id'", $num, $min);
+	my($self, $id, $num, $min, $options) = @_;
+	return $self->getCommentsByGeneric("ipid='$id'", $num, $min, $options);
 }
 
 #################################################################
 sub getCommentsBySubnetID {
-	my($self, $id, $num, $min) = @_;
-	return $self->getCommentsByGeneric("subnetid='$id'", $num, $min);
+	my($self, $id, $num, $min, $options) = @_;
+	return $self->getCommentsByGeneric("subnetid='$id'", $num, $min, $options);
 }
 
 #################################################################
@@ -1699,9 +2135,12 @@ sub getCommentsBySubnetID {
 # whether you have an IPID or a SubnetID, those queries take a
 # fraction of a second, but this "OR" is a table scan.
 sub getCommentsByIPIDOrSubnetID {
-	my($self, $id, $min) = @_;
+	my($self, $id, $num, $min, $options) = @_;
+	my $constants = getCurrentStatic();
+	my $where = "(ipid='$id' OR subnetid='$id') ";
+	$where .= " AND cid >= $constants->{comments_forgetip_mincid} " if $constants->{comments_forgetip_mincid};
 	return $self->getCommentsByGeneric(
-		"ipid='$id' OR subnetid='$id'", $min);
+	       $where, $num, $min, $options);
 }
 
 
@@ -1718,14 +2157,15 @@ sub getCommentsByIPIDOrSubnetID {
 
 { # closure surrounding getDBs and getDB
 
-my %_getDBs_cached_databases;
+# shared between sites, not a big deal
 my $_getDBs_cached_nextcheck;
 sub getDBs {
 	my($self) = @_;
 
 	my %databases;
-	if (($_getDBs_cached_nextcheck || 0) > time) {
-		%databases = %_getDBs_cached_databases;
+	my $cache = getCurrentCache();
+	if ($cache->{'dbs'} && (($_getDBs_cached_nextcheck || 0) > time)) {
+		%databases = %{ $cache->{'dbs'} };
 #		print STDERR gmtime() . " $$ getDBs returning cache"
 #			. " time='" . time . "'"
 #			. " nextcheck in " . ($_getDBs_cached_nextcheck - time) . " secs\n";
@@ -1746,7 +2186,7 @@ sub getDBs {
 	# angel script, this should be roughly similar to how
 	# often that angel runs.
 	$_getDBs_cached_nextcheck = time + 10;
-	%_getDBs_cached_databases = %databases;
+	$cache->{'dbs'} = \%databases;
 #	print STDERR gmtime() . " $$ getDBs setting cache\n";
 
 	return \%databases;
@@ -1758,8 +2198,9 @@ sub getDBs {
 sub getDB {
 	my($self, $db_type) = @_;
 
-	if (($_getDBs_cached_nextcheck || 0) > time) {
-		my $vu_ar = $_getDBs_cached_databases{$db_type};
+	my $cache = getCurrentCache();
+	if ($cache->{'dbs'} && (($_getDBs_cached_nextcheck || 0) > time)) {
+		my $vu_ar = $cache->{'dbs'}{$db_type};
 #		print STDERR gmtime() . " $$ getDB returning cache for '$db_type'"
 #			. " time='" . time . "'"
 #			. " nextcheck in " . ($_getDBs_cached_nextcheck - time) . " secs\n";
@@ -1821,12 +2262,15 @@ sub createUser {
 	my($self, $matchname, $email, $newuser) = @_;
 	return unless $matchname && $email && $newuser;
 
+	$email =~ s/\s//g; # strip whitespace from emails
+
 	return if ($self->sqlSelect(
 		"uid", "users",
 		"matchname=" . $self->sqlQuote($matchname)
 	))[0] || $self->existsEmail($email);
 
-	$self->{_dbh}->{AutoCommit} = 0;
+#	$self->{_dbh}{AutoCommit} = 0;
+	$self->sqlDo("SET AUTOCOMMIT=0");
 
 	$self->sqlInsert("users", {
 		uid		=> '',
@@ -1839,8 +2283,10 @@ sub createUser {
 
 	my $uid = $self->getLastInsertId({ table => 'users', prime => 'uid' });
 	unless ($uid) {
-		$self->{_dbh}->rollback;
-		$self->{_dbh}->{AutoCommit} = 1;
+#		$self->{_dbh}->rollback;
+#		$self->{_dbh}{AutoCommit} = 1;
+		$self->sqlDo("ROLLBACK");
+		$self->sqlDo("SET AUTOCOMMIT=1");
 	}
 	return unless $uid;
 	$self->sqlInsert("users_info", {
@@ -1863,44 +2309,50 @@ sub createUser {
 	#	- Cliff
 	# Initialize the expiry variables...
 	# ...users start out as registered...
-	# ...the default email view is to SHOW email address...
-	#	(not anymore - Jamie)
 	my $constants = getCurrentStatic();
 
-	# editComm;users;default knows that the default emaildisplay is 0...
-	# ...as it should be
+	my $initdomain = fullhost_to_domain($email);
 	$self->setUser($uid, {
 		'registered'		=> 1,
 		'expiry_comm'		=> $constants->{min_expiry_comm},
 		'expiry_days'		=> $constants->{min_expiry_days},
 		'user_expiry_comm'	=> $constants->{min_expiry_comm},
 		'user_expiry_days'	=> $constants->{min_expiry_days},
-#		'emaildisplay'		=> 2,
+		initdomain		=> $initdomain,
+		created_ipid		=> getCurrentUser('ipid'),
 	});
 
-	$self->{_dbh}->commit;
-	$self->{_dbh}->{AutoCommit} = 1;
+#	$self->{_dbh}->commit;
+#	$self->{_dbh}{AutoCommit} = 1;
+	$self->sqlDo("COMMIT");
+	$self->sqlDo("SET AUTOCOMMIT=1");
 
 	$self->sqlInsert("users_count", { uid => $uid });
+
+	$self->setUser_delete_memcached($uid);
 
 	return $uid;
 }
 
 
 ########################################################
-# Do not like this method -Brian
 sub setVar {
 	my($self, $name, $value) = @_;
+	my $name_q = $self->sqlQuote($name);
+	my $retval;
 	if (ref $value) {
-		$self->sqlUpdate('vars', {
-			value		=> $value->{'value'},
-			description	=> $value->{'description'}
-		}, 'name=' . $self->sqlQuote($name));
+		my $update = { };
+		for my $k (qw( value description )) {
+			$update->{$k} = $value->{$k} if defined $value->{$k};
+		}
+		return 0 unless $update;
+		$retval = $self->sqlUpdate('vars', $update, "name=$name_q");
 	} else {
-		$self->sqlUpdate('vars', {
+		$retval = $self->sqlUpdate('vars', {
 			value		=> $value
-		}, 'name=' . $self->sqlQuote($name));
+		}, "name=$name_q");
 	}
+	return $retval;
 }
 
 ########################################################
@@ -2006,8 +2458,10 @@ sub deleteModeratorlog {
 	return unless @$mmids;
 
 	my $mmid_in = join ',', @$mmids;
-	$self->sqlDelete('moderatorlog', $where);
+	# Delete from metamodlog first since (if built correctly) that
+	# table has a FOREIGN KEY constraint pointing to moderatorlog.
 	$self->sqlDelete('metamodlog', "mmid IN ($mmid_in)");
+	$self->sqlDelete('moderatorlog', $where);
 }
 
 ########################################################
@@ -2169,12 +2623,15 @@ sub setDiscussionDelCount {
 # of someone wanting to delete a submission that is
 # not part in the form
 sub deleteSubmission {
-	my($self, $subid) = @_;
+	my($self, $options, $nodelete) = @_;  # $nodelete param is obsolete
 	my $uid = getCurrentUser('uid');
 	my $form = getCurrentForm();
 	my @subid;
 
-	if ($form->{subid}) {
+	$options = {} unless ref $options;
+	$options->{nodelete} = $nodelete if defined $nodelete;
+
+	if ($form->{subid} && !$options->{nodelete}) {
 		$self->sqlUpdate("submissions", { del => 1 },
 			"subid=" . $self->sqlQuote($form->{subid})
 		);
@@ -2220,12 +2677,17 @@ sub deleteSubmission {
 				$self->sqlUpdate("submissions", \%sub,
 					"subid=" . $self->sqlQuote($n));
 			}
-		} elsif ($t eq 'del') {
-			$self->sqlUpdate("submissions", { del => 1 },
-				'subid=' . $self->sqlQuote($n));
-			$self->setUser($uid,
-				{ -deletedsubmissions => 'deletedsubmissions+1' }
-			);
+		} elsif ($t eq 'del' && !$options->{nodelete}) {
+			if ($options->{accepted}) {
+				$self->sqlUpdate("submissions", { del => 2 },
+					'subid=' . $self->sqlQuote($n));
+			} else {
+				$self->sqlUpdate("submissions", { del => 1 },
+					'subid=' . $self->sqlQuote($n));
+				$self->setUser($uid,
+					{ -deletedsubmissions => 'deletedsubmissions+1' }
+				);
+			}
 			push @subid, $n;
 		}
 	}
@@ -2335,6 +2797,7 @@ sub saveTopic {
 		default_image	=> $imgid,
 		alttext		=> $topic->{alttext},
 		parent_topic	=> $topic->{parent_topic},
+		series		=> $topic->{series} ? 1 : 0,
 	};
 
 
@@ -2441,30 +2904,33 @@ sub saveColorBlock {
 	my($self, $colorblock) = @_;
 	my $form = getCurrentForm();
 
-	my $db_bid = $self->sqlQuote($form->{color_block} || 'colors');
+	my $bid_q = $self->sqlQuote($form->{color_block} || 'colors');
 
 	if ($form->{colorsave}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
 				block => $colorblock,
-			}, "bid = $db_bid"
+			}, "bid = $bid_q"
 		);
 
 	} elsif ($form->{colorsavedef}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
 				block => $colorblock,
-			}, "bid = $db_bid"
+			}, "bid = $bid_q"
 		);
 		$self->sqlUpdate('backup_blocks', {
 				block => $colorblock,
-			}, "bid = $db_bid"
+			}, "bid = $bid_q"
 		);
 
 	} elsif ($form->{colororig}) {
 		# reload original version of colors
-		my $block = $self->{_dbh}->selectrow_array("SELECT block FROM backup_blocks WHERE bid = $db_bid");
-		$self->sqlDo("UPDATE blocks SET block = $block WHERE bid = $db_bid");
+		my $block = $self->sqlSelect("block", "backup_blocks", "bid = $bid_q");
+		$self->sqlUpdate('blocks', {
+				block => $block
+			}, "bid = $bid_q"
+		);
 	}
 }
 
@@ -2628,10 +3094,9 @@ sub savePollQuestion {
 
 	# Go on and unset any reference to the qid in sections, if it 
 	# needs to exist the next statement will correct this. -Brian
-	$self->sqlUpdate('sections', { qid => ''}, " qid = $poll->{qid} ")	
-		if ($poll->{qid});
+	$self->sqlUpdate('sections', { qid => '0' }, " qid = $poll->{qid} ")	
+		if $poll->{qid};
 
-	
 	if ($poll->{qid} && $poll->{polltype} eq "section" && $poll->{date} le $self->getTime()) {
 		$self->setSection($poll->{section}, { qid => $poll->{qid} });
 	}
@@ -2687,6 +3152,9 @@ sub deletePoll {
 sub getPollQuestionList {
 	my($self, $offset, $other) = @_;
 	my($where);
+
+	my $justStories = $other->{type} eq "story" ? 1 : 0 ;
+
 	$offset = 0 if $offset !~ /^\d+$/;
 	my $admin = getCurrentUser('is_admin');
 
@@ -2715,13 +3183,22 @@ sub getPollQuestionList {
 	$where .= sprintf ' AND section NOT IN (%s)', join(',', @{$other->{exclude_section}})
 		if $other->{exclude_section} && @{$other->{section}};
 	$where .= " AND pollquestions.topic = $other->{topic} " if $other->{topic};
-       
+
 	$where .= " AND date <= NOW() " unless $admin;
 	my $limit = $other->{limit} || 20;
 
+	my $cols = 'pollquestions.qid as qid, question, date, voters, discussions.commentcount as commentcount, 
+			polltype, date>now() as future,pollquestions.topic';
+	$cols .= ", stories.title as title, stories.sid as sid" if $justStories;
+
+	my $tables = 'pollquestions,discussions';
+	$tables .= ',stories' if $justStories;
+
+	$where .= ' AND pollquestions.qid = stories.qid' if $justStories;
+
 	my $questions = $self->sqlSelectAll(
-		'qid, question, date, voters, commentcount, polltype, date>now() as future,pollquestions.topic',
-		'pollquestions,discussions',
+		$cols,
+		$tables,
 		$where,
 		"ORDER BY date DESC LIMIT $offset, $limit"
 	);
@@ -2810,11 +3287,19 @@ sub setStory {
 	}
 
 	for (@param)  {
-		$self->sqlReplace($param_table, {
-			sid	=> $sid,
-			name	=> $_->[0],
-			value	=> $_->[1]
-		}) if defined $_->[1];
+		if (defined $_->[1] && length $_->[1]) {
+			$self->sqlReplace($param_table, {
+				sid	=> $sid,
+				name	=> $_->[0],
+				value	=> $_->[1]
+			});
+		} else {
+			my $sid_q = $self->sqlQuote($sid);
+			my $name_q = $self->sqlQuote($_->[0]);
+			$self->sqlDelete($param_table,
+				"sid = $sid_q AND name = $name_q"
+			);
+		}
 	}
 
 	return $ok;
@@ -2901,6 +3386,9 @@ sub getUnsetFkCount {
 sub updateFormkeyId {
 	my($self, $formname, $formkey, $uid, $rlogin, $upasswd) = @_;
 
+	# here we check to see if a user has logged in just now, and
+	# has any formkeys assigned to him; if so, we assign them to
+	# his newly-granted UID
 	if (! isAnon($uid) && $rlogin && length($upasswd) > 1) {
 		my $constants = getCurrentStatic();
 		my $last_count = $self->_getLastFkCount($formname);
@@ -3444,6 +3932,134 @@ sub checkReadOnly {
 	return 0;
 }
 
+sub getKnownOpenProxy {
+	my($self, $ip) = @_;
+	return 0 unless $ip;
+	my $ip_q = $self->sqlQuote($ip);
+	my $hours_back = getCurrentStatic('comments_portscan_cachehours') || 48;
+	my $port = $self->sqlSelect("port",
+		"open_proxies",
+		"ip = $ip_q AND ts >= DATE_SUB(NOW(), INTERVAL $hours_back HOUR)");
+#print STDERR scalar(localtime) . " getKnownOpenProxy returning " . (defined($port) ? "'$port'" : "undef") . " for ip '$ip'\n";
+	return $port;
+}
+
+sub setKnownOpenProxy {
+	my($self, $ip, $port) = @_;
+	return 0 unless $ip;
+	my $xff;
+	if ($port) {
+		my $r = Apache->request;
+		$xff = $r->header_in('X-Forwarded-For') if $r;
+#use Data::Dumper; print STDERR "sKOP headers_in: " . Dumper([ $r->headers_in ]) if $r;
+	}
+	$xff ||= undef;
+	$xff = $1 if $xff && length($xff) > 15
+		&& $xff =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/;
+#print STDERR scalar(localtime) . " setKnownOpenProxy doing sqlReplace ip '$ip' port '$port'\n";
+	return $self->sqlReplace("open_proxies", {
+		ip =>	$ip,
+		port =>	$port,
+		-ts =>	'NOW()',
+		xff =>	$xff,
+	});
+}
+
+sub checkForOpenProxy {
+	my($self, $ip) = @_;
+	# If we weren't passed an IP address, default to whatever
+	# the current IP address is.
+	if (!$ip && $ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$ip = $r->connection->remote_ip if $r;
+	}
+	# If we don't have an IP address, it can't be an open proxy.
+	return 0 if !$ip;
+	# Known secure IPs also don't count as open proxies.
+	my $constants = getCurrentStatic();
+	my $secure_ip_regex = $constants->{admin_secure_ip_regex};
+	return 0 if $secure_ip_regex && $ip =~ /$secure_ip_regex/;
+
+	# If the IP address is already one we have listed, use the
+	# existing listing.
+	my $port = $self->getKnownOpenProxy($ip);
+	if (defined $port) {
+#print STDERR scalar(localtime) . " cfop no need to check ip '$ip', port is '$port'\n";
+		return $port;
+	}
+#print STDERR scalar(localtime) . " cfop ip '$ip' not known, checking\n";
+
+	# No known answer;  probe the IP address and get an answer.
+	my $ports = $constants->{comments_portscan_ports} || '80 8080 8000 3128';
+	my @ports = grep /^\d+$/, split / /, $ports;
+	return 0 if !@ports;
+	my $timeout = $constants->{comments_portscan_timeout} || 5;
+	my $connect_timeout = int($timeout/scalar(@ports)+0.2);
+	my $ok_url = "$constants->{absolutedir}/ok.txt";
+
+	my $pua = Slash::Custom::ParUserAgent->new();
+	$pua->redirect(1);
+	$pua->max_redirect(3);
+	$pua->max_hosts(scalar(@ports));
+	$pua->max_req(scalar(@ports));
+	$pua->timeout($connect_timeout);
+
+#use LWP::Debug;
+#use Data::Dumper;
+#LWP::Debug::level("+trace"); LWP::Debug::level("+debug");
+
+	my $start_time = time;
+
+	local $_proxy_port = undef;
+	sub _cfop_callback {
+		my($data, $response, $protocol) = @_;
+#print STDERR scalar(localtime) . " _cfop_callback protocol '$protocol' port '$_proxy_port' succ '" . ($response->is_success()) . "' data '$data' content '" . ($response->is_success() ? $response->content() : "(fail)") . "'\n";
+		if ($response->is_success() && $data eq "ok\n") {
+			# We got a success, so the IP is a proxy.
+			# We should know the proxy's port at this
+			# point;  if not, that's remarkable, so
+			# print an error.
+			my $orig_req = $response->request();
+			$_proxy_port = $orig_req->{_slash_proxytest_port};
+			if (!$_proxy_port) {
+				print STDERR scalar(localtime) . " _cfop_callback got data but no port, protocol '$protocol' port '$_proxy_port' succ '" . ($response->is_success()) . "' data '$data' content '" . $response->content() . "'\n";
+			}
+			$_proxy_port ||= 1;
+			# We can quit listening on any of the
+			# other ports that may have connected,
+			# returning immediately from the wait().
+			# So we want to return C_ENDALL.  Except
+			# C_ENDALL doesn't seem to _work_, it
+			# crashes in _remove_current_connection.
+			# Argh.  So we use C_LASTCON.
+			return LWP::Parallel::UserAgent::C_LASTCON;
+		}
+#print STDERR scalar(localtime) . " _cfop_callback protocol '$protocol' succ '0'\n";
+	}
+
+#print STDERR scalar(localtime) . " cfop beginning registering\n";
+	for my $port (@ports) {
+		# We switch to a new proxy every time thru.
+		$pua->proxy('http', "http://$ip:$port/");
+		my $req = HTTP::Request->new(GET => $ok_url);
+		$req->{_slash_proxytest_port} = $port;
+#print STDERR scalar(localtime) . " cfop registering for proxy '$pua->{proxy}{http}'\n";
+		$pua->register($req, \&_cfop_callback);
+	}
+#print STDERR scalar(localtime) . "pua: " . Dumper($pua);
+	my $elapsed = time - $start_time;
+	my $wait_timeout = $timeout - $elapsed;
+	$wait_timeout = 1 if $wait_timeout < 1;
+	$pua->wait($wait_timeout);
+#print STDERR scalar(localtime) . " cfop done with wait, returning " . (defined $_proxy_port ? 'undef' : "'$port'") . "\n";
+	$_proxy_port = 0 if !$_proxy_port;
+
+	# Store this value so we don't keep probing the IP.
+	$self->setKnownOpenProxy($ip, $_proxy_port);
+
+	return $_proxy_port;
+}
+
 ##################################################################
 # For backwards compatibility, returns just the number of comments if
 # called in scalar context, or a list of (number of comments, sum of
@@ -3494,9 +4110,6 @@ sub getNumCommPostedByUID {
 }
 
 ##################################################################
-# This method could stand to be more efficient.  Instead of doing a
-# separate getUser($uid, 'nickname') for each uid, those could be
-# one query. - Jamie 2003/04/11
 sub getUIDStruct {
 	my($self, $column, $id) = @_;
 
@@ -3588,13 +4201,13 @@ sub getNetIDStruct {
 	}
 
 	$iplist = $self->sqlSelectAll(
-                "ipid,
-                MIN(SUBSTRING(time, 1, 10)) AS dmin,
-                MAX(SUBSTRING(time, 1, 10)) AS dmax,
-                COUNT(*) AS c, $column4 as ipid_vis",
-                "submissions",
-                "uid = '$id' AND ipid != ''",
-                "GROUP BY ipid ORDER BY dmax DESC, dmin DESC, c DESC, ipid ASC LIMIT 100");
+		"ipid,
+		MIN(SUBSTRING(time, 1, 10)) AS dmin,
+		MAX(SUBSTRING(time, 1, 10)) AS dmax,
+		COUNT(*) AS c, $column4 as ipid_vis",
+		"submissions",
+		"uid = '$id' AND ipid != ''",
+		"GROUP BY ipid ORDER BY dmax DESC, dmin DESC, c DESC, ipid ASC LIMIT 100");
 
 	for (@$iplist) {
 		if (exists $ipstruct->{$_->[0]}) {
@@ -3605,39 +4218,39 @@ sub getNetIDStruct {
 		} else {
 			my $ip;
 			$ip->{dmin} = $_->[1];
-                	$ip->{dmax} = $_->[2];
-                	$ip->{count} = $_->[3];
-                	$ip->{ipid_vis} = $_->[4];
+			$ip->{dmax} = $_->[2];
+			$ip->{count} = $_->[3];
+			$ip->{ipid_vis} = $_->[4];
 			$ip->{submissions} = 1;
-                	$ipstruct->{$_->[0]} = $ip;
+			$ipstruct->{$_->[0]} = $ip;
 		}
 	}
 
-        $iplist = $self->sqlSelectAll(
-                "ipid,
-                MIN(SUBSTRING(ts, 1, 10)) AS dmin,
-                MAX(SUBSTRING(ts, 1, 10)) AS dmax,
-                COUNT(*) AS c, $column4 as ipid_vis",
-                "moderatorlog",
-                "uid = '$id' AND ipid != ''",
-                "GROUP BY ipid ORDER BY dmax DESC, dmin DESC, c DESC, ipid ASC LIMIT 100");
+	$iplist = $self->sqlSelectAll(
+		"ipid,
+		MIN(SUBSTRING(ts, 1, 10)) AS dmin,
+		MAX(SUBSTRING(ts, 1, 10)) AS dmax,
+		COUNT(*) AS c, $column4 as ipid_vis",
+		"moderatorlog",
+		"uid = '$id' AND ipid != ''",
+		"GROUP BY ipid ORDER BY dmax DESC, dmin DESC, c DESC, ipid ASC LIMIT 100");
 
 	for (@$iplist) {
-                if (exists $ipstruct->{$_->[0]}) {
-                        $ipstruct->{$_->[0]}{dmin} = ($ipstruct->{$_->[0]}{dmin} lt $_->[1]) ? $ipstruct->{$_->[0]}{dmin} : $_->[1];
-                        $ipstruct->{$_->[0]}{dmax} = ($ipstruct->{$_->[0]}{dmax} gt $_->[2]) ? $ipstruct->{$_->[0]}{dmax} : $_->[2];
-                        $ipstruct->{$_->[0]}{count} += $_->[3];
-                        $ipstruct->{$_->[0]}{moderatorlog} = 1;
-                } else {
-                        my $ip;
-                        $ip->{dmin} = $_->[1];
-                        $ip->{dmax} = $_->[2];
-                        $ip->{count} = $_->[3];
-                        $ip->{ipid_vis} = $_->[4];
-                        $ip->{moderatorlog} = 1;
-                        $ipstruct->{$_->[0]} = $ip;
-                }
-        }
+		if (exists $ipstruct->{$_->[0]}) {
+			$ipstruct->{$_->[0]}{dmin} = ($ipstruct->{$_->[0]}{dmin} lt $_->[1]) ? $ipstruct->{$_->[0]}{dmin} : $_->[1];
+			$ipstruct->{$_->[0]}{dmax} = ($ipstruct->{$_->[0]}{dmax} gt $_->[2]) ? $ipstruct->{$_->[0]}{dmax} : $_->[2];
+			$ipstruct->{$_->[0]}{count} += $_->[3];
+			$ipstruct->{$_->[0]}{moderatorlog} = 1;
+		} else {
+			my $ip;
+			$ip->{dmin} = $_->[1];
+			$ip->{dmax} = $_->[2];
+			$ip->{count} = $_->[3];
+			$ip->{ipid_vis} = $_->[4];
+			$ip->{moderatorlog} = 1;
+			$ipstruct->{$_->[0]} = $ip;
+		}
+	}
 
 	return $ipstruct;
 }
@@ -3797,13 +4410,20 @@ sub getAbuses {
 		subnetid => "subnetid = '$id'",
 	};
 
-	$self->sqlSelectAll('ts,uid,ipid,subnetid,pagename,reason', 'abusers',  "$where->{$key}", 'ORDER by ts DESC');
+	$self->sqlSelectAll('ts,uid,ipid,subnetid,pagename,reason',
+		'abusers',  "$where->{$key}", 'ORDER by ts DESC');
 
 }
 
 ##################################################################
 # grabs the number of rows in the last X rows of accesslog, in order
 # to get an idea of recent hits
+# If called wanting a scalar, just returns the total number of
+# hits.
+# If called wanting an array, returns an array whose first
+# item is the total number of hits, and whose next 5 items
+# (indexed 1 thru 5 of course) are the number of hits with
+# status codes 1xx, 2xx, 3xx, 4xx and 5xx respectively.
 sub countAccessLogHitsInLastX {
 	my($self, $field, $check, $x) = @_;
 	$x ||= 10000;
@@ -3823,7 +4443,23 @@ sub countAccessLogHitsInLastX {
 
 	$where .= "AND id BETWEEN $min AND $max";
 
-	return $self->sqlCount("accesslog", $where);
+	if (wantarray) {
+		my $hr = $self->sqlSelectAllHashref(
+			"statusxx",
+			"FLOOR(status/100)*100 AS statusxx, COUNT(*) AS c",
+			"accesslog",
+			$where,
+			"GROUP BY statusxx");
+		my @retval = ( 0 );
+		for my $statusxx (qw( 100 200 300 400 500 )) {
+			my $c = $hr->{$statusxx}{c} || 0;
+			$retval[0] += $c;
+			push @retval, $c;
+		}
+		return @retval;
+	} else {
+		return $self->sqlCount("accesslog", $where);
+	}
 }
 
 ##################################################################
@@ -3854,7 +4490,7 @@ sub _get_insert_and_where_accesslist {
 				"ipid = '$user_check->{md5id}'",
 				"subnetid = '$user_check->{md5id}'",
 			];
-			$insert_hr->{ipid} = $user_check->{ipid};
+			$insert_hr->{ipid} = $insert_hr->{subnetid} = $user_check->{md5id};
 		} else {
 			return undef;
 		}
@@ -3879,17 +4515,19 @@ sub getAccessListInfo {
 
 	my $info = undef;
 	for my $where (@$where_ary) {
-		$ref = $self->sqlSelectAll("reason, ts, adminuid", 'accesslist', $where);
+		$ref = $self->sqlSelectAll("reason, ts, adminuid, estimated_users", 'accesslist', $where);
 		for my $row (@$ref) {
 			$info ||= { };
 			if (!exists($info->{reason}) || $info->{reason} eq '') {
 				$info->{reason}	= $row->[0];
 				$info->{ts}	= $row->[1];
 				$info->{adminuid} = $row->[2];
+				$info->{estimated_users} = $row->[3];
 			} elsif ($info->{reason} ne $row->[0]) {
 				$info->{reason}	= 'multiple';
 				$info->{ts}	= 'multiple';
 				$info->{adminuid} = 0;
+				$info->{estimated_users} = $row->[3];
 				# At this point we're done, since the
 				# reason and time can't change anymore,
 				# so short-circuit out of the loop.
@@ -4000,6 +4638,7 @@ sub setAccessList {
 }
 
 #################################################################
+# Should probably cache this instead of relying on MySQL's query cache.
 sub checkIsProxy {
 	my($self, $ipid) = @_;
 
@@ -4011,6 +4650,7 @@ sub checkIsProxy {
 }
 
 #################################################################
+# Should probably cache this instead of relying on MySQL's query cache.
 sub checkIsTrusted {
 	my($self, $ipid) = @_;
 
@@ -4062,12 +4702,12 @@ sub currentAdmin {
 #
 sub getTopNewsstoryTopics {
 	my($self, $limit, $section) = @_;
-        $section = "" if $section eq "index";
+	$section = "" if $section eq "index";
 	my $all = 1 if !$limit;
 
 	$limit =~ s/\D+//g;
 	$limit = 10 if !$limit || $limit == 1;
-        my $sect_clause =" AND section='$section' " if $section;
+	my $sect_clause = " AND section='$section' " if $section;
 	my $other  = $all ? '' : "LIMIT $limit";
 	my $topics = $self->sqlSelectAllHashrefArray(
 		"topics.tid AS tid, alttext, COUNT(*) AS cnt, default_image, MAX(time) AS tme",
@@ -4097,7 +4737,7 @@ sub getTopPollTopics {
 
 	$limit =~ s/\D+//g;
 	$limit = 10 if !$limit || $limit == 1;
-        my $sect_clause;
+	my $sect_clause;
 	my $other  = $all ? '' : "LIMIT $limit";
 	my $topics = $self->sqlSelectAllHashrefArray(
 		"topics.tid AS tid, alttext, COUNT(*) AS cnt, default_image, MAX(date) AS tme",
@@ -4264,57 +4904,64 @@ sub getPortalsCommon {
 ##################################################################
 # Heaps are not optimized for count; use main comments table
 sub countCommentsByGeneric {
-	my($self, $where_clause) = @_;
-	return $self->sqlCount('comments', $where_clause);
+	my($self, $where_clause, $options) = @_;
+	$where_clause = "($where_clause) AND date > DATE_SUB(NOW(), INTERVAL $options->{limit_days} DAY)"
+		if $options->{limit_days};
+	$where_clause .= " AND cid >= $options->{cid_at_or_after} " if $options->{cid_at_or_after};
+	return $self->sqlCount('comments', $where_clause, $options);
 }
 
 ##################################################################
 sub countCommentsBySid {
-	my($self, $sid) = @_;
+	my($self, $sid, $options) = @_;
 	return 0 if !$sid;
-	return $self->countCommentsByGeneric("sid=$sid");
+	return $self->countCommentsByGeneric("sid=$sid", $options);
 }
 
 ##################################################################
 sub countCommentsByUID {
-	my($self, $uid) = @_;
+	my($self, $uid, $options) = @_;
 	return 0 if !$uid;
-	return $self->countCommentsByGeneric("uid=$uid");
+	return $self->countCommentsByGeneric("uid=$uid", $options);
 }
 
 ##################################################################
 sub countCommentsBySubnetID {
-	my($self, $subnetid) = @_;
+	my($self, $subnetid, $options) = @_;
 	return 0 if !$subnetid;
-	return $self->countCommentsByGeneric("subnetid='$subnetid'");
+	return $self->countCommentsByGeneric("subnetid='$subnetid'", $options);
 }
 
 ##################################################################
 sub countCommentsByIPID {
-	my($self, $ipid) = @_;
+	my($self, $ipid, $options) = @_;
 	return 0 if !$ipid;
-	return $self->countCommentsByGeneric("ipid='$ipid'");
+	return $self->countCommentsByGeneric("ipid='$ipid'", $options);
 }
 
 ##################################################################
 sub countCommentsByIPIDOrSubnetID {
-	my($self, $id) = @_;
+	my($self, $id, $options) = @_;
 	return 0 if !$id;
-	return $self->countCommentsByGeneric("ipid='$id' OR subnetid='$id'");
+	my $ipid_cnt = $self->countCommentsByGeneric("ipid='$id'", $options);
+	return wantarray ? ($ipid_cnt, "ipid") : $ipid_cnt if $ipid_cnt;
+
+	my $subnet_cnt = $self->countCommentsByGeneric("subnetid='$id'", $options);
+	return wantarray ? ($subnet_cnt, "subnetid") : $subnet_cnt;
 }
 
 ##################################################################
 sub countCommentsBySidUID {
-	my($self, $sid, $uid) = @_;
+	my($self, $sid, $uid, $options) = @_;
 	return 0 if !$sid or !$uid;
-	return $self->countCommentsByGeneric("sid=$sid AND uid=$uid");
+	return $self->countCommentsByGeneric("sid=$sid AND uid=$uid", $options);
 }
 
 ##################################################################
 sub countCommentsBySidPid {
-	my($self, $sid, $pid) = @_;
+	my($self, $sid, $pid, $options) = @_;
 	return 0 if !$sid or !$pid;
-	return $self->countCommentsByGeneric("sid=$sid AND pid=$pid");
+	return $self->countCommentsByGeneric("sid=$sid AND pid=$pid", $options);
 }
 
 ##################################################################
@@ -4339,23 +4986,280 @@ sub countStory {
 	return $value;
 }
 
+
+##################################################################
+# Handles moderation
+# Moderates a specific comment. 
+# Returns 0 or 1 for whether the comment changed
+# Returns a negative value when an error was encountered. The
+# warning the user sees is handled within the .pl file
+#
+# Currently defined error types:
+# -1 - No points
+# -2 - Not enough points
+#
+##################################################################
+
+sub moderateComment {
+	my($self, $sid, $cid, $reason, $options) = @_;
+	return 0 unless dbAvailable("write_comments");
+	return 0 unless $reason;
+	$options ||= {};
+
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+
+	my $comment_changed = 0;
+	my $superAuthor = $options->{is_superauthor}
+		|| ( $constants->{authors_unlimited}
+			&& $user->{seclev} >= $constants->{authors_unlimited} );
+
+	if ($user->{points} < 1 && !$superAuthor) {
+		return -1;
+	}
+
+	my $comment = $self->getComment($cid);
+	
+
+	$comment->{time_unixepoch} = timeCalc($comment->{date}, "%s", 0);
+
+	# The user should not have been been presented with the menu
+	# to moderate if any of the following tests trigger, but,
+	# an unscrupulous user could have faked their submission with
+	# or without us presenting them the menu options.  So do the
+	# tests again.
+	unless ($superAuthor) {
+		# Do not allow moderation of any comments with the same UID as the
+		# current user (duh!).
+		return 0 if $user->{uid} == $comment->{uid};
+		# Do not allow moderation of any comments (anonymous or otherwise)
+		# with the same IP as the current user.
+		return 0 if $user->{ipid} eq $comment->{ipid};
+		# If the var forbids it, do not allow moderation of any comments
+		# with the same *subnet* as the current user.
+		return 0 if $constants->{mod_same_subnet_forbid}
+			and $user->{subnetid} eq $comment->{subnetid};
+		# Do not allow moderation of comments that are too old.
+		return 0 unless $comment->{time_unixepoch} >= time() - 3600*
+			($constants->{comments_moddable_hours}
+				|| 24*$constants->{archive_delay});
+	}
+
+	# Start putting together the data we'll need to display to
+	# the user.
+	my $reasons = $self->getReasons();
+	my $dispArgs = {
+		cid	=> $cid,
+		sid	=> $sid,
+		subject => $comment->{subject},
+		reason	=> $reason,
+		points	=> $user->{points},
+		reasons	=> $reasons,
+	};
+
+	unless ($superAuthor) {
+		my $mid = $self->getModeratorLogID($cid, $user->{uid});
+		if ($mid) {
+			$dispArgs->{type} = 'already moderated';
+			Slash::slashDisplay('moderation', $dispArgs)
+				unless $options->{no_display};
+			return 0;
+		}
+	}
+
+	# Add moderation value to display arguments.
+	my $val = $reasons->{$reason}{val};
+	my $raw_val = $val;
+	$val = "+1" if $val == 1;
+	$dispArgs->{val} = $val;
+
+	my $scorecheck = $comment->{points} + $val;
+	my $active = 1;
+	# If the resulting score is out of comment score range, no further
+	# actions need be performed.
+	# Should we return here and go no further?
+	if (	$scorecheck < $constants->{comment_minscore} ||
+		($scorecheck > $constants->{comment_maxscore} && $val + $comment->{tweak} > 0 ))
+	{
+		# We should still log the attempt for M2, but marked as
+		# 'inactive' so we don't mistakenly undo it. Mods get modded
+		# even if the action didn't "really" happen.
+		#
+		$active = 0;
+		$dispArgs->{type} = 'score limit';
+	}
+
+	# Find out how many mod points this will really cost us.  As of
+	# Oct. 2002, it might be more than 1.
+	my $pointsneeded = $self->getModPointsNeeded(
+		$comment->{points},
+		$scorecheck,
+		$reason);
+
+	# If more than 1 mod point needed, we might not have enough,
+	# so this might still fail.
+	if ($pointsneeded > $user->{points} && !$superAuthor) {
+		return -2;
+	}
+
+	# Write the proper records to the moderatorlog.
+	$self->createModeratorLog($comment, $user, $val, $reason, $active,
+		$pointsneeded);
+
+	if ($active) {
+
+		# If we are here, then the user either has mod points, or
+		# is an admin (and 'author_unlimited' is set).  So point
+		# checks should be unnecessary here.
+
+		# First, update values for the moderator.
+		my $changes = { };
+		$changes->{-points} = "GREATEST(points-$pointsneeded, 0)";
+		my $tcost = $constants->{mod_unm2able_token_cost} || 0;
+		$tcost = 0 if $reasons->{$reason}{m2able};
+		$changes->{-tokens} = "tokens - $tcost" if $tcost;
+		$changes->{-totalmods} = "totalmods + 1";
+		$self->setUser($user->{uid}, $changes);
+		$user->{points} -= $pointsneeded;
+		$user->{points} = 0 if $user->{points} < 0;
+
+		# Update stats.
+		if ($tcost and my $statsSave = getObject('Slash::Stats::Writer')) {
+			$statsSave->addStatDaily("mod_tokens_lost_unm2able", $tcost);
+		}
+
+		# Apply our changes to the comment.  That last argument
+		# is tricky;  we're passing in true for $need_point_change
+		# only if the comment was posted non-anonymously.  (If it
+		# was posted anonymously, we don't need to know the
+		# details of how its point score changed thanks to this
+		# mod, because it won't affect anyone's karma.)
+		my $poster_was_anon = isAnon($comment->{uid});
+		my $karma_change = $reasons->{$reason}{karma};
+		$karma_change = 0 if $poster_was_anon;
+
+		my $comment_change_hr =
+			$self->setCommentForMod($cid, $val, $reason,
+				$comment->{reason});
+		if (!defined($comment_change_hr)) {
+			# This shouldn't happen;  the only way we believe it
+			# could is if $val is 0, the comment is already at
+			# min or max score, the user's already modded this
+			# comment, or some other reason making this mod invalid.
+			# This is really just here as a safety check.
+			$dispArgs->{type} = 'logic error';
+			Slash::slashDisplay('moderation', $dispArgs)
+				unless $options->{no_display};
+			return 0;
+		}
+
+		# Finally, adjust the appropriate values for the user who
+		# posted the comment.
+		my $token_change = 0;
+		if ($karma_change) {
+			# If this was a downmod, it may cost the poster
+			# something other than exactly 1 karma.
+			if ($karma_change < 0) {
+				($karma_change, $token_change) =
+					$self->_calc_karma_token_loss(
+						$karma_change, $comment_change_hr)
+			}
+		}
+		if ($karma_change) {
+			my $cu_changes = { };
+			if ($val < 0) {
+				$cu_changes->{-downmods} = "downmods + 1";
+			} elsif ($val > 0) {
+				$cu_changes->{-upmods} = "upmods + 1";
+			}
+			if ($karma_change < 0) {
+				$cu_changes->{-karma} = "GREATEST("
+					. "$constants->{minkarma}, karma + $karma_change)";
+				$cu_changes->{-tokens} = "tokens + $token_change";
+			} elsif ($karma_change > 0) {
+				$cu_changes->{-karma} = "LEAST("
+					. "$constants->{maxkarma}, karma + $karma_change)";
+			}
+
+			# Make the changes to the poster user.
+			$self->setUser($comment->{uid}, $cu_changes);
+
+			# Update stats.
+			if ($karma_change < 0 and my $statsSave = getObject('Slash::Stats::Writer')) {
+				$statsSave->addStatDaily("mod_tokens_lost_downmod",
+					$token_change);
+			}
+
+		}
+
+		# We know things actually changed, so update points for
+		# display and send a message if appropriate.
+		$dispArgs->{points} = $user->{points};
+		$dispArgs->{type} = 'moderated';
+		if (($comment->{points} + $comment->{tweak} + $raw_val) >= $constants->{comment_minscore} &&
+		    ($comment->{points} + $comment->{tweak}) >= $constants->{comment_minscore}) {
+
+			my $messages = getObject("Slash::Messages");
+			$messages->send_mod_msg({
+				type	=> 'mod_msg',
+				sid	=> $sid,
+				cid	=> $cid,
+				val	=> $val,
+				reason	=> $reason,
+				comment	=> $comment
+			}) unless $options->{no_message};
+		}
+	}
+
+	# Now display the template with the moderation results.
+	Slash::slashDisplay('moderation', $dispArgs)
+		unless $options->{no_display};
+
+	return 1;
+}
+
+sub _calc_karma_token_loss {
+	my($self, $reason_karma_change, $comment_change_hr) = @_;
+	my $constants = getCurrentStatic();
+	my($kc, $tc); # karma change, token change
+	$kc = $reason_karma_change;
+	if ($constants->{mod_down_karmacoststyle}) {
+		if ($constants->{mod_down_karmacoststyle} == 1) {
+			my $change = abs($comment_change_hr->{points_max}
+				- $comment_change_hr->{points_after});
+			$kc *= $change;
+		}
+	}
+	if ($kc < 0 
+		&& defined $constants->{comment_karma_limit}
+		&& $constants->{comment_karma_limit} ne "") {
+		my $future_karma = $comment_change_hr->{karma} + $kc;
+		if ($future_karma < $constants->{comment_karma_limit}) {
+			$kc = $constants->{comment_karma_limit}
+				- $comment_change_hr->{karma};
+		}
+		$kc = 0 if $kc > 0;
+	}
+	$tc = $kc;
+	return ($kc, $tc);
+}
+
 ##################################################################
 sub metamodEligible {
 	my($self, $user) = @_;
+	
+	# This should be true since admins should be able to do
+	# anything at anytime.  We now also provide admins controls
+	# to metamod arbitrary moderations	
+	return 1 if $user->{is_admin};
 
 	# Easy tests the user can fail to be ineligible to metamod.
 	return 0 if $user->{is_anon} || !$user->{willing} || $user->{karma} < 0;
 
-	# Technically I believe the next bit should always be right under
-	# the doctrine that an admin should be able to to anything but
-	# maybe the cat ate a plant tonight
-	# and thus Jim Jones really did it with the monkey wrench in the
-	# blue room -Brian
-	#return 1 if $user->{is_admin};
 
 	# Not eligible if metamodded too recently.
 	my $constants = getCurrentStatic();
-	my $m2_freq = $constants->{m2_freq} || 86400;
+	my $m2_freq = $self->getVar('m2_freq', 'value', 1) || 86400;
 	my $cutoff_str = time2str("%Y-%m-%d %H:%M:%S",
 		time() - $m2_freq, 'GMT');
 	return 0 if $user->{lastmm} ge $cutoff_str;
@@ -4382,53 +5286,93 @@ sub getAuthorNames {
 }
 
 ##################################################################
-# Oranges to Apples. Would it be faster to grab some of this
-# data from the cache? Or is it just as fast to grab it from
-# the database?
+#
 sub getStoryByTime {
-	my($self, $sign, $story, $section, $limit) = @_;
-	my $where;
+	my($self, $sign, $story, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	$limit ||= '1';
+	$options    = {} if !$options || ref($options) ne 'HASH';
+	my $limit   = $options->{limit}   || 1;
+	my $topic   = $options->{topic}   || '';
+	my $section = $options->{section} || '';
+	my $where;
+	my $name  = 'story_by_time';
+	_genericCacheRefresh($self, $name, $constants->{story_expire} || 600); # use same cache time as for stories
+	my $cache = $self->{"_${name}_cache"} ||= {};
+
+	$self->{"_${name}_cache_time"} = time() if !keys %$cache;
+# any reason to force a refresh?
+#	%$cache = () if $refresh;
 
 	# We only do getStoryByTime() for stories that are more recent
-	# than twice the story archiving delay.  If the DB has to scan
-	# back thousands of stories, this can really bog.  We solve
-	# this by having the first clause in the WHERE be an impossible
-	# condition for any stories that are too old (this is more
+	# than twice the story archiving delay (or bytime_delay if defined).
+	# If the DB has to scan back thousands of stories, this can really bog.
+	# We solve this by having the first clause in the WHERE be an
+	# impossible condition for any stories that are too old (this is more
 	# straightforward than parsing the timestamp in perl).
 	my $time = $story->{time};
-	my $twice_arch_delay = $constants->{archive_delay}*2;
-	$twice_arch_delay = 7 if $twice_arch_delay < 7;
+	my $bytime_delay = $constants->{bytime_delay} || $constants->{archive_delay}*2;
+	$bytime_delay = 7 if $bytime_delay < 7;
 
 	my $order = $sign eq '<' ? 'DESC' : 'ASC';
+	my $key = $sign;
 
-	if ($user->{sectioncollapse}) {
+	if (!$section && !$topic && $user->{sectioncollapse}) {
 		$where .= ' AND displaystatus>=0';
+		$key .= '|>=';
 	} else {
 		$where .= ' AND displaystatus=0';
+		$key .= '|=';
 	}
 
-	$where .= "   AND tid not in ($user->{'extid'})" if $user->{'extid'};
-	$where .= "   AND uid not in ($user->{'exaid'})" if $user->{'exaid'};
-	$where .= "   AND section not in ($user->{'exsect'})" if $user->{'exsect'};
-	$where .= "   AND sid != '$story->{'sid'}'";
+	$where .= " AND sid != '$story->{sid}'";
+	$key .= "|$story->{sid}";
+
+	if (!$topic && !$section) {
+		$where .= " AND tid not in ($user->{extid})" if $user->{extid};
+		$where .= " AND uid not in ($user->{exaid})" if $user->{exaid};
+		$where .= " AND section not in ($user->{exsect})" if $user->{exsect};
+		# don't cache if user has own prefs -- pudge
+		$key = $user->{extid} || $user->{exaid} || $user->{exsect} ? '' : $key . '|';
+	} elsif ($section) {
+		$where .= " AND section = '$section'";
+		$key .= "|$section";
+	} elsif ($topic) {
+		$where .= " AND tid = '$topic'";
+		$key .= "|$topic";
+	}
+
+	$key .= "|$time" if $key;
+
+	return $cache->{$key} if $key && defined $cache->{$key};
+
+#	print STDERR "SELECT title, sid, section, tid FROM stories WHERE " .
+#		"'$time' > DATE_SUB(NOW(), INTERVAL $bytime_delay DAY) AND time $sign '$time' AND time < NOW() AND writestatus != 'delete' $where " .
+#		"ORDER BY time $order LIMIT $limit\n";
 
 	my $returnable = $self->sqlSelectHashref(
-			'title, sid, section, tid',
-			'stories',
-			
-			"'$time' > DATE_SUB(NOW(), INTERVAL $twice_arch_delay DAY)
-			 AND time $sign '$time'
-			 AND time < NOW()
-			 AND writestatus != 'delete'
-			 $where",
+		'title, sid, section, tid',
+		'stories',
 
-			"ORDER BY time $order LIMIT $limit"
+		"'$time' > DATE_SUB(NOW(), INTERVAL $bytime_delay DAY)
+		 AND time $sign '$time'
+		 AND time < NOW()
+		 AND writestatus != 'delete'
+		 $where",
+
+		"ORDER BY time $order LIMIT $limit"
 	);
+	# needs to be defined as empty
+	$cache->{$key} = $returnable || '' if $key;
 
 	return $returnable;
+}
+
+##################################################################
+#
+sub getStorySidFromDiscussion {
+	my ($self, $discussion) = (@_);
+	return $self->sqlSelect("sid", "stories", "discussion = ".$self->sqlQuote($discussion));
 }
 
 ##################################################################
@@ -4437,18 +5381,20 @@ sub getStoryByTimeAdmin {
 	my($self, $sign, $story, $limit) = @_;
 	my($where);
 	my $user = getCurrentUser();
-	$limit ||= '1';
+	$limit ||= 1;
 
+	# '=' is also sometimes used for $sign; in that case,
+	# order is irrelevant -- pudge
 	my $order = $sign eq '<' ? 'DESC' : 'ASC';
 
-	$where .= "   AND sid != '$story->{'sid'}'";
+	$where .= " AND sid != '$story->{sid}'";
 
 	my $time = $story->{'time'};
 	my $returnable = $self->sqlSelectAllHashrefArray(
-			'title, sid, time, displaystatus',
-			'stories',
-			"time $sign '$time' AND writestatus != 'delete' $where",
-			"ORDER BY time $order LIMIT $limit"
+		'title, sid, time, displaystatus',
+		'stories',
+		"time $sign '$time' AND writestatus != 'delete' $where",
+		"ORDER BY time $order LIMIT $limit"
 	);
 
 	return $returnable;
@@ -4497,15 +5443,14 @@ sub multiMetaMod {
 	my $others = $self->sqlSelectAllHashrefArray(
 		"id, cid, reason",
 		"moderatorlog",
-		"($cr_clause)
-		 AND uid != $uid_q AND cuid != $uid_q
-		 AND m2status=0
+		"($cr_clause)".
+		" AND uid != $uid_q AND cuid != $uid_q ".
+		" AND m2status=0
 		 AND reason IN ($m2able_reasons)
 		 AND active=1
 		 AND id NOT IN ($orig_mmid_in)",
 		"ORDER BY RAND() LIMIT $max_limit"
 	);
-
 	# If there are none, we're done.
 	return if !$others or !@$others;
 
@@ -4552,50 +5497,75 @@ sub multiMetaMod {
 # Note that karma and token changes as a result of metamod are
 # done in the run_moderatord task.
 sub createMetaMod {
-	my($self, $m2_user, $m2s, $multi_max) = @_;
+	my($self, $m2_user, $m2s, $multi_max, $options) = @_;
 	my $constants = getCurrentStatic();
-	my $consensus = $constants->{m2_consensus};
+	$options ||= {}; 
 	my $rows;
 
 	# If this user has no saved mods, by definition nothing they try
-	# to M2 is valid.
-	return if !$m2_user->{mods_saved};
+	# to M2 is valid, unless of course they're an admin.
+	return if !$m2_user->{mods_saved} && !$m2_user->{is_admin} && !$options->{inherited};
 
 	# The user is only allowed to metamod the mods they were given.
 	my @mods_saved = $self->getModsSaved($m2_user);
 	my %mods_saved = map { ( $_, 1 ) } @mods_saved;
+	my $saved_mods_encountered = 0;
 	my @m2s_mmids = sort { $a <=> $b } keys %$m2s;
 	for my $mmid (@m2s_mmids) {
-		delete $m2s->{$mmid} if !$mods_saved{$mmid};
+		delete $m2s->{$mmid} if !$mods_saved{$mmid} && !$m2_user->{is_admin} &!$options->{inherited};
+		$saved_mods_encountered++ if $mods_saved{$mmid};
 	}
+	return if !keys %$m2s;
 
 	# If we are allowed to multiply these M2's to apply to other
 	# mods, go ahead.  multiMetaMod changes $m2s in place.  Note
 	# that we first screened %$m2s to allow only what was saved for
 	# this user;  having made sure they are not trying to fake an
 	# M2 of something disallowed, now we can multiply them out to
-	# possibly affect more.
+	# possibly affect more.  Note that we save the original list --
+	# when we tally how many metamods this user has done, we only
+	# count their intentions, not the results.
+	my %m2s_orig = ( map { $_, 1 } keys %$m2s );
 	if ($multi_max) {
 		$self->multiMetaMod($m2_user, $m2s, $multi_max);
 	}
 
-	# Whatever happens below, as soon as we get here, this user has
-	# done their M2 for the day and gets their list of OK mods cleared.
-	$rows = $self->sqlUpdate("users_info", {
-		-lastmm =>	'NOW()',
-		mods_saved =>	'',
-	}, "uid=$m2_user->{uid} AND mods_saved != ''");
-	if (!$rows) {
-		# The update failed, presumably because the user clicked
-		# the MetaMod button multiple times quickly to try to get
-		# their decisions to count twice.  The user did not count
-		# on our awesome powers of atomicity:  only one of those
-		# clicks got to set mods_saved to empty.  That one wasn't
-		# us, so we do nothing.
-		return ;
+	# We need to know whether the M1 IDs are for moderations
+	# that were up or down.
+	my $m1_list = join(",", keys %$m2s);
+	my $m2s_vals = $self->sqlSelectAllHashref("id", "id, val",
+		"moderatorlog", "id IN ($m1_list)");
+	for my $m1id (keys %$m2s_vals) {
+		$m2s->{$m1id}{val} = $m2s_vals->{$m1id}{val};
 	}
 
-	my($voted_fair, $voted_unfair) = (0, 0);
+	# Whatever happens below, as soon as we get here, this user has
+	# done their M2 for the day and gets their list of OK mods cleared.
+	# The only exceptions are admins who didn't metamod any of their saved mods
+	# also we don't clear a users mods if the m2s being applied are inherited.
+	# In the case of inherited mods the m2_user isn't actively m2ing, their
+	# m2s are just being applied to another mod
+
+	if (!$options->{inherited} &&
+		!$m2_user->{is_admin}
+		|| ($m2_user->{is_admin} && $saved_mods_encountered)) {
+		$rows = $self->sqlUpdate("users_info", {
+			-lastmm =>	'NOW()',
+			mods_saved =>	'',
+		}, "uid=$m2_user->{uid} AND mods_saved != ''");
+		$self->setUser_delete_memcached($m2_user->{uid});
+		if (!$rows) {
+			# The update failed, presumably because the user clicked
+			# the MetaMod button multiple times quickly to try to get
+			# their decisions to count twice.  The user did not count
+			# on our awesome powers of atomicity:  only one of those
+			# clicks got to set mods_saved to empty.  That one wasn't
+			# us, so we do nothing.
+			return ;
+		}
+	}
+	my($voted_up_fair, $voted_down_fair, $voted_up_unfair, $voted_down_unfair)
+		= (0, 0, 0, 0);
 	for my $mmid (keys %$m2s) {
 		my $mod_uid = $self->getModeratorLog($mmid, 'uid');
 		my $is_fair = $m2s->{$mmid}{is_fair};
@@ -4605,28 +5575,41 @@ sub createMetaMod {
 		# change its m2status from 0 ("eligible for M2") to 1
 		# ("all done with M2'ing, but not yet reconciled").  Note
 		# that we insist not only that the count be above the
-		# current consensus point, but that it be odd -- if we
-		# recently lowered the var m2_consensus, there may be some
-		# mods "trapped" with an even number of M2s.
+		# current consensus point, but that it be odd, in case
+		# something weird happens.
 
 		$rows = 0;
 		$rows = $self->sqlUpdate(
 			"moderatorlog", {
 				-m2count =>	"m2count+1",
-				-m2status =>	"IF(m2count >= $consensus
+				-m2status =>	"IF(m2count >= m2needed
 							AND MOD(m2count, 2) = 1,
 							1, 0)",
 			},
 			"id=$mmid AND m2status=0
-			 AND m2count < $consensus AND active=1",
+			 AND m2count < m2needed AND active=1",
 			{ assn_order => [qw( -m2count -m2status )] },
-		) unless $m2_user->{tokens} < $self->getVar("m2_mintokens", "value", 1);
+		) unless $m2_user->{tokens} < $self->getVar("m2_mintokens", "value", 1) &&
+			 !$m2_user->{is_admin};
 
 		$rows += 0; # if no error, returns 0E0 (true!), we want a numeric answer
+
 		my $ui_hr = { };
-		if ($is_fair)	{ ++$voted_fair;   $ui_hr->{-m2fair}   = "m2fair+1" }
-		else		{ ++$voted_unfair; $ui_hr->{-m2unfair} = "m2unfair+1" }
+		     if ($is_fair  && $m2s->{$mmid}{val} > 0) {
+			++$voted_up_fair if $m2s_orig{$mmid};
+			$ui_hr->{-up_fair}	= "up_fair+1";
+		} elsif ($is_fair  && $m2s->{$mmid}{val} < 0) {
+			++$voted_down_fair if $m2s_orig{$mmid};
+			$ui_hr->{-down_fair}	= "down_fair+1";
+		} elsif (!$is_fair && $m2s->{$mmid}{val} > 0) {
+			++$voted_up_unfair if $m2s_orig{$mmid};
+			$ui_hr->{-up_unfair}	= "up_unfair+1";
+		} elsif (!$is_fair && $m2s->{$mmid}{val} < 0) {
+			++$voted_down_unfair if $m2s_orig{$mmid};
+			$ui_hr->{-down_unfair}	= "down_unfair+1";
+		}
 		$self->sqlUpdate("users_info", $ui_hr, "uid=$mod_uid");
+
 		if ($rows) {
 			# If a row was successfully updated, insert a row
 			# into metamodlog.
@@ -4653,12 +5636,17 @@ sub createMetaMod {
 			});
 		}
 
+		$self->setUser_delete_memcached($mod_uid);
 	}
 
+	my $voted = $voted_up_fair || $voted_down_fair || $voted_up_unfair || $voted_down_unfair;
 	$self->sqlUpdate("users_info", {
-		-m2fairvotes	=> "m2fairvotes+$voted_fair",
-		-m2unfairvotes	=> "m2unfairvotes+$voted_unfair",
-	}, "uid=$m2_user->{uid}") if $voted_fair || $voted_unfair;
+		-m2voted_up_fair	=> "m2voted_up_fair	+ $voted_up_fair",
+		-m2voted_down_fair	=> "m2voted_down_fair	+ $voted_down_fair",
+		-m2voted_up_unfair	=> "m2voted_up_unfair	+ $voted_up_unfair",
+		-m2voted_down_unfair	=> "m2voted_down_unfair	+ $voted_down_unfair",
+	}, "uid=$m2_user->{uid}") if $voted;
+	$self->setUser_delete_memcached($m2_user->{uid});
 }
 
 ########################################################
@@ -4691,12 +5679,18 @@ sub deleteVar {
 # This is a little better. Most of the business logic
 # has been removed and now resides at the theme level.
 #	- Cliff 7/3/01
-# It now returns a boolean: whether or not the comment was changed. - Jamie
-sub setCommentCleanup {
+# It used to return a boolean indicating whether the
+# comment was changed.  Now it returns either undef
+# (if the comment did not change) or a true value (if
+# it did).  If $need_point_change is true, it will
+# query the DB to obtain the comment scores before and
+# after the change and return that data in a hashref.
+# If not, it will just return 1.
+sub setCommentForMod {
 	my($self, $cid, $val, $newreason, $oldreason) = @_;
-
+	my $raw_val = $val;
 	$val += 0;
-	return 0 if !$val;
+	return undef if !$val;
 	$val = "+$val" if $val > 0;
 
 	my $user = getCurrentUser();
@@ -4709,13 +5703,18 @@ sub setCommentCleanup {
 		"cid=$cid AND active=1",
 		"GROUP BY reason"
 	);
+	my $averagereason = $self->getCommentMostCommonReason($cid,
+		$allreasons_hr,
+		$newreason, $oldreason);
 
-	# Changes we're going to make to this comment.
+	# Changes we're going to make to this comment.  Note
+	# that the pointsmax GREATEST() gets called after
+	# points is assigned, thanks to assn_order.
 	my $update = {
-		-points => "points$val",
-		reason => $self->getCommentMostCommonReason($cid,
-			$allreasons_hr, $newreason, $oldreason),
-		lastmod => $user->{uid},
+		-points =>	"points$val",
+		-pointsmax =>	"GREATEST(pointsmax, points)",
+		reason =>	$averagereason,
+		lastmod =>	$user->{uid},
 	};
 
 	# If more than n downmods, a comment loses its karma bonus.
@@ -4730,27 +5729,102 @@ sub setCommentCleanup {
 	}
 
 	# Make sure we apply this change to the right comment :)
-	my $where = "cid=$cid AND points ";
+	my $where = "cid=$cid ";
+	my $points_extra_where = "";
 	if ($val < 0) {
-		$where .= " > $constants->{comment_minscore}";
+		$points_extra_where .= " AND points > $constants->{comment_minscore}";
 	} else {
-		$where .= " < $constants->{comment_maxscore}";
+		$points_extra_where .= " AND points < $constants->{comment_maxscore}";
 	}
 	$where .= " AND lastmod <> $user->{uid}"
 		unless $constants->{authors_unlimited}
 			&& $user->{seclev} >= $constants->{authors_unlimited};
 
-	return $self->sqlUpdate("comments", $update, $where);
+	# We do a two-query transaction here:  one select to get
+	# the old points value, then the update as part of the
+	# same transaction;  that way, we know, based on whether
+	# the update succeeded, what the final points value is.
+	# If this weren't a transaction, another moderation
+	# could happen between the two queries and give us the
+	# wrong answer.  On the other hand, if the caller didn't
+	# want the point change, we don't need to get any of
+	# that data.
+	# We have to select cid here because LOCK IN SHARE MODE
+	# only works when an indexed column is returned.
+	# Of course, this isn't actually going to work at all
+	# since the comments table is MyISAM.  Eventually, though,
+	# we'll pull the indexed blobs out and into comments_text
+	# and make the comments table InnoDB and this will work.
+	# Oh well.  Meanwhile, the worst thing that will happen is
+	# a few wrong points logged here and there.
+
+#	$self->{_dbh}{AutoCommit} = 0;
+	$self->sqlDo("SET AUTOCOMMIT=0");
+
+	my $hr = { };
+	($hr->{cid}, $hr->{points_before}, $hr->{points_orig}, $hr->{points_max}, $hr->{karma}) =
+		$self->sqlSelect("cid, points, pointsorig, pointsmax, karma",
+			"comments", "cid=$cid", "LOCK IN SHARE MODE");
+	$hr->{points_change} = $val;
+	$hr->{points_after} = $hr->{points_before} + $val;
+
+	my $karma_val;
+	my $karma_change = $reasons->{$newreason}{karma};
+	if (!$constants->{mod_down_karmacoststyle}) {
+		$karma_val = $karma_change;
+	} elsif ($val < 0) {
+		$karma_val = ($hr->{points_before} + $karma_change) - $hr->{points_max};
+	} else {
+		$karma_val = $karma_change;
+	}
+	
+	if ($karma_val < 0
+		&& defined($constants->{comment_karma_limit})
+		&& $constants->{comment_karma_limit} ne "") {
+		my $future_karma = $hr->{karma} + $karma_val;
+		if ($future_karma < $constants->{comment_karma_limit}) {
+			$karma_val = $constants->{comment_karma_limit} - $hr->{karma};
+		}
+		$karma_val = 0 if $karma_val > 0; # just to make sure
+	}
+
+	if ($karma_val) {
+		my $karma_abs_val = abs($karma_val);
+		$update->{-karma}     = sprintf("karma%+d", $karma_val);
+		$update->{-karma_abs} = sprintf("karma_abs%+d", $karma_abs_val);
+	}
+
+	my $changed = $self->sqlUpdate("comments", $update, $where.$points_extra_where, {
+		assn_order => [ "-points", "-pointsmax" ]
+	});
+	$changed += 0;
+	if (!$changed && $raw_val > 0) {
+		$update->{-points}="points";
+		$update->{-tweak}="tweak$val";
+		my $tweak_extra = " AND tweak$val <= 0";
+		$changed = $self->sqlUpdate("comments", $update, $where.$tweak_extra, {
+			assn_order => [ "-points", "-pointsmax" ]
+		});
+	}
+	$changed += 0;
+
+#	$self->{_dbh}->commit;
+#	$self->{_dbh}{AutoCommit} = 1;
+	$self->sqlDo("COMMIT");
+	$self->sqlDo("SET AUTOCOMMIT=1");
+
+	return $changed ? $hr : undef;
 }
 
 ########################################################
-# This gets the mathematical mode, in other words the most common, of the
-# moderations done to a comment.  If no mods, return undef.  Tiebreakers
-# break ties, first tiebreaker found wins.  "cid" is a key in moderatorlog
-# so this is not a table scan.
-# A clever thing to do here would be to take the SUM of all mods; if
-# positive, only consider positive mod reasons, and if negative, only
-# negative.  If zero, use the current logic. XXX - Jamie 2002/08/14
+# This gets the mathematical mode, in other words the most common,
+# of the moderations done to a comment.  If no mods, return undef.
+# Tiebreakers break ties, first tiebreaker found wins.  "cid"
+# is a key in moderatorlog so this is not a table scan.
+# A clever thing to do here would be to check the comment's
+# "points" vs. "pointsorig";  if the score has overall gone
+# up, only consider positive mod reasons, and if down, only
+# negative.  If zero, use the current logic.  Maybe later...
 sub getCommentMostCommonReason {
 	my($self, $cid, $allreasons_hr, @tiebreaker_reasons) = @_;
 
@@ -4816,7 +5890,7 @@ sub getCommentReply {
 	my($self, $sid, $pid) = @_;
 	my $sid_quoted = $self->sqlQuote($sid);
 	my $reply = $self->sqlSelectHashref(
-		"date,date as time,subject,comments.points as points,
+		"date,date as time,subject,comments.points as points,comments.tweak as tweak,
 		comment_text.comment as comment,realname,nickname,
 		fakeemail,homepage,comments.cid as cid,sid,
 		users.uid as uid,reason",
@@ -4854,6 +5928,7 @@ sub getCommentsForUser {
 	my $select = " cid, date, date as time, subject, nickname, "
 		. "homepage, fakeemail, users.uid AS uid, sig, "
 		. "comments.points AS points, pointsorig, "
+		. "tweak, tweak_orig, "
 		. "pid, pid AS original_pid, sid, lastmod, reason, "
 		. "journal_last_entry_date, ipid, subnetid, "
 		. "karma_bonus, "
@@ -4933,7 +6008,7 @@ sub getComments {
 
 #######################################################
 sub getSubmissionsByNetID {
-        my($self, $id, $field, $limit) = @_;
+	my($self, $id, $field, $limit, $options) = @_;
 
 	$limit = "LIMIT $limit" if $limit;
 	my $where;
@@ -4945,13 +6020,62 @@ sub getSubmissionsByNetID {
 	} else {
 		$where = "ipid='$id' OR subnetid='$id'";
 	}
-
-	my $answer = $self->sqlSelectAllHashrefArray(
-		'uid,name,subid,subj,time',
+	$where = "($where) AND time > DATE_SUB(NOW(), INTERVAL $options->{limit_days} DAY)"
+		if $options->{limit_days};
+	$where .= " AND del = 2" if $options->{accepted_only};
+	
+	my $subs = $self->sqlSelectAllHashrefArray(
+		'uid,name,subid,ipid,subj,time,del,section,tid',
 		'submissions', $where,
 		"ORDER BY time DESC $limit");
 
-	return $answer;
+	for my $sub (@$subs) {
+		$sub->{sid} = $self->sqlSelect(
+			'value',
+			'submission_param',
+			"subid=".$self->sqlQuote($sub->{subid})." AND name='sid'") if $sub->{del} == 2;
+		if ($sub->{sid}) {
+			my $story_ref = $self->sqlSelectHashref("title,displaystatus,time","stories","sid=".$self->sqlQuote($sub->{sid}));
+			@$sub{'story_title','story_time','displaystatus'} = @$story_ref{'title','time','displaystatus'} if $story_ref;
+		}
+	}
+
+	return $subs;
+}
+
+########################################################
+sub getSubmissionsByUID {
+	my($self, $id, $limit, $options) = @_;
+	$limit = " LIMIT $limit " if $limit;
+	my $where = "uid=$id";
+	$where = "($where) AND time > DATE_SUB(NOW(), INTERVAL $options->{limit_days} DAY)"
+		if $options->{limit_days};
+	$where .= " AND del = 2" if $options->{accepted_only};
+
+	my $subs = $self->sqlSelectAllHashrefArray(
+		'uid,name,subid,ipid,subj,time,del,section,tid',
+		'submissions', $where,
+		"ORDER BY time DESC $limit");
+	
+	for my $sub (@$subs) {
+		$sub->{sid} = $self->sqlSelect(
+			'value',
+			'submission_param', 
+			"subid=" . $self->sqlQuote($sub->{subid}) . " AND name='sid'") if $sub->{del} == 2;
+		if ($sub->{sid}) {
+			my $story_ref = $self->sqlSelectHashref("title,displaystatus,time","stories","sid=".$self->sqlQuote($sub->{sid}));
+			@$sub{'story_title','story_time','displaystatus'} = @$story_ref{'title','time','displaystatus'} if $story_ref;
+		}
+	}
+	return $subs;
+}
+
+########################################################
+sub countSubmissionsByUID {
+	my($self, $id) = @_;
+
+	my $count = $self->sqlCount('submissions', "uid='$id'");
+	return $count;
 }
 
 ########################################################
@@ -4965,12 +6089,15 @@ sub countSubmissionsByNetID {
 	} elsif ($field eq 'subnetid') {
 		$where = "subnetid='$id'";
 	} else {
-		$where = "ipid='$id' OR subnetid='$id'";
+		my $ipid_cnt = $self->sqlCount("submissions", "ipid='$id'");
+		return wantarray ? ($ipid_cnt, "ipid") : $ipid_cnt if $ipid_cnt;
+		my $subnetid_cnt = $self->sqlCount("submissions", "subnetid='$id'");
+		return wantarray ? ($subnetid_cnt, "subnetid") : $subnetid_cnt;
 	}
 
 	my $count = $self->sqlCount('submissions', $where);
 
-	return $count;
+	return wantarray ? ($count, $field) : $count;
 }
 
 ########################################################
@@ -4982,7 +6109,10 @@ sub getStoriesBySubmitter {
 	$limit = 'LIMIT ' . $limit if $limit;
 	my $answer = $self->sqlSelectAllHashrefArray(
 		'sid,title,time',
-		'stories', "submitter='$id' AND time < NOW() AND (writestatus = 'ok' OR writestatus = 'dirty') and displaystatus >= 0 ",
+		'stories',
+		"submitter='$id' AND time < NOW()
+		 AND displaystatus >= 0
+		 AND writestatus IN ('ok', 'dirty', 'archived')",
 		"ORDER by time DESC $limit");
 	return $answer;
 }
@@ -4991,7 +6121,10 @@ sub getStoriesBySubmitter {
 sub countStoriesBySubmitter {
 	my($self, $id) = @_;
 
-	my $count = $self->sqlCount('stories', "submitter='$id'  AND time < NOW() AND (writestatus = 'ok' OR writestatus = 'dirty') and displaystatus >= 0");
+	my $count = $self->sqlCount('stories',
+		"submitter='$id' AND time < NOW()
+		 AND displaystatus >= 0
+		 AND writestatus IN ('ok', 'dirty', 'archived')");
 
 	return $count;
 }
@@ -5072,7 +6205,8 @@ sub getStoriesEssentials {
 	my($column_time, $where_time) = $self->_stories_time_clauses({
 		try_future => 1, must_be_subscriber => 0
 	});
-	my $columns = "sid, section, title, time, commentcount, hitparade, tid, body_length, word_count, $column_time";
+	my $columns = "sid, section, title, time, commentcount, hitparade,"
+		. " tid, body_length, word_count, discussion, $column_time";
 
 	my $where = "$where_time ";
 
@@ -5200,6 +6334,7 @@ sub getSubmissionsMerge {
 			$self->sqlUpdate('users_info', {
 				-karma => $newkarma },
 			"uid=$sub->{uid}");
+			$self->setUser_delete_memcached($sub->{uid});
 		}
 	}
 
@@ -5303,17 +6438,40 @@ sub getSubmissionForUser {
 }
 
 ########################################################
+sub calcTrollPoint {
+	my ($self, $type, $good_behavior) = @_;
+	my $constants = getCurrentStatic();
+	$good_behavior ||= 0;
+	my $trollpoint =0;
+	
+	$trollpoint = -abs($constants->{istroll_downmods_ip}) - $good_behavior if $type eq "ipid";
+	$trollpoint = -abs($constants->{istroll_downmods_subnet}) - $good_behavior if $type eq "subnetid";
+	$trollpoint = -abs($constants->{istroll_downmods_user}) - $good_behavior if $type eq "uid";
+
+	return $trollpoint;
+}
+
+########################################################
 sub calcModval {
 	my($self, $where_clause, $halflife, $minicache) = @_;
+	my $constants = getCurrentStatic();
+
+	return undef unless $where_clause;
 
 	# There's just no good way to do this with a join; it takes
 	# over 1 second and if either comment posting or moderation
 	# is reasonably heavy, the DB can get bogged very fast.  So
 	# let's split it up into two queries.  Dagnabbit.
+	# And in case we're being asked about a user who has posted
+	# many many comments (or heaven forfend, some bug lets this
+	# method be called for the anonymous coward), put a couple
+	# of sanity check limits on this query.
+	my $min_cid = $self->sqlSelect("MIN(cid)", "moderatorlog") || 0;
 	my $cid_ar = $self->sqlSelectColArrayref(
 		"cid",
 		"comments",
-		$where_clause,
+		"cid >= $min_cid AND $where_clause",
+		"ORDER BY cid DESC LIMIT 250"
 	);
 	return 0 if !$cid_ar or !@$cid_ar;
 
@@ -5339,22 +6497,44 @@ sub calcModval {
 		"GROUP BY hoursback",
 	);
 
+	my $max_halflives = $constants->{istroll_max_halflives};
 	my $modval = 0;
 	for my $hoursback (keys %$hr) {
 		my $val = $hr->{$hoursback}{valsum};
 		next unless $val;
 		if ($hoursback <= $halflife) {
 			$modval += $val;
-		} elsif ($hoursback > $halflife*10) {
-			# So old it's not worth looking at.
-		} else {
+		} elsif ($hoursback <= $halflife*$max_halflives) {
 			# Logarithmically weighted.
 			$modval += $val / (2 ** ($hoursback/$halflife));
+		} elsif ($hoursback > $halflife*12) {
+			# So old it's not worth looking at.
+		} else {
+			# Half-lives, half-lived...
+			$modval += $val / (2 ** $max_halflives);
 		}
 	}
 
 	$minicache->{$cid_text} = $modval if $minicache;
 	$modval;
+}
+
+sub getNetIDKarma {
+	my($self, $type, $id) = @_;
+	my($count, $karma);
+	if ($type eq "ipid") {
+		($count, $karma) = $self->sqlSelect("count(*),sum(karma)","comments","ipid='$id'");
+		return wantarray ? ($karma, $count) : $karma;
+	} elsif ($type eq "subnetid") {
+		($count, $karma) = $self->sqlSelect("count(*),sum(karma)","comments","subnetid='$id'");
+		return wantarray ? ($karma, $count) : $karma;
+	} else {
+		($count, $karma) = $self->sqlSelect("count(*),sum(karma)","comments","ipid='$id'");
+		return wantarray ? ($karma, $count) : $karma if $count;
+
+		($count, $karma) = $self->sqlSelect("count(*),sum(karma)","comments","subnetid='$id'");
+		return wantarray ? ($karma, $count) : $karma;
+	}
 }
 
 ########################################################
@@ -5423,13 +6603,13 @@ sub getIsTroll {
 	my $minicache = { };
 
 	# Check for modval by IPID.
-	$trollpoint = -abs($constants->{istroll_downmods_ip}) - $good_behavior;
+	$trollpoint = $self->calcTrollPoint("ipid", $good_behavior);
 	$modval = $self->calcModval("ipid = '$user->{ipid}'",
 		$ipid_hoursback, $minicache);
 	return 1 if $modval <= $trollpoint;
 
 	# Check for modval by subnet.
-	$trollpoint = -abs($constants->{istroll_downmods_subnet}) - $good_behavior;
+	$trollpoint = $self->calcTrollPoint("subnetid", $good_behavior);
 	$modval = $self->calcModval("subnetid = '$user->{subnetid}'",
 		$ipid_hoursback, $minicache);
 	return 1 if $modval <= $trollpoint;
@@ -5439,7 +6619,7 @@ sub getIsTroll {
 	return 0 if $user->{is_anon};
 
 	# Check for modval by user ID.
-	$trollpoint = -abs($constants->{istroll_downmods_user}) - $good_behavior;
+	$trollpoint = $self->calcTrollPoint("uid",$good_behavior);
 	$modval = $self->calcModval("comments.uid = $user->{uid}", $uid_hoursback);
 	return 1 if $modval <= $trollpoint;
 
@@ -5476,7 +6656,8 @@ sub createStory {
 	my($self, $story) = @_;
 
 	my $constants = getCurrentStatic();
-	$self->{_dbh}{AutoCommit} = 0;
+#	$self->{_dbh}{AutoCommit} = 0;
+	$self->sqlDo("SET AUTOCOMMIT=0");
 
 	# yes, this format is correct, don't change it :-)
 	my $sidformat = '%02d/%02d/%02d/%02d%0d2%02d';
@@ -5496,8 +6677,8 @@ sub createStory {
 		);
 
 		# i think i got this right -- pudge
- 		if (!isAnon($suid)) {
-	 		my($userkarma) =
+		if (!isAnon($suid)) {
+			my($userkarma) =
 				$self->sqlSelect('karma', 'users_info', "uid=$suid");
 			my $newkarma = (($userkarma + $constants->{submission_bonus})
 				> $constants->{maxkarma})
@@ -5506,6 +6687,7 @@ sub createStory {
 			$self->sqlUpdate('users_info', {
 				-karma => $newkarma },
 			"uid=$suid");
+			$self->setUser_delete_memcached($suid);
 		}
 
 		$self->setSubmission($story->{subid}, {
@@ -5546,37 +6728,46 @@ sub createStory {
 	my $rootdir = $section->{rootdir} || $constants->{rootdir};
 	my $comment_codes = $self->getDescriptions("commentcodes");
 
-	my $id = $self->createDiscussion( {
+	my $discussion = {
 		title		=> $story->{title},
 		section		=> $story->{section},
 		topic		=> $story->{tid},
-		url		=> "$rootdir/article.pl?sid=$story->{sid}&tid=$story->{topic}",
+		url		=> "$rootdir/article.pl?sid=$story->{sid}"
+					. ($constants->{tids_in_urls}
+					  ? "&tid=$story->{topic}" : ""),
 		sid		=> $story->{sid},
-		commentstatus	=> $comment_codes->{$story->{commentstatus}} ? $story->{commentstatus} : getCurrentStatic('defaultcommentstatus'),
+		commentstatus	=> $comment_codes->{$story->{commentstatus}}
+				   ? $story->{commentstatus}
+				   : $constants->{defaultcommentstatus},
 		ts		=> $story->{'time'}
-	});
+	};
+	my $id = $self->createDiscussion($discussion);
 	unless ($id) {
-		print STDERR "Failed to create discussion for story\n";
+		print STDERR "Failed to create discussion for story: " . Dumper($discussion);
 		goto error;
 	}
 	unless ($self->setStory($story->{sid}, { discussion => $id })) {
-		print STDERR "Failed to set  discussion for story\n";
+		print STDERR "Failed to set discussion '$id' for story '$story->{sid}'\n";
 		goto error;
 	}
 	# Take all secondary topics and shove them into the array for the story
 	unless ($self->setStoryTopics($story->{sid}, createStoryTopicData($self))) {
-		print STDERR "Failed to set topics for story\n";
+		print STDERR "Failed to set topics for story '$story->{sid}'\n";
 		goto error;
 	}
 
-	$self->{_dbh}->commit;
-	$self->{_dbh}{AutoCommit} = 1;
+#	$self->{_dbh}->commit;
+#	$self->{_dbh}{AutoCommit} = 1;
+	$self->sqlDo("COMMIT");
+	$self->sqlDo("SET AUTOCOMMIT=1");
 
 	return $story->{sid};
 
 	error: {
-		$self->{_dbh}->rollback;
-		$self->{_dbh}{AutoCommit} = 1;
+#		$self->{_dbh}->rollback;
+#		$self->{_dbh}{AutoCommit} = 1;
+		$self->sqlDo("ROLLBACK");
+		$self->sqlDo("SET AUTOCOMMIT=1");
 		return "";
 	}
 }
@@ -5585,10 +6776,23 @@ sub createStory {
 sub updateStory {
 	my($self, $sid, $data) = @_;
 	my $constants = getCurrentStatic();
-	$self->{_dbh}{AutoCommit} = 0;
+#	$self->{_dbh}{AutoCommit} = 0;
+	$self->sqlDo("SET AUTOCOMMIT=0");
 
 	$data->{body_length} = length($data->{bodytext});
 	$data->{word_count} = countWords($data->{introtext}) + countWords($data->{bodytext});
+
+	my $sid_q = $self->sqlQuote($sid);
+	my $prev_section = $self->sqlSelect(
+		"section", "stories",
+		"sid=$sid_q");
+	my $old_section_param = $self->sqlSelect(
+		"value", "story_param",
+		"sid=$sid_q AND name = 'old_shtml_sections'");
+	if ($prev_section && $prev_section ne $data->{section}) {
+		$old_section_param .= "$prev_section,";
+		$data->{old_shtml_sections} = $old_section_param;
+	}
 
 	unless ($self->setStory($sid, $data)) {
 		print STDERR "Failed to set topics for story\n";
@@ -5627,20 +6831,24 @@ sub updateStory {
 		$self->setSection($data->{section}, { writestatus => 'dirty' });
 	}
 
-	$self->{_dbh}->commit;
-	$self->{_dbh}{AutoCommit} = 1;
-        $self->updatePollFromStory($sid, {
-        	date		=> 1,
-        	topic		=> 1,
-        	section		=> 1,
-        	polltype	=> 1
-        });
+#	$self->{_dbh}->commit;
+#	$self->{_dbh}{AutoCommit} = 1;
+	$self->sqlDo("COMMIT");
+	$self->sqlDo("SET AUTOCOMMIT=1");
+	$self->updatePollFromStory($sid, {
+		date		=> 1,
+		topic		=> 1,
+		section		=> 1,
+		polltype	=> 1
+	});
 
 	return $sid;
 
 	error: {
-		$self->{_dbh}->rollback;
-		$self->{_dbh}{AutoCommit} = 1;
+#		$self->{_dbh}->rollback;
+#		$self->{_dbh}{AutoCommit} = 1;
+		$self->sqlDo("ROLLBACK");
+		$self->sqlDo("SET AUTOCOMMIT=1");
 		return "";
 	}
 }
@@ -5699,6 +6907,8 @@ sub getSlashConf {
 		   || ($conf{m2_consensus}-1)/2 != int(($conf{m2_consensus}-1)/2);
 	$conf{nick_chars}	||= q{ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$_.+!*'(),-};
 	$conf{nick_maxlen}	||= 20;
+	$conf{cookie_location}  ||= 'classbid';
+	$conf{login_temp_minutes} ||= 10;
 	# For all fields that it is safe to default to -1 if their
 	# values are not present...
 	for (qw[min_expiry_days max_expiry_days min_expiry_comm max_expiry_comm]) {
@@ -5744,19 +6954,25 @@ sub getSlashConf {
 		# --------			# -------------------
 						# See <http://www.iana.org/assignments/uri-schemes>
 		approved_url_schemes =>		[qw( ftp http gopher mailto news nntp telnet wais https )],
-		approvedtags =>			[qw( B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV ECODE )],
-		approvedtags_break =>		[qw( P LI OL UL BR BLOCKQUOTE DIV HR )],
+		approvedtags =>			[qw( B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV ECODE DL DT DD)],
+		approvedtags_break =>		[qw( P LI OL UL BR BLOCKQUOTE DIV HR DL DT DD)],
 		charrefs_bad_entity =>		[qw( zwnj zwj lrm rlm )],
 		charrefs_bad_numeric =>		[qw( 8204 8205 8206 8207 8236 8237 8238 )],
-		lonetags =>			[qw( P LI BR IMG )],
+		charrefs_good_entity =>		[qw( amp lt gt euro )],
+		charrefs_good_numeric =>	[ ],
+		lonetags =>			[qw( P LI BR IMG DT DD)],
 		fixhrefs =>			[ ],
+		hc_possible_fonts =>		[ ],
 		lonetags =>			[ ],
+		m2_sliding_consensus =>		[ ],
 		op_exclude_from_countdaily =>   [qw( rss )],
+		op_extras_countdaily =>   	[ ],
 		mod_stats_reports =>		[ $conf{adminmail_mod} ],
 		stats_reports =>		[ $conf{adminmail} ],
 		stats_sfnet_groupids =>		[ 4421 ],
 		submit_categories =>		[ ],
 		sections_recenttopics =>        [ ],
+		subnet_karma_post_limit_range => [ ]
 	);
 	my %conf_fixup_hashes = (
 		# var name			# default hash of keys/values
@@ -5775,7 +6991,8 @@ sub getSlashConf {
 						  0.70 => [qw(  0     0     +2  0   )],
 						  0.80 => [qw( +0.01 -1     +3  0   )],
 						  0.90 => [qw( +0.02 -2     +4  0   )],
-						  1.00 => [qw( +0.05  0     +5 +0.5 )],	}
+						  1.00 => [qw( +0.05  0     +5 +0.5 )],	},
+		m2_consequences_repeats =>	{ 3 => -4, 5 => -12, 10 => -100 },
 	);
 	for my $key (keys %conf_fixup_arrays) {
 		if (defined($conf{$key})) {
@@ -5817,39 +7034,112 @@ sub getSlashConf {
 		$conf{comment_nonstartwordchars_regex} = qr{$regex}i;
 	}
 
+	for my $regex (qw(
+		accesslog_imageregex
+		x_forwarded_for_trust_regex
+	)) {
+		next if !$conf{$regex} || $conf{$regex} eq 'NONE';
+		$conf{$regex} = qr{$conf{$regex}};
+	}
+
+	if ($conf{approvedtags_attr}) {
+		my $approvedtags_attr = $conf{approvedtags_attr};
+		$conf{approvedtags_attr} = {};
+		my @tags = split(/\s+/, $approvedtags_attr);
+		foreach my $tag(@tags){
+			my ($tagname,$attr_info) = $tag=~/([^:]*):(.*)$/;
+			my @attrs = split( ",", $attr_info );
+			my $ord=1;
+			foreach my $attr(@attrs){
+				my($at,$extra) = split( /_/, $attr );
+				$at = uc($at);
+				$tagname = uc($tagname);
+				$conf{approvedtags_attr}->{$tagname}{$at}{ord}=$ord;
+				$conf{approvedtags_attr}->{$tagname}{$at}{req}=1 if $extra=~/R/;
+				$conf{approvedtags_attr}->{$tagname}{$at}{url}=1 if $extra=~/U/;
+				$ord++
+			}
+		}   
+
+	}
+
 	# for fun ... or something
 	$conf{colors} = $self->sqlSelect("block", "blocks", "bid='colors'");
 
 	# We only need to do this on startup.
 	$conf{classes} = $self->getClasses();
 
-	# Let's try memcached.  The memcached_servers var is in the format
+	return \%conf;
+}
+
+##################################################################
+# It would be best to write a Slash::MemCached class, preferably as
+# a plugin, but let's just do this for now.
+sub getMCD {
+	my($self) = @_;
+
+	# If we already created it for this object, or if we tried to
+	# create it and failed and assigned it 0, return that.
+	return $self->{_mcd} if defined($self->{_mcd});
+
+	# If we aren't using memcached, return false.
+	my $constants = getCurrentStatic();
+	return 0 if !$constants->{memcached} || !$constants->{memcached_servers};
+
+	# OK, let's try memcached.  The memcached_servers var is in the format
 	# "10.0.0.15:11211 10.0.0.15:11212 10.0.0.17:11211=3".
-	# It would be best to write a Slash::MemCached class, preferably as
-	# a plugin, but let's just do this for now.
-	if ($conf{memcached} && $conf{memcached_servers}) {
-		my @servers = split / /, $conf{memcached_servers};
-		for my $server (@servers) {
-			if ($server =~ /(.+)=(\d+)$/) {
-				$server = [ $1, $2 ];
-			}
-		}
-		require MemCachedClient;
-		$self->{_mcd} = MemCachedClient->new({
-			servers =>	[ @servers ],
-			debug =>	$conf{memcached_debug} > 1 ? 1 : 0,
-		});
-		if ($conf{memcached_keyprefix}) {
-			$self->{_mcd}{keyprefix} = $conf{memcached_keyprefix};
-		} else {
-			# If no keyprefix defined in vars, use the first and
-			# last letter from the sitename.
-			$conf{sitename} =~ /([A-Za-z]).*(\w)/;
-			$self->{_mcd}{keyprefix} = ($2 ? lc("$1$2") : ($1 ? lc($1) : ""));
+
+	my @servers = split / /, $constants->{memcached_servers};
+	for my $server (@servers) {
+		if ($server =~ /(.+)=(\d+)$/) {
+			$server = [ $1, $2 ];
 		}
 	}
+	require Cache::Memcached;
+	$self->{_mcd} = Cache::Memcached->new({
+		servers =>	[ @servers ],
+		debug =>	$constants->{memcached_debug} > 1 ? 1 : 0,
+	});
+	if (!$self->{_mcd}) {
+		# Can't connect; not using it.
+		return $self->{_mcd} = 0;
+	}
+	if ($constants->{memcached_keyprefix}) {
+		$self->{_mcd}{keyprefix} = $constants->{memcached_keyprefix};
+	} else {
+		# If no keyprefix defined in vars, use the first and
+		# last letter from the sitename.
+		$constants->{sitename} =~ /([A-Za-z]).*(\w)/;
+		$self->{_mcd}{keyprefix} = ($2 ? lc("$1$2") : ($1 ? lc($1) : ""));
+	}
+	return $self->{_mcd};
+}
 
-	return \%conf;
+##################################################################
+sub getMCDStats {
+	my($self) = @_;
+	my $mcd = $self->getMCD();
+	return undef unless $mcd && $mcd->can("stats");
+
+	my $stats = $mcd->stats();
+	for my $server (keys %{$stats->{hosts}}) {
+		_getMCDStats_percentify($stats->{hosts}{$server}{misc},
+			qw(	get_hits	cmd_get		get_hit_percent ));
+		_getMCDStats_percentify($stats->{hosts}{$server}{malloc},
+			qw(	total_alloc	arena_size	total_alloc_percent ));
+	}
+	_getMCDStats_percentify($stats->{total},
+			qw(	get_hits	cmd_get		get_hit_percent ));
+	_getMCDStats_percentify($stats->{total},
+			qw(	malloc_total_alloc	malloc_arena_size	malloc_total_alloc_percent ));
+	return $stats;
+}
+
+sub _getMCDStats_percentify {
+	my($hr, $num, $denom, $dest) = @_;
+	my $perc = "-";
+	$perc = sprintf("%.1f", $hr->{$num}*100 / $hr->{$denom}) if $hr->{$denom};
+	$hr->{$dest} = $perc;
 }
 
 ##################################################################
@@ -5931,17 +7221,12 @@ sub getTime {
 }
 
 ##################################################################
-# Should this really be in here? -- krow
-# dunno ... sigh, i am still not sure this is best
-# (see getStories()) -- pudge
-# As of now, getDay is only used in Slash.pm getOlderStories() - Jamie
 # And if a webserver had a date that is off... -Brian
 # ...it wouldn't matter; "today's date" is a timezone dependent concept.
 # If you live halfway around the world from whatever timezone we pick,
 # this will be consistently off by hours, so we shouldn't spend an SQL
 # query to worry about minutes or seconds - Jamie
 sub getDay {
-#	my($now) = $self->sqlSelect('to_days(now())');
 	my($self, $days_back) = @_;
 	$days_back ||= 0;
 	my $day = timeCalc(scalar(localtime(time-86400*$days_back)), '%Y%m%d'); # epoch time, %Q
@@ -5956,6 +7241,7 @@ sub getStoryList {
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
 
 	# CHANGE DATE_ FUNCTIONS
 	my $columns = 'hits, stories.commentcount as commentcount, stories.sid, stories.title, stories.uid, '
@@ -5972,7 +7258,7 @@ sub getStoryList {
 		push @where, "stories.section = " . $self->sqlQuote($SECT->{section});
 	}
 	push @where, "time < DATE_ADD(NOW(), INTERVAL 72 HOUR) "
-		if $form->{section} eq "";
+		if $form->{section} eq '' && !$constants->{show_all_future_stories_admin};
 	my $other = "ORDER BY time DESC LIMIT $first_story, $num_stories";
 
 	$where = join ' AND ', @where;
@@ -6054,6 +7340,18 @@ sub getSlashdStatuses {
 }
 
 ##################################################################
+sub getMaxCid {
+	my($self) = @_;
+	return $self->sqlSelect("MAX(cid)", "comments");
+}
+
+##################################################################
+sub getMaxModeratorlogId {
+	my($self) = @_;
+	return $self->sqlSelect("MAX(id)", "moderatorlog");
+}
+
+##################################################################
 sub getRecentComments {
 	my($self, $options) = @_;
 	my $constants = getCurrentStatic();
@@ -6061,13 +7359,24 @@ sub getRecentComments {
 		$constants->{comment_maxscore});
 	$min = $options->{min} if defined $options->{min};
 	$max = $options->{max} if defined $options->{max};
+	my $sid = $options->{sid} if defined $options->{sid};
 	$max = $min if $max < $min;
 	my $startat = $options->{startat} || 0;
-	my $num = $options->{num} || 30; # should be a var
+	my $num = $options->{num} || 100; # should be a var
 
-	my $max_cid = $self->sqlSelect("MAX(cid)", "comments");
+	my $max_cid = $self->getMaxCid();
 	my $start_cid = $max_cid - ($startat+($num*5-1));
 	my $end_cid = $max_cid - $startat;
+
+	my($limit_clause, $where_extra);
+	if ($sid) {
+		$where_extra  = " AND comments.sid = ".$self->sqlQuote($sid);
+		$limit_clause = " LIMIT $startat, $num ";
+	} else {
+		$where_extra  = " AND comments.cid BETWEEN $start_cid and $end_cid ";
+		$limit_clause = " LIMIT $num"; 
+	}
+
 	my $ar = $self->sqlSelectAllHashrefArray(
 		"comments.sid AS sid, comments.cid AS cid,
 		 date, comments.ipid AS ipid,
@@ -6075,19 +7384,21 @@ sub getRecentComments {
 		 comments.uid AS uid, points AS score,
 		 lastmod, comments.reason AS reason,
 		 users.nickname AS nickname,
+		 comment_text.comment AS comment,
 		 SUM(val) AS sum_val,
 		 IF(moderatorlog.cid IS NULL, 0, COUNT(*))
 		 	AS num_mods",
-		"comments, users
+		"comments, users, comment_text
 		 LEFT JOIN moderatorlog
 		 	ON comments.cid=moderatorlog.cid
 			AND moderatorlog.active=1",
 		"comments.uid=users.uid
+		 AND comments.cid = comment_text.cid
 		 AND comments.points BETWEEN $min AND $max
-		 AND comments.cid BETWEEN $start_cid AND $end_cid",
+		 $where_extra",
 		"GROUP BY comments.cid
 		 ORDER BY comments.cid DESC
-		 LIMIT $num"
+		 $limit_clause"
 	);
 
 	return $ar;
@@ -6103,13 +7414,10 @@ sub getStory {
 	my $table_cache = '_stories_cache';
 	my $table_cache_time= '_stories_cache_time';
 
-	my $val_scalar = 1;
-	$val_scalar = 0 if !$val or ref($val);
-
 	# Go grab the data if we don't have it, or if the caller
 	# demands that we grab it anyway.
 	my $is_in_cache = exists $self->{$table_cache}{$id};
-	if (!$is_in_cache or $force_cache_freshen) {
+	if (!$is_in_cache || $force_cache_freshen) {
 		# We avoid the join here. Sure, it's two calls to the db,
 		# but why do a join if it's not needed?
 		my($append, $answer, $db_id);
@@ -6126,7 +7434,7 @@ sub getStory {
 		for my $ary_ref (@$append) {
 			$answer->{$ary_ref->[0]} = $ary_ref->[1];
 		}
-		if (!$answer or ref($answer) ne 'HASH') {
+		if (!$answer || ref($answer) ne 'HASH') {
 			# If there's no data for this sid, then there's no data
 			# for us to return, and we shouldn't touch the cache.
 			return undef;
@@ -6141,8 +7449,8 @@ sub getStory {
 	}
 
 	# The data is in the table cache now.
-	my $retval = undef;
-	if ($val_scalar) {
+	my $retval;
+	if ($val && !ref $val) {
 		# Caller only asked for one return value.
 		if (exists $self->{$table_cache}{$id}{$val}) {
 			$retval = $self->{$table_cache}{$id}{$val};
@@ -6171,6 +7479,38 @@ sub getStory {
 }
 
 ########################################################
+sub setCommonStoryWords {
+	my($self) = @_;
+	my $form      = getCurrentForm();
+	my $constants = getCurrentStatic();
+	my $words;
+	
+	if (ref($form->{_multi}{set_common_word}) eq 'ARRAY') {
+		$words = $form->{_multi}{set_common_word};
+	} elsif ($form->{set_common_word}) {
+		$words = $form->{set_common_word};
+	}
+	if ($words) {
+		my %common_words = map { $_ => 1 } split " ", ($self->getVar('common_story_words', 'value', 1) || "");
+
+		if (ref $words eq "ARRAY") {
+			$common_words{$_} = 1 foreach @$words;
+		} else {
+			$common_words{$words} = 1;
+		}
+
+		# assuming our storage limits are the same as for uncommon words
+		my $maxlen = $constants->{uncommonstorywords_maxlen} || 65000; 
+		
+		my $common_words = substr(join(" ", keys %common_words), 0, $maxlen);
+		if (length($common_words) == $maxlen) {
+			$common_words =~ s/\s+\S+\Z//;
+		}
+		$self->setVar("common_story_words", $common_words);
+	}
+}
+
+########################################################
 sub getSimilarStories {
 	my($self, $story, $max_wanted) = @_;
 	$max_wanted ||= 100;
@@ -6196,6 +7536,9 @@ sub getSimilarStories {
 	# need to concern ourselves with looking for).
 	my @recent_uncommon_words = split " ",
 		($self->getVar("uncommonstorywords", "value") || "");
+	my %common_words = map { $_ => 1 } split " ", ($self->getVar("common_story_words", "value", 1) || "");
+	@recent_uncommon_words = grep {!$common_words{$_}} @recent_uncommon_words;
+	
 	# If we don't (yet) know the list of uncommon words, return now.
 	return [ ] unless @recent_uncommon_words;
 	# Find the intersection of this story and recent stories.
@@ -6208,7 +7551,6 @@ sub getSimilarStories {
 		grep { $text_words->{$_}{count} }
 		grep { length($_) > 3 }
 		@recent_uncommon_words;
-#use Data::Dumper;
 #print STDERR "text_words: " . Dumper($text_words);
 #print STDERR "uncommon intersection: '@text_uncommon_words'\n";
 	# If there is no intersection, return now.
@@ -6338,9 +7680,9 @@ sub getAdmins {
 	my($self, $cache_flag) = @_;
 
 	my $table = 'admins';
-	my $table_cache= '_' . $table . '_cache';
-	my $table_cache_time= '_' . $table . '_cache_time';
-	my $table_cache_full= '_' . $table . '_cache_full';
+	my $table_cache = '_' . $table . '_cache';
+	my $table_cache_time = '_' . $table . '_cache_time';
+	my $table_cache_full = '_' . $table . '_cache_full';
 
 	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag) {
 		my %return = %{$self->{$table_cache}};
@@ -6615,11 +7957,12 @@ sub getTopicImage {
 }
 
 ########################################################
+# Since the topic_images_section table was taken out,
+# this is basically the same as the getTopicImage call
+# with different parameters.
 sub getTopicImageBySection {
 	my($self, $topic, $section, $values, $cache) = @_;
-	my $image_sections = $self->getDescriptions("topic_images_section");
-	# Yes the hash lookup is right, review the getDescription call if you have questions
-	my $image_id = $image_sections->{"$topic->{tid}|$section"} || $topic->{default_image};	
+	my $image_id = $topic->{default_image};	
 	my $answer = _genericGetCache({
 		table		=> 'topic_images',
 		table_prime	=> 'id',
@@ -6630,7 +7973,13 @@ sub getTopicImageBySection {
 }
 
 ########################################################
-# Brian, make this cache -Brian
+# This really could be folded into getStoryTopics().
+# It effectively returns the same thing as getStoryTopics
+# with no $add_names argument -- the only differences are
+# that this method takes more options, uses a cache, and
+# returns an arrayref instead of hashref.  If those
+# features were added to getStoryTopics, we could get rid
+# of this method.  It only appears in our code four times.
 sub getStoryTopicsJustTids {
 	my($self, $sid, $options) = @_;
 	return $self->{_story_topics}{$sid} if $self->{_story_topics}{$sid} && !$options->{no_parents};
@@ -6644,8 +7993,16 @@ sub getStoryTopicsJustTids {
 }
 
 ########################################################
-# add_names = 1, or any other non-zero/non-two value  -> Topic Alt text.
-# add_names = 2 -> Topic Name.
+# As of 2004/04:
+# $add_names of 1 means to return the alt text, which is the
+# human-readable name of a topic.  This is currently used
+# only in article.pl to add these words and phrases to META
+# information on the webpage.
+# $add_names of 2 means to return the name, which is a
+# (not-guaranteed-unique) short single keyword.  This is
+# currently used only in adminmail.pl to append something
+# descriptive to the numeric tid for the topichits_123_foo
+# stats.
 sub getStoryTopics {
 	my($self, $sid, $add_names) = @_;
 	my($topicdesc);
@@ -6825,6 +8182,8 @@ sub setUser {
 	my($self, $uid, $hashref, $options) = @_;
 	return 0 unless $uid;
 
+	my $constants = getCurrentStatic();
+
 	my(@param, %update_tables, $cache);
 	my $tables = [qw(
 		users users_comments users_index
@@ -6840,10 +8199,7 @@ sub setUser {
 	}
 
 	# Power to the People
-	if ($hashref->{people}) {
-		my $people = $hashref->{people};
-		$hashref->{people} = freeze($people);
-	}
+	$hashref->{people} = freeze($hashref->{people}) if $hashref->{people};
 
 	# hm, come back to exboxes later; it works for now
 	# as is, since external scripts handle it -- pudge
@@ -6867,6 +8223,16 @@ sub setUser {
 		} else {
 			push @param, [$_, $hashref->{$_}];
 		}
+	}
+
+	# Delete from memcached once before we update the DB.  We only need to
+	# delete if we're touching a table other than users_hits (since nothing
+	# in that table is stored in memcached).
+	my $mcd = $self->getMCD();
+	my $mcd_need_delete = 0;
+	if ($mcd) {
+		$mcd_need_delete = 1 if grep { $_ ne 'users_hits' } keys %update_tables;
+		$self->setUser_delete_memcached($uid) if $mcd_need_delete;
 	}
 
 	my $rows = 0;
@@ -6902,7 +8268,7 @@ sub setUser {
 		} elsif ($_->[0] eq "acl") {
 			my(@delete, @add);
 			my $acls = $_->[1];
-			for my $key (keys(%$acls)) {
+			for my $key (sort keys %$acls) {
 				if ($acls->{$key}) {
 					push @add, $key;
 				} else {
@@ -6911,16 +8277,22 @@ sub setUser {
 			} 
 			if (@delete) {
 				my $string = join(',', @{$self->sqlQuote(\@delete)});
-				$self->sqlDo("DELETE FROM users_acl WHERE acl IN ($string)");
+				$self->sqlDelete("users_acl", "acl IN ($string) AND uid=$uid");
+				$mcd_need_delete = 1;
 			}
 			if (@add) {
+				# Doing all the inserts at once is cheaper than
+				# separate calls to sqlInsert().
 				my $string;
-				for (@add) {
-					my $qacl = $self->sqlQuote($_);
+				for my $acl (@add) {
+					my $qacl = $self->sqlQuote($acl);
 					$string .= qq| ($uid, $qacl),|
 				}
-				chop($string);
+				chop($string); # remove trailing comma
+				my $qlid = $self->_querylog_start('INSERT', 'users_acl');
 				$self->sqlDo("INSERT IGNORE INTO users_acl (uid, acl) VALUES $string");
+				$self->_querylog_finish($qlid);
+				$mcd_need_delete = 1;
 			}
 		} else {
 			$rows += $self->sqlReplace('users_param', {
@@ -6931,138 +8303,614 @@ sub setUser {
 		}
 	}
 
+	# And delete from memcached again after we update the DB
+	$mcd_need_delete = 1 if $rows;
+	$self->setUser_delete_memcached($uid) if $mcd_need_delete;
+
 	return $rows;
 }
 
-# Nicknames
-sub getUsersNicknamesByUID {
-	my ($self, $people) = @_;
-	return unless (ref($people) eq 'ARRAY') && scalar(@$people);
-	my $list = join(",", @$people);
-	$self->sqlSelectAllHashref("uid", "uid,nickname", "users", "uid IN ($list)");
+sub setUser_delete_memcached {
+	my($self, $uid_list) = @_;
+	my $mcd = $self->getMCD();
+	return unless $mcd;
+	my $constants = getCurrentStatic();
+	my $mcddebug = $mcd && $constants->{memcached_debug};
+
+	$uid_list = [ $uid_list ] if !ref($uid_list);
+	for my $uid (@$uid_list) {
+		my $mcdkey = "$mcd->{keyprefix}u:";
+		# The "1" means "don't accept new writes to this key for 1 second."
+		$mcd->delete("$mcdkey$uid", 1);
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ setU_deletemcd deleted '$mcdkey$uid'\n";
+		}
+	}
 }
 
 ########################################################
-# Now here is the thing. We want getUser to look like
-# a generic, despite the fact that it is not :)
+# Get a list of nicknames
+sub getUsersNicknamesByUID {
+	my($self, $people) = @_;
+	return unless (ref($people) eq 'ARRAY') && scalar(@$people);
+	my $list = join(",", @$people);
+	return $self->sqlSelectAllHashref("uid", "uid,nickname", "users", "uid IN ($list)");
+}
+
+########################################################
+# Get the complete list of all acl/uid pairs used on this site.
+# (We assume this to be on the order of < 10K rows returned.)
+# The list is returned as a hashref whose keys are the acl names
+# and whose values are an arrayref of uids that have that acl
+# permission.
+sub getAllACLs {
+	my($self) = @_;
+	my $ar = $self->sqlSelectAll("uid, acl", "users_acl");
+	return undef unless $ar && @$ar;
+	my $hr = { };
+	for my $row (@$ar) {
+		my($uid, $acl) = @$row;
+		push @{$hr->{$acl}}, $uid;
+	}
+	return $hr;
+}
+
+########################################################
+# We want getUser to look like a generic, despite the fact that
+# it is decidedly not :)
+# New as of 9/2003: if memcached is active, we no longer do piecemeal
+# DB loads of anything less than the full user data.  We grab the
+# users_hits table from the DB and everything else from memcached.
 sub getUser {
-	my($self, $id, $val) = @_;
+	my($self, $uid, $val) = @_;
 	my $answer;
-	my $tables = [qw(
-		users users_comments users_index
-		users_info users_prefs users_hits
-	)];
-	# The sort makes sure that someone will always get the cache if
-	# they have the same tables
-	my $cache = _genericGetCacheName($self, $tables);
+	my $uid_q = $self->sqlQuote($uid);
 
-	if (ref($val) eq 'ARRAY') {
-		my($values, %tables, @param, $where, $table);
-		for (@$val) {
-			(my $clean_val = $_) =~ s/^-//;
-			if ($self->{$cache}{$clean_val}) {
-				$tables{$self->{$cache}{$_}} = 1;
-				$values .= "$_,";
-			} else {
-				push @param, $_;
-			}
-		}
-		chop($values);
+	my $constants = getCurrentStatic();
+	my $mcd = $self->getMCD();
+	my $mcddebug = $mcd && $constants->{memcached_debug};
+	my $start_time;
+	my $mcdkey = "$mcd->{keyprefix}u:" if $mcd;
+	my $mcdanswer;
 
-		for (keys %tables) {
-			$where .= "$_.uid=$id AND ";
-		}
-		$where =~ s/ AND $//;
-
-		$table = join ',', keys %tables;
-		$answer = $self->sqlSelectHashref($values, $table, $where)
-			if $values;
-		for (@param) {
-			$answer->{$_} = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'");
-		}
-
-	} elsif ($val) {
-		(my $clean_val = $val) =~ s/^-//;
-		my $table = $self->{$cache}{$clean_val};
-		if ($table) {
-			$answer = $self->sqlSelect($val, $table, "uid=$id");
-		} else {
-			# First we try it as an acl param -acs
-			$answer = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$val'");
-		}
-
-	} else {
-
-		# The five-way join is causing us some pain.  For testing, let's
-		# use a var to decide whether to do it that way, or a new way
-		# where we do multiple SELECTs.  Let the var decide how many
-		# SELECTs we do, and if more than 1, the first tables we'll pull
-		# off separately are Rob's suspicions:  users_prefs and
-		# users_comments.
-
-		my $n = getCurrentStatic('num_users_selects') || 1;
-		my @tables_ordered = qw( users users_index
-			users_info users_hits
-			users_comments users_prefs );
-		while ($n > 0) {
-			my @tables_thispass = ( );
-			if ($n > 1) {
-				# Grab the columns from the last table still
-				# on the list.
-				@tables_thispass = pop @tables_ordered;
-			} else {
-				# This is the last SELECT we'll be doing, so
-				# join all remaining tables.
-				@tables_thispass = @tables_ordered;
-			}
-			my $table = join(",", @tables_thispass);
-			my $where = join(" AND ", map { "$_.uid=$id" } @tables_thispass);
-			if (!$answer) {
-				$answer = $self->sqlSelectHashref('*', $table, $where);
-			} else {
-				my $moreanswer = $self->sqlSelectHashref('*', $table, $where);
-				for (keys %$moreanswer) {
-					$answer->{$_} = $moreanswer->{$_}
-						unless exists $answer->{$_};
-				}
-			}
-			$n--;
-		}
-
-		my($append_acl, $append);
-		$append_acl = $self->sqlSelectColArrayref('acl', 'users_acl', "uid=$id");
-		for (@$append_acl) {
-			$answer->{acl}{$_} = 1;
-		}
-		$append = $self->sqlSelectAll('name,value', 'users_param', "uid=$id");
-		for (@$append) {
-			$answer->{$_->[0]} = $_->[1];
-		}
+	if ($mcddebug > 1) {
+		my $v = Dumper($val); $v =~ s/\s+/ /g;
+		print STDERR scalar(gmtime) . " $$ getUser('$uid' ($uid_q), $v) mcd='$mcd'\n";
 	}
 
-	# we have a bit of cleanup to do before returning;
-	# thaw the people element, and clean up possibly broken
-	# exsect/exaid/extid.  gotta do it separately for hashrefs ...
-	if (ref($answer) eq 'HASH') {
-		for (qw(exaid extid exsect)) {
-			next unless $answer->{$_};
-			$answer->{$_} =~ s/,'[^']+$//;
-			$answer->{$_} =~ s/,'?$//;
-		}
-		$answer->{'people'} = thaw($answer->{'people'}) if $answer->{'people'};
+	# If memcached debug enabled, start timer
 
-	# ... and for scalars
+	$start_time = Time::HiRes::time if $mcddebug;
+
+	# Figure out, based on what columns we were asked for, which tables
+	# we'll need to consult.  _getUser_get_table_data() caches this data,
+	# so it's pretty quick to return everything we might need.  Note
+	# that, with memcached, it might turn out that we don't need to use
+	# the where clause or whatever;  that's OK.
+	my $gtd = $self->_getUser_get_table_data($uid_q, $val);
+
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ getUser can '$gtd->{can_use_mcd}' key '$mcdkey$uid' gtd: " . Dumper($gtd);
+	}
+
+	my $rawmcdanswer;
+	my $used_shortcut = 0;
+	if ($gtd->{can_use_mcd}
+		and $mcd
+		and $rawmcdanswer = $mcd->get("$mcdkey$uid")) {
+
+		# Excellent, we can pull some data (maybe all of it)
+		# from memcached.  The data at this point is already
+		# in $rawmcdanswer, now we just need to determine
+		# which portion of it to use.
+		my $cols_still_need = [ ];
+		if ($gtd->{all}) {
+
+			# Quick shortcut.  Everything comes from
+			# memcached except the users_hits table.
+			# users_param and users_acl tables.
+			$answer = \%{ $rawmcdanswer };
+			my $users_hits = $self->sqlSelectAllHashref(
+				"uid", "*", "users_hits",
+				"uid=$uid_q")->{uid};
+#			my $users_param = $self->sqlSelectAll(
+#				"name, value", "users_param",
+#				"uid=$uid_q");
+#			my $users_acl = $self->sqlSelectColArrayref(
+#				"acl", "users_acl",
+#				"uid=$uid_q");
+			for my $col (keys %$users_hits) {
+				$answer->{$col} = $users_hits->{$col};
+			}
+#			for my $duple (@$users_param) {
+#				$answer->{$duple->[0]} = $duple->[1];
+#			}
+#			for my $acl (@$users_acl) {
+#				push @{$answer->{acl}}, $acl;
+#			}
+			$used_shortcut = 1;
+
+		} else {
+
+			for my $col (@{$gtd->{cols_needed_ar}}) {
+				if (exists($rawmcdanswer->{$col})) {
+					# This column we can pull from mcd.
+					$mcdanswer->{$col} = $rawmcdanswer->{$col};
+					# If we get anything from mcd, we should
+					# get all the params data, so we no longer
+					# need to get them later.
+					$gtd->{all} = 0;
+				} else {
+					# This one we'll need from DB.
+					push @$cols_still_need, $col;
+				}
+			}
+
+			# Now whatever's left, we get from the DB.  If all went
+			# well, this will just be the data from the users_hits
+			# table (but we don't make that assumption, it works
+			# the same whatever data was stored in memcached).
+			if (@$cols_still_need) {
+				my $table_hr = $self->_getUser_get_select_from_where(
+					$uid_q, $cols_still_need);
+				if ($mcddebug > 1) {
+					print STDERR scalar(gmtime) . " $$ getUser still_need: '@$cols_still_need' table_hr: " . Dumper($table_hr);
+				}
+				$answer = $self->_getUser_do_selects(
+					$uid_q,
+					$table_hr->{select_clause},
+					$table_hr->{from_clause},
+					$table_hr->{where_clause},
+					$gtd->{all} ? "all" : $table_hr->{params_needed});
+			}
+
+			# Now merge the memcached and DB data.
+			for my $col (keys %$answer) {
+				$mcdanswer->{$col} = $answer->{$col};
+			}
+			$answer = $mcdanswer;
+
+		}
+
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ getUser hit, won't write_memcached\n";
+		}
+
 	} else {
-		if ($val eq 'people') {
-			$answer = thaw($answer);
-		} elsif ($val =~ m/^ex(?:aid|tid|sect)$/) {
-			$answer =~ s/,'[^']+$//;
-			$answer =~ s/,'?$//;
+
+		# Turns out we have to go to the DB for everything.
+		# Fortunately, the info we need to select it all has
+		# been precalculated and cached for us.
+		# We're doing an optimization here for the common case
+		# of an empty $val.  If we're being asked for everything
+		# about the user, select_clause will contain a list of
+		# every column, but it will be faster to just ask the DB
+		# for "*".
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ getUser miss, about to select: val '$val' all '$gtd->{all}' can '$gtd->{can_use_mcd}'\n";
+		}
+		$answer = $self->_getUser_do_selects(
+			$uid_q,
+			($val ? $gtd->{select_clause} : "*"),
+			$gtd->{from_clause},
+			$gtd->{where_clause},
+			$gtd->{all} ? "all" : $gtd->{params_needed});
+
+		# If we just got all the data for the user, and
+		# memcached is active, write it into the cache.
+		if ($mcddebug > 2) {
+			print STDERR scalar(gmtime) . " $$ getUser answer: " . Dumper($answer);
+		}
+		if (!$val && $gtd->{all} && $gtd->{can_use_mcd}) {
+			$self->_getUser_write_memcached($answer);
+		}
+		
+	}
+
+	# If no such user, we can return now.
+	# 2004/04/02 - we're seeing this message a lot, not sure why so much.
+	# Adding more debug info to check - Jamie
+	# I'm guessing it's the "com_num_X_at_or_after_cid" check.
+	if (!$answer || !%$answer) {
+		if ($mcddebug) {
+			my $elapsed = sprintf("%6.4f", Time::HiRes::time - $start_time);
+			my $rawdump = Dumper($rawmcdanswer); chomp $rawdump;
+			print STDERR scalar(gmtime) . " $$ mcd getUser '$mcdkey$uid' elapsed=$elapsed no such user can '$gtd->{can_use_mcd}' rawmcdanswer: $rawdump val: " . Dumper($val);
+		}
+		return undef;
+	}
+
+	# Fill in the uid field.
+	$answer->{uid} ||= $uid;
+
+	if ($mcddebug > 2) {
+		print STDERR scalar(gmtime) . " $$ getUser answer: " . Dumper($answer);
+	}
+
+	if (ref($val) eq 'ARRAY') {
+		# Specific column(s) are needed.
+		my $return_hr = { };
+		for my $col (@$val) {
+			$return_hr->{$col} = $answer->{$col};
+		}
+		$answer = $return_hr;
+	} elsif ($val) {
+		# Exactly one specific column is needed.
+		$answer = $answer->{$val};
+	}
+
+	if ($mcddebug) {
+		my $elapsed = sprintf("%6.4f", Time::HiRes::time - $start_time);
+		if (defined($mcdanswer) || $used_shortcut) {
+			print STDERR scalar(gmtime) . " $$ mcd getUser '$mcdkey$uid' elapsed=$elapsed cache HIT" . ($used_shortcut ? " shortcut" : "") . "\n";;
+		} else {
+			print STDERR scalar(gmtime) . " $$ mcd getUser '$mcdkey$uid' elapsed=$elapsed cache MISS can '$gtd->{can_use_mcd}' rawmcdanswer: " . Dumper($rawmcdanswer);
+		}
+	}
+	
+	return $answer;
+}
+
+#
+# _getUser_do_selects
+#
+
+sub _getUser_do_selects {
+	my($self, $uid_q, $select, $from, $where, $params) = @_;
+	my $mcd = $self->getMCD();
+	my $constants = getCurrentStatic();
+	my $mcddebug = $mcd && $constants->{memcached_debug};
+
+	# Here's the big select, the one that does something like:
+	# SELECT foo, bar, baz FROM users, users_blurb, users_snork
+	# WHERE users.uid=123 AND users_blurb.uid=123 AND so on.
+	# Note if we're being asked to get only params, we skip this.
+	my $answer = { };
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ mcd gU_ds selecthashref: '$select' '$from' '$where'\n";
+	}
+	$answer = $self->sqlSelectHashref($select, $from, $where) if $select && $from && $where;
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ mcd gU_ds got answer '$select' '$from' '$where'\n";
+	}
+
+	# Now get the params and the ACLs.  In the special case
+	# where we are being asked to get "all" params (not an
+	# arrayref of specific params), we also get the ACLs too.
+	my $param_ar = [ ];
+	if ($params eq "all") {
+		$param_ar = $self->sqlSelectAllHashrefArray(
+			"name, value",
+			"users_param",
+			"uid = $uid_q");
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ mcd gU_ds got all params\n";
+		}
+		my $acl_ar = $self->sqlSelectColArrayref(
+			"acl",
+			"users_acl",
+			"uid = $uid_q");
+		for my $acl (@$acl_ar) {
+			$answer->{acl}{$acl} = 1;
+		}
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ mcd gU_ds got all acls\n";
+		}
+	} elsif (ref($params) eq 'ARRAY' && @$params) {
+		my $param_list = join(",", map { $self->sqlQuote($_) } @$params);
+		$param_ar = $self->sqlSelectAllHashrefArray(
+			"name, value",
+			"users_param",
+			"uid = $uid_q AND name IN ($param_list)");
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ mcd gU_ds got specific params '@$params'\n";
+		}
+	}
+	for my $hr (@$param_ar) {
+		$answer->{$hr->{name}} = $hr->{value};
+	}
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ mcd gU_ds params added to answer\n";
+	}
+
+	# We have a bit of cleanup to do before returning;
+	# thaw the people element, and clean up possibly broken
+	# exsect/exaid/extid.
+	for my $key (qw( exaid extid exsect )) {
+		next unless $answer->{$key};
+		$answer->{$key} =~ s/,'[^']+$//;
+		$answer->{$key} =~ s/,'?$//;
+	}
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ mcd gU_ds answer ex-keys done\n";
+	}
+	if ($answer->{people}) {
+		$answer->{people} = thaw($answer->{people});
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ mcd gU_ds answer people thawed\n";
 		}
 	}
 
 	return $answer;
 }
+
+#
+# _getUser_compare_mcd_db
+#
+
+sub _getUser_compare_mcd_db {
+	my($self, $uid_q, $answer, $mcdanswer) = @_;
+	my $constants = getCurrentStatic();
+
+	my $errtext = "";
+
+	local $Data::Dumper::Sortkeys = 1;
+	my %union_keys = map { ($_, 1) } (keys %$answer, keys %$mcdanswer);
+	my @union_keys = sort grep !/^-/, keys %union_keys;
+	for my $key (@union_keys) {
+		my $equal = 0;
+		my($db_an_dumped, $mcd_an_dumped);
+		if (!ref($answer->{$key}) && !ref($mcdanswer->{$key})) {
+			if ($answer->{$key} eq $mcdanswer->{$key}) {
+				$equal = 1;
+			} else {
+				$db_an_dumped = "'$answer->{$key}'";
+				$mcd_an_dumped = "'$mcdanswer->{$key}'";
+			}
+		} else {
+			$db_an_dumped = Dumper($answer->{$key});	$db_an_dumped =~ s/\s+/ /g;
+			$mcd_an_dumped = Dumper($mcdanswer->{$key});	$mcd_an_dumped =~ s/\s+/ /g;
+			$equal = 1 if $db_an_dumped eq $mcd_an_dumped;
+		}
+		if (!$equal) {
+			$errtext .= "\tKEY '$key' DB:  $db_an_dumped\n";
+			$errtext .= "\tKEY '$key' MCD: $mcd_an_dumped\n";
+		}
+	}
+
+	if ($errtext) {
+		$errtext = scalar(gmtime) . " $$ getUser mcd diff on uid $uid_q:"
+			. "\n$errtext";
+		print STDERR $errtext;
+	}
+}
+
+########################################################
+#
+# Begin closure.  This is OK to use these variables to store the
+# caches, instead of getCurrentCache(), because all sites running
+# on a given webhead are running the same code and so need to be
+# at the same version of Slash.  The only way this cached data could
+# differ between different sites being served by the same webhead,
+# is if they are at different versions (and if the users_* schema
+# changed between those versions).
+{
+
+my %gsfwcache = ( );
+my %gtdcache = ( );
+my $all_users_tables = [ qw(
+	users		users_comments		users_index
+	users_info	users_prefs		users_hits	) ];
+my $users_hits_colnames;
+
+#
+# _getUser_get_select_from_where
+#
+# Given a list of needed columns, return the SELECT clause,
+# FROM clause, and WHERE clause necessary to hit the DB to
+# get them.
+
+sub _getUser_get_select_from_where {
+	my($self, $uid_q, $cols_needed) = @_;
+	my $cols_needed_sorted = [ sort @$cols_needed ];
+	my $gsfwcachekey = join("|", @$cols_needed_sorted);
+
+	my $mcd = $self->getMCD();
+	my $constants = getCurrentStatic();
+	my $mcddebug = $mcd && $constants->{memcached_debug};
+
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ gU_gsfw uid $uid_q cols '@$cols_needed_sorted' def=" . (defined($gsfwcache{$gsfwcachekey}) ? 1 : 0) . "\n";
+	}
+	if (!defined($gsfwcache{$gsfwcachekey})) {
+		my $cache_name = _genericGetCacheName($self, $all_users_tables);
+
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ gU_gsfw cache_name '$cache_name'\n";
+		}
+		
+		# Need to figure out which tables we need, based on
+		# which cols we need (and we already know that).
+		# In earlier versions of this code, we stripped
+		# a "-" prefix from the keys passed in, but "-col"
+		# should never be passed to getUser, only setUser,
+		# so we don't have to do that.
+		my %need_table = ( );
+		my $params_needed = [ ];
+		if ($mcddebug > 2) {
+			print STDERR scalar(gmtime) . " $$ gU_gsfw cache name '$cache_name' cache: " . Dumper($self->{$cache_name});
+		}
+		my $cols_main_needed_sorted = [ ];
+		for my $col (@$cols_needed_sorted) {
+			if ($mcddebug > 1) {
+				print STDERR scalar(gmtime) . " $$ gU_gsfw col '$col' table '$self->{$cache_name}{$col}'\n";
+			}
+			if (my $table_name = $self->{$cache_name}{$col}) {
+				$need_table{$table_name} = 1;
+				push @$cols_main_needed_sorted, $col;
+			} else {
+				push @$params_needed, $col;
+			}
+		}
+		my $tables_needed = [ sort keys %need_table ];
+
+		# Determine the FROM clause (comma-separated tables) and the
+		# WHERE clause (AND users_foo.uid=) to pull data from the DB.
+		my $select_clause = join(",", grep { $_ ne 'uid' } @$cols_main_needed_sorted);
+		my $from_clause = join(",", @$tables_needed);
+
+		$gsfwcache{$gsfwcachekey} = {
+			tables_needed =>	$tables_needed,
+			select_clause =>	$select_clause,
+			from_clause =>		$from_clause,
+			params_needed =>	$params_needed,
+		};
+		if ($mcddebug > 2) {
+			print STDERR scalar(gmtime) . " $$ gU_gsfw cache_name '$cache_name' gsfwcache: " . Dumper($gsfwcache{$gsfwcachekey});
+		}
+	}
+	my $return_hr = $gsfwcache{$gsfwcachekey};
+	$return_hr->{where_clause} = "("
+		. join(" AND ",
+			map { "$_.uid=$uid_q" } @{$return_hr->{tables_needed}}
+		  )
+		. ")";
+	return $return_hr;
+}
+
+#
+# _getUser_get_table_data
+#
+
+sub _getUser_get_table_data {
+	my($self, $uid_q, $val) = @_;
+	my $constants = getCurrentStatic();
+	my $mcd = $self->getMCD();
+	my $mcddebug = $mcd && $constants->{memcached_debug};
+	my $cache_name = _genericGetCacheName($self, $all_users_tables);
+
+	my $gtdcachekey;
+	my $tables_needed;
+	my $cols_needed;
+
+	# First, normalize the list of columns we need.
+	if (ref($val) eq 'ARRAY') {
+		# Specific column(s) are needed.
+		$cols_needed = $val;
+	} elsif ($val) {
+		# Exactly one specific column is needed.
+		$cols_needed = [ $val ];
+	} else {
+		# All columns are needed.  Special case of gtdcachekey.
+		$gtdcachekey = "__ALL__";
+		# And we only need to do this processing if this case
+		# is not in the cache yet.
+		if (!$gtdcache{$gtdcachekey}) {
+			$cols_needed = [ sort keys %{$self->{$cache_name}} ];
+			$tables_needed = $all_users_tables;
+		}
+	}
+
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ _getU_gtd cols_needed: " . ($cols_needed ? "'@$cols_needed'" : "(all)") . "\n";
+	}
+
+	# Now, check to see if we know all the answers for that exact
+	# list.  If so, we can skip some processing.
+	$gtdcachekey ||= join("|", @$cols_needed);
+	if (!$gtdcache{$gtdcachekey}) {
+		my $params_needed = [ ];
+		my $where;
+		my $table_list;
+		my %need_table = ( );
+
+		my $table_hr = $self->_getUser_get_select_from_where(
+			$uid_q, $cols_needed);
+		$tables_needed = $table_hr->{tables_needed}
+			if !$tables_needed || !@$tables_needed;
+
+		# Determine whether we need data from memcached, or the DB,
+		# or both.
+		my($can_use_mcd, $need_db);
+		if (!$mcd) {
+			$need_db = 1; $can_use_mcd = 0;
+		} else {
+			if (grep { $_ eq 'users_hits' } @$tables_needed) {
+				$need_db = 1;
+			}
+			if (grep { $_ ne 'users_hits' } @$tables_needed) {
+				$can_use_mcd = 1;
+			}
+		}
+
+		# We've got the data, now write it into the cache;  we'll
+		# return it in a moment.
+		my $hr = $gtdcache{$gtdcachekey} = { };
+		$hr->{tables_needed_ar} =	$tables_needed;
+		$hr->{tables_needed_hr} =	{ map { $_, 1 }
+						      @$tables_needed };
+		$hr->{cols_needed_ar} =		$cols_needed;
+		$hr->{cols_needed_hr} =		{ map { $_, $self->{$cache_name}{$_} }
+						      @$cols_needed };
+		$hr->{params_needed} =		$table_hr->{params_needed};
+		$hr->{select_clause} =		$table_hr->{select_clause};
+		$hr->{from_clause} =		$table_hr->{from_clause};
+		$hr->{need_db} =		$need_db;
+		$hr->{can_use_mcd} =		$can_use_mcd;
+	}
+
+	my $return_hr = $gtdcache{$gtdcachekey};
+	$return_hr->{where_clause} = "("
+		. join(" AND ",
+			map { "$_.uid=$uid_q" } @{$return_hr->{tables_needed_ar}}
+		  )
+		. ")";
+
+	$return_hr->{all} = 1 if $gtdcachekey eq '__ALL__';
+
+	if ($mcddebug > 1) {
+		print STDERR scalar(gmtime) . " $$ _getU_gtd returning: " . Dumper($return_hr);
+	}
+
+	return $return_hr;
+}
+
+#
+# _getUser_write_memcached
+#
+
+sub _getUser_write_memcached {
+	my($self, $userdata) = @_;
+	my $uid = $userdata->{uid};
+	return unless $uid;
+	my $mcd = getMCD();
+	return unless $mcd;
+	my $constants = getCurrentStatic();
+	my $mcddebug = $mcd && $constants->{memcached_debug};
+
+	# We don't write users_hits data into memcached.  Strip those
+	# columns out.
+	if (!$users_hits_colnames || !@$users_hits_colnames) {
+		my $cache_name = _genericGetCacheName($self, $all_users_tables);
+		$users_hits_colnames = [ ];
+		for my $col (keys %{$self->{$cache_name}}) {
+			push @$users_hits_colnames, $col
+				if $self->{$cache_name}{$col} eq 'users_hits';
+		}
+	}
+	for my $col (@$users_hits_colnames) {
+		delete $userdata->{$col};
+	}
+	if ($mcddebug > 2) {
+		print STDERR scalar(gmtime) . " $$ _getU_writemcd users_hits_colnames '@$users_hits_colnames' userdata: " . Dumper($userdata);
+	}
+
+	my $mcdkey = "$mcd->{keyprefix}u:";
+
+	my $exptime = $constants->{memcached_exptime_user};
+	$exptime = 1200 if !defined($exptime);
+	$mcd->set("$mcdkey$uid", $userdata, $exptime);
+
+	if ($mcddebug > 2) {
+		print STDERR scalar(gmtime) . " $$ _getU_writemcd wrote to '$mcdkey$uid' exptime '$exptime': " . Dumper($userdata);
+	}
+}
+
+}
+# end closure
+#
+########################################################
+
 
 ########################################################
 # This could be optimized by not making multiple calls
@@ -7076,7 +8924,7 @@ sub _genericGetCacheName {
 		$cache = '_' . join ('_', sort(@$tables), 'cache_tables_keys');
 		unless (keys %{$self->{$cache}}) {
 			for my $table (@$tables) {
-				my $keys = $self->getKeys($table);
+				my $keys = $self->getKeys($table) || [ ];
 				for (@$keys) {
 					$self->{$cache}{$_} = $table;
 				}
@@ -7085,7 +8933,7 @@ sub _genericGetCacheName {
 	} else {
 		$cache = '_' . $tables . 'cache_tables_keys';
 		unless (keys %{$self->{$cache}}) {
-			my $keys = $self->getKeys($tables);
+			my $keys = $self->getKeys($tables) || [ ];
 			for (@$keys) {
 				$self->{$cache}{$_} = $tables;
 			}
@@ -7203,11 +9051,13 @@ sub _genericGetCache {
 		$type  = $values ? 1 : 0;
 	}
 
-	if ($type) {
-		return $self->{$table_cache}{$id}{$values}
-			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
-	} else {
-		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
+	# If the value(s) wanted is (are) in that table's cache, and
+	# the cache_flag is not set to true (meaning "don't use cache"),
+	# then return the cached value now.
+	if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
+		if ($type) {
+			return $self->{$table_cache}{$id}{$values};
+		} else {
 			my %return = %{$self->{$table_cache}{$id}};
 			return \%return;
 		}
@@ -7321,9 +9171,9 @@ sub _genericGetsCache {
 	return _genericGets(@_) unless getCurrentStatic('cache_enabled');
 
 	my($table, $table_prime, $param_table, $self, $cache_flag) = @_;
-	my $table_cache= '_' . $table . '_cache';
-	my $table_cache_time= '_' . $table . '_cache_time';
-	my $table_cache_full= '_' . $table . '_cache_full';
+	my $table_cache = '_' . $table . '_cache';
+	my $table_cache_time = '_' . $table . '_cache_time';
+	my $table_cache_full = '_' . $table . '_cache_full';
 
 	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag) {
 		my %return = %{$self->{$table_cache}};
@@ -7605,6 +9455,42 @@ sub getMenus {
 }
 
 ########################################################
+# for ubb_like_forums
+sub getForumDescription {
+	my($self, $forum_id) = @_;
+
+	my $desc = $self->sqlSelect('comment', 'comments, comment_text', "comments.cid=comment_text.cid AND sid=$forum_id", 'ORDER BY comments.cid ASC LIMIT 1');
+
+	return $desc;
+}
+
+########################################################
+# for ubb_like_forums
+sub getForumParents {
+	my($self, $forum_id) = @_;
+
+	my $num_parents = $self->sqlSelect('count(*)', 'comments', "sid=$forum_id AND pid=0");
+
+	return $num_parents;
+}
+
+########################################################
+# for ubb_like_forums
+sub getForumFirstPostHashref {
+	my($self, $forum_id) = @_;
+
+	return $self->sqlSelectHashref("*", 'comments', "sid=$forum_id", 'ORDER BY comments.cid ASC LIMIT 1');
+}
+
+########################################################
+# for ubb_like_forums
+sub getForumLastPostHashref {
+	my($self, $forum_id) = @_;
+
+	return $self->sqlSelectHashref("*", 'comments', "sid=$forum_id", 'ORDER BY comments.cid DESC LIMIT 1');
+}
+
+########################################################
 sub sqlReplace {
 	my($self, $table, $data) = @_;
 	my($names, $values);
@@ -7647,7 +9533,7 @@ sub sqlTableExists {
 	my($self, $table) = @_;
 	return unless $table;
 
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $tab = $self->{_dbh}->selectrow_array(qq!SHOW TABLES LIKE "$table"!);
 
 	return $tab;
@@ -7658,7 +9544,7 @@ sub sqlSelectColumns {
 	my($self, $table) = @_;
 	return unless $table;
 
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $rows = $self->{_dbh}->selectcol_arrayref("SHOW COLUMNS FROM $table");
 	return $rows;
 }
@@ -7678,32 +9564,32 @@ sub getRandomSpamArmor {
 
 ########################################################
 sub sqlShowProcessList {
-        my($self) = @_;
+	my($self) = @_;
 
-        $self->sqlConnect();
-        my $proclist = $self->{_dbh}->prepare("SHOW FULL PROCESSLIST");
+	$self->sqlConnect();
+	my $proclist = $self->{_dbh}->prepare("SHOW FULL PROCESSLIST");
 
-        return $proclist;
+	return $proclist;
 }
 
 ########################################################
 sub sqlShowStatus {
-        my($self) = @_;
+	my($self) = @_;
 
-        $self->sqlConnect();
-        my $status = $self->{_dbh}->prepare("SHOW STATUS");
+	$self->sqlConnect();
+	my $status = $self->{_dbh}->prepare("SHOW STATUS");
 
-        return $status;
+	return $status;
 }
 
 ########################################################
 sub sqlShowInnodbStatus {
-        my($self) = @_;
+	my($self) = @_;
 
-        $self->sqlConnect();
-        my $status = $self->{_dbh}->prepare("SHOW INNODB STATUS");
+	$self->sqlConnect();
+	my $status = $self->{_dbh}->prepare("SHOW INNODB STATUS");
 
-        return $status;
+	return $status;
 }
 
 ########################################################

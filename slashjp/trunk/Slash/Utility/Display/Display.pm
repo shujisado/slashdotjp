@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -25,6 +25,7 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
+use Image::Size;
 use Slash::Display;
 use Slash::Utility::Data;
 use Slash::Utility::Environment;
@@ -59,7 +60,7 @@ use vars qw($VERSION @EXPORT);
 
 #========================================================================
 
-=head2 createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT, ORDERED])
+=head2 createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT, ORDERED, MULTIPLE])
 
 Creates a drop-down list in HTML.  List is sorted by default
 alphabetically according to list values.
@@ -91,7 +92,7 @@ See "Return value" below.
 
 =item NSORT
 
-Sort numerically, not alphabetically.
+Boolean: sort numerically, not alphabetically.
 
 =item ORDERED
 
@@ -99,6 +100,10 @@ If an arrayref is passed, an already-sorted array reference of keys.
 If non-ref, then an arrayref of hash keys is created sorting the
 hash values, alphabetically and case-insensitively.
 If ORDERED is passed in either form, then the NSORT parameter is ignored.
+
+=item MULTIPLE
+
+Boolean: do <SELECT MULTIPLE...> instead of <SELECT...>
 
 =back
 
@@ -119,7 +124,7 @@ The 'select' template block.
 =cut
 
 sub createSelect {
-	my($label, $hashref, $default, $return, $nsort, $ordered) = @_;
+	my($label, $hashref, $default, $return, $nsort, $ordered, $multiple) = @_;
 
 	if (ref $hashref eq 'ARRAY') {
 		$hashref = { map { ($_, $_) } @$hashref };
@@ -163,6 +168,7 @@ sub createSelect {
 		default	=> $default,
 		numeric	=> $nsort,
 		ordered	=> $ordered,
+		multiple => $multiple,
 	};
 
 	if ($return) {
@@ -423,7 +429,9 @@ sub linkStory {
 	# prerendered .shtml URLs whenever possible/appropriate.
 	# But, we must link to the .pl when necessary.
 
-	my $dynamic = 0;
+	# if we REALLY want dynamic
+	my $dynamic = $story_link->{dynamic} || 0;
+
 	if ($ENV{SCRIPT_NAME} || !$user->{is_anon}) {
 		# Whenever we're invoked from Apache, use dynamic links.
 		# This test will be true 99% of the time we come through
@@ -448,7 +456,9 @@ sub linkStory {
 	$story_link->{'link'} = $reader->getStory($story_link->{sid}, 'title') if $story_link->{'link'} eq '';
 	$title       = $story_link->{'link'};
 	$section     = $story_link->{section} ||= $reader->getStory($story_link->{sid}, 'section');
-	$params{tid} = $reader->getStoryTopicsJustTids($story_link->{sid}); 
+	if ($constants->{tids_in_urls}) {
+		$params{tid} = $reader->getStoryTopicsJustTids($story_link->{sid});
+	}
 
 	my $SECT = $reader->getSection($story_link->{section});
 	$url = $SECT->{rootdir} || $constants->{real_rootdir} || $constants->{rootdir};
@@ -465,8 +475,8 @@ sub linkStory {
 		chop $url;
 	} else {
 		$url .= '/' . $section . '/' . $story_link->{sid} . '.shtml';
-		# manually add the tid for now
-		if ($params{tid}) {
+		# manually add the tid(s), if wanted
+		if ($constants->{tids_in_urls} && $params{tid}) {
 			$url .= '?';
 			if (ref $params{tid} eq 'ARRAY') {
 				$url .= 'tid=' . fixparam($_) . '&' for @{$params{tid}};
@@ -478,10 +488,10 @@ sub linkStory {
 	}
 
 	if ($render) {
-		my $rendered = '<A HREF="' . $url . '"';
+		my $rendered = '<A HREF="' . strip_attribute($url) . '"';
 		$rendered .= ' TITLE="' . strip_attribute($story_link->{title}) . '"'
 			if $story_link->{title} ne '';
-		$rendered .= '>' . $title . '</A>';
+		$rendered .= '>' . strip_html($title) . '</A>';
 		return $rendered;
 	} else {
 		return [$url, $title, $story_link->{title}];
@@ -518,7 +528,7 @@ works with NO_TABLE).
 
 If this parameter is specified, the voting widget will take the vote and return
 the user to the specified URI. Note that you WILL NOT be able to redirect
-outside of the site usign this parameter for security reasons (hence the need for 
+outside of the site using this parameter for security reasons (hence the need for
 URIs as opposed to URLs).
 
 =back
@@ -850,7 +860,7 @@ sub portalbox {
 		url	=> $url,
 	}, { Return => 1, Nocomm => 1 });
 
-	if (($user->{exboxes} && $getblocks eq 'index') || 
+	if (($user->{exboxes} && $getblocks eq 'index') ||
 		($user->{exboxes} && $constants->{slashbox_sections})) {
 		$title = slashDisplay('portalmap', {
 			title	=> $title,
@@ -964,7 +974,7 @@ sub linkComment {
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
 		reason nickname fakeemail homepage sig)) {
-		$comment->{$_} = '' unless exists $comment->{$_};
+		$comment->{$_} = undef unless exists $comment->{$_};
 	}
 
 	$comment->{pid} = $comment->{original_pid} || $comment->{pid};
@@ -1097,7 +1107,7 @@ sub createMenu {
 	if ($style eq 'tabbed') {
 		# All menus in the tabbed style use the same template.
 		$menu_text .= slashDisplay("tabbedmenu",
-		 	{ tabs =>		$items,
+			{ tabs =>		$items,
 			  justify =>		$options->{justify} || 'left',
 			  color =>		$color,
 			  tab_selected =>	$options->{tab_selected},	},
@@ -1115,7 +1125,9 @@ sub createMenu {
 		if (@$items) {
 			$menu_text .= slashDisplay($menu,
 				{ items =>	$items,
-				  color =>	$color },
+				  color =>	$color,
+				  lightfontcolor => $options->{lightfontcolor} || ""
+				},
 				{ Return => 1, Page => 'menu' });
 		}
 	}
@@ -1193,12 +1205,13 @@ sub _hard_linkComment {
 # $comment->{threshold}? Hmm. I'm not sure what it
 # means for a comment to have a threshold. If it's 0,
 # does the following line do the right thing? - Jamie
-# You know, I think this is a bug that comes up every so often. But in 
-# theory when you go to the comment link "threshhold" should follow 
+# You know, I think this is a bug that comes up every so often. But in
+# theory when you go to the comment link "threshhold" should follow
 # with you. -Brian
 	$display .= "&amp;threshold=" . ($comment->{threshold} || $user->{threshold});
 	$display .= "&amp;commentsort=$user->{commentsort}";
-	$display .= "&amp;tid=$user->{state}{tid}" if $user->{state}{tid};
+	$display .= "&amp;tid=$user->{state}{tid}"
+		if $constants->{tids_in_urls} && $user->{state}{tid};
 	$display .= "&amp;mode=$user->{mode}";
 	$display .= "&amp;startat=$comment->{startat}" if $comment->{startat};
 
@@ -1224,21 +1237,23 @@ sub _hard_linkComment {
 
 #========================================================================
 my $slashTags = {
-	'image'    => \&_slashImage,
-	'story'    => \&_slashStory,
-	'user'     => \&_slashUser,
-	'link'     => \&_slashLink,
-	'break'    => \&_slashPageBreak,
 	'file'     => \&_slashFile,
+	'image'    => \&_slashImage,
+	'link'     => \&_slashLink,
+	'related'  => \&_slashRelated,
+	'user'     => \&_slashUser,
+	'story'    => \&_slashStory,
+	'break'    => \&_slashPageBreak,
 	'comment'  => \&_slashComment,
 	'journal'  => \&_slashJournal,
 };
 
 my $cleanSlashTags = {
-	'story'    => \&_cleanSlashStory,
-	'user'     => \&_cleanSlashUser,
-	'nickname' => \&_cleanSlashUser, # alternative syntax
 	'link'     => \&_cleanSlashLink,
+	'related'  => \&_cleanSlashRelated,
+	'user'     => \&_cleanSlashUser,
+	'story'    => \&_cleanSlashStory,
+	'nickname' => \&_cleanSlashUser, # alternative syntax
 	'comment'  => \&_cleanSlashComment,
 	'journal'  => \&_cleanSlashJournal,
 };
@@ -1247,8 +1262,8 @@ sub cleanSlashTags {
 	my($text, $options) = @_;
 	return unless $text;
 
-
-	$text =~ s#<slash-(image|story|user|file|break|link|comment|journal)#<SLASH TYPE="\L$1\E"#gis;
+	my $tag_re = join '|', sort keys %$slashTags;
+	$text =~ s#<SLASH-($tag_re)#<SLASH TYPE="\L$1\E"#gis;
 	my $newtext = $text;
 	my $tokens = Slash::Custom::TokeParser->new(\$text);
 	while (my $token = $tokens->get_tag('slash')) {
@@ -1265,6 +1280,45 @@ sub cleanSlashTags {
 	}
 
 	return $newtext;
+}
+
+sub _cleanSlashLink {
+	my($tokens, $token, $newtext) = @_;
+	my $reloDB = getObject('Slash::Relocate');
+
+	if ($reloDB) {
+		if (!$token->[1]{id}) {
+			my $link  = $reloDB->create({ url => $token->[1]{href} });
+			my $href  = strip_attribute($token->[1]{href});
+			my $title = strip_attribute($token->[1]{title});
+			$$newtext =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="link">#is;
+		} else {
+			my $url   = $reloDB->get($token->[1]{id}, 'url');
+			my $link  = $reloDB->create({ url => $token->[1]{href} });
+			my $href  = strip_attribute($token->[1]{href});
+			my $title = strip_attribute($token->[1]{title});
+			$$newtext =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="link">#is;
+		}
+	}
+}
+
+sub _cleanSlashRelated {
+	my($tokens, $token, $newtext) = @_;
+
+	my $href  = strip_attribute($token->[1]{href});
+	my $text;
+	if ($token->[1]{text}) {
+		$text = $token->[1]{text};
+	} else {
+		$text = $tokens->get_text("/slash");
+	}
+
+	my $content = qq|<SLASH HREF="$href" TYPE="related">$text</SLASH>|;
+	if ($token->[1]{text}) {
+		$$newtext =~ s#\Q$token->[3]\E#$content#is;
+	} else {
+		$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
+	}
 }
 
 sub _cleanSlashUser {
@@ -1290,7 +1344,7 @@ sub _cleanSlashUser {
 }
 
 sub _cleanSlashStory {
-	my ($tokens, $token, $newtext) = @_;
+	my($tokens, $token, $newtext) = @_;
 	return unless $token->[1]{story};
 
 	my $text;
@@ -1301,8 +1355,8 @@ sub _cleanSlashStory {
 	}
 
 	my $slashdb = getCurrentDB();
-	my $title = $token->[1]{title} 
-	? strip_attribute($token->[1]{title}) 
+	my $title = $token->[1]{title}
+		? strip_attribute($token->[1]{title})
 		: strip_attribute($slashdb->getStory($token->[1]{story}, 'title', 1));
 	my $sid = strip_attribute($token->[1]{story});
 
@@ -1311,24 +1365,6 @@ sub _cleanSlashStory {
 		$$newtext =~ s#\Q$token->[3]\E#$content#is;
 	} else {
 		$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
-	}
-}
-
-sub _cleanSlashLink {
-	my ($tokens, $token, $newtext) = @_;
-	my $relocateDB = getObject('Slash::Relocate');
-
-	if (!$token->[1]{id}) {
-		my $link  = $relocateDB->create({ url => $token->[1]{href} });
-		my $href  = strip_attribute($token->[1]{href});
-		my $title = strip_attribute($token->[1]{title});
-		$$newtext =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="link">#is;
-	} else {
-		my $url   = $relocateDB->get($token->[1]{id}, 'url');
-		my $link  = $relocateDB->create({ url => $token->[1]{href} });
-		my $href  = strip_attribute($token->[1]{href});
-		my $title = strip_attribute($token->[1]{title});
-		$$newtext =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="link">#is;
 	}
 }
 
@@ -1357,76 +1393,32 @@ sub processSlashTags {
 		}
 	}
 
-	if ($user->{stats}{pagebreaks} && !$user->{state}{editing}) {
+	# SLASH-BREAK is only allowed in bodytext, so we pass it in as a
+	# hardcoded option to the processSlashTags call -- pudge
+	if ($options->{break}) {
 		my $form = getCurrentForm();
-# The logic is that if they are on the first page then page will be empty
-# -Brian
-		my @parts = split /<SLASH TYPE="break">/is, $newtext;
-		if ($form->{page}) {
-			$newtext = $parts[$form->{page} - 1];
+		if ($user->{state}{pagebreaks}) {
+			if ($user->{state}{editing}) {
+				$newtext =~ s/<SLASH TYPE="break">/<HR>/gis;
+			} else {
+				my @parts = split /<SLASH TYPE="break">/is, $newtext;
+				if ($form->{pagenum}) {
+					$newtext = $parts[$form->{pagenum} - 1];
+					if ($newtext eq "") { # nonexistent page, reset
+						$newtext = $parts[0];
+						$form->{pagenum} = 0;
+					}
+				} else {
+					$newtext = $parts[0];
+					$form->{pagenum} = 1;
+				}
+			}
 		} else {
-			$newtext = $parts[0];
+			$form->{pagenum} = 0;
 		}
 	}
 
 	return $newtext;
-}
-
-sub _slashImage {
-	my($tokens, $token, $newtext) = @_;
-
-	my $content = slashDisplay('imageLink', {
-		id	=> $token->[1]{id},
-		title	=> $token->[1]{title},
-		align	=> $token->[1]{align},
-		width	=> $token->[1]{width},
-		height	=> $token->[1]{height},
-	}, {
-		Return => 1,
-		Nocomm => 1,
-	});
-	$content ||= Slash::getData('SLASH-UNKNOWN-IMAGE');
-
-	$$newtext =~ s/\Q$token->[3]\E/$content/;
-}
-
-sub _slashStory {
-	my($tokens, $token, $newtext) = @_;
-
-	my $sid = $token->[1]{story};
-	my $text = $tokens->get_text("/slash");
-	my $storylinks = linkStory({
-		'link'	=> $text,
-		sid	=> $token->[1]{story},
-		title	=> $token->[1]{title},
-	});
-
-	my $content;
-	if ($storylinks->[0] && $storylinks->[2]) {
-		$content = '<A HREF="' . $storylinks->[0] . '"';
-		$content .= ' TITLE="' . strip_attribute($storylinks->[2]) . '"'
-			if $storylinks->[2] ne '';
-		$content .= '>' . $storylinks->[1] . '</A>';
-	}
-
-	$content ||= Slash::getData('SLASH-UNKNOWN-STORY');
-
-	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
-}
-
-sub _slashUser {
-	my($tokens, $token, $newtext) = @_;
-
-	my $content = slashDisplay('userLink', {
-		uid      => $token->[1]{uid},
-		nickname => $token->[1]{nickname}, 
-	}, {
-		Return => 1,
-		Nocomm => 1,
-	});
-	$content ||= Slash::getData('SLASH-UNKNOWN-USER');
-
-	$$newtext =~ s/\Q$token->[3]\E/$content/;
 }
 
 sub _slashFile {
@@ -1449,23 +1441,102 @@ sub _slashFile {
 	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
 }
 
+sub _slashImage {
+	my($tokens, $token, $newtext) = @_;
+
+	if (!$token->[1]{width} || !$token->[1]{height}) {
+		my $blob = getObject("Slash::Blob", { db_type => 'reader' });
+		my $data = $blob->get($token->[1]{id});
+		if ($data && $data->{data}) {
+			my($w, $h) = imgsize(\$data->{data});
+			$token->[1]{width}  = $w if $w && !$token->[1]{width};
+			$token->[1]{height} = $h if $h && !$token->[1]{height};
+		}
+	}
+	if (!$token->[1]{width} || !$token->[1]{height}) {
+		print STDERR scalar(localtime) . " _slashImage width or height unknown for image blob id '$token->[1]{id}', resulting HTML page may be non-optimal\n";
+	}
+
+	my $content = slashDisplay('imageLink', {
+		id	=> $token->[1]{id},
+		title	=> $token->[1]{title},
+		align	=> $token->[1]{align},
+		width	=> $token->[1]{width},
+		height	=> $token->[1]{height},
+	}, {
+		Return => 1,
+		Nocomm => 1,
+	});
+	$content ||= Slash::getData('SLASH-UNKNOWN-IMAGE');
+
+	$$newtext =~ s/\Q$token->[3]\E/$content/;
+}
+
 sub _slashLink {
 	my($tokens, $token, $newtext) = @_;
 
-	my $reloDB = getObject('Slash::Relocate', { db_type => 'reader' });
-	my($content);
 	my $text = $tokens->get_text("/slash");
-	if ($reloDB) {
-		$content = slashDisplay('hrefLink', {
-			id    => $token->[1]{id},
-			title => $token->[1]{title} || $token->[1]{href} || $text,
-			text  => $text,
-		}, {
-			Return => 1,
-			Nocomm => 1,
-		});
-	}
+	my $content = slashDisplay('hrefLink', {
+		id		=> $token->[1]{id},
+		href		=> $token->[1]{href},
+		title		=> $token->[1]{title} || $token->[1]{href} || $text,
+		text		=> $text,
+	}, {
+		Return => 1,
+		Nocomm => 1,
+	});
+
 	$content ||= Slash::getData('SLASH-UNKNOWN-LINK');
+
+	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
+}
+
+sub _slashRelated {
+	my($tokens, $token, $newtext) = @_;
+	my $user = getCurrentUser();
+
+	my $link = $token->[1]{href};
+	my $text = $tokens->get_text("/slash");
+
+	push @{$user->{state}{related_links}}, [ $text, $link ];
+	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E##is;
+}
+
+sub _slashUser {
+	my($tokens, $token, $newtext) = @_;
+
+	my $content = slashDisplay('userLink', {
+		uid      => $token->[1]{uid},
+		nickname => $token->[1]{nickname},
+	}, {
+		Return => 1,
+		Nocomm => 1,
+	});
+	$content ||= Slash::getData('SLASH-UNKNOWN-USER');
+
+	$$newtext =~ s/\Q$token->[3]\E/$content/;
+}
+
+sub _slashStory {
+	my($tokens, $token, $newtext) = @_;
+
+	my $sid = $token->[1]{story};
+	my $text = $tokens->get_text("/slash");
+	my $storylinks = linkStory({
+		'link'	=> $text,
+		sid	=> $token->[1]{story},
+		title	=> $token->[1]{title},
+	});
+
+	my $content;
+	if ($storylinks->[0] && $storylinks->[2]) {
+		$content = '<A HREF="' . strip_attribute($storylinks->[0]) . '"';
+		$content .= ' TITLE="' . strip_attribute($storylinks->[2]) . '"'
+			if $storylinks->[2] ne '';
+		$content .= '>' . strip_html($storylinks->[1]) . '</A>';
+	}
+
+	$content ||= Slash::getData('SLASH-UNKNOWN-STORY');
 
 	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
 }
@@ -1474,9 +1545,7 @@ sub _slashPageBreak {
 	my($tokens, $token, $newtext) = @_;
 	my $user = getCurrentUser();
 
-	$user->{stats}{pagebreaks}++;
-
-	return;
+	$user->{state}{pagebreaks}++;
 }
 
 sub _slashComment {
@@ -1488,7 +1557,7 @@ sub _slashJournal {
 }
 
 # sigh ... we had to change one line of TokeParser rather than
-# waste time rewriting the whole thing
+# waste time rewriting the whole thing -- pudge
 package Slash::Custom::TokeParser;
 
 use base 'HTML::TokeParser';

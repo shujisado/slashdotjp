@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -34,11 +34,11 @@ if (!$symlink_exists) {
 
 # Remember to doublecheck these match usage()!
 usage('Options used incorrectly')
-	unless getopts('hvu:TUV', \%opts);
+	unless getopts('hvu:TtUV', \%opts);
 usage() if $opts{h} || !keys %opts;
 version() if $opts{v};
 usage('Right now only -U does anything') if !$opts{U};
-my $testing = $opts{T} ? 1 : 0;
+my $testing = $opts{T} ? 1 : ($opts{t} ? 1 : 0);
 my $verbose = $opts{V} ? 1 : 0;
 
 my $virtuser = $opts{u} || 'slash';
@@ -50,7 +50,9 @@ my $install = Slash::Install->new($virtuser);
 
 # This will read all the themes and all the plugins available for this
 # installation.
-my $site_theme = $install->get("theme")->{value};
+my $get_theme = $install->get("theme");
+die "cannot get theme, DB probably unreachable" if !$get_theme;
+my $site_theme = $get_theme->{value};
 my $site_plugins = $install->get("plugin");
 my @site_plugins = sort
 	map { $site_plugins->{$_}{value} }
@@ -83,6 +85,7 @@ for my $key (@theme_htdocs_keys) {
 for my $key (qw( tasks misc )) {
 	my $src_key = $key;
 	$src_key =~ s/s$//; # theme "task" becomes theme_subdir_files "tasks"
+	next unless $theme_hr->{$src_key};
 	@{$theme_subdir_files{$key}} =
 		ref($theme_hr->{$src_key}) && ref($theme_hr->{$src_key}) eq 'ARRAY'
 			? @{$theme_hr->{$src_key}}
@@ -306,7 +309,8 @@ Main options:
 	-h	Help (this message)
 	-v	Version
 	-u	Virtual user (default is "slash")
-	-T	Test run, report but don't do anything
+	-t	Test run, report but don't do anything
+	-T	Synonym for -t
 	-U	Upgrade your symlinks to the latest for your theme and plugins
 
 Debugging options:
@@ -323,7 +327,7 @@ sub version {
 $PROGNAME $VERSION
 
 This code is a part of Slash, and is released under the GPL.
-Copyright 1997-2003 by Open Source Development Network. See README
+Copyright 1997-2004 by Open Source Development Network. See README
 and COPYING for more information, or see http://slashcode.com/.
 
 EOT

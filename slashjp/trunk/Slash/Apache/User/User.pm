@@ -1,11 +1,12 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
 package Slash::Apache::User;
 
 use strict;
+use Digest::MD5 'md5_hex';
 use Time::HiRes;
 use Apache;
 use Apache::Constants qw(:common M_GET REDIRECT);
@@ -51,7 +52,7 @@ sub handler {
 
 	return DECLINED unless $r->is_main;
 
-	$request_start_time = Time::HiRes::time;
+	$request_start_time ||= Time::HiRes::time;
 
 	# Ok, this will make it so that we can reliably use Apache->request
 	Apache->request($r);
@@ -76,12 +77,43 @@ sub handler {
 
 	$slashdb->sqlConnect;
 
-	my $method = $r->method;
+	##################################################
 	# Don't remove this. This solves a known bug in Apache -- brian
 	# i really wish we knew WHAT bug, and how this solves it -- pudge
-	$r->method('GET');
+	#
+	# OK, let's try to clear this up. See:
+	# http://www.apache.org/dist/perl/mod_perl-1.28/faq/mod_perl_api.pod
+	# The issue is that we use Apache::Request's methods to parse an
+	# incoming POST request;  it reads Content-length bytes from STDIN
+	# and converts them into params which we assign into a form hash in
+	# filter_params().  If another module later tries to do the same
+	# thing, it will hang forever waiting to read Content-length more
+	# bytes from STDIN when of course none are left to read.  The main
+	# danger is that someone will 'use CGI' along with Slash -- CGI.pm
+	# automatically parses that data and so will hang.  There is no
+	# good way to share that data between the two modules, so what we
+	# do instead is munge what Apache::Request considers the incoming
+	# data to be, so no later code will try to read from it.  Maybe we
+	# should do this in filter_params itself, but for now it's here.
+	# -- jamie
+	# And gee it sure looks like this makes this handler get executed
+	# twice and the second time through it comes as a GET with no
+	# parameters because they've been nuked.  But when I comment
+	# those three lines out, it at least works, so that's what I'm
+	# doing for now.  We'll figure it out better later.  -- jamie
+
+	my $method = $r->method;
 
 	my $form = filter_params($apr);
+
+#	$r->method('GET');
+#	$r->method_number(M_GET);
+#	$r->headers_in->unset('Content-length');
+
+	# And now the request is safe for CGI.pm or anything else to try
+	# to work with -- or at least it won't hang.
+	##################################################
+
 	$form->{query_apache} = $apr;
 	@{$form}{keys  %{$constants->{form_override}}} =
 		values %{$constants->{form_override}};
@@ -92,11 +124,52 @@ sub handler {
 	my $uid;
 	my $op = $form->{op} || '';
 
-	if (($op eq 'userlogin' || $form->{rlogin}) && length($form->{upasswd}) > 1) {
-		my $tmpuid = $slashdb->getUserUID($form->{unickname});
-		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
+	# we know this is not the current user yet, but we only
+	# want to save one bit of information there, and retrieve it
+	# later -- pudge
+	my $user_temp = getCurrentUser();
+	$user_temp->{state}{login_temp} = 'no';
 
-		# here we want to redirect only if the user has posted via
+	if ((($op eq 'userlogin' || $form->{rlogin}) && length($form->{upasswd}) > 1)
+		||
+	     ($op eq 'userlogin' && $form->{logtoken})
+	) {
+		# this is only allowed to be set by user on login attempt
+		$user_temp->{state}{login_temp} = 'yes' if $form->{login_temp} eq 'yes';
+
+		my $tmpuid = $slashdb->getUserUID($form->{unickname});
+		my $passwd = $form->{upasswd};
+		my $logtoken;
+		if (!$tmpuid && $form->{logtoken}) {
+			($tmpuid, $passwd) = eatUserCookie($form->{logtoken});
+			$logtoken = $form->{logtoken};
+		}
+
+		# Don't allow login attempts from IPIDs that have been marked
+		# as "nopost" -- those are mostly open proxies.  Check both
+		# the ipid and the subnetid (we can't use values in $user
+		# because that doesn't get set up until prepareUser is called,
+		# later in this function).  Note we don't have to MD5 the
+		# values, checkReadOnly() knows how to do that.
+		my $read_only = 0;
+		my $hostip = $r->connection->remote_ip;
+		my($ip, $subnet) = get_ipids($hostip, 1);
+		if ($slashdb->checkReadOnly('nopost', { ipid => $ip })) {
+			$read_only = 1;
+		} else {
+			$read_only = 1 if $slashdb->checkReadOnly('nopost', {
+				subnetid => $subnet });
+		}
+
+		my $newpass;
+		if ($read_only || !$tmpuid) {
+			# We know we can't log in, don't even try.
+			$uid = 0;
+		} else {
+			($uid, $newpass) = userLogin($tmpuid, $passwd, $logtoken);
+		}
+
+		# here we want to redirect only if the user has requested via
 		# GET, and the user has logged in successfully
 
 		if ($method eq 'GET' && $uid && ! isAnon($uid)) {
@@ -109,7 +182,13 @@ sub handler {
 				? "$constants->{rootdir}/users.pl?op=changepasswd" .
 					# XXX This "note" field is ignored now...
 					# right?  - Jamie 2002/09/17
-				  "&note=Please+change+your+password+now!"
+					# YYY I made it so it is just a silly code,
+					# so it can be picked up by the form, and
+					# actual text is not passed in.
+					# For now, the code is just this text; later,
+					# I can change it to something else.
+					# -- pudge
+				  "&note=Please+change+your+password+now!&oldpass=" . fixparam($form->{upasswd})
 				: $form->{returnto}
 					? $form->{returnto}
 					: $uri),
@@ -122,24 +201,32 @@ sub handler {
 #			return REDIRECT;
 		}
 
-	} elsif ($op eq 'userclose') {
-		# It may be faster to just let the delete fail then test -Brian
-		# well, uid is undef here ... can't use it to test
-		# until it is defined :-) -- pudge
-		# Went boom without if. --Brian
-		# When did we comment out this? This means that even
-		# if an author logs out, the other authors will
-		# not know about it. Bad....
-		#$slashdb->deleteSession(); #  if $slashdb->getUser($uid, 'seclev') >= 99;
-		delete $cookies->{user};
-		setCookie('user', '');
+	} elsif ($form->{logtoken} || ($cookies->{user} && $cookies->{user}->value)) {
+		# $form->{logtoken} overrides the cookie under some circumstances,
+		# but is NOT used here to log user in with a cookie, it is only for
+		# one-shot requests, unless coupled with userlogin op, as above
+		my $logtoken = '';
+		if ($form->{logtoken}) {
+			# only allow this for certain pages/ops etc.
+			# and that page must doublecheck for permissions etc., still,
+			# redirecting user back to a main page upon failure
+			if ($constants->{rss_allow_index} && $form->{content_type} eq 'rss' && $uri =~ m{^/index\.pl$}) {
+				$logtoken = $form->{logtoken};
+			} else {
+				delete $form->{logtoken};
+			}
+		}
 
-	} elsif ($cookies->{user} and $cookies->{user}->value) {
-		my($tmpuid, $password) = eatUserCookie($cookies->{user}->value);
-		($uid, my($cookpasswd)) =
-			$slashdb->getUserAuthenticate($tmpuid, $password);
+		my($tmpuid, $value) = eatUserCookie($logtoken || $cookies->{user}->value);
+		my $cookvalue;
+		if ($tmpuid && $tmpuid > 0 && $tmpuid != $constants->{anonymous_coward_uid}) {
+			($uid, $cookvalue) =
+				$slashdb->getUserAuthenticate($tmpuid, $value, 0, 1);
+		}
 
-		if ($uid) {
+		# we don't want to set a cookie etc. if user is using a $logtoken,
+		# as that is just for RSS etc.
+		if (!$logtoken && $uid && $op ne 'userclose') {
 			# set cookie every time, in case session_login
 			# value changes, or time is almost expired on
 			# saved cookie, or password changes, or ...
@@ -148,18 +235,45 @@ sub handler {
 			# we need to set it only if password or
 			# session_login changes. -- pudge
 
-# 			setCookie('user', bakeUserCookie($uid, $cookpasswd),
-# 				$slashdb->getUser($uid, 'session_login')
-# 			);
-		} else {
+			# if existing cookie is not a logtoken cookie, make it one
+			if ($value !~ m|^[A-Za-z0-9/+]{22}$|) {
+	 			setCookie('user', bakeUserCookie($uid, $cookvalue),
+	 				$slashdb->getUser($uid, 'session_login')
+	 			);
+
+			# always set cookie for "temp" logins, on every request
+	 		} elsif ($user_temp->{state}{login_temp} eq 'yes') {
+ 				setCookie('user', bakeUserCookie($uid, $cookvalue), 2);
+	 		}
+
+		# blank out user cookie and make anon if user wants to log out, or
+		# uses a bad cookie
+		} elsif (!$logtoken && dbAvailable()) {
+			if ($op eq 'userclose') {
+				$slashdb->deleteLogToken($uid);
+			}
+
 			$uid = $constants->{anonymous_coward_uid};
 			delete $cookies->{user};
+			# if you are here, chances are your cookie is bad,
+			# so we blank it out for you.  you're welcome.
 			setCookie('user', '');
 		}
+
+	} elsif ($op eq 'userclose') {
+		# When did we comment out this? This means that even
+		# if an author logs out, the other authors will
+		# not know about it. Bad....
+		#$slashdb->deleteSession(); #  if $slashdb->getUser($uid, 'seclev') >= 99;
+		delete $cookies->{user};
+		setCookie('user', '');
 	}
 
+	# can't use after login
+	delete $form->{login_temp};
+
 	# This has happened to me a couple of times.
-	delete $cookies->{user} if ($cookies->{user} and !($cookies->{user}->value));
+	delete $cookies->{user} if $cookies->{user} && !$cookies->{user}->value;
 
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
@@ -177,15 +291,36 @@ sub handler {
 
 	# this needs to get called once per child ... might as well
 	# have it called here. -- pudge
-	srand(time ^ ($$ + ($$ << 15))) unless $srand_called;
+	# Note that (and this may be new starting in perl 5.6 or so)
+	# if you call srand() with no arguments, perl will try hard
+	# to find random data to seed with, using /dev/urandom if
+	# possible.  This is almost certainly better than any seed
+	# we could cobble together with time() and $$ and so on.
+	srand() unless $srand_called;
 	$srand_called ||= 1;
 
 	# If this uid is marked as banned, deny them access.
 	my $banlist = $slashdb->getBanList();
 	if ($banlist->{$uid}) {
+		# The global current user hasn't been created yet, so the
+		# template expects uid just passed in as the var named "uid".
 		$r->custom_response(FORBIDDEN,
-			slashDisplay('bannedtext_uid', { }, { Return => 1} )
+			slashDisplay('bannedtext_uid', { uid => $uid }, { Return => 1 } )
 		);
+		# Now we need to create a user hashref for that global
+		# current user, so the "uid" field of accesslog gets written
+		# correctly when we log this attempted hit.  We do this
+		# dummy hashref with the bare minimum of values that we need,
+		# instead of going through prepareUser(), because this is
+		# much, much faster.
+		my $hostip = $r->connection->remote_ip;
+		my($ipid, $subnetid) = get_ipids($hostip);
+		my $user = {
+			uid		=> $uid,
+			ipid		=> $ipid,
+			subnetid	=> $subnetid,
+		};
+		createCurrentUser($user);
 		return FORBIDDEN;
 	}
 
@@ -195,6 +330,7 @@ sub handler {
 	if ($uri =~ /\.pl$/ || $uri =~ /\.tmpl$/) {
 		$user->{state}{_dynamic_page} = 1;
 	}
+	$user->{state}{login_temp} = $user_temp->{state}{login_temp};
 	$user->{state}{ssl} = $is_ssl;
 	createCurrentUser($user);
 	createCurrentForm($form);
@@ -209,8 +345,11 @@ sub handler {
 			# allowed to make the attempt on the SSL server.
 			# Logging in means the users.pl script and either
 			# an empty op or the 'userlogin' op.
-                        $uri =~ m{^/users\.pl}
-                        && (!$form->{op} || $form->{op} eq 'userlogin')
+			(
+			$uri =~ m{^/osdn-test/}
+			||
+			$uri =~ m{^/(?:users|login)\.pl}
+			) && (!$form->{op} || $form->{op} eq 'userlogin')
                 )
 	) {
 		my $ans = $constants->{allow_nonadmin_ssl};
@@ -311,17 +450,21 @@ sub authors {
 
 ########################################################
 sub userLogin {
-	my($name, $passwd) = @_;
-	my $r = Apache->request;
+	my($uid_try, $passwd, $logtoken) = @_;
 	my $slashdb = getCurrentDB();
 
-	# Do we want to allow logins with encrypted passwords? -- pudge
-#	$passwd = substr $passwd, 0, 20;
-	my($uid, $cookpasswd, $newpass) =
-		$slashdb->getUserAuthenticate($name, $passwd); #, 1
+	# only allow plain text passwords, unless logtoken is passed,
+	# then only allow that
+	# my($EITHER, $PLAIN, $ENCRYPTED, $LOGTOKEN) = (0, 1, 2, 3);
+	## this is disabled for now; some people still using saved URLs
+	## with encrypted passwords etc. ... come back to it later -- pudge
+	my $kind = 0; #$logtoken ? 3 : 1;
+
+	my($uid, $cookvalue, $newpass) =
+		$slashdb->getUserAuthenticate($uid_try, $passwd, $kind);
 
 	if (!isAnon($uid)) {
-		setCookie('user', bakeUserCookie($uid, $cookpasswd),
+		setCookie('user', bakeUserCookie($uid, $cookvalue),
 			$slashdb->getUser($uid, 'session_login'));
 		return($uid, $newpass);
 	} else {
@@ -332,6 +475,8 @@ sub userLogin {
 ########################################################
 sub userdir_handler {
 	my($r) = @_;
+
+	return DECLINED unless $r->is_initial_req;
 
 	my $constants = getCurrentStatic();
 
@@ -588,6 +733,7 @@ Bender:Well I don't have anything else planned for today, let's get drunk!
 Bender:Oh, so, just 'cause a robot wants to kill humans that makes him a radical?
 Bender:Bite my shiny, metal ass!
 Bender:Lick my frozen, metal ass!
+Bender:Life is hilariously cruel.
 Bender:The laws of science be a harsh mistress.
 Bender:In the event of an emergency, my ass can be used as a flotation device.
 Bender:Like most of life's problems, this one can be solved with bending.
@@ -638,6 +784,11 @@ Bender:I've gone too far! Who does that guy think I am?
 Bender:Down with Bender!
 Bender:Listen up, cause I got a climactic speech.
 Bender:I choose to not understand these signs!
+Bender:Aw, this bends!
+Bender:Farewell, big blue ball of idiots!
+Bender:This guy's not making any sense.  Can I kill him?  Please?
+Bender:Hooray, we don't have to do anything!
+Bender:I only speak enough binary to ask where the bathroom is.
 Fry:There's a lot about my face you don't know.
 Fry:These new hands are great. I'm gonna break them in tonight.
 Fry:I refuse to testify on the grounds that my organs will be chopped up into a patty.
@@ -669,6 +820,9 @@ Fry:I'm literally angry with rage!
 Fry:The butter in my pocket is melting!
 Fry:Stop abducting me!
 Fry:What kind of bozos would start a Bender protest group?
+Fry:I can burp the alphabet.  A, B, D ... no, wait ...
+Fry:Why use my own legs like an idiot when I can use a Chickenwalker?
+Fry:Hooray, we don't have to do anything!
 EOT
 
 1;
@@ -687,7 +841,7 @@ Slash::Apache::User - Apache Authenticate for Slash user
 
 This is the user authenication system for Slash. This is
 where you want to be if you want to modify slashcode's
-method of authenication. The rest of Slash depends
+method of authentication. The rest of Slash depends
 on finding the UID of the user in the SLASH_USER
 environmental variable.
 

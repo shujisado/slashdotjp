@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -480,7 +480,9 @@ sub getThemeList {
 sub getSiteTemplates {
 	my($self) = @_;
 	my (%templates, @no_templates, @final);
-	my $slash_prefix = $self->get('base_install_directory')->{value};
+	my $bid = $self->get('base_install_directory');
+	die "cannot find base_install_directory, DB is probably unreachable" if !$bid;
+	my $slash_prefix = $bid->{value};
 	my $plugins = $self->get('plugin');
 	my @plugins;
 	for (keys %$plugins) {
@@ -488,6 +490,7 @@ sub getSiteTemplates {
 	}
 	#Themes override plugins so this has to run after plugins. -Brian
 	my $theme = $self->get('theme');
+	# it might be nice if this looks in the THEME file ... -- pudge
 	my $include_theme = $self->get('include_theme');
 	if ($include_theme) {
 		my @no_templates; # Not current used -Brian

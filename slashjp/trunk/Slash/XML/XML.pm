@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -24,6 +24,8 @@ Slash::XML aids in creating XML.  Right now, only RSS is supported.
 =cut
 
 use strict;
+use Apache::Constants ':http';
+use Digest::MD5 'md5_hex';
 use Time::Local;
 use Slash;
 use Slash::Utility;
@@ -71,6 +73,13 @@ Boolean for whether to print (false) or return (true) the
 processed template data.  Default is to print output via
 Apache, with full HTML headers.
 
+=item filename
+
+A name for the generated filename Apache sends out.  "Unsafe"
+chars are replaced, and ".xml" is appended if there is no "."
+in the name already.  "foo bar" becomes "foo_bar.xml" and
+"foo bar.rss" becomes "foo_bar.rss".
+
 =back
 
 =back
@@ -111,15 +120,21 @@ sub xmlDisplay {
 		return $content;
 	} else {
 		my $r = Apache->request;
-		$r->header_out('Cache-Control', 'private');
-		$r->content_type('text/xml');
-		$r->status(200);
-		$r->send_http_header;
-		return 1 if $r->header_only;
-		$r->rflush;
-		$r->print($content);
-		$r->status(200);
-		return 1;
+
+		my $temp = $content;
+		# normalize
+		if ($type eq 'rss') {
+			$temp =~ s|[dD]ate>[^<]+</||;
+		}
+
+		$opt->{filename} .= '.xml' if $opt->{filename} && $opt->{filename} !~ /\./;
+
+		http_send({
+			content_type	=> 'text/xml',
+			filename	=> $opt->{filename},
+			etag		=> md5_hex($temp),
+			content		=> $content
+		});
 	}
 }
 

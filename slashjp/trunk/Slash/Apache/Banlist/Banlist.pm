@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -23,13 +23,14 @@ sub handler {
 
 	return DECLINED unless $r->is_main;
 
+	$Slash::Apache::User::request_start_time ||= Time::HiRes::time;
+
 	# Ok, this will make it so that we can reliably use Apache->request
 	Apache->request($r);
-	my $cur_ip = $r->connection->remote_ip;
-	my $cur_ipid = md5_hex($cur_ip);
-	my $cur_subnet = $cur_ip;
-	$cur_subnet =~ s/^(\d+\.\d+\.\d+)\.\d+$/$1.0/;
-	my $cur_subnetid = md5_hex($cur_subnet);
+	my $hostip = $r->connection->remote_ip;
+
+	my($cur_ip, $cur_subnet) = get_ipids($hostip, 1);
+	my($cur_ipid, $cur_subnetid) = get_ipids($hostip);
 
 	my $slashdb = getCurrentDB();
 	my $reader_user = $slashdb->getDB('reader');
@@ -50,6 +51,7 @@ sub handler {
 	if ($banlist->{$cur_ipid} || $banlist->{$cur_subnetid}) {
 		# Send a special "you are banned" page if the user is
 		# hitting RSS.
+print STDERR scalar(localtime) . " Banlist.pm $$ $hostip " . $r->method . " " . $r->uri . " returning FORBIDDEN for ipid '$banlist->{$cur_ipid}'\n";
 		return _send_rss($r, 'ban') if $is_rss;
 		# Send our usual "you are banned" page, whether the user
 		# is on palm or not.  It's mostly text so palm users
@@ -86,10 +88,12 @@ sub handler {
 
 sub _send_rss {
 	my($r, $type, $ipid) = @_;
-	$r->content_type('text/xml');
-	$r->status(202);
-	$r->send_http_header;
-	$r->print(_get_rss_msg($type, $ipid));
+	http_send({
+		content_type	=> 'text/xml',
+		status		=> 202,
+		content		=> _get_rss_msg($type, $ipid),
+	});
+
 	return DONE;
 }
 

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -109,10 +109,12 @@ These constants are for message delivery modes and message type codes.
 	MSG_CODE_ADMINMAIL
 	MSG_CODE_EMAILSTORY
 	MSG_CODE_ZOO_CHANGE
+	MSG_CODE_BADPASSWORD
+	MSG_CODE_MODSTATS
 
 =cut
 
-# -2 -1 0 1 2 3 4 5 6 7 8 9 10 11 12
+# -2 -1 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14
 
 =pod
 

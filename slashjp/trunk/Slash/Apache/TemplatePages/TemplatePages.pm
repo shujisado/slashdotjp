@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -19,8 +19,8 @@ use vars qw($VERSION);
 sub handler {
 	my($r) = @_;
 	my $constants = getCurrentStatic();
+	return NOT_FOUND unless dbAvailable();
 	my $slashdb = getCurrentDB();
-	return NOT_FOUND if -e "$constants->{datadir}/dboff";
 	my $page = $r->uri;
 	$page =~ s|^/(.*)\.tmpl$|$1|;
 	my $section = getCurrentForm('section');
@@ -28,7 +28,7 @@ sub handler {
 	if ($title) {
 		header($title, $section) or return;
 		my $display = slashDisplay('body', '', { Page => $page, Section => $section, Return => 1 });
-		$r->print($display);
+		print $display;
 		footer();
 	} else {
 		return NOT_FOUND;

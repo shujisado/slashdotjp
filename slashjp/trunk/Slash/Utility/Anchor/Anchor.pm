@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -26,6 +26,8 @@ LONG DESCRIPTION.
 
 use strict;
 use Apache;
+use Apache::Constants ':http';
+use Digest::MD5 'md5_hex';
 use Slash::Display;
 use Slash::Utility::Data;
 use Slash::Utility::Display;
@@ -36,6 +38,7 @@ use vars qw($VERSION @EXPORT);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
+	http_send
 	header
 	footer
 	redirect
@@ -206,7 +209,81 @@ sub header {
 
 #========================================================================
 
-=head2 footer()
+=head2 http_send(OPTIONS)
+
+Prints an HTTP header like L<header>, but more generic, and then optionally
+prints content.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item OPTIONS
+
+=back
+
+=item Return value
+
+True upon success, false upon failure.
+
+=back
+
+=cut
+
+sub http_send {
+	my($opt) = @_;
+
+	$opt->{status}        ||= HTTP_OK;
+	$opt->{content_type}  ||= 'text/plain';
+	$opt->{cache_control} ||= 'private'  unless defined $opt->{cache_control};
+	$opt->{pragma}        ||= 'no-cache' unless defined $opt->{pragma};
+
+	my $r = Apache->request;
+	$r->content_type($opt->{content_type});
+	$r->header_out('Cache-Control', $opt->{cache_control}) if $opt->{cache_control};
+	$r->header_out('Pragma', $opt->{pragma}) if $opt->{pragma};
+
+	if ($opt->{etag} || $opt->{do_etag}) {
+		if ($opt->{do_etag} && $opt->{content}) {
+			$opt->{etag} = md5_hex($opt->{content});
+		}
+		$r->header_out('ETag', $opt->{etag});
+
+		my $match = $r->header_in('If-None-Match');
+		if ($match && $match eq $opt->{etag}) {
+			$r->status(HTTP_NOT_MODIFIED);
+			$r->send_http_header;
+			return 1;
+		}
+	}
+
+	if ($opt->{filename}) {
+		$opt->{filename} =~ s/[^\w_.-]/_/g;
+		my $val = "filename=$opt->{filename}";
+		$val = "attachment; $val" if $opt->{attachment};
+		$r->header_out('Content-Disposition', $val);
+	}
+
+	$r->status($opt->{status});
+	$r->send_http_header;
+	$r->rflush;
+	return 1 if $r->header_only;
+
+	if ($opt->{content}) {
+		print $opt->{content};
+		$r->rflush;
+	}
+
+	return 1;
+}
+
+
+
+#========================================================================
+
+=head2 footer(OPTIONS)
 
 Prints the footer for the document.
 
@@ -328,8 +405,8 @@ sub ssiHeadFoot {
 	my $user = getCurrentUser();
 	my $slashdb = getCurrentDB();
 	(my $dir = $constants->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
-	my $hostname = $slashdb->getSection($user->{currentSection}, 'hostname')
-		if $user->{currentSection};
+#	my $hostname = $slashdb->getSection($user->{currentSection}, 'hostname')
+#		if $user->{currentSection};
 	my $page = $options->{Page} || $user->{currentPage} || 'misc';
 
 	# if there's a special .inc header for this page, use it, else it's
@@ -519,9 +596,16 @@ sub prepAds {
 
 ########################################################
 sub getAd {
-	my($num) = @_;
+	my($num, $need_box) = @_;
 	$num ||= 1;
+	$need_box ||= 0;
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+
+	# sometimes, when this is called from shtml, the section is not
+	# in $user like we'd like it to be. This attempts to remedy this.
+	# 					--Pater
+	$user->{currentSection} = $constants->{static_section} if $user->{currentSection} eq '';
 
 	unless ($ENV{SCRIPT_NAME}) {
 		# When run from a slashd task (or from the command line in
@@ -529,14 +613,13 @@ sub getAd {
 		# shtml code which *will* generate the actual ad when it's
 		# executed later.
 		return <<EOT;
-<!--#perl sub="sub { use Slash; print Slash::getAd($num); }" -->
+<!--#perl sub="sub { use Slash; print Slash::getAd($num, $need_box); }" -->
 EOT
 	}
 
 	# If this is the first time that getAd() is being called, we have
 	# to set up all the ad data at once before we can return anything.
 	if (!defined $user->{state}{ad}) {
-		my $constants = getCurrentStatic();
 		if ($constants->{use_minithin} && $constants->{plugin}{MiniThin}) {
 			# new way
 			my $minithin = getObject('Slash::MiniThin', { db_type => 'reader' });
@@ -547,7 +630,21 @@ EOT
 		}
 	}
 
-	return $user->{state}{ad}{$num} || "";
+	if ($num == 2 && $need_box) {
+		# we need the ad wrapped in a fancybox
+		if (defined $user->{state}{ad}{$num}
+			&& $user->{state}{ad}{$num} !~ /^<!-- no pos/
+			&& $user->{state}{ad}{$num} !~ /^<!-- place/) {
+			# if we're called from shtml, we won't have colors
+			# set, so we should get some set before making a
+			# box.				-- Pater
+			getSectionColors() unless $user->{bg};
+
+			return fancybox($constants->{fancyboxwidth}, 'Advertisement', "<CENTER>" . $user->{state}{ad}{$num} . "</CENTER>", 1, 1);
+		} else { return ""; }
+	} else {
+		return $user->{state}{ad}{$num} || "";
+	}
 }
 
 
@@ -563,7 +660,7 @@ sub getSectionBlock {
 		: $user->{currentSection};
 
 	my $block;
-	if ($thissect and ($thissect ne 'index')) {
+	if ($thissect && $thissect ne 'index') {
 		$block = $slashdb->getBlock("${thissect}_${name}", 'block');
 	}
 

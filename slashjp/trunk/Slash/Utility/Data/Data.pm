@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -28,10 +28,11 @@ use strict;
 use Date::Format qw(time2str);
 use Date::Language;
 use Date::Parse qw(str2time);
-use Digest::MD5 'md5_hex';
-use HTML::Entities;
+use Digest::MD5 qw(md5_hex md5_base64);
+use HTML::Entities qw(:DEFAULT %char2entity);
 use HTML::FormatText;
 use HTML::TreeBuilder;
+use POSIX qw(UINT_MAX);
 use Safe;
 use Slash::Constants qw(:strip);
 use Slash::Utility::Environment;
@@ -52,6 +53,7 @@ use vars qw($VERSION @EXPORT);
 	balanceTags
 	changePassword
 	chopEntity
+	cleanRedirectUrl
 	commify
 	countTotalVisibleKids
 	countWords
@@ -64,13 +66,16 @@ use vars qw($VERSION @EXPORT);
 	fixparam
 	fixurl
 	fudgeurl
+	fullhost_to_domain
 	formatDate
 	getArmoredEmail
+	createLogToken
 	grepn
 	html2text
 	nickFix
 	nick2matchname
 	root2abs
+	roundrand
 	set_rootdir
 	sitename2filename
 	strip_anchor
@@ -154,6 +159,34 @@ sub root2abs {
 
 #========================================================================
 
+=head2 roundrand()
+
+Rounds a real value to an integer value, randomly, with the
+two options weighted in linear proportion to the fractional
+component.  E.g. 1.3 is 30% likely to round to 1, 70% to 2.
+And -4.9 is 90% likely to round to -5, 10% to -4.
+
+=over 4
+
+=item Return value
+
+Input value converted to integer.
+
+=back
+
+=cut
+
+sub roundrand {
+	my($real) = @_;
+	return 0 if !$real;
+	my $i = int($real);
+	$i-- if $real < 0;
+	my $frac = $real - $i;
+	return( (rand(1) >= $frac) ? $i : $i+1 );
+}
+
+#========================================================================
+
 =head2 set_rootdir()
 
 Make sure all your rootdirs use the same scheme (even if that scheme is no
@@ -183,6 +216,65 @@ sub set_rootdir {
 	return $sectionuri->as_string;
 }
 
+
+#========================================================================
+
+=head2 cleanRedirectUrl(URL)
+
+Clean an untrusted URL for safe redirection.  We do not redirect URLs received
+from outside Slash (such as in $form->{returnto}) to arbitrary sites, only
+to ourself.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item URL
+
+URL to clean.
+
+=back
+
+=item Return value
+
+Fixed URL.
+
+=back
+
+=cut
+
+sub cleanRedirectUrl {
+	my($redirect) = @_;
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+
+	# We absolutize the return-to URL to our homepage just to
+	# be sure nobody can use the site as a redirection service.
+	# We decide whether to use the secure homepage or not
+	# based on whether the current page is secure.
+	my $base = root2abs();
+	my $clean = URI->new_abs($redirect || $constants->{rootdir}, $base);
+
+	my $site_domain = $constants->{basedomain};
+	$site_domain =~ s/^www\.//;
+	$site_domain =~ s/:.+$//;	# strip port, if available
+
+	my $host = $clean->can('host') ? $clean->host : '';
+	$host =~ s/^www\.//;
+
+	if ($site_domain eq $host) {
+		# Cool, it goes to our site.  Send the user there.
+		$clean = $clean->as_string;
+	} else {
+		# Bogus, it goes to another site.  op=userlogin is not a
+		# URL redirection service, sorry.
+		$clean = url2abs($constants->{rootdir});
+	}
+
+	return $clean;
+}
 
 #========================================================================
 
@@ -334,7 +426,8 @@ Format time strings using user's format preference.
 
 =item DATE
 
-Raw date from database.
+Raw date/time to format.
+Supply a false value here to get the current date/time.
 
 =item FORMAT
 
@@ -367,13 +460,19 @@ sub timeCalc {
 
 	$off_set = $user->{off_set} unless defined $off_set;
 
-	# massage data for YYYYMMDDHHmmSS or YYYYMMDDHHmm
-	$date =~ s/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?$/"$1-$2-$3 $4:$5:" . ($6 || '00')/e;
+	if ($date) {
+		# massage data for YYYYMMDDHHmmSS or YYYYMMDDHHmm
+		$date =~ s/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?$/"$1-$2-$3 $4:$5:" . ($6 || '00')/e;
 
-	# find out the user's time based on personal offset in seconds
-	$date = str2time($date) + $off_set;
+		# find out the user's time based on personal offset in seconds
+		$date = str2time($date) + $off_set;
+	} else {
+		# use current time (plus offset) if no time provided
+		$date = time() + $off_set;
+	}
 
-	# set user's language
+	# set user's language; we only use this if it is defined,
+	# so it's not a performance hit
 	my $lang = getCurrentStatic('datelang');
 
 	# convert the raw date to pretty formatted date
@@ -386,6 +485,49 @@ sub timeCalc {
 
 	# return the new pretty date
 	return $date;
+}
+
+#========================================================================
+
+=head2 createLogToken()
+
+Return new random 22-character logtoken, composed of \w chars.
+
+=over 4
+
+=item Return value
+
+Return a random password that matches /^\w{22}$/.
+
+We're only pulling out 3 chars each time thru this loop, so we only
+need (and trust) about 18 bits worth of randomness.  We re-seed srand
+periodically to try to get more randomness into the mix ("it uses a
+semirandom value supplied by the kernel (if it supports the /dev/urandom
+device)", says the Camel book).  I don't think I'm doing anything
+mathematically dumb to introduce any predictability into this, so it
+should be fine, wasteful of a few microseconds perhaps, ugly perhaps, but
+the 22-char value it returns should have very close to 131 bits of
+randomness.
+
+=back
+
+=cut
+
+sub createLogToken {
+	my $str = "";
+	my $need_srand = 0;
+	while (length($str) < 22) {
+		if ($need_srand) {
+			srand();
+			$need_srand = 0;
+		}
+		my $r = rand(UINT_MAX) . ":" . rand(UINT_MAX);
+		my $md5 = md5_base64($r);
+		$md5 =~ tr/A-Za-z0-9//cd;
+		$str .= substr($md5, int(rand 8) + 5, 3);
+		$need_srand = 1 if rand() < 0.3;
+	}
+	return substr($str, 0, 22);
 }
 
 #========================================================================
@@ -624,6 +766,52 @@ my %latin1_to_ascii = (
 	255	=> 'y',
 );
 
+# protect the hash by just returning it, for external use only
+sub _latin1_to_ascii { %latin1_to_ascii }
+
+sub _charsetConvert {
+	my($char, $constants) = @_;
+	$constants ||= getCurrentStatic();
+
+	my $str = '';
+	if ($constants->{draconian_charset_convert}) {
+		if ($constants->{draconian_charrefs}) {
+			if ($constants->{good_numeric}{$char}) {
+				$str = sprintf("&#%u;", $char);
+			} else { # see if char is in %good_entity
+				my $ent = $char2entity{chr $char};
+				if ($ent) {
+					(my $data = $ent) =~ s/^&(\w+);$/$1/;
+					$str = $ent if $constants->{good_entity}{$data};
+				}
+			}
+		}
+		# fall back
+		$str ||= $latin1_to_ascii{$char};
+	}
+
+	# fall further back
+	$str ||= sprintf("&#%u;", $char);
+	return $str;
+}
+
+sub _fixupCharrefs {
+	my $constants = getCurrentStatic();
+
+	return if $constants->{bad_numeric};
+
+	# At the moment, unless the "draconian" rule is set, only
+	# entities that change the direction of text are forbidden.
+	# For more information, see
+	# <http://www.w3.org/TR/html4/struct/dirlang.html#bidirection>
+	# and <http://www.htmlhelp.com/reference/html40/special/bdo.html>.
+	$constants->{bad_numeric}  = { map { $_, 1 } @{$constants->{charrefs_bad_numeric}} };
+	$constants->{bad_entity}   = { map { $_, 1 } @{$constants->{charrefs_bad_entity}} };
+
+	$constants->{good_numeric} = { map { $_, 1 } @{$constants->{charrefs_good_numeric}}, keys %latin1_to_ascii };
+	$constants->{good_entity}  = { map { $_, 1 } @{$constants->{charrefs_good_entity}},
+		grep { s/^&(\w+);$/$1/ } map { $char2entity{decode_entities("&#$_;")} } keys %latin1_to_ascii };
+}
 
 my %action_data = ( );
 
@@ -694,12 +882,14 @@ my %actions = (
 
 	encode_high_bits => sub {
 			# !! assume Latin-1 !!
-			if (getCurrentStatic('draconian_charset')) {
-				my $convert = getCurrentStatic('draconian_charset_convert');
+			my $constants = getCurrentStatic();
+			if ($constants->{draconian_charset}) {
+				my $convert = $constants->{draconian_charset_convert};
 				# anything not CRLF tab space or ! to ~ in Latin-1
 				# is converted to entities, where approveCharrefs or
 				# encode_html_amp takes care of them later
-				${$_[0]} =~ s/([^\n\r\t !-~])/($convert && $latin1_to_ascii{ord($1)}) || sprintf("&#%u;", ord($1))/ge;
+				_fixupCharrefs();
+				${$_[0]} =~ s[([^\n\r\t !-~])][ _charsetConvert(ord($1), $constants)]ge;
 			}						},
 );
 
@@ -901,7 +1091,6 @@ C<approveTag> function, C<approveCharref> function.
 
 sub stripBadHtml {
 	my($str) = @_;
-#print STDERR "stripBadHtml 1 '$str'\n";
 
 	$str =~ s/<(?!.*?>)//gs;
 	$str =~ s/<(.*?)>/approveTag($1)/sge;
@@ -927,11 +1116,9 @@ sub stripBadHtml {
 		)
 	}{&lt;$1}gx;
 
-#print STDERR "stripBadHtml 2 '$str'\n";
 	my $ent = qr/#?[a-zA-Z0-9]+/;
 	$str =~ s/&(?!$ent;)/&amp;/g;
 	$str =~ s/&($ent);?/approveCharref($1)/ge;
-#print STDERR "stripBadHtml 3 '$str'\n";
 
 	return $str;
 }
@@ -1068,7 +1255,7 @@ sub breakHtml {
 	# These are tags that "break" a word;
 	# a<P>b</P> breaks words, y<B>z</B> does not
 	my $approvedtags_break = $constants->{'approvedtags_break'}
-		|| [qw(HR BR LI P OL UL BLOCKQUOTE DIV)];
+		|| [qw(HR BR LI P OL UL BLOCKQUOTE DIV DL)];
 	my $break_tag = join '|', @$approvedtags_break;
 	$break_tag = qr{(?:$break_tag)}i;
 
@@ -1339,30 +1526,38 @@ sub approveTag {
 	if (!$approved{$t_uc}) {
 		return "";
 	}
+	
+	# These are now stored in a var approvedtags_attr
+	#
+	# A string in the format below:
+	# a:href_RU img:src_RU,alt,width,height,longdesc_U
+	# 
+	# Is decoded into the following data structure for attribute
+	# approval
+	#
+	# {
+	#	A =>	{ HREF =>	{ ord => 1, req => 1, url => 1 } },
+	#	IMG =>	{ SRC =>	{ ord => 1, req => 1, url => 1 },
+	#		  ALT =>	{ ord => 2                     },
+	#		  WIDTH =>	{ ord => 3                     },
+	#		  HEIGHT =>	{ ord => 4                     },
+	#		  LONGDESC =>	{ ord => 5,           url => 1 }, },
+	# }
+	# this is decoded in Slash/DB/MySQL.pm geSlashConf
 
-	# Some tags allow attributes, or require attributes to be useful.
-	# These tags go through a secondary, fancier approval process.
-	# Note that approvedtags overrides what is/isn't allowed here.
-	# (At some point we should put this hash into a var, maybe
-	# like "a:href_RU img:src_RU,alt,width,height,longdesc_U"?)
-	my %attr = (
-		A =>	{ HREF =>	{ ord => 1, req => 1, url => 1 } },
-		IMG =>	{ SRC =>	{ ord => 1, req => 1, url => 1 },
-			  ALT =>	{ ord => 2                     },
-			  WIDTH =>	{ ord => 3                     },
-			  HEIGHT =>	{ ord => 4                     },
-			  LONGDESC =>	{ ord => 5,           url => 1 }, },
-	);
+	my $attr = getCurrentStatic("approvedtags_attr") || {};
+
+
 	if ($slash) {
 
 		# Close-tags ("</A>") never get attributes.
 		$wholetag = "/$t";
 
-	} elsif ($attr{$t_uc}) {
+	} elsif ($attr->{$t_uc}) {
 
 		# This is a tag with attributes, verify them.
 
-		my %allowed = %{$attr{$t_uc}};
+		my %allowed = %{$attr->{$t_uc}};
 		my %required =
 			map  { $_, $allowed{$_}  }
 			grep { $allowed{$_}{req} }
@@ -1443,20 +1638,7 @@ sub approveCharref {
 
 	my $ok = 1; # Everything not forbidden is permitted.
 
-	if ($constants->{draconian_charrefs}) {
-		# Don't mess around trying to guess what to forbid.
-		# Everything is forbidden except a very few known to
-		# be good.
-		$ok = 0 unless $charref =~ /^(amp|lt|gt)$/;
-	}
-
-	# At the moment, unless the "draconian" rule is set, only
-	# entities that change the direction of text are forbidden.
-	# For more information, see
-	# <http://www.w3.org/TR/html4/struct/dirlang.html#bidirection>
-	# and <http://www.htmlhelp.com/reference/html40/special/bdo.html>.
-	my %bad_numeric = map { $_, 1 } @{$constants->{charrefs_bad_numeric}};
-	my %bad_entity  = map { $_, 1 } @{$constants->{charrefs_bad_entity}};
+	_fixupCharrefs();
 
 	if ($ok == 1 && $charref =~ /^#/) {
 		# Probably a numeric character reference.
@@ -1472,11 +1654,19 @@ sub approveCharref {
 			$ok = 0;
 		}
 		$ok = 0 if $decimal <= 0 || $decimal > 65534; # sanity check
-		$ok = 0 if $bad_numeric{$decimal};
+		if ($constants->{draconian_charrefs}) {
+			$ok = 0 unless $constants->{good_numeric}{$decimal};
+		} else {
+			$ok = 0 if $constants->{bad_numeric}{$decimal};
+		}
 	} elsif ($ok == 1 && $charref =~ /^([a-z0-9]+)$/i) {
 		# Character entity.
 		my $entity = lc $1;
-		$ok = 0 if $bad_entity{$entity};
+		if ($constants->{draconian_charrefs}) {
+			$ok = 0 unless $constants->{good_entity}{$entity};
+		} else {
+			$ok = 0 if $constants->{bad_entity}{$entity};
+		}
 	} elsif ($ok == 1) {
 		# Unknown character reference type, assume flawed.
 		$ok = 0;
@@ -1594,6 +1784,9 @@ sub fudgeurl {
 
 	my $constants = getCurrentStatic();
 
+	### should we just escape spaces, quotes, apostrophes, and <> instead
+	### of removing them? -- pudge
+
 	# Remove quotes and whitespace (we will expect some at beginning and end,
 	# probably)
 	$url =~ s/["\s]//g;
@@ -1688,6 +1881,7 @@ sub fudgeurl {
 	$url =~ s/&#(.+?);//g;
 	# we don't like SCRIPT at the beginning of a URL
 	my $decoded_url = decode_entities($url);
+	$decoded_url =~ s{ &(\#?[a-zA-Z0-9]+);? } { approveCharref($1) }gex;
 	return $decoded_url =~ /^[\s\w]*script\b/i ? undef : $url;
 }
 }
@@ -1869,12 +2063,9 @@ sub balanceTags {
 			@{$constants->{approvedtags}};
 	}
 	%lone = map { ($_, 1) } @{$constants->{lonetags}};
+	my %is_breaking = map { ( $_, 1 ) } @{$constants->{approvedtags_break}};
 
-	# If the quoted slash in the next line bothers you, then feel free to
-	# remove it. It's just there to prevent broken syntactical highlighting
-	# on certain editors (vim AND xemacs).  -- Cliff
-	# maybe you should use a REAL editor, like BBEdit.  :) -- pudge
-	while ($html =~ m|(<(\/?)($match)\b[^>]*>)|igo) { # loop over tags
+	while ($html =~ /(<(\/?)($match)\b[^>]*>)/igo) { # loop over tags
 		($tag, $close, $whole) = (uc($3), $2, $1);
 
 		if ($close) {
@@ -1906,9 +2097,25 @@ sub balanceTags {
 			$tags{$tag}++;
 			push @stack, $tag;
 
+			# No <A>...</A> tag is allowed to stretch over a
+			# breaking tag.  If we're currently in <A> text
+			# and this is a breaking tag, insert a </A> before
+			# it, and yank the <A> out of the middle of the
+			# stack so we don't try to close it later.
+			# Actually, do that as many times as we have
+			# nested <A>s (which we shouldn't have anyway).
+			if (!$constants->{anchortags_bridge_breaks}
+				&& $is_breaking{$tag}
+				&& $tags{A}) {
+				my $p = pos($html) - length($whole);
+				substr($html, $p, 0) = ("</A>" x $tags{A});
+				@stack = grep !/^A$/, @stack;
+				$tags{A} = 0;
+			}
+
 			if ($max_nest_depth) {
 				my $cur_depth = 0;
-				for (qw( UL OL DIV BLOCKQUOTE )) { $cur_depth += $tags{$_} }
+				for (qw( UL OL DIV BLOCKQUOTE DL )) { $cur_depth += $tags{$_} }
 				return undef if $cur_depth > $max_nest_depth;
 			}
 		}
@@ -1918,7 +2125,7 @@ sub balanceTags {
 	$html =~ s/\s+$//;
 
 	# add on any unclosed tags still on stack
-	$html .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
+	$html .= join '', map { "</$_>" } grep { !exists $lone{$_} } reverse @stack;
 
 	return $html;
 }
@@ -2159,37 +2366,65 @@ sub addDomainTags {
 	return $html;
 }
 
+sub fullhost_to_domain {
+	my($fullhost) = @_;
+	my $info = lc $fullhost;
+	if ($info =~ m/^([\d.]+)\.in-addr\.arpa$/) {
+		$info = join(".", reverse split /\./, $1);
+	}
+	if ($info =~ m/^(\d{1,3}\.){3}\d{1,3}$/) {
+		# leave a numeric IP address alone
+	} elsif ($info =~ m/([\w-]+\.[a-z]{3,4})$/) {
+		# a.b.c.d.com -> d.com
+		$info = $1;
+	} elsif ($info =~ m/([\w-]+\.[a-z]{2,4}\.[a-z]{2})$/) {
+		# a.b.c.d.co.uk -> d.co.uk
+		$info = $1;
+	} elsif ($info =~ m/([\w-]+\.[a-z]{2})$/) {
+		# a.b.c.realdomain.gr -> realdomain.gr
+		$info = $1;
+	} else {
+		# any other a.b.c.d.e -> c.d.e
+		my @info = split /\./, $info;
+		my $num_levels = scalar @info;
+		if ($num_levels >= 3) {
+			$info = join(".", @info[-3..-1]);
+		}
+	}
+	return $info;
+}
+
 sub _url_to_domain_tag {
 	my($href, $link, $body) = @_;
 	my $absolutedir = getCurrentStatic('absolutedir');
 	my $uri = URI->new_abs($link, $absolutedir);
 	my $uri_str = $uri->as_string;
-	my($info, $host, $scheme) = ("", "", "");
-	if ($uri->can("host") and $host = $uri->host) {
-		$info = lc $host;
-		if ($info =~ m/^([\d.]+)\.in-addr\.arpa$/) {
-			$info = join(".", reverse split /\./, $1);
-		}
-		if ($info =~ m/^(\d{1,3}\.){3}\d{1,3}$/) {
-			# leave a numeric IP address alone
-		} elsif ($info =~ m/([\w-]+\.[a-z]{3,4})$/) {
-			# a.b.c.d.com -> d.com
-			$info = $1;
-		} elsif ($info =~ m/([\w-]+\.[a-z]{2,4}\.[a-z]{2})$/) {
-			# a.b.c.d.co.uk -> d.co.uk
-			$info = $1;
-		} elsif ($info =~ m/([\w-]+\.[a-z]{2})$/) {
-			# a.b.c.realdomain.gr -> realdomain.gr
-			$info = $1;
-		} else {
-			# any other a.b.c.d.e -> c.d.e
-			my @info = split /\./, $info;
-			my $num_levels = scalar @info;
-			if ($num_levels >= 3) {
-				$info = join(".", @info[-3..-1]);
+
+	my($info, $scheme) = ('', '');
+	if ($uri->can('host')) {
+		my $host;
+		unless (($host = $uri->host)
+				&&
+			$uri->can('scheme')
+				&&
+			($scheme = $uri->scheme)
+		) {
+			# If this URL is malformed in a particular
+			# way ("scheme:///host"), treat it the way
+			# that many browsers will (rightly or
+			# wrongly) treat it.
+			if ($uri_str =~ s|$scheme:///+|$scheme://|) {
+				$uri = URI->new_abs($uri_str, $absolutedir);
+				$uri_str = $uri->as_string;
+				$host = $uri->host;
 			}
 		}
-	} elsif ($uri->can("scheme") and $scheme = $uri->scheme) {
+		$info = fullhost_to_domain($host) if $host;
+	}
+
+	if (!$info && ($scheme || (
+		$uri->can('scheme') && ($scheme = $uri->scheme)
+	))) {
 		# Most schemes, like ftp or http, have a host.  Some,
 		# most notably mailto and news, do not.  For those,
 		# at least give the user an idea of why not, by
@@ -2203,17 +2438,16 @@ sub _url_to_domain_tag {
 		} else {
 			$info = lc $scheme;
 		}
-	} else {
-		$info = "?";
 	}
-	if ($info ne "?") {
-		$info =~ tr/A-Za-z0-9.-//cd;
-	}
+
+	$info =~ tr/A-Za-z0-9.-//cd if $info;
+
 	if (length($info) == 0) {
-		$info = "?";
+		$info = '?';
 	} elsif (length($info) >= 25) {
-		$info = substr($info, 0, 10) . "..." . substr($info, -10);
+		$info = substr($info, 0, 10) . '...' . substr($info, -10);
 	}
+
 	# Add a title tag to make this all friendly for those with vision
 	# and similar issues -Brian
 	$href =~ s/>/ TITLE="$info">/ if $info ne '?';
@@ -2297,7 +2531,6 @@ sub _link_to_slashlink {
 		my $any_host = "(?:"
 			. join("|", sort keys %all_urls)
 			. ")";
-#print STDERR "link_to_slashlink abs '$abs' any_host '$any_host'\n";
 		# All possible URLs' arguments, soon to be attributes
 		# in the new tag (thus "urla").	Values are the name
 		# of the script ("sn") and expressions that can pull
@@ -2318,7 +2551,6 @@ sub _link_to_slashlink {
 				  sid => qr{\bsid=(\d+)},
 				  cid => qr{\bcid=(\d+)} },
 		);
-#use Data::Dumper; print STDERR Dumper(\%urla);
 	}
 	# Get a reference to the URL argument hash for this
 	# virtual user, thus "urlavu".
@@ -2372,7 +2604,6 @@ sub _link_to_slashlink {
 			. q{>};
 	}
 
-#print STDERR "_link_to_slashlink end '$url'\n";
 	# Return either the new $retval we just made, or just send the
 	# original text back.
 	return $retval;
@@ -2951,25 +3182,61 @@ sub grepn {
 # Removed from openbackend
 sub sitename2filename {
 	my($section) = @_;
-	(my $filename = $section || lc getCurrentStatic('sitename')) =~ s/\W+//g;
+	my $filename = '';
+
+	if ($section ne 'light') {
+		$filename = $section || lc getCurrentStatic('sitename');
+	} else {
+		$filename = lc getCurrentStatic('sitename');
+	}
+
+	$filename =~ s/\W+//g;
+
 	return $filename;
 }
 
 ##################################################################
 # counts total visible kids for each parent comment
 sub countTotalVisibleKids {
-	my($pid, $comments) = @_;
-	my $total = 0;
+	my($comments, $pid) = @_;
+
+	my $constants        = getCurrentStatic();
+	my $total            = 0;
+	my $last_updated     = '';
+	my $last_updated_uid = 0;
+	$pid               ||= 0;
 
 	$total += $comments->{$pid}{visiblekids};
+	if ($constants->{ubb_like_forums}) {
+		$last_updated     = $comments->{$pid}{date};
+		$last_updated_uid = $comments->{$pid}{uid};
+	}
 
 	for my $cid (@{$comments->{$pid}{kids}}) {
-		$total += countTotalVisibleKids($cid, $comments);
+		my($num_kids, $date_test, $uid) =
+			countTotalVisibleKids($comments, $cid);
+		$total += $num_kids;
+
+		if ($constants->{ubb_like_forums}) {
+			if ($date_test gt $last_updated) {
+				$last_updated     = $date_test;
+				$last_updated_uid = $uid;
+			}
+			if ($comments->{$cid}{date} gt $last_updated) {
+				$last_updated     = $comments->{$cid}{date};
+				$last_updated_uid = $comments->{$cid}{uid};
+			}
+		}
 	}
 
 	$comments->{$pid}{totalvisiblekids} = $total;
+	# don't do the next two if pid=0
+	if ($pid && $constants->{ubb_like_forums}) {
+		$comments->{$pid}{last_updated}     = $last_updated;
+		$comments->{$pid}{last_updated_uid} = $last_updated_uid;
+	}
 
-	return $total;
+	return($total, $last_updated, $last_updated_uid);
 }
 
 ##################################################################

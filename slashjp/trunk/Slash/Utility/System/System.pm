@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -35,6 +35,7 @@ use Mail::Sendmail;
 use Slash::Custom::Bulkmail;	# Mail::Bulkmail
 use Slash::Utility::Environment;
 use Symbol 'gensym';
+use Time::HiRes ();
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT @EXPORT_OK);
@@ -124,8 +125,9 @@ sub sendEmail {
 		Message		=> $content,
 		To		=> $addr,
 		# put in vars ... ?
-		'Content-type'	=> 'text/plain; charset="us-ascii"',
+		'Content-type'			=> 'text/plain; charset="us-ascii"',
 		'Content-transfer-encoding'	=> '8bit',
+		'Message-Id'			=> messageID(),
 	);
 
 	if ($pr && $pr eq 'bulk') {
@@ -146,6 +148,25 @@ sub sendEmail {
 		return 0;
 	}
 }
+
+{ my($localhost);
+sub messageID {
+	my $constants = getCurrentStatic();
+
+	my $host = $constants->{basedomain};
+	if (!$localhost) {
+		chomp($localhost = `hostname`);
+		$localhost ||= '';
+	}
+
+	my $msg_id;
+	if ($host eq $localhost || !length($localhost)) {
+		$msg_id = sprintf('%f-%d-slash@%s', Time::HiRes::time(), $$, $host);
+	} else {
+		$msg_id = sprintf('%f-%d-slash-%s@%s', Time::HiRes::time(), $$, $localhost, $host);
+	}
+	return $msg_id;
+}}
 
 sub bulkEmail {
 	my($addrs, $subject, $content) = @_;
@@ -178,6 +199,10 @@ sub bulkEmail {
 		GOOD	=> $goodfile,
 		BAD	=> $badfile,
 		ERRFILE	=> $errfile,
+		# put in vars ... ?
+		'Content-type'			=> 'text/plain; charset="us-ascii"',
+		'Content-transfer-encoding'	=> '8bit',
+		'Message-Id'			=> messageID(),
 	);
 	my $return = $bulk->bulkmail;
 
@@ -281,7 +306,13 @@ sub doLogExit {
 
 sub doLog {
 	my($fname, $msg, $stdout, $sname) = @_;
-	chomp(my @msg = @$msg);
+	my @msg;
+	if (ref($msg) && ref($msg) eq 'ARRAY') {
+		@msg = @$msg;
+	} else {
+		@msg = ( $msg );
+	}
+	chomp(@msg);
 
 	$sname    ||= '';
 	$sname     .= ' ' if $sname;

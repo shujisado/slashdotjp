@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -36,6 +36,9 @@ use vars qw($VERSION @EXPORT);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
+
+	dbAvailable
+
 	createCurrentAnonymousCoward
 	createCurrentCookie
 	createCurrentDB
@@ -65,6 +68,7 @@ use vars qw($VERSION @EXPORT);
 	isSubscriber
 	prepareUser
 	filter_params
+	get_ipids
 
 	setUserDate
 	isDST
@@ -77,6 +81,7 @@ use vars qw($VERSION @EXPORT);
 	slashProfInit
 	slashProfEnd
 
+	getOpAndDatFromStatusAndURI
 	createLog
 	errorLog
 	writeLog
@@ -94,6 +99,72 @@ my($static_user, $static_form, $static_constants, $static_site_constants,
 	$static_virtual_user, $static_objects, $static_cache, $static_hostname);
 
 # FRY: I don't regret this.  But I both rue and lament it.
+
+#========================================================================
+
+=head2 dbAvailable([TOKEN])
+
+Returns TRUE if (as usual) the DB(s) are available for reading and
+writing.  Returns FALSE if the DB(s) are not available and should not
+be accessed.  If a TOKEN is named, return FALSE if either the DB(s)
+required for that purpose are down or all DBs are down.  If no TOKEN is
+named, return FALSE only if all DBs are down.
+
+Whether or not the DBs are down is determined only by whether files exist
+at /usr/local/slash/dboff or /usr/local/slash/dboff_TOKEN.  For best
+results, admins will want to write their own db-angel scripts that detect
+DBs having gone down and create one or more of those files.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item TOKEN
+
+Name of the resource specifically being asked about, or the
+empty string.
+
+=back
+
+=item Return value
+
+0 or 1.
+
+=back
+
+=cut
+
+{ # closure
+my $dbAvailable_lastcheck = {};
+my $dbAvailable_lastval = {};
+sub dbAvailable {
+	# I'm not going to explain exactly how I came up with this
+	# logic... the if's are ordered to reduce computation as
+	# much as possible.
+	my($token) = @_;
+
+	# if we're doing a general check for dbAvailability we set
+	# the token to empty-string and store the lastchecked status
+	# and lastval check in the hashrefs with that as the key
+	$token ||= '';
+
+	if (defined $dbAvailable_lastcheck->{$token} && time < ($dbAvailable_lastcheck->{$token} + 5)) {
+		return $dbAvailable_lastval->{$token};
+	}
+
+
+	my $newval;
+	   if (-e "/usr/local/slash/dboff")		{ $newval = 0 }
+	elsif (!$token || $token !~ /^(\w+)/)		{ $newval = 1 }
+	elsif (-e "/usr/local/slash/dboff_$token")	{ $newval = 0 }
+	else						{ $newval = 1 }
+	$dbAvailable_lastval->{$token} = $newval;
+	$dbAvailable_lastcheck->{$token} = time;
+	return $newval;
+}
+} # end closure
 
 #========================================================================
 
@@ -165,7 +236,7 @@ sub getCurrentMenu {
 
 =head2 getCurrentUser([MEMBER])
 
-Returns the current authenicated user.
+Returns the current authenticated user.
 
 =over 4
 
@@ -548,6 +619,7 @@ sub getCurrentStatic {
 	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		my $hostname = $r->header_in('host');
+		$hostname =~ s/:\d+$//;
 		if ($const_cfg->{'site_constants'}{$hostname}) { 
 			$constants = $const_cfg->{site_constants}{$hostname};
 		} else {
@@ -665,13 +737,15 @@ sub getCurrentAnonymousCoward {
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		return undef if !$const_cfg || !$const_cfg->{anonymous_coward};
 		if ($value) {
-			return $const_cfg->{'anonymous_coward'}{$value};
+			return $const_cfg->{anonymous_coward}{$value};
 		} else {
-			my %coward = %{$const_cfg->{'anonymous_coward'}};
+			my %coward = %{$const_cfg->{anonymous_coward}};
 			return \%coward;
 		}
 	} else {
+		return undef if !$static_anonymous_coward;
 		if ($value) {
 			return $static_anonymous_coward->{$value};
 		} else {
@@ -957,12 +1031,12 @@ A random value based on alphanumeric characters
 
 #========================================================================
 
-=head2 bakeUserCookie(UID, PASSWD)
+=head2 bakeUserCookie(UID, VALUE)
 
-Bakes (creates) a user cookie from its ingredients (UID, PASSWD).
+Bakes (creates) a user cookie from its ingredients (UID, VALUE).
 
-Currently cookie is hexified: this should be changed, no need anymore,
-perhaps?  -- pudge
+The cookie used to be hexified; it is no longer.  We can still read such
+cookies, though, but we don't create them.
 
 =over 4
 
@@ -974,9 +1048,9 @@ perhaps?  -- pudge
 
 User ID.
 
-=item PASSWD
+=item VALUE
 
-Password.
+Cookie's value.
 
 =back
 
@@ -992,7 +1066,6 @@ Created cookie.
 sub bakeUserCookie {
 	my($uid, $passwd) = @_;
 	my $cookie = $uid . '::' . $passwd;
-	$cookie =~ s/(.)/sprintf("%%%02x", ord($1))/ge;
 	return $cookie;
 }
 
@@ -1001,10 +1074,10 @@ sub bakeUserCookie {
 =head2 eatUserCookie(COOKIE)
 
 Digests (parses) a user cookie, returning it to its original ingredients
-(UID, password).
+(UID, value).
 
-Currently cookie is hexified: this should be changed, no need anymore,
-perhaps?  -- pudge
+The cookie used to be hexified; it is no longer.  We can still read such
+cookies, though.
 
 =over 4
 
@@ -1020,7 +1093,7 @@ Cookie to be parsed.
 
 =item Return value
 
-The UID and password encoded in the cookie.
+The UID and value encoded in the cookie.
 
 =back
 
@@ -1028,7 +1101,8 @@ The UID and password encoded in the cookie.
 
 sub eatUserCookie {
 	my($cookie) = @_;
-	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/ge;
+	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/ge
+		unless $cookie =~ /^\d+::/;
 	my($uid, $passwd) = split(/::/, $cookie, 2);
 	return($uid, $passwd);
 }
@@ -1048,7 +1122,7 @@ called multiple times to set multiple cookies.
 
 =item NAME
 
-NAme of the cookie.
+Name of the cookie.
 
 =item VALUE
 
@@ -1110,6 +1184,9 @@ sub setCookie {
 	# lines, and uncomment the one right above "bake"
 	if (!$val) {
 		$cookie->expires('-1y');  # delete
+	} elsif ($session && $session > 1) {
+		my $minutes = $constants->{login_temp_minutes};
+		$cookie->expires("+${minutes}m");
 	} elsif (!$session) {
 		$cookie->expires('+1y');
 	}
@@ -1188,7 +1265,7 @@ sub prepareUser {
 	}
 	
 	# First we find a good reader DB so that we can use that for the user.
-	my $databases = $slashdb->getDBs();
+	my $databases = $slashdb->getDBs;
 	my %user_types;
 	for my $type (keys %$databases) {
 		my $db = $databases->{$type};
@@ -1227,6 +1304,7 @@ sub prepareUser {
 		$user->{state} = {};
 	} else {
 		$user = $reader->getUser($uid);
+		$user->{logtoken} = bakeUserCookie($uid, $reader->getLogToken($uid));
 		$user->{is_anon} = 0;
 	}
 
@@ -1241,10 +1319,7 @@ sub prepareUser {
 	}
 
 	$user->{state}{post}	= $method eq 'POST' ? 1 : 0;
-	$user->{ipid}		= md5_hex($hostip);
-	$user->{subnetid}	= $hostip;
-	$user->{subnetid}	=~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
-	$user->{subnetid}	= md5_hex($user->{subnetid});
+	@{$user}{qw[ipid subnetid classbid hostip]} = get_ipids($hostip);
 
 	my @defaults = (
 		['mode', 'thread'], qw[
@@ -1320,6 +1395,8 @@ sub prepareUser {
 	}
 	if ($user->{seclev} >= 100) {
 		$user->{is_admin} = 1;
+		# can edit users and do all sorts of cool stuff
+		$user->{is_super_admin} = 1 if $user->{seclev} >= 10_000 || $user->{acl}{super_admin};
 		my $sid;
 		#This cookie could go, and we could have session instance
 		#do its own thing without the cookie. -Brian
@@ -1346,6 +1423,37 @@ sub prepareUser {
 	return $user;
 }
 
+
+#========================================================================
+
+sub get_ipids {
+	my($hostip, $no_md5, $locationid) = @_;
+
+	$locationid = getCurrentStatic('cookie_location') if @_ > 2 && !$locationid;
+
+	if (!$hostip && $ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$hostip = $r->connection->remote_ip;
+	} elsif (!$hostip) {
+		$hostip = '';
+	}
+
+	my $ipid = $no_md5 ? $hostip : md5_hex($hostip);
+	(my $subnetid = $hostip) =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
+	$subnetid = $no_md5 ? $subnetid : md5_hex($subnetid);
+	(my $classbid = $hostip) =~ s/(\d+\.\d+)\.\d+\.\d+/$1\.0\.0/;
+	$classbid = $no_md5 ? $classbid : md5_hex($classbid);
+
+	if ($locationid) {
+		return $locationid eq 'classbid' ? $classbid
+		     : $locationid eq 'subnetid' ? $subnetid
+		     : $locationid eq 'ipid'     ? $ipid
+		     : $locationid eq 'ip'       ? $hostip
+		     : '';
+	}
+
+	return($ipid, $subnetid, $classbid, $hostip);
+}
 
 #========================================================================
 
@@ -1387,23 +1495,24 @@ Hashref of cleaned-up data.
 		filter_id hbtm height highlightthresh
 		isolate issue last maillist max
 		maxcommentsize maximum_length maxstories
-		min minimum_length minimum_match next
+		min min_comment minimum_length minimum_match next
 		nobonus_present
 		nosubscriberbonus_present
 		ordernum pid
 		postanon_present posttype ratio retrieve
+		show_m1s show_m2s
 		seclev start startat threshold
 		thresh_count thresh_secs thresh_hps
 		uid uthreshold voters width
 		textarea_rows textarea_cols tokens
-		subid stid tpid tid qid aid
+		subid stid tpid tid qid aid pagenum
 		url_id spider_id miner_id keyword_id
 	);
 
 	# fields that have ONLY a-zA-Z0-9_
 	my %alphas = map {($_ => 1)} qw(
 		fieldname formkey commentstatus
-		hcanswer mode op section type
+		hcanswer mode op section thisname type
 	);
 
 	# regexes to match dynamically generated numeric fields
@@ -1411,10 +1520,12 @@ Hashref of cleaned-up data.
 
 	# special few
 	my %special = (
-		sid	=> sub { $_[0] =~ s|[^A-Za-z0-9/._]||g	},
-		flags	=> sub { $_[0] =~ s|[^a-z0-9_,]||g	},
-		query	=> sub { $_[0] =~ s|[\000-\040<>\177-\377]+| |g;
-			         $_[0] =~ s|\s+| |g;		},
+		logtoken	=> sub { $_[0] = '' unless
+					 $_[0] =~ m|^\d+::[A-Za-z0-9]{22}$|	},
+		sid		=> sub { $_[0] =~ s|[^A-Za-z0-9/._]||g		},
+		flags		=> sub { $_[0] =~ s|[^a-z0-9_,]||g		},
+		query		=> sub { $_[0] =~ s|[\000-\040<>\177-\377]+| |g;
+			        	 $_[0] =~ s|\s+| |g;			},
 	);
 
 
@@ -1943,20 +2054,9 @@ sub writeLog {
 	$r->err_header_out(SLASH_LOG_DATA => $dat);
 }
 
-sub createLog {
-	my($uri, $dat, $status) = @_;
-	my $constants = getCurrentStatic();
-
-	# At this point, if we have short-circuited the
-	# "PerlAccessHandler  Slash::Apache::User"
-	# by returning an apache code like DONE before that processing
-	# could take place (which currently happens in Banlist.pm), then
-	# prepareUser() has not been called, thus the $user->{state}{dbs}
-	# table is not set up.  So to make sure we write to the proper
-	# logging DB (assuming there is one), we have to use the old-style
-	# arguments to getObject(), instead of passing in {db_type=>'log'}.
-	# - Jamie 2003/05/25
-	my $logdb = getObject('Slash::DB', { virtual_user => $constants->{log_db_user} });
+sub getOpAndDatFromStatusAndURI {
+	my($status, $uri, $dat) = @_;
+	$dat ||= "";
 
 	my $page = qr|\d{2}/\d{2}/\d{2}/\d{4,7}|;
 
@@ -1988,6 +2088,10 @@ sub createLog {
 		$uri = 'image';
 	} elsif ($uri =~ /\.tiff$/) {
 		$uri = 'image';
+	} elsif ($uri =~ /\.png$/) {
+		$uri = 'image';
+	} elsif ($uri =~ /\.rss$/ || $uri =~ /\.xml$/ || $uri =~ /\.rdf$/ || $ENV{QUERY_STRING} =~ /\bcontent_type=rss\b/) {
+		$uri = 'rss';
 	} elsif ($uri =~ /\.pl$/) {
 		$uri =~ s|^/(.*)\.pl$|$1|;
 	# This is for me, I am getting tired of patching my local copy -Brian
@@ -1997,31 +2101,53 @@ sub createLog {
 		$uri =~ s|^/(.*)\.rpm$|$1|;
 	} elsif ($uri =~ /\.dmg$/) {
 		$uri =~ s|^/(.*)\.dmg$|$1|;
-	} elsif ($uri =~ /\.rss$/ || $uri =~ /\.xml$/ || $uri =~ /\.rdf$/) {
-		$uri = 'rss';
+	} elsif ($uri =~ /\.css$/) {
+		$uri = 'css';
 	} elsif ($uri =~ /\.shtml$/) {
 		$uri =~ s|^/(.*)\.shtml$|$1|;
 		$dat = $uri if $uri =~ $page;	
 		$uri =~ s|^/?(\w+)/?(.*)|$1|;
 		my $suspected_handler = $2;
-		my $SECT;
+		my $handler;
 		my $reader = getObject('Slash::DB', { db_type => 'reader' });
-		if ($SECT = $reader->getSection($uri) ) {
-			my $handler = $SECT->{index_handler};
+		if ($handler = $reader->getSection($uri, 'index_handler')) {
 			$handler =~ s|^(.*)\.pl$|$1|;
-			if ($handler eq $suspected_handler) {
-				$uri = $handler;
-			}
+			$uri = $handler if $handler eq $suspected_handler;
 		}
 	} elsif ($uri =~ /\.html$/) {
 		$uri =~ s|^/(.*)\.html$|$1|;
 		$dat = $uri if $uri =~ $page;	
 		$uri =~ s|^/?(\w+)/?.*|$1|;
+	
+	# for linux.com -- maps things like /howtos/HOWTO-INDEX/ to howtos which is what we want
+	# if this isn't desirable for other sites we can add a var to control this on a per-site
+	# basis.  --vroom 2004/01/27
+	} elsif ($uri =~ m|^/([^/]*)/([^/]*/)+$|) {
+		$uri = $1;
 	}
-	$logdb->createAccessLog($uri, $dat, $status);
-	if (getCurrentUser('is_admin')) {
-		$logdb->createAccessLogAdmin($uri, $dat, $status);
-	}
+	($uri, $dat);
+}
+
+sub createLog {
+	my($uri, $dat, $status) = @_;
+	my $constants = getCurrentStatic();
+
+	# At this point, if we have short-circuited the
+	# "PerlAccessHandler  Slash::Apache::User"
+	# by returning an apache code like DONE before that processing
+	# could take place (which currently happens in Banlist.pm), then
+	# prepareUser() has not been called, thus the $user->{state}{dbs}
+	# table is not set up.  So to make sure we write to the proper
+	# logging DB (assuming there is one), we have to use the old-style
+	# arguments to getObject(), instead of passing in {db_type=>'log'}.
+	# - Jamie 2003/05/25
+	my $logdb = getObject('Slash::DB', { virtual_user => $constants->{log_db_user} });
+
+	my($op, $new_dat) = getOpAndDatFromStatusAndURI($status, $uri, $dat);
+
+	$logdb->createAccessLog(	$op, $new_dat, $status);
+	$logdb->createAccessLogAdmin(	$op, $new_dat, $status)
+		if getCurrentUser('is_admin');
 }
 
 #========================================================================

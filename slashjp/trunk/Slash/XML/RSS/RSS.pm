@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -147,22 +147,36 @@ sub create {
 
 	my $constants = getCurrentStatic();
 
-	my $version  = $param->{version}     || '1.0';
+	my $version  = $param->{version} && $param->{version} =~ /^\d+\.?\d*$/
+		? $param->{version}
+		: '1.0';
 	my $encoding = $param->{rdfencoding} || $constants->{rdfencoding};
 	$self->{rdfitemdesc} = defined $param->{rdfitemdesc}
 		? $param->{rdfitemdesc}
 		: $constants->{rdfitemdesc};
+	$self->{rdfitemdesc_html} = defined $param->{rdfitemdesc_html}
+		? $param->{rdfitemdesc_html}
+		: $constants->{rdfitemdesc_html};
+
+	# since we do substr if rdfitemdesc != 1, and that would break HTML,
+	# do it for that too (can be fixed later) -- pudge
+	$self->{rdfitemdesc_html} = 0 unless $self->{rdfitemdesc} == 1;
 
 	my $rss = XML::RSS->new(
 		version		=> $version,
 		encoding	=> $encoding,
 	);
 
+	my $absolutedir = defined &Slash::Apache::ConnectionIsSSL
+	                  && Slash::Apache::ConnectionIsSSL()
+		? $constants->{absolutedir_secure}
+		: $constants->{absolutedir};
+
 	# set defaults
 	my %channel = (
 		title		=> $constants->{sitename},
 		description	=> $constants->{slogan},
-		'link'		=> $constants->{absolutedir} . '/',
+		'link'		=> $absolutedir . '/',
 
 		# dc
 		date		=> $self->date2iso8601(),
@@ -353,8 +367,10 @@ sub rss_story {
 
 	my $topics = $slashdb->getTopics();
 
-	$encoded_item->{title}  = $self->encode($story->{title});
-	$encoded_item->{'link'} = $self->encode("$channel->{'link'}article.pl?sid=$story->{sid}", 'link');
+	$encoded_item->{title}  = $self->encode($story->{title})
+		if $story->{title};
+	$encoded_item->{'link'} = $self->encode("$channel->{'link'}article.pl?sid=$story->{sid}", 'link')
+		if $story->{sid};
 
 	if ($version >= 0.91) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
@@ -364,15 +380,21 @@ sub rss_story {
 	if ($version >= 1.0) {
 		my $slashdb   = getCurrentDB();
 
-		$encoded_item->{dc}{date}    = $self->encode($self->date2iso8601($story->{'time'}));
-		$encoded_item->{dc}{subject} = $self->encode($topics->{$story->{tid}}{name});
-		$encoded_item->{dc}{creator} = $self->encode($slashdb->getUser($story->{uid}, 'nickname'));
+		$encoded_item->{dc}{date}    = $self->encode($self->date2iso8601($story->{'time'}))
+			if $story->{'time'};
+		$encoded_item->{dc}{subject} = $self->encode($topics->{$story->{tid}}{name})
+			if $story->{tid};
+		$encoded_item->{dc}{creator} = $self->encode($slashdb->getUser($story->{uid}, 'nickname'))
+			if $story->{uid};
 
-		$encoded_item->{slash}{section}    = $self->encode($story->{section});
-		$encoded_item->{slash}{comments}   = $self->encode($story->{commentcount});
-		$encoded_item->{slash}{hitparade}  = $self->encode($story->{hitparade});
+		$encoded_item->{slash}{section}    = $self->encode($story->{section})
+			if $story->{section};
+		$encoded_item->{slash}{comments}   = $self->encode($story->{commentcount})
+			if $story->{commentcount};
+		$encoded_item->{slash}{hitparade}  = $self->encode($story->{hitparade})
+			if $story->{hitparade};
 		$encoded_item->{slash}{department} = $self->encode($story->{dept})
-			if $constants->{use_dept};
+			if $story->{dept} && $constants->{use_dept};
 	}
 
 	return $encoded_item;
@@ -414,10 +436,12 @@ sub rss_item_description {
 	my $constants = getCurrentStatic();
 
 	if ($self->{rdfitemdesc}) {
-		# no HTML
-		$desc = strip_notags($desc);
-		$desc =~ s/\s+/ /g;
-		$desc =~ s/ $//;
+		# no HTML, unless we specify HTML allowed
+		unless ($self->{rdfitemdesc_html}) {
+			$desc = strip_notags($desc);
+			$desc =~ s/\s+/ /g;
+			$desc =~ s/ $//;
+		}
 
 		# keep $desc as-is if == 1
 		if ($self->{rdfitemdesc} != 1) {

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -2061,9 +2061,11 @@ Fixed KEY.
 
 =back
 
-=head2 setCommentCleanup(KEY)
+=head2 setCommentForMod(KEY)
 
-I am the default documentation, short and stout.
+Adjust a comment in the database for being moderated.  This only
+affects the comment data, not the data for the user moderating
+or being moderated, doesn't log to moderatorlog, etc.
 
 =over 4
 
@@ -2079,7 +2081,9 @@ Key, as in the KEY
 
 =item Return value
 
-Fixed KEY.
+If the moderation failed for some reason, undef.  Otherwise, a
+numeric value indicating the comment's new point score.  If the
+new point score is 0, "0 but true" is returned.
 
 =back
 

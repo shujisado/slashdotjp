@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -41,7 +41,7 @@ sub SlashVirtualUser ($$$) {
 
 	createCurrentVirtualUser($cfg->{VirtualUser} = $user);
 	createCurrentDB		($cfg->{slashdb} = Slash::DB->new($user));
-	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf($user));
+	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf());
 	$cfg->{constants}{section} = 'index'; # This is in here till I finish up some work -Brian
 
 	# placeholders ... store extra placeholders in DB?  :)
@@ -79,6 +79,7 @@ sub SlashVirtualUser ($$$) {
 			# Must not just copy the form_override info
 			$new_cfg->{form_override} = {}; 
 			$new_cfg->{absolutedir} = $_->{url};
+			$new_cfg->{absolutedir_secure} = set_rootdir($_->{url}, $cfg->{constants}{absolutedir_secure});
 			$new_cfg->{rootdir} = set_rootdir($_->{url}, $cfg->{constants}{rootdir});
 			$new_cfg->{cookiedomain} = $_->{cookiedomain} if $_->{cookiedomain};
 			$new_cfg->{defaultsubsection} = $_->{defaultsubsection} if $_->{defaultsubsection};
@@ -96,8 +97,7 @@ sub SlashVirtualUser ($$$) {
 			$cfg->{site_constants}{$_->{hostname}} = $new_cfg;
 		}
 	}
-	# If this is not here this will go poorly.
-	$cfg->{slashdb}->{_dbh}->disconnect;
+	$cfg->{slashdb}->{_dbh}->disconnect if $cfg->{slashdb}->{_dbh};
 }
 
 sub SlashSetVar ($$$$) {
@@ -165,8 +165,9 @@ sub SlashSectionHost ($$$$) {
 			unless $_ eq 'form_override';
 	}
 	# Must not just copy the form_override info
-	$new_cfg->{form_override} = {}; 
+	$new_cfg->{form_override} = {};
 	$new_cfg->{absolutedir} = $url;
+	$new_cfg->{absolutedir_secure} = set_rootdir($url, $cfg->{constants}{absolutedir_secure});
 	$new_cfg->{rootdir} = set_rootdir($url, $cfg->{constants}{rootdir});
 	$new_cfg->{basedomain} = $hostname;
 	$new_cfg->{defaultsection} = $section;
@@ -217,6 +218,9 @@ sub SlashCompileTemplates ($$$) {
 		});
 	}
 
+	# Pudge, any reason we still need this Begin/Done debug log? - Jamie
+	# Yes, sometimes it takes a long time to do it, and you want to know
+	# what is going on ... -- pudge
 	print STDERR "$cfg->{VirtualUser} ($$): Compiling All Templates Done\n";
 
 	$cfg->{template} = Slash::Display::get_template(0, 0, 1);
@@ -224,21 +228,42 @@ sub SlashCompileTemplates ($$$) {
 	$slashdb->{_dbh}->disconnect;
 }
 
-# this can be used in conjunction with mod_proxy_add_forward or somesuch
+# This can be used in conjunction with mod_proxy_add_forward or somesuch,
 # if you use a frontend/backend Apache setup, where all requests come
-# from 127.0.0.1
+# from 127.0.0.1 or some other predictable IP number(s).  For speed, we
+# use a closure to store the regex that matches incoming IP number.
+{
+my $trusted_ip_regex = undef;
 sub ProxyRemoteAddr ($) {
 	my($r) = @_;
 
-	# we'll only look at the X-Forwarded-For header if the requests
-	# comes from our proxy at localhost
-	return OK unless $r->connection->remote_ip eq '127.0.0.1';
+	if (!defined($trusted_ip_regex)) {
+		$trusted_ip_regex = getCurrentStatic("x_forwarded_for_trust_regex");
+		if ($trusted_ip_regex) {
+			# Avoid a little processing each time by doing
+			# the regex parsing just once.
+			$trusted_ip_regex = qr{$trusted_ip_regex};
+		} elsif (!defined($trusted_ip_regex)) {
+			# If not defined, use localhost.
+			$trusted_ip_regex = qr{^127\.0\.0\.1$};
+		} else {
+			# If defined but false, disable.
+			$trusted_ip_regex = '0';
+		}
+	}
+	return OK if $trusted_ip_regex eq '0';
 
-	if (my($ip) = $r->header_in('X-Forwarded-For') =~ /([^,\s]+)$/) {
+	# Since any client can forge X-Forwarded-For, we ignore it...
+	return OK unless $r->connection->remote_ip =~ $trusted_ip_regex;
+
+	# ...unless the connection comes from a trusted source.
+	my $xf = $r->header_in('X-Forward-Pound') || $r->header_in('X-Forwarded-For');
+	if (my($ip) = $xf =~ /([^,\s]+)$/) {
 		$r->connection->remote_ip($ip);
 	}
-        
+
 	return OK;
+}
 }
 
 sub ConnectionIsSSL {
@@ -263,7 +288,7 @@ sub ConnectionIsSSL {
 }
 
 sub ConnectionIsSecure {
-	return 1 if ConnectionIsSSL;
+	return 1 if ConnectionIsSSL();
 
 	# If the connection comes from a local IP or a network deemed
 	# secure by the admin, it's secure.  (The too-clever-by-half
@@ -284,7 +309,7 @@ sub ConnectionIsSecure {
 	# Non-SSL connection, from a network not known to be secure.
 	# Call it insecure.
 	return 0;
- }
+}
 
 sub IndexHandler {
 	my($r) = @_;
@@ -292,6 +317,8 @@ sub IndexHandler {
 	return DECLINED unless $r->is_main;
 	my $constants = getCurrentStatic();
 	my $uri = $r->uri;
+	my $is_user = $r->header_in('Cookie') =~ $USER_MATCH;
+
 	if ($constants->{rootdir}) {
 		my $path = URI->new($constants->{rootdir})->path;
 		$uri =~ s/^\Q$path//;
@@ -301,17 +328,24 @@ sub IndexHandler {
 	# thing dynamically
 	# my $slashdb = getCurrentDB();
 	# my $dbon = $slashdb->sqlConnect(); 
-	my $dbon = ! -e "$constants->{datadir}/dboff";
+	my $dbon = dbAvailable();
 
-	if ($uri eq '/') {
+	if ($uri eq '/' && $constants->{index_handler} ne 'IGNORE') {
 		my $basedir = $constants->{basedir};
 
 		# $USER_MATCH defined above
-		if ($dbon && $r->header_in('Cookie') =~ $USER_MATCH) {
+		if ($dbon && $is_user) {
 			$r->uri("/$constants->{index_handler}");
 			$r->filename("$basedir/$constants->{index_handler}");
 			return OK;
+		} elsif (!$dbon) {
+			# no db (you may wish to symlink index.shtml to your real
+			# home page if you don't have one already)
+			$r->uri('/index.shtml');
+			return DECLINED;
 		} else {
+			# user not logged in
+	
 			# consider using File::Basename::basename() here
 			# for more robustness, if it ever matters -- pudge
 			my($base) = split(/\./, $constants->{index_handler});
@@ -330,22 +364,31 @@ sub IndexHandler {
 		}
 	}
 
-	if ($uri =~ m|^/(\w+)/$|) {
+	# match /section/ or /section
+	if ($uri =~ m|^/(\w+)/?$|) {
 		my $key = $1;
+		
+		if (!$dbon) {
+			$r->uri('/index.shtml');
+			return DECLINED;
+		}
+
 		my $slashdb = getCurrentDB();
 		my $section = $slashdb->getSection($key);
-		if ($section && $section->{id}) {
+		my $index_handler = $section->{index_handler}
+			|| $constants->{index_handler};
+		if ($section && $section->{id} && $index_handler ne 'IGNORE') {
 			my $basedir = $constants->{basedir};
-			my $index_handler = $section->{index_handler}
-				|| $constants->{index_handler};
 
 			# $USER_MATCH defined above
-			if ($dbon && $r->header_in('Cookie') =~ $USER_MATCH) {
+			if ($dbon && $is_user) {
 				$r->args("section=$key");
 				$r->uri("/$index_handler");
 				$r->filename("$basedir/$index_handler");
 				return OK;
 			} else {
+				# user not logged in
+
 				# consider using File::Basename::basename() here
 				# for more robustness, if it ever matters -- pudge
 				my($base) = split(/\./, $index_handler);
@@ -361,7 +404,7 @@ sub IndexHandler {
 		my $filename = $r->filename;
 		my $basedir  = $constants->{basedir};
 
-		if (!$dbon || $r->header_in('Cookie') !~ $USER_MATCH) {
+		if (!$dbon || !$is_user) {
 			$r->uri('/authors.shtml');
 			$r->filename("$basedir/authors.shtml");
 			writeLog('shtml');
@@ -378,27 +421,40 @@ sub IndexHandler {
 		return OK;
 	}
 
-# The vote is still out on whether I will do this or not -Brian
-#	if ($uri =~ /^\/\d\d\/\d\d\/\d\d\/\d*\.shtml/) {
-#		my $basedir  = $constants->{basedir};
-#		my ($realfile)  = split /\?/, $uri;
-#		my $section = $constants->{defaultsection};
-#	print STDERR "DEFAULT $section\n";
-#
-#		$r->uri("/$section/$realfile");
-#		$r->filename("$basedir/$section/$realfile");
-#		writeLog('shtml');
-#		return OK;
-#	}
+	# redirect to static if not a user, and
+	# * var is on
+	# * is article.pl
+	# * no page number > 1 specified
+	# * sid specified
+	# * referrer exists AND is external to our site
+	if ($constants->{referrer_external_static_redirect} && !$is_user && $uri eq '/article.pl') {
+		my $referrer = $r->header_in("Referer");
+		my $referrer_domain = $constants->{referrer_domain} || $constants->{basedomain};
+		my $the_request = $r->the_request;
+		if ($referrer
+			&& $referrer !~ m{^(?:https?:)?(?://)?(?:[\w-.]+\.)?$referrer_domain(?:/|$)}
+			&& $the_request !~ m{\bpagenum=(?:[2-9]|\d\d+)\b}
+			&& $the_request =~ m{\bsid=([\d/]+)}
+		) {
+			my $sid = $1;
+			my $slashdb = getCurrentDB();
+			my $section = $slashdb->getStory($sid, 'section') || $constants->{defaultsection};
 
-	if (!$dbon && $uri !~ /\.shtml/) {
-		my $basedir  = $constants->{basedir};
+			my $newurl = "/$section/$sid.shtml";
+			if (-e "$constants->{basedir}$newurl") {
+				redirect($newurl);
+				return DONE;
+			}
+		}
+	}
 
+	if (!$dbon && $uri !~ /\.(?:shtml|html|jpg|gif|png|rss|rdf|xml|txt|css)$/) {
+		# if db is off we don't necessarily have access to constants
+		# this means we change the URI and return DECLINED which lets
+		# Apache do the URI to filename translation
 		$r->uri('/index.shtml');
-		$r->filename("$basedir/index.shtml");
 		writeLog('shtml');
 		$r->notes('SLASH_FAILURE' => "db"); # You should be able to find this in other processes
-		return OK;
 	}
 
 	return DECLINED;

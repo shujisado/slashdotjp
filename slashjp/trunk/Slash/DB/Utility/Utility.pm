@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -30,7 +30,7 @@ sub new {
 
 	bless($self, $class);
 	$self->{virtual_user} = $user;
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 
 	if ($self->can('init')) {
 		# init should return TRUE for success, else
@@ -113,6 +113,7 @@ sub gets {
 	} else {
 		$sth = $self->sqlSelectMany('*', $table, $where);
 	}
+	return undef unless $sth;
 
 	while (my $row = $sth->fetchrow_hashref) {
 		$return{ $row->{$prime} } = $row;
@@ -131,7 +132,7 @@ sub list {
 	my $prime = $self->{'_prime'};
 
 	$val ||= $prime;
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start('SELECT', $table);
 	my $list = $self->{_dbh}->selectcol_arrayref("SELECT $val FROM $table");
 	$self->_querylog_finish($qlid);
@@ -202,7 +203,7 @@ sub exists {
 
 	my $sql = "SELECT count(*) FROM $table WHERE $where";
 	# we just need one stinkin value to see if this exists
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start('DELETE', $table);
 	my $count = $self->{_dbh}->selectrow_array($sql);
 	$self->_querylog_finish($qlid);
@@ -220,6 +221,8 @@ sub sqlConnect {
 	if ($restart) {
 		$self->{_dbh}->disconnect;
 	}
+
+	return 0 unless dbAvailable();
 
 	if (!(defined $self->{_dbh}) || !$self->{_dbh}->ping) {
 	#if (!(defined $self->{_dbh}) || !$self->{_dbh}->can("ping") || !$self->{_dbh}->ping) {
@@ -271,7 +274,7 @@ sub getLastInsertId {
 	# We're not going to go through sqlSelect() because that will
 	# involve querylog code;  we'll fetch this value here.
 	my $sql = "SELECT LAST_INSERT_ID()";
-	$self->sqlConnect;
+	$self->sqlConnect() or return undef;
 	my $sth = $self->{_dbh}->prepare($sql);
 	if (!$sth->execute) {
 		$self->sqlErrorLog($sql);
@@ -293,6 +296,7 @@ sub getLastInsertId {
 sub _querylog_enabled {
 	my($self) = @_;
 
+	return 0 unless dbAvailable();
 	return $self->{_querylog}{enabled}
 		if defined $self->{_querylog}{enabled}
 			&& $self->{_querylog}{next_check_time} > time;
@@ -398,14 +402,17 @@ sub _querylog_writecache {
 	my($self) = @_;
 	return unless ref($self->{_querylog}{cache})
 		&& @{$self->{_querylog}{cache}};
-	my $dbh = $self->{_querylog}{db}{_dbh};
-	return unless $dbh;
-	$dbh->do("SET AUTOCOMMIT=0");
+	my $qdb = $self->{_querylog}{db};
+	return unless $qdb;
+#	$qdbh->{AutoCommit} = 0;
+	$qdb->sqlDo("SET AUTOCOMMIT=0");
 	while (my $sql = shift @{$self->{_querylog}{cache}}) {
-		$dbh->do($sql);
+		$qdb->sqlDo($sql);
 	}
-	$dbh->do("COMMIT");
-	$dbh->do("SET AUTOCOMMIT=1");
+	$qdb->sqlDo("COMMIT");
+	$qdb->sqlDo("SET AUTOCOMMIT=1");
+#	$qdbh->commit;
+#	$qdbh->{AutoCommit} = 1;
 }
 
 ########################################################
@@ -421,7 +428,7 @@ sub sqlSelectMany {
 	$sql .= "  WHERE $where " if $where;
 	$sql .= "        $other" if $other;
 
-	$self->sqlConnect;
+	$self->sqlConnect() or return undef;
 	my $sth = $self->{_dbh}->prepare($sql);
 	if ($sth->execute) {
 		return $sth;
@@ -443,7 +450,7 @@ sub sqlSelect {
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $sth = $self->{_dbh}->prepare($sql);
 	if (!$sth->execute) {
@@ -471,7 +478,7 @@ sub sqlSelectArrayRef {
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $sth = $self->{_dbh}->prepare($sql);
 	if (!$sth->execute) {
@@ -505,7 +512,7 @@ sub sqlCount {
 	$sql .= " WHERE $where" if $where;
 
 	# we just need one stinkin value - count
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start("SELECT", $table);
 	my $count = $self->{_dbh}->selectrow_array($sql);
 	$self->_querylog_finish($qlid);
@@ -523,7 +530,7 @@ sub sqlSelectHashref {
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $sth = $self->{_dbh}->prepare($sql);
 
@@ -548,7 +555,7 @@ sub sqlSelectColArrayref {
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $sth = $self->{_dbh}->prepare($sql);
 
@@ -585,14 +592,14 @@ sub sqlSelectAll {
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $H = $self->{_dbh}->selectall_arrayref($sql);
 	unless ($H) {
 		$self->sqlErrorLog($sql);
 		$self->sqlConnect;
-		return;
+		return undef;
 	}
 	$self->_querylog_finish($qlid);
 	return $H;
@@ -628,6 +635,7 @@ sub sqlSelectAllHashref {
 
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $sth = $self->sqlSelectMany($select, $from, $where, $other);
+	return undef unless $sth;
 	my $returnable = { };
 	while (my $row = $sth->fetchrow_hashref) {
 		my $reference = $returnable;
@@ -664,6 +672,7 @@ sub sqlSelectAllHashrefArray {
 
 	my $qlid = $self->_querylog_start("SELECT", $from);
 	my $sth = $self->sqlSelectMany($select, $from, $where, $other);
+	return undef unless $sth;
 	my @returnable;
 	while (my $row = $sth->fetchrow_hashref) {
 		push @returnable, $row;
@@ -718,7 +727,7 @@ sub sqlUpdate {
 		}
 	}
 	chop $sql; # lose the terminal ","
-	$sql .= "\nWHERE $where\n";
+	$sql .= "\nWHERE $where\n" if $where;
 	my $qlid = $self->_querylog_start("UPDATE", $table);
 	my $rows = $self->sqlDo($sql);
 	$self->_querylog_finish($qlid);
@@ -772,7 +781,7 @@ sub sqlInsert {
 #################################################################
 sub sqlQuote {
 	my($self, $value) = @_;
-	$self->sqlConnect;
+	$self->sqlConnect() or return undef;
 	if (ref($value) eq 'ARRAY') {
 		my(@array);
 		for (@$value) {
@@ -787,7 +796,7 @@ sub sqlQuote {
 #################################################################
 sub sqlDo {
 	my($self, $sql) = @_;
-	$self->sqlConnect();
+	$self->sqlConnect() or return undef;
 	my $rows = $self->{_dbh}->do($sql);
 	unless ($rows) {
 		unless ($sql =~ /^INSERT\s+IGNORE\b/i) {
@@ -806,7 +815,7 @@ sub sqlErrorLog {
 	my($self, $sql) = @_;
 	my $error = $self->sqlError || 'no error string';
 
-	my @return = ("DB=$self->{virtual_user}", $error);
+	my @return = ("DB='$self->{virtual_user}'", "hostinfo='$self->{_dbh}->{mysql_hostinfo}'", $error);
 	push @return, $sql if $sql;
 	errorLog(join ' -- ', @return);
 }

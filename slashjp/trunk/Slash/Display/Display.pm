@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -105,6 +105,16 @@ block this is.  Default is to include comments if the var
 "template_show_comments" is true, to not include comments
 if it is false.  It is true by default.
 
+If the var "template_show_comments" is greater than 1,
+the Nocomm boolean will be ignored and the HTML comments
+will ALWAYS be inserted around templates (except when they
+are invoked from within other templates by INCLUDE or
+PROCESS).  This is NOT what you want for a public site, since
+(for example) email built up from templates will have HTML
+comments in it which will confuse your readers;  HTML tags
+built from several templates may have HTML comments "inside"
+them, breaking your HTML syntax;  etc.
+
 =item Section
 
 Each template is assigned to a section.  This section may be
@@ -167,7 +177,7 @@ sub slashDisplay {
 		name data opt origSection origPage tempdata
 	)};
 
-	$TEMPNAME = 'anon';
+	local $TEMPNAME = 'anon';
 	unless (ref $name) {
 		# we don't want to have to call this here, but because
 		# it is cached the performance hit is generally light,
@@ -177,11 +187,6 @@ sub slashDisplay {
 		$TEMPNAME = "ID $tempdata->{tpid}, " .
 			"$name;$tempdata->{page};$tempdata->{section}";
 	}
-
-	my @comments = (
-		"\n\n<!-- start template: $TEMPNAME -->\n\n",
-		"\n\n<!-- end template: $TEMPNAME -->\n\n"
-	);
 
 	# copy parent data structure so it is not modified,
 	# so it is left alone on return back to caller
@@ -206,11 +211,14 @@ sub slashDisplay {
 		}
 	}
 
-	my $Nocomm = defined $opt->{Nocomm}
-		? $opt->{Nocomm}
-		: !$constants->{template_show_comments};
+	# template_show_comments == 0		never show HTML comments
+	# template_show_comments == 1		show them if !$opt->{Nocomm}
+	# template_show_comments == 2		always show them - debug only!
 
-	$out = $comments[0] . $out . $comments[1] unless $Nocomm;
+	my $show_comm = $constants->{template_show_comments} ? 1 : 0;
+	$show_comm &&= 0 if $opt->{Nocomm} && $constants->{template_show_comments} < 2;
+	$out = "\n\n<!-- start template: $TEMPNAME -->\n\n$out\n\n<!-- end template: $TEMPNAME -->\n\n"
+		if $show_comm;
 
 	if ($err) {
 		errorLog("$TEMPNAME : $err");
@@ -248,6 +256,10 @@ sub slashDisplayName {
 		$user->{currentSection} = 'default';
 	# admin and light are special cases
 	} elsif ($user->{currentSection} eq 'admin') {
+		# This should never happen, far as I know.  "admin" is
+		# not used as a fake section for some months now, it's
+		# just a page. - Jamie 2004/03/05
+print STDERR scalar(localtime) . " slashDisplayName setting currentSection to 'admin', won't set to '" . (defined($opt->{Section}) ? $opt->{Section} : "undef") . "'\n";
 		$user->{currentSection} = 'admin';
 	} elsif ($user->{light}) {
 		$user->{currentSection} = 'light';
@@ -515,6 +527,9 @@ my %scalar_ops = (
 	'lc'		=> sub { lc $_[0] },
 	'ucfirst'	=> sub { ucfirst $_[0] },
 	'lcfirst'	=> sub { lcfirst $_[0] },
+	'gt'		=> sub { $_[0] gt $_[1] },
+	'lt'		=> sub { $_[0] lt $_[1] },
+	'cmp'		=> sub { $_[0] cmp $_[1] },
 	'substr'        => sub {
 		if (@_ == 2) {
 			substr($_[0], $_[1]);
@@ -527,6 +542,17 @@ my %scalar_ops = (
 	'rand'		=> sub {
 		my $maxval = $_[0] || 1;
 		return rand($maxval);
+	},
+	# integer value to Systeme Internationale (K=kilo, M=mega, etc.)
+	size2si		=> sub {
+		my $v = $_[0] || 0;
+		my $a = $v < 0 ? -$v : $v;
+		my @formats = qw(  %d  %.1fK  %.1fM  %.1fG  %.1fT  );
+		while (my $format = shift @formats) {
+			return sprintf($format, $v) if $a < 2*1024 || !@formats;
+			$a /= 1024; $v /= 1024;
+		}
+		return "size2si_err";
 	},
 );
 

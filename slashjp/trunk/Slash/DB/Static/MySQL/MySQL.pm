@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -13,6 +13,7 @@ package Slash::DB::Static::MySQL;
 use strict;
 use Slash::Utility;
 use Digest::MD5 'md5_hex';
+use Time::HiRes;
 use URI ();
 use vars qw($VERSION);
 use base 'Slash::DB::MySQL';
@@ -123,6 +124,22 @@ sub updateCommentTotals {
 			commentcount	=> $comments->{0}{totals}[0]
 		}, 'sid=' . $self->{_dbh}->quote($sid)
 	);
+}
+
+########################################################
+# For slashd
+sub insertErrnoteLog {
+	my($self, $taskname, $errnote, $moreinfo) = @_;
+	my @c = caller(1);
+	my $line = $c[2] || 0;
+	$moreinfo = undef unless $moreinfo;
+	$self->sqlInsert("slashd_errnotes", {
+		-ts =>		'NOW()',
+		taskname =>	$taskname,
+		line =>		$line,
+		errnote =>	$errnote,
+		moreinfo =>	$moreinfo,
+	});
 }
 
 ########################################################
@@ -302,7 +319,7 @@ sub _deleteThread {
 #}
 
 ########################################################
-# For dailystuff
+# For daily_forget.pl
 sub forgetCommentIPs {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
@@ -365,7 +382,7 @@ sub forgetCommentIPs {
 }
 
 ########################################################
-# For dailystuff
+# For daily_forget.pl
 sub forgetSubmissionIPs {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
@@ -412,32 +429,46 @@ sub forgetSubmissionIPs {
 }
 
 ########################################################
+# For daily_forget.pl
+sub forgetOpenProxyIPs {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+
+	my $hours = $constants->{comments_portscan_cachehours} || 48;
+	$hours++;
+	return $self->sqlDelete("open_proxies",
+		"ts < DATE_SUB(NOW(), INTERVAL $hours HOUR)");
+}
+
+########################################################
 # For dailystuff
 sub deleteDaily {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
+# This is now done more efficiently, throughout the day, by the
+# counthits.pl task.
 #	$self->updateStoriesCounts();
+
+	$self->sqlDelete('badpasswords', "TO_DAYS(NOW()) - TO_DAYS(ts) > 2");
+
+	$self->sqlDelete('pollvoters');
+
 	my $archive_delay_mod =
 		   $constants->{archive_delay_mod}
 		|| $constants->{archive_delay}
 		|| 14;
+	$self->sqlDelete('moderatorlog',
+		"TO_DAYS(NOW()) - TO_DAYS(ts) > $archive_delay_mod");
+	$self->sqlDelete('metamodlog',
+		"TO_DAYS(NOW()) - TO_DAYS(ts) > $archive_delay_mod");
 
-	# Now for some random stuff
-	$self->sqlDo("DELETE FROM pollvoters");
-	$self->sqlDo("DELETE FROM moderatorlog
-		WHERE TO_DAYS(NOW()) - TO_DAYS(ts) > $archive_delay_mod");
-	$self->sqlDo("DELETE FROM metamodlog
-		WHERE TO_DAYS(NOW()) - TO_DAYS(ts) > $archive_delay_mod");
+# This is now done by the flush_formkeys task.
+#	my $delete_time = time() - $constants->{formkey_timeframe};
+#	$self->sqlDelete('formkeys', "ts < $delete_time");
 
-	# Formkeys
-	my $delete_time = time() - $constants->{'formkey_timeframe'};
-	$self->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
-
-	unless ($constants->{noflush_empty_discussions}) {
-		$self->sqlDo("DELETE FROM discussions
-			WHERE type='recycle' AND commentcount=0");
-	}
+	$self->sqlDelete('discussions', "type='recycle' AND commentcount=0")
+		unless $constants->{noflush_empty_discussions};
 }
 
 ########################################################
@@ -608,6 +639,13 @@ sub getTop10Comments {
 	my $cids = [];
 	my $comments = [];
 	my $num_top10_comments = 0;
+	my $max_cid = $self->getMaxCid();
+
+	# To make this select a LOT faster, we limit not only by date
+	# but by the primary key.  If any site gets more than 20,000
+	# comments in a day, my hat's off to ya.
+	my $min_cid = ($max_cid || 0) - 20_000;
+	$min_cid = 0 if $min_cid < 1;
 
 	while (1) {
 		# Select the latest comments with high scores.  If we
@@ -616,7 +654,8 @@ sub getTop10Comments {
 		$cids = $self->sqlSelectAll(
 			'cid',
 			'comments',
-			"date >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+			"cid >= $min_cid
+				AND date >= DATE_SUB(NOW(), INTERVAL 1 DAY)
 				AND points >= $max_score",
 			'ORDER BY date DESC');
 
@@ -643,7 +682,11 @@ sub getTop10Comments {
 	@$cids = sort { $a->[1] <=> $b->[1] } @$cids;
 	$num_top10_comments = 0;
 
-	while ($num_top10_comments < $num_wanted) {
+	while (@$cids
+		&& $cids->[$num_top10_comments]
+		&& @{$cids->[$num_top10_comments]}
+		&& $num_top10_comments < $num_wanted
+	) {
 		my $comment = $self->sqlSelectArrayRef(
 			"stories.sid, title, cid, subject, date, nickname, comments.points, comments.reason",
 			"comments, stories, users",
@@ -781,7 +824,7 @@ sub convert_tokens_to_points {
 
 	# Sanity check.
 	my $n_users = $self->countUsers();
-	$n_wanted = int($n_users/100) if $n_wanted > int($n_users)/100;
+	$n_wanted = int($n_users/10) if $n_wanted > int($n_users)/10;
 
 	my $maxtokens = $constants->{maxtokens} || 60;
 	my $tokperpt = $constants->{tokensperpoint} || 8;
@@ -817,6 +860,7 @@ sub convert_tokens_to_points {
 	# it only limited points to maxpoints for users with karma >= 0
 	# and seclev < 100.  These aren't meaningful limitations, so these
 	# updates should work as well.  - Jamie 2002/08/08
+	# Actually I don't think these are needed at all. - Jamie 2003/09/09
 	$self->sqlUpdate(
 		"users_comments",
 		{ points => $maxpoints },
@@ -880,38 +924,6 @@ sub stirPool {
 }
 
 ########################################################
-# For tailslash
-sub pagesServed {
-	my($self) = @_;
-	my $returnable = $self->sqlSelectAll("count(*),ts",
-			"accesslog", "to_days(now()) - to_days(ts) <= 1",
-			"GROUP BY ts ORDER BY ts ASC");
-
-	return $returnable;
-
-}
-
-########################################################
-# For tailslash
-sub maxAccessLog {
-	my($self) = @_;
-	my($returnable) = $self->sqlSelect("max(id)", "accesslog");;
-
-	return $returnable;
-}
-
-########################################################
-# For tailslash
-sub getAccessLogInfo {
-	my($self, $id) = @_;
-	my $returnable = $self->sqlSelectAll("host_addr,uid,op,dat,ts,id",
-				"accesslog", "id > $id",
-				"ORDER BY ts DESC");
-	formatDate($returnable, 4, 4, '%H:%M');
-	return $returnable;
-}
-
-########################################################
 # For run_moderatord.pl
 #
 # New as of 2002/09/05:  returns ordered first by hitcount, and
@@ -932,24 +944,48 @@ sub getAccessLogInfo {
 # Also, the var mod_elig_hoursback is no longer needed.
 # Note that fetchEligibleModerators_accesslog can return a
 # *very* large hashref.
+#
+# New as of 2004/02/04:  fetchEligibleModerators_accesslog has
+# been split into ~_insertnew, ~_deleteold, and ~_read.  They
+# all are methods for the logslavedb, which may or may not be
+# the same as the main slashdb.
 
-sub fetchEligibleModerators_accesslog {
+sub fetchEligibleModerators_accesslog_insertnew {
+	my($self, $lastmaxid, $newmaxid, $youngest_uid) = @_;
+	return if $lastmaxid > $newmaxid;
+	my $ac_uid = getCurrentStatic('anonymous_coward_uid');
+	$self->sqlDo("INSERT INTO accesslog_artcom (uid, ts, c)"
+		. " SELECT uid, AVG(ts) AS ts, COUNT(*) AS c"
+		. " FROM accesslog"
+		. " WHERE id BETWEEN $lastmaxid AND $newmaxid"
+			. " AND (op='article' OR op='comments')"
+		. " AND uid != $ac_uid AND uid <= $youngest_uid"
+		. " GROUP BY uid");
+}
+
+sub fetchEligibleModerators_accesslog_deleteold {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+	my $hoursback = $constants->{accesslog_hoursback} || 60;
+	$self->sqlDelete("accesslog_artcom",
+		"ts < DATE_SUB(NOW(), INTERVAL $hoursback HOUR)");
+}
+
+sub fetchEligibleModerators_accesslog_read {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 	my $hitcount = defined($constants->{m1_eligible_hitcount})
 		? $constants->{m1_eligible_hitcount} : 3;
-
-	# Whether the var "authors_unlimited" is set or not, it doesn't
-	# much matter whether we return admins in this list.
-
 	return $self->sqlSelectAllHashref(
 		"uid",
-		"uid, COUNT(*) AS c",
-		"accesslog USE INDEX (op_part)",
-		"op='article' OR op='comments'",
-		"GROUP BY uid
-		 HAVING c >= $hitcount");
+		"uid, SUM(c) AS c",
+		"accesslog_artcom",
+		"",
+		"GROUP BY uid HAVING c >= $hitcount");
 }
+
+# This is a method for the main slashdb, which may or may not be
+# the same as the logslavedb.
 
 sub fetchEligibleModerators_users {
 	my($self, $count_hr) = @_;
@@ -981,7 +1017,7 @@ sub fetchEligibleModerators_users {
 		}
 		# If there is more to do, sleep for a moment so we don't
 		# hit the DB too hard.
-		sleep 1 if @uids;
+		Time::HiRes::sleep(0.2) if @uids;
 	}
 
 	my $return_ar = [
@@ -1108,7 +1144,7 @@ sub factorEligibleModerators {
 	if ($wtf->{stirratio}) {
 		# Assign a token likeliness factor based on the ratio of
 		# stirred to spent mod points.  In order not to be
-		# "prejudiced" against users with little or not mod history,
+		# "prejudiced" against users with little or no mod history,
 		# those users get no change in their factor (i.e. 1) by
 		# simply being left out of the list.  Sort by ratio first
 		# (that's the point of this code); if there's a tie in
@@ -1157,35 +1193,9 @@ sub factorEligibleModerators {
 				&& $factor > $info_hr->{factor_highest};
 		# If the factor is, say, 1.3, then the count of this uid is
 		# at least 1, and there is a 0.3 chance that it goes to 2.
-		my $count = int($factor);
-		$count++ if rand() < $factor-$count;
+		my $count = roundrand($factor);
 		push @return_uids, ($uid) x $count;
 	}
-
-# Because this is a complicated method, here is some lengthy debugging
-# output that doesn't appear to be necessary... this will be removed
-# soon. - Jamie
-#	print STDERR "factorEligibleModerators ran on " . scalar(@$orig_uids)
-#		. " uids, producing a list of " . scalar(@return_uids)
-#		. " uids, in "
-#		. sprintf("%0.3f", Time::HiRes::time - $start_time)
-#		. " seconds\n";
-#	print STDERR "factorEligibleModerators orig start: '@$orig_uids[0..9]' now start: '@return_uids[0..9]'\n";
-#	print STDERR "factorEligibleModerators orig   end: '@$orig_uids[-10..-1]' now   end: '@return_uids[-10..-1]'\n";
-#	for my $uid (sort { $u_hr->{$a}{factor_m2total} <=> $u_hr->{$b}{factor_m2total} }
-#		keys %$u_hr) {
-#		print STDERR
-#			sprintf("m2total %0.4f m2ratio %0.4f stirredratio %0.4f uid %6d m2fair %6d stirred %6d",
-#				$u_hr->{$uid}{factor_m2total} || 1,
-#				$u_hr->{$uid}{factor_m2ratio} || 1,
-#				$u_hr->{$uid}{factor_stirredratio} || 1,
-#				$uid,
-#				$u_hr->{$uid}{m2fair},
-#				$u_hr->{$uid}{stirred}
-#			) . "\n";
-#	}
-#use Data::Dumper;
-#	print STDERR "factorEligibleModerators u_hr: " . Dumper($u_hr);
 
 	return \@return_uids;
 }
@@ -1236,15 +1246,252 @@ sub _set_factor {
 ########################################################
 # For run_moderatord.pl
 sub updateTokens {
-	my($self, $uidlist) = @_;
+	my($self, $uid_hr) = @_;
 	my $constants = getCurrentStatic();
 	my $maxtokens = $constants->{maxtokens} || 60;
-	for my $uid (@$uidlist) {
-		next unless $uid;
+	for my $uid (sort keys %$uid_hr) {
+		next unless $uid
+			&& $uid		   =~ /^\d+$/
+			&& $uid_hr->{$uid} =~ /^\d+$/;
+		my $add = $uid_hr->{$uid};
 		$self->setUser($uid, {
-			-tokens	=> "LEAST(tokens+1, $maxtokens)",
+			-tokens	=> "LEAST(tokens+$add, $maxtokens)",
 		});
 	}
+}
+
+########################################################
+# For run_moderatord.pl
+# Given a fractional value representing the fraction of fair M2
+# votes, returns the token/karma consequences of that fraction
+# in a hashref.  Makes the very complex var m2_consequences a
+# little easier to use.  Note that the value returned has three
+# fields:  a float, its sign, and an SQL expression which may be
+# either an integer or an IF().
+# The mod_hr passed in here is the same format as the items
+# returned by getModsNeedingReconcile().
+sub getM2Consequences {
+	my($self, $frac, $mod_hr) = @_;
+	my $constants = getCurrentStatic();
+
+	my $c = $constants->{m2_consequences};
+	my $retval = { };
+	for my $ckey (sort { $a <=> $b } keys %$c) {
+		if ($frac <= $ckey) {
+			my @vals = @{$c->{$ckey}};
+			for my $key (qw(        m2_fair_tokens
+						m2_unfair_tokens
+						m1_tokens
+						m1_karma )) {
+				$retval->{$key}{num} = shift @vals; 
+			}
+			$self->_csq_bonuses($frac, $retval, $mod_hr);
+			for my $key (keys %$retval) {
+				$self->_set_csq($key, $retval->{$key});
+			}
+			last;
+		}
+	}
+
+	my $cr = $constants->{m2_consequences_repeats};
+	if ($cr && %$cr) {
+		my $repeats = $self->_csq_repeats($mod_hr);
+		for my $min (sort { $b <=> $a } keys %$cr) {
+			if ($min <= $repeats) {
+				$retval->{m1_tokens}{num} += $cr->{$min};
+				$self->_set_csq('m1_tokens', $retval->{m1_tokens});
+				last;
+			}
+		}
+	}
+
+	return $retval;
+}
+
+sub _csq_repeats {
+	my($self, $mod_hr) = @_;
+	# Count the number of moderations performed by this user
+	# on the same target user, in the same direction (up or
+	# down), before the current mod we're reconciling, but of
+	# course after the archive_delay_mod (or a max of 60 days).
+	my $ac_uid = getCurrentStatic("anonymous_coward_uid");
+	return $self->sqlCount(
+		"moderatorlog",
+		"active=1
+		 AND uid=$mod_hr->{uid} AND cuid=$mod_hr->{cuid}
+		 AND cuid != $ac_uid
+		 AND val=$mod_hr->{val}
+		 AND id < $mod_hr->{id}
+		 AND ts >= DATE_SUB(NOW(), INTERVAL 60 DAY)");
+}
+
+sub _csq_bonuses {
+	my($self, $frac, $retval, $mod_hr) = @_;
+	my $constants = getCurrentStatic();
+
+	my $num = $retval->{m1_tokens}{num};
+	# Only moderations that are going to give a token bonus
+	# already qualify to have that bonus hiked.
+	return if $num <= 0;
+
+	my $num_orig = $num;
+	my @applied = qw( );
+
+	# "Slashdot provides an existence proof that the basic idea
+	# of distributed moderation is sound. ... There is still
+	# room, however, for design advances that require only
+	# modestly more moderator effort to produce far more timely
+	# and accurate moderation overall."
+	#
+	# That and following quotes are taken from:
+	# Lampe, C. and Resnick, P. "Slash(dot) and Burn: Moderation in a
+	# Large Scale Conversation Space."  Proceedings of the Conference on
+	# Computer Human Interaction (SIGCHI).  April 2004. Vienna, Austria.
+	# ACM Press.  (Forthcoming.)
+	#
+	# The goal of _csq_bonuses is to reward moderators who take
+	# a little extra effort, by giving them their next set of
+	# mod points sooner.  It may work better if moderators are
+	# told about these bonuses and are encouraged to take actions
+	# to earn them.  Even if not, at least the moderators who
+	# take it upon themselves to _do_ these actions will be able
+	# to moderate more frequently.
+
+	# If a comment was Fairly moderated *soon* after being posted,
+	# give the moderator a bonus for being quick on the draw.
+	#
+	# "Among comments that received some moderation, the median time
+	# until receiving the first moderation was 83 minutes... More
+	# than 40% of comments that reached a +4 score took longer to do
+	# so than 174 minutes, the time at which a typical conversation
+	# was already half over."
+	if ($mod_hr->{secs_before_mod} < $constants->{m2_consequences_bonus_earlymod_secs}) {
+		$num *= $constants->{m2_consequences_bonus_earlymod_tokenmult} || 1;
+		push @applied, 'earlymod';
+	}
+
+	# If a Fair moderation was applied to a comment not posted
+	# too early in a discussion, give the moderator a bonus for
+	# not just hanging out for the first few minutes of a story.
+	#
+	# "Of early comments [in the first quintile of their
+	# discussion], 59% were moderated, compared to 25% for
+	# comments in the middle [third quintile] of their
+	# conversation and 7% for late comments [fifth quintile]."
+	# Here, quintile 5 is the latest 20% of the discussion, and
+	# quintile 1 is the earliest 20%.
+	if ($mod_hr->{cid_percentile} > 80) {
+		$num *= $constants->{m2_consequences_bonus_quintile_5} || 1;
+		push @applied, 'quintile_5';
+	} elsif ($mod_hr->{cid_percentile} > 60) {
+		$num *= $constants->{m2_consequences_bonus_quintile_4} || 1;
+		push @applied, 'quintile_4';
+	} elsif ($mod_hr->{cid_percentile} > 40) {
+		$num *= $constants->{m2_consequences_bonus_quintile_3} || 1;
+		push @applied, 'quintile_3';
+	} elsif ($mod_hr->{cid_percentile} > 20) {
+		$num *= $constants->{m2_consequences_bonus_quintile_2} || 1;
+		push @applied, 'quintile_2';
+	} else {
+		$num *= $constants->{m2_consequences_bonus_quintile_1} || 1;
+		push @applied, 'quintile_1';
+	}
+
+	# If a Fair moderation was applied to a comment that was
+	# a reply, rather than top-level, give the moderator a bonus
+	# for not just scanning the most visible comments.
+	#
+	# "Of top-level comments, 48% received some moderation,
+	# compared to 22% for response comments.  The mean final
+	# score for top-level comments was 1.73, as compared to
+	# 1.40 for responses."
+	if ($mod_hr->{comment_pid}) {
+		$num *= $constants->{m2_consequences_bonus_replypost_tokenmult} || 1;
+		push @applied, 'reply';
+	}
+
+	# If a Fair moderation was applied to a comment while it
+	# was at a low score, give the moderator a bonus.  Or
+	# perhaps don't give the moderator quite so many tokens
+	# for moderating a comment while it was at a high score.
+	#
+	# "Moderators may give insufficient attention to comments
+	# with low scores... comments with lower starting scores
+	# were less likely to be moderated.  For example, 30% of
+	# comments starting at 2 received a moderation, compared
+	# to only 29% of those starting at 1, 25% of those
+	# starting at 0, and 9% of those starting at -1."
+	#
+	# I don't think that's much of a spread (from 0 to 2
+	# anyway), and note this applies to the comment's score
+	# at the time of moderation, not its original score
+	# (since if a comment went from 0 to 4 and then got
+	# moderated, the moderator only saw it at 4 anyway).
+	my $constname = "m2_consequences_bonus_pointsorig_$mod_hr->{points_orig}";
+	if (defined($constants->{$constname})) {
+		$num *= $constants->{$constname};
+		push @applied, "pointsorig_$mod_hr->{points_orig}";
+	}
+
+	return if $num == $num_orig;
+
+	if ($frac < $constants->{m2_consequences_bonus_minfairfrac}) {
+		# Only moderations that meet a certain minimum
+		# level of Fairness qualify for the bonuses.
+		# This mod did not meet that level.  So now, the
+		# consequences change does not happen if it would
+		# be advantageous to the moderator.
+		return if $num_orig > $num;
+	}
+
+printf STDERR "%s m2_consequences change from '%d' to '%.2f' because '%s' id %d cid %d uid %d\n",
+scalar(localtime), $num_orig, $num, join(" ", @applied), $mod_hr->{id}, $mod_hr->{cid}, $mod_hr->{uid};
+
+	$retval->{csq_token_change}{num} ||= 0;
+	$retval->{csq_token_change}{num} += $num - $num_orig;
+	$retval->{m1_tokens}{num} = sprintf("%+.2f", $num);
+}
+
+sub _set_csq {
+        my($self, $key, $hr) = @_;
+        my $n = $hr->{num};
+        if (!$n) {
+                $hr->{chance} = $hr->{sign} = 0;
+                $hr->{sql_base} = $hr->{sql_possible} = "";
+                $hr->{sql_and_where} = undef;
+                return ;
+        }
+
+        my $constants = getCurrentStatic();
+        my $column = 'tokens';
+        $column = 'karma' if $key =~ /karma$/;
+        my $max = ($column eq 'tokens')
+                ? $constants->{m2_consequences_token_max}
+                : $constants->{m2_maxbonus_karma};
+        my $min = ($column eq 'tokens')
+                ? $constants->{m2_consequences_token_min}
+                : $constants->{minkarma};
+
+        my $sign = 1; $sign = -1 if $n < 0;
+        $hr->{sign} = $sign;
+
+        my $a = abs($n);
+        my $i = int($a);
+
+        $hr->{chance} = $a - $i;
+        $hr->{num_base} = $i * $sign;
+        $hr->{num_possible} = ($i+1) * $sign;
+        if ($sign > 0) {
+                $hr->{sql_and_where}{$column} = "$column < $max";
+                $hr->{sql_base} = $i ? "LEAST($column+$i, $max)" : "";
+                $hr->{sql_possible} = "LEAST($column+" . ($i+1) . ", $max)"
+                        if $hr->{chance};
+        } else {
+                $hr->{sql_and_where}{$column} = "$column > $min";
+                $hr->{sql_base} = $i ? "GREATEST($column-$i, $min)" : "";
+                $hr->{sql_possible} = "GREATEST($column-" . ($i+1) . ", $min)"
+                        if $hr->{chance};
+        }
 }
 
 ########################################################
@@ -1300,13 +1547,83 @@ sub getModsNeedingReconcile {
 	$limit = "LIMIT $batchsize" if $batchsize;
 
 	my $mods_ar = $self->sqlSelectAllHashrefArray(
-		'*',
-		'moderatorlog',
-		'm2status=1',
+		'moderatorlog.id AS id, moderatorlog.ipid AS ipid,
+			moderatorlog.subnetid AS subnetid,
+			moderatorlog.uid AS uid, val,
+			moderatorlog.sid AS sid,
+			moderatorlog.ts AS ts,
+			moderatorlog.cid AS cid, cuid,
+			moderatorlog.reason AS reason,
+			active, spent, m2count, m2status,
+			points_orig,
+		 comments.pid AS comment_pid,
+		 comments.pointsorig AS comment_pointsorig,
+		 UNIX_TIMESTAMP(moderatorlog.ts) AS mod_unixts,
+		 UNIX_TIMESTAMP(comments.date) AS comment_unixts,
+		 UNIX_TIMESTAMP(discussions.ts) AS discussion_unixts,
+		 discussions.commentcount AS discussion_commentcount',
+		'moderatorlog,comments,discussions',
+		'm2status=1
+			AND moderatorlog.cid = comments.cid
+			AND moderatorlog.sid = discussions.id',
 		"ORDER BY id $limit",
 	);
 
+	# Now get some extra data about each discussion and the
+	# moderated comments in question.  We want the percentile
+	# of each comment in its discussion, and also the time
+	# in seconds between discussion opening and the comment
+	# being posted.
+	if ($mods_ar && @$mods_ar) {
+		my %disc_ids = map { ($_->{sid}, 1) } @$mods_ar;
+		my %sid_cids = ( );
+		my $sid_in_clause = "sid IN (" . join(", ", keys %disc_ids) . ")";
+		my $cid_ar = $self->sqlSelectAll(
+			"sid, cid",
+			"comments",
+			$sid_in_clause,
+			"ORDER BY sid, cid");
+		for my $ar (@$cid_ar) {
+			my($sid, $cid) = @$ar;
+			push @{$sid_cids{$sid}}, $cid;
+		}
+		for my $mod (@$mods_ar) {
+			# Generate the cid_percentile, where 0 is the
+			# first comment in the discussion, and 100 is
+			# the last comment (posted so far).
+			my($sid, $cid) = ($mod->{sid}, $mod->{cid});
+			my $cidlist_ar = $sid_cids{$sid};
+			if (scalar(@$cidlist_ar < 10)) {
+				$mod->{cid_percentile} = undef;
+			} else {
+				$mod->{cid_percentile} = _find_percentile(
+					$cid, $cidlist_ar);
+			}
+			# Generate the number of seconds between
+			# discussion opening and the comment being
+			# posted.
+			$mod->{secs_before_post} = $mod->{comment_unixts}
+				- $mod->{discussion_unixts};
+			# Generate the number of seconds between
+			# the comment being posted and its being
+			# moderated.
+			$mod->{secs_before_mod} = $mod->{mod_unixts}
+				- $mod->{comment_unixts};
+		}
+	}
+
 	return $mods_ar;
+}
+
+sub _find_percentile {
+	my($item, $list) = @_;
+	my $n = $#$list;
+	return undef if $n < 1;
+	my $i = $n;
+	for (0..$n-1) {
+		$i = $_, last if $item <= $list->[$_];
+	}
+	return sprintf("%.1f", 100*($i/$n));
 }
 
 ########################################################
@@ -1438,13 +1755,16 @@ sub deleteStoryAll {
 	my($self, $sid) = @_;
 	my $sid_q = $self->sqlQuote($sid);
 
-	$self->{_dbh}{AutoCommit} = 0;
+#	$self->{_dbh}{AutoCommit} = 0;
+	$self->sqlDo("SET AUTOCOMMIT=0");
 	my $discussion_id = $self->sqlSelect('id', 'discussions', "sid = $sid_q");
 	$self->sqlDelete("stories", "sid=$sid_q");
 	$self->sqlDelete("story_text", "sid=$sid_q");
 	$self->deleteDiscussion($discussion_id) if $discussion_id;
-	$self->{_dbh}->commit;
-	$self->{_dbh}{AutoCommit} = 1;
+#	$self->{_dbh}->commit;
+#	$self->{_dbh}{AutoCommit} = 1;
+	$self->sqlDo("COMMIT");
+	$self->sqlDo("SET AUTOCOMMIT=1");
 }
 
 ########################################################
@@ -1506,6 +1826,8 @@ sub refreshUncommonStoryWords {
 		"stories.sid = story_text.sid
 		 AND stories.time >= DATE_SUB(NOW(), INTERVAL $n_days DAY)"
 	);
+	my %common_words = map { ($_, 1) } split " ",
+		($self->getVar('common_story_words', 'value', 1) || "");
 	my @weights = (
 		$constants->{uncommon_weight_title} || 8,
 		$constants->{uncommon_weight_introtext} || 1,
@@ -1542,6 +1864,7 @@ sub refreshUncommonStoryWords {
 		}
 		grep { $word_hr->{$_}{count} <= $ignore_threshold }
 		grep { length($_) > $minlen }
+		grep { !$common_words{$_} }
 		keys %$word_hr;
 	my $uncommon_words = substr(join(" ", @uncommon_words), 0, $maxlen);
 	if (length($uncommon_words) == $maxlen) {
@@ -1552,12 +1875,41 @@ sub refreshUncommonStoryWords {
 }
 
 ########################################################
+# For tasks/freshenup.pl
+#
+# get previous sections stored so we can clear out old .shtml
+# files and redirect to new
+
+sub getPrevSectionsForSid {
+	my($self, $sid) = @_;
+	my $sid_q = $self->sqlQuote($sid);
+	my $old_sect = $self->sqlSelect(
+		"value",
+		"story_param",
+		"name='old_shtml_sections' AND sid=$sid_q");
+	my @old_sect = grep { $_ } split(/,/, $old_sect);
+	return @old_sect;
+}
+
+########################################################
+# For tasks/freshenup.pl
+#
+# clear old sections stored after their .shtml files 
+# have been cleaned up
+ 
+sub clearPrevSectionsForSid {
+	my($self, $sid) = @_;
+	my $sid_q = $self->sqlQuote($sid);
+	$self->sqlDelete(
+		"story_param",
+		"name='old_shtml_sections' AND sid=$sid_q");
+}
+
+########################################################
 # For tasks/flush_formkeys.pl
 sub deleteOldFormkeys {
 	my($self, $timeframe) = @_;
-	$timeframe ||= 14400;
-	$timeframe *= 2; # why are we doubling this? bizarre - Jamie 2003/07/24
-	my $delete_before_time = time - $timeframe;
+	my $delete_before_time = time - ($timeframe || 14400);
 	$self->sqlDelete("formkeys", "ts < $delete_before_time");
 }
 
@@ -1568,8 +1920,30 @@ sub countAccesslogDaily {
 }
 
 ########################################################
-# For portald
+# For tasks/run_moderatord.pl
+sub countM2M1Ratios {
+	my($self, $longterm) = @_;
 
+	my $reasons = $self->getReasons();
+	my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
+	my $reasons_m2able = join(",", @reasons_m2able);
+
+	my @ratios = ( );
+	for my $daysback (7, 28) {
+		my $m1 = $self->sqlCount("moderatorlog");
+	}
+	my $daysback = $longterm ? 28 : 7;
+
+	return $self->sqlCount("moderatorlog");
+}
+
+sub countM2 {
+	my($self) = @_;
+	return 0;
+}
+
+########################################################
+# For portald
 sub createRSS {
 	my($self, $bid, $item) = @_;
 	# this will go away once we require Digest::MD5 2.17 or greater
@@ -1713,27 +2087,68 @@ sub getNumNewUsersSinceDaysback {
 }
 
 ########################################################
+# Returns the first UID created within the last n days.
+# Rounds off to GMT midnight.
+sub getFirstUIDCreatedDaysBack {
+	my($self, $num_days, $yesterday) = @_;
+	$yesterday = substr($yesterday, 0, 10);
+
+	my $between_str = '';
+	if ($num_days) {
+		$between_str = "BETWEEN DATE_SUB('$yesterday 00:00',    INTERVAL $num_days DAY)
+				    AND DATE_SUB('$yesterday 23:59:59', INTERVAL $num_days DAY)";
+	} else {
+		$between_str = "BETWEEN '$yesterday 00:00' AND '$yesterday 23:59:59'";
+	}
+	return $self->sqlSelect(
+		"MIN(uid)",
+		"users_info",
+		"created_at $between_str");
+}
+
+########################################################
 # Returns the uid/nicks of a random sample of users created
 # since yesterday.
 sub getRandUsersCreatedYest {
-	my($self, $num) = @_;
+	my($self, $num, $yesterday) = @_;
 	$num ||= 10;
 
-	my $max_uid = $self->countUsers({ max => 1 });
-	my $min = $self->sqlSelect(
-		"MIN(uid)",
-		"users_info",
-		"SUBSTRING(created_at, 1, 10) >= SUBSTRING(DATE_SUB(
-			NOW(), INTERVAL 1 DAY
-		 ), 1, 10)");
-	$min ||= 0;
+	my $min_uid = $self->getFirstUIDCreatedDaysBack(1, $yesterday);
+	return [ ] unless $min_uid;
+	my $max_uid = $self->getFirstUIDCreatedDaysBack(0, $yesterday);
+	if ($max_uid) {
+		$max_uid--;
+	} else {
+		$max_uid = $self->countUsers({ max => 1 });
+	}
+	return [ ] unless $max_uid && $max_uid >= $min_uid;
 	my $users_ar = $self->sqlSelectAllHashrefArray(
 		"uid, nickname, realemail",
 		"users",
-		"uid BETWEEN $min AND $max_uid",
+		"uid BETWEEN $min_uid AND $max_uid",
 		"ORDER BY RAND() LIMIT $num");
+	return [ ] unless $users_ar && @$users_ar;
 	@$users_ar = sort { $a->{uid} <=> $b->{uid} } @$users_ar;
 	return $users_ar;
+}
+
+########################################################
+# Returns the most popular email hosts of recently created
+# user accounts.
+sub getTopRecentRealemailDomains {
+	my($self, $yesterday, $options) = @_;
+	my $daysback = $options->{daysback} || 7;
+	my $num = $options->{num_wanted} || 10;
+
+	my $min_uid = $self->getFirstUIDCreatedDaysBack($daysback, $yesterday);
+	my $newaccounts = $self->sqlSelect('max(uid)','users') - $min_uid;
+	return [ ] unless $min_uid;
+	return $self->sqlSelectAllHashrefArray(
+		"initdomain, COUNT(*) AS c",
+		"users_info",
+		"uid >= $min_uid",
+		"GROUP BY initdomain ORDER BY c DESC, initdomain LIMIT $num"),
+	       $daysback, $newaccounts;
 }
 
 ########################################################
@@ -1779,6 +2194,60 @@ sub getAllTemplateIds {
 	);
 }
 
+sub getCidForDaysBack {
+	my($self, $days, $startat_cid) = @_;
+	$days ||= 0;
+	$startat_cid ||= 0;
+	return $self->sqlSelect(
+		"MIN(cid)",
+		"comments",
+		"cid > $startat_cid AND date > DATE_SUB(NOW(), INTERVAL $days DAY)");
+}
+
+sub getModderModdeeSummary {
+	my ($self, $options) = @_;
+	my $ac_uid = getCurrentStatic('anonymous_coward_uid');
+	$options ||= {};
+	my @where;
+	push @where, "ts > date_sub(NOW(),INTERVAL $options->{days_back} DAY)" if $options->{days_back};
+	push @where, "cuid != $ac_uid" if $options->{no_anon_comments};
+	push @where, "id >= $options->{start_at_id}" if $options->{start_at_id};
+	push @where, "id <= $options->{end_at_id}" if $options->{end_at_id};
+	push @where, "ipid is not null and ipid!=''" if $options->{need_defined_ipid};
+
+	my $where = join(" AND ", @where);
+
+	my $mods = $self->sqlSelectAllHashref(
+			[qw(uid cuid)],
+			"uid,cuid,count(*) as count",
+			"moderatorlog",
+			$where,
+			"group by uid, cuid");
+
+	return $mods;
+}
+
+sub getModderCommenterIPIDSummary {
+	my ($self, $options) = @_;
+	my $ac_uid = getCurrentStatic('anonymous_coward_uid');
+	$options ||= {};
+	my @where = ("moderatorlog.cid=comments.cid");
+	push @where, "ts > date_sub(NOW(),INTERVAL $options->{days_back} DAY)" if $options->{days_back};
+	push @where, "cuid != $ac_uid" if $options->{no_anon_comments};
+	push @where, "cuid = $ac_uid" if $options->{only_anon_comments};
+	push @where, "id >= $options->{start_at_id}" if $options->{start_at_id};
+	push @where, "id <= $options->{end_at_id}" if $options->{end_at_id};
+	push @where, "ipid is not null and ipid!=''" if $options->{need_defined_ipid};
+	my $where = join(" AND ", @where);
+	my $mods = $self->sqlSelectAllHashref(
+			[qw(uid ipid)],
+			"moderatorlog.uid as uid, comments.ipid as ipid, count(*) as count",
+			"moderatorlog,comments",
+			$where,
+			"group by uid, ipid");
+			
+	return $mods;
+}
 1;
 
 __END__

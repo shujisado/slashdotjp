@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -31,7 +31,7 @@ use Slash::DB;
 use Slash::Display;
 use Slash::Utility;
 use Fcntl;
-use File::Spec;
+use File::Spec::Functions;
 use Time::Local;
 use Time::HiRes;
 
@@ -41,11 +41,12 @@ use vars qw($VERSION @EXPORT);
 $VERSION   	= '2.003000';  # v2.3.0
 # note: those last two lines of functions will be moved elsewhere
 @EXPORT		= qw(
+	constrain_score
 	getData
 	gensym
 
 	dispComment displayStory displayThread dispStory
-	getOlderStories moderatorCommentLog printComments
+	getOlderStories getOlderDays moderatorCommentLog printComments
 );
 
 
@@ -81,7 +82,7 @@ sub selectComments {
 	# When we pull comment text from the DB, we only want to cache it if
 	# there's a good chance we'll use it again.
 	my $cache_read_only = 0;
-	$cache_read_only = 1 if $header->{writestatus} eq 'archived';
+	$cache_read_only = 1 if $header->{type} eq 'archived';
 	$cache_read_only = 1 if timeCalc($header->{ts}, '%s') <
 		time - 3600 * $constants->{comment_cache_max_hours};
 
@@ -107,8 +108,11 @@ sub selectComments {
 	# and such.
 	for my $C (@$thisComment) {
 		# By setting pid to zero, we remove the threaded
-		# relationship between the comments
-		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
+		# relationship between the comments. Don't ignore threads
+		# in forums, or when viewing a single comment (cid > 0)
+		$C->{pid} = 0 if $user->{commentsort} > 3
+			&& $cid == 0
+			&& $user->{mode} ne 'parents'; # Ignore Threads
 
 		# I think instead we want something like this... (not this
 		# precisely, it munges up other things).
@@ -137,10 +141,23 @@ sub selectComments {
 		} @$thisComment;
 	}
 
+	my $forum_desc;
+	if ($constants->{ubb_like_forums} && $user->{mode} eq 'parents') {
+		# don't display the comment that describes the forums
+		# we get the comment here and save it for later use
+		$forum_desc = $slashdb->getForumFirstPostHashref($header->{id});
+	}
+
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# is in the index of the hash (based on its cid).
 	for my $C (@$thisComment) {
+		# If this is a forum, we skip the first comment in a
+		# discussion, since it's the description
+		next if $constants->{ubb_like_forums}
+			&& ($user->{mode} eq 'parents')
+			&& ($C->{cid} == $forum_desc->{cid});
+
 		# So we save information. This will only have data if we have 
 		# happened through this cid while it was a pid for another
 		# comments. -Brian
@@ -181,9 +198,8 @@ sub selectComments {
 		$comments->{0}{totals}[$x] += $comments->{0}{totals}[$x + 1];
 	}
 
-	# get the total visible kids for each comment (the 0 means start
-	# pid 0, or top level comments.	--Pater
-	countTotalVisibleKids(0, $comments);
+	# get the total visible kids for each comment --Pater
+	countTotalVisibleKids($comments);
 
 	_print_cchp($header, $count, $comments->{0}{totals});
 
@@ -191,11 +207,20 @@ sub selectComments {
 	return($comments, $count);
 }
 
+sub constrain_score {
+	my ($score) = @_;
+	my $constants = getCurrentStatic();
+	my ($min, $max) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
+	$score = $min if $score < $min;
+	$score = $max if $score > $max;
+	return $score;
+}
+
 sub _get_points {
 	my($C, $user, $min, $max, $max_uid, $reasons) = @_;
 	my $hr = {
-		score_start => $C->{pointsorig},
-		moderations => $C->{points} - $C->{pointsorig},
+		score_start => constrain_score($C->{pointsorig} + $C->{tweak_orig}),
+		moderations => constrain_score($C->{points} + $C->{tweak}) - constrain_score($C->{pointsorig} + $C->{tweak_orig}),
 	};
 	my $points = $hr->{score_start};
 
@@ -326,6 +351,8 @@ sub _print_cchp {
 		)) {
 			warn "_print_cchp cannot open '$filename', $!\n";
 		} else {
+			$count ||= 0;
+			$hp_str ||= '0';
 			print $fh "count $count, hitparade $hp_str\n";
 			close $fh;
 		}
@@ -412,9 +439,15 @@ sub _can_mod {
 	my($comment) = @_;
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
+
+	# set time_unixepoch to current time if we aren't passed a
+	# comment this is the case for the check for the moderate button
+	# on the article page 
+
+	$comment->{time_unixepoch} = time unless $comment;
 	$comment->{time_unixepoch} = timeCalc($comment->{date}, "%s", 0)
 		unless $comment->{time_unixepoch};
-	return
+	my $retval =
 		   !$user->{is_anon}
 		&& $constants->{allow_moderation}
 		&& !$comment->{no_moderation}
@@ -425,16 +458,20 @@ sub _can_mod {
 		    && $comment->{lastmod} != $user->{uid}
 		    && $comment->{ipid} ne $user->{ipid}
 		    && (!$constants->{mod_same_subnet_forbid}
-			|| $comment->{subnetid} ne $user->{subnetid} )
+		    	|| $comment->{subnetid} ne $user->{subnetid} )
 		    && (!$user->{state}{discussion_archived}
 			|| $constants->{comments_moddable_archived})
-		    && $comment->{time_unixepoch} >= time() - 3600*
+		    && ($comment->{time_unixepoch} >= time() - 3600*
 			($constants->{comments_moddable_hours}
-			|| 24*$constants->{archive_delay})
+			|| 24*$constants->{archive_delay}))
 		) || (
 		       $constants->{authors_unlimited}
 		    && $user->{seclev} >= $constants->{authors_unlimited}
+		) || (
+		       $user->{acl}{modpoints_always}
 		) );
+
+	return $retval;
 }
 
 #========================================================================
@@ -580,6 +617,7 @@ sub printComments {
 	my $total = ($user->{mode} eq 'flat' || $user->{mode} eq 'nested') ? $comments->{$cidorpid}{totalvisiblekids} : $cc;
 
 	my $lcp = linkCommentPages($discussion->{id}, $pid, $cid, $total);
+
 	my $comment_html = slashDisplay('printCommComments', {
 		can_moderate	=> _can_mod($comment),
 		comment		=> $comment,
@@ -606,37 +644,37 @@ sub printComments {
 	# Currently, the only user prefs that affect comment rendering at
 	# this level are whether domaintags are the default, and whether
 	# maxcommentsize is the default.
-	my $try_memcached =
-		   $constants->{memcached}
-		&& $slashdb->{_mcd}
-		&& $form->{mode} ne 'archive'
-		&& $user->{domaintags} == 2
-		&& $user->{maxcommentsize} == $constants->{default_maxcommentsize}
-		? 1 : 0;
+	my $mcd = $slashdb->getMCD();
+	$mcd = undef if
+		   $form->{mode} eq 'archive'
+		|| $user->{domaintags} != 2
+		|| $user->{maxcommentsize} != $constants->{default_maxcommentsize};
 
 	# loop here, pull what cids we can
 	my $cids_needed_ar = $user->{state}{cids} || [ ];
 	my($mcd_debug, $mcdkey, $mcdkeylen);
-	if ($constants->{memcached_debug}) {
+	if ($mcd) {
 		# MemCached key prefix "ctp" means "comment_text, parsed".
 		# Prepend our site key prefix to try to avoid collisions
 		# with other sites that may be using the same servers.
-		$mcd_debug = { start_time => Time::HiRes::time };
-		$mcdkey = "$slashdb->{_mcd}{keyprefix}ctp:";
+		$mcdkey = "$mcd->{keyprefix}ctp:";
 		$mcdkeylen = length($mcdkey);
+		if ($constants->{memcached_debug}) {
+			$mcd_debug = { start_time => Time::HiRes::time };
+		}
 	}
 	$mcd_debug->{total} = scalar @$cids_needed_ar if $mcd_debug;
-	if ($try_memcached) {
-		if ($constants->{memcached_debug} && $constants->{memcached_debug} >= 2) {
+	if ($mcd) {
+		if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 2) {
 			print STDERR scalar(gmtime) . " printComments memcached mcdkey '$mcdkey'\n";
 		}
 		my @keys_try =
 			map { "$mcdkey$_" }
 			grep { $_ != $form->{cid} }
 			@$cids_needed_ar;
-		$comment_text = $slashdb->{_mcd}->get_multi(@keys_try);
+		$comment_text = $mcd->get_multi(@keys_try);
 		my @old_keys = keys %$comment_text;
-		if ($constants->{memcached_debug} && $constants->{memcached_debug} >= 2) {
+		if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
 			print STDERR scalar(gmtime) . " printComments memcached got keys '@old_keys' tried for '@keys_try'\n"
 		}
 		$mcd_debug->{hits} = scalar @old_keys if $mcd_debug;
@@ -646,8 +684,8 @@ sub printComments {
 		}
 		@$cids_needed_ar = grep { !exists $comment_text->{$_} } @$cids_needed_ar;
 	}
-	if ($constants->{memcached_debug} && $constants->{memcached_debug} >= 2) {
-		print STDERR scalar(gmtime) . " printComments memcached try_memcached '$try_memcached' con '$constants->{memcached}' s->m '$slashdb->{_mcd}' dt '$user->{domaintags}' mcs '$user->{maxcommentsize}' still needed: '@$cids_needed_ar'\n";
+	if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
+		print STDERR scalar(gmtime) . " printComments memcached mcd '$mcd' con '$constants->{memcached}' mcd '$mcd' dt '$user->{domaintags}' mcs '$user->{maxcommentsize}' still needed: '@$cids_needed_ar'\n";
 	}
 
 	# Now we get fresh with the comment text. We take all of the cids
@@ -655,7 +693,7 @@ sub printComments {
 	# the tags that were there to hold them.
 	my $more_comment_text = $slashdb->getCommentText($cids_needed_ar) || {}
 		if @$cids_needed_ar;
-	if ($constants->{memcached_debug} && $constants->{memcached_debug} >= 2) {
+	if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
 		print STDERR scalar(gmtime) . " more_comment_text keys: '" . join(" ", sort keys %$more_comment_text) . "'\n";
 	}
 
@@ -683,22 +721,25 @@ sub printComments {
 		# valid to write to memcached.
 		$comment_text->{$cid} = parseDomainTags($more_comment_text->{$cid},
 			$comments->{$cid}{fakeemail});
-		if ($try_memcached && $form->{cid} ne $cid) {
-			my $retval = $slashdb->{_mcd}->set("$mcdkey$cid", $comment_text->{$cid});
-			if ($constants->{memcached_debug} && $constants->{memcached_debug} >= 2) {
-				print STDERR scalar(gmtime) . " printComments memcached writing '$mcdkey$cid' length " . length($comment_text->{$cid}) . " retval=$retval\n";
+		if ($mcd && $form->{cid} ne $cid) {
+			my $exptime = $constants->{memcached_exptime_comtext};
+			$exptime = 86400 if !defined($exptime);
+			my $retval = $mcd->set("$mcdkey$cid", $comment_text->{$cid}, $exptime);
+			if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
+				my $exp_at = $exptime ? scalar(gmtime(time + $exptime)) : "never";
+				print STDERR scalar(gmtime) . " printComments memcached writing '$mcdkey$cid' length " . length($comment_text->{$cid}) . " retval=$retval expire: $exp_at\n";
 			}
 		}
 	}
 
-	if ($constants->{memcached_debug} && $constants->{memcached_debug} >= 2) {
+	if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
 		print STDERR scalar(gmtime) . " comment_text keys: '" . join(" ", sort keys %$comment_text) . "'\n";
 	}
 
 	if ($mcd_debug) {
 		$mcd_debug->{hits} ||= 0;
 		printf STDERR scalar(gmtime) . " printComments memcached"
-			. " tried=$try_memcached total_cids=%d hits=%d misses=%d elapsed=%6.4f\n",
+			. " tried=" . ($mcd ? 1 : 0) . " total_cids=%d hits=%d misses=%d elapsed=%6.4f\n",
 			$mcd_debug->{total} , $mcd_debug->{hits},
 			$mcd_debug->{total} - $mcd_debug->{hits},
 			Time::HiRes::time - $mcd_debug->{start_time};
@@ -751,18 +792,39 @@ The 'modCommentLog' template block.
 =cut
 
 sub moderatorCommentLog {
-	my($type, $value) = @_;
+	my($type, $value, $options) = @_;
+	$options ||= {};
+	my $title = $options->{title};
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 
-	my $seclev = getCurrentUser('seclev');
+	# If the user doesn't want even to see the numeric score of
+	# a comment, they certainly don't want to see all this detail.
+	return "" if $user->{noscores};
+
+	my $seclev = $user->{seclev};
 	my $mod_admin = $seclev >= $constants->{modviewseclev} ? 1 : 0;
 
 	my $asc_desc = $type eq 'cid' ? 'ASC' : 'DESC';
 	my $limit = $type eq 'cid' ? 0 : 100;
-	my $both_mods = (($type =~ /ipid/) || ($type =~ /subnetid/)) ? 1 : 0;
+	my $both_mods = (($type =~ /ipid/) || ($type =~ /subnetid/) || ($type =~ /global/)) ? 1 : 0;
+	my $skip_ip_disp = 0;
+	if ($type =~ /^b(ip|subnet)id$/) {
+		$skip_ip_disp = 1;
+	} elsif ($type =~ /^(ip|subnet)id$/) {
+		$skip_ip_disp = 2;
+	}
+	my $gmcl_opts = {};
+	$gmcl_opts->{hours_back} = $options->{hours_back} if $options->{hours_back};
+	$gmcl_opts->{order_col} = "reason" if $type eq "cid";
+
 	my $mods = $slashdb->getModeratorCommentLog($asc_desc, $limit,
-		$type, $value);
+		$type, $value, $gmcl_opts);
+
+	my $timestamp_hr = exists $options->{hr_hours_back}
+		? $slashdb->getTime({ add_secs => -3600 * $options->{hr_hours_back} })
+		: "";
 
 	if (!$mod_admin) {
 		# Eliminate inactive moderations from the list.
@@ -777,10 +839,11 @@ sub moderatorCommentLog {
 	# in this template were moderations, and if there were none,
 	# we could short-circuit here if @$mods was empty.  But now,
 	# the template handles that decision.
-
+	my $seen_mods = {};
 	for my $mod (@$mods) {
+		$seen_mods->{$mod->{id}}++;
 		vislenify($mod); # add $mod->{ipid_vis}
-		$mod->{ts} = substr($mod->{ts}, 5, -3);
+		#$mod->{ts} = substr($mod->{ts}, 5, -3);
 		$mod->{nickname2} = $slashdb->getUser($mod->{uid2},
 			'nickname') if $both_mods; # need to get 2nd nick
 		next unless $mod->{active};
@@ -807,7 +870,7 @@ sub moderatorCommentLog {
 				  $constants->{comment_maxscore});
 		my $max_uid = $slashdb->countUsers({ max => 1 });
 
-		my $select = "cid, uid, karma_bonus, reason, points, pointsorig";
+		my $select = "cid, uid, karma_bonus, reason, points, pointsorig, tweak, tweak_orig";
 		if ($constants->{plugin}{Subscribe} && $constants->{subscribe}) {
 			$select .= ", subscriber_bonus";
 		}
@@ -826,6 +889,35 @@ sub moderatorCommentLog {
 		($points, $modifier_hr) = _get_points($comment, $user, $min, $max, $max_uid, $reasons);
 	}
 
+	my $this_user;
+	$this_user = $slashdb->getUser($value) if $type eq "uid";
+	my $cur_uid;
+	$cur_uid = $value if $type eq "uid" || $type eq "cuid";
+
+	my $mod_ids = [keys %$seen_mods];
+	my $mods_to_m2s;
+	if ($constants->{show_m2s_with_mods} && $options->{show_m2s}) {
+		$mods_to_m2s = $slashdb->getMetamodsForMods($mod_ids, $constants->{m2_limit_with_mods});
+	}
+	
+	# Do the work to determine which moderations share the same m2s
+	if ($type eq "cid"
+		&& $constants->{show_m2s_with_mods}
+		&& $constants->{m2_multicount}
+		&& $options->{show_m2s}){
+		foreach my $m (@$mods){
+			my $key = '';
+			foreach my $m2 (@{$mods_to_m2s->{$m->{id}}}) {
+				$key .= "$m2->{uid} $m2->{val},";
+			}
+			$m->{m2_identity} = $key;
+		}
+		@$mods = sort {
+			$a->{reason} <=> $b->{reason}
+				||
+			$a->{m2_identity} cmp $b->{m2_identity}
+		} @$mods;
+	}
 	my $data = {
 		type		=> $type,
 		mod_admin	=> $mod_admin, 
@@ -840,6 +932,17 @@ sub moderatorCommentLog {
 		show_modder	=> $show_modder,
 		mod_to_from	=> $mod_to_from,
 		both_mods	=> $both_mods,
+		timestamp_hr	=> $timestamp_hr,
+		skip_ip_disp    => $skip_ip_disp,
+		this_user	=> $this_user,
+		title		=> $title,
+		mods_to_m2s	=> $mods_to_m2s,
+		show_m2s	=> $options->{show_m2s},
+		cur_uid		=> $cur_uid,
+		value		=> $value,
+		need_m2_form	=> $options->{need_m2_form},
+		need_m2_button	=> $options->{need_m2_button},
+		meta_mod_only	=> $options->{meta_mod_only},
 	};
 	slashDisplay('modCommentLog', $data, { Return => 1, Nocomm => 1 });
 }
@@ -974,7 +1077,9 @@ sub displayThread {
 	# metamoderation.
 	if ($user->{mode} eq 'flat'
 		|| $user->{mode} eq 'archive'
-		|| $user->{mode} eq 'metamod') {
+		|| $user->{mode} eq 'metamod'
+		|| $user->{mode} eq 'parents'
+		|| $user->{mode} eq 'child') {
 		$indent = 0;
 		$full = 1;
 	} elsif ($user->{mode} eq 'nested') {
@@ -1026,7 +1131,7 @@ sub displayThread {
 			$finish_list++;
 		}
 
-		if ($comment->{kids}) {
+		if ($comment->{kids} && ($user->{mode} ne 'parents' || $pid)) {
 			$return .= $const->{cagebegin} if $cagedkids;
 			$return .= $const->{indentbegin} if $indent;
 			$return .= displayThread($sid, $cid, $lvl+1, $comments, $const);
@@ -1116,7 +1221,7 @@ sub dispComment {
 	}
 
 	$comment->{sig} = parseDomainTags($comment->{sig}, $comment->{fakeemail});
-	if ($user->{sigdash} && $comment->{sig} && !isAnon($comment->{uid})) {
+	if ($user->{sigdash} && $comment->{sig}) {
 		$comment->{sig} =~ s/^\s*-{1,5}\s*<(?:P|BR)>//i;
 		$comment->{sig} = "--<BR>$comment->{sig}";
 	}
@@ -1152,6 +1257,13 @@ EOT
 	# we need a display-friendly fakeemail string
 	$comment->{fakeemail_vis} = ellipsify($comment->{fakeemail});
 	push @{$user->{state}{cids}}, $comment->{cid};
+
+	# stats for clampe
+	if ($constants->{clampe_stats} && $ENV{SCRIPT_NAME}) {
+		my $fname = catfile('clampe', $user->{ipid});
+		my $comlog = "IPID: $user->{ipid} UID: $user->{uid} SID: $comment->{sid} CID: $comment->{cid} Dispmode: $user->{mode} Thresh: $user->{threshold} CIPID: $comment->{ipid} CUID: $comment->{uid}";
+		doLog($fname, [$comlog]);	
+	}
 
 	return _hard_dispComment(
 		$comment, $constants, $user, $form, $comment_shrunk,
@@ -1304,6 +1416,7 @@ sub displayStory {
 	# There are many cases when we'd not want to return the pre-rendered text
 	# from the DB.
 	if (	   !$constants->{no_prerendered_stories}
+		&& $constants->{cache_enabled}
 		&& $story->{rendered} && !$options->{get_cacheable}
 		&& !$form->{light} && !$user->{light}
 		&& (!$form->{ssi} || $form->{ssi} ne 'yes')
@@ -1323,23 +1436,28 @@ sub displayStory {
 		$story->{atstorytime} = "__TIME_TAG__";
 
 		$story->{introtext} = parseSlashizedLinks($story->{introtext});
-		$story->{introtext} = processSlashTags($story->{introtext}, {});
+		$story->{introtext} = processSlashTags($story->{introtext});
 		if ($full) {
 			$story->{bodytext} = parseSlashizedLinks($story->{bodytext});
-			$story->{bodytext} = processSlashTags($story->{bodytext}, {});
+			$story->{bodytext} = processSlashTags($story->{bodytext}, { break => 1 });
 			$options->{stid} = $reader->getStoryTopicsJustTids($story->{sid});
+			# if a secondary page, put bodytext where introtext would normally go
+			# maybe this is not the right thing, but is what we are doing for now;
+			# let me know if you have another idea -- pudge
+			$story->{introtext} = delete $story->{bodytext} if $form->{pagenum} > 1;
 		}
 
 		$return = dispStory($story, $author, $topic, $full, $options);
 
 	}
-
-	my $storytime = timeCalc($story->{'time'});
+	my $df = ($user->{mode} eq "archive" || ($story->{writestatus} eq "archived" && $user->{is_anon}))
+		? $constants->{archive_dateformat} : "";
+	my $storytime = timeCalc($story->{'time'}, $df);
 	my $atstorytime;
 	if ($options->{is_future} && !($user->{author} || $user->{is_admin})) {
 		$atstorytime = $constants->{subscribe_future_name};
 	} else {
-		$atstorytime = $user->{aton} . " " . timeCalc($story->{'time'});
+		$atstorytime = $user->{aton} . " " . timeCalc($story->{'time'}, $df);
 	}
 	$return =~ s/\Q__TIME_TAG__\E/$atstorytime/ unless $options->{get_cacheable};
 
@@ -1383,8 +1501,8 @@ The 'getOlderStories' template block.
 =cut
 
 sub getOlderStories {
-	my($stories, $section) = @_;
-	my($count, $newstories, $today, $stuff);
+	my($stories, $section, $stuff) = @_;
+	my($count, $newstories);
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -1409,15 +1527,7 @@ sub getOlderStories {
 		});
 	}
 
-	my $yesterday;
-	if ($form->{issue}) {
-		my($y, $m, $d) = $form->{issue} =~ /^(\d\d\d\d)(\d\d)(\d\d)$/;
-		$yesterday = timeCalc(scalar localtime(
-			timelocal(0, 0, 12, $d, $m - 1, $y - 1900) - 86400
-		), '%Y%m%d');
-	} else {
-		$yesterday = $reader->getDay(1);
-	}
+	my($today, $tomorrow, $yesterday, $week_ago) = getOlderDays($form->{issue});
 
 	$form->{start} ||= 0;
 
@@ -1430,11 +1540,45 @@ sub getOlderStories {
 		stories		=> $stories,
 		section		=> $section,
 		cur_time	=> time,
+		today		=> $today,
+		tomorrow	=> $tomorrow,
 		yesterday	=> $yesterday,
-		start		=> int($artcount/3) + $form->{start},
+		week_ago	=> $week_ago,
+		start		=> int($artcount/3) + $form->{start},	
+		first_date	=> $stuff->{first_date},
+		last_date	=> $stuff->{last_date}
 	}, 1);
 }
 
+#========================================================================
+sub getOlderDays {
+	my($issue) = @_;
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my($today, $tomorrow, $yesterday, $week_ago);
+	# week prior to yesterday (oldest story we'll get back when we do
+	# a getStoriesEssentials for yesterday's issue)
+	if ($issue) {
+		my($y, $m, $d) = $issue =~ /^(\d\d\d\d)(\d\d)(\d\d)$/;
+		if ($y) {
+			$today    = $reader->getDay(0);
+			$tomorrow = timeCalc(scalar localtime(
+				timelocal(0, 0, 12, $d, $m - 1, $y - 1900) + 86400
+			), '%Y%m%d');
+			$yesterday = timeCalc(scalar localtime(
+				timelocal(0, 0, 12, $d, $m - 1, $y - 1900) - 86400
+			), '%Y%m%d');
+			$week_ago  = timeCalc(scalar localtime(
+				timelocal(0, 0, 12, $d, $m - 1, $y - 1900) - 86400 * 8 
+			), '%Y%m%d');
+		}
+	} else {
+		$today     = $reader->getDay(0);
+		$tomorrow  = $reader->getDay(-1);
+		$yesterday = $reader->getDay(1);
+		$week_ago  = $reader->getDay(8);
+	}
+	return($today, $tomorrow, $yesterday, $week_ago);
+}
 
 #========================================================================
 
@@ -1691,7 +1835,10 @@ EOT
 		}, 1) if $comment->{original_pid};
 
 		push @link, createSelect("reason_$comment->{cid}",
-			$reasons, '', 1, 1) if $can_mod;
+			$reasons, '', 1, 1) if $can_mod
+				&& $user->{mode} ne 'archive'
+				&& ( !$user->{state}{discussion_archived}
+					|| $constants->{comments_moddable_archived} );
 
 		push @link, qq|<INPUT TYPE="CHECKBOX" NAME="del_$comment->{cid}">|
 			if $user->{is_admin};
@@ -1705,7 +1852,6 @@ EOT
 					[ $link ]
 					</FONT>
 				</TD></TR>
-				<TR><TD>
 EOT
 		}
 
