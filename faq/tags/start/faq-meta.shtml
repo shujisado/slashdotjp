@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+        <TITLE>Slashdot FAQ (日本語版) - メタFAQ</TITLE>
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR>
+		<TD><A HREF="editorial.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+<HR><BR>
+
+<A NAME="fm100">
+<H2>この文書は何ですか?</H2>
+
+	<P>これは、スラッシュドットの FAQ (Frequently Asked Questions:
+	よくある質問) ファイルです。つまり、スラッシュドットのスタッフ
+	がよく受ける質問とその解答をあらかじめリストした文書です。
+	
+	<P>この FAQ はバージョン 1.1 です。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
+	Last Modified: 6/26/00 <BR>
+	</SMALL></I>
+
+<A NAME="fm200">	
+<H2>知りたいことがあるけど、この FAQ に載ってません。誰に聞けばいいですか?</H2>
+
+	<P>質問をCmdrTacoにメールしてください。解答できるようベストを
+	尽くします。同じ質問が何回もあった場合は、FAQ に追加することも
+	検討します。<BR>
+	(注意：スラッシュドットジャパンに関する質問は
+	<A HREF="mailto:slashmaster@slashdot.jp">スラッシュチーム</A>
+	へどうぞ)
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
+	Last Modified: 6/26/00 <BR>
+	</SMALL></I>
+
+<A NAME="fm300">	
+<H2>この FAQ の責任者は誰ですか?</H2>
+
+	<P>もともとは Rob "CmdrTaco" Malda が作ったもので、ほとんどは
+	彼が実際に書いたものです。2000 年 6 月に、Joe Merlino が
+	Andover.net に雇われて改訂しました。Joe は、内容を更新、編集、
+	フォーマットし直して、ほかの文書とも統一しました。CmdrTaco と
+	Joe のほかにも、以下の人々の協力がありました。
+
+		<UL>
+		
+			<LI><A HREF="mailto:loonxtall@hotmail.com">Loon</A>
+			<LI><A HREF="mailto:dkh2@po.cwru.edu">dkh2</A>
+			 
+		</UL>
+		
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
+	Last Modified: 6/26/00 <BR>
+	</SMALL></I>
+
+<A NAME="fm400">	
+<H2>この FAQ やほかの場所で、"TODO list" のことが書かれています。今見れるんですか?</H2>
+
+	<P>間もなく公式な TODO list がここに投稿されるはずです。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I>
+
+<BR><HR>	
+<TABLE>
+	<TR>
+		<TD><A HREF="editorial.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->

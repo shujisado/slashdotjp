@@ -1,0 +1,337 @@
+<HTML>
+<HEAD>
+        <TITLE>Slashdot FAQ (English) - tech</TITLE>
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="slashmeta.shtml">Previous section</A>
+		<TD><A HREF="advertising.shtml">Next section</A>
+		<TD><A HREF="index.shtml">Index</A>
+	</TR>
+</TABLE>
+<HR><BR>
+
+<A NAME="te050">
+<H2>What kind of hardware does Slashdot run on?</H2>
+
+	<P>[<I>Note: This writeup originally appeared as a Slashdot post. You
+	can see the original post, complete with comments, <A
+	HREF="http://slashdot.org/articles/00/05/18/1427203.shtml">here</A>.
+	</I>]
+
+	<P>At the request of countless users, we're happy to finally present a 
+	summary of the new setup over at Exodus. It's the result of over 6 
+	months of work from a lot of people, so shout-outs to Adam, Kurt, and 
+	Scoop, Team P: Pudge, PatG & Pater for the code, and Martin, BSD-Pat,
+	and Liz for getting the hardware and co-loc taken care of. 
+
+	<P>The original version of this document was written by Andover.Net
+	Alpha Geek Kurt Grey. The funny jokes are his. The stupid jokes are
+	mine. 
+
+	<P><B>The Backstory</B>  
+	
+	<P>We realized soon that our setup at Digital Nation was very flawed.
+	We were having great difficulty administering the machines and making
+	changes. But the real problem was that all the SQL traffic was flowing
+	over the same switch. The decision was made to move to Exodus to solve
+	these problems, as well as to go to a provider that would allow us to
+	scatter multiple data centers around the world when we were ready to do
+	so. 
+
+	<P>Meanwhile, <A HREF="http://www.slashcode.com">Slashcode</A> kicked
+	and screamed its way to v1.0 at the iron fists of CaptTofu (Patrick
+	Galbraith) and Pudge (Chris Nandor). The list of bug fixes stretches
+	many miles, and the world rejoiced, although Slashdot itself continued
+	to run the old code until we made the move. 
+
+	<P><B>The Colocation Site</B>
+ 
+	<P>Slashdot's new co-location site is now at Andover.Net's own
+	<I>(pinky finger to the mouth)</I> $1 million dedicated data center at
+	the Exodus network facility in Waltham, Mass, which has the added
+	advantage of being less than a 30 minute drive for most of our network
+	admins -- so they don't have to fly cross-country to install machines.
+	We have some racks sitting at Exodus. All boxes are networked together
+	through a Cisco 6509 with 2 MSFCs and a Cisco 3500 so we can rearrange
+	our internal network topology just by reconfiguring the switch.
+	Internet connectivity to/from the outside world all flows through an
+	Arrowpoint CS-800 switch which acts as both a firewall load balancer
+	for the front end Web servers. It also so happens that Arrowpoint
+	shares the same office building with Andover.Net in Acton so whenever
+	we need Arrowpoint tech support we just walk upstairs and talk to the
+	engineers.  
+
+	<P><B>The Hardware</B> 
+	<UL>
+      		<LI>5 load balanced Web servers dedicated to pages 
+      		<LI>3 load balanced Web servers dedicated to images 
+      		<LI>1 SQL server 
+      		<LI>1 NFS Server 
+	</UL>
+	
+	<P>All the boxes are VA Linux Systems FullOns running Debian (except
+	for the SQL box). Each box (except for the SQL box) has LVD SCSI
+	with 10,000 RPM drives. And they all have 2 Intel EtherExpress 100
+	LAN adapters. 
+
+	<P><B>The Software</B>  
+	
+	<P>Slashdot itself is finally running the latest release of Slashcode
+	(it was pretty amusing being out of date with our own code: for nearly
+	a year the code release lagged behind Slashdot, but my, how the tables
+	have turned). 
+
+	<P>Slashcode itself is based on Apache, mod_perl and MySQL. The MySQL
+	and Apache configs are still being tweaked -- part of the trick is
+	to keep the MaxClients setting in httpd.conf on each web server
+	low enough to not overwhelm the connection limits of database,
+	which in turn depends on the process limits of the kernel, which
+	can all be tweaked until a state of perfect zen balance has been
+	achieved ... this is one of the trickier parts. Run 'ab' (the
+	apache bench tool) with a few different settings, then tweak SQL a
+	bit. Repeat. Tweak httpd a bit. Repeat. Drink coffee. Repeat until
+	dead. And every time you add or change hardware, you start over! 
+
+	<P>The AdFu ad system has been replaced with a small Apache module
+	written in C for better performance, and that too will be open
+	sourced When It's Ready (tm). This was done to make things
+	consistent across all of Andover.Net (I personally prefer AdFu,
+	but since I'm not the one who has to read the reports and maintain
+	the list of ads, I don't really care what Slashdot runs). 
+
+	<P>Fault tolerance was a big issue. We've started by load balancing
+	anything that could easily be balanced, but balancing MySQL is
+	harder. We're funding development efforts with the MySQL team to
+	add database replication and rollback capabilities to MySQL (these
+	improvements will of course be rolled into the normal MySQL release
+	as well). 
+
+	<P>We're also developing some in-house software (code named
+	"Odyssey") that will keep each Slashdot box synchronized with a
+	hot-spare box, so in case a box suddenly dies it will
+	automatically be replaced with a hot-spare box -- kind of a
+	RAID-for-servers solution (imagine... a Beowulf cluster of these?
+	<I>rimshot</I>) Yes, it'll also be released as open source when
+	its functional. 
+
+	<P><B>Security Measures</B>  
+
+	<P>The Matrix sits behind a firewalling BSD box and an Arrowpoint Load
+	balancer. Each filters certain kinds of attacks and frees up the httpd
+	boxes to concentrate on just serving httpd, and allows the dedicated
+	hardware to do what it does best. All administrative access is made
+	through a VPN (which is just another box). 
+
+	<P><B>Hardware Details</B> 
+	
+	<UL>
+		<LI>Type I (web server)
+		<UL> 
+			<LI>VA Full On 2x2 
+			<LI>Debian Linux frozen
+			<LI>PIII/600 MHz 512K cache
+			<LI>1 GB RAM
+			<LI>9.1GB LVD SCSI with hot swap backplane
+			<LI>Intel EtherExpress Pro (built-in on moboard)
+			<LI>Intel EtherExpress 100 adapter
+		</UL>
+		<BR>
+		<LI>Type II (kernel NFS with kernel locking)
+		<UL> 
+			<LI>VA Full On 2x2
+			<LI>Debian Linux frozen
+			<LI>Dual PIII/600 MHz
+			<LI>2 GB RAM
+			<LI>(2) 9.1GB LVD SCSI with hot swap backplane
+			<LI>Intel EtherExpress Pro (built-in on motherboard)
+			<LI>Intel EtherExpress 100 adapter
+		</UL>
+		<BR>
+		<LI>Type III (SQL) 
+		<UL>
+			<LI>VA Research 3500
+			<LI>Red Hat Linux 6.2 (final release + tweaks)
+			<LI>Quad Xeon 550 MHz, 1MB cache
+			<LI>2 GB RAM
+			<LI>6 LVD disks, 10000 RPM (1 system disk, 5 disks for
+			RAID5)
+			<LI>Mylex Extreme RAID controller 16 MB cache
+			<LI>Intel EtherExpress Pro (built-in on motherboard)
+			<LI>Intel EtherExpress 100 adapter
+		</UL>
+	</UL>
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+
+
+<A NAME="te100">
+<H2>Why doesn't Slashdot display in Browser X? </H2> 
+
+	<P>Ummm, I don't know?  Slashdot has some pretty ancient and nasty HTML
+	in it.  It breaks some older browsers.  Things work pretty well on
+	lynx, w3m, Netscape 4.x+ and IE4.x+.  It might work on other browsers.
+	It might not.  If you see a problem, feel free to mail us and let us
+	know, but for the most part, if you can't tell us how to fix it, we
+	won't. We don't have every browser running, and we're not psychic.
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+
+
+<A NAME="te200">
+<H2>Where/Why do you use cookies? </H2>
+
+	See <A HREF="accounts.shtml#ac500">this</A>.
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+
+<A NAME="te250">
+<H2>What kind of logging does Slashdot do with regard to its readers?</H2>
+
+	<P>We log the usual stuff (IP, page, time, user, page views, moderation,
+	and comment posting, mainly).  A few other odds and ends too, but mostly
+	the data is used to make moderation possible. We keep the logs for 48
+	hours. 
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+
+
+<A NAME="te300">
+<H2>Can I have your poll scripts? </H2>
+
+	<P>The poll scripts are included with the <A
+	HREF="tech.shtml#te500">Slashdot source code</A>.
+
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/21/00 <BR>
+	</SMALL></I> 
+
+
+<A NAME="te400">
+<H2>Why are you generating so many pages dynamically? </H2>
+
+	<P>We're really not generating that many pages dynamically. The
+	homepage, the section indexes, and the articles are all generated and
+	stored for  users as updates occur. These pages represent 50-60% of the
+	site's total traffic. The only pages that are generated dynamically are
+	the comments pages. These are dynamic for several reasons: 
+
+	<UL> 
+		<LI>They change a lot. <BR><BR> 
+	
+		<LI>The deeper you go, the fewer times the pages are
+		hit.<BR><BR> 
+
+		<LI>User preferences and thresholds allow the comments to
+		be customized to a user's taste. The static pages ignore those
+		tastes.<BR><BR>
+	</UL>
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+
+    
+<A NAME="te500">
+<H2>What about the source code to this site? </H2>
+
+	<P>The source code is called <A HREF=http://www.slashcode.com>Slash</A>
+	and it has been released under the GPL.  It contains pretty much
+	everything that you see on Slashdot, but cleaned up a bit for general
+	purpose use. You can use it to create your own weblog.  With features
+	like an online story editor, mass moderation, customizable user
+	preferences and oh-so-much more. It's a fun little adventure.  However
+	it's not for the faint of heart either; it's got bugs.
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="te600">
+<H2>If you were just starting to code Slashdot.org today, what would you 
+code the site in PHP or mod_perl?</H2>
+
+	<P>Perl.
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="te700">
+<H2>Do you guys ever worry that some site might steal Slashcode and try and 
+outdo Slashdot?</H2>
+
+	<P>Go for it.
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+	
+<A NAME="te800">
+<H2>How did it feel when you opensourced slashcode allowing people to 
+tinker with your 'baby' as it were?  Are you still involved with the
+process as much or is your time taken up by reading email and such?</H2>
+
+	<P>It was hard. People were mean about it. Attacked me personally. 
+	Insulted my code. I don't regret it, but a big company wouldn't take
+	it. They'd say, "Forget this GPL thing." These guys are ungrateful
+	jerks. I'm still involved, but less so. I still direct where the code
+	goes and control the features that go in.
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="te900">
+<H2>What's the biggest benefit to come out of the opening of Slash so far?
+Better efficiency?  Tighter security?</H2>
+
+	<P>Yes. Both of these. Also, it's just cool when people submit patches.
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+<BR><HR>
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="slashmeta.shtml">Previous section</A>
+		<TD><A HREF="advertising.shtml">Next section</A>
+		<TD><A HREF="index.shtml">Index</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->
