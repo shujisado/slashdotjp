@@ -255,21 +255,21 @@ sub displayRSS {
 		($constants->{journal_rdfitemdesc_html} > 2 && !$user->{is_anon})
 	);
 
-	my($title, $journals, $link);
+	my($title, $desc, $link);
 	if ($form->{op} eq 'friendview') {
-		$title    = "$juser->{nickname}'s Friends'";
-		$journals = 'Journals';
+		$title    = getData('rss_fv_title', { nickname => $juser->{nickname} });
+		$desc     = getData('rss_fv_desc', { nickname => $juser->{nickname} });
 		$link     = '/journal/friends/';
 	} else {
-		$title    = "$juser->{nickname}'s";
-		$journals = 'Journal';
+		$title    = getData( 'rss_title', { nickname => $juser->{nickname} });
+		$desc     = getData( 'rss_desc', { nickname => $juser->{nickname} });
 		$link     = '/journal/';
 	}
 
 	xmlDisplay(rss => {
 		channel => {
-			title		=> "$title $journals",
-			description	=> "$title $constants->{sitename} $journals",
+			title		=> $title,
+			description	=> $desc,
 			'link'		=> root2abs() . '/~' . fixparam($juser->{nickname}) . $link,
 			creator		=> $juser->{nickname},
 		},

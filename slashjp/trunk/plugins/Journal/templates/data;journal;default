@@ -68,6 +68,18 @@ __template__
 	[% returnme.data_constant = 1 %]
 	Sorry, the requested journal entries were not found.
 
+[% CASE 'rss_title' %]
+	[% nickname %]'s Journal
+
+[% CASE 'rss_desc' %]
+	[% nickname %]'s [% constants.sitename %] Journal
+
+[% CASE 'rss_fv_title' %]
+	[% nickname %]'s Friends' Journals
+
+[% CASE 'rss_fv_desc' %]
+	[% nickname %]'s Friends' [% constants.sitename %] Journals
+
 [% END %]
 
 __seclev__
