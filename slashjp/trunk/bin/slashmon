@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -20,11 +20,12 @@ use vars qw(
 	@abbreviations	%abbreviations
 	$slashdb	$constants	$logdb
 	@db
-	$time_last	$maxlog_last
-	$time_first	$maxlog_first
-	$time_new	$maxlog_new
-	$pages		$loadavg	$num_cycles
-	$pages_total	$loadavg_sum
+	$time_last	$maxlog_last	$maxcid_last
+	$time_first	$maxlog_first	$maxcid_first
+	$time_new	$maxlog_new	$maxcid_new
+	$queries	$pages		$comments
+	$queries_total	$pages_total	$comments_total
+	$loadavg	$loadavg_sum	$num_cycles
 	$lines_since_header
 );
 
@@ -46,7 +47,7 @@ sub init {
 	version() if $opts{v};
 
 	$weed_out_images = $opts{i} ? 1 : 0;
-	$virtuser = $opts{u} || 'slashdot';
+	$virtuser = $opts{u} || 'slash';
 	$width = $opts{w} || 106;
 	$height = $opts{r} || 20;
 	$sleep = $opts{s} || 10;
@@ -62,12 +63,16 @@ sub init {
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
 
+	my $vus_hr = {
+		map { ( $_, 1 ) }
+		@{$slashdb->sqlSelectColArrayref('virtual_user', 'dbs')}
+	};
 	my $vus = [ (
 		$slashdb->{virtual_user},
 		sort { $a cmp $b }
 		grep { $_ ne $slashdb->{virtual_user} }
-		@{$slashdb->sqlSelectColArrayref('virtual_user', 'dbs')}
-	)];
+		keys %$vus_hr
+	) ];
 	my $log_db = $slashdb->getDBs()->{log}[0]{virtual_user} || '';
 
 	# Set up the @db array based on what virtual users we have.
@@ -100,22 +105,27 @@ sub init {
 	$num_cycles = 0;
 	$loadavg_sum = 0;
 	$pages_total = 0;
+	$comments_total = 0;
+	$queries_total = 0;
 
 	$maxlog_first = $logdb->sqlSelect("MAX(id)", "accesslog");
 	$maxlog_last = $maxlog_first;
+
+	$maxcid_first = $slashdb->getMaxCid();
+	$maxcid_last = $maxcid_first;
 
 	$time_first = Time::HiRes::time;
 	$time_last = $time_first;
 
 	for my $db (@db) {
-		$db->{status_sth} = $db->{db}->sqlShowStatus();
-		$db->{innostatus_sth} = $db->{db}->sqlShowInnodbStatus()
+		$db->{status_query} = "SHOW STATUS";
+		$db->{innostatus_query} = "SHOW INNODB STATUS"
 			if $db->{version} == 4
 				&& $db->{vu} ne 'search'; # hack, hack
-		$db->{proclist_sth} = $db->{db}->sqlShowProcessList();
+		$db->{proclist_query} = "SHOW FULL PROCESSLIST";
 		($db->{queries_first}, $db->{slow_queries_first})
 			= ($db->{queries_last}, $db->{slow_queries_last})
-			= getQueries($db->{status_sth});
+			= getQueries($db);
 	}
 
 }
@@ -126,6 +136,10 @@ sub run {
 	# want to correlate times.
 	print scalar(gmtime) . "\n";
 
+	# And print the key for the hitrate column because it's not
+	# very intuitive.
+	print "InnoDB cache (h)itrate key:   + >98%   - 94-98%   X <94%   ? unknown\n";
+
 	while (1) {
 
 		print_header() if $lines_since_header > $height;
@@ -134,6 +148,7 @@ sub run {
 
 		$time_new = Time::HiRes::time;
 		$maxlog_new = $logdb->sqlSelect("MAX(id)", "accesslog");
+		$maxcid_new = $slashdb->getMaxCid();
 
 		update_db_ary();
 
@@ -147,6 +162,7 @@ sub run {
 		print "\n"; ++$lines_since_header;
 
 		$time_last = $time_new;
+		$maxcid_last = $maxcid_new;
 		$maxlog_last = $maxlog_new;
 		for my $db (@db) {
 			$db->{queries_last} = $db->{queries_new};
@@ -160,10 +176,10 @@ sub run {
 
 sub print_header {
 	# First line of header: spaces over the global stuff, headers for DBs
-	printf("%4s %4s %4s", "", "", "");
+	printf("%4s %4s %5s %4s %4s", "", "", "", "", "");
 	for my $db (@db) {
 		my $wid = 14;
-		$wid += 2 if $db->{innostatus_sth};
+		$wid += 2 if $db->{innostatus_query};
 		my $name = $db->{vu};
 		my $len = length($name);
 		print join("",
@@ -175,10 +191,10 @@ sub print_header {
 	print "\n";
 
 	# Second line of header: names for the globals, names for DB columns
-	printf("%4s %4s %4s", "time", "load", "pps");
+	printf("%4s %4s %5s %4s %4s", "time", "load", "cps", "pps", "qpp");
 	for my $db (@db) {
 		printf(" %4s %3s %4s", "qps", "sps", "qpp");
-		print " h" if $db->{innostatus_sth};
+		print " h" if $db->{innostatus_query};
 	}
 	print "\n";
 
@@ -193,8 +209,8 @@ sub sleep_until {
 
 sub update_db_ary {
 	for my $db (@db) {
-		($db->{queries_new}, $db->{slow_queries_new}) = getQueries($db->{status_sth});
-		($db->{hitrate}) = getHitRate($db->{innostatus_sth}) if $db->{innostatus_sth};
+		($db->{queries_new}, $db->{slow_queries_new}) = getQueries($db);
+		($db->{hitrate}) = getHitRate($db) if $db->{innostatus_query};
 		getProclist($db);
 	}
 }
@@ -209,12 +225,21 @@ sub print_first_line {
 		$pages = $maxlog_new - $maxlog_last;
 	}
 	$pages_total += $pages;
+	$comments = $maxcid_new - $maxcid_last;
+	$comments_total = $maxcid_new - $maxcid_first;
+	$queries = 0;
+	for my $db (@db) {
+		$queries += $db->{queries_new} - $db->{queries_last};
+	}
+	$queries_total += $queries;
 	my $time_elapsed = $time_new - $time_last;
 	$time_elapsed = 0.01 if $time_elapsed < 0.01;
-	printf("%4s %4.2f %4.1f",
+	printf("%4s %4.2f %5.2f %4.1f %4.1f",
 		"",
 		$loadavg,
-		$pages / $time_elapsed
+		$comments / $time_elapsed,
+		$pages / $time_elapsed,
+		$queries / ($pages ? $pages : 1),
 	);
 	$pages = 1 if $pages < 1; # Below it's used in a denominator
 	for my $db (@db) {
@@ -224,11 +249,11 @@ sub print_first_line {
 			($db->{queries_new} - $db->{queries_last}) / $time_elapsed,
 			($db->{queries_new} - $db->{queries_last}) / $pages,
 		);
-		if ($db->{innostatus_sth}) {
+		if ($db->{innostatus_query}) {
 			if (!defined($db->{hitrate})) {
 				print " ?";
 			} elsif ($db->{hitrate} >= 98) {
-				print "  ";
+				print " +";
 			} elsif ($db->{hitrate} >= 94) {
 				print " -";
 			} else {
@@ -241,13 +266,15 @@ sub print_first_line {
 
 sub print_second_line {
 	# Second line: stats since slashmon started running
-	my $pt = $pages_total || 1;
 	my $time_elapsed = $time_new - $time_first;
 	$time_elapsed = 0.01 if $time_elapsed < 0.01;
-	printf("%4d %4.2f %4.1f",
+	my $pt = $pages_total || 1;
+	printf("%4d %4.2f %5.2f %4.1f %4.1f",
 		$time_new - $time_first,
 		$loadavg_sum / $num_cycles,
-		$pt / $time_elapsed,
+		$comments_total / $time_elapsed,
+		$pages_total / $time_elapsed,
+		$queries_total / $pt,
 	);
 	for my $db (@db) {
 		my $slow = sprintf("%4.2f", ($db->{slow_queries_new} - $db->{slow_queries_first}) / $time_elapsed);
@@ -284,29 +311,38 @@ sub getLoadavg {
 }
 
 sub getQueries {
-	my($sth) = @_;
-	$sth->execute();
+	my($db) = @_;
+	my $query = $db->{status_query};
+	my $sth = $db->{db}{_dbh}->prepare($query);
 	my($q, $sq);
+	$sth->execute();
 	while (my($key, $val) = $sth->fetchrow()) {
-		$q = $val, next	if $key eq "Questions";
-		$sq = $val	if $key eq "Slow_queries";
+		$q = $val, next if $key eq "Questions";
+		$sq = $val      if $key eq "Slow_queries";
 	}
 	$sth->finish();
+	if (!$q) {
+		print STDERR "getQueries returning q='$q' sq='$sq' for '$query'\n";
+	}
 	return($q, $sq);
 }
 
 sub getHitRate {
-	my($sth) = @_;
+	my($db) = @_;
+	my $query = $db->{innostatus_query};
+	my $sth = $db->{db}{_dbh}->prepare($query);
 	$sth->execute();
 	my($text) = $sth->fetchrow();
 	my($num, $denom) = $text =~ /Buffer pool hit rate (\d+)[ \/]+(\d+)/;
+	$sth->finish();
 	return undef unless $denom;
 	return 100*$num/$denom;
 }
 
 sub getProclist {
 	my($db) = @_;
-	my $sth = $db->{proclist_sth};
+	my $query = $db->{proclist_query};
+	my $sth = $db->{db}{_dbh}->prepare($query);
 	my $threads = 0;
 	my $active = 0;
 	my $proclist = [ ];
@@ -366,12 +402,12 @@ Usage: $PROGNAME [OPTIONS] ... [UIDs]
 Monitor the Slash site's database.
 
 Main options:
-	-h      Help (this message)
-	-v      Version
+	-h	Help (this message)
+	-v	Version
 	-i	Accesslog may contain images; do a SELECT from it to
 		weed them out when counting pages
 
-	-u      Virtual user (default "slashdot")
+	-u	Virtual user (default "slash")
 	-w	Width max in columns (default 76)
 	-r	Height max in (r)ows (default 20)
 	-s	Sleep time (default 10)
@@ -381,13 +417,15 @@ Global stats are the left 3 columns:
 	time	Elapsed seconds
 	load	CPU load on this machine
 	pps	Pages per second
+	cps	Comments per second
+	qpp	Queries per page (total)
 
 For each DB, the data is:
 	qps	Queries per second
 	sps	Slow queries per second
 	qpp	Queries per page
-	h	Cache hit rate percent (MySQL 4.x only)
-		("+" means 98% or better, "-" means not)
+	h	InnoDB cache hit rate percent (MySQL 4.x only)
+		("+" means > 98%, "-" means 94-98%, "X" means < 94%)
 EOT
 	exit 0;
 }
@@ -398,7 +436,7 @@ sub version {
 $PROGNAME $VERSION
 
 This code is a part of Slash, and is released under the GPL.
-Copyright 1997-2003 by Open Source Development Network. See README
+Copyright 1997-2004 by Open Source Development Network. See README
 and COPYING for more information, or see http://slashcode.com/.
 
 EOT

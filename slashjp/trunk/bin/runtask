@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -68,6 +68,15 @@ exit 0;
 
 sub slashdLog {
 	doLog('slashd', \@_, 1, 'runtask');
+}
+
+# A command to log an error to a DB table.  This is only for messages
+# that are important enough that the admins should see them (maybe in
+# the admin.pl backend, but definitely in email at the end of the day).
+
+sub slashdErrnote {
+	my($errnote, $moreinfo) = @_;
+	$slashdb->insertErrnoteLog($task_name || 'RUNTASK', $errnote, $moreinfo);
 }
 
 sub slashdLogDie {
@@ -216,7 +225,14 @@ sub parse_slash_sites {
 	}
 	($orig_euid, $orig_egid) = ( $>, $) );
 	$orig_egid =~ /^(\d+)/; $orig_egid = $1;
-	if ( $uid != $orig_euid or $gid != $orig_egid ) {
+
+	# Mac OS X likes to have signed UIDs, so e.g. user
+	# nobody will get UID 4294967294 from the system,
+	# but $> will be -2.  fun fun fun!  but getpwuid(-2)
+	# will give us 4294967294, so let's get it that way. -- pudge
+	my($c_name, $c_pass, $c_uid, $c_gid) = getpwuid($uid);
+	if ( $uid != $c_uid || $gid != $c_gid ) {
+#	if ( $uid != $orig_euid or $gid != $orig_egid ) {
 		die "can't set uid/gid to $uid/$gid ($>/$))";
 	}
 	# If we made it this far, everything's cool
@@ -281,6 +297,7 @@ sub main {
 	slashdLogInit();
 
 	# Process task specific options, if any.
+	$constants->{task_options} = { };
 	if ($opts{'o'}) {
 		my($hash);
 		for (split /,/, $opts{o}) {
@@ -288,6 +305,10 @@ sub main {
 		}
 		$constants->{task_options} = $hash;
 	}
+	$constants->{task_options_text} = join(",",
+		map { "$_=$constants->{task_options}{$_}" }
+		sort keys %{$constants->{task_options}}
+	);
 
 	my $task_name_nopl = $task_name;
 	$task_name_nopl =~ s/\.pl$//;
@@ -296,7 +317,10 @@ sub main {
 	});
 
 	my $subref = get_task_subref();
-	slashdLog("$task_name begin") if verbosity() >= 2;
+	slashdLog("$task_name begin"
+		. ($constants->{task_options_text} ? " $constants->{task_options_text}" : "")
+	) if verbosity() >= 2;
+
 	my $start_time = Time::HiRes::time;
 	# runtask doesn't fork, there wouldn't be much point
 	my $rc = $subref->($virtual_user, $constants, $slashdb, $user, {});
@@ -352,7 +376,7 @@ sub version {
 $PROGNAME $VERSION
 
 This code is a part of Slash, and is released under the GPL.
-Copyright 1997-2003 by Open Source Development Network. See README
+Copyright 1997-2004 by Open Source Development Network. See README
 and COPYING for more information, or see http://slashcode.com/.
 
 EOT

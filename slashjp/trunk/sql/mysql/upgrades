@@ -1,14 +1,29 @@
 # This is the upgrade file for SQL. What does this mean to you?
 # If you are a developer you should leave notes here as to what
 # was done and when. This includes inserts, alter tables and deletions.
-# The Format is that you add your changes to the end with notes
-# and who you are. If your changes occur after a certain release tag
-# then you need to place your changes there.
+# Changes should always be appended, and when a tag is applied,
+# an End/Start comment should be appended.
+#
+# "End of X" means that tag X was applied "here" (at this point in
+#      the file, on the date given)..
+# "Start of Y" is just intended to clarify that work on the next tag
+#      after X started at the same time that X was tagged.
+
+#
+# $Id$
+#
 
 # BEGIN tf23's additions 
 # for required changes to update a site from fry to devel 
 # this matches cvs diff -r fry -r T_2_3_0_10 -U3 sql/mysql/slashschema_create.sql
 #
+# So if you are upgrading a site from 2.2.x, you should start here
+# and apply all the changes below.  Simply pasting in the whole
+# list almost certainly won't work, since we have several notes
+# where you need to run a brief perl script or something;  you will
+# need to read down it and apply those brief moments of human
+# intelligence.  Sorry.  We plan to build a tool to automate this
+# upgrade process... someday. - Jamie 2003/03/31
 
 ALTER TABLE vars CHANGE name name varchar(48) DEFAULT '' NOT NULL;
 
@@ -474,9 +489,6 @@ INSERT INTO vars (name, value, description) VALUES ('approved_url_schemes','ftp|
 
 
 # End of T_2_3_0_29, Start of T_2_3_0_30
-
-# OSDNTEST LAST UPDATED HERE
-# OSDN LAST UPDATED HERE
 
 # Forgot this one a little while ago too.
 # For plugins/Stats (ignore if you're not using that plugin):
@@ -1188,7 +1200,6 @@ UPDATE message_codes SET type = 'Comment Moderation' WHERE code = 3;
 UPDATE message_codes SET type = 'Comment Reply' WHERE code = 4;
 UPDATE message_codes SET type = 'Journal Reply' WHERE code = 7;
 
-# LINUX.COM LAST UPDATED HERE
 # FOUNDRIES LAST UPDATED
 
 # Adds in the current bonus for those users who have it set -Brian
@@ -1474,8 +1485,6 @@ CREATE TABLE users_acl (
 
 INSERT INTO vars (name, value, description) VALUES ('subscribe_future_plug','0','If subscribe_future_secs > 0, do non-subscribers get to know when a future story is coming up, even though they cannot see it?');
 
-# SLASHCODE LAST UPDATED HERE
-
 # End of T_2_3_0_90, Start of T_2_3_0_91 - 2003/04/25
 # End of T_2_3_0_91, Start of T_2_3_0_92 - 2003/04/25
 # End of T_2_3_0_92, Start of T_2_3_0_93 - 2003/04/30
@@ -1636,8 +1645,8 @@ ALTER TABLE topic_image_sections TYPE=InnoDB;
 ALTER TABLE topic_images TYPE=InnoDB;
 ALTER TABLE tzcodes TYPE=InnoDB;
 ALTER TABLE users_acl TYPE=InnoDB;
-ALTER TABLE users_comments TYPE=InnoDB TYPE=InnoDB;
-ALTER TABLE users_hits TYPE=InnoDB TYPE=InnoDB;
+ALTER TABLE users_comments TYPE=InnoDB;
+ALTER TABLE users_hits TYPE=InnoDB;
 ALTER TABLE users_index TYPE=InnoDB;
 ALTER TABLE users_info TYPE=InnoDB;
 ALTER TABLE users_param TYPE=InnoDB;
@@ -1709,14 +1718,10 @@ ALTER TABLE people TYPE=InnoDB;
 
 # End of T_2_3_0_103, Start of T_2_3_0_104 - 2003/07/01
 
-# LINUX.COM LAST UPDATED HERE
-
 DELETE FROM menus WHERE menu="topics" AND label="Recent Topics";
 INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'topics','Topic Hierarchy','','[% constants.rootdir %]/topics.pl?op=hierarchy ',0,1,1);
 
 # End of T_2_3_0_104, Start of T_2_3_0_105 - 2003/07/09
-
-# DEVCHANNEL LAST UPDATED HERE
 
 INSERT INTO vars (name, value, description) VALUES ('no_prerendered_stories','0','Turn off use of prerendered stories in display');
 
@@ -1830,9 +1835,7 @@ UPDATE users_comments SET threshold=0 WHERE threshold IS NULL;
 UPDATE users_comments SET commentsort=0 WHERE commentsort IS NULL;
 ALTER TABLE users_comments CHANGE COLUMN mode mode ENUM('flat', 'nested', 'nocomment', 'thread') DEFAULT 'thread' NOT NULL, CHANGE COLUMN commentsort commentsort TINYINT DEFAULT '0' NOT NULL, CHANGE COLUMN threshold threshold TINYINT DEFAULT '0' NOT NULL;
 
-# SLASHDOT LAST UPDATED HERE
-
-INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('MAGST',  39600, 'Magadan', NULL, 'MAGDT', 43200);
+INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('MAGS',  39600, 'Magadan', NULL, 'MAGD', 43200);
 
 # sigh ... this really needs to be iso-8859-1 ... make it utf-8 if you want
 # make sure you also put the right thing in your Apache confs for something like:
@@ -1840,4 +1843,436 @@ INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) 
 # -- pudge
 REPLACE INTO vars (name, value, description) VALUES ('content_type_webpage','text/html; charset=iso-8859-1','The Content-Type header for webpages');
 
-# USEPERL LAST UPDATED HERE
+# End of T_2_3_0_113, Start of T_2_3_0_114 - 2003/08/12
+
+# run this unless you have a reason not to (like, you have your own html-header;index)
+DELETE FROM templates WHERE name = "html-header" AND page = "index" AND section = "default";
+
+ALTER TABLE topics ADD COLUMN series TINYINT DEFAULT 0 NOT NULL;
+
+INSERT INTO vars (name, value, description) VALUES ('bytime_delay','120','days to go back for next/previous links on stories');
+
+INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_series','0','Boolean where to use next/prev links for articles in a series (topic)');
+INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_section','0','Boolean where to use next/prev links for articles in a section');
+
+INSERT INTO vars (name, value, description) VALUES ('top_sid','','The sid of the most recent story on the homepage');
+
+UPDATE sections SET title='' WHERE title IS NULL;
+UPDATE sections SET qid='0' WHERE qid IS NULL;
+ALTER TABLE sections CHANGE COLUMN title title VARCHAR(64) DEFAULT '' NOT NULL, CHANGE COLUMN qid qid MEDIUMINT DEFAULT '0' NOT NULL;
+
+# This is a change we're making for Slashdot;  it's something to consider
+# for your own site, depending on how you have set up your sections.
+# The practical change you'll see is that now sectional index.pl Older
+# Stuff slashboxes will have a "Yesterday's Edition" link at the bottom.
+# UPDATE sections SET issue=3 WHERE issue=1 AND artcount > 0 AND section NOT IN ('polls', 'search');
+
+# End of T_2_3_0_114, Start of T_2_3_0_115 - 2003/08/28
+
+CREATE TABLE badpasswords (
+	uid mediumint(8) NOT NULL DEFAULT 0,
+	ip varchar(15) NOT NULL DEFAULT '',
+	subnet varchar(15) NOT NULL DEFAULT '',
+	password varchar(20) NOT NULL DEFAULT '',
+	ts timestamp(14) NOT NULL,
+	INDEX uid (uid),
+	INDEX ip (ip),
+	INDEX subnet (subnet)
+) TYPE=InnoDB;
+
+# End of T_2_3_0_115, Start of T_2_3_0_116 - 2003/09/03
+
+# This is probably not necessary for your site, but Slashdot has
+# an inconsistency with the CVS schema that this solves, and
+# running this should have no effect on a site that's up-to-date.
+UPDATE sections SET artcount=0 WHERE artcount IS NULL;
+UPDATE sections SET issue=0 WHERE issue IS NULL;
+ALTER TABLE sections CHANGE artcount artcount MEDIUMINT NOT NULL DEFAULT 30, CHANGE issue issue TINYINT NOT NULL DEFAULT 0;
+
+# New codes and constants to handle bad login attempts
+# For users and admins.
+INSERT INTO message_codes (code, type, seclev, modes, send, subscribe) VALUES (13, 'Bad login attempt warnings', 1, 1, 'now', 0);
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_uid','40','Warn admin if user specifies password incorrectly this many times in one day');
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_ip','40','Warn admin if an ip specifies password incorrectly this many times in one day');
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_subnet','60','Warn admin if a subnet specifies password incorrectly this many times in one day');
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_user_limit','30','Warn a user on the Nth bad password attempt within 24 hours. Set to 0 if you do not want users to be warned');
+
+# if you use the Relocate plugin, add this var and set it appropriately
+INSERT INTO vars (name, value, description) VALUES ('relocate_href2slash', 0, 'Automatically convert all A HREF tags to SLASH HREF tags, using relocate.pl.');
+
+# End of T_2_3_0_116, Start of T_2_3_0_117 - 2003/09/12
+# End of T_2_3_0_117, Start of T_2_3_0_118 - 2003/09/16
+
+INSERT INTO vars (name, value, description) VALUES ('memcached_exptime_user','1200','Number of seconds a user record lives in memcached before requiring a re-read from the DB (empty string=default, 0=forever)');
+INSERT INTO vars (name, value, description) VALUES ('memcached_exptime_comtext','86400','Number of seconds comment text lives in memcached before requiring a re-read from the DB (empty string=default, 0=forever)');
+
+# End of T_2_3_0_118, Start of T_2_3_0_119 - 2003/09/23
+
+INSERT INTO vars (name, value, description) VALUES ('x_forwarded_for_trust_regex','^127\\.0\\.0\\.1$','IP addresses from which we will trust an X-Forwarded-For header');
+
+# if using Slash::Blob
+ALTER TABLE blobs ADD COLUMN filename VARCHAR(80) DEFAULT "" NOT NULL AFTER content_type;
+
+# already done on Slashdot, which is probably the only site that will need it :)
+ALTER TABLE metamodlog CHANGE id id INT UNSIGNED NOT NULL AUTO_INCREMENT;
+
+# End of T_2_3_0_119, Start of T_2_3_0_120 - 2003/09/28
+
+DELETE FROM vars WHERE name='tailslash_stats';
+
+# Change for plugins/Subscribe (ignore if not using that plugin)
+ALTER TABLE subscribe_payments ADD COLUMN payment_type VARCHAR(10) DEFAULT 'user';
+ALTER TABLE subscribe_payments ADD COLUMN puid MEDIUMINT UNSIGNED;
+UPDATE subscribe_payments SET puid=uid, ts=ts;
+ALTER TABLE subscribe_payments ADD INDEX puid (puid);
+
+INSERT INTO vars VALUES ('subscribe_allow_gifts','1','Allow gift subscriptions');
+INSERT INTO vars VALUES ('subscribe_gen_transaction_id_length','18','Length of transaction id to generate (up to 32 chars).  Best to keep the length of these ids different from outside verifiers to prevent collisions');
+INSERT INTO vars VALUES ('subscribe_gift_testing','1','When this is on only admins will be able to see gift subscription form');
+
+# End of T_2_3_0_122, Start of T_2_3_0_123 - 2003/10/28
+
+
+ALTER TABLE users_acl ADD INDEX acl (acl);
+
+# Set to 1 if you want all future stories displayed in admin stories listing
+INSERT INTO vars (name, value, description) VALUES ('show_all_future_stories_admin', 0, 'Turn this on so all future stories are show in the admin stories list');
+
+# End of T_2_3_0_124, Start of T_2_3_0_125 - 2003/11/10
+
+
+# for messages (adjust to suit your own tastes, but these are new defaults):
+REPLACE INTO vars (name, value, description) VALUES ('message_web_expire','14','Number of days to keep message on web site');
+REPLACE INTO vars (name, value, description) VALUES ('message_web_maxtotal','25','Number of total messages to keep on web site, per user');
+
+# for relocate plugin if you don't have this installed you don't need this
+# this column allows the user to decide what links or groups of links stats are collected for
+ALTER TABLE links add stats_type VARCHAR(24);
+
+
+ALTER TABLE accesslist ADD estimated_users SMALLINT UNSIGNED DEFAULT 1;
+
+UPDATE vars SET description='Seclev for which authors have unlimited comment-moderation and -deletion power (see also the ACLs)' WHERE name='authors_unlimited';
+
+# set to whatever date_format you'd like to use for archived stories, you can set the value to be an empty string if you want it to work as it
+# currently does
+INSERT INTO vars (name, value, description) VALUES ('archive_dateformat',' %I:%M %p  %B %o, %Y','format for dates when stories are archived to shtml');
+
+# currently set to previous defaults -- set as appropriate for your site
+# to rewrite archived stories with a new datestamp you will want to set writestatus to dirty for a manageable number of previously archived story
+# set your archive_limit var appropriately and probably set your archive_dir to DESC so stories set to be handled newly archived are handled first
+# and then older stories are rearchived with the new date format.  You only need to do this if you want to change the date_format of archived stories
+INSERT INTO vars (name, value, description) VALUES ('archive_dir','ASC','direction we want items to be archived ordered and handled');
+INSERT INTO vars (name, value, description) VALUES ('archive_limit','500','maximum number of articles to archive at a time');
+
+# End of T_2_3_0_125, Start of T_2_3_0_126 - 2003/12/02
+
+# Change for plugins/Relocate (ignore if not using that plugin)
+INSERT INTO vars (name, value, description) VALUES ('relocate_keep_count', 1, 'Keep count of click-thrus in the links_for_stories.count column');
+
+# The change below is for plugins/Search (ignore if not using that plugin).
+# These control how what method is used for topic search.  Using
+# topic_search_use_join will return a more complete set of results  but
+# could result in performance problems for larger sites.  The other method
+# is a two-select method asking for sids which meet your topic criteria
+# first too many sids returned may result in performance problems -- too
+# few could result in missing results -- 1000 is a good default but you may
+# want to test with different values for these variables to optimize site
+# performance and search results.
+INSERT INTO vars (name, value, description) VALUES ('topic_search_use_join', 0, 'Controls whether your site uses a join for topic search');
+INSERT INTO vars (name, value, description) VALUES ('topic_search_sid_limit', 1000, 'Maximum number of sids to grab on a two-select topic search');
+
+
+# End of T_2_3_0_126, Start of T_2_3_0_127 - 2003/12/10
+
+# End of T_2_3_0_127, Start of T_2_3_0_128 - 2003/12/11
+
+# End of T_2_3_0_128, Start of T_2_3_0_129 - 2003/12/16
+
+CREATE TABLE users_logtokens (
+	lid MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uid MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	locationid CHAR(32) NOT NULL DEFAULT '',
+	expires DATETIME NOT NULL DEFAULT '2000-01-01 00:00:00',
+	value CHAR(22) NOT NULL DEFAULT '',
+	PRIMARY KEY (lid),
+	UNIQUE uid_locationid (uid, locationid),
+	KEY (locationid)
+) TYPE=InnoDB;
+
+INSERT INTO vars (name, value, description) VALUES ('rss_allow_index', '0', 'Allow RSS feeds to be served from index.pl (1 = admins, 2 = subscribers, 3 = all logged-in users)');
+
+# End of T_2_3_0_129, Start of T_2_3_0_130 - 2003/12/29
+
+INSERT INTO string_param (type, code, name) VALUES ('cookie_location','none','Everywhere');
+INSERT INTO string_param (type, code, name) VALUES ('cookie_location','classbid','My Subnet');
+INSERT INTO string_param (type, code, name) VALUES ('cookie_location','ipid','My IP Address');
+
+REPLACE INTO code_param (type, code, name) VALUES ('session_login',0,'In one year');
+REPLACE INTO code_param (type, code, name) VALUES ('session_login',1,'When I close my browser');
+
+ALTER TABLE users_info ADD COLUMN cookie_location enum("classbid","subnetid","ipid","none") DEFAULT "classbid" NOT NULL AFTER session_login;
+ALTER TABLE users_logtokens ADD COLUMN temp ENUM("yes","no") NOT NULL DEFAULT "no" AFTER locationid;
+ALTER TABLE users_logtokens DROP INDEX uid_locationid;
+ALTER TABLE users_logtokens ADD UNIQUE uid_locationid_temp (uid, locationid, temp);
+ALTER TABLE users_logtokens ADD KEY (temp);
+
+INSERT INTO vars (name, value, description) VALUES ('login_temp_minutes', '10', 'Minutes before a temporary login expires');
+
+# End of T_2_3_0_130, Start of T_2_3_0_131 - 2003/12/31
+
+INSERT INTO vars (name, value, description) VALUES ('cookie_location','none','Default for user\'s cookie_location value (also see users_info schema!)');
+
+UPDATE vars SET value=CONCAT(value,'|DL|DT|DD') WHERE name='approvedtags';
+UPDATE vars SET value=CONCAT(value,'|DL|DT|DD') WHERE name='approvedtags_break';
+
+# Change for plugins/Stats (ignore if not using that plugin)
+ALTER TABLE stats_daily ADD UNIQUE section_day_name (section, day, name);
+UPDATE vars set description='Ops to omit from daily counts in adminmail (delimiter of |)' where name = "op_exclude_from_countdaily";
+INSERT INTO vars (name, value, description) VALUES ('op_extras_countdaily', '', 'Extra site-specific pagetypes/ops you would like listed (delimiter of |)');
+
+# Change for plugins/PollBooth -- set according to your preferences (ignore if not using that plugin)
+INSERT INTO vars (name, value, description) VALUES ('allow_anon_poll_voting', '1', 'Set this to decide whether anonymous users can vote in polls)');
+
+ALTER TABLE moderatorlog ADD COLUMN points_orig tinyint DEFAULT NULL;
+
+### do these ONLY IF you want cookies to work everywhere by default ...
+### it may invalidate existing user cookies if you've previously
+### been using logtokens, so beware -- pudge
+ALTER TABLE users_info MODIFY COLUMN cookie_location enum("classbid","subnetid","ipid","none") DEFAULT "none" NOT NULL AFTER session_login;
+REPLACE INTO vars (name, value, description) VALUES ('cookie_location','none','Default for user\'s cookie_location value (also see users_info schema!)');
+
+REPLACE INTO string_param (type, code, name) VALUES ('cookie_location','none','follows me everywhere');
+REPLACE INTO string_param (type, code, name) VALUES ('cookie_location','classbid','moves within a subnet');
+REPLACE INTO string_param (type, code, name) VALUES ('cookie_location','ipid','never moves');
+
+REPLACE INTO code_param (type, code, name) VALUES ('session_login',0,'lasts forever');
+REPLACE INTO code_param (type, code, name) VALUES ('session_login',1,'closes with browser');
+
+# End of T_2_3_0_131, Start of T_2_3_0_132 - 2004/01/27
+
+INSERT INTO vars (name, value, description) VALUES ('common_story_words', 'about above across after again against almost along already also although always among another anyone arise around aside asked available away became because become becomes been before began behind being better between both brought called came can\'t cannot certain certainly come could days didn\'t different does done down during each either else enough especially even ever every fact find following form found from further gave gets give given gives giving going gone hardly have having here himself however http important into it\'s itself just keep kept knew know known largely later least like look made mainly make many maybe might more most mostly much must nearly neither never next none noted nothing obtain obtained often once only other others ought over overall owing particularly past people perhaps please possible present probably quite rather read ready really right said same saying says seem seems seen several shall should show showed shown shows similar similarly since some something sometime sometimes somewhat soon such sure take taken tell than that that\'s their theirs them themselves then there therefore these they thing things think this those though through throughout thus time together told took toward turn under unless until upon used using usually various very want well were what what when where whether which while whole whom whose wide widely will will with within without would year years your', 'Words which are considered too common to be used in detecting "similar" stories');
+
+# End of T_2_3_0_132, Start of T_2_3_0_133 - 2004/01/30
+
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_minfairfrac', '0.8', 'Fraction of Fair metamods a mod has to get for its user to be eligible for the m2 csq bonuses');
+
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_earlymod_secs', '1800', 'Fairly moderate a comment within this many seconds of its being posted and gain a token bonus');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_earlymod_tokenmult', '1.1', 'Fairly moderate a comment early, and gain this bonus multiplier');
+
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_1', '0.9', 'Fairly moderate a comment in the first 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_2', '1.0', 'Fairly moderate a comment in the second 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_3', '1.1', 'Fairly moderate a comment in the third 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_4', '1.1', 'Fairly moderate a comment in the fourth 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_5', '1.1', 'Fairly moderate a comment in the last 20% of a discussion and gain this bonus multiplier');
+
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_replypost_tokenmult', '1.2', 'Fairly moderate a reply, instead of a top-level comment, and gain this bonus multiplier');
+
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_-1', '1.1', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_0',  '1.2', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_1',  '1.1', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_2',  '1.0', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_3',  '0.8', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_4',  '0.5', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_5',  '0.8', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+
+INSERT INTO vars (name, value, description) VALUES ('mod_down_karmacoststyle', '0', '0=old (downmod costs 1 karma), 1=new (downmod costs pointsmax-new_points karma)');
+
+ALTER TABLE comments ADD COLUMN pointsmax TINYINT NOT NULL DEFAULT 0 AFTER pointsorig, ADD COLUMN karma SMALLINT NOT NULL DEFAULT 0, ADD COLUMN karma_abs SMALLINT UNSIGNED NOT NULL DEFAULT 0;
+UPDATE comments SET pointsmax=points;
+
+ALTER TABLE users_info ADD COLUMN initdomain VARCHAR(30) DEFAULT '' NOT NULL AFTER user_expiry_comm, ADD COLUMN created_ipid VARCHAR(32) DEFAULT '' NOT NULL AFTER initdomain;
+ALTER TABLE users_info ADD INDEX initdomain (initdomain), ADD INDEX created_ipid (created_ipid);
+
+# If you want correct values for your existing users' column
+# users_info.initdomain, try running this quick script
+# (replace virtusername with your DBIx::Password user):
+# perl -MSlash::Test=virtusername -e 'my $arr = $reader_db->sqlSelectAll("uid, realemail", "users"); for my $ar (@$arr) { next unless $ar->[1]; $d=fullhost_to_domain($ar->[1]); push @{$du{$d}}, $ar->[0] } undef $arr; while (($k, $v) = each %du) { $in = join(",", @$v); $slashdb->sqlUpdate("users_info", { initdomain => $k }, "uid IN ($in)"); sleep(0.1) if scalar(@$v) > 100 }'
+
+INSERT INTO vars (name, value, description) VALUES ('istroll_max_halflives', '3', 'Max number of times to cut the TrollModval impact of a downmod in half');
+
+# End of T_2_3_0_133, Start of T_2_3_0_134 - 2004/02/03
+
+DROP TABLE IF EXISTS accesslog_artcom;
+CREATE TABLE accesslog_artcom (
+        uid MEDIUMINT UNSIGNED NOT NULL,
+        ts DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+        c SMALLINT UNSIGNED NOT NULL DEFAULT '0',
+        INDEX uid (uid),
+        INDEX ts (ts)
+) TYPE=InnoDB;
+
+INSERT INTO vars (name, value, description) VALUES ('moderatord_lastmaxid', '0', 'Last accesslog.id seen by run_moderatord');
+INSERT INTO vars (name, value, description) VALUES ('moderatord_maxrows', '50000', 'Max number of accesslog rows to process at once in run_moderatord');
+INSERT INTO vars (name, value, description) VALUES ('accesslog_hoursback', '60', 'Number of hours before accesslog rows are purged');
+
+
+# End of T_2_3_0_134, Start of T_2_3_0_135 - 2004/02/04
+
+DROP TABLE IF EXISTS slashd_errnotes;
+CREATE TABLE slashd_errnotes (
+        ts DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+        taskname VARCHAR(50) NOT NULL DEFAULT 'SLASHD',
+        line MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+        errnote VARCHAR(255) NOT NULL DEFAULT '',
+        moreinfo TEXT DEFAULT NULL,
+        INDEX (ts),
+        INDEX taskname_ts (taskname, ts)
+) TYPE=InnoDB;
+
+# Change for plugins/HumanConf (ignore if not using that plugin)
+INSERT INTO vars (name, value, description) VALUES ('hc_possible_fonts', '', 'Possible fonts to use (space-separated, empty for the default)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('hc_pool_secs_before_del', '21600', 'Number of seconds after a pool entry last used before it will be deleted');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('hc_pool_secs_before_use', '3600', 'Number of seconds after a pool entry created before it will be used');
+INSERT INTO vars (name, value, description) VALUES ('hc_q1_margin', '6', 'For question 1 (images), margin around the image in pixels');
+INSERT INTO vars (name, value, description) VALUES ('hc_q1_maxrad', '0.2', 'For question 1 (images), maximum number of radians to rotate (positive or negative, so the range is twice this)');
+
+# End of T_2_3_0_136, Start of T_2_3_0_137 - 2004/02/12
+
+# Changes for plugins/Messages (ignore if not using that plugin)
+ALTER TABLE message_codes ADD COLUMN acl VARCHAR(32) DEFAULT '' NOT NULL;
+UPDATE message_codes SET acl = 'stats' WHERE code = 10;
+INSERT INTO message_codes (code, type, seclev, modes, acl) VALUES (14, 'Daily Moderation Stats', 100, 0, 'stats');
+
+INSERT INTO vars (name, value, description) VALUES ('tids_in_urls', '0', 'Want tid=1&tid=2 in story and discussion-related URLs?');
+
+# End of T_2_3_0_137, Start of T_2_3_0_138 - 2004/02/17
+
+INSERT INTO vars (name, value, description) VALUES ('admin_comment_display_days', '30', 'Number of days back worth of comments to show admin on a user page');
+
+INSERT INTO vars (name, value, description) VALUES ('admin_daysback_commentlimit', '100', 'Limit on number of comments to show on initial page for X days back of comments (Empty string for no limit)');
+
+INSERT INTO vars (name, value, description) VALUES ('admin_comment_subsequent_pagesize', '50', 'Number of comments to show per page for admins on pages past the intial one');
+
+INSERT INTO vars (name, value, description) VALUES ('show_mods_with_comments', '1', 'Show moderations intertwined with comments on user pages?');
+INSERT INTO vars (name, value, description) VALUES ('mod_limit_with_comments', '', 'Maximum number of moderations to show intertwined with a group of comments (Empty string for no limit)');
+
+INSERT INTO vars (name, value, description) VALUES ('show_m2s_with_mods', '1', 'Show metamods intertwined with mods?');
+INSERT INTO vars (name, value, description) VALUES ('m2_limit_with_mods', '', 'Maximum number of metamods to show intertwined with a group of mods (Empty string for no limit)');
+
+# End of T_2_3_0_138, Start of T_2_3_0_139 - 2004/02/25
+
+INSERT INTO vars (name, value, description) VALUES ('anchortags_bridge_breaks', '0', 'Are <A> tags allowed to stretch across breaking tags (defined in approvedtags_break)?');
+
+# End of T_2_3_0_139, Start of T_2_3_0_140 - 2004/02/26
+
+ALTER TABLE message_drop CHANGE COLUMN message message MEDIUMBLOB DEFAULT '' NOT NULL;
+
+INSERT INTO vars (name, value, description) VALUES ('approvedtags_attr', 'a:href_RU img:src_RU,alt,width,height,longdesc_U', 'definition of approvedtags attributes in the following format a:href_RU img:src_RU,alt,width,height,longdesc_U see Slash::Utility::Data.pm for more details');
+
+# End of T_2_3_0_140, Start of T_2_3_0_141 - 2004/03/03
+
+UPDATE vars SET description='Show HTML comments before and after template? (see Slash::Display) 0=no 1=yes unless Nocomm 2=ALWAYS (debugging only!)' WHERE name='template_show_comments';
+
+INSERT INTO vars (name, value, description) VALUES ('store_com_page1_min_cid_for_user_com_cnt',1000,"Caches the minimum cid shown on a user's first page of comments shown if their commentcount is >= this val. This can speed up future queries.  Set to 0 to disable this.");
+
+INSERT INTO vars (name, value, description) VALUES ('submissions_listing_page_size', 24, "Number of submissions shown per page on a user page.  Set to 0 to show all");
+
+# End of T_2_3_0_141, Start of T_2_3_0_142 - 2004/03/09
+
+# Changes for plugins/Hof (ignore if not using that plugin)
+INSERT INTO vars (name, value, description) VALUES ('hof_do_not_count', '', 'Do not list stories with these (space-separated) sids in hof.pl');
+
+# End of T_2_3_0_142, Start of T_2_3_0_143 - 2004/03/10
+
+INSERT INTO vars (name, value, description) VALUES ('accesslog_imageregex', '^/images/hc/', 'Image hits will only be written into accesslog if their URL path matches this regex, empty string for all, NONE for none');
+
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_repeats','3=-4|5=-12|10=-100','Token penalties for modding same user multiple times, applied at M2 reconcile time');
+
+INSERT INTO vars (name, value, description) VALUES ('comment_karma_limit','','Max karma that a single comment can cost a user, normally negative values or 0 to never take karma with downmods, empty string for unlimited');
+
+# End of T_2_3_0_143, Start of T_2_3_0_144 - 2004/03/16
+
+DELETE from vars where name = "submissions_listing_page_size";
+
+INSERT INTO vars (name, value, description) VALUES ('submissions_accepted_only_page_size', 20, "Number of submissions shown per page when only accepted submissions are shown.  Set to 0 to show all");
+INSERT INTO vars (name, value, description) VALUES ('submissions_all_page_size', 40, "Number of submissions shown per page on a user page when all submission statuses are shown.  Set to 0 to show all");
+
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Stories','stories','[% constants.rootdir %]/admin.pl',100,0,1);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Mods','recent_mods','[% constants.rootdir %]/admin.pl?op=recent_mods',500,0,2);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Reqs','requests','[% constants.rootdir %]/admin.pl?op=recent_requests',500,0,3);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Posting','recent','[% constants.rootdir %]/admin.pl?op=recent',500,0,4);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Abusers','abusers','[% constants.rootdir %]/users.pl?op=topabusers',100,0,5);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Read&nbsp;Only','readonly','[% constants.rootdir %]/users.pl?op=listreadonly',100,0,6);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Banned','banned','[% constants.rootdir %]/users.pl?op=listbanned',100,0,7);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Info','stats','[% constants.rootdir %]/stats.pl',100,0,8);
+INSERT INTO menus(id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL,'security','Config','config','[% constants.rootdir %]/admin.pl?op=topics',10000,0,9);
+
+# End of T_2_3_0_144, Start of T_2_3_0_145 - 2004/03/23
+
+ALTER TABLE users_info ADD COLUMN csq_bonuses FLOAT NOT NULL DEFAULT '0';
+
+ALTER TABLE moderatorlog ADD COLUMN m2needed MEDIUMINT UNSIGNED DEFAULT '0' AFTER m2count;
+UPDATE moderatorlog, vars SET moderatorlog.m2needed = vars.value WHERE vars.name='m2_consensus' AND m2needed=0;
+
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan_anon_for_proxy', '0', 'If true, when anonymous posting is attempted, try to access our own site ok.txt using incoming IP as a proxy, and forbid posting if successful');
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan_cachehours', '48', 'If comments_portscan_anon_for_proxy is true, hours to cache a result of a portscan for open proxies on a particular IP');
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan_ports', '80 8080 8000 3128', 'If comments_portscan_anon_for_proxy is true, scan these space-separated ports');
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan_timeout', '5', 'If comments_portscan_anon_for_proxy is true, use this as timeout');
+
+CREATE TABLE open_proxies (
+   ip      VARCHAR(15) NOT NULL,
+   port    SMALLINT UNSIGNED NOT NULL DEFAULT '0',
+   ts      DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+   PRIMARY KEY (ip),
+   KEY ts (ts)
+) TYPE=InnoDB;
+
+# End of T_2_3_0_145, Start of T_2_3_0_146 - 2004/03/24
+
+# End of T_2_3_0_146, Start of T_2_3_0_147 - 2004/03/25
+
+UPDATE vars SET name='comments_portscan', description='Scan incoming IPs for open proxy ports? 0=never, 1=anon posting only, 2=all posting' WHERE name='comments_portscan_anon_for_proxy';
+
+ALTER TABLE code_param CHANGE COLUMN type type VARCHAR(24) NOT NULL DEFAULT '';
+UPDATE code_param SET type='section_topic_types'    WHERE type='section_topic_ty';
+UPDATE code_param SET type='displaycodes_sectional' WHERE type='displaycodes_sec';
+
+ALTER TABLE badpasswords ADD COLUMN realemail VARCHAR(50) NOT NULL DEFAULT '';
+
+DROP TABLE topic_image_sections;
+
+# this determine how metamoderation consensus is calculated.  If you choose sliding consensus you can set the number required for consensus based on the count
+# of moderations performed against a cid-reason pair
+
+INSERT INTO vars (name, value, description) VALUES ('m2_sliding_consensus', "5|7|9", "Array of consensus values chosen by count of mods for a particular cid-reason pair 5|7|9 means count 1 consensus 5, count 2 consensus 7, count >=3 consensus of 9");
+
+INSERT INTO vars (name, value, description) VALUES ('m2_use_sliding_consensus', 0, "Use sliding value for number of metamods needed for consensus -- consensus number is based on count of moderations for a cid-reason pair");
+
+INSERT INTO vars (name, value, description) VALUES ('mailpasswd_portscan', '0', 'If true, when sending a password is attempted, try to access our own site ok.txt using incoming IP as a proxy, and forbid mailing if successful');
+
+INSERT INTO vars (name, value, description) VALUES ('newuser_portscan', '0', 'If true, when creating a new user account is attempted, try to access our own site ok.txt using incoming IP as a proxy, and forbid account creation if successful');
+
+ALTER TABLE open_proxies ADD COLUMN xff VARCHAR(15) DEFAULT NULL;
+
+INSERT INTO vars (name, value, description) VALUES ('adjust_m2_freq', '0', 'If true, m2_freq will be automatically adjusted to match rates of m1s and m2s');
+#Set these to suitable mins and maxes for your site.  These are only applied if adjust_m2_freq is true
+INSERT INTO vars (name, value, description) VALUES ('m2_freq_min', '42300', 'Min value m2_freq will be automatically adjusted to');
+INSERT INTO vars (name, value, description) VALUES ('m2_freq_max', '172800', 'Max value m2_freq will be automatically adjusted to');
+
+ALTER TABLE comments ADD COLUMN tweak_orig TINYINT NOT NULL DEFAULT 0 AFTER karma_abs, ADD COLUMN tweak TINYINT NOT NULL DEFAULT 0;
+
+INSERT INTO vars (name, value, description) VALUES ('m2_inherit', '0', 'Set to true if you would like to inherit m2s from previous mods with the same cid-reason');
+
+ALTER TABLE users_info ADD COLUMN up_fair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER m2fair, ADD COLUMN down_fair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER up_fair, ADD COLUMN up_unfair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER m2unfair, ADD COLUMN down_unfair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER up_unfair, ADD COLUMN m2voted_up_fair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER m2fairvotes, ADD COLUMN m2voted_down_fair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER m2voted_up_fair, ADD COLUMN m2voted_up_unfair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER m2unfairvotes, ADD COLUMN m2voted_down_unfair MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL AFTER m2voted_up_unfair, ADD COLUMN m2voted_lonedissent mediumint UNSIGNED DEFAULT '0' NOT NULL AFTER m2voted_down_unfair, ADD COLUMN m2voted_majority mediumint UNSIGNED DEFAULT '0' NOT NULL AFTER m2voted_lonedissent;
+
+INSERT INTO vars (name, value, description) VALUES ('karma_posting_penalty_style', '0', '0=old (starting score decremented), 1=new (display score shown lower, comment can suffer results of additional downvotes)');
+
+# SLASHCODE/USEPERL LAST UPDATED HERE
+
+# SLASHDOT LAST UPDATED HERE
+
+# SLASHCLUSTER LAST UPDATED HERE
+
+# End of T_2_3_0_149, Start of T_2_3_0_150 - 2004/04/13
+
+# End of T_2_3_0_150, Start of T_2_3_0_151 - 2004/04/20
+
+INSERT INTO vars (name, value, description) VALUES ('m2_if_smoother',5,'Number that acts as multiplier for the if_expr, should probably be around your average m2needed/consensus value');
+INSERT INTO vars (name, value, description) VALUES ('subnet_karma_post_limit_range','-5|-9|-10|-999999','range of subnet karma to block posting at -5|-9|-10|-999999 blocks anonymous posting at -5 to -9 subnet karma, and all posting from -10 to -999999 subnet karma');
+INSERT INTO vars (name, value, description) VALUES ('subnet_karma_comments_needed','5','Number of comments needed before subnet karma is used for disallowing posting');
+
+INSERT INTO vars (name, value, description) VALUES ('maxtokens_add','3','Max tokens to give any one user per pass');
+
+# End of T_2_3_0_151, Start of T_2_3_0_152 - 2004/04/27
+

@@ -52,6 +52,7 @@ CREATE TABLE accesslist (
 	was_nopalm enum('no','yes') NOT NULL default 'no',
 	was_proxy enum('no','yes') NOT NULL default 'no',
 	was_trusted enum('no','yes') NOT NULL default 'no',
+	estimated_users smallint UNSIGNED default 1,
 	PRIMARY KEY  (id),
 	KEY uid (uid),
 	KEY ipid (ipid),
@@ -110,6 +111,14 @@ CREATE TABLE accesslog_admin (
 	PRIMARY KEY (id)
 ) TYPE=InnoDB;
 
+DROP TABLE IF EXISTS accesslog_artcom;
+CREATE TABLE accesslog_artcom (
+	uid mediumint UNSIGNED NOT NULL,
+	ts datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+	c smallint unsigned NOT NULL DEFAULT '0',
+	INDEX uid (uid),
+	INDEX ts (ts)
+) TYPE=InnoDB;
 
 #
 # Table structure for table 'authors_cache'
@@ -139,6 +148,23 @@ CREATE TABLE backup_blocks (
 ) TYPE=InnoDB;
 
 #
+# Table structure for table 'badpasswords'
+#
+
+DROP TABLE IF EXISTS badpasswords;
+CREATE TABLE badpasswords (
+	uid mediumint(8) NOT NULL DEFAULT 0,
+	ip varchar(15) NOT NULL DEFAULT '',
+	subnet varchar(15) NOT NULL DEFAULT '',
+	password varchar(20) NOT NULL DEFAULT '',
+	ts timestamp(14) NOT NULL,
+	realemail VARCHAR(50) NOT NULL DEFAULT '',
+	INDEX uid (uid),
+	INDEX ip (ip),
+	INDEX subnet (subnet)
+) TYPE=InnoDB;
+
+#
 # Table structure for table 'blocks'
 #
 
@@ -156,7 +182,7 @@ CREATE TABLE blocks (
 	url varchar(128),
 	rdf varchar(255),
 	retrieve tinyint NOT NULL DEFAULT '0',
-	last_update timestamp,
+	last_update timestamp NOT NULL,
 	rss_template varchar(30),
 	items smallint NOT NULL DEFAULT '0', 
 	autosubmit ENUM("no","yes") DEFAULT 'no' NOT NULL,
@@ -188,7 +214,7 @@ CREATE TABLE classes (
 DROP TABLE IF EXISTS code_param;
 CREATE TABLE code_param (
 	param_id smallint UNSIGNED NOT NULL auto_increment,
-	type varchar(16) NOT NULL,
+	type varchar(24) NOT NULL,
 	code tinyint DEFAULT '0' NOT NULL,
 	name varchar(32) NOT NULL,
 	UNIQUE code_key (type,code),
@@ -223,11 +249,16 @@ CREATE TABLE comments (
 	uid mediumint UNSIGNED NOT NULL,
 	points tinyint DEFAULT '0' NOT NULL,
 	pointsorig tinyint DEFAULT '0' NOT NULL,
+	pointsmax tinyint DEFAULT '0' NOT NULL,
 	lastmod mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	reason tinyint UNSIGNED DEFAULT '0' NOT NULL,
 	signature char(32) DEFAULT '' NOT NULL,
 	karma_bonus enum('yes', 'no') DEFAULT 'no' NOT NULL,
 	len smallint UNSIGNED DEFAULT '0' NOT NULL,
+	karma smallint DEFAULT '0' NOT NULL,
+	karma_abs smallint UNSIGNED DEFAULT '0' NOT NULL,
+	tweak_orig TINYINT NOT NULL DEFAULT 0,
+	tweak TINYINT NOT NULL DEFAULT 0,
 	PRIMARY KEY (cid),
 	KEY display (sid,points,uid),
 	KEY byname (uid,points),
@@ -311,7 +342,7 @@ CREATE TABLE discussions (
 	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
 	flags ENUM("ok","delete","dirty") DEFAULT 'ok' NOT NULL,
 	section varchar(30) NOT NULL,
-	last_update timestamp,
+	last_update timestamp NOT NULL,
 	approved tinyint UNSIGNED DEFAULT 0 NOT NULL,
 	commentstatus ENUM('disabled','enabled','friends_only','friends_fof_only','no_foe','no_foe_eof') DEFAULT 'enabled' NOT NULL, /* Default is that we allow anyone to write */
 	KEY (sid),
@@ -407,7 +438,7 @@ CREATE TABLE menus (
 
 DROP TABLE IF EXISTS metamodlog;
 CREATE TABLE metamodlog (
-	id mediumint UNSIGNED NOT NULL AUTO_INCREMENT,
+	id int UNSIGNED NOT NULL AUTO_INCREMENT,
 	mmid int UNSIGNED DEFAULT '0' NOT NULL,
 	uid mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	val tinyint  DEFAULT '0' NOT NULL,
@@ -454,7 +485,9 @@ CREATE TABLE moderatorlog (
 	active tinyint DEFAULT '1' NOT NULL,
 	spent tinyint DEFAULT '1' NOT NULL,
 	m2count mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2needed mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	m2status tinyint DEFAULT '0' NOT NULL,
+	points_orig tinyint DEFAULT NULL,
 	PRIMARY KEY (id),
 	KEY sid (sid,cid),
 	KEY sid_2 (sid,uid,cid),
@@ -481,6 +514,20 @@ CREATE TABLE modreasons (
 	fairfrac float DEFAULT '0.5' NOT NULL,
 	unfairname varchar(32) DEFAULT '' NOT NULL,
 	PRIMARY KEY (id)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'open_proxies'
+#
+
+DROP TABLE IF EXISTS open_proxies;
+CREATE TABLE open_proxies (
+        ip	VARCHAR(15) NOT NULL,
+	port	SMALLINT UNSIGNED NOT NULL DEFAULT '0',
+	ts	DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	xff	VARCHAR(15) DEFAULT NULL,
+	PRIMARY KEY (ip),
+	KEY ts (ts)
 ) TYPE=InnoDB;
 
 #
@@ -595,8 +642,8 @@ CREATE TABLE sections (
 	id smallint UNSIGNED NOT NULL auto_increment,
 	section varchar(30) NOT NULL,
 	artcount mediumint UNSIGNED DEFAULT '30' NOT NULL,
-	title varchar(64),
-	qid mediumint,
+	title varchar(64) DEFAULT '' NOT NULL,
+	qid mediumint DEFAULT '0' NOT NULL,
 	issue tinyint DEFAULT '0' NOT NULL,
 	url char(128) DEFAULT '' NOT NULL,
 	hostname char(128) DEFAULT '' NOT NULL,
@@ -610,7 +657,7 @@ CREATE TABLE sections (
 	defaulttopic TINYINT DEFAULT '1' NOT NULL,
 	defaultsection VARCHAR(30),  /* Only set in collected sections */
 	defaultsubsection SMALLINT UNSIGNED NOT NULL,
-	last_update timestamp DEFAULT '20000101000000' NOT NULL,
+	last_update timestamp NOT NULL,
 	UNIQUE (section),
 	PRIMARY KEY (id)
 ) TYPE=InnoDB;
@@ -736,6 +783,16 @@ CREATE TABLE slashd_status (
 	PRIMARY KEY (task)
 ) TYPE=InnoDB;
 
+DROP TABLE IF EXISTS slashd_errnotes;
+CREATE TABLE slashd_errnotes (
+	ts DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	taskname VARCHAR(50) NOT NULL DEFAULT 'SLASHD',
+	line MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	errnote VARCHAR(255) NOT NULL DEFAULT '',
+	moreinfo TEXT DEFAULT NULL,
+	INDEX (ts),
+	INDEX taskname_ts (taskname, ts)
+) TYPE=InnoDB;
 
 #
 # Table structure for table 'spamarmors'
@@ -774,7 +831,7 @@ CREATE TABLE stories (
 	day_published DATE DEFAULT '0000-00-00' NOT NULL,
 	qid MEDIUMINT UNSIGNED DEFAULT NULL,
 	subsection SMALLINT UNSIGNED DEFAULT 0 NOT NULL,
-	last_update timestamp,
+	last_update timestamp NOT NULL,
 	body_length MEDIUMINT UNSIGNED DEFAULT 0 NOT NULL,
 	word_count MEDIUMINT UNSIGNED DEFAULT 0 NOT NULL,
 	PRIMARY KEY (sid),
@@ -848,7 +905,7 @@ CREATE TABLE string_param (
 DROP TABLE IF EXISTS submissions;
 CREATE TABLE submissions (
 	subid mediumint UNSIGNED NOT NULL auto_increment,
-	email varchar(50) NOT NULL,
+	email varchar(255) DEFAULT '' NOT NULL,
 	name varchar(50) NOT NULL,
 	time datetime NOT NULL,
 	subj varchar(50) NOT NULL,
@@ -900,7 +957,7 @@ CREATE TABLE templates (
 	seclev mediumint UNSIGNED NOT NULL,
 	description text,
 	title varchar(128),
-	last_update timestamp,
+	last_update timestamp NOT NULL,
 	PRIMARY KEY (tpid),
 	UNIQUE true_template (name,page,section,lang)
 ) TYPE=InnoDB;
@@ -916,23 +973,12 @@ CREATE TABLE topics (
 	name char(20) NOT NULL,
 	alttext char(40),
 	default_image mediumint UNSIGNED DEFAULT 0 NOT NULL,
+	series tinyint DEFAULT 0 NOT NULL,
 	PRIMARY KEY (tid)
 ) TYPE=InnoDB;
 
 #
-# Table structure for table 'topic_image_sections'
-#
-
-DROP TABLE IF EXISTS topic_image_sections;
-CREATE TABLE topic_image_sections (
-	tid smallint UNSIGNED DEFAULT 0 NOT NULL,
-	topic_image mediumint UNSIGNED DEFAULT 0 NOT NULL,
-	section varchar(30) DEFAULT 'index' NOT NULL,
-	PRIMARY KEY (tid,section)
-) TYPE=InnoDB;
-
-#
-# Table structure for table 'topics'
+# Table structure for table 'topic_images'
 #
 
 DROP TABLE IF EXISTS topic_images;
@@ -987,6 +1033,8 @@ CREATE TABLE users (
 
 #
 # Table structure for table 'users_acl'
+# (The redundant key on uid is there for when FOREIGN KEY starts
+# working with InnoDB...)
 #
 
 DROP TABLE IF EXISTS users_acl;
@@ -996,6 +1044,7 @@ CREATE TABLE users_acl (
 	acl varchar(32) NOT NULL,
 	UNIQUE uid_key (uid,acl),
 	KEY uid (uid),
+	KEY acl (acl),
 	PRIMARY KEY (id)
 ) TYPE=InnoDB;
 
@@ -1084,22 +1133,55 @@ CREATE TABLE users_info (
 	mods_saved varchar(120) DEFAULT '' NOT NULL,
 	lastaccess date DEFAULT '0000-00-00' NOT NULL,
 	m2fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	up_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	down_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	m2unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	up_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	down_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	m2fairvotes mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2voted_up_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2voted_down_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	m2unfairvotes mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2voted_up_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2voted_down_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2voted_lonedissent mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2voted_majority mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	upmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	downmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	stirred mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	session_login tinyint DEFAULT '0' NOT NULL,
+	cookie_location enum("classbid","subnetid","ipid","none") DEFAULT "classbid" NOT NULL,
 	registered tinyint UNSIGNED DEFAULT '1' NOT NULL,
 	reg_id char(32) DEFAULT '' NOT NULL,
 	expiry_days smallint UNSIGNED DEFAULT '1' NOT NULL,
 	expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
 	user_expiry_days smallint UNSIGNED DEFAULT '1' NOT NULL,
 	user_expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
+	initdomain VARCHAR(30) DEFAULT '' NOT NULL,
+	created_ipid VARCHAR(32) DEFAULT '' NOT NULL,
 	created_at datetime DEFAULT '0000-00-00 00:00' NOT NULL,
 	people MEDIUMBLOB,
-	PRIMARY KEY (uid)
+	PRIMARY KEY (uid),
+	KEY (initdomain),
+	KEY (created_ipid)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'users_logtokens'
+#
+
+DROP TABLE IF EXISTS users_logtokens;
+CREATE TABLE users_logtokens (
+	lid MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uid MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	locationid CHAR(32) NOT NULL DEFAULT '',
+	temp ENUM("yes","no") NOT NULL DEFAULT "no",
+	expires DATETIME NOT NULL DEFAULT '2000-01-01 00:00:00',
+	value CHAR(22) NOT NULL DEFAULT '',
+	PRIMARY KEY (lid),
+	UNIQUE uid_locationid_temp (uid, locationid, temp),
+	KEY (locationid),
+	KEY (temp)
 ) TYPE=InnoDB;
 
 #

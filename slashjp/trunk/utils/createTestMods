@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -140,11 +140,7 @@ my(%comments, %comment_data);
 			}
 
 			my $cid = $cidbatch[-1];
-			my $comment = {
-				sid => $did,
-				cid => $cid,
-				uid => $comment_data{$did}{$cid}{uid},
-			};
+			my $comment = $slashdb->getComment($cid);
 
 			my($modval, $reason, $active);
 			my $reasons = $slashdb->getReasons();
@@ -183,10 +179,13 @@ EOT
 # Yes. I am getting a little silly with these. But it's nice not having.
 # them clutter scope elsewhere, when they are only needed here.
 {
+my $depth = 0;
 my($min_uid, $max_uid);
 my(%exception_list);
 sub getRandomUserID {
 	my ($key,$val) = each %{$_[0]};
+	++$depth;
+	die "sorry, not enough activity on site to do a random mod" if $depth > 10;
 	if (!exists $exception_list{$val->{sid}}) {
 		LOOP:
 		for my $cid (keys %{$_[0]}) {
@@ -211,8 +210,9 @@ sub getRandomUserID {
 	$min_uid ||= $slashdb->sqlSelect('MIN(uid)', 'users');
 	my $ret = $min_uid + int(rand($max_uid - $min_uid + 1));  
 	for (@{$exception_list{$val->{sid}}}) {
-		return getRandomUserID(@_) if $_ == $ret;
+		$ret = getRandomUserID(@_), last if $_ == $ret;
 	}
+	--$depth;
         return $ret;
 } }
 
@@ -296,7 +296,7 @@ sub version {
 $PROGNAME $VERSION
 
 This code is a part of Slash, and is released under the GPL.
-Copyright 1997-2003 by Open Source Development Network. See README
+Copyright 1997-2004 by Open Source Development Network. See README
 and COPYING for more information, or see http://slashcode.com/.
 
 EOT

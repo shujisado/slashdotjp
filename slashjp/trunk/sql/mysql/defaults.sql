@@ -2,6 +2,9 @@
 # Host: localhost    Database: dump
 #--------------------------------------------------------
 # Server version	3.23.26-beta-log
+#
+# $Id$
+#
 
 #
 # Dumping data for table 'abusers'
@@ -45,8 +48,8 @@ INSERT INTO code_param (type, code, name) VALUES ('issuemodes',2,'Issue Based');
 INSERT INTO code_param (type, code, name) VALUES ('issuemodes',3,'Both Issue and Article');
 INSERT INTO code_param (type, code, name) VALUES ('maillist',0,'Don\'t Email');
 INSERT INTO code_param (type, code, name) VALUES ('maillist',1,'Email Headlines Each Night');
-INSERT INTO code_param (type, code, name) VALUES ('session_login',0,'Expires after one year');
-INSERT INTO code_param (type, code, name) VALUES ('session_login',1,'Expires after browser exits');
+INSERT INTO code_param (type, code, name) VALUES ('session_login',0,'In one year');
+INSERT INTO code_param (type, code, name) VALUES ('session_login',1,'When I close my browser');
 INSERT INTO code_param (type, code, name) VALUES ('sortcodes',0,'Oldest First');
 INSERT INTO code_param (type, code, name) VALUES ('sortcodes',1,'Newest First');
 INSERT INTO code_param (type, code, name) VALUES ('sortcodes',3,'Highest Scores First');
@@ -246,6 +249,9 @@ INSERT INTO string_param (type, code, name) VALUES ('commentcodes_extended','fri
 INSERT INTO string_param (type, code, name) VALUES ('commentcodes_extended','friends_fof_only','Just Friends and their Friends');
 INSERT INTO string_param (type, code, name) VALUES ('commentcodes_extended','no_foe','No Foes');
 INSERT INTO string_param (type, code, name) VALUES ('commentcodes_extended','no_foe_eof','No Foes and No Friend\'s Foes');
+INSERT INTO string_param (type, code, name) VALUES ('cookie_location','none','Everywhere');
+INSERT INTO string_param (type, code, name) VALUES ('cookie_location','classbid','My Subnet');
+INSERT INTO string_param (type, code, name) VALUES ('cookie_location','ipid','My IP Address');
 INSERT INTO string_param (type, code, name) VALUES ('section_topic_type','topic_1','Default');
 INSERT INTO string_param (type, code, name) VALUES ('yes_no','yes','yes');
 INSERT INTO string_param (type, code, name) VALUES ('yes_no','no','no');
@@ -544,7 +550,7 @@ INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) 
 INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('AWST',  28800, 'Western Australian',           'Australia',   'AWDT',  32400);
 INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('ACST',  34200, 'Central Australian',           'Australia',   'ACDT',  37800);
 INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('AEST',  36000, 'Eastern Australian',           'Australia',   'AEDT',  39600);
-INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('MAGST', 39600, 'Magadan',                       NULL,         'MAGDT', 43200);
+INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('MAGS',  39600, 'Magadan',                       NULL,         'MAGD', 43200);
 INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('NZST',  43200, 'New Zealand',                  'New Zealand', 'NZDT',  46800);
 
 INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) VALUES ('WAT',   -3600, 'West Africa',                   NULL,          NULL,    NULL);
@@ -601,6 +607,7 @@ INSERT INTO tzcodes (tz, off_set, description, dst_region, dst_tz, dst_off_set) 
 INSERT INTO vars (name, value, description) VALUES ('absolutedir','http://www.example.com','Absolute base URL of site; used for creating links external to site that need a complete URL');
 INSERT INTO vars (name, value, description) VALUES ('absolutedir_secure','','Absolute base URL of Secure HTTP site (blank if site has no HTTPS side)');
 INSERT INTO vars (name, value, description) VALUES ('accesslog_disable','0','Disable apache writing to accesslog?');
+INSERT INTO vars (name, value, description) VALUES ('accesslog_imageregex', '^/images/hc/', 'Image hits will only be written into accesslog if their URL path matches this regex, empty string for all, NONE for none');
 INSERT INTO vars (name, value, description) VALUES ('accesslog_insert_cachesize','0','Cache accesslog inserts and do this many all at once (0 to disable, if enabled, suggest value of 5 or so)');
 INSERT INTO vars (name, value, description) VALUES ('ad_max', '6', 'Maximum ad number (must be at least ad_messaging_num)');
 INSERT INTO vars (name, value, description) VALUES ('ad_messaging_num', '6', 'Which ad (env var AD_BANNER_x) is the "messaging ad"?');
@@ -618,21 +625,27 @@ INSERT INTO vars (name, value, description) VALUES ('adminmail_post','admin@exam
 INSERT INTO vars (name, value, description) VALUES ('allow_anonymous','1','allow anonymous posters');
 INSERT INTO vars (name, value, description) VALUES ('allow_moderation','1','allows use of the moderation system');
 INSERT INTO vars (name, value, description) VALUES ('allow_nonadmin_ssl','0','0=users with seclev <= 1 cannot access the site over Secure HTTP; 1=they all can; 2=only if they are subscribers');
+INSERT INTO vars (name, value, description) VALUES ('anchortags_bridge_breaks', '0', 'Are <A> tags allowed to stretch across breaking tags (defined in approvedtags_break)?');
 INSERT INTO vars (name, value, description) VALUES ('anonymous_coward_uid', '1', 'UID to use for anonymous coward');
 INSERT INTO vars (name, value, description) VALUES ('anon_name_alt','An anonymous coward','Name of anonymous user to be displayed in stories');
 INSERT INTO vars (name, value, description) VALUES ('apache_cache', '3600', 'Default times for the getCurrentCache().');
 INSERT INTO vars (name, value, description) VALUES ('approved_url_schemes','ftp|http|gopher|mailto|news|nntp|telnet|wais|https','Schemes that can be used in comment links without being stripped of bogus chars');
 INSERT INTO vars (name, value, description) VALUES ('approvedtags','B|I|P|A|LI|OL|UL|EM|BR|TT|STRONG|BLOCKQUOTE|DIV|ECODE','Tags that you can use');
+INSERT INTO vars (name, value, description) VALUES ('approvedtags_attr', 'a:href_RU img:src_RU,alt,width,height,longdesc_U', 'definition of approvedtags attributes in the following format a:href_RU img:src_RU,alt,width,height,longdesc_U see Slash::Utility::Data.pm for more details');
 INSERT INTO vars (name, value, description) VALUES ('approvedtags_break','P|LI|OL|UL|BR|BLOCKQUOTE|DIV','Tags that break words (see breakHtml())');
 INSERT INTO vars (name, value, description) VALUES ('archive_delay','60','days to wait for story archiving');
 INSERT INTO vars (name, value, description) VALUES ('archive_delay_mod','60','Days before moderator logs are expired');
 INSERT INTO vars (name, value, description) VALUES ('archive_use_backup_db', '0', 'Should the archival process retrieve data from the backup database?');
 INSERT INTO vars (name, value, description) VALUES ('articles_only','0','show only Articles in submission count in admin menu');
 INSERT INTO vars (name, value, description) VALUES ('article_nocomment','0','Show no comments in article.pl');
-INSERT INTO vars (name, value, description) VALUES ('authors_unlimited','100','Seclev for which authors have unlimited moderation');
+INSERT INTO vars (name, value, description) VALUES ('authors_unlimited','100','Seclev for which authors have unlimited comment-moderation and -deletion power (see also the ACLs)');
 INSERT INTO vars (name, value, description) VALUES ('backup_db_user','','The virtual user of the database that the code should use for intensive database access that may bring down the live site. If you don\'t know what this is for, you should leave it blank.');
 INSERT INTO vars (name, value, description) VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value');
 INSERT INTO vars (name, value, description) VALUES ('badreasons','4','number of \"Bad\" reasons in \"reasons\", skip 0 (which is neutral)');
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_ip','40','Warn admin if an ip specifies password incorrectly this many times in one day');
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_subnet','60','Warn admin if a subnet specifies password incorrectly this many times in one day');
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_uid','40','Warn admin if user specifies password incorrectly this many times in one day');
+INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_user_interval','30','Warn a user on the Nth bad password attempt within 24 hours. Set to 0 if you do not want users to be warned');
 INSERT INTO vars (name, value, description) VALUES ('banlist_expire','900','Default expiration time for the banlist cache');
 INSERT INTO vars (name, value, description) VALUES ('basedir','/usr/local/slash/www.example.com/htdocs','Where should the html/perl files be found?');
 INSERT INTO vars (name, value, description) VALUES ('basedomain','www.example.com','The URL for the site');
@@ -640,11 +653,13 @@ INSERT INTO vars (name, value, description) VALUES ('block_expire','3600','Defau
 INSERT INTO vars (name, value, description) VALUES ('body_bytes','0','Use Slashdot like byte message instead of word count on stories');
 INSERT INTO vars (name, value, description) VALUES ('breakhtml_wordlength','50','Maximum word length before whitespace is inserted in comments');
 INSERT INTO vars (name, value, description) VALUES ('breaking','100','Establishes the maximum number of comments the system will display when reading comments from a "live" discussion. For stories that exceed this number of comments, there will be "page breaks" printed at the bottom. This setting does not affect "archive" mode.');
+INSERT INTO vars (name, value, description) VALUES ('bytime_delay','120','days to go back for next/previous links on stories');
 INSERT INTO vars (name, value, description) VALUES ('cache_enabled','1','Simple Boolean to determine if content is cached or not');
 INSERT INTO vars (name, value, description) VALUES ('cache_enabled_template','1','If set, then template caching is still active even if var cache_enabled is turned off.');
 INSERT INTO vars (name, value, description) VALUES ('charrefs_bad_entity','zwnj|zwj|lrm|rlm','Entities that approveCharref should always delete');
 INSERT INTO vars (name, value, description) VALUES ('charrefs_bad_numeric','8204|8205|8206|8207|8236|8237|8238','Numeric references that approveCharref should always delete');
 INSERT INTO vars (name, value, description) VALUES ('checklist_length','255','Length of user_index checklist fields (default is VARCHAR(255))');
+INSERT INTO vars (name, value, description) VALUES ('cookie_location','classbid','Default for user\'s cookie_location value (also see users_info schema!)');
 INSERT INTO vars (name, value, description) VALUES ('comment_cache_debug','1','Debug _comment_text cache activity to STDERR?');
 INSERT INTO vars (name, value, description) VALUES ('comment_cache_max_hours','96','Discussion age at which comments are no longer cached');
 INSERT INTO vars (name, value, description) VALUES ('comment_cache_max_keys','3000','Maximum number of keys in the _comment_text cache');
@@ -655,6 +670,7 @@ INSERT INTO vars (name, value, description) VALUES ('comment_cache_purge_min_req
 INSERT INTO vars (name, value, description) VALUES ('comment_compress_slice','500','Chars to slice comment into for compressOk');
 INSERT INTO vars (name, value, description) VALUES ('comment_homepage_disp','50','Chars of poster URL to show in comment header');
 INSERT INTO vars (name, value, description) VALUES ('comment_commentlimit','250','Max commentlimit users can set');
+INSERT INTO vars (name, value, description) VALUES ('comment_karma_limit','','Max karma that a single comment can cost a user, normally negative values or 0 to never take karma with downmods, empty string for unlimited');
 INSERT INTO vars (name, value, description) VALUES ('comment_maxscore','5','Maximum score for a specific comment');
 INSERT INTO vars (name, value, description) VALUES ('comment_minscore','-1','Minimum score for a specific comment');
 INSERT INTO vars (name, value, description) VALUES ('comment_nonstartwordchars','.,;:/','Chars which cannot start a word (will be forcibly separated from the rest of the word by a space) - this works around a Windows/MSIE "widening" bug - set blank for no action');
@@ -674,10 +690,15 @@ INSERT INTO vars (name, value, description) VALUES ('comments_min_line_len_kicks
 INSERT INTO vars (name, value, description) VALUES ('comments_min_line_len_max','20','Maximum minimum average line length');
 INSERT INTO vars (name, value, description) VALUES ('comments_moddable_archived','0','Are comments in discussions that have been archived moderatable?');
 INSERT INTO vars (name, value, description) VALUES ('comments_moddable_hours','336','Num hours after being posted that a comment may be moderated');
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan', '0', 'Scan incoming IPs for open proxy ports? 0=never, 1=anon posting only, 2=all posting');
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan_cachehours', '48', 'If comments_portscan_anon_for_proxy is true, hours to cache a result of a portscan for open proxies on a particular IP');
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan_ports', '80 8080 8000 3128', 'If comments_portscan_anon_for_proxy is true, scan these space-separated ports');
+INSERT INTO vars (name, value, description) VALUES ('comments_portscan_timeout', '5', 'If comments_portscan_anon_for_proxy is true, use this as timeout');
 INSERT INTO vars (name, value, description) VALUES ('comments_response_limit','5','interval between reply and submit');
 INSERT INTO vars (name, value, description) VALUES ('comments_speed_limit','120','seconds delay before repeat posting');
 INSERT INTO vars (name, value, description) VALUES ('comments_wsfactor','1.0','Whitespace factor');
 INSERT INTO vars (name, value, description) VALUES ('commentstatus','0','default comment code');
+INSERT INTO vars (name, value, description) VALUES ('common_story_words', 'about above across after again against almost along already also although always among another anyone arise around aside asked available away became because become becomes been before began behind being better between both brought called came can\'t cannot certain certainly come could days didn\'t different does done down during each either else enough especially even ever every fact find following form found from further gave gets give given gives giving going gone hardly have having here himself however http important into it\'s itself just keep kept knew know known largely later least like look made mainly make many maybe might more most mostly much must nearly neither never next none noted nothing obtain obtained often once only other others ought over overall owing particularly past people perhaps please possible present probably quite rather read ready really right said same saying says seem seems seen several shall should show showed shown shows similar similarly since some something sometime sometimes somewhat soon such sure take taken tell than that that\'s their theirs them themselves then there therefore these they thing things think this those though through throughout thus time together told took toward turn under unless until upon used using usually various very want well were what what when where whether which while whole whom whose wide widely will will with within without would year years your', 'Words which are considered too common to be used in detecting "similar" stories');
 INSERT INTO vars (name, value, description) VALUES ('content_type_webpage','text/html; charset=iso-8859-1','The Content-Type header for webpages');
 INSERT INTO vars (name, value, description) VALUES ('cookiedomain','','Domain for cookie to be active (normally leave blank)');
 INSERT INTO vars (name, value, description) VALUES ('cookiepath','/','Path on server for cookie to be active');
@@ -727,10 +748,12 @@ INSERT INTO vars (name, value, description) VALUES ('index_noanon','0','Redirect
 INSERT INTO vars (name, value, description) VALUES ('istroll_downmods_ip','4','Downmods at which an IP is considered a troll');
 INSERT INTO vars (name, value, description) VALUES ('istroll_downmods_subnet','6','Downmods at which a subnet is considered a troll');
 INSERT INTO vars (name, value, description) VALUES ('istroll_downmods_user','4','Downmods at which a user is considered a troll');
+INSERT INTO vars (name, value, description) VALUES ('istroll_max_halflives', '3', 'Max number of times to cut the TrollModval impact of a downmod in half');
 INSERT INTO vars (name, value, description) VALUES ('istroll_ipid_hours','72','Hours back that getIsTroll checks IPs for comment mods');
 INSERT INTO vars (name, value, description) VALUES ('istroll_uid_hours','72','Hours back that getIsTroll checks uids for comment mods');
 INSERT INTO vars (name, value, description) VALUES ('karma_adj','-10=Terrible|-1=Bad|0=Neutral|12=Positive|25=Good|99999=Excellent','Adjectives that describe karma, used if karma_obfuscate is set (best to keep aligned with badkarma, m2_maxbonus_karma, and goodkarma)');
 INSERT INTO vars (name, value, description) VALUES ('karma_obfuscate','0','Should users see, not their numeric karma score, but instead an adjective describing their approximate karma?');
+INSERT INTO vars (name, value, description) VALUES ('karma_posting_penalty_style', '0', '0=old (starting score decremented), 1=new (display score shown lower, comment can suffer results of additional downvotes)');
 INSERT INTO vars (name, value, description) VALUES ('label_ui','0','Whether to label some things in the admin ui');
 INSERT INTO vars (name, value, description) VALUES ('lastlookmemory','3600','Amount of time the uid last looked-at will be remembered/displayed');
 INSERT INTO vars (name, value, description) VALUES ('lastComments','0','Last time we checked comments for moderation points');
@@ -739,6 +762,7 @@ INSERT INTO vars (name, value, description) VALUES ('lenient_formkeys','0','0 - 
 INSERT INTO vars (name, value, description) VALUES ('log_admin','1','This turns on/off entries to the accesslog. If you are a small site and want a true number for your stats turn this off.');
 INSERT INTO vars (name, value, description) VALUES ('log_db_user','','The virtual user of the database that the code should write accesslog to. If you don\'t know what this is for, you should leave it blank.');
 INSERT INTO vars (name, value, description) VALUES ('logdir','/usr/local/slash/www.example.com/logs','Where should the logs be found?');
+INSERT INTO vars (name, value, description) VALUES ('login_temp_minutes', '10', 'Minutes before a temporary login expires');
 INSERT INTO vars (name, value, description) VALUES ('lonetags','P|LI|BR|IMG','Tags that don\'t need to be closed');
 INSERT INTO vars (name, value, description) VALUES ('m1_eligible_hitcount','3','Number of hits on comments.pl before user can be considered eligible for moderation');
 INSERT INTO vars (name, value, description) VALUES ('m1_eligible_percentage','0.8','Percentage of users eligible to moderate');
@@ -752,12 +776,32 @@ INSERT INTO vars (name, value, description) VALUES ('m2_comments','10','Number o
 INSERT INTO vars (name, value, description) VALUES ('m2_consensus', '9', 'Number of M2 votes per M1 before it is reconciled by consensus - if not odd, will be forced to next highest odd number');
 INSERT INTO vars (name, value, description) VALUES ('m2_consensus_waitpow', '1', 'Positive real number, 0.2 to 5 is sensible. Between 0 and 1, older mods are chosen for M2 preferentially. Greater than 1, newer');
 INSERT INTO vars (name, value, description) VALUES ('m2_consequences','0.00=0,+2,-100,-1|0.15=-2,+1,-40,-1|0.30=-0.5,+0.5,-20,0|0.35=0,0,-10,0|0.49=0,0,-4,0|0.60=0,0,+1,0|0.70=0,0,+2,0|0.80=+0.01,-1,+3,0|0.90=+0.02,-2,+4,0|1.00=+0.05,0,+5,+0.5','Rewards and penalties for M2ers and moderator, up to the given amount of fairness (0.0-1.0): numbers are 1, tokens to fair-voters, 2, tokens to unfair-voters, 3, tokens to moderator, and 4, karma to moderator');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_earlymod_secs', '1800', 'Fairly moderate a comment within this many seconds of its being posted and gain a token bonus');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_earlymod_tokenmult', '1.1', 'Fairly moderate a comment early, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_minfairfrac', '0.8', 'Fraction of Fair metamods a mod has to get for its user to be eligible for the m2 csq bonuses');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_-1', '1.1', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_0',  '1.2', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_1',  '1.1', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_2',  '1.0', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_3',  '0.8', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_4',  '0.5', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_pointsorig_5',  '0.8', 'Fairly moderate a comment from this score, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_1', '0.9', 'Fairly moderate a comment in the first 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_2', '1.0', 'Fairly moderate a comment in the second 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_3', '1.1', 'Fairly moderate a comment in the third 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_4', '1.1', 'Fairly moderate a comment in the fourth 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_quintile_5', '1.1', 'Fairly moderate a comment in the last 20% of a discussion and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_bonus_replypost_tokenmult', '1.2', 'Fairly moderate a reply, instead of a top-level comment, and gain this bonus multiplier');
+INSERT INTO vars (name, value, description) VALUES ('m2_consequences_repeats','3=-4|5=-12|10=-100','Token penalties for modding same user multiple times, applied at M2 reconcile time');
 INSERT INTO vars (name, value, description) VALUES ('m2_consequences_token_max','25','Maximum number of tokens a user can have, for being on the consensus side of an M2 or being judged Fair, to merit gaining tokens');
 INSERT INTO vars (name, value, description) VALUES ('m2_consequences_token_min','-999999','Minimum number of tokens a user must have, for being on the consensus side of an M2 to merit gaining tokens');
 INSERT INTO vars (name, value, description) VALUES ('m2_freq','86400','In seconds, the maximum frequency which users can metamoderate');
+INSERT INTO vars (name, value, description) VALUES ('m2_if_smoother',5,'Number that acts as multiplier for the if_expr, should probably be around your average m2needed/consensus value');
+INSERT INTO vars (name, value, description) VALUES ('m2_inherit', '0', 'Set to true if you would like to inherit m2s from previous mods with the same cid-reason');
 INSERT INTO vars (name, value, description) VALUES ('m2_maxbonus_karma','12','Usually about half of goodkarma');
 INSERT INTO vars (name, value, description) VALUES ('m2_min_daysbackcushion','2','The minimum days-back cushion');
 INSERT INTO vars (name, value, description) VALUES ('m2_mintokens','0','The min M2 tokens');
+INSERT INTO vars (name, value, description) VALUES ('m2_multicount', '5', 'Additional multiplier for M2s performed on duplicate mods (leave 0 to disable)');
 INSERT INTO vars (name, value, description) VALUES ('m2_range_offset','0.9','Offset for M2 assignment ranges');
 INSERT INTO vars (name, value, description) VALUES ('m2_userpercentage','0.9','UID must be below this percentage of the total userbase to metamoderate');
 INSERT INTO vars (name, value, description) VALUES ('mailfrom','admin@example.com','All mail addressed from the site looks like it is coming from here');
@@ -781,6 +825,7 @@ INSERT INTO vars (name, value, description) VALUES ('max_users_viewings','30','h
 INSERT INTO vars (name, value, description) VALUES ('maxkarma','50','Maximum karma a user can accumulate');
 INSERT INTO vars (name, value, description) VALUES ('maxpoints','5','The maximum number of points any moderator can have');
 INSERT INTO vars (name, value, description) VALUES ('maxtokens','40','Token threshold that must be hit to get any points');
+INSERT INTO vars (name, value, description) VALUES ('maxtokens_add','3','Max tokens to give any one user per pass');
 INSERT INTO vars (name, value, description) VALUES ('memcached','0','Use memcached?');
 INSERT INTO vars (name, value, description) VALUES ('memcached_debug','0','Turn on debugging for memcached?');
 INSERT INTO vars (name, value, description) VALUES ('memcached_keyprefix','x','Unique, short (1-2 chars probably) prefix to distinguish this site from the other sites sharing memcaches');
@@ -832,6 +877,7 @@ INSERT INTO vars (name, value, description) VALUES ('reasons','Normal|Offtopic|F
 INSERT INTO vars (name, value, description) VALUES ('recent_topic_img_count','5','Number of recent topics to store in the template "recentTopics"');
 INSERT INTO vars (name, value, description) VALUES ('recent_topic_txt_count','5','Number of recent topics to store in the block "recenttopics"');
 INSERT INTO vars (name, value, description) VALUES ('rootdir','//www.example.com','Base URL of site; used for creating on-site links that need protocol-inspecific URL (so site can be used via HTTP and HTTPS at the same time)');
+INSERT INTO vars (name, value, description) VALUES ('rss_allow_index', '0', 'Allow RSS feeds to be served from index.pl (1 = admins, 2 = subscribers, 3 = all logged-in users)');
 INSERT INTO vars (name, value, description) VALUES ('rss_expire_days','7','Number of days till we blank the data from the database (the signatures still stick around though)');
 INSERT INTO vars (name, value, description) VALUES ('rss_store','0','Should we be saving incomming submissions for rss');
 INSERT INTO vars (name, value, description) VALUES ('run_ads','0','Should we be running ads?');
@@ -867,22 +913,28 @@ INSERT INTO vars (name, value, description) VALUES ('submit_forgetip_hours','720
 INSERT INTO vars (name, value, description) VALUES ('submit_forgetip_maxrows','100000','Max number of rows to forget IPs of at once');
 INSERT INTO vars (name, value, description) VALUES ('submit_forgetip_minsubid','0','Minimum subid to start forgetting IP at');
 INSERT INTO vars (name, value, description) VALUES ('submit_show_weight', '0', 'Display optional weight field in submission admin.');
+INSERT INTO vars (name, value, description) VALUES ('subnet_karma_comments_needed','5','Number of comments needed before subnet karma is used for disallowing posting');
+INSERT INTO vars (name, value, description) VALUES ('subnet_karma_post_limit_range','-5|-9|-10|-999999','range of subnet karma to block posting at -5|-9|-10|-999999 blocks anonymous posting at -5 to -9 subnet karma, and all posting from -10 to -999999 subnet karma');
 INSERT INTO vars (name, value, description) VALUES ('template_cache_request','0','Special boolean to cache templates only for a single request');
 INSERT INTO vars (name, value, description) VALUES ('template_cache_size','0','Number of templates to store in cache (0 = unlimited)');
 INSERT INTO vars (name, value, description) VALUES ('template_post_chomp','0','Chomp whitespace after directives (0 = no, 1 = yes, 2 = collapse; 0 or 2 recommended)');
 INSERT INTO vars (name, value, description) VALUES ('template_pre_chomp','0','Chomp whitespace before directives (0 = no, 1 = yes, 2 = collapse; 0 or 2 recommended)');
-INSERT INTO vars (name, value, description) VALUES ('template_show_comments', '1', 'Show HTML comments before and after template (see Slash::Display)');
+INSERT INTO vars (name, value, description) VALUES ('template_show_comments', '1', 'Show HTML comments before and after template? (see Slash::Display) 0=no 1=yes unless Nocomm 2=ALWAYS (debugging only!)');
 INSERT INTO vars (name, value, description) VALUES ('textarea_cols', '50', 'Default # of columns for content TEXTAREA boxes');
 INSERT INTO vars (name, value, description) VALUES ('textarea_rows', '10', 'Default # of rows for content TEXTAREA boxes');
+INSERT INTO vars (name, value, description) VALUES ('tids_in_urls', '0', 'Want tid=1&tid=2 in story and discussion-related URLs?');
 INSERT INTO vars (name, value, description) VALUES ('titlebar_width','100%','The width of the titlebar');
 INSERT INTO vars (name, value, description) VALUES ('today','730512','(Obviated) Today converted to days past a long time ago');
 INSERT INTO vars (name, value, description) VALUES ('tokenspercomment','6','Number of tokens to feed the system for each comment');
 INSERT INTO vars (name, value, description) VALUES ('tokensperpoint','8','Number of tokens per point');
 INSERT INTO vars (name, value, description) VALUES ('top10comm_num','10','Number of comments wanted for the Top 10 Comments slashbox (if not 10, you ought to rename it maybe)');
+INSERT INTO vars (name, value, description) VALUES ('top_sid','','The sid of the most recent story on the homepage');
 INSERT INTO vars (name, value, description) VALUES ('totalComments','0','Total number of comments posted');
 INSERT INTO vars (name, value, description) VALUES ('totalhits','0','Total number of hits the site has had thus far');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
 INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link','1','Boolean where to use next/prev links for articles');
+INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_series','0','Boolean where to use next/prev links for articles in a series (topic)');
+INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_section','0','Boolean where to use next/prev links for articles in a section');
 INSERT INTO vars (name, value, description) VALUES ('user_comment_display_default','24','Number of comments to display on user\'s info page');
 INSERT INTO vars (name, value, description) VALUES ('user_submitter_display_default','24','Number of stories to display on user\'s info page');
 INSERT INTO vars (name, value, description) VALUES ('users_bio_length','1024','Length allowed for user bio');
