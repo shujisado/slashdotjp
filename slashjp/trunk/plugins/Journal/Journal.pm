@@ -13,7 +13,6 @@ use Slash::Utility;
 
 use vars qw($VERSION);
 use base 'Exporter';
-use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
