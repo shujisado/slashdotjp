@@ -2095,7 +2095,7 @@ sub chopEntity {
 
 sub html2text {
 	my($html, $col) = @_;
-	my($text, $tree, $form, $refs);
+	my($text, $tree, $form, $refs, $was_utf8);
 
 	my $user      = getCurrentUser();
 	my $gSkin     = getCurrentSkin();
@@ -2106,11 +2106,15 @@ sub html2text {
 	$form = new HTML::FormatText (leftmargin => 0, rightmargin => $col-2);
 	$refs = new HTML::FormatText::AddRefs;
 
+	$was_utf8 = Encode::is_utf8( $html );
 	$tree->parse($html);
 	$tree->eof;
 	$refs->parse_refs($tree);
 	$text = $form->format($tree);
 	1 while chomp($text);
+
+	# restore UTF-8 Flag lost by HTML::TreeBuilder
+	$text = Encode::decode_utf8( $text );
 
 	return $text, $refs->get_refs($gSkin->{absolutedir});
 }
