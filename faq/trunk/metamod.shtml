@@ -1,0 +1,214 @@
+<HTML>
+<HEAD>
+        <TITLE>Slashdot FAQ (日本語版) - メタモデレーション</TITLE>
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="com-mod.shtml">前のセクション</A>
+		<TD><A HREF="accounts.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+<HR><BR>
+
+
+<A NAME="mm100">
+<H2>"M1" とか "M2" はどういう意味ですか?</H2>
+
+	<P>これはスラッシュドット特有の略語で、M1 は "モデレーション"、
+	M2 は "メタモデレーション" を意味します。変化形もアリで、
+	"M2ed" なら "メタモデレートされた"、"M1er" なら "モデレータ"
+	を意味します。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by:<A HREF="mailto:loonxtall@hotmail.com">Loon</A>  <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+
+	
+<A NAME="mm200">
+<H2>メタモデレーションとは何ですか?</H2>
+
+	<P>モデレーションシステムの二層目にあたる部分で、アンフェアな
+	モデレータの存在に対処するために考えられました。スラッシュドッ
+	トのログイン ユーザが "メタモデレータ" となり、ランダムに選ん
+	だ 10 件のコメント投稿の "評価を評価" します。つまり、メタモデ
+	レータは、モデレータの評価に対して、"公平"、"公平でない"、
+	"どちらでもない" のいずれかの評価を与えるわけです。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+<A NAME="mm300">
+<H2>メタモデレーション システムはなぜ作られたのですか?</H2>
+
+	<P>これは、モデレーション システム (M1) がちゃんと機能している
+	かを確認するための実験として始まりました。いまでは、悪質なモデ
+	レータを M1 候補者リストから外すのに役立っています。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+<A NAME="mm350">
+<H2>誰が M2 できるのですか?</H2>
+
+	<P>メタモデレータになれるのは、システムの全アカウントの中で、
+	古い順に 90% 以内に入っている人です。つまり、アカウントを作成
+	してから、だいたい数週間から 2 か月くらい経ってから、というこ
+	とになります。この期間は、あなたの後にアカウントがどのくらいの
+	スピードで増えるかによって変わります。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
+	Last Modified: 10/29/00 <BR>
+	</SMALL></I>
+
+<A NAME="mm400">
+<H2>メタモデレートの仕方を教えてください</H2>
+
+	<P>ログインしているメタモデレータ候補者ならだれでもメタモデレー
+	トできます。メイン ページの上にある "メタモデレートしますか"
+	というリンクをクリックしてください。M2 ページに移動し
+	ます。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 10/29/00 <BR>
+	</SMALL></I>
+
+	
+<A NAME="mm500">
+<H2>M2 はどのくらいの頻度でできますか?</H2>
+
+	<P>GMT を基準にして、1 日 1 回です。<BR>
+	(注意：日本時間だと午前9時から一日がはじまります)
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+	
+<A NAME="mm600">
+<H2>M2 はモデレータのカルマにどのように影響しますか?</H2>
+
+	<P>これはちょっとややこしいんですが、このランダムさと、モデレー
+	タのカルマと、ほかのいくつかの要因に応じて、メタモデレーション
+	の結果がモデレータのカルマを変更しないこともあります。...って
+	全然答えになってませんね。どうしても知りたかったらコードを見てく
+	ださい。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+
+<A NAME="mm700">
+<H2>モデレーションはどのくらいの頻度で M2 の対象になりますか?</H2>
+
+	<P>投稿からストーリーのアーカイブまでの 14 日間で、なるべく頻
+	繁に対象となるようにしています。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+<A NAME="mm800">
+<H2>なぜ同じコメントが出てくるのですか?</H2>
+
+	<P>M2 の評価対象はモデレーションであって、コメントではありませ
+	ん。同じコメントが複数回モデレートされていれば、それぞれ違った
+	モデレーションを評価するために、複数回メタモデレーション対象に
+	なります。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+
+<A NAME="mm900">
+<H2>わたしの index.pl にはなぜ M2 へのリンクがないのでしょうか?</H2>
+
+	<P>M2 リンクの表示が妨げられるようなバグが Slashcode にあるの
+	かも知れません。ただし、ログインしていないユーザには M2 リンク
+	は表示されません。
+	メタモデレートするには、ログインして
+	<A  HREF="/metamod.pl">/metamod.pl</A>に行ってください。そ
+	うすればインデックス ページにリンクが現れるはずです。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+<A NAME="mm1000"> 
+<H2>モデレータが "するどい洞察" と評価しているが、わたしは "役に立つ"だと思う場合、どう M2 すればよいですか?</H2>
+	
+	<P>そんなに厳密になる必要はありません。"するどい洞察" も
+	"役に立つ" は、コメントに与える影響は同じです。単なる個人的
+	見解の違いですので、"公平" にして次に進んでください。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+
+
+<A NAME="mm1100">
+<H2>M2 しているストーリーに投稿できますか?</H2>	
+
+	<P>できます。<A HREF="com-mod.shtml#cm600">投稿規制は M1 だけ
+	に適用されます。</A>.
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I>
+	
+<A NAME="mm1200">
+<H2>M2 はわたしのカルマに影響しますか?</H2>
+
+	するかもしれません。カルマが低い場合は、少し高くなるかもしれま
+	せん。ただし、 +1 になるほどではありません
+	<A HREF="com-mod.shtml#800">[関連情報]</A>。+1 にな
+	るには、コメントを投稿して、モデレーションで高く評価される必要
+	があります。M2 でカルマが高くなるのは、みんなに M2 してもらい
+	たいからであって、それが悪用されるようなことがあってはいけませ
+	んから。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/12/00 <BR>
+	</SMALL></I> 
+
+<BR><HR>
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="com-mod.shtml">前のセクション</A>
+		<TD><A HREF="accounts.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->

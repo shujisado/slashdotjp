@@ -1,0 +1,362 @@
+<HTML>
+<HEAD>
+        <TITLE>Slashdot FAQ (日本語版) - スラッシュのメタネタ</TITLE>
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="accounts.shtml">前のセクション</A>
+		<TD><A HREF="tech.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+<HR><BR>
+
+<A NAME="sm100">
+<H2>スラッシュドットの主催者は誰ですか?</H2> 
+	
+	<P>元々は、<A HREF="mailto:malda@slashdot.org">
+	Rob "CmdrTaco" Malda</A> が 1997 年 9 月に立ち上げまし
+	た。現在は<A HREF="http://www.valinux.com">
+	VA Linux Systems</A>が所有しています。
+
+	<P>スラッシュドットは、当初、わたし(Rob)と
+	<A HREF="http://Hemos.net">Jeff "Hemos" Bates</A>が運
+	営していました。Hemos は、ストーリー投稿と広告セールスと書評を
+	担当していました。
+
+	<P><A HREF="http://www.slashcode.com">
+	Slashcode</A>についての議論や、その他テクニカルなことは、
+	Andover の geek チームが係わりました。(geek なメンバー: Adam
+	Green、Patrick "CaptTofu" Galbraith、Chris "Pudge" Nandor、
+	Kurt Grey、Scoop、Liz、BSD-Pat、PatG、Jon "CowboyNeal" Pater)
+
+	<P>編集面では、Robin "Roblimo" Miller が最近参加して、サイトの
+	管理面とか、(驚くべきことに) ストーリーの投稿とかを手伝ってい
+	る。そのほかのスラッシュドットの編集チームは次のとおり:
+	Timothy Lord (マネージャ兼エディタ)、Emmett Plant (スタッフ レ
+	ポータ)、Cliff Wood (スラッシュドットに聞け! のエディタ)、
+	Michael Sims と Jamie McCarthy (YRO セクションのエディタ)、Jon
+	'CowboyNeal' Pater (Very Largeなエディタ)。
+
+	<P>帯域幅とコロケーションは<A HREF="http://www.exodus.net">
+	Exodus.NET</A>、ハードウェアは
+	<A HREF="http://www.valinux.com">VA Linux Systems</A>
+	のものです(設備の詳細は<A HREF="tech.shtml#te050">
+	こちら</A>を参照)。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/26/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm150">
+<H2>スラッシュドットってどういう意味?</H2>
+
+	<P>ただのおふざけです。最初にドメインを登録したとき、アホみた
+	いで発音不能な URL にしたかった。"http://slashdot.org" を声に
+	出して読んでみるとよくわかるはずです。(すらっしゅすらっしゅす
+	らっしゅどっとどっとおるぐ。) でも結局はめぐりめぐって
+	自分に天罰が下りました。しょっちゅう電話で誰かに URL とかメー
+	ル アドレスを教えなきゃならなくなってしまったからです。みんな
+	「ドットは d・o・t ? それともピリオド?」とか混乱しまくって、説
+	明が面倒くさ過ぎです。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/29/00 <BR>
+	</SMALL></I> 
+
+<A NAME="sm120">
+<H2>Rob と Jeff は、スラッシュドットを売却したことを後悔している?</H2> 
+
+
+	<P>後悔している部分もあるし、そうでない部分もある。スラッシュ
+	ドットの運営がどんなに巨大化かつ複雑化したかというのは、読者に
+	はちょっと理解しにくいところだと思う。古き良き日を懐かしむこと
+	もあるけど、今のレベルの優位性は OSDN (VA Linux)の
+	インフラストラクチャな
+	しには実現できなかった。それに OSDN (VA Linux)がネットワーク
+	の運用とか広告のセールスとかをやってくれるからこそ、自分達は
+	ストーリーの投稿とかコードの開発とか、好きなことをやって
+	いられるんだしね。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/21/00 <BR>
+	</SMALL></I> 
+
+
+<A NAME="sm121">
+<H2>売却して、退屈な会社オヤジになったんですか?</H2> 
+
+
+	<P>ヘヘ、まさか。 
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/21/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm122">
+<H2>だったらスラッシュドットPTクルーザーなんて誰が考えたんだ?</H2> 
+
+	<P>マーケティング部門さ。個人的には俺たち(RobとJeff)はスラッシュ
+	ドットクルーザーなんて馬鹿みたいことだと思ってるし、事前に聞
+	いてくれればそう答えた。
+	マーケティング部門は、普通はプロモーションの企画については俺達に相談し
+	てくれるけど、義務というわけじゃないし、今回は何の相談もなしだっ
+	た。すごく評判が悪いから、彼らもこれで学んだんじゃないかな。
+	<BR>
+	(注意：OSDN.com設立時にスラッシュドットカラーの緑で全面ペ
+	イントされ、側面にデカデカと"Slashdot"ロゴが描かれた車が作られ
+	た。多分、そのことだろう。あれがアメリカ人の発想なのかなと思っ
+	ていたが彼らも気に入ってはなかったようだ。普段乗るのは勘弁して
+	ほしいけど、見るだけならなかなかクールな感じだった。意味ないね。)
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/21/00 <BR>
+	</SMALL></I> 
+
+<A NAME="sm200">
+<H2>スラッシュドットに○○して欲しい。</H2> 
+	
+	<P><A HREF="suggestions.shtml">Suggestions</A>のセクションを参
+	照。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm250"> 
+<H2>スラッシュドットの読者の声を聞くより、言い争ってるほうが多いんじゃない? 自分ではどう思ってるの? もしそうじゃないというなら、なぜこんなに大勢の人がそう思ってるのか説明して欲しい。</H2>
+
+	<P>俺は週に 20 〜 30 時間はスラッシュドットに関するメールを読
+	むことだけに費やしてる。だから人の声はよく聞いてる。ただ、みん
+	なが望むことをいつもやるわけじゃない。望みどおりにならないと腹
+	を立てて文句をいう奴もいるけど、全員を喜ばせることはできないよ。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm260"> 
+<H2>スラッシュドット読者の中には、スラッシュドットの方針決定にもっと参加したいと思ってる人も多いです。スラッシュドットの運営についてもっとメタディスカッションする機会を持つ可能性はありますか?</H2>
+
+	<P>メタディスカッションに反対する気はないですが、ただ、スラッ
+	シュドットの運営と、スラッシュドットの運営についての話し合いと、
+	その両方をやってる時間がないんです。これは時間の制約の問題です。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+<A NAME="sm300">
+<H2>スラッシュドットのトラフィックはどれくらいですか?</H2> 
+
+	1 か月に 3,000 万ページビューです。<BR>
+	(注意：今は5,000万ぐらい。ジャパンはまだまだペーペー)
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm330">
+<H2>なぜスラッシュドットはこんなに成功したのですか?</H2>
+
+	<P>あらゆる成功と同じ理由です。必要とされるものを誰よりも早く
+	提供し、できるだけ良いものにするように、身を粉にして働いてます。
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	  
+<A NAME="sm400">
+<H2>"CmdrTaco" と "Hemos" というニックネームはどういう意味?</H2>
+
+	<P>なーんでどいつもこいつもそんなこと知りたがるんだろうね。
+	"CmdrTaco" っていうのは、Dave Barry の記事で、デートに適さない
+	場所リストっていうのに載ってた、どこだか知らない "The
+	Commander Taco" とかなんとかいう名前から取った。ローカル BBS
+	では "Icarus" っていうニックネームを使ってたけど、高校時代にイ
+	ンターネットを使い始めたときに誰かがもう使ってたから変えたんだ
+	よ。
+
+	<P>"Hemos" は、ミシガンの砂漠に生えてるもじゃもじゃな植物かな
+	んかの名前だろ。よく知らん。Jeff も変な奴だし。
+
+	<P>(注意：ちなみにOliverは本名そのまんまだろう。日本語名ではな
+	さそうだけど。kazekiriはkazubosoにでも聞いてくれ。)
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+
+<A NAME="sm500">
+<H2>何でレポーターはあなたたちのニックネームの由来を知りたがるのでしょう?</H2>
+
+	<P>実際のところ知らんが、多分こういうことではないか。つまり、
+	現実の世界ではみんな、生まれたときに付けられた "Bob" とか
+	"George" とか "Archibald" とかいう名前で暮らしている。当たり前
+	だけど、そんなに面白い名前とはいえない。
+	
+	<P>レポーターは、何でもいいから面白そうなものを求めているんだ
+	な。だけど、"Bob" っていう名前の奴に、"Bob" の由来を聞いてもしょ
+	うがない ("いやー、前世でコルクだったんでね" とか?)。自分で選
+	んだ名前じゃないからね。でも geek な世界では、自分で名前を選ぶ。
+	だからレポーターは、"おぉー、CmdrTaco とは何と暗示的な名前か。
+	この名前こそがこの人物の魂へ通ずる窓に違いない。" などと考える
+	んではないか。
+
+	<P>しかし皮肉なことに、geek はそんな重大な意味があって名前を付
+	けるわけではない。ただ、何か人と違ったものを求めてるだけだと思
+	う。Bob は何兆億人いるかわからないけど、CmdrTaco なんて名前は
+	ほとんど見当たらない(Quake と EverQuest サーバには俺の名を騙
+	る奴がいるようだが)。レポーターがこの質問をするたびに、"あぁ、
+	なんのヒネリもない奴だな" と思う。"スラッシュドットを始めて何
+	年になりますか?" とか、"スラッシュドットとは何ですか?" と同じ
+	くらいうんざりするような質問だよ。
+
+	<P>だからレポーター諸氏に言いたい。geek のニックネームの由来を
+	聞くのは、双方にとって時間の無駄だと。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I>
+	
+<A NAME="sm550">
+<H2>コメントによく出てくる "Free Speech/Free Beer" とは何のことですか?</H2>
+
+	<P>これは、フリー ソフトウェアとオープン ソースの動きに関する
+	中心的なディベートを指す略語みたいなものです。元々は英語の欠陥
+	に由来しますが、"free" という言葉には 2 つの意味があります。1
+	つは、"Free Speech" の "free"。これは、人間の基本的人権である
+	"言論の自由" などの "自由" を表す "free"。
+
+	<P>もう 1 つは "Free Beer" の "free"。これは、しみったれた人間
+	におなじみの言葉で、"ビール一杯無料" などの "無料" を表す
+	"free"。だから "Free Beer" は、誰かが何かにお金を払いたがらな
+	い、という意味を持ちます。
+
+	<P>これには、オープン ソース イニシアチブ (OSI) とフリー ソフ
+	トウェア ファウンデーション (FSF) の微妙な違いも関係してきます。
+	OSI は、ソフトウェアはオープンであるほうがより優れた開発が可能
+	である、と考えています。FSF では、ソフトウェアがオープンでない
+	のは倫理上間違っていると考えています。ちょっと単純化し過ぎた言
+	い方ですが、大体はそういうことです。
+
+	<P>狂信的な人々はこういうことに関していろんなことを言っていて、
+	それらを理解することが、スラッシュドットの中心的なディベートを
+	理解する上で非常に重要です。
+	
+	<P>この件についてもっと知りたい場合は、以下のWeb サイトを参考
+	にするとよいでしょう。
+	
+	<UL>
+		<LI><A HREF="http://www.fsf.org">The Free Software 
+		Foundation</A>
+		<LI><A HREF="http://www.opensource.org">The Open Source 	
+		Initiative</A>
+	</UL>
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/30/00 <BR>
+	</SMALL></I>
+
+
+<A NAME="sm600">
+<H2>"スラッシュドット効果" って何ですか?</H2>
+
+	<P>スラッシュドットがどこかのサイトにリンクを張ると、大勢の読
+	者がストーリーを読んだりグラフィックを見ようとしてリンクをヒッ
+	トするので、1 つのサイトがほんの数分間で数千回もヒットされるこ
+	とがあります。大きな商業サイトなら問題はないのですが、スラッシュ
+	ドットがリンクするサイトの中には、普段は 1 日せいぜい数千ヒッ
+	トという小さなサイトもたくさんあります。そういうサイトにスラッ
+	シュドット読者が押し寄せると、サイトが完全に飽和状態になって限
+	界を超えてしまう。こういう状態を、"スラッシュドットされた"
+	(Slashdotted)と呼びます。
+	
+	<P>最近では、"スラッシュドット効果"(Slashdot Effect)とか
+	"スラッシュドットされた"(Slashdotted)という言葉が一般化されて、
+	Web サイトに発生する短期間のトラ
+	フィックジャム全般を指すようになってきています。
+
+	<P><A HREF="suggestions.shtml#su900">ページをキャッシュするこ
+	とも考えられますが、それはまったく別の問題です。</A> 
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 6/13/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm700">
+<H2>これまでのスラッシュドット ストーリーの中で一番面白かったものは?</H2>
+
+	<P>間違いなく、<A
+	HREF="http://slashdot.org/articles/99/10/16/1017231.shtml">Jeff
+	の家が燃えた話</A>でしょう。<BR>
+	(注意：Hemosが留守中に家が燃えてしまったお話です。即座に
+	「Hemos is Homeless」という記事が投稿されました。)
+	
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm800">
+<H2>"Geeks in Space" の続きは作らないのですか?</H2>
+
+	<P>みんな街にいないんで、作るのが難しくなってる。でも誰かいる
+	ときはやろうと思ってるよ。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+<A NAME="sm900">
+<H2>hidden sidsについてはどう考えているの?</H2>
+
+	<P>そこに置いとくから、楽しく使ってちょーだい。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 10/28/00 <BR>
+	</SMALL></I> 
+	
+<BR><HR>
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="accounts.shtml">前のセクション</A>
+		<TD><A HREF="tech.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->
