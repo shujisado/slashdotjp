@@ -28,6 +28,7 @@ use strict;
 use Apache;
 use Apache::Constants ':http';
 use Digest::MD5 'md5_hex';
+use Encode 'encode_utf8';
 use Slash::Display;
 use Slash::Utility::Data;
 use Slash::Utility::Display;
@@ -265,7 +266,7 @@ sub http_send {
 
 	if ($opt->{etag} || $opt->{do_etag}) {
 		if ($opt->{do_etag} && $opt->{content}) {
-			$opt->{etag} = md5_hex($opt->{content});
+			$opt->{etag} = encode_utf8(md5_hex($opt->{content}));
 		}
 		$r->header_out('ETag', $opt->{etag});
 
