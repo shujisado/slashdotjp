@@ -25,6 +25,8 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
+use open ":utf8";
+use open ":std";
 use Fcntl qw(:flock :seek);
 use File::Basename;
 use File::Path;
