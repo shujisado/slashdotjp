@@ -513,7 +513,9 @@ sub setPrefs {
 sub listArticle {
 	my($journal, $constants, $user, $form, $reader) = @_;
 
-	my $uid = $form->{uid} || $ENV{SLASH_USER};
+	my $uid		= $form->{uid} ? $form->{uid} : $reader->getUserUID($form->{nick});
+	$user		= $reader->getUser($uid, ['nickname', 'fakeemail']) if $uid;
+	$uid		= $uid || $user->{uid};
 	if (isAnon($uid)) {
 		return displayFriends(@_);
 	}
