@@ -2471,6 +2471,11 @@ XML::Parser::Expat(3).
 sub xmlencode {
 	my($text, $nohtml) = @_;
 
+	# convert text to UTF-8 
+	#### ADD_J ####
+	$text = Encode::decode( 'EUC-JP', $text );
+	#### END_J ####
+
 	# if there is an & that is not part of an entity, convert it
 	# to &amp;
 	$text =~ s/&(?!#?[a-zA-Z0-9]+;)/&amp;/g
