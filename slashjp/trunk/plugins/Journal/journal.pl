@@ -199,8 +199,9 @@ sub searchUsers {
 sub displayRSS {
 	my($journal, $constants, $user, $form, $reader) = @_;
 
-	$user		= $reader->getUser($form->{uid}, ['nickname', 'fakeemail']) if $form->{uid};
-	my $uid		= $form->{uid} || $user->{uid};
+	my $uid		= $form->{uid} ? $form->{uid} : $reader->getUserUID($form->{nick});
+	$user		= $reader->getUser($uid, ['nickname', 'fakeemail']) if $uid;
+	$uid		= $uid || $user->{uid};
 	my $nickname	= $user->{nickname};
 
 	my $articles = $journal->getsByUid($uid, 0, 15);
