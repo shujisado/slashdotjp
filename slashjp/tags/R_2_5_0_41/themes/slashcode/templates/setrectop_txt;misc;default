@@ -1,0 +1,21 @@
+__section__
+default
+__description__
+Text that is used when populating the recenttopics slashbox
+
+Passed a topic ID and topic name 
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+setrectop_txt
+__template__
+
+&middot; <A HREF="[% gSkin.rootdir %]/search.pl?tid=[% id %]">[% name %]</A><BR>
+__seclev__
+10000
+__version__
+$Id$

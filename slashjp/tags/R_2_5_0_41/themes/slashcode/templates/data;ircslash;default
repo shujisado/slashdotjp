@@ -1,0 +1,85 @@
+__section__
+default
+__description__
+Responses that ircslash.pl makes in-channel.
+
+* value = the lowercased text that was said to ircslash.pl
+
+Extra data may be sent along as well.
+
+__title__
+
+__page__
+ircslash
+__lang__
+en_US
+__name__
+data
+__template__
+
+[% SWITCH value %]
+
+[% CASE 'help' %]
+	Commands: help, [un]hush, [un]ignore, slashd, ping, who, whois (uid|nick), quote (symbol), dbs, [% IF plugins.daddypants %], daddypants [now|next|today|tomorrow|n days][% END %]
+
+[% CASE 'exiting' %]
+	Exiting (slashd should restart me within a minute)
+
+[% CASE 'nosuchuser' %]
+	No such user [% uid %]
+
+[% CASE 'alreadyignoring' %]
+	Already ignoring [% nickname %] ([% uid %])
+
+[% CASE 'wasntignoring' %]
+	Wasn't ignoring [% nickname %] ([% uid %])
+
+[% CASE 'ignoring' %]
+	Now ignoring [% nickname %] ([% uid %])
+
+[% CASE 'unignored' %]
+	No longer ignoring [% nickname %] ([% uid %])
+
+[% CASE 'useris' %]
+	Uid [% uid %] is [% nickname %]
+
+[% CASE 'slashd_lasttask' %]
+	Task [% task.task %] finished [% task.last_completed_secs_ago %] seconds ago
+
+[% CASE 'slashd_curtasks' %]
+	Currently running tasks:[% IF tasks.size > 0; FOREACH task = tasks; " "; task.task; END; ELSE; " none"; END %]
+
+[% CASE 'slashd_parentpid' %]
+	Parent slashd running as pid [% process.pid %], lifetime [% process.pctcpu %]% cpu, in state [% process.state %]
+
+[% CASE 'slashd_parent_gone' %]
+	ATTENTION: my parent slashd process is gone. Since this task is still around, the parent's death is probably unplanned. Restarting it would be good.
+
+[% CASE 'quote_response' %]
+	[% IF !stock.success %]
+		ERROR: [% stock.errormsg %]
+	[% ELSE %]
+		Price for [% stock.name %] at [% stock.time %]: [% stock.last %] ([% stock.net %] from last close/open [% stock.close %]/[% stock.open %]) -- Today's lo-hi [% stock.low %]-[% stock.high %] -- Year lo-hi [% stock.year_low %]-[% stock.year_high %]
+	[% END %]
+
+[% CASE 'dbs_response' %]
+	[% FOREACH dbid = dbids;
+		dbs.$dbid.virtual_user;
+		" alive="; dbs.$dbid.was_alive;
+		" lag="; dbs.$dbid.lag;
+		" bog="; dbs.$dbid.bog;
+		UNLESS loop.last(); " -- "; END;
+	END %]
+
+[% CASE 'dbs_nodata' %]
+	Error: no dbs_readerstatus data found within the last minute.
+
+[% CASE DEFAULT %]
+	-- MISSING USER MESSAGE SEGMENT -- [[% value %]] block not found.
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id$

@@ -1,0 +1,43 @@
+__section__
+default
+__description__
+This is the main block of html and code that gets evaled to create the main
+index page.
+
+* metamod_elig = boolean for whether current user is eligible to metamod
+* future_plug = whether to let the user know about stories they can't see
+  that are coming up soon
+* stories = string containing all the stories
+* boxes = string containing all the slashboxes
+
+__title__
+
+__page__
+index
+__lang__
+en_US
+__name__
+index
+__template__
+[% PROCESS indexhead %]
+
+[% stories %]
+
+[% UNLESS user.noboxes %]
+
+</TD>
+[% PROCESS maintable_td %]&nbsp;</TD>
+[% PROCESS maintable_td mt_width=(constants.fancyboxwidth + 10) mt_height="1" mt_align="CENTER" mt_valign="TOP" %]
+[% IF boxes;
+	boxes %]
+	<IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="[% constants.fancyboxwidth + 10 %]" HEIGHT="1" BORDER="0" ALT="">
+[% ELSE %]
+	&nbsp;
+[% END %]
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id$

@@ -1,0 +1,28 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+meta
+__template__
+[% name = "del_$article.id" %]
+[% PROCESS titlebar width => "100%" title = "Deleting Article" %]
+<FORM ACTION="[% gSkin.rootdir %]/journal.pl" METHOD="POST">
+<INPUT TYPE="hidden" NAME="op" VALUE="remove">
+<INPUT TYPE="hidden" NAME="[% name %]" VALUE="1">
+<P>Alright, before we do this thing, I just want to really make
+sure that you want to delete your journal entry
+<B>[% article.description | strip_literal %]</B>.</P>
+<P><INPUT TYPE="submit" VALUE="Yup, I'm positive"></P>
+</FORM>
+
+__seclev__
+500
+__version__
+$Id$

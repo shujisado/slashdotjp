@@ -1,0 +1,132 @@
+__section__
+default
+__description__
+* note = Note to display
+* messagecodes = hashref of message codes
+* displaymodes = hashref of delivery modes
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+display_prefs
+__template__
+[%
+   userm = userm ? userm : user;
+   usernick = userm.nickname | strip_literal;
+
+   modenone = Slash.MSG_MODE_NONE;
+   modemail = Slash.MSG_MODE_EMAIL;
+   modeweb  = Slash.MSG_MODE_WEB;
+%]
+
+<P><B>[% note %]</B></P>
+
+<FORM ACTION="[% env.script_name %]" METHOD="POST">
+<TABLE ALIGN="CENTER" WIDTH="100%" BGCOLOR="[% user.colors.bg_5 %]">
+<TR><TD>
+
+<P>
+From this page you can configure various messages that
+[% constants.sitename %] can optionally send to you.  The primary
+options are [% deliverymodes.$modenone %] (Disabled),
+[% deliverymodes.$modemail %], and [% deliverymodes.$modeweb %].
+Not all options are available for all message types.
+[% deliverymodes.$modeweb %] messages <B>will be deleted</B> after
+<B>[% constants.message_web_expire || 31 %] days</B>.
+</P>
+
+</TD></TR>
+
+	<TR><TD><TABLE ALIGN="LEFT" BGCOLOR="[% user.colors.bg_2 %]">
+[% messages = Slash.getObject('Slash::Messages');
+   FOR code = messagecodes.sort;
+      moderef = { $modenone => deliverymodes.$modenone };
+
+      # this is not so bad, it is cached, but could be improved perhaps
+      mcode = messages.getMessageCode(code);
+
+      UNLESS messages.checkMessageUser(code, userm);
+         NEXT;
+      END;
+
+      IF mcode.modes.length;
+         modes = mcode.modes.split(",");
+      ELSE;
+         modes = deliverymodes.keys;
+      END;
+
+      FOR mode = modes;
+         moderef.$mode = deliverymodes.$mode;
+      END;
+%]
+<TR>
+	<TD><B>[% messagecodes.$code %]</B></TD>
+	<TD>[% UNLESS prefs.${code}.defined; prefs.$code = modenone; END;
+	Slash.createSelect("deliverymodes_$code", moderef, prefs.$code, 1, 1) %]</TD>
+</TR>
+[%- END %]
+	</TABLE></TD></TR>
+
+<TR><TD>
+<P>
+You may select a message threshold for when messages for comments (replies
+to journal entries, replies to comments) are sent to you.
+</P>
+
+<P>[%
+thresh = userm.message_threshold.defined ? userm.message_threshold : constants.message_threshold;
+Slash.createSelect('message_threshold',
+	Slash.db.getDescriptions('threshcodes'), thresh, 1)
+%]</P>
+
+</TD></TR>
+
+
+<!--
+[[TR]][[TD]]
+
+[[P]]
+If you have [[B]][%# messagecodes.${Slash.MSG_CODE_INTERUSER} %][[/B]] enabled,
+you can receive messages from other users.  Please select whom you would
+like to be able to receive messages from.  To not receive any interuser
+messages, disable it above.
+[[/P]]
+
+[[/TD]][[/TR]]
+
+	[%# default_ium = user.messages_interuser_receive || Slash.MSG_IUM_FRIENDS %]
+
+	[[TR]][[TD]][[TABLE ALIGN="LEFT" BGCOLOR="[%# user.colors.bg_2 %]"]]
+[[TR]]
+	[[TD]][[B]]Only Your Friends[[/B]][[/TD]]
+	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_FRIENDS %]"[%# IF default_ium == Slash.MSG_IUM_FRIENDS; constants.markup_checked_attribute; END %]]][[/TD]]
+[[/TR]]
+[[TR]]
+	[[TD]][[B]]Anyone[[/B]][[/TD]]
+	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_ANYONE %]"[%# IF default_ium == Slash.MSG_IUM_ANYONE; constants.markup_checked_attribute; END %]]][[/TD]]
+[[/TR]]
+[[TR]]
+	[[TD]][[B]]Anyone except for foes[[/B]][[/TD]]
+	[[TD]][[INPUT TYPE="radio" NAME="messages_interuser_receive" VALUE="[%# Slash.MSG_IUM_NOFOES %]"[%# IF default_ium == Slash.MSG_IUM_NOFOES; constants.markup_checked_attribute; END %]]][[/TD]]
+[[/TR]]
+	[[/TABLE]][[/TD]][[/TR]]
+-->
+
+<TR>
+	<TD>
+	<INPUT TYPE="hidden" NAME="uid" VALUE="[% userm.uid %]">
+	<INPUT TYPE="hidden" NAME="op" VALUE="save_prefs">
+	<INPUT TYPE="submit" VALUE="Save Prefs">
+	</TD>
+</TR>
+
+</TABLE>
+
+</FORM>
+__seclev__
+500
+__version__
+$Id$

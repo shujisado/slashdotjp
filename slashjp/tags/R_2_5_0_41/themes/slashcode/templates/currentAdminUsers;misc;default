@@ -1,0 +1,49 @@
+__section__
+default
+__description__
+Displays currently logged-in admin users.
+
+* ids = admin uids
+* can_edit_admins = boolean for if current user can edit admins
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+currentAdminUsers
+__template__
+<table border="0" cellpadding="2" cellspacing="0">
+
+[% FOREACH author = ids %]
+	[% id         = author.0;
+	   lastsecs   = author.1;
+	   lasttitle  = author.2;
+	   uid        = author.3;
+	%]
+
+	<tr><td bgcolor="[% user.colors.bg_3 %]">
+		<a href="[% gSkin.rootdir %]/~[% id | fixparam %]/"><font color="[% user.colors.fg_3 %]" 
+		size="2"><B>[% id %]</B></font></a>
+	</td><td bgcolor="[% user.colors.bg_2 %]">
+		<font color="[% user.colors.fg_1 %]" size="2">[% lastsecs %]
+		[% IF lastsecs and lasttitle %]&nbsp;/&nbsp;[% lasttitle %]
+		[% END %]
+		</font>&nbsp;
+	</td></tr>
+
+[% END %]
+	[% IF constants.cur_performance_stats_disp %]
+	<tr>
+	<td bgcolor="[% user.colors.bg_3 %]" valign="top"><font color="[% user.colors.fg_3 %]" size="2">Performance</font></td>
+	<td bgcolor="[% user.colors.bg_2 %]" valign="top">[% PROCESS performance_stats %]</td>
+	</tr>
+	[% END %]
+</table>
+
+__seclev__
+10000
+__version__
+$Id$

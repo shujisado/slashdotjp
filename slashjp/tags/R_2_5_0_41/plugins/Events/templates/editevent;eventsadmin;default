@@ -1,0 +1,70 @@
+__section__
+default
+__description__
+"sid,title,dept,topics.tid,alttext"
+__title__
+
+__page__
+eventsadmin
+__lang__
+en_US
+__name__
+editevent
+__template__
+[% USE Slash %]
+[% PROCESS titlebar title="Edit Event" width="100%" %]
+<TABLE>
+[% FOREACH event=dates %]
+	<TR>
+		<TD>
+			<A HREF="[% gSkin.rootdir %]/admin.pl?op=edit&amp;sid=[% sid %]">[% storytitle %]</A>
+		</TD>
+		<TD>
+			[% IF event.begin == event.end %] 
+				[% event.begin %] 
+			[% ELSE %] 
+				[% event.begin %] - [% event.end %] 
+			[% END %]
+		</TD>
+		<TD>
+			<A HREF="[% gSkin.rootdir %]/eventsadmin.pl?op=delete&amp;sid=[% sid %]&amp;id=[% event.id %]">[delete]</A>
+		</TD>
+	</TR>
+[% END %]
+</TABLE>
+<BR>
+[% PROCESS titlebar title="Add Event to \"$storytitle, sid $sid\"" width="100%" %]
+<P>
+<FORM ACTION="[% gSkin.rootdir %]/eventsadmin.pl" METHOD="POST">
+		Begin Date: 
+	<SELECT NAME="beginday">
+		[% FOREACH i = days %]
+	
+		<OPTION VALUE="[% i %]" [% IF i == selectedref.beginday %]SELECTED[% END %]>[% i %]
+		[% END %]
+	</SELECT>
+		Month [% Slash.createSelect("beginmonth", months, selectedref.beginmonth, 1, 1) %]&nbsp;
+		Year [% Slash.createSelect("beginyear", years, selectedref.beginyear, 1, 1) %]&nbsp;
+		<BR>
+		End Date: 
+<SELECT NAME="endday">
+		[% FOREACH i = days %]
+	
+	<OPTION VALUE="[% i %]" [% IF i == selectedref.endday %]SELECTED[% END %]>[% i %]
+		[% END %]
+</SELECT>
+Month [% Slash.createSelect("endmonth", months, selectedref.endmonth, 1, 1) %]&nbsp;
+Year [% Slash.createSelect("endyear", years, selectedref.endyear, 1, 1) %]&nbsp;
+		&nbsp;
+
+		<BR>
+<INPUT TYPE="HIDDEN" NAME="sid" VALUE="[% sid %]">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="add">
+<INPUT TYPE="SUBMIT" VALUE="Save">
+<BR>
+<A HREF="[% gSkin.rootdir %]/admin.pl?op=edit&amp;sid=[% sid %]">Edit Story</A>
+</FORM>
+__seclev__
+100
+__version__
+$Id$
