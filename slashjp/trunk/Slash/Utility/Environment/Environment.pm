@@ -1441,6 +1441,8 @@ sub filter_params {
 				$form{$_} = \@multi;
 				$form{_multi}{$_} = \@multi;
 				next;
+			} elsif (/^op_(.+)$/){
+				$form{'op'} = $1;
 			}
 		}
 	}
