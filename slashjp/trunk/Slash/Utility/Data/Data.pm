@@ -2875,6 +2875,7 @@ XML::Parser::Expat(3).
 
 sub xmlencode {
 	my($text, $nohtml) = @_;
+	my $constants = getCurrentStatic();
 
 	# if there is an & that is not part of an entity, convert it
 	# to &amp;
@@ -2885,7 +2886,7 @@ sub xmlencode {
 	$text = XML::Parser::Expat->xml_escape($text, ">");
 
 	# convert ASCII-non-printable to numeric entities
-	$text =~ s/([^\s\040-\176])/ "&#" . ord($1) . ";" /ge;
+	$text =~ s/([^\s\040-\176])/ "&#" . ord($1) . ";" /ge if $constants->{rss_entitize_nonascii};
 
 	return $text;
 }
