@@ -36,6 +36,7 @@ use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Symbol 'gensym';
 use Time::HiRes ();
+use Encode;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT @EXPORT_OK);
@@ -120,6 +121,15 @@ sub sendEmail {
 		return 0;
 	}
 
+	# Character Code Conversion; target encoding must be valid name
+	# Characters not representable in the destination character set
+	# and encoding will be replaced with \x{HHHH} place-holders
+	# (s. Encode(3) perldoc, Handling Malformed Data)
+	my $b_code = $constants->{mail_charset_body} || "UTF-8";
+	my $h_code = $constants->{mail_charset_header} || "MIME-Header";
+	$content = encode( $b_code, $content, Encode::FB_PERLQQ );
+	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
+
 	my %data = (
 		From		=> $constants->{mailfrom},
 		Smtp		=> $constants->{smtp_server},
@@ -127,7 +137,7 @@ sub sendEmail {
 		Message		=> $content,
 		To		=> $addr,
 		# put in vars ... ?
-		'Content-type'			=> 'text/plain; charset="us-ascii"',
+		'Content-type'			=> qq|text/plain; charset="$b_code"|,
 		'Content-transfer-encoding'	=> '8bit',
 		'Message-Id'			=> messageID(),
 	);

@@ -836,6 +836,8 @@ INSERT INTO vars (name, value, description) VALUES ('m2_oldest_zone_mult', '2', 
 INSERT INTO vars (name, value, description) VALUES ('m2_oldzone', '0', 'Starting id (youngest) of the old-zone of moderations that still require M2 (the oldest certain percentile)');
 INSERT INTO vars (name, value, description) VALUES ('m2_userpercentage','0.9','UID must be below this percentage of the total userbase to metamoderate');
 INSERT INTO vars (name, value, description) VALUES ('m2_wait_hours','12','Number of hours to wait before a mod is available for m2');
+INSERT INTO `vars` (`name`, `value`, `description`) VALUES ('mail_charset_body','us-ascii','Character Encoding used for mail body sent by the system (s. Encode::Supported)');
+INSERT INTO `vars` (`name`, `value`, `description`) VALUES ('mail_charset_header','MIME-Header','Character Encoding used for mail header sent by the system (s. Encode::MIME::Header)');
 INSERT INTO vars (name, value, description) VALUES ('mailfrom','admin@example.com','All mail addressed from the site looks like it is coming from here');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_hours','48','Mailing a password only allowed mailpass_max_num times per account per this many hours');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_num','2','Mailing a password only allowed this many times per account per mainpass_max_hours hours');
