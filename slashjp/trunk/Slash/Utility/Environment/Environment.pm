@@ -1473,7 +1473,7 @@ sub filter_params {
 
 sub filter_param {
 	my($key, $data) = @_;
-	my $candencs = [ 'EUC-JP', 'Shift-JIS' ];
+	my $candencs = qw/utf8 ascii euc-jp shiftjis 7bit-jis/;
 	my $enc;
 
 	# Paranoia - Clean out any embedded NULs. -- cbwood
@@ -1495,14 +1495,9 @@ sub filter_param {
 
 		# convert input to internal character encoding
 		# don't do any conversion if code can't be guessed
-		while ( !ref($enc) && @$candencs){
-			$enc = guess_encoding( $data, @$candencs );
-			if (ref($enc)){
-				Encode::from_to( $data, $enc->name, "EUC-JP" );
-				last;
-			}else{
-				pop( @$candencs );
-			}
+		$enc = guess_encoding( $data, $candencs );
+		if (ref($enc)){
+			$data = $enc->decode( $data, );
 		}
 	}
 

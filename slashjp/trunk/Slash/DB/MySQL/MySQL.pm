@@ -12,6 +12,7 @@ use Date::Format qw(time2str);
 use Slash::Utility;
 use Storable qw(thaw freeze);
 use URI ();
+use Encode;
 use vars qw($VERSION);
 use base 'Slash::DB';
 use base 'Slash::DB::Utility';
@@ -291,6 +292,27 @@ sub init {
 	# probably perform a delete on anything matching, here.
 }
 
+########################################################
+# Tell server to send us data in UTF-8 encoding, also
+# tell data base handle to set utf8 flag on all strings
+# (blindly assuming MySQL 4.1 and patched DBD::MySQL for now)
+sub sqlConnect{
+	my($self) = @_;
+	$self->SUPER::sqlConnect();
+	$self->{_dbh}->{mysql_enable_utf8} = 1;
+	$self->{_dbh}->do( "SET NAMES utf8");
+}
+
+########################################################
+# make sure UTF-8 flag is set before we send query to
+# MySQL, assuming all data is actually UTF-8 and only
+# Perl has lost the flag somewhere
+sub sqlDo{
+	my($self, $sql) = @_;
+	$sql = decode_utf8( $sql );
+	$self->SUPER::sqlDo( $sql );
+}
+  
 ########################################################
 # Yes, this is ugly, and we can ditch it in about 6 months
 # Turn off autocommit here
