@@ -3443,9 +3443,9 @@ sub sitename2filename {
 	if ($section eq 'mainpage') {
 		$filename = 'index';
 	} elsif ($section ne 'light') {
-		$filename = $section || lc getCurrentStatic('sitename');
+		$filename = $section || lc getCurrentStatic('siteid');
 	} else {
-		$filename = lc getCurrentStatic('sitename');
+		$filename = lc getCurrentStatic('siteid');
 	}
 
 	$filename =~ s/\W+//g;
