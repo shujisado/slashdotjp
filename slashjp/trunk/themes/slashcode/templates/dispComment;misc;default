@@ -22,8 +22,6 @@ en_US
 __name__
 dispComment
 __template__
-[% USE Slash %]
-
 	<TR><TD>
 	<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
 		<TR VALIGN="TOP">
@@ -70,7 +68,7 @@ on [% Slash.timeCalc(time) %]
 			<TD BACKGROUND="[% constants.imagedir %]/gr.gif"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="11" HEIGHT="11" ALT=""></TD>
 		</TR>
 
-		<TR><TD BGCOLOR="#006666" COLSPAN="3"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="1" HEIGHT="1"></TD></TR>
+		<TR><TD BGCOLOR="#006666" COLSPAN="3"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="1" HEIGHT="1" ALT=""></TD></TR>
 		<TR>
 			<TD BACKGROUND="[% constants.imagedir %]/wl.gif"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="11" HEIGHT="11" ALT=""></TD>
 			<TD BGCOLOR="[% user.bg.1 %]" WIDTH="100%"><TABLE WIDTH="100%" BORDER="0" CELLPADDING="5" CELLSPACING="0"><TR><TD BGCOLOR="[% user.bg.1 %]">
@@ -84,14 +82,15 @@ on [% Slash.timeCalc(time) %]
 		sid	=> sid,
 		cid	=> cid,
 		pid	=> cid,
-		subject	=> 'Read the rest of this comment...'
+		subject	=> 'Read the rest of this comment...',
+		subject_only => 1
 	}, 1) %]
 	<P><B>[% linkComment %]</B>
 [% END %]
 			</TD></TR></TABLE></TD>
 			<TD BACKGROUND="[% constants.imagedir %]/wr.gif"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="11" HEIGHT="11" ALT=""></TD>
 		</TR>
-		<TR><TD BGCOLOR="[% user.bg.3 %]" COLSPAN="3"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="1" HEIGHT="1"></TD></TR>
+		<TR><TD BGCOLOR="[% user.bg.3 %]" COLSPAN="3"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="1" HEIGHT="1" ALT=""></TD></TR>
 	</TABLE>
 	</TD></TR>
 

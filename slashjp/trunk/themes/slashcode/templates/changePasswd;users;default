@@ -7,6 +7,8 @@ Change password form
 * author_flag = user is author
 * title = passed to titlebar
 * session = popup for session login
+* got_old_pass = set to 1 if you've already been passed the old password correctly 
+
 
 __title__
 
@@ -26,7 +28,7 @@ __template__
 		<TD>
 [% IF constants.offer_insecure_login_link %]
 		<P>You can automatically log in by clicking
-		 <A HREF="[% constants.rootdir %]/index.pl?op=userlogin&amp;upasswd=[% useredit.passwd | fixparam %]&amp;unickname=[% useredit.nickname | fixparam %]">This Link</A> and Bookmarking the resulting page. 
+		 <A HREF="[% constants.rootdir %]/index.pl?op=userlogin&amp;logtoken=[% useredit.logtoken | fixparam %]">This Link</A> and Bookmarking the resulting page. 
 		This is totally insecure, but very convenient.
 		</P>
 [% END %]
@@ -41,7 +43,24 @@ __template__
 [% ELSE %]
 		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% useredit.uid %]">
 [% END %]
-		<B>Session Login</B> [% session %]<BR>
+		My <A HREF="[% constants.rootdir %]/faq/accounts.shtml#ac1200">login session</A> [% session %] and [% clocation %]
+
+		<P>
+
+		<P>Note: currently, to change your login cookie preferences, you must change your
+		password.  This will be fixed in the near future.  You can change your password to
+		whatever your current password is, if you like, so it won't actually change.</P>
+
+		<P>Note: changing your password or login cookie preferences will disable all
+		cookies for this account, requiring all browsers to reauthenticate.</P>
+[% IF !admin_flag %]
+		[% IF got_oldpass %]
+			<INPUT TYPE="HIDDEN" NAME="oldpass" VALUE="[% form.oldpass | strip_attribute %]">	
+		[% ELSE %]
+			Enter your <b>current</b> password <BR>
+			<INPUT TYPE="PASSWORD" NAME="oldpass" SIZE="20" MAXLENGTH="20" VALUE=""><BR>
+		[% END %]
+[% END %]
 		<B>Password</B> Enter a new password twice to change it.
 		(must be 6-20 chars long)</B><BR>
 		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="20" MAXLENGTH="20">

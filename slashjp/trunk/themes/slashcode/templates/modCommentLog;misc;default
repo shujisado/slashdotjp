@@ -16,8 +16,16 @@ Prints table detailing history of moderation of a comment, or a user, or
 	done to; "from" means each nickname/uid is the moderator
 * both_mods = if true (1), this is an ipid or subnetid page, and both
 	moderator and moderatee columns are needed
-
-__title__
+* timestamp_hr = time to place an <HR> at
+* skip_ip_disp = number of ip display to skip when both_mods are on ( 1 or 2) 0 if you don't want to skip any
+* this_user    = user whose mods we are looking at
+* title	       = title to display -- if none is given none is shown
+* mods_to_m2s  = hashref keyed by mod id containing arrays of m2s done to that mod
+* show_m2s     = whether we are currently trying to show_m2s
+* value	       = value of item we're looking at uid of user, or netid value
+* need_m2_form = whether we need to open and close a form for m2
+* need_m2_button = whether we need to show a button for m2
+* meta_mod_only = whether meta_moderation is the only thing going on in this form
 
 __page__
 misc
@@ -26,55 +34,186 @@ en_US
 __name__
 modCommentLog
 __template__
-
 [% IF mod_admin %]
+[% 
+light_text_color = "#AAAAAA
+light_text_color2 = "#444444";
+light_bgcolor ="#EEEEEE";
+down=0; cnt=0; m2_down=0; m2_count=0; m2_offside=0; 
+a_down=0; a_cnt=0; a_m2_down=0; a_m2_up=0; m2_count=0; a_m2_offside=0; a_m2_unfair_votes=0; unanimous = 0; unresolved=0;
+show_uid_totals = (type == "uid" && (this_user.totalmods || this_user.downmods || this_user.upmods || this_user.m2unfair || this_user.m2unfairpercent || this_user.stirred));
 
-<TABLE BGCOLOR="[% user.bg.2 %]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0">
-	[% IF mods.size > 0  %]
-	<TR BGCOLOR="[% user.bg.3 %]">
-[% IF show_cid %]<TH><FONT COLOR="[% user.fg.3 %]"> cid </FONT></TH>
-		<TH><FONT COLOR="[% user.fg.3 %]"> score </FONT></TH>[% END %]
-		<TH><FONT COLOR="[% user.fg.3 %]"> val </FONT></TH>
-		<TH><FONT COLOR="[% user.fg.3 %]"> reason </FONT></TH>
-[% IF show_modder %]<TH COLSPAN="2"><FONT COLOR="[% user.fg.3 %]"> 
-		[% IF mod_to_from == 'to' %]moderatee[% ELSE %]moderator[% END %]
-</FONT></TH>
-		[% IF both_mods %]<TH COLSPAN="2"><FONT COLOR="[% user.fg.3 %]">moderatee</FONT></TH>[% END %]
-[% END %]
-		<TH><FONT COLOR="[% user.fg.3 %]"> time </FONT></TH>
-		<TH>&nbsp;</FONT></TH>
-	</TR>
-
+bg_toggle = 0;
+bg_col_1 = "DDDDDD";
+bg_col_2 = user.bg.2;
+%]
+[% IF mods.size > 0  || show_uid_totals %]
+	[% IF user.is_admin and need_m2_form %]
+	<FORM  METHOD="POST" ACTION="[% constants.rootdir %]/comments.pl">
+	[% END %]
+	[% IF meta_mod_only %]
+		<INPUT TYPE="HIDDEN" name="meta_mod_only" value="1">
+	[% END %]
+	[% total_cols = 6 %]	
+	<TABLE BORDER=0 ALIGN="CENTER" width="100%" CELLSPACING="0" CELLPADDING="0">
+	[% IF title %]
+		[% show_m2s_op = show_m2s ? 0 : 1;
+		   self_url = PROCESS base_url_mod;
+		   url_tail = PROCESS state_url_mod override = { show_m2s => show_m2s_op};
+		   self_url = self_url  _ url_tail;
+		   extra = "<TD width=\"14\" bgcolor=\"" _ user.bg.3 _ "\"><A HREF='" _ self_url _ "'><IMG SRC=\"" _  constants.imagedir _ (show_m2s ? "/contract.gif" : "/expand.gif") _ "\"  ALT=\"\" WIDTH=\"14\" HEIGHT=\"14\" BORDER=0></A></TD>";
+		%]
+		<TR><TD ALIGN="CENTER">[% PROCESS titlebar width="100%" title=title td_extra = extra %]</TD></TR>
+	[% END %]
+	<TR><TD ALIGN="CENTER">
+	<TABLE BGCOLOR="[% user.bg.2 %]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+	<tr BGCOLOR="[% user.bg.3 %]">
+        	<th align=left><font COLOR="[% user.fg.3 %]" size=-1> Datestamp </font></th>
+		<th align=right><font COLOR="[% user.fg.3 %]" size=-1> Was </font></th>
+		<th align=right><font COLOR="[% user.fg.3 %]" size=-1> Now </font></th>
+		<th align=right><font COLOR="[% user.fg.3 %]" size=-1> Val </font></th>
+		<th align=left><font COLOR="[% user.fg.3 %]" size=-1> Reason <font color=AAAAAA> / Metamod</font> </font></th>
+		<th align=right><font COLOR="[% user.fg.3 %]" size=-1> M2 </font></th>
+		[% IF mod_to_from == "from"; total_cols = total_cols + 2; %]
+			[% IF skip_ip_disp == 1 and both_mods; total_cols = total_cols - 1; ELSE %]
+			<th align=left><font COLOR="[% user.fg.3 %]" size=-1>IPID </font></th>
+			[% END %]
+			<th align="LEFT"><font COLOR="[% user.fg.3 %]" size=-1>Moderator</font></th>
+		[% END %]
+		[% IF mod_to_from == "to" || both_mods; total_cols = total_cols + 2; %]
+			[% IF both_mods and skip_ip_disp ==2; total_cols = total_cols - 1; ELSE  %]
+			<th align=left><font COLOR="[% user.fg.3 %]" size=-1>IPID </font></th>
+			[% END %]
+			<th align=left><font COLOR="[% user.fg.3 %]" size=-1>Moderatee<font color=AAAAAA> / Metamoderator</font></font></th>
+		[% END %]
+	</tr>
+		[% hr_shown = 0; 
+		   mod_index = 0; %]
 		[% FOREACH moderation = mods %]
-	<TR>
-[% IF show_cid %]
-		<TD ALIGN="RIGHT">
+		[% IF type == "cid" and constants.show_m2s_with_mods and show_m2s and constants.m2_multicount; 
+			prev_index = mod_index - 1;
+			next_index = mod_index + 1;
+			IF prev_index >= 0; prev_mod = mods.${prev_index}; END;
+			IF next_index < mods.size; next_mod = mods.${next_index}; ELSE; next_mod = {}; END;
+			IF moderation.m2_identity == prev_mod.m2_identity && moderation.reason == prev_mod.reason; suppress_mod_head = 1; ELSE; suppress_mod_head = 0; END;
+			IF moderation.m2_identity == next_mod.m2_identity && moderation.reason == next_mod.reason; suppress_m2s = 1; ELSE; suppress_m2s = 0; END;
+		 END %]
+		[% IF type=="cid";
+			IF !suppress_mod_head; 
+				bg_toggle=!bg_toggle;
+			END;
+		   ELSE;
+			bg_toggle=!bg_toggle;
+		END; %]
+		[% IF (timestamp_hr and timestamp_hr.gt(moderation.ts) and !hr_shown); hr_shown=1 %]<TR><TD COLSPAN="[% total_cols %]">[% PROCESS horiz_rule %]</TD></TR>[% END %]
+	<TR bgcolor="[% bg_toggle ? bg_col_1 : bg_col_2 %]">
+		<TD ALIGN="LEFT">
+			[% IF show_cid %]
 			<A HREF="[% constants.rootdir %]/comments.pl?sid=[%
 			moderation.sid %]&amp;cid=[% moderation.cid %]">[%
-			moderation.cid %]</A>
+			moderation.ts.substr(5,-3) %]</A>
+			[% ELSE %]
+				[% moderation.ts.substr(5,-3) %]
+			[% END %]
+			[% IF !moderation.active %]*[% END %]
 		</TD>
-		<TD ALIGN="RIGHT">
-			[% moderation.score %]
+	        <TD ALIGN="right">[% moderation.points_orig; %]</TD>
+		<TD ALIGN="right">
+			[% IF !suppress_mod_head; moderation.score; END %]
 		</TD>
+		<TD ALIGN="RIGHT"> <B>[% IF !suppress_mod_head %][% IF moderation.val > 0; "+"; END; moderation.val %][% END %]</B> </TD>
+		<TD>[% IF !suppress_mod_head %][% PROCESS reason_or_m2_select moderation=moderation reasons=reasons mod_admin=mod_admin %][% END %]</TD>
+		[% IF !reasons.${moderation.reason}.m2able || !moderation.active;
+			m2fair_str = "-";
+			m2unfair_str = "-";
+		ELSE;
+			IF moderation.m2status > 0; 
+				m2fair_str = "<B><I>" _ moderation.m2fair _ "</I></B>"; m2unfair_str = "<B><I>" _ moderation.m2unfair _ "</I></B>";
+		 	  ELSE;
+				unresolved = unresolved + 1;
+				m2fair_str = moderation.m2fair; m2unfair_str =  moderation.m2unfair;
+		   	END; 
+			
+		END %]
+		<TD ALIGN="RIGHT">[% IF !suppress_mod_head; m2fair_str _ " " _ m2unfair_str; END %] </TD>
+
+[% IF !both_mods || skip_ip_disp!=1 %]	
+	<TD> &nbsp; [% PROCESS link_ipid ipid=moderation.ipid ipid_vis=moderation.ipid_vis %]</TD>
 [% END %]
-		<TD ALIGN="RIGHT"> <B>[% IF moderation.val > 0; "+"; END; moderation.val %]</B> </TD>
-		<TD> [% reasons.${moderation.reason}.name %] </TD>
-[% IF show_modder %]
-		<TD> &nbsp; <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% moderation.ipid | strip_attribute %]&amp;fieldname=ipid">[% moderation.ipid_vis %]</A> </TD>
-		<TD> [% moderation.nickname | strip_literal %] (<A HREF="[%
-			constants.rootdir %]/users.pl?op=userinfo&amp;fieldname=uid&amp;userfield=[%
-			moderation.uid %]">[% moderation.uid %]</A>) &nbsp; </TD>
-[% IF both_mods %]<TD> &nbsp; <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% moderation.ipid2 | strip_attribute %]&amp;fieldname=ipid">[% moderation.ipid2_vis %]</A> </TD>
-		<TD> [% moderation.nickname2 | strip_literal %] (<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;fieldname=uid&amp;userfield=[% moderation.uid2 %]">[% moderation.uid2 %]</A>) &nbsp; </TD>[% END %]
+<TD> [% PROCESS nick_and_uid nickname=moderation.nickname uid=moderation.uid %] &nbsp; </TD>
+[% IF both_mods %]
+	[% IF skip_ip_disp!=2 %]	
+		<TD> &nbsp; [% PROCESS link_ipid ipid=moderation.ipid2  ipid_vis=moderation.ipid2_vis %]</TD>
+	[% END %]	
+		<TD> [% PROCESS nick_and_uid nickname=moderation.nickname2 uid=moderation.uid2 %] &nbsp; </TD>
 [% END %]
-		<TD> [% moderation.ts %]</TD>
-		<TD>[% IF moderation.active %] &nbsp; [% ELSE %] <i>in</i> [% END %] </TD>
 	</TR>
+		[% mod_index = mod_index + 1; %]
+		[% IF moderation.active %]
+			[%  a_sum = a_sum + moderation.val; IF moderation.val > 0; a_up = a_up+1; END; IF moderation.val < 0; a_down = a_down + 1; END; 
+			a_count = a_count+1; a_m2_count = a_m2_count + moderation.m2fair + moderation.m2unfair;
+			a_m2_unfair_votes=a_m2_unfair_votes + moderation.m2unfair;
+			IF moderation.m2status > 0;
+				IF moderation.m2fair > moderation.m2unfair;  a_m2_up = a_m2_up + 1; END;
+				IF moderation.m2unfair > moderation.m2fair;  a_m2_down = a_m2_down + 1; END;
+				IF (moderation.m2unfair == 0) and (moderation.m2fair>0 ); unanimous=unanimous + 1; END;
+				END;
+ %]
+			[% IF moderation.m2fair >= moderation.m2unfair; a_m2_offside = a_m2_offside + moderation.m2unfair; ELSE; a_m2_offside = a_m2_offside + moderation.m2fair; END %]
+			[% IF constants.show_m2s_with_mods %]
+			[% FOREACH m2 = mods_to_m2s.${moderation.id} %] 
+			[% IF !suppress_m2s %]
+			<TR bgcolor="[% light_bgcolor %]"><TD><font size=-1 color="[% light_text_color2 %]">[% m2.ts.substr(5,-3)  %][% IF !m2.active %]*[% END %]</font></TD><TD colspan="3"></TD><TD align="right"><font size=-1 color="[% light_text_color2 %]">[% m2.val > 0 ? "Fair" : "Unfair" %]</font></TD><TD ALIGN="RIGHT"><font size=-1 color="[% light_text_color2 %]">[% m2.val > 0 ? "+" : "-" %]</font></TD>
+			[%- IF !both_mods || skip_ip_disp!=1 -%]
+				<TD></TD>
+			[%- END -%]
+			<TD>[% IF !both_mods %]<font size=-1 color="[% light_text_color2 %]">[% PROCESS nick_and_uid nickname=m2.nickname uid=m2.uid %]</font>[% END %] </TD>
+			[%- IF both_mods -%]
+				[%- IF skip_ip_disp!=2 -%]
+					<TD></TD>
+				[%- END -%]
+				<TD><font size=-1 color="[% light_text_color2 %]">[% PROCESS nick_and_uid nickname=m2.nickname uid=m2.uid %]</font></TD>
+			[%- END %]
+			</TR>
+			[% END %]
+		[%- END -%]
+		[%- END -%]
+
 		[% END %]
+	
+		[% sum = sum + moderation.val; IF moderation.val > 0; up = up+1; END; IF moderation.val < 0; down = down + 1; END; count = count+1; 
+		IF moderation.m2unfair > moderation.m2fair; m2_down = m2_down + 1; END; m2_count= m2_count + moderation.m2fair + moderation.m2unfair; %]
+
+		[% IF moderation.m2fair >= moderation.m2unfair; m2_offside = m2_offside + moderation.m2unfair; ELSE; m2_offside = m2_offside + moderation.m2fair; END %]
+		[% END %]
+	[% IF count %]
+	<TR><TD colspan="[% total_cols %]">[% PROCESS horiz_rule %]</TD></TR>
+	<TR><TD colspan="2"><B>Total: [% a_count %] </B></TD><TD></TD><TD align="right"><B>[% a_down %]</B></TD><TD><B>[% Slash.getData('percentage', { sum=>a_down, count => a_count},"misc") %] Down</B></TD><TD align="right"><B>[% a_m2_unfair_votes %]</B></TD><TD><B>Unfair ([% Slash.getData('percentage', { sum=> a_m2_unfair_votes, count => a_m2_count },"misc") %])</B></TD> 
+	[% IF both_mods and skip_ip_disp==1 %]<TD></TD>[% END %]
+	<TD><B>[% unanimous %] Unanimous [% a_m2_up %] Fair [% a_m2_down %] Unfair [% unresolved %] Unresolved</B></TD>
+</TR>
 	[% END %]
-
+[% IF type=="uid" %]
+	<TR><TD colspan="2"><B>Lifetime Spent: [% this_user.totalmods %]</B></TD><TD></TD><TD align="right"></TD><TD><B>[% Slash.getData('percentage', { sum = this_user.downmods, count=> this_user.downmods + this_user.upmods },"misc") %] Down</B></TD><TD></TD><TD><B>[% this_user.m2unfair %] Unfair [% IF this_user.m2unfairpercent %]([% this_user.m2unfairpercent %])[% END %]</B></TD>
+	[% IF both_mods and skip_ip_disp==1 %]<TD></TD>[% END %]
+	<TD><B>[% this_user.stirred %] Stirred</B></TD>
+</TR>
+[% END %]
+        </TABLE>
+</TD></TR>
+[% IF user.is_admin and (need_m2_form || need_m2_button )%]
+	[% IF need_m2_button %]
+		<TR bgcolor="[% user.bg.2 %]"><TD colspan="[% total_cols %]" align="right">
+		<INPUT TYPE="HIDDEN" NAME="op" VALUE="moderate">
+		<INPUT TYPE="submit" name="submit" value="MetaModerate">
+		</TD></TR>
+	[% END %]
+[% END %]
 </TABLE>
-
+	[% IF need_m2_form %]	
+		</FORM>
+	[% END %]
+[% END %]
 [% END %]
 
 [% modifiers = [
@@ -121,10 +260,12 @@ IF num_modifiers > 0 %]
 			|| (modifier.label == 'moderations' && reasonTotal > 0)
 			|| (modifier.label == 'reason_bonus' && reason)
 	)	|| modifier_hr.${modifier.label} %]
+	[% sc_end = modifier.label=='score_end' %]
+	[% IF sc_end %]<TR><TD colspan="4">[% PROCESS horiz_rule %]</TD></TR>[% END %]
 	<TR>
-		<TD ALIGN="LEFT">[% modifier.name %]</TD>
+		<TD ALIGN="LEFT">[% IF sc_end %]<B>[% END %][% modifier.name %][% IF sc_end %]</B>[% END %]</TD>
 		<TD>&nbsp;</TD>
-		<TD ALIGN="RIGHT">[% modifier_hr.${modifier.label} || 0 %]</TD>
+		<TD ALIGN="RIGHT">[% IF sc_end %]<B>[% END %][% modifier_hr.${modifier.label} || 0 %][% IF sc_end %]</B>[% END %]</TD>
 		<TD>
 		[%- IF modifier.edit && !user.is_anon -%]
 			<FONT SIZE="-1">(<A HREF="/my/comments/#[% modifier.label | strip_attribute %]">Edit</A>)</FONT>
@@ -156,11 +297,74 @@ IF num_modifiers > 0 %]
 	</TR>
 	[% END;
 END %]
-
+	[% IF mod_admin %]
+	<TR><TD><B>Comment Karma:</B></TD><TD>&nbsp;</TD><TD ALIGN="RIGHT"><B>[% mods.0.karma %]</B></TD><TD></TD></TR>
+	[% END %]
 </TABLE>
 
 [% END %]
 
+[% BLOCK link_ipid %]
+<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% ipid | strip_attribute %]&amp;fieldname=ipid">[% ipid_vis %]</A>
+[% END %] 
+
+[% BLOCK nick_and_uid;
+	nickname | strip_literal;
+	IF uid != constants.anonymous_coward_uid;
+		' (<A HREF="';
+	constants.rootdir;
+		'/users.pl?op=userinfo&amp;fieldname=uid&amp;userfield=';
+		uid;
+		'">';
+		uid;
+		'</A>)';
+	END;
+END %]
+
+[% BLOCK reason_or_m2_select %]
+	[% IF user.is_admin and moderation.active and moderation.m2status==0 and reasons.${moderation.reason}.m2able; 
+		h = { ""  => reasons.${moderation.reason}.name,
+		      "+" => reasons.${moderation.reason}.name _ " Fair",
+		      "-" => reasons.${moderation.reason}.name _ " Unfair"
+		    };
+		Slash.createSelect("mm${moderation.id}", h, '', 1, 0 );
+	ELSE;
+		reasons.${moderation.reason}.name;
+	END %]
+
+[% END %]
+
+[% BLOCK base_url_mod %]
+	[% base_url = constants.rootdir _ "/users.pl?op=userinfo&amp;fieldname=";
+	IF type == "uid" or type == "cuid";
+		base_url = constants.rootdir _ "/users.pl?op=userinfo&amp;uid=" _ value;
+	ELSIF type =="cid";
+		base_url = constants.rootdir _ "/comments.pl?sid=${mods.0.sid}&amp;pid=${mods.0.pid}&amp;cid=${mods.0.cid}";
+	ELSIF type =="global";
+		base_url = constants.rootdir _ "/admin.pl?op=recent_mods";
+	ELSE; 
+		fp_fieldname = BLOCK; form.fieldname | fixparam; END;
+		base_url = base_url _ fp_fieldname _ "&amp;userfield=" _ value;
+	END;
+	base_url;
+	%]
+[% END %]
+[% BLOCK state_url_mod;
+	state_url="";
+	state_params = ["show_m2s","show_m1s","min_comment", "m2_listing"];
+	FOREACH param = state_params;
+		IF form.${param}.defined || override.${param}.defined;
+			state_url = state_url _ "&amp;" _ param _ "=";
+			IF override.${param}.defined;
+				fp_val = BLOCK; override.${param} | fixparam; END;
+			ELSE;
+				fp_val = BLOCK; form.${param} | fixparam; END;
+			END;
+			state_url = state_url _ fp_val;
+		END;
+	END;
+	state_url;
+END %]
 __seclev__
 10000
 __version__

@@ -32,6 +32,21 @@ CASE "no anonymous posting" %]
 Sorry, anonymous posting has been turned off. Please
 <A HREF="[% constants.rootdir %]/users.pl">register and log in</A>.
 
+[% # OPEN PROXY.
+CASE "open proxy" %]
+Sorry, but according to our tests, you are trying to post anonymously
+from an open HTTP proxy.  Please close the proxy or ask your sysadmin
+to do so, because open proxies are used to spam web boards like this
+one. If you really can't close it and still want to post, you'll have to
+<A HREF="[% constants.rootdir %]/users.pl">register and log in</A>.
+<p>If you have questions, mention that your proxy is at
+<tt>[% unencoded_ip %]</tt> on port <tt>[% port %]</tt>.
+
+[% # COMMENT TABLE NOT AVAILABLE FOR WRITING
+CASE "comment_db_down" %]
+Database maintenance is currently taking place.  Some items such
+as comment posting and moderation are currently unavailable.
+
 [% # ALREADY POSTED.
 CASE "already posted" %]
 You've already posted something in this discussion<BR>
@@ -126,10 +141,16 @@ posted in the last 24 hours.
 
 [% # TROLL MESSAGE.
 CASE "troll message" %]
-Due to excessive bad posting from this IP or Subnet, comment posting
-has temporarily been disabled. If it's you, consider this a chance to
-sit in the timeout corner. If it's someone else, this is a chance to
-hunt them down.
+Due to excessive bad posting from this IP or Subnet, [% IF logged_in_allowed
+%]anonymous [% END %]comment posting
+has temporarily been disabled. 
+[% IF logged_in_allowed %]
+You can still login to post.  However, if bad posting continues from your IP
+or Subnet that privilege could be revoked as well.
+[% END %]
+If it's you, consider this a chance to
+sit in the timeout corner[% IF logged_in_allowed %] or login and improve your posting[% END %]
+. If it's someone else, this is a chance to hunt them down.
 If you think this is unfair, please email
 [% IF constants.adminmail_mod; constants.adminmail_mod;
 ELSE; constants.adminmail; END %]
@@ -143,7 +164,7 @@ END %].
 [% # NESTING TOO DEEP
 CASE "nesting too deep" %]
 You can only post nested lists and blockquotes [% constants.nesting_maxdepth %]
-levels deep. Please fix your UL, OL, and BLOCKQUOTE tags.
+levels deep. Please fix your UL, OL, DL, and BLOCKQUOTE tags.
 
 [% # LOW CHARS-PER-LINE
 CASE "low chars-per-line" %]

@@ -151,6 +151,13 @@ IF !useredit.is_anon;
                         '<BR><HR NOSHADE SIZE="1">';
 			useredit.bio;
                 END;
+
+		IF user.is_admin AND hits;
+			'<BR><HR NOSHADE SIZE="1">';
+			'This story has been viewed ';
+			hits;
+			' times.';
+		END;
 	END;
 	Slash.fancybox(constants.fancyboxwidth, title, contents, 1, 1);
 
@@ -195,7 +202,7 @@ URLs showing abuse (the cid link please!).
 	END;
 END %]
 
-<IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="[% constants.fancyboxwidth + 10 %]" HEIGHT="1" BORDER="0">
+<IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="[% constants.fancyboxwidth + 10 %]" HEIGHT="1" BORDER="0" ALT="">
 
 __seclev__
 1000

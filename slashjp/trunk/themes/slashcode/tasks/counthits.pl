@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -27,6 +27,7 @@ $maxrows = 150000;
 
 $task{$me}{timespec} = "1-59/$minutes_run * * * *";
 $task{$me}{timespec_panic_1} = ''; # not that important
+$task{$me}{resource_locks} = { log_slave => 1 };
 $task{$me}{fork} = SLASHD_NOWAIT;
 
 $task{$me}{code} = sub {
@@ -42,6 +43,10 @@ $task{$me}{code} = sub {
 	$lastmaxid = $newmaxid - $maxrows if $lastmaxid < $newmaxid - $maxrows;
         if ($lastmaxid > $newmaxid) {
                 slashdLog("Nothing to do, lastmaxid '$lastmaxid', newmaxid '$newmaxid'");
+		if ($lastmaxid > $newmaxid + 2) {
+			# Something odd is going on... this ID is off.
+			slashdErrnote("counthits_lastmaxid '$lastmaxid' is higher than it should be '$newmaxid', did accesslog maybe get rebuilt?");
+		}
                 return "";
         }
 

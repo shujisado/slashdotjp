@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -81,6 +81,12 @@ sub main {
 			[ qw ( max_post_check valid_check interval_check 
 				formkey_check regen_formkey ) ],
 		},
+		delete_forum		=> {
+			function		=> \&deleteForum,
+			seclev			=> 1000,
+			formname		=> 'discussions',
+			checks			=> ['generate_formkey'],
+		},
 		reply			=> {
 			function		=> \&editComment,
 			formname 		=> 'comments',
@@ -130,16 +136,20 @@ sub main {
 		if ($form->{sid} !~ /^\d+$/) {
 			$discussion = $slashdb->getDiscussionBySid($form->{sid});
 			$section = $discussion->{section};
-			my $tids = $slashdb->getStoryTopicsJustTids($form->{sid}); 
-			my $tid_string = join('&amp;tid=', @$tids);
-			$user->{state}{tid} = $tid_string;
+			if ($constants->{tids_in_urls}) {
+				my $tids = $slashdb->getStoryTopicsJustTids($form->{sid}); 
+				my $tid_string = join('&amp;tid=', @$tids);
+				$user->{state}{tid} = $tid_string;
+			}
 		} else {
 			$discussion = $slashdb->getDiscussion($form->{sid});
 			$section = $discussion->{section};
+			if ($constants->{tids_in_urls}) {
+				# This is to get tid in comments. It would be a mess to
+				# pass it directly to every comment -Brian
+				$user->{state}{tid} = $discussion->{topic};
+			}
 		}
-		# This is to get tid in comments. It would be a mess to pass it
-		# directly to every comment -Brian
-		$user->{state}{tid} = $discussion->{topic};
 		# The is_future field isn't automatically added by getDiscussion
 		# like it is with getStory.  We have to add it manually here.
 		$discussion->{is_future} = 1 if $slashdb->checkDiscussionIsInFuture($discussion);
@@ -180,7 +190,19 @@ sub main {
 
 	$form->{pid} ||= "0";
 
-	header($discussion ? $discussion->{'title'} : 'Comments', $section) or return;
+	my $title = 'Comments';
+
+	if ($discussion && $constants->{ubb_like_forums}
+		&& ($discussion->{type} eq 'recycle')) {
+		$title = $constants->{sitename} . ": Forums - "
+			. $discussion->{'title'};
+	} elsif ($discussion) {
+		$title = $discussion->{'title'};
+	} elsif ((!$discussion) && $constants->{ubb_like_forums}) {
+		$title = 'Forums';
+	}
+
+	header($title, $section) or return;
 
 	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
 		print getError('login error');
@@ -272,7 +294,7 @@ sub main {
 		# in there.. perhaps the length of the primary field in
 		# your form would be a good choice.
 		if ($ops->{$op}{update_formkey}) {
-			if($retval) {
+			if ($retval) {
 				my $field_length = $form->{postercomment}
 					? length($form->{postercomment})
 					: 0;
@@ -328,8 +350,7 @@ sub getError {
 sub delete {
 	my($form, $slashdb, $user, $constants) = @_;
 
-	# The content here should also probably go into a template.
-	titlebar("100%", "Delete $form->{cid}");
+	titlebar("100%", getData('deletecid'));
 
 	my $delCount = deleteThread($form->{sid}, $form->{cid});
 
@@ -350,6 +371,11 @@ sub displayComments {
 		});
 	}
 
+	if (defined($form->{show_m2s}) && $user->{is_admin}) {
+		$slashdb->setUser($user->{uid},
+			{ m2_with_comm_mod => $form->{show_m2s} });
+	}
+
 	if ($form->{cid}) {
 		# Here is the deal, if a user who has a mode of nocomment asks for a 
 		# comment we give it to them and assume the default mode (which 
@@ -358,6 +384,8 @@ sub displayComments {
 		printComments($discussion, $form->{cid}, $form->{cid});
 	} elsif ($form->{sid}) {
 		printComments($discussion, $form->{pid});
+	} elsif ($constants->{ubb_like_forums}) {
+		commentIndexUserCreated(@_);
 	} else {
 		commentIndex(@_);
 	}
@@ -465,20 +493,31 @@ sub commentIndexUserCreated {
 	my($form, $slashdb, $user, $constants, $error_message) = @_;
 	my $label = getData('label');
 
-	# um, let's put this in the template
 	# titlebar("100%", getData('user_discussions'));
 	my $searchdb = getObject('Slash::Search', $constants->{search_db_user});
-	my $start = $form->{start} || 0;
-	my $hashref = {};
-	$hashref->{section} = $form->{section} if $form->{section};
-	$hashref->{tid} = $form->{tid} if $form->{tid};
-	$hashref->{type} = 'recycle'; 
+	my $start    = $form->{start} || 0;
+	my $hashref  = {};
+	my $sections;
+	$hashref->{section}  = $form->{section} if $form->{section};
+	$hashref->{tid}      = $form->{tid} if $form->{tid};
+	$hashref->{type}     = 'recycle'; 
 	$hashref->{approved} = '1'; 
 
 	my $discussions = $searchdb->findDiscussion(
 		$hashref, 
 		$constants->{discussion_display_limit} + 1, 
 		$start, $constants->{discussion_sort_order});
+
+	my $section_select;	
+	if ($constants->{ubb_like_forums}) {
+		$sections = $slashdb->getDescriptions('forums');
+		$section_select = createSelect('section', $sections, $form->{section}, 1);
+		for (my $i=0; $i < @$discussions; $i++) {
+			$discussions->[$i]{comment} = $slashdb->getForumDescription($discussions->[$i]{id});
+			$discussions->[$i]{num_parents} = $slashdb->getForumParents($discussions->[$i]{id});
+			$discussions->[$i]{last_comment} = $slashdb->getForumLastPostHashref($discussions->[$i]{id});
+		}
+	}
 
 	if ($discussions && @$discussions) {
 		my $forward;
@@ -502,7 +541,7 @@ sub commentIndexUserCreated {
 # REMOVE ?
 
 #		$title .= ": " . $slashdb->getTopic($form->{tid},'alttext') . " ($form->{tid})" if $form->{tid};
-	
+
 		slashDisplay('udiscuss_list', {
 			discussions	=> $discussions,
 			error_message	=> $error_message,
@@ -512,12 +551,15 @@ sub commentIndexUserCreated {
 			args		=> _buildargs($form),
 			start		=> $start,
 			back		=> $back,
+			sections	=> $sections,
+			section_select  => $section_select,
 		});
 	} else {
 		print getData('nodiscussions');
 		slashDisplay('edit_comment', {
 			newdiscussion	=> 1,
 			label		=> $label,
+			section_select  => $section_select,
 		}) if $user->{seclev} >= $constants->{discussion_create_seclev};
 	}
 }
@@ -633,6 +675,17 @@ sub commentIndexPersonal {
 }
 
 ##################################################################
+# for ubb_like_forums
+sub deleteForum {
+	my($form, $slashdb, $user, $constants, $error_message) = @_;
+
+	$slashdb->deleteDiscussion($form->{sid}) if $constants->{ubb_like_forums};
+	commentIndexUserCreated(@_);
+
+	return;
+}
+
+##################################################################
 # This is where all of the real discussion creation occurs 
 # Returns the discussion id of the created discussion
 # -Brian
@@ -649,15 +702,16 @@ sub _createDiscussion {
 		# we don't want to override prefs too easily.  this
 		# can be modified to become more inclusive later,
 		# if needed.  -- pudge
-		my $newurl	= $form->{url}
+		my $newurl	   = $form->{url}
 			? $form->{url}
 			: $ENV{HTTP_REFERER} =~ m|\Q$constants->{rootdir}/comments.pl\E$|
 				? ""
 				: $ENV{HTTP_REFERER};
-		$form->{url}	= fudgeurl($newurl);
+		$form->{url}	   = fudgeurl($newurl);
 		# $form->{title}	= strip_notags($form->{title});
-		$form->{title}	= strip_notags($form->{postersubj});
-		$form->{topic}  = $constants->{defaulttopic};
+		$form->{title}	   = strip_notags($form->{postersubj});
+		$form->{topic}   ||= $constants->{defaulttopic};
+		$form->{section} ||= $constants->{defaultsection};
 
 
 		# for now, use the postersubj filters; problem is,
@@ -678,6 +732,7 @@ sub _createDiscussion {
 			$id = $slashdb->createDiscussion({
 				title	=> $form->{title},
 				topic	=> $form->{topic},
+				section => $form->{section},
 				url	=> $form->{url} || 1,
 				type	=> "recycle"
 			});
@@ -749,6 +804,12 @@ sub editComment {
 		$form->{postersubj} = "Re:$form->{postersubj}";
 	}
 
+	my($sections, $section_select);
+	if ($constants->{ubb_like_forums} && $form->{section} && $form->{newdiscussion}) {
+		$sections = $slashdb->getDescriptions('forums');
+		$section_select = createSelect('section', $sections, $form->{section}, 1);
+	}
+
 	my $gotmodwarning;
 	$gotmodwarning = 1 if (($error_message eq getError("moderations to be lost")) || $form->{gotmodwarning});
 	slashDisplay('edit_comment', {
@@ -758,7 +819,9 @@ sub editComment {
 		indextype	=> $form->{indextype},
 		preview		=> $preview,
 		reply		=> $reply,
-		gotmodwarning	=> $gotmodwarning
+		gotmodwarning	=> $gotmodwarning,
+		newdiscussion	=> $form->{newdiscussion},
+		section_select  => $section_select,
 	});
 }
 
@@ -777,22 +840,53 @@ sub validateComment {
 	my $message = '';
 
 	my $read_only;
+	if (!dbAvailable("write_comments")) {
+		$$error_message = getError('comment_db_down');
+		$form_success = 0;
+		return;
+	}
 	for (qw(ipid subnetid uid)) {
 		# We skip the UID test for anonymous users.
 		next if $_ eq 'uid' && $user->{is_anon};
 		# Otherwise we perform the specific read-only test.
 		$read_only = $slashdb->checkReadOnly('nopost', {
-        	        $_ => $user->{$_},
-	        });
+			$_ => $user->{$_},
+		});
 		# Bail if a specific test returns TRUE
 		last if $read_only;
 	}
-        if ($read_only) {
-                $$error_message = getError('readonly');
-                $form_success = 0;
-                # editComment('', $$error_message), return unless $preview;
-                return;
-        }
+	if ($read_only) {
+		$$error_message = getError('readonly');
+		$form_success = 0;
+		# editComment('', $$error_message), return unless $preview;
+		return;
+	}
+
+	# New check (March 2004):  depending on the settings of
+	# a var and whether the user is posting anonymous, we
+	# might scan the IP they're coming from to see if we can use
+	# some commonly-used proxy ports to access our own site.
+	# If we can, they're coming from an open HTTP proxy, which
+	# we don't want to allow to post.
+	if ($constants->{comments_portscan}
+		&& ( $constants->{comments_portscan} == 2
+			|| $constants->{comments_portscan} == 1 && $user->{is_anon} )
+	) {
+		my $is_trusted = $slashdb->checkIsTrusted($user->{ipid});
+		if ($is_trusted ne 'yes') {
+#use Time::HiRes; my $start_time = Time::HiRes::time;
+			my $is_proxy = $slashdb->checkForOpenProxy($user->{hostip});
+#my $elapsed = sprintf("%.3f", Time::HiRes::time - $start_time); print STDERR scalar(localtime) . " comments.pl cfop returned '$is_proxy' for '$user->{hostip}' in $elapsed secs\n";
+			if ($is_proxy) {
+				$$error_message = getError('open proxy', {
+					unencoded_ip	=> $ENV{REMOTE_ADDR},
+					port		=> $is_proxy,
+				});
+				$form_success = 0;
+				return;
+			}
+		}
+	}
 
 	# New check (July 2002):  there is a max number of posts per 24-hour
 	# period, either based on IPID for anonymous users, or on UID for
@@ -844,11 +938,33 @@ sub validateComment {
 		});
 		return;
 	}
-
+	
 	if (!$constants->{allow_anonymous} && ($user->{is_anon} || $form->{postanon})) {
 		$$error_message = getError('anonymous disallowed');
 		return;
 	}
+	
+	my $subnet_karma_comments_needed = $constants->{subnet_comments_posts_needed};
+	my ($subnet_karma, $subnet_post_cnt) = $slashdb->getNetIDKarma("subnetid", $user->{subnetid});
+	my ($sub_anon_max, $sub_anon_min, $sub_all_max, $sub_all_min ) = @{$constants->{subnet_karma_post_limit_range}};
+	
+	if ($subnet_post_cnt >= $subnet_karma_comments_needed) {
+		if (($user->{is_anon} || $form->{postanon}) && $constants->{allow_anonymous} && $subnet_karma >= $sub_anon_min && $subnet_karma <= $sub_anon_max ) {
+			my $logged_in_allowed = ($subnet_karma >= $sub_all_min && $subnet_karma <= $sub_all_max) ? 0 : 1;
+			$$error_message = getError('troll message', {
+				unencoded_ip 		=> $ENV{REMOTE_ADDR},
+				logged_in_allowed 	=> $logged_in_allowed      
+			});
+			return;
+		} elsif ($subnet_karma >= $sub_all_min && $subnet_karma <= $sub_all_max) {
+			$$error_message = getError('troll message', {
+				unencoded_ip 		=> $ENV{REMOTE_ADDR},
+			});
+			return;
+		}
+	} 
+	
+
 
 	$$subj =~ s/\(Score(.*)//i;
 	$$subj =~ s/Score:(.*)//i;
@@ -952,10 +1068,18 @@ sub validateComment {
 		}
 	}
 
-	if ($constants->{allow_moderation} && !$user->{is_anon} && !$form->{gotmodwarning} && $slashdb->sqlCount("moderatorlog","uid=$user->{uid} and sid=$form->{sid}") && !$form->{postanon} && !$user->{is_admin}) {
+	if ($constants->{allow_moderation}
+		&& !$user->{is_anon}
+		&& !$form->{postanon}
+		&& !$form->{gotmodwarning}
+		&& !( $constants->{authors_unlimited}
+			&& $user->{seclev} >= $constants->{authors_unlimited} )
+		&& !$user->{acl}{modpoints_always}
+		&& $slashdb->countUserModsInDiscussion($user->{uid}, $form->{sid}) > 0
+	) {
 		$$error_message = getError("moderations to be lost");
 		$form_success = 0;
-		return; 
+		return;
 	}
 
 	$$error_message ||= '';
@@ -1011,6 +1135,7 @@ sub previewForm {
 
 	my $sig = $user->{sig};
 	if ($user->{sigdash} && $user->{sig}) {
+		$sig =~ s/^\s*-{1,5}\s*<(?:P|BR)>//i;
 		$sig = "--<BR>$sig";
 	}
 
@@ -1131,11 +1256,17 @@ sub submitComment {
 	my $pts = 0;
 	my $karma_bonus = 0;
 	my $subscriber_bonus = 0;
-
+	my $tweak = 0;
 	if (!$user->{is_anon} && !$form->{postanon}) {
 		$pts = $user->{defaultpoints};
-		$pts-- if $user->{karma} < 0;
-		$pts-- if $user->{karma} < $constants->{badkarma};
+
+		if ($constants->{karma_posting_penalty_style} == 0) {
+			$pts-- if $user->{karma} < 0;
+			$pts-- if $user->{karma} < $constants->{badkarma};
+                } else {
+			$tweak-- if $user->{karma} < 0;
+			$tweak-- if $user->{karma} < $constants->{badkarma};
+		}
 		# Enforce proper ranges on comment points.
 		my($minScore, $maxScore) =
 			($constants->{comment_minscore}, $constants->{comment_maxscore});
@@ -1168,6 +1299,8 @@ sub submitComment {
 		subnetid	=> $user->{subnetid},
 		uid		=> $posters_uid,
 		points		=> $pts,
+		tweak		=> $tweak,
+		tweak_orig	=> $tweak,
 		karma_bonus	=> $karma_bonus ? 'yes' : 'no',
 	};
 	if ($constants->{plugin}{Subscribe}) {
@@ -1226,11 +1359,13 @@ sub submitComment {
 			$reply = $slashdb->getCommentReply($form->{sid}, $maxCid);
 		}
 
+		$clean_comment->{pointsorig} = $clean_comment->{points};
+
 		# reply to comment
 		if ($messages && $form->{pid}) {
 			my $parent = $slashdb->getCommentReply($id, $form->{pid});
 			my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
-			if (_send_comment_msg($users->[0], \%users, $pts)) {
+			if (_send_comment_msg($users->[0], \%users, $pts, $clean_comment)) {
 				my $data  = {
 					template_name	=> 'reply_msg',
 					subject		=> { template_name => 'reply_msg_subj' },
@@ -1247,7 +1382,7 @@ sub submitComment {
 		# reply to journal
 		if ($messages && $discussion->{url} =~ /\bjournal\b/) {
 			my $users  = $messages->checkMessageCodes(MSG_CODE_JOURNAL_REPLY, [$discussion->{uid}]);
-			if (_send_comment_msg($users->[0], \%users, $pts)) {
+			if (_send_comment_msg($users->[0], \%users, $pts, $clean_comment)) {
 				my $data  = {
 					template_name	=> 'journrep',
 					subject		=> { template_name => 'journrep_subj' },
@@ -1309,27 +1444,32 @@ sub submitComment {
 ##################################################################
 # Decide whether or not to send a given message to a given user
 sub _send_comment_msg {
-	my($uid, $uids, $pts) = @_;
+	my($uid, $uids, $pts, $C) = @_;
 	my $constants	= getCurrentStatic();
-	my $slashdb	= getCurrentDB();
+	my $reader	= getObject('Slash::DB', { db_type => 'reader' });
 	my $user	= getCurrentUser();
 
 	return unless $uid;			# no user
 	return if $uids->{$uid};		# user not already being msgd
 	return if $user->{uid} == $uid;		# don't msg yourself
 
-	my $user_message_threshold = $slashdb->getUser($uid, 'message_threshold');
+	my $otheruser = $reader->getUser($uid);
 
 	# use message_threshold in vars, unless user has one
 	# a message_threshold of 0 is valid, but "" is not
-	my $message_threshold = length($user_message_threshold)
-		? $user_message_threshold
+	my $message_threshold = length($otheruser->{message_threshold})
+		? $otheruser->{message_threshold}
 		: length($constants->{message_threshold})
 			? $constants->{message_threshold}
 			: undef;
 
+	my $newpts = Slash::_get_points($C, $otheruser,
+		$constants->{comment_minscore}, $constants->{comment_maxscore},
+		$reader->countUsers({ max => 1 }), $reader->getReasons,
+	);
+
 	# only if reply pts meets message threshold
-	return if defined $message_threshold && $pts < $message_threshold;
+	return if defined $message_threshold && $newpts < $message_threshold;
 
 	return 1;
 }
@@ -1344,13 +1484,32 @@ sub moderate {
 	my $sid = $form->{sid};
 	my $was_touched = 0;
 
+	my $meta_mods_performed = 0;
+	if ($user->{is_admin}) {
+		$meta_mods_performed = metaModerate();		
+	}
+
+	if ($form->{meta_mod_only}) {
+		titlebar("100%", getData('metamoderating'));
+		print getData("metamoderate_message");
+		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
+		return;
+	}
+
+	if (!dbAvailable("write_comments")) {
+		print getError("comment_db_down");
+		return;
+	}
+
 	if ($discussion->{type} eq 'archived'
 		&& !$constants->{comments_moddable_archived}) {
+		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
 		print getData('archive_error');
 		return;
 	}
 
 	if (! $constants->{allow_moderation}) {
+		print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
 		print getData('no_moderation');
 		return;
 	}
@@ -1361,21 +1520,37 @@ sub moderate {
 	titlebar("100%", getData('moderating'));
 
 	$hasPosted = $slashdb->countCommentsBySidUID($sid, $user->{uid})
-		unless $constants->{authors_unlimited}
-			&& $user->{seclev} >= $constants->{authors_unlimited};
+		unless ($constants->{authors_unlimited}
+				&& $user->{seclev} >= $constants->{authors_unlimited})
+			|| $user->{acl}{modpoints_always};
 
 	slashDisplay('mod_header');
+	print getData("metamods_performed", { num => $meta_mods_performed }) if $meta_mods_performed;
 
 	# Handle Deletions, Points & Reparenting
 	# It would be nice to sort these by current score of the comments
 	# ascending, maybe also by val ascending, or some way to try to
 	# get the single-point-spends first and then to only do the
 	# multiple-point-spends if the user still has points.
+	my $can_del = ($constants->{authors_unlimited} && $user->{seclev} >= $constants->{authors_unlimited})
+		|| $user->{acl}{candelcomments_always};
 	for my $key (sort keys %{$form}) {
-		if ($user->{seclev} > 100 and $key =~ /^del_(\d+)$/) {
+		if ($can_del && $key =~ /^del_(\d+)$/) {
 			$total_deleted += deleteThread($sid, $1);
-		} elsif (!$hasPosted and $key =~ /^reason_(\d+)$/) {
-			$was_touched += moderateCid($sid, $1, $form->{$key});
+		} elsif (!$hasPosted && $key =~ /^reason_(\d+)$/) {
+			my $cid = $1;
+			my $ret_val = $slashdb->moderateComment($sid, $cid, $form->{$key});
+			# If an error was returned, tell the user what
+			# went wrong.
+			if ($ret_val < 0) {
+				if ($ret_val == -1) {
+					print getError('no points');
+				} elsif ($ret_val == -2){
+					print getError('not enough points');
+				}
+			} else {
+				$was_touched += $ret_val;
+			}
 		}
 	}
 	$slashdb->setDiscussionDelCount($sid, $total_deleted);
@@ -1409,199 +1584,42 @@ sub moderate {
 	}
 }
 
-
-##################################################################
-# Handles moderation
-# Moderates a specific comment. Returns whether the comment score changed.
-sub moderateCid {
-	my($sid, $cid, $reason) = @_;
-	return 0 unless $reason;
-
+sub metaModerate {
+	my($id) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	
+	# for now at least no one should be hitting this unless they're an admin
+	return 0 unless $user->{is_admin};
 
-	my $comment_changed = 0;
-	my $superAuthor = $constants->{authors_unlimited}
-		&& $user->{seclev} >= $constants->{authors_unlimited};
+	# The user is only allowed to metamod the mods they were given.
+	my @mods_saved = $slashdb->getModsSaved();
+	my %mods_saved = map { ( $_, 1 ) } @mods_saved;
 
-	if ($user->{points} < 1 && !$superAuthor) {
-		print getError('no points');
-		return 0;
+	# %m2s is the data structure we'll be building.
+	my %m2s = ( );
+
+	for my $key (keys %{$form}) {
+		# Metamod form data can only be a '+' or a '-'.
+		next unless $form->{$key} =~ /^[+-]$/;
+		# We're only looking for the metamod inputs.
+		next unless $key =~ /^mm(\d+)$/;
+		my $mmid = $1;
+		# Only the user's given mods can be used, unless they're an admin.
+		next unless $mods_saved{$mmid} || $user->{is_admin};
+		# This one's valid.  Store its data in %m2s.
+		$m2s{$mmid}{is_fair} = ($form->{$key} eq '+') ? 1 : 0;
 	}
 
-	my $comment = $slashdb->getComment($cid);
-	$comment->{time_unixepoch} = timeCalc($comment->{date}, "%s", 0);
-
-	# The user should not have been been presented with the menu
-	# to moderate if any of the following tests trigger, but,
-	# an unscrupulous user could have faked their submission with
-	# or without us presenting them the menu options.  So do the
-	# tests again.
-	unless ($superAuthor) {
-		# Do not allow moderation of any comments with the same UID as the
-		# current user (duh!).
-		return if $user->{uid} == $comment->{uid};
-		# Do not allow moderation of any comments (anonymous or otherwise)
-		# with the same IP as the current user.
-		return if $user->{ipid} eq $comment->{ipid};
-		# If the var forbids it, do not allow moderation of any comments
-		# with the same *subnet* as the current user.
-		return if $constants->{mod_same_subnet_forbid}
-			and $user->{subnetid} eq $comment->{subnetid};
-		# Do not allow moderation of comments that are too old.
-		return unless $comment->{time_unixepoch} >= time() - 3600*
-			($constants->{comments_moddable_hours}
-				|| 24*$constants->{archive_delay});
-	}
-
-	# Start putting together the data we'll need to display to
-	# the user.
-	my $reasons = $slashdb->getReasons();
-	my $dispArgs = {
-		cid	=> $cid,
-		sid	=> $sid,
-		subject => $comment->{subject},
-		reason	=> $reason,
-		points	=> $user->{points},
-		reasons	=> $reasons,
-	};
-
-	unless ($superAuthor) {
-		my $mid = $slashdb->getModeratorLogID($cid, $user->{uid});
-		if ($mid) {
-			$dispArgs->{type} = 'already moderated';
-			slashDisplay('moderation', $dispArgs);
-			return 0;
-		}
-	}
-
-	# Add moderation value to display arguments.
-	my $val = $reasons->{$reason}{val};
-	$val = "+1" if $val == 1;
-	$dispArgs->{val} = $val;
-
-	my $scorecheck = $comment->{points} + $val;
-	my $active = 1;
-	# If the resulting score is out of comment score range, no further
-	# actions need be performed.
-	# Should we return here and go no further?
-	if (	$scorecheck < $constants->{comment_minscore} ||
-		$scorecheck > $constants->{comment_maxscore})
-	{
-		# We should still log the attempt for M2, but marked as
-		# 'inactive' so we don't mistakenly undo it. Mods get modded
-		# even if the action didn't "really" happen.
-		#
-		$active = 0;
-		$dispArgs->{type} = 'score limit';
-	}
-
-	# Find out how many mod points this will really cost us.  As of
-	# Oct. 2002, it might be more than 1.
-	my $pointsneeded = $slashdb->getModPointsNeeded(
-		$comment->{points},
-		$scorecheck,
-		$reason);
-
-	# If more than 1 mod point needed, we might not have enough,
-	# so this might still fail.
-	if ($pointsneeded > $user->{points} && !$superAuthor) {
-		print getError('not enough points');
-		return 0;
-	}
-
-	# Write the proper records to the moderatorlog.
-	$slashdb->createModeratorLog($comment, $user, $val, $reason, $active,
-		$pointsneeded);
-
-	if ($active) {
-
-		# If we are here, then the user either has mod points, or
-		# is an admin (and 'author_unlimited' is set).  So point
-		# checks should be unnecessary here.
-
-		# First, update values for the moderator.
-		my $changes = { };
-		$changes->{-points} = "GREATEST(points-$pointsneeded, 0)";
-		my $tcost = $constants->{mod_unm2able_token_cost} || 0;
-		$tcost = 0 if $reasons->{$reason}{m2able};
-		$changes->{-tokens} = "tokens - $tcost" if $tcost;
-		$changes->{-totalmods} = "totalmods + 1";
-		$slashdb->setUser($user->{uid}, $changes);
-		$user->{points} -= $pointsneeded;
-		$user->{points} = 0 if $user->{points} < 0;
-
-		# Update stats.
-		if ($tcost and my $statsSave = getObject('Slash::Stats::Writer')) {
-			$statsSave->addStatDaily("mod_tokens_lost_unm2able", $tcost);
-		}
-
-		# Next, adjust the appropriate values for the user who
-		# posted the comment.
-		my $karma_change = $reasons->{$reason}{karma};
-		if (!isAnon($comment->{uid})) {
-			my $lost_tokens_per_downmod = 1; # XXX should be a var
-			my $cu_changes = { };
-			if ($val < 0) {
-				$cu_changes->{-downmods} = "downmods + 1";
-			} elsif ($val > 0) {
-				$cu_changes->{-upmods} = "upmods + 1";
-			}
-			if ($karma_change < 0) {
-				$cu_changes->{-karma} = "GREATEST("
-					. "$constants->{minkarma}, karma - 1)";
-				$cu_changes->{-tokens} = "tokens - $lost_tokens_per_downmod";
-			} elsif ($karma_change > 0) {
-				$cu_changes->{-karma} = "LEAST("
-					. "$constants->{maxkarma}, karma + 1)";
-			}
-			if (scalar keys %$cu_changes) {
-				$slashdb->setUser($comment->{uid}, $cu_changes);
-				# Update stats.
-				if ($karma_change < 0 and my $statsSave = getObject('Slash::Stats::Writer')) {
-					$statsSave->addStatDaily("mod_tokens_lost_downmod",
-						$lost_tokens_per_downmod);
-				}
-			}
-		}
-
-		# Make sure our changes get propagated back to the comment.
-		$comment_changed =
-			$slashdb->setCommentCleanup($cid, $val, $reason,
-				$comment->{reason});
-		if (!$comment_changed) {
-			# This shouldn't happen;  the only way we believe it
-			# could is if $val is 0, the comment is already at
-			# min or max score, the user's already modded this
-			# comment, or some other reason making this mod invalid.
-			# This is really just here as a safety check.
-			$dispArgs->{type} = 'logic error';
-			slashDisplay('moderation', $dispArgs);
-			return 0;
-		}
-
-		# We know things actually changed, so update points for
-		# display and send a message if appropriate.
-		$dispArgs->{points} = $user->{points};
-		$dispArgs->{type} = 'moderated';
-
-		send_mod_msg({
-			type	=> 'mod_msg',
-			sid	=> $sid,
-			cid	=> $cid,
-			val	=> $val,
-			reason	=> $reason,
-			comment	=> $comment
-		});
-	}
-
-	# Now display the template with the moderation results.
-	slashDisplay('moderation', $dispArgs);
-
-	return 1;
+	# The createMetaMod() method does all the heavy lifting here.
+	# Re m2_multicount:  if this var is set, then our vote for
+	# reason r on cid c applies potentially to *all* mods of
+	# reason r on cid c.
+	$slashdb->createMetaMod($user, \%m2s, $constants->{m2_multicount});
+	return scalar keys %m2s;
 }
-
 
 ##################################################################
 # Given an SID & A CID this will delete a comment, and all its replies
@@ -1609,6 +1627,7 @@ sub deleteThread {
 	my($sid, $cid, $level, $comments_deleted) = @_;
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
 
 	$level ||= 0;
 
@@ -1616,7 +1635,8 @@ sub deleteThread {
 	my @delList;
 	$comments_deleted = \@delList if !$level;
 
-	return unless $user->{seclev} >= 1000;
+	return unless ($constants->{authors_unlimited} && $user->{seclev} >= $constants->{authors_unlimited})
+		|| $user->{acl}{candelcomments_always};
 
 	my $delkids = $slashdb->getCommentChildren($cid);
 
@@ -1647,67 +1667,6 @@ sub deleteThread {
 	return $count;
 }
 
-##################################################################
-# Send messages regarding this moderation to user who posted
-# comment if they have that bit set.
-sub send_mod_msg {
-	my($mod) = @_;
-
-	my $messages	= getObject('Slash::Messages') or return;
-
-	my $constants	= getCurrentStatic();
-	my $slashdb	= getCurrentDB();
-	my $user	= getCurrentUser();
-
-	my $sid		= $mod->{sid};
-	my $cid		= $mod->{cid};
-	my $val		= $mod->{val};
-	my $reason	= $mod->{reason};
-	my $type	= $mod->{type}    || 'mod_msg';
-	my $comment	= $mod->{comment} || $slashdb->getComment($cid);
-
-	my $comm	= $slashdb->getCommentReply($sid, $cid);
-	my $users	= $messages->checkMessageCodes(
-		MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]
-	);
-
-	if (@$users) {
-		my $discussion = $slashdb->getDiscussion($sid);
-		if ($discussion->{sid}) {
-			# Story discussion, link to it.
-			$discussion->{realurl} = "/article.pl?sid=$discussion->{sid}";
-		} else {
-			# Some other kind of discussion,
-			# probably poll, journal entry, or
-			# user-created;  don't trust its url. -- jamie
-			# I really don't like this.  I want users
-			# to be able to go to the poll or journal
-			# directly.  we could consider matching a pattern
-			# for journal.pl or pollBooth.pl etc.,
-			# but that is not great.  maybe a field in discussions
-			# for whether or not url is trusted. -- pudge
-			$discussion->{realurl} = "/comments.pl?sid=$discussion->{id}";
-		}
-
-		my $data  = {
-			template_name	=> $type,
-			subject		=> {
-				template_name => $type . '_subj'
-			},
-			comment		=> $comm,
-			discussion	=> $discussion,
-			moderation	=> {
-				user	=> $user,
-				value	=> $val,
-				reason	=> $reason,
-			},
-			reasons		=> $slashdb->getReasons(),
-		};
-		$messages->create($users->[0],
-			MSG_CODE_COMMENT_MODERATE, $data, 0, '', 'collective'
-		);
-	}
-}
 
 ##################################################################
 # If you moderate, and then post, all your moderation is undone.
@@ -1717,14 +1676,17 @@ sub undoModeration {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	# We abandon this operation if:
+	# We abandon this operation, thus allowing mods to remain while
+	# the post goes forward, if:
 	#	1) Moderation is off
-	#	2) The user is anonymous (they aren't allowed to anyway).
-	#	3) The user is an author with a high enough security level
-	#	   and that option is turned on.
-	return if !$constants->{allow_moderation} || $user->{is_anon} ||
-		  ( $constants->{authors_unlimited} && $user->{seclev} >= $constants->{authors_unlimited}
-		    && $user->{author} );
+	#	2) The user is anonymous (posting anon is the only way
+	#	   to contribute to a discussion after you moderate)
+	#	3) The user has the "always modpoints" ACL
+	#	4) The user has a sufficient seclev
+	return if !$constants->{allow_moderation}
+		|| $user->{is_anon}
+		|| $user->{acl}{modpoints_always}
+		|| $constants->{authors_unlimited} && $user->{seclev} >= $constants->{authors_unlimited};
 
 	if ($sid !~ /^\d+$/) {
 		$sid = $slashdb->getDiscussionBySid($sid, 'header');
@@ -1733,7 +1695,8 @@ sub undoModeration {
 
 	for my $mod (@$removed) {
 		$mod->{val} =~ s/^(\d)/+$1/;  # put "+" in front if necessary
-		send_mod_msg({
+		my $messages = getObject('Slash::Messages');
+		$messages->send_mod_msg({
 			type	=> 'unmod_msg',
 			sid	=> $sid,
 			cid	=> $mod->{cid},

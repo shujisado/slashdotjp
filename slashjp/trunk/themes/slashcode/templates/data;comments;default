@@ -66,8 +66,21 @@ __template__
 	You either aren't <a href="[% constants.rootdir %]/users.pl">logged in</a>
 	or don't have sufficient privileges to submit a [% label %].
 
+[% CASE 'metamoderate_message' %]
+	[% returnme.data_constant = 1 %]
+	MetaModeration completed.
+
+[% CASE 'metamods_performed' %]
+	<P>[% num %] MetaModeration(s) Completed.
+
 [% CASE 'moderating' %]
-	"Moderating..."
+	Moderating...
+
+[% CASE 'metamoderating' %]
+	MetaModerating...
+
+[% CASE 'deletecid' %]
+	Delete form.cid
 
 [% END %]
 

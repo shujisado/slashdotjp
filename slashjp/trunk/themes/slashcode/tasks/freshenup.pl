@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -32,8 +32,15 @@ $task{$me}{code} = sub {
 	# other two times, we just update the top three stories and
 	# the front page, skipping sectional stuff and other stories.
 	my $do_all = ($info->{invocation_num} % 3 == 1) || 0;
+
+	# If run with runtask, you can specify some options on the comand
+	# line, e.g. to chew through writing .shtml files to disk for up
+	# to five minutes:
+	# runtask -u slashusername -o run_all=1,timeout_shtml=300 freshenup
 	$do_all = 1 
 		if $constants->{task_options}{run_all};
+	my $timeout_render = 30;
+	my $timeout_shtml = $constants->{task_options}{timeout_shtml} || 90;
 
 	my $max_stories = defined($constants->{freshenup_max_stories})
 		? $constants->{freshenup_max_stories}
@@ -42,8 +49,7 @@ $task{$me}{code} = sub {
 
 	if ($do_all) {
 		my $x = 0;
-		# this deletes stories that have a writestatus of 5 (now delete), 
-		# which is the delete writestatus
+		# this deletes stories that have a writestatus of 'delete'
 		my $deletable = $slashdb->getStoriesWithFlag(
 			'delete',
 			'ASC',
@@ -70,7 +76,7 @@ $task{$me}{code} = sub {
 	STORIES_RENDER: for my $sid (@$stories) {
 
 		# Don't run forever...
-		if (time > $start_time + 30) {
+		if (time > $start_time + $timeout_render) {
 			slashdLog("Aborting stories at render, too much elapsed time");
 			last STORIES_RENDER;
 		}
@@ -114,7 +120,7 @@ $task{$me}{code} = sub {
 		# Since this task is run every minute, quitting after
 		# 90 seconds of work should mean we only stomp on the
 		# one invocation following.
-		if (time > $start_time + 90) {
+		if (time > $start_time + $timeout_shtml) {
 			slashdLog("Aborting stories at freshen, too much elapsed time");
 			last STORIES_FRESHEN;
 		}
@@ -167,6 +173,29 @@ $task{$me}{code} = sub {
 			$do_log ||= (verbosity() >= 1);
 		}
 
+		# if we wrote a section page previously replace
+		# old pages with a redirect to the current
+		# article
+
+		my @old_sect = $slashdb->getPrevSectionsForSid($sid);
+		if (@old_sect) {
+			for my $old_sect (@old_sect) {
+				next if $old_sect eq $section;
+				my $url = "$constants->{rootdir}/$section/$sid.shtml";
+				my $fn = "$basedir/$old_sect/$sid.shtml";
+				if (-e $fn) {
+					my $fh = gensym();
+					if (!open($fh, ">", $fn)) {
+						warn("Couldn't open file: $fn for writing");
+					} else {
+						print $fh slashDisplay("articlemoved", { url => $url },
+							{ Return => 1 } );
+						close $fh;
+					}
+				}
+			}
+			$slashdb->clearPrevSectionsForSid($sid);
+		}
 		# Now we extract what we need from the file we created
 		my $set_ok = 0;
 		my($cc, $hp) = _read_and_unlink_cchp_file($cchp_file, $cchp_param);
@@ -201,6 +230,17 @@ $task{$me}{code} = sub {
 		$w = 'notok' if !-s $basefile || -M _ > $min_days;
 	}
 
+	# Finally, if the top story changed, write it into the var we use
+	# to keep track of it.  This may also affect whether we think we
+	# have to write the homepage out.
+	my $top_sid = $slashdb->getVar('top_sid', 'value', 1);
+	my $stories_ess = $slashdb->getStoriesEssentials(1);
+	my $new_top_sid = $stories_ess->[0]{sid};
+	if ($new_top_sid ne $top_sid) {
+		$w = 'notok';
+		$slashdb->setVar('top_sid', $new_top_sid);
+	}
+
 	my $dirty_sections;
 	if ($constants->{task_options}{run_all}) {
 		my $sections = $slashdb->getDescriptions('sections-all');
@@ -232,6 +272,7 @@ $task{$me}{code} = sub {
 			next unless $key;
 			my $index_handler = $section->{index_handler}
 				|| $constants->{index_handler};
+			next if $index_handler eq 'IGNORE';
 			my($base) = split(/\./, $index_handler);
 			prog2file(
 				"$basedir/$index_handler", 

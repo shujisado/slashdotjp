@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -259,7 +259,7 @@ sub main {
 			seclev		=> 100,
 			formname	=> $formname,
 			checks		=> [],
-			adminmenu	=> 'info',
+			adminmenu	=> 'security',
 			tab_selected	=> 'readonly',
 		},
 		listbanned => {
@@ -267,7 +267,7 @@ sub main {
 			seclev		=> 100,
 			formname	=> $formname,
 			checks		=> [],
-			adminmenu	=> 'info',
+			adminmenu	=> 'security',
 			tab_selected	=> 'banned',
 		},
 		topabusers 	=> {
@@ -275,7 +275,7 @@ sub main {
 			seclev		=> 100,
 			formname	=> $formname,
 			checks		=> [],
-			adminmenu	=> 'info',
+			adminmenu	=> 'security',
 			tab_selected	=> 'abusers',
 		},
 		listabuses 	=> {
@@ -300,54 +300,7 @@ sub main {
 	}
 
 	if ($op eq 'userlogin' && ! $user->{is_anon}) {
-		# We absolutize the return-to URL to our homepage just to
-		# be sure nobody can use the site as a redirection service.
-		# We decide whether to use the secure homepage or not
-		# based on whether the current page is secure.
-		my $abs_dir =
-			( $constants->{absolutedir_secure}
-				&& Slash::Apache::ConnectionIsSSL() )
-			? $constants->{absolutedir_secure}
-			: $constants->{absolutedir};
-		my $refer = URI->new_abs($form->{returnto} || $constants->{rootdir},
-			$abs_dir);
-
-		# Tolerate redirection with or without a "www.", this is a
-		# little sloppy but it may help avoid a subtle misbehavior
-		# someday. -- Jamie
-		# What misbehavior? It looks to me like it could break a
-		# site.  www.foo.com is not necessarily the same as foo.com.
-		# Please explain.  -- pudge
-		# The only question here is whether it's allowed to
-		# redirect the user to a particular URL.  The business
-		# logic here is that we don't bounce the user to foreign
-		# sites (otherwise innocuous-looking URLs at foo.com can be
-		# constructed that send the user anywhere on the internet).
-		# But any site on the same domain is considered safe/OK.
-		# If it is, we still redirect the user to the same $refer.
-		# If www.foo.com really thinks it's unsafe to redirect the
-		# user to a URL at foo.com, they need to change this logic
-		# (or find a new web host!) -- Jamie
-		# So you're saying SourceForge.net domains are
-		# messed up?  :)  -- pudge
-		# I have no comment at this time -- Jamie
-
-		my $site_domain = $constants->{basedomain};
-		$site_domain =~ s/^www\.//;
-		$site_domain =~ s/:.+$//;	# strip port, if available
-
-		my $refer_host = $refer->can("host") ? $refer->host() : "";
-		$refer_host =~ s/^www\.//;
-
-		if ($site_domain eq $refer_host) {
-			# Cool, it goes to our site.  Send the user there.
-			$refer = $refer->as_string;
-		} else {
-			# Bogus, it goes to another site.  op=userlogin is not a
-			# URL redirection service, sorry.
-			$refer = $constants->{rootdir};
-		}
-		redirect($refer);
+		redirect(cleanRedirectUrl($form->{returnto}));
 		return;
 
 	# this will only redirect if it is a section-based rootdir, and
@@ -411,7 +364,7 @@ sub main {
 
 	if ($constants->{admin_formkeys} || $user->{seclev} < 100) {
 
-                my $done = 0;
+		my $done = 0;
 		$done = 1 if $op eq 'savepasswd'; # special case
 		$formname = $ops->{$op}{formname};
 
@@ -420,7 +373,7 @@ sub main {
 		# to get out of it.  (But for "newuserform," the current
 		# user's karma doesn't get them out of having to prove
 		# they're a human for creating a *new* user.)
-                my $options = {};
+		my $options = {};
 		if (	   !$constants->{plugin}{HumanConf}
 			|| !$constants->{hc}
 			|| !$constants->{hc_sw_newuser}
@@ -434,12 +387,12 @@ sub main {
 			$options->{no_hc} = 1;
 		}
 
-                DO_CHECKS: while (!$done) {
-                        for my $check (@{$ops->{$op}{checks}}) {
-                                $ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
-                                $error_flag = formkeyHandler($check, $formname, $formkey,
-                                        undef, $options);
-                                if ($error_flag == -1) {
+		DO_CHECKS: while (!$done) {
+			for my $check (@{$ops->{$op}{checks}}) {
+				$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
+				$error_flag = formkeyHandler($check, $formname, $formkey,
+					undef, $options);
+				if ($error_flag == -1) {
 					# Special error:  HumanConf failed.  Go
 					# back to the previous op, start over.
 					if ($op =~ /^(newuser|mailpasswd)$/) {
@@ -448,17 +401,17 @@ sub main {
 						next DO_CHECKS;
 					}
 				} elsif ($error_flag) {
-                                        $done = 1;
-                                        last;
-                                }
-                        }
-                        $done = 1;
-                }
+					$done = 1;
+					last;
+				}
+			}
+			$done = 1;
+		}
 
-                if (!$error_flag && !$options->{no_hc}) {
-                        my $hc = getObject("Slash::HumanConf");
-                        $hc->reloadFormkeyHC($formname) if $hc;
-                }
+		if (!$error_flag && !$options->{no_hc}) {
+			my $hc = getObject("Slash::HumanConf");
+			$hc->reloadFormkeyHC($formname) if $hc;
+		}
 
 	}
 
@@ -555,6 +508,8 @@ sub newUser {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+	
 	my $plugins = $slashdb->getDescriptions('plugins');
 	my $title;
 	my $suadmin_flag = $user->{seclev} >= 10000 ? 1 : 0;
@@ -566,10 +521,26 @@ sub newUser {
 	if (!$form->{email} || $form->{email} !~ /\@/) {
 		print getError('email_invalid', 0, 1);
 		return;
+	} elsif ($form->{email} ne $form->{email2}) {
+		print getError('email_do_not_match', 0, 1);
+		return;	
 	} elsif ($slashdb->existsEmail($form->{email})) {
 		print getError('emailexists_err', 0, 1);
 		return;
 	} elsif ($matchname ne '' && $form->{newusernick} ne '') {
+		if ($constants->{newuser_portscan}) {
+			my $is_trusted = $slashdb->checkIsTrusted($user->{ipid});
+			if ($is_trusted ne 'yes') {
+				my $is_proxy = $slashdb->checkForOpenProxy($user->{hostip});
+				if ($is_proxy) {
+					print getError('new user open proxy', {
+					unencoded_ip	=> $ENV{REMOTE_ADDR},
+					port		=> $is_proxy,
+					});
+					return;
+				}
+			}
+		}
 		my $uid;
 		my $rootdir = getCurrentStatic('rootdir', 'value');
 
@@ -583,6 +554,7 @@ sub newUser {
 			for (qw(tzcode)) {
 				$data->{$_} = $form->{$_} if defined $form->{$_};
 			}
+			$data->{creation_ipid} = $user->{ipid};
 
 			$slashdb->setUser($uid, $data) if keys %$data;
 			$title = getTitle('newUser_title');
@@ -630,6 +602,8 @@ sub newUser {
 sub mailPasswd {
 	my($hr) = @_;
 	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+	
 	my $uid = $hr->{uid} || 0;
 
 	my $slashdb = getCurrentDB();
@@ -657,6 +631,7 @@ sub mailPasswd {
 
 	my $user_edit;
 	my $err_name = '';
+	my $err_opts = {};
 	if (!$uid || isAnon($uid)) {
 		$err_name = 'mailpasswd_notmailed_err';
 	}
@@ -670,9 +645,23 @@ sub mailPasswd {
 		$err_name = 'mailpasswd_toooften_err'
 			if $slashdb->checkMaxMailPasswords($user_edit);
 	}
+	
+	if (!$err_name) {
+		if ($constants->{mailpasswd_portscan}) {
+			my $is_trusted = $slashdb->checkIsTrusted($user->{ipid});
+			if ($is_trusted ne 'yes') {
+				my $is_proxy = $slashdb->checkForOpenProxy($user->{hostip});
+				if ($is_proxy) {
+					$err_name = 'mailpasswd open proxy';
+					$err_opts = { unencoded_ip => $ENV{REMOTE_ADDR}, port => $is_proxy }; 
+				}
+			}
+
+		}
+	}
 
 	if ($err_name) {
-		print getError($err_name);
+		print getError($err_name, $err_opts);
 		$slashdb->resetFormkey($form->{formkey});	
 		$form->{op} = 'mailpasswdform';
 		displayForm();
@@ -838,21 +827,38 @@ sub showInfo {
 	my $id = $hr->{uid} || 0;
 
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+
 
 	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my($title, $admin_block, $fieldkey) = ('', '', '');
 	my $comments = undef;
 	my $commentcount = 0;
+	my $commentcount_time = 0;
 	my $commentstruct = [];
 	my $requested_user = {};
-
+	my $time_period = $constants->{admin_comment_display_days} || 30;
+	my $cid_for_time_period = $reader->getVar("min_cid_last_$time_period\_days",'value', 1) || 0;
+	my $admin_time_period_limit = $constants->{admin_daysback_commentlimit} || 100;
+	my $admin_non_time_limit    = $constants->{admin_comment_subsequent_pagesize} || 24;
+	
 	my($points, $nickmatch_flag, $uid, $nick);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
 
-	if (! $id && ! $form->{userfield}) {
+	if ($admin_flag
+		&& (defined($form->{show_m2s}) || defined($form->{show_m1s}) || defined($form->{m2_listing})))
+	 {
+		my $update_hr = {};
+		$update_hr->{m2_with_mod} = $form->{show_m2s} if defined $form->{show_m2s};
+		$update_hr->{mod_with_comm} = $form->{show_m1s} if defined $form->{show_m1s};
+		$update_hr->{show_m2_listing} = $form->{m2_listing} if defined $form->{m2_listing};
+		$slashdb->setUser($user->{uid}, $update_hr);
+	}
+
+	if (!$id && !$form->{userfield}) {
 		if ($form->{uid} && ! $id) {
 			$fieldkey = 'uid';
 			($uid, $id) = ($form->{uid}, $form->{uid});
@@ -973,6 +979,10 @@ sub showInfo {
 		|| $constants->{comments_more_seclev} == 2 && $user->{is_subscriber};
 
 	my($netid, $netid_vis) = ('', '');
+
+	my $comment_time;
+	my $non_admin_limit = $comments_wanted;
+
 	if ($requested_user->{nonuid}) {
 		$requested_user->{fg} = $user->{fg};
 		$requested_user->{bg} = $user->{bg};
@@ -999,58 +1009,88 @@ sub showInfo {
 
 		if ($form->{fieldname}) {
 			if ($form->{fieldname} eq 'ipid') {
-				$commentcount = $reader->countCommentsByIPID(
-					$netid, $comments_wanted, $min_comment);
-				$comments = $reader->getCommentsByIPID(
-					$netid, $comments_wanted, $min_comment);
+				$commentcount 		= $reader->countCommentsByIPID($netid);
+				$commentcount_time 	= $reader->countCommentsByIPID($netid, { cid_at_or_after => $cid_for_time_period });
+				$comments = getCommentListing("ipid", $netid,
+					$min_comment, $time_period, $commentcount, $commentcount_time, $cid_for_time_period, 
+					$non_admin_limit, $admin_time_period_limit, $admin_non_time_limit)
+						if $commentcount;
 			} elsif ($form->{fieldname} eq 'subnetid') {
-				$commentcount = $reader->countCommentsBySubnetID(
-					$netid, $comments_wanted, $min_comment);
-				$comments = $reader->getCommentsBySubnetID(
-					$netid, $comments_wanted, $min_comment);
+				$commentcount 		= $reader->countCommentsBySubnetID($netid);
+				$commentcount_time	= $reader->countCommentsBySubnetID($netid, { cid_at_or_after => $cid_for_time_period });
+				$comments = getCommentListing("subnetid", $netid,
+					$min_comment, $time_period, $commentcount, $commentcount_time, $cid_for_time_period,
+					$non_admin_limit, $admin_time_period_limit, $admin_non_time_limit)
+						if $commentcount;
+
 			} else {
 				delete $form->{fieldname};
 			}
 		}
 		if (!defined($comments)) {
 			# Last resort; here for backwards compatibility mostly.
-			$commentcount = $reader->countCommentsByIPIDOrSubnetID(
-				$netid, $comments_wanted, $min_comment);
-			$comments = $reader->getCommentsByIPIDOrSubnetID(
-				$netid, $comments_wanted, $min_comment
-			);
-		}
-
+			my $type;
+			($commentcount,$type) = $reader->countCommentsByIPIDOrSubnetID($netid);
+			$commentcount_time = $reader->countCommentsByIPIDOrSubnetID($netid, { cid_at_or_after => $cid_for_time_period });
+			if ($type eq "ipid") {
+				$comments = getCommentListing("ipid", $netid,
+					$min_comment, $time_period, $commentcount, $commentcount_time, $cid_for_time_period,
+					$non_admin_limit, $admin_time_period_limit, $admin_non_time_limit)
+						if $commentcount;
+			} elsif ($type eq "subnetid") {
+				$comments = getCommentListing("subnetid", $netid,
+					$min_comment, $time_period, $commentcount, $commentcount_time,  $cid_for_time_period,
+					$non_admin_limit, $admin_time_period_limit, $admin_non_time_limit)
+						if $commentcount;
+			}
+		}	
 	} else {
 		$admin_block = getUserAdmin($id, $fieldkey, 1) if $admin_flag;
 
-		$commentcount =
-			$reader->countCommentsByUID($requested_user->{uid});
-		$comments = $reader->getCommentsByUID(
-			$requested_user->{uid}, $comments_wanted, $min_comment
-		) if $commentcount;
+		$commentcount      = $reader->countCommentsByUID($requested_user->{uid});
+		$commentcount_time = $reader->countCommentsByUID($requested_user->{uid}, { cid_at_or_after => $cid_for_time_period });
+		$comments = getCommentListing("uid", $requested_user->{uid},
+			$min_comment, $time_period, $commentcount, $commentcount_time, $cid_for_time_period,
+			$non_admin_limit, $admin_time_period_limit, $admin_non_time_limit,
+			{ use_uid_cid_cutoff => 1 })
+				if $commentcount;
 		$netid = $requested_user->{uid};
 	}
 
 	# Grab the nicks of the uids we have, we're going to be adding them
 	# into the struct.
-	my @extra_cols_wanted = qw( nickname );
+	my @users_extra_cols_wanted       = qw( nickname );
+	my @discussions_extra_cols_wanted = qw( type );
 	my $uid_hr = { };
+	my $sid_hr = { };
 	if ($comments && @$comments) {
 		my %uids = ();
+		my %sids = ();
 		for my $c (@$comments) {
 			$uids{$c->{uid}}++;
+			$sids{$c->{sid}}++;
 		}
 		my $uids = join(", ", sort { $a <=> $b } keys %uids);
+		my $sids = join(", ", sort { $a <=> $b } keys %sids);
 		$uid_hr = $reader->sqlSelectAllHashref(
 			"uid",
-			"uid, " . join(", ", @extra_cols_wanted),
+			"uid, " . join(", ", @users_extra_cols_wanted),
 			"users",
 			"uid IN ($uids)"
 		);
+		
+		$sid_hr = $reader->sqlSelectAllHashref(
+			"id",
+			"id, " . join(", ", @discussions_extra_cols_wanted),
+			"discussions",
+			"id IN ($sids)"
+		);
+		
 	}
 
+	my $cids_seen = {};
 	for my $comment (@$comments) {
+		$cids_seen->{$comment->{cid}}++;
 		my $type;
 		# This works since $sid is numeric.
 		my $replies = $reader->countCommentsBySidPid($comment->{sid}, $comment->{cid});
@@ -1076,12 +1116,13 @@ sub showInfo {
 		# fix points in case they are out of bounds
 		$comment->{points} = $constants->{comment_minscore} if $comment->{points} < $constants->{comment_minscore};
 		$comment->{points} = $constants->{comment_maxscore} if $comment->{points} > $constants->{comment_maxscore};
-
+		vislenify($comment);
 		my $data = {
 			pid 		=> $comment->{pid},
 			url		=> $discussion->{url},
-			type 		=> $type,
+			disc_type 	=> $type,
 			disc_title	=> $discussion->{title},
+			disc_time	=> $discussion->{ts},
 			sid 		=> $comment->{sid},
 			cid 		=> $comment->{cid},
 			subj		=> $comment->{subject},
@@ -1090,32 +1131,61 @@ sub showInfo {
 			reason		=> $comment->{reason},
 			uid		=> $comment->{uid},
 			replies		=> $replies,
+			ipid		=> $comment->{ipid},
+			ipid_vis	=> $comment->{ipid_vis},
+			karma		=> $comment->{karma},
+			tweak		=> $comment->{tweak},
+			tweak_orig	=> $comment->{tweak_orig},
+		
 		};
 		#Karma bonus time
 
-		for my $col (@extra_cols_wanted) {
+		for my $col (@users_extra_cols_wanted) {
 			$data->{$col} = $uid_hr->{$comment->{uid}}{$col} if defined $uid_hr->{$comment->{uid}}{$col};
+		}
+		for my $col(@discussions_extra_cols_wanted) {
+			$data->{$col} = $sid_hr->{$comment->{sid}}{$col} if defined $sid_hr->{$comment->{sid}}{$col};
 		}
 		push @$commentstruct, $data;
 	}
-	my $storycount =
-		$reader->countStoriesBySubmitter($requested_user->{uid})
-	unless $requested_user->{nonuid};
-	my $stories = $reader->getStoriesBySubmitter(
-		$requested_user->{uid},
-		$constants->{user_submitter_display_default}
-	) unless !$storycount || $requested_user->{nonuid};
+	# Sort so the chosen group of comments is sorted by discussion
+	@$commentstruct = sort {
+		$b->{disc_time} cmp $a->{disc_time} || $b->{sid} <=> $a->{sid}
+	} @$commentstruct
+		unless $user->{user_comment_sort_type} == 1;
 
-	my $subcount = $reader->countSubmissionsByNetID($netid, $fieldkey)
+	my $cid_list = [ keys %$cids_seen ];
+	my $cids_to_mods = {};
+	if ($admin_flag && $constants->{show_mods_with_comments}) {
+		my $comment_mods = $reader->getModeratorCommentLog("DESC",
+			$constants->{mod_limit_with_comments}, "cidin", $cid_list);
+	
+		# Loop through mods and group them by the sid they're attached to
+		while (my $mod = shift @$comment_mods) {
+			push @{$cids_to_mods->{$mod->{cid}}}, $mod;
+		}
+	}
+
+	my $sub_limit = ((($admin_flag || $user->{uid} == $requested_user->{uid}) ? $constants->{submissions_all_page_size} : $constants->{submissions_accepted_only_page_size}) || "");
+	
+	my $sub_options = { limit_days => 365 };
+	$sub_options->{accepted_only} = 1 if !$admin_flag && $user->{uid} != $requested_user->{uid};
+
+	my $sub_field = $form->{fieldname};
+	
+	my ($subcount, $ret_field) = $reader->countSubmissionsByNetID($netid, $sub_field)
 		if $requested_user->{nonuid};
-	my $submissions = $reader->getSubmissionsByNetID($netid, $fieldkey)
+	my $submissions = $reader->getSubmissionsByNetID($netid, $ret_field, $sub_limit, $sub_options)
 		if $requested_user->{nonuid};
+
+        my $ipid_hoursback = $constants->{istroll_ipid_hours} || 72;
+	my $uid_hoursback = $constants->{istroll_uid_hours} || 72;
 
 	if ($requested_user->{nonuid}) {
 		slashDisplay('netIDInfo', {
 			title			=> $title,
 			id			=> $id,
-			user			=> $requested_user,
+			useredit		=> $requested_user,
 			commentstruct		=> $commentstruct || [],
 			commentcount		=> $commentcount,
 			min_comment		=> $min_comment,
@@ -1126,6 +1196,9 @@ sub showInfo {
 			reasons			=> $reader->getReasons(),
 			subcount		=> $subcount,
 			submissions		=> $submissions,
+			hr_hours_back		=> $ipid_hoursback,
+			cids_to_mods		=> $cids_to_mods,
+			comment_time		=> $comment_time
 		});
 
 	} else {
@@ -1152,6 +1225,12 @@ sub showInfo {
 		}
 
 		my $lastjournal = _get_lastjournal($uid);
+		
+		my $subcount = $reader->countSubmissionsByUID($uid);
+	
+		my $submissions = $reader->getSubmissionsByUID($uid, $sub_limit, $sub_options);
+		my $metamods;
+		$metamods = $reader->getMetamodlogForUser($uid, 30) if $admin_flag;
 
 		slashDisplay('userInfo', {
 			title			=> $title,
@@ -1166,15 +1245,18 @@ sub showInfo {
 			karma_flag		=> $karma_flag,
 			admin_block		=> $admin_block,
 			admin_flag 		=> $admin_flag,
-			stories 		=> $stories,
-			storycount 		=> $storycount,
 			reasons			=> $reader->getReasons(),
 			lastjournal		=> $lastjournal,
+			hr_hours_back		=> $ipid_hoursback,
+			cids_to_mods		=> $cids_to_mods,
+			comment_time		=> $comment_time,
+			submissions		=> $submissions,
+			subcount		=> $subcount,
+			metamods		=> $metamods
 		});
 	}
 
 	if ($user_change && %$user_change) {
-		my $slashdb = getCurrentDB();
 		$slashdb->setUser($user->{uid}, $user_change);
 	}
 
@@ -1519,12 +1601,26 @@ sub changePasswd {
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
 
+	my $clocation = $slashdb->getDescriptions('cookie_location');
+	my @clocation_order = grep { exists $clocation->{$_} } qw(none classbid subnetid ipid);
+	my $clocation_select = createSelect('cookie_location', $clocation,
+		$user_edit->{cookie_location}, 1, 0, \@clocation_order
+	);
+
+	my $got_oldpass = 0;
+	if ($form->{oldpass}) {
+		my $return_uid = $slashdb->getUserAuthenticate($id, $form->{oldpass}, 1);
+		$got_oldpass = 1 if $return_uid && $id == $return_uid;
+	}
+
 	slashDisplay('changePasswd', {
 		useredit 		=> $user_edit,
 		admin_flag		=> $suadmin_flag,
 		title			=> $title,
 		session 		=> $session_select,
+		clocation 		=> $clocation_select,
 		admin_block		=> $admin_block,
+		got_oldpass		=> $got_oldpass
 	});
 }
 
@@ -1552,7 +1648,7 @@ sub editUser {
 	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my $fieldkey;
 
-	if ($form->{userfield}) {
+	if ($admin_flag && $form->{userfield}) {
 		$id ||= $form->{userfield};
 		if ($form->{userfield} =~ /^\d+$/) {
 			$user_edit = $slashdb->getUser($id);
@@ -1615,7 +1711,7 @@ sub editHome {
 	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my $admin_block = '';
 
-	if ($form->{userfield}) {
+	if ($admin_flag && $form->{userfield}) {
 		$id ||= $form->{userfield};
 		if ($form->{userfield} =~ /^\d+$/) {
 			$user_edit = $slashdb->getUser($id);
@@ -1692,7 +1788,7 @@ sub editComm {
 
 	my $admin_flag = $user->{is_admin} ? 1 : 0;
 
-	if ($form->{userfield}) {
+	if ($admin_flag && $form->{userfield}) {
 		$id ||= $form->{userfield};
 		if ($form->{userfield} =~ /^\d+$/) {
 			$user_edit = $slashdb->getUser($id);
@@ -1788,15 +1884,18 @@ sub editComm {
 		'bytelimit', $formats, $user_edit->{bytelimit}, 1
 	);
 
-	my $h_check  = $user_edit->{hardthresh}		? ' CHECKED' : '';
-	my $r_check  = $user_edit->{reparent}		? ' CHECKED' : '';
-	my $n_check  = $user_edit->{noscores}		? ' CHECKED' : '';
-	my $s_check  = $user_edit->{nosigs}		? ' CHECKED' : '';
-	my $d_check  = $user_edit->{sigdash}		? ' CHECKED' : '';
-	my $b_check  = $user_edit->{nobonus}		? ' CHECKED' : '';
-	my $sb_check = $user_edit->{nosubscriberbonus}	? ' CHECKED' : '';
-	my $p_check  = $user_edit->{postanon}		? ' CHECKED' : '';
-	my $nospell_check = $user_edit->{no_spell}	? ' CHECKED' : '';
+	my $h_check  = $user_edit->{hardthresh}		 ? ' CHECKED' : '';
+	my $r_check  = $user_edit->{reparent}		 ? ' CHECKED' : '';
+	my $n_check  = $user_edit->{noscores}		 ? ' CHECKED' : '';
+	my $s_check  = $user_edit->{nosigs}		 ? ' CHECKED' : '';
+	my $d_check  = $user_edit->{sigdash}		 ? ' CHECKED' : '';
+	my $b_check  = $user_edit->{nobonus}		 ? ' CHECKED' : '';
+	my $sb_check = $user_edit->{nosubscriberbonus}	 ? ' CHECKED' : '';
+	my $p_check  = $user_edit->{postanon}		 ? ' CHECKED' : '';
+	my $nospell_check = $user_edit->{no_spell}	 ? ' CHECKED' : '';
+	my $s_mod_check = $user_edit->{mod_with_comm}	 ? ' CHECKED' : '';
+	my $s_m2_check = $user_edit->{m2_with_mod}	 ? ' CHECKED' : '';
+	my $s_m2c_check = $user_edit->{m2_with_comm_mod} ? ' CHECKED' : '';
 
 	$formats = $slashdb->getDescriptions('postmodes');
 	$posttype_select = createSelect(
@@ -1815,6 +1914,9 @@ sub editComm {
 		b_check			=> $b_check,
 		sb_check		=> $sb_check,
 		p_check			=> $p_check,
+		s_mod_check		=> $s_mod_check,
+		s_m2_check		=> $s_m2_check,
+		s_m2c_check		=> $s_m2c_check,
 		nospell_check		=> $nospell_check,
 		commentmodes_select	=> $commentmodes_select,
 		commentsort_select	=> $commentsort_select,
@@ -1843,16 +1945,15 @@ sub saveUserAdmin {
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
 	my($user_edits_table, $user_edit) = ({}, {});
-	my $save_success = 0;
 	my $author_flag;
 	my $note = '';
 	my $id;
 	my $user_editfield_flag;
 	my $banned = 0;
 	my $banref;
-
 	if ($form->{uid}) {
 		$user_editfield_flag = 'uid';
 		$id = $form->{uid};
@@ -1898,8 +1999,6 @@ sub saveUserAdmin {
 		$slashdb->getBanList(1); # reload the list
 	}
 
-	$note .= getMessage('saveuseradmin_saved', { field => $user_editfield_flag, id => $id}) if $save_success;
-
 	if ($user->{is_admin} && ($user_editfield_flag eq 'uid' ||
 		$user_editfield_flag eq 'nickname')) {
 
@@ -1910,11 +2009,24 @@ sub saveUserAdmin {
 		$user_edits_table->{tokens} = $form->{tokens};
 		$user_edits_table->{m2info} = $form->{m2info};
 
+		# As far as ACLs, first we set all the ACLs that we're
+		# setting, to 1.
+		$user_edits_table->{acl} = { map { ($_, 1) } @{$form->{newacls_multiple}} };
+		# Then we run through all the ACLs, and any that we're not
+		# setting, go to 0 so they get deleted..
+		my $all_acls_hr = $reader->getAllACLs();
+		my @all_acls = sort keys %$all_acls_hr;
+		for my $acl (@all_acls) {
+			$user_edits_table->{acl}{$acl} ||= 0;
+		}
+
 		my $author = $slashdb->getAuthor($id);
 		my $was_author = ($author && $author->{author}) ? 1 : 0;
 
 		$slashdb->setUser($id, $user_edits_table);
+
 		$note .= getMessage('saveuseradmin_saveduser', { field => $user_editfield_flag, id => $id });
+
 		if ($was_author xor $user_edits_table->{author}) {
 			# A frequently-asked question for new Slash admins is
 			# why their authors aren't showing up immediately.
@@ -1978,24 +2090,30 @@ sub savePasswd {
 		$error_flag++;
 	}
 
-	if (length $form->{pass1} < 6 && $form->{pass1} && $form->{pass1} ne "") {
+	if (!$form->{pass1} || length $form->{pass1} < 6) {
 		$$note .= getError('saveuser_passtooshort_err', { titlebar => 0 }, 0, 1)
 			if $note;
 		$error_flag++;
 	}
 
+	if (!$user->{is_admin}){
+		# not an admin -- check old password before changing passwd
+		my $return_uid = $slashdb->getUserAuthenticate($uid, $form->{oldpass}, 1);
+		if (!$return_uid || $return_uid != $uid) {
+			$$note .= getError('saveuser_badoldpass_err', { titlebar => 0 }, 0, 1) 
+				if $note;
+			$error_flag++;
+
+		}
+	}
+
 	if (! $error_flag) {
 		$user_edits_table->{passwd} = $form->{pass1} if $form->{pass1};
 		$user_edits_table->{session_login} = $form->{session_login};
-		my $pass = bakeUserCookie($uid,
-			$user_edits_table->{passwd}
-				? encryptPassword($user_edits_table->{passwd})
-				: $user_edit->{passwd}
-		);
+		$user_edits_table->{cookie_location} = $form->{cookie_location};
 
-		if ($form->{uid} eq $user->{uid}) {
-			setCookie('user', $pass, $user_edits_table->{session_login});
-		}
+		# changed pass, so delete all logtokens
+		$slashdb->deleteLogToken($form->{uid}, 1);
 
 		if ($user->{admin_clearpass}
 			&& !$user->{state}{admin_clearpass_thisclick}) {
@@ -2011,6 +2129,12 @@ sub savePasswd {
 		$$note .= getMessage('saveuser_passchanged_msg',
 			{ nick => $user_edit->{nickname}, uid => $user_edit->{uid} },
 		0, 1) if $note;
+
+		# only set cookie if user is current user
+		if ($form->{uid} eq $user->{uid}) {
+			$user->{logtoken} = bakeUserCookie($uid, $slashdb->getLogToken($form->{uid}, 1));
+			setCookie('user', $user->{logtoken}, $user_edits_table->{session_login});
+		}
 	}
 
 	return $error_flag;
@@ -2209,7 +2333,7 @@ sub saveComm {
 	# Enforce Ranges for variables that need it
 	$form->{commentlimit} = 0 if $form->{commentlimit} < 1;
 	my $cl_max = $constants->{comment_commentlimit} || 0;
-	$form->{commentlimit} = $cl_max if $cl_max > 0 and $form->{commentlimit} > $cl_max;
+	$form->{commentlimit} = $cl_max if $cl_max > 0 && $form->{commentlimit} > $cl_max;
 	$form->{commentspill} = 0 if $form->{commentspill} < 1;
 
 	my $max = $constants->{comment_maxscore} - $constants->{comment_minscore};
@@ -2261,6 +2385,23 @@ sub saveComm {
 						? $form->{textarea_rows} : undef),
 		textarea_cols		=> ($form->{textarea_cols} != $constants->{textarea_cols}
 						? $form->{textarea_cols} : undef),
+		user_comment_sort_type	=> ($form->{user_comment_sort_type} != 2
+						? $form->{user_comment_sort_type} : undef ),
+		mod_with_comm		=> ($form->{mod_with_comm} ? 1 : undef),
+		m2_with_mod		=> ($form->{m2_with_mod} ? 1 : undef),
+        	m2_with_comm_mod		=> ($form->{m2_with_mod_on_comm} ? 1 : undef),
+
+	};
+	
+	# set our default values for the items where an empty-string won't do 
+	my $defaults = {
+		posttype        => 2,
+		highlightthresh => 4,
+		maxcommentsize  => 4096,
+		reparent        => 1,
+		commentlimit    => 100,
+		commentspill    => 50,
+		mode            => 'thread'
 	};
 
 	my @reasons = ( );
@@ -2281,8 +2422,8 @@ sub saveComm {
 		$answer = 0 if $answer !~ /^[\-+]?\d+$/;
 		$users_comments_table->{"people_bonus_$_"} = ($answer == 0) ? '' : $answer;
 	}
-
 	getOtherUserParams($users_comments_table);
+	setToDefaults($users_comments_table, {}, $defaults) if $form->{restore_defaults};
 	$slashdb->setUser($uid, $users_comments_table);
 
 	editComm({ uid => $uid, note => $note });
@@ -2357,6 +2498,11 @@ sub saveHome {
 		sectioncollapse	=> ($form->{sectioncollapse} ? 1 : 0),
 	};
 
+	my $defaults = {
+		maxstories 	=> 30,
+		tzcode     	=> "EST"
+	};
+
 	if (defined $form->{tzcode} && defined $form->{tzformat}) {
 		$users_index_table->{tzcode} = $form->{tzcode};
 		$users_index_table->{dfid}   = $form->{tzformat};
@@ -2384,6 +2530,7 @@ sub saveHome {
 	}
 
 	getOtherUserParams($users_index_table);
+	setToDefaults($users_index_table, {}, $defaults) if $form->{restore_defaults};
 	$slashdb->setUser($uid, $users_index_table);
 
 	editHome({ uid => $uid, note => $note });
@@ -2630,8 +2777,11 @@ sub getTitle {
 }
 
 #################################################################
-# getUserAdmin - returns a block of text
-# containing fields for admin users
+# getUserAdmin - returns a block of HTML text that provides
+# information and editing capabilities for admin users.
+# Most of this data is already in the getUserAdmin template,
+# but really, we should try to get more of this logic into
+# that template.
 sub getUserAdmin {
 	my($id, $field, $seclev_field) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
@@ -2643,7 +2793,8 @@ sub getUserAdmin {
 	$id ||= $user->{uid};
 
 	my($expired, $uidstruct, $readonly);
-	my($user_edit, $user_editfield, $ipstruct, $ipstruct_order, $authors, $author_flag, $topabusers, $thresh_select,$section_select, $accesshits);
+	my($user_edit, $user_editfield, $ipstruct, $ipstruct_order, $authors, $author_flag, $topabusers, $thresh_select,$section_select);
+	my @accesshits;
 	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
 	my $accesslist;
@@ -2656,7 +2807,7 @@ sub getUserAdmin {
 		$user_editfield = $user_edit->{uid};
 		$expired = $reader->checkExpired($user_edit->{uid}) ? ' CHECKED' : '';
 		$ipstruct = $reader->getNetIDStruct($user_edit->{uid});
-		$accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{uid}) if defined($logdb);
+		@accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{uid}) if defined($logdb);
 		$section_select = createSelect('section', $sectionref, $user_edit->{section}, 1);
 
 	} elsif ($field eq 'nickname') {
@@ -2664,18 +2815,18 @@ sub getUserAdmin {
 		$user_editfield = $user_edit->{nickname};
 		$expired = $reader->checkExpired($user_edit->{uid}) ? ' CHECKED' : '';
 		$ipstruct = $reader->getNetIDStruct($user_edit->{uid});
-		$accesshits = $logdb->countAccessLogHitsInLastX('uid', $user_edit->{uid}) if defined($logdb);
+		@accesshits = $logdb->countAccessLogHitsInLastX('uid', $user_edit->{uid}) if defined($logdb);
 		$section_select = createSelect('section', $sectionref, $user_edit->{section}, 1);
 
 	} elsif ($field eq 'md5id') {
 		$user_edit->{nonuid} = 1;
 		$user_edit->{md5id} = $id;
-		if ($form->{fieldname} and $form->{fieldname} =~ /^(ipid|subnetid)$/) {
+		if ($form->{fieldname} && $form->{fieldname} =~ /^(ipid|subnetid)$/) {
 			$uidstruct = $reader->getUIDStruct($form->{fieldname}, $user_edit->{md5id});
-			$accesshits = $logdb->countAccessLogHitsInLastX($form->{fieldname}, $user_edit->{md5id}) if defined($logdb);
+			@accesshits = $logdb->countAccessLogHitsInLastX($form->{fieldname}, $user_edit->{md5id}) if defined($logdb);
 		} else {
 			$uidstruct = $reader->getUIDStruct('md5id', $user_edit->{md5id});
-			$accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{md5id}) if defined($logdb);
+			@accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{md5id}) if defined($logdb);
 		}
 
 	} elsif ($field eq 'ipid') {
@@ -2683,7 +2834,7 @@ sub getUserAdmin {
 		$user_edit->{ipid} = $id;
 		$user_editfield = $id;
 		$uidstruct = $reader->getUIDStruct('ipid', $user_edit->{ipid});
-		$accesshits = $logdb->countAccessLogHitsInLastX('host_addr', $user_edit->{ipid}) if defined($logdb);
+		@accesshits = $logdb->countAccessLogHitsInLastX('host_addr', $user_edit->{ipid}) if defined($logdb);
 
 	} elsif ($field eq 'subnetid') {
 		$user_edit->{nonuid} = 1;
@@ -2696,16 +2847,14 @@ sub getUserAdmin {
 
 		$user_editfield = $id;
 		$uidstruct = $reader->getUIDStruct('subnetid', $user_edit->{subnetid});
-		$accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{subnetid}) if defined($logdb);
+		@accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{subnetid}) if defined($logdb);
 
 	} else {
 		$user_edit = $id ? $reader->getUser($id) : $user;
 		$user_editfield = $user_edit->{uid};
 		$ipstruct = $reader->getNetIDStruct($user_edit->{uid});
-		$accesshits = $logdb->countAccessLogHitsInLastX('uid', $user_edit->{uid}) if defined($logdb);
+		@accesshits = $logdb->countAccessLogHitsInLastX('uid', $user_edit->{uid}) if defined($logdb);
 	}
-
-	$accesshits ||= 0;
 
 	for my $access_type (qw( ban nopost nosubmit norss nopalm proxy trusted )) {
 		$accesslist->{$access_type} = "";
@@ -2714,6 +2863,7 @@ sub getUserAdmin {
 		$accesslist->{reason}	||= $info_hr->{reason};
 		$accesslist->{ts}	||= $info_hr->{ts};
 		$accesslist->{adminuid}	||= $info_hr->{adminuid};
+		$accesslist->{estimated_users} ||= $info_hr->{estimated_users};
 		$accesslist->{$access_type} = " CHECKED";
 	}
 	if (exists $accesslist->{adminuid}) {
@@ -2747,8 +2897,12 @@ sub getUserAdmin {
 	if ($constants->{subscribe} and my $subscribe = getObject('Slash::Subscribe')) {
 		$user_edit->{subscribe_payments} =
 			$subscribe->getSubscriptionsForUser($user_edit->{uid});
+		$user_edit->{subscribe_purchases} =
+			$subscribe->getSubscriptionsPurchasedByUser($user_edit->{uid},{ only_types => [ "grant", "gift" ] });
 	}
 
+	my $all_acls = $reader->getAllACLs();
+	my $all_acls_hr = { map { ( $_, $_ ) } keys %$all_acls };
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
 		useredit		=> $user_edit,
@@ -2758,7 +2912,7 @@ sub getUserAdmin {
 		ipstruct		=> $ipstruct,
 		ipstruct_order		=> $ipstruct_order,
 		uidstruct		=> $uidstruct,
-		accesshits		=> $accesshits,
+		accesshits		=> \@accesshits,
 		seclev_field		=> $seclev_field,
 		expired 		=> $expired,
 		topabusers		=> $topabusers,
@@ -2766,6 +2920,7 @@ sub getUserAdmin {
 		thresh_select		=> $thresh_select,
 		authoredit_flag 	=> $authoredit_flag,
 		section_select		=> $section_select,
+		all_acls		=> $all_acls_hr,
 	}, 1);
 }
 
@@ -2792,8 +2947,100 @@ sub getOtherUserParams {
 	}
 }
 
+###############################################################
+# This modifies a hashref to default values -- if nothing
+# else we assume the empty string which clears items in the
+# user_param table 
+#
+# takes 3 hashrefs currently
+# $data     - hashref to change to defaults
+# $skip     - hashref of keys to skip modifying
+# $defaults - hashref of defaults to set to something other 
+#             than the empty string
+sub setToDefaults {
+	my($data, $skip, $defaults) = @_;
+	foreach my $key (keys %$data) {
+		next if $skip->{$key};
+		$data->{$key} = exists $defaults->{$key} ? $defaults->{$key} : "";
+ 	}
+}
 #################################################################
+sub getCommentListing {
+	my ($type, $value,
+		$min_comment, $time_period, $cc_all, $cc_time_period, $cid_for_time_period,
+		$non_admin_limit, $admin_time_limit, $admin_non_time_limit,
+		$options) = @_;
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $store_cutoff = $options->{use_uid_cid_cutoff} ? $constants->{store_com_page1_min_cid_for_user_com_cnt} : 0;
+	
+	my $s_opt = {};
+	my $num_wanted = 0;
+	if ($min_comment) {
+		if ($user->{is_admin}) {
+			$num_wanted = $admin_non_time_limit;
+		} else {
+			$num_wanted = $non_admin_limit;
+		}
+	} else {
+	
+		if ($user->{is_admin}) {
+			if ($cc_time_period >= $admin_non_time_limit) {
+				$s_opt->{cid_at_or_after} = $cid_for_time_period;
+				$num_wanted = $admin_time_limit;
+			} else {
+				$num_wanted = $admin_non_time_limit;
+				if($store_cutoff){
+					my $min_cid = $reader->getUser($value,
+						"com_num_".$num_wanted."_at_or_after_cid");
+					$s_opt->{cid_at_or_after} = $min_cid
+						if $min_cid && $min_cid =~ /^\d+$/;
+				}
+			}
+		} else {
+			if ($cc_time_period >= $non_admin_limit ) {
+				$s_opt->{cid_at_or_after} = $cid_for_time_period;
+				$num_wanted = $non_admin_limit;
+			} else {
+				$num_wanted = $non_admin_limit;
+				if($store_cutoff){
+					my $min_cid = $reader->getUser($value,
+						"com_num_".$num_wanted."_at_or_after_cid");
+					$s_opt->{cid_at_or_after} = $min_cid
+						if $min_cid && $min_cid =~ /^\d+$/;
+				}
+			}
+		}
+	}
+	if ($type eq "uid") {
 
+		my $comments = $reader->getCommentsByUID($value, $num_wanted, $min_comment, $s_opt) if $cc_all;
+		if ($store_cutoff
+			&& $comments && $cc_all >= $store_cutoff && $min_comment == 0 
+			&& scalar(@$comments) == $num_wanted) {
+			my $min_cid = 0;
+			for my $comment (@$comments) {
+				$min_cid = $comment->{cid}
+					if !$min_cid || ($comment->{cid} < $min_cid); 
+			}
+			if ($min_cid && $min_cid =~/^\d+$/) {
+				$slashdb->setUser($value, {
+					"com_num_".$num_wanted."_at_or_after_cid" => $min_cid
+				});
+			}
+			
+		}
+		return $comments;
+	} elsif ($type eq "ipid"){
+		return $reader->getCommentsByIPID($value, $num_wanted, $min_comment, $s_opt) if $cc_all;
+	} elsif ($type eq "subnetid"){
+		return $reader->getCommentsBySubnetID($value, $num_wanted, $min_comment, $s_opt) if $cc_all;
+	} else {
+		return $reader->getCommentsByIPIDOrSubnetID($value, $num_wanted, $min_comment, $s_opt) if $cc_all;
+	}
+}
 createEnvironment();
 main();
 

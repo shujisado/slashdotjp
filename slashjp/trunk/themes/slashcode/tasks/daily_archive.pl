@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -23,6 +23,7 @@ use vars qw( %task $me );
 
 $task{$me}{timespec} = '7 8 * * *';
 $task{$me}{timespec_panic_2} = ''; # if major panic, dailyStuff can wait
+$task{$me}{resource_locks} = { log_slave => 1 };
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
@@ -62,8 +63,8 @@ $task{$me}{code} = sub {
 	$slashdb->updateArchivedDiscussions();
 
 	# Archive stories.
-	my $limit = $constants->{task_options}{archive_limit} || 500;
-	my $dir   = $constants->{task_options}{archive_dir}   || 'ASC';
+	my $limit = $constants->{task_options}{archive_limit} || $constants->{archive_limit} || 500;
+	my $dir   = $constants->{task_options}{archive_dir}   || $constants->{archive_dir} || 'ASC';
 	my $astories = $slashdb->getArchiveList($limit, $dir);
 	if ($astories && @{$astories}) {
 		# Takes approx. 2 minutes on Slashdot

@@ -18,8 +18,9 @@ use Data::Dumper;
 use vars qw( %task $me );
 
 $task{$me}{timespec} = '18 0-23 * * *';
-$task{$me}{timespec_panic_1} = '18 0-10/2 * * *';	# night only
+$task{$me}{timespec_panic_1} = '18 1,10 * * *';		# night only
 $task{$me}{timespec_panic_2} = '';			# don't run
+$task{$me}{resource_locks} = { log_slave => 1 };
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 
@@ -30,22 +31,17 @@ $task{$me}{code} = sub {
 		return ;
 	}
 
-#	doLogInit('moderatord');
-
 	update_modlog_ids($virtual_user, $constants, $slashdb, $user);
 	give_out_points($virtual_user, $constants, $slashdb, $user);
 	reconcile_m2($virtual_user, $constants, $slashdb, $user);
 	update_modlog_ids($virtual_user, $constants, $slashdb, $user);
-
-#	doLogExit('moderatord');
-
+	adjust_m2_freq($virtual_user, $constants, $slashdb, $user) if $constants->{adjust_m2_freq};
 	return ;
 };
 
 ############################################################
 
 sub moderatordLog {
-#	doLog('moderatord', \@_);
 	doLog('slashd', \@_);
 }
 
@@ -59,6 +55,13 @@ sub update_modlog_ids {
 		if $days_back_cushion < ($constants->{m2_min_daysbackcushion} || 2);
 	$days_back -= $days_back_cushion;
 
+	 my $reasons = $reader->getReasons();
+         my $m2able_reasons = join(",",
+                sort grep { $reasons->{$_}{m2able} }
+                keys %$reasons);
+         return if !$m2able_reasons;
+
+
 	# XXX I'm considering adding a 'WHERE m2status=0' clause to the
 	# MIN/MAX selects below.  This might help choose mods more
 	# smoothly and make failure (as archive_delay_mod is approached)
@@ -68,16 +71,20 @@ sub update_modlog_ids {
 	# way to predict accurately what it will do on a live site
 	# without doing it... -Jamie 2002/11/16
 
-	my($min_old) = $reader->sqlSelect("MIN(id)", "moderatorlog");
+	my($min_old) = $reader->sqlSelect("MIN(id)", "moderatorlog",
+		"m2status=0 AND active=1 AND reason IN ($m2able_reasons)");
 	my($max_old) = $reader->sqlSelect("MAX(id)", "moderatorlog",
-		"ts < DATE_SUB(NOW(), INTERVAL $days_back DAY)");
+		"ts < DATE_SUB(NOW(), INTERVAL $days_back DAY)
+		 AND m2status=0 AND active=1 AND reason IN ($m2able_reasons)");
 	$min_old = 0 if !$min_old;
-	$max_old = 0 if !$max_old;
+	$max_old = $min_old if !$max_old;
 	my($min_new) = $reader->sqlSelect("MIN(id)", "moderatorlog",
-		"ts >= DATE_SUB(NOW(), INTERVAL $days_back_cushion DAY)");
-	my($max_new) = $reader->sqlSelect("MAX(id)", "moderatorlog");
+		"ts >= DATE_SUB(NOW(), INTERVAL $days_back_cushion DAY)
+		 AND m2status=0 AND active=1 AND reason IN ($m2able_reasons)");
+	my($max_new) = $reader->sqlSelect("MAX(id)", "moderatorlog",
+		"m2status=0 AND active=1 AND reason IN ($m2able_reasons)");
 	$min_new = 0 if !$min_new;
-	$max_new = 0 if !$max_new;
+	$max_new = $min_new if !$max_new;
 
 	$slashdb->setVar("m2_modlogid_min_old", $min_old);
 	$slashdb->setVar("m2_modlogid_max_old", $max_old);
@@ -193,7 +200,8 @@ sub give_out_tokens {
 	# Note:  this is a large array -- on Slashdot, at least tens of
 	# thousands of elements.
 
-	my $count_hr = $log_db->fetchEligibleModerators_accesslog();
+	my $count_hr = $log_db->fetchEligibleModerators_accesslog_read();
+
 	my @eligible_uids = @{$backup_db->fetchEligibleModerators_users($count_hr)};
 	my $eligible = scalar @eligible_uids;
 
@@ -226,13 +234,14 @@ sub give_out_tokens {
 	}
 
 	# Decide who's going to get the tokens.
+	my $maxtokens_add = $constants->{maxtokens_add} || 3;
 	my %update_uids = ( );
 	for (my $x = 0; $x < $num_tokens; $x++) {
 		my $uid = $eligible_uids[rand @eligible_uids];
-		$update_uids{$uid} = 1;
+		next if $update_uids{$uid} >= $maxtokens_add;
+		$update_uids{$uid}++;
 	}
-	my @update_uids = sort keys %update_uids;
-	my $n_update_uids = scalar(@update_uids);
+	my $n_update_uids = scalar(keys %update_uids);
 
 	# Log info about what we're about to do.
 	moderatordLog(getData('moderatord_tokenmsg', {
@@ -254,7 +263,7 @@ sub give_out_tokens {
 	}));
 
 	# Give each user her or his tokens.
-	$slashdb->updateTokens(\@update_uids);
+	$slashdb->updateTokens(\%update_uids);
 
 	# And keep a running tally of how many tokens we've given out due
 	# to users who clicked the right number of times and got lucky.
@@ -281,7 +290,7 @@ sub reconcile_m2 {
 	# hashrefs with values title, url, subject, vote, reason).
 	my %m2_results = ( );
 
-	# We load the optional plugin object here.
+	# We load the optional plugin objects here.
 	my $messages = getObject('Slash::Messages');
 	my $statsSave = getObject('Slash::Stats::Writer');
 
@@ -289,6 +298,8 @@ sub reconcile_m2 {
 	# reconciled.
 	my $mods_ar = $slashdb->getModsNeedingReconcile();
 
+	my $both0 = { };
+	my $tievote = { };
 	my %newstats = ( );
 	for my $mod_hr (@$mods_ar) {
 
@@ -299,30 +310,27 @@ sub reconcile_m2 {
 		my $nfair   = scalar(grep { $_->{active} && $_->{val} ==  1 } @$m2_ar);
 
 		# Sanity-checking... what could go wrong?
-		if (!$mod_hr->{uid}) {
-			print STDERR "no uid in \$mod_hr: " . Dumper($mod_hr);
-			next;
-		}
-		if ($nunfair+$nfair == 0) {
-			print STDERR "M2 fair,unfair both 0 for mod id $mod_hr->{id}\n";
-			next;
-		}
-		if (($nunfair+$nfair) % 2 == 0) {
-			print STDERR "M2 fair+unfair=" . ($nunfair+$nfair) . ","
-				. " consensus=$consensus"
-				. " for mod id $mod_hr->{id}\n";
-		}
+		next unless rec_sanity_check({
+			mod_hr =>	$mod_hr,
+			nunfair =>	$nunfair,
+			nfair =>	$nfair,
+			both0 =>	$both0,
+			tievote =>	$tievote,
+		});
 
 		my $winner_val = 0;
 		   if ($nfair > $nunfair) {	$winner_val =  1 }
 		elsif ($nunfair > $nfair) {	$winner_val = -1 }
 		my $fair_frac = $nfair/($nunfair+$nfair);
+		my $lonedissent_val =
+			scalar(grep { $_->{active} && $_->{val} == -$winner_val } @$m2_ar) <= 1
+			? -$winner_val : 0;
 
 		# Get the token and karma consequences of this vote.
 		# This uses a complex algorithm to return a fairly
 		# complex data structure but at least its fields are
 		# named reasonably well.
-		my $csq = $slashdb->getM2Consequences($fair_frac);
+		my $csq = $slashdb->getM2Consequences($fair_frac, $mod_hr);
 
 		# First update the moderator's tokens.
 		my $use_possible = $csq->{m1_tokens}{num}
@@ -368,10 +376,18 @@ sub reconcile_m2 {
 			{ m2info => $new_m2info }
 		) if $new_m2info ne $old_m2info;
 
+		# Now update the moderator's tally of csq bonuses/penalties.
+		my $csqtc = $csq->{csq_token_change}{num};
+		my $val = sprintf("csq_bonuses %+0.3f", $csqtc);
+		$slashdb->setUser(
+			$mod_hr->{uid},
+			{ -csq_bonuses => $val },
+		) if $csqtc;
+
 		# Now update the tokens of each M2'er.
 		for my $m2 (@$m2_ar) {
 			if (!$m2->{uid}) {
-				print STDERR "no uid in \$m2: " . Dumper($m2);
+				slashdLog("no uid in \$m2: " . Dumper($m2));
 				next;
 			}
 			my $key = "m2_fair_tokens";
@@ -387,6 +403,13 @@ sub reconcile_m2 {
 					{ -tokens => $sql },
 					{ and_where => $csq->{$key}{sql_and_where} }
 				);
+			}
+			if ($m2->{val} == $winner_val) {
+				$slashdb->setUser($m2->{uid},
+					{ -m2voted_majority	=> "m2voted_majority + 1" });
+			} elsif ($m2->{val} == $lonedissent_val) {
+				$slashdb->setUser($m2->{uid},
+					{ -m2voted_lonedissent	=> "m2voted_lonedissent + 1" });
 			}
 			if ($statsSave) {
 				my $token_change = $use_possible
@@ -419,13 +442,7 @@ sub reconcile_m2 {
 			my $comment_subj = ($slashdb->getComments(
 				$mod_hr->{sid}, $mod_hr->{cid}
 			))[2];
-			my $comment_url =
-				fudgeurl(	# inserts scheme if necessary
-					join("",
-						$constants->{rootdir},
-						"/comments.pl?sid=", $mod_hr->{sid},
-						"&cid=", $mod_hr->{cid}
-				)	);
+			my $comment_url = "/comments.pl?sid=$mod_hr->{sid}&cid=$mod_hr->{cid}";
 
 			$m2_results{$mod_hr->{uid}}{change} ||= 0;
 			$m2_results{$mod_hr->{uid}}{change} += $csq->{m1_karma}{sign}
@@ -445,6 +462,13 @@ sub reconcile_m2 {
 			-m2status => 2,
 		}, "id=$mod_hr->{id}");
 
+	}
+
+	if ($both0 && %$both0) {
+		slashdLog("$both0->{num} mods had both fair and unfair 0, ids $both0->{minid} to $both0->{maxid}");
+	}
+	if ($tievote && %$tievote) {
+		slashdLog("$tievote->{num} mods had a tie fair-unfair vote, ids $tievote->{minid} to $tievote->{maxid}");
 	}
 
 	# Update stats to reflect all the token and M2-judgment
@@ -482,6 +506,39 @@ sub reconcile_m2 {
 		}
 	}
 
+}
+
+sub rec_sanity_check {
+	my($args) = @_;
+	my($mod_hr, $nunfair, $nfair, $both0, $tievote) = (
+		$args->{mod_hr}, $args->{nunfair}, $args->{nfair},
+		$args->{both0}, $args->{tievote}
+	);
+	if (!$mod_hr->{uid}) {
+		slashdLog("no uid in \$mod_hr: " . Dumper($mod_hr));
+		return 0;
+	}
+	if ($nunfair+$nfair == 0) {
+		$both0->{num}++;
+		$both0->{minid} = $mod_hr->{id} if !$both0->{minid} || $mod_hr->{id} < $both0->{minid};
+		$both0->{maxid} = $mod_hr->{id} if !$both0->{maxid} || $mod_hr->{id} > $both0->{maxid};
+		if (verbosity() >= 3) {
+			slashdLog("M2 fair,unfair both 0 for mod id $mod_hr->{id}");
+		}
+		return 0;
+	}
+	if (($nunfair+$nfair) % 2 == 0) {
+		$tievote->{num}++;
+		$tievote->{minid} = $mod_hr->{id} if !$tievote->{minid} || $mod_hr->{id} < $tievote->{minid};
+		$tievote->{maxid} = $mod_hr->{id} if !$tievote->{maxid} || $mod_hr->{id} > $tievote->{maxid};
+		if (verbosity() >= 3) {
+			my $constants = getCurrentStatic();
+			slashdLog("M2 fair+unfair=" . ($nunfair+$nfair) . ","
+				. " consensus=$constants->{m2_consensus}"
+				. " for mod id $mod_hr->{id}");
+		}
+	}
+	return 1;
 }
 
 sub add_m2info {
@@ -567,6 +624,47 @@ sub reconcile_stats {
 		"m2_${reason_name}_${nfair}_${nunfair}",
 		"value + 1");
 }
+
+############################################################
+
+sub adjust_m2_freq {
+	my($virtual_user, $constants, $slashdb, $user) = @_;
+
+	my $t = $constants->{archive_delay};
+	$t = 3 if $t < 3;
+	$t = 10 if $t > 10;
+
+	my $avg_consensus_t = $slashdb->sqlSelect("avg(m2needed)", "moderatorlog", "active=1 and ts > date_sub(NOW(), INTERVAL $t day)");
+	my $avg_consensus_day = $slashdb->sqlSelect("avg(m2needed)", "moderatorlog", "active=1 and ts > date_sub(NOW(), INTERVAL 1 day)");
+	
+	my $m2count_t = $slashdb->sqlCount("metamodlog", "active=1 and ts > date_sub(NOW(), INTERVAL $t day)");
+	my $m1count_t = $slashdb->sqlCount("moderatorlog", "active=1 and ts > date_sub(NOW(), INTERVAL $t day)");
+
+	my $m2count_day = $slashdb->sqlCount("metamodlog", "active=1 and ts > date_sub(NOW(), INTERVAL 1 day)");
+	my $m1count_day = $slashdb->sqlCount("moderatorlog", "active=1 and ts > date_sub(NOW(), INTERVAL 1 day)");
+	
+	return 1 unless $m1count_t && $m1count_day && $m2count_t && $m2count_day;
+
+	my $x = $m2count_t / ($m1count_t * $avg_consensus_t);
+	my $y = $m2count_day / ($m1count_day * $avg_consensus_day);
+
+	my $z = ($y * 3 + $x) / 4;
+	slashdLog("m2_freq vars: x: $x y: $y z: $z\n");	
+
+	return 1 if ($x > 1 && $y < 1) || ($x < 1 && $y > 1);
+	$z = 3/4 if $z < 3/4;
+	$z = 4/3 if $z > 4/3;
+	slashdLog("m2_freq: adjusted  z: $z\n");	
+
+	my $cur_m2_freq = $slashdb->getVar('m2_freq', 'value', 1) || 86400;
+	my $new_m2_freq = int($cur_m2_freq * $z ** (1/24));
+
+	$new_m2_freq = $constants->{m2_freq_min} if defined $constants->{m2_freq_min} && $new_m2_freq < $constants->{m2_freq_min};
+	$new_m2_freq = $constants->{m2_freq_max} if defined $constants->{m2_freq_max} && $new_m2_freq > $constants->{m2_freq_max};
+	slashdLog("adjusting m2_freq from $cur_m2_freq to $new_m2_freq");	
+	$slashdb->setVar('m2_freq', $new_m2_freq);
+}
+	
 
 1;
 

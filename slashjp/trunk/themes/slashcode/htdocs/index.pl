@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -8,8 +8,11 @@ use strict;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
+use Slash::XML;
+use Time::HiRes;
 
 sub main {
+my $start_time = Time::HiRes::time;
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
@@ -38,6 +41,20 @@ sub main {
 		redirect($ENV{HTTP_REFERER} || $ENV{SCRIPT_NAME}), return if $c;
 	}
 
+
+	my $rss = $constants->{rss_allow_index} && $form->{content_type} eq 'rss' && (
+		$user->{is_admin}
+			||
+		($constants->{rss_allow_index} > 1 && $user->{is_subscriber})
+			||
+		($constants->{rss_allow_index} > 2 && !$user->{is_anon})
+	);
+
+	# $form->{logtoken} is only allowed if using rss
+	if ($form->{logtoken} && !$rss) {
+		redirect($ENV{SCRIPT_NAME});
+	}
+
 	$section = $reader->getSection($form->{section});
 
 	# Decide what our limit is going to be.
@@ -54,13 +71,16 @@ sub main {
 		$limit = $user->{maxstories};
 	}
 
+	# TIMING START
+	# From here to the "TIMING END", the bulk of the work in index.pl is
+	# done.  Times listed at "TIMING MARKPOINT" are as measured on
+	# Slashdot, normalized such that the median request takes 1 second.
+	# Times listed are elapsed time from the previous markpoint.
+
 	$stories = $reader->getStoriesEssentials(
 		$limit, $form->{section},
 		'',
 	);
-
-	my $title = getData('head', { section => $section });
-	header($title, $section->{section}) or return;
 
 	# We may, in this listing, have a story from the Mysterious Future.
 	# If so, there are three possibilities:
@@ -84,12 +104,39 @@ sub main {
 		$future_plug = 1;
 	}
 
+	# TIMING MARKPOINT
+	# Median 0.145 seconds, 90th percentile 0.222 seconds
+
+	return do_rss($reader, $constants, $user, $form, $stories, $section) if $rss;
+
+	my $title = getData('head', { section => $section });
+	header($title, $section->{section}) or return;
+
+	# TIMING MARKPOINT
+	# Median 0.090 seconds, 90th percentile 0.145 seconds
+
 	# displayStories() pops stories off the front of the @$stories array.
 	# Whatever's left is fed to displayStandardBlocks for use in the
 	# index_more block (aka Older Stuff).
 	$Stories = displayStories($stories);
 
-	my $StandardBlocks = displayStandardBlocks($section, $stories);
+	# TIMING MARKPOINT
+	# Median 0.437 seconds, 90th percentile 1.078 seconds
+
+	# damn you, autovivification!
+	my($first_date, $last_date);
+	if (@$stories) {
+		($first_date, $last_date) = ($stories->[0]{time}, $stories->[-1]{time});
+		$first_date =~ s/(\d\d\d\d)-(\d\d)-(\d\d).*$/$1$2$3/;
+		$last_date  =~ s/(\d\d\d\d)-(\d\d)-(\d\d).*$/$1$2$3/;
+	}
+
+	my $StandardBlocks = displayStandardBlocks($section, $stories,
+		{ first_date => $first_date, last_date => $last_date }
+	);
+
+	# TIMING MARKPOINT
+	# Median 0.235 seconds, 90th percentile 0.513 seconds
 
 	slashDisplay('index', {
 		metamod_elig	=> scalar $reader->metamodEligible($user),
@@ -98,9 +145,48 @@ sub main {
 		boxes		=> $StandardBlocks,
 	});
 
+	# TIMING MARKPOINT
+	# Median 0.052 seconds, 90th percentile 0.084 seconds
+
 	footer();
 
 	writeLog($form->{section});
+
+	# TIMING MARKPOINT
+	# Median 0.037 seconds, 90th percentile 0.059 seconds
+
+}
+
+
+sub do_rss {
+	my($reader, $constants, $user, $form, $stories, $section) = @_;
+	my @rss_stories;
+	for (@$stories) {
+		my $story = $reader->getStory($_->{sid});
+		$story->{introtext} = parseSlashizedLinks($story->{introtext});
+		$story->{introtext} = processSlashTags($story->{introtext});
+		$story->{introtext} =~ s{(HREF|SRC)="(//[^/"]+)}{$1 . '="' . url2abs($2)}ieg;
+		push @rss_stories, { story => $story };
+	}
+
+	my $title = getData('rsshead', { section => $section });
+	my $name = lc($constants->{basedomain}) . '.rss';
+
+	xmlDisplay('rss', {
+		channel	=> {
+			title	=> $title,
+		},
+		version 		=> $form->{rss_version},
+		image			=> 1,
+		items			=> \@rss_stories,
+		rdfitemdesc		=> 1,
+		rdfitemdesc_html	=> 1,
+	}, {
+		filename		=> $name,
+	});
+
+	writeLog($form->{section});
+	return;
 }
 
 #################################################################
@@ -164,7 +250,7 @@ sub rmBid {
 
 #################################################################
 sub displayStandardBlocks {
-	my($section, $older_stories_essentials) = @_;
+	my($section, $older_stories_essentials, $other) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -203,7 +289,8 @@ sub displayStandardBlocks {
 			$return .= portalbox(
 				$constants->{fancyboxwidth},
 				getData('morehead'),
-				getOlderStories($older_stories_essentials, $section),
+				getOlderStories($older_stories_essentials, $section,
+					{ first_date => $other->{first_date}, last_date => $other->{last_date} }),
 				$bid,
 				'',
 				$getblocks
@@ -284,7 +371,6 @@ sub displayStories {
 	my $form      = getCurrentForm();
 	my $user      = getCurrentUser();
 	my $ls_other  = { user => $user, reader => $reader, constants => $constants };
-
 	my($today, $x) = ('', 0);
 	my $cnt = int($user->{maxstories} / 3);
 	my($return, $counter);
@@ -298,7 +384,7 @@ sub displayStories {
 	# of for every story
 	my $msg;
 	$msg->{readmore} = getData('readmore');
-	if ($constants->{body_bytes}){
+	if ($constants->{body_bytes}) {
 		$msg->{bytes} = getData('bytes');
 	} else {
 		$msg->{words} = getData('words');
@@ -319,15 +405,15 @@ sub displayStories {
 		# to sufficiently fill the homepage (typically 10), then we're
 		# done -- put the story back on the list (so it'll correctly
 		# appear in the Older Stuff box) and exit.
-		my $day = timeCalc($story->{time},'%A %B %d');
-		my($w) = join ' ', (split m/ /, $day)[0 .. 2];
+		my $day = timeCalc($story->{time}, '%A %B %d');
+		my($w) = join ' ', (split / /, $day)[0 .. 2];
 		$today ||= $w;
 		if (++$x > $cnt && $today ne $w) {
 			unshift @$stories, $story;
 			last;
 		}
 
-		my @threshComments = split m/,/, $story->{hitparade};  # posts in each threshold
+		my @threshComments = split /,/, $story->{hitparade};  # posts in each threshold
 
 		$other->{is_future} = 1 if $story->{is_future};
 		my $storytext = displayStory($story->{sid}, '', $other);
@@ -380,7 +466,7 @@ sub displayStories {
 				threshold	=> -1,
 				'link'		=> $story->{commentcount} || 0,
 				section		=> $story->{section}
-			},"", $ls_other);
+			}, "", $ls_other);
 
 			push @commentcount_link, $thresh, ($story->{commentcount} || 0);
 			push @links, getData('comments', { cc => \@commentcount_link })
@@ -410,9 +496,19 @@ sub displayStories {
 		$tmpreturn .= slashDisplay('storylink', {
 			links	=> \@links,
 			sid	=> $story->{sid},
-		}, { Return => 1});
+		}, { Return => 1 });
 
 		$return .= $tmpreturn;
+	}
+
+	unless ($constants->{index_no_prev_next_day}) {
+		my($today, $tomorrow, $yesterday, $week_ago) = getOlderDays($form->{issue});
+		$return .= slashDisplay('next_prev_issue', {
+			today		=> $today,
+			tomorrow	=> $tomorrow,
+			yesterday	=> $yesterday,
+			week_ago	=> $week_ago,
+		}, { Return => 1 });
 	}
 
 	return $return;

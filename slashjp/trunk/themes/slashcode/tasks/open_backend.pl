@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2004 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -23,7 +23,7 @@ $task{$me}{code} = sub {
 	if ($stories && @$stories) {
 		newxml(@_, undef, $stories);
 		newrdf(@_, undef, $stories);
-		newwml(@_, undef, $stories);
+		#newwml(@_, undef, $stories);
 		newrss(@_, undef, $stories);
 	}
 
@@ -48,14 +48,16 @@ sub save2file {
 	# re-FETCH the file; if they send an If-Modified-Since, Apache
 	# will just return a header saying the file has not been modified
 	# -- pudge
-	open $fh, "<$f" or die "Can't open $f: $!";
-	my $current = do { local $/; <$fh> };
-	close $fh;
-
-	my $new = $d;
-	# normalize ...
-	s|<dc:date>[^<]*</dc:date>|| for $current, $new;
-	return if $current eq $new;
+	# on the other hand, don't abort if the file doesn't exist; that
+	# probably means the site is newly installed - Jamie 2003/09/05
+	if (open $fh, "<$f") {
+		my $current = do { local $/; <$fh> };
+		close $fh;
+		my $new = $d;
+		# normalize ...
+		s|[dD]ate>[^<]+</|| for $current, $new;
+		return if $current eq $new;
+	}
 
 	open $fh, ">$f" or die "Can't open $f: $!";
 	print $fh $d;

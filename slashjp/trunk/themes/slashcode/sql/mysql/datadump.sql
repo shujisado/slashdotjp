@@ -3,6 +3,10 @@
 # Host: localhost    Database: dump
 #--------------------------------------------------------
 # Server version	3.23.26-beta-log
+#
+# $Id$
+#
+
 
 #
 # Dumping data for table 'abusers'
@@ -25,7 +29,7 @@
 
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('articles_more','',1000,'static',NULL,'articles',5,'Articles',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('colors','#FFFFFF,#222222,#111111,#DDDDDD,#999999,#111111,#DDDDDD,#FFFFFF,#DDDDDD,#660000,#BBBBBB,#DDDDDD',1000,'color','<P>This is a comma delimited list of colors that are split by comma and \r\nassigned to two arrays: $user->{fg} and $user->{bg}. <BR>The first half of these colors go into $user->{fg} and the last half go into $user->{bg}.</P>','index',0,'colors',0,'','',0);
-INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features','<!-- begin features block -->\r\nThis is a place where you can put linkage to important stories\r\nthat you have on your site.\r\nYou can edit this space easily by just logging into backSlash, clicking\r\n\'Blocks\' from the admin menu, and editing the block named \'features\'.\r\n<!-- end features block -->\r\n\r\n',500,'static',NULL,'index',1,'features',1,'index.pl?section=features',NULL,0);
+INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features','<!-- begin features block -->\r\nThis is a place where you can put linkage to important stories\r\nthat you have on your site.\r\nYou can edit this space easily by just logging into backSlash, clicking\r\n\'Config\' and then \'Blocks\' from the admin menu, and editing the block named \'features\'.\r\n<!-- end features block -->\r\n\r\n',500,'static',NULL,'index',1,'features',1,'index.pl?section=features',NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features_more','',1000,'static',NULL,'features',5,'more',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features_qlinks','<!-- begin quicklinks block -->\n<A HREF=\"http://newsforge.com/\">Newsforge</A><BR>\n<A HREF=\"http://lists.slashdot.org/mailman/listinfo.cgi\">Slash Mailing lists</A><BR>\n<A HREF=\"http://www.slashcode.com/\">Slashcode.com</A><BR>\n<A HREF=\"http://slashdot.org/\">Slashdot</A><BR>\n<A HREF=\"http://osdn.com/\">OSDN</A><BR>\n<A HREF=\"http://CmdrTaco.net/\">CmdrTaco.net</A><BR>\n<A HREF=\"http://www.cowboyneal.org/\">Cowboyneal.org</A><BR>\n<A HREF=\"http://pudge.net/\">Pudge.Net</A><BR>\n<A HREF=\"http://tangent.org/\">TangentOrg</A><BR>\n<A HREF=\"http://thinkgeek.com/\">ThinkGeek</A><BR>\n\n<!-- end quicklinks block -->',500,'static',NULL,'features',7,'Quick Links',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('index_more','',1000,'static',NULL,'index',5,'Older Stuff',1,NULL,NULL,0);
@@ -258,11 +262,13 @@ INSERT INTO topic_images (id, name, image, width, height) VALUES (1,'news', 'top
 INSERT INTO topic_images (id, name, image, width, height) VALUES (2,'linux', 'topiclinux.gif',60,70);
 INSERT INTO topic_images (id, name, image, width, height) VALUES (3,'slashdot', 'topicslashdot.gif',100,34);
 INSERT INTO topic_images (id, name, image, width, height) VALUES (4,'slash', 'topicslash.gif',81,36);
+INSERT INTO topic_images (id, name, image, width, height) VALUES (5,'programming', 'topicprogramming.gif',80,48);
 
 INSERT INTO topics (tid, name, alttext, default_image) VALUES (1,'news', 'News', 1);
 INSERT INTO topics (tid, name, alttext, default_image) VALUES (2,'linux', 'Linux', 2);
 INSERT INTO topics (tid, name, alttext, default_image) VALUES (3,'slashdot', 'Slashdot', 3);
 INSERT INTO topics (tid, name, alttext, default_image) VALUES (4,'slash', 'Slash', 4);
+INSERT INTO topics (tid, name, alttext, default_image) VALUES (5,'programming', 'Programming', 5);
 
 #
 # Dumping data for table 'tzcodes'
