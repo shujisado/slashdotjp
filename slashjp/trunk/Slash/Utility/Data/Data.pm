@@ -37,6 +37,7 @@ use Slash::Constants qw(:strip);
 use Slash::Utility::Environment;
 use URI;
 use XML::Parser;
+use Encode; 
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -1109,6 +1110,10 @@ sub breakHtml {
 	# half-braindead adherance to Unicode char breaking.
 	$text =~ s{$nswcr}{<nobr> <wbr></nobr>$2$3}gs
 		if $constants->{comment_startword_workaround};
+	
+	#### ADD_J
+	$text = Encode::decode("EUC-JP", $text);
+	#### END_J
 
 	# Break up overlong words, treating entities/character references
 	# as single characters and ignoring HTML tags.
@@ -1127,6 +1132,10 @@ sub breakHtml {
 		. substr($1, -1)
 		. $workaround_end
 	}gsex;
+
+	#### ADD_J
+	$text = Encode::encode("EUC-JP", $text);
+	#### END_J
 
 	# Just to be tidy, if we appended that word break at the very end
 	# of the text, eliminate it.
