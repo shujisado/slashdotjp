@@ -1389,13 +1389,15 @@ sub getOlderStories {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $months = $reader->getDescriptions('months');
 
 	for my $story (@$stories) {
 		#Use one call and parse it, its cheaper :) -Brian
-		my($day_of_week, $month, $day, $secs) = split m/ /, timeCalc($story->{time}, "%A %B %d %s");
+		my($day_of_week, $month, $day, $secs) = split m/ /, timeCalc($story->{time}, "%A %m %d %s");
 		$day =~ s/^0//;
+		$month =~ s/^0//;
 		$story->{day_of_week} = $day_of_week;
-		$story->{month} = $month;
+		$story->{month} = $months->{$month}; 
 		$story->{day} = $day;
 		$story->{secs} = $secs;
 		$story->{issue} ||= timeCalc($story->{time}, '%Y%m%d');
