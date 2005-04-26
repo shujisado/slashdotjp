@@ -2467,9 +2467,18 @@ sub determineCurrentSkin {
 		my $hostname = $r->header_in('host');
 		$hostname =~ s/:\d+$//;
  
+		# filter skins by hostname
 		my $skins = $reader->getSkins;
-		($skin) = grep { lc $skins->{$_}{hostname} eq lc $hostname }
+		my @potSkin = grep { lc $skins->{$_}{hostname} eq lc $hostname }
 			sort { $a <=> $b } keys %$skins;
+
+		# match /section/...,  / is matched to 
+		if ($r->uri() =~ m|^/(\w+)/|){
+			my $key = $1;
+			($skin) = grep {$skins->{$_}{name} eq $key } @potSkin;
+		}else{
+			($skin) = @potSkin;
+		}
 
 		# don't bother warning if $hostname is numeric IP
 		if (!$skin && $hostname !~ /^\d+\.\d+\.\d+\.\d+$/) {
