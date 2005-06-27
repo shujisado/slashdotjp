@@ -586,7 +586,7 @@ sub displayStories {
 		}
 
 		if ($user->{seclev} >= 100) {
-			push @links, [ "$gSkin->{rootdir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit') ];
+			push @links, [ "$constants->{absolutedir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit') ];
 		}
 
 		# I added sid so that you could set up replies from the front page -Brian
