@@ -1899,9 +1899,9 @@ sub editComm {
 	}
 
 	my @reasons = ( );
-	my $reasons = $slashdb->getReasons();
-	for my $id (sort { $a <=> $b } keys %$reasons) {
-		push @reasons, $reasons->{$id}{name};
+	my $reasons_raw = $slashdb->getReasons();
+	for my $id (sort { $a <=> $b } keys %$reasons_raw) {
+		push @reasons, $reasons_raw->{$id}{name};
 	}
 
 	my %reason_select;
@@ -2017,7 +2017,9 @@ sub editComm {
 		highlightthresh_select	=> $highlightthresh_select,
 		uthreshold_select	=> $uthreshold_select,
 		posttype_select		=> $posttype_select,
+		range			=> \@range,
 		reasons			=> \@reasons,
+		reasons_raw		=> $reasons_raw,
 		reason_select		=> \%reason_select,
 		people			=> \@people,
 		people_select		=> \%people_select,
@@ -2509,8 +2511,9 @@ sub saveComm {
 		push @reasons, $reasons->{$id}{name};
 	}
 
-	for my $reason_name (@reasons) {
-		my $key = "reason_alter_$reason_name";
+	for my $reason_id (keys %$reasons) {
+		next unless $reasons->{$reason_id}{listable};
+		my $key = "reason_alter_$reason_id";
 		my $answer = $form->{$key};
 		$answer = 0 if $answer !~ /^[\-+]?\d+$/;
 		$user_edits_table->{$key} = ($answer == 0) ? '' : $answer;
