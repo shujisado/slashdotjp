@@ -1325,6 +1325,7 @@ sub _get_lastjournal {
 			|| [qw(HR BR LI P OL UL BLOCKQUOTE DIV)];
 		my $break_tag = join '|', @$approvedtags_break;
 		if (scalar(() = $art_shrunk =~ /<(?:$break_tag)>/gi) > 2) {
+			# extract first line of journal entry
 			$art_shrunk =~ s/\A
 			(
 				(?: <(?:$break_tag)> )?
@@ -1332,11 +1333,14 @@ sub _get_lastjournal {
 				.*?
 			)	<(?:$break_tag)>.*
 			/$1/six;
-			if (length($art_shrunk) < 15) {
+			# returning undef is totally broken,
+			# because user will have no journal entries
+			# in userInfo  -- Oliver
+			#if (length($art_shrunk) < 15) {
 				# This journal entry has too much whitespace
 				# in its first few chars;  scrap it.
-				return undef;
-			}
+			#	return undef;
+			#}
 			$art_shrunk = chopEntity($art_shrunk);
 		}
 		if (length($art_shrunk) < length($lastjournal->{article})) {
