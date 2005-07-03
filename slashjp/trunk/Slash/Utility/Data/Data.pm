@@ -747,7 +747,7 @@ Encrypted password.
 
 sub encryptPassword {
 	my($passwd) = @_;
-	return md5_hex($passwd);
+	return md5_hex(Encode::encode_utf8($passwd));
 }
 
 #========================================================================
