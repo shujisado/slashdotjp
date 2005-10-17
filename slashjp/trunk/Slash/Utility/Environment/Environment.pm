@@ -1753,7 +1753,7 @@ sub filter_params {
 
 sub filter_param {
 	my($key, $data) = @_;
-	my @candencs = qw/utf8 ascii euc-jp shiftjis 7bit-jis/;
+	my @candencs = qw/utf8 ascii euc-jp cp932 7bit-jis/;
 	my $enc;
 
 	# Paranoia - Clean out any embedded NULs. -- cbwood
