@@ -143,6 +143,9 @@ sub header {
 # 			$r->header_out('Cache-Control', 'private');
 # 		}
 
+		$options->{last_modified} &&
+			$r->header_out('Last-Modified',  $options->{last_modified});
+
 		$r->send_http_header;
 		return if $r->header_only;
 	}
