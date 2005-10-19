@@ -883,6 +883,20 @@ sub submitComment {
 		$form->{posttype} || PLAINTEXT
 	);
 
+	if ($constants->{anonymous_comment_interval} && ($user->{is_anon} || $form->{postanon})) {
+		my $ipid = getCurrentUser('ipid');
+		my $ipid_count = $slashdb->sqlSelect('count(*)', 'comments',
+			"sid='$form->{sid}'
+			AND uid=1
+			AND date > SUBDATE(NOW(), INTERVAL $constants->{anonymous_comment_interval} MINUTE)
+			AND ipid='$ipid'");
+		if ($ipid_count > 0) {
+			header('Comments', $discussion->{section}) or return;
+			editComment(@_, getError('anonymous_comment_interval'));
+			return 0;
+		}
+	}
+
 	unless (validateComment(
 		\$tempComment, \$tempSubject, $error_message, 1,
 		($form->{posttype} == CODE
