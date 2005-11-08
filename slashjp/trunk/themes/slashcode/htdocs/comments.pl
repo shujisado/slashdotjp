@@ -826,7 +826,7 @@ sub previewForm {
 	}
 
 	my $tm = $user->{mode};
-	$user->{mode} = 'archive';
+	$user->{mode} = 'preview';
 	my $previewForm;
 	if ($form->{newdiscussion} && $user->{seclev} < $constants->{discussion_create_seclev}) { 
 		$previewForm = slashDisplay('newdiscussion', {
