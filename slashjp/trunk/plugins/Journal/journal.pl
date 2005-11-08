@@ -240,7 +240,7 @@ sub displayRSS {
 				tid		=> $article->[5],
 			},
 			title		=> $article->[2],
-			description	=> strip_mode($article->[1], $article->[4]),
+			description	=> strip_notags($article->[1]),
 			'link'		=> root2abs() . '/~' . fixparam($nickname) . "/journal/$article->[3]",
 		};
 	}
