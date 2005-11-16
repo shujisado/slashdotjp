@@ -2404,7 +2404,7 @@ sub parseSlashizedLinks {
 		>
 	}{
 		_slashlink_to_link($1, $options)
-	}gxe;
+	}gxei;
 	return $html;
 }
 
