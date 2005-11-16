@@ -153,7 +153,7 @@ sub deleteSubmissions {
 sub blankForm {
 	my($constants, $slashdb, $user, $form) = @_;
 	yourPendingSubmissions(@_);
-	displayForm($user->{nickname}, $user->{fakeemail}, $form->{skin}, getData('defaulthead'));
+	displayForm($user->{nickname}, 'http://'.$constants->{basedomain}.'/~'.$user->{nickname}.'/', $form->{skin}, getData('defaulthead'));
 }
 
 #################################################################
@@ -448,7 +448,7 @@ sub displayForm {
 	}
 
 	my $skins = $slashdb->getSkins();
-	my $topic_values = $slashdb->getDescriptions('non_nexus_topics-submittable');
+	my $topic_values = $slashdb->getDescriptions('highlighted-topics-submittable');
 	my $skin_values = $slashdb->getDescriptions('skins-submittable');
 
 	$form->{tid} ||= 0;
