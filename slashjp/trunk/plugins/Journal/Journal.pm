@@ -211,10 +211,9 @@ sub top {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count(j.uid) AS c, u.nickname, j.uid, MAX(date), MAX(id)
-FROM journals AS j, users AS u
-WHERE j.uid = u.uid
-GROUP BY u.nickname ORDER BY c DESC
+SELECT count AS c,nickname,users_journal.uid,date,jid AS id
+FROM users_journal JOIN users USING (uid)
+ORDER BY count DESC
 LIMIT $limit
 EOT
 
@@ -240,10 +239,8 @@ sub topRecent {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count(j.id), u.nickname, u.uid, MAX(j.date) AS date, MAX(id)
-FROM journals AS j, users AS u
-WHERE j.uid = u.uid
-GROUP BY u.nickname
+SELECT count AS c,nickname,users_journal.uid,date,jid AS id
+FROM users_journal JOIN users USING (uid)
 ORDER BY date DESC
 LIMIT $limit
 EOT
