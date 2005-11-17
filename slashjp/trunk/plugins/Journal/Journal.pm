@@ -145,6 +145,7 @@ sub create {
 	my($date) = $self->sqlSelect('date', 'journals', "id=$id");
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { journal_last_entry_date => $date });
+	$self->updateUsersJournal($uid);
 
 	return $id;
 }
@@ -177,7 +178,31 @@ sub remove {
 	}
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { -journal_last_entry_date => $date });
+	$self->updateUsersJournal($uid);
+
 	return $count;
+}
+
+sub updateUsersJournal {
+	my ($self, $uid) = @_;
+
+	my $count = $self->sqlCount("journals", "uid=$uid");
+	my $jid = $self->sqlSelect("MAX(id)", "journals", "uid=$uid");
+	my $date = $self->sqlSelect("date", "journals", "id=$jid");
+	if ($self->sqlUpdate("users_journal",
+			     { count => $count,
+			       jid => $jid,
+			       date => $date },
+			     "uid=$uid") < 1) {
+		if ($self->sqlInsert("users_journal",
+				     { uid => $uid,
+				       jid => $jid,
+				       count => $count,
+				       date => $date }) < 1) {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 sub top {
