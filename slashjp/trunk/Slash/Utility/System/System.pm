@@ -133,13 +133,12 @@ sub sendEmail {
 	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
 
 	# set enverope from
+	my $sender = $constants->{mailfrom};
 	if ($constants->{bounce_address}) {
 		$sender = $constants->{bounce_address};
 		my $bounce_addr = $addr;
 		$bounce_addr =~ s/@/=/;
 		$sender =~ s/###ADDR###/$bounce_addr/;
-	} else {
-		$sender = $constants->{mailfrom};
 	}
 
 	my %data = (
