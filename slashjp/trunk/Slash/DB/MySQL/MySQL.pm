@@ -308,7 +308,7 @@ sub sqlConnect{
 # Perl has lost the flag somewhere
 sub sqlDo{
 	my($self, $sql) = @_;
-	$sql = decode_utf8( $sql ); # unless $sql =~ /accesslog_admin|people/;
+	$sql = decode_utf8( $sql ) unless $sql =~ /INSERT\s+INTO\s+accesslog_admin|UPDATE\s+users_info\s+SET\s+people\s+=/;
 	$self->SUPER::sqlDo( $sql );
 }
   
