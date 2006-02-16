@@ -239,25 +239,16 @@ sub topRecent {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count AS c,nickname,users_journal.uid,date,jid AS id
+SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article
 FROM users_journal JOIN users USING (uid)
+JOIN journals ON jid=journals.id
+JOIN journals_text ON jid=journals_text.id
 ORDER BY date DESC
 LIMIT $limit
 EOT
 
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);
 	return [ ] if !$losers || !@$losers;
-
-	my $id_list = join(", ", map { $_->[4] } @$losers);
-	my $loserid_hr = $self->sqlSelectAllHashref(
-		"id",
-		"id, description",
-		"journals",
-		"id IN ($id_list)");
-
-	for my $loser (@$losers) {
-		$loser->[5] = $loserid_hr->{$loser->[4]}{description};
-	}
 
 	return $losers;
 }

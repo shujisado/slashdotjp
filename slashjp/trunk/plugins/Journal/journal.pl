@@ -308,7 +308,8 @@ sub displayTopRSS {
 
 		push @items, {
 			title	=> $title,
-			'link'	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/"
+			link	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/",
+			description => strip_notags($entry->[6]),
 		};
 	}
 
