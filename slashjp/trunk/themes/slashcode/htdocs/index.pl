@@ -598,6 +598,10 @@ sub displayStories {
 		$return .= $tmpreturn;
 	}
 
+	if ($constants->{ad_enable_google_adsense_on_index}) {
+		$return .= slashDisplay('google_adsense', {}, { Return => 1 });
+	}
+
 	unless ($constants->{index_no_prev_next_day}) {
 		my($today, $tomorrow, $yesterday, $week_ago) = getOlderDays($form->{issue});
 		$return .= slashDisplay('next_prev_issue', {
