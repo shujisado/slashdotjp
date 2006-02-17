@@ -1,0 +1,54 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+search
+__lang__
+en_US
+__name__
+usersearch
+__template__
+[% USE Slash %]
+<TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	[% FOREACH thisuser=users %]
+		<TR>
+		[% IF thisuser.score %]
+			<TD VALIGN="TOP">
+				[% thisuser.score %]
+			</TD>
+		[% END %]
+		<TD VALIGN="TOP">
+			<A HREF="[% gSkin.rootdir %]/~[% thisuser.nickname | fixparam %]/">[% thisuser.nickname | strip_literal %]</A> &nbsp;
+			[% IF thisuser.fakeemail %]
+				([% thisuser.uid %]) email: <A HREF="mailto:[% thisuser.fakeemail | fixparam %]">[% thisuser.fakeemail | strip_literal %]</A> <BR>
+			[% ELSE %]
+				([% thisuser.uid %])<BR>
+			[% END %]
+		</TD>
+		[% IF thisuser.journal_last_entry_date %]
+			<TD VALIGN="TOP">
+				<A HREF="[% gSkin.rootdir %]/~[% thisuser.nickname | fixparam %]/journal/"><B><EM> Last Journal entry [% Slash.timeCalc(thisuser.journal_last_entry_date) %]</EM></A>
+			</TD>
+		[% ELSE %]
+			<TD VALIGN="TOP">
+				&nbsp;
+			</TD>
+		[% END %]
+		[% UNLESS user.is_anon %]
+			<TD VALIGN="TOP">
+				[% PROCESS zoo_icons person=thisuser.uid %]
+			</TD>
+		[% END %]
+		</TR>
+	[% END %]
+</TABLE>
+[% PROCESS pagination %]
+<P>
+
+__seclev__
+100
+__version__
+$Id$

@@ -1,0 +1,75 @@
+__section__
+default
+__description__
+Repository for random data elements.
+
+* value = the name of the data element to retrieve
+
+Each data element may have any number of other variables.
+__title__
+
+__page__
+pollBooth
+__lang__
+en_US
+__name__
+data
+__template__
+[% SWITCH value %]
+
+[% CASE 'title' %]
+	[% returnme.data_constant = 1 %]
+	[% constants.sitename %] Poll
+
+[% CASE 'edit_poll_title' %]
+	[% IF qid %]Editing Poll #[% qid %][% ELSE %]New Poll[% END %]
+
+[% CASE 'invalid_sid' %]
+	[% returnme.data_constant = 1 %]
+	Invalid Story Id specified.  Please correct and try to save again.
+[% CASE 'attached_to_other' %]
+	[% returnme.data_constant = 1 %]
+	Story is already attatched to a different poll.  Please detach poll from that story before saving.
+[% CASE 'invalid' %]
+	[% returnme.data_constant = 1 %]
+	Invalid poll!<BR>
+
+[% CASE 'display' %]
+	[% returnme.data_constant = 1 %]
+	Displaying poll results.
+
+[% CASE 'anon' %]
+	[% returnme.data_constant = 1 %]
+	You may not vote anonymously.  Please
+	<A HREF="[% constants.real_rootdir %]/users.pl">log in</A>.
+
+[% CASE 'uid_voted' %]
+	[% user.nickname | strip_literal %] at [% env.remote_addr %] has already voted.
+	[% IF env.http_x_forwarded_for %]
+	(proxy for [% env.http_x_forwarded_for %])
+	[% END %]
+
+[% CASE 'poll_closed' %]
+	[% returnme.data_constant = 1 %]
+	Voting is closed on this poll.
+
+[% CASE 'success' %]
+	Your vote ([% aid %]) has been registered.
+
+[% CASE 'reject' %]
+	Your vote ([% aid %]) was rejected.
+
+[% CASE 'noquestion' %]
+	[% returnme.data_constant = 1 %]
+	You must provide a question.
+
+[% CASE 'noanswer' %]
+	[% returnme.data_constant = 1 %]
+	You must provide one or more answers.
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id$

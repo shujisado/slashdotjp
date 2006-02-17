@@ -1,0 +1,197 @@
+__section__
+default
+__description__
+Edit all those menus and checkboxes for authors, topics,
+sections (nexuses), and slashboxes.
+
+* title = passed to top titlebar, just above the section, author,
+  and topic selection
+* criteria_msg = a note to appear between that titlebar and the
+  section, author, and topic selection itself
+* customize_title = title for the titlebar just above the slashboxes
+* tilded_customize_msg = a note to appear between
+  the list of slashboxes and the User Space textbox
+* tilded_box_msg = any text to display under the User Space textbox
+
+* authorref = hashref of author information
+	$n = nickname for author with uid $n
+* aid_order = list of the fields of authorref to display, in display order
+
+* nexusref = hashref of nexus information
+	$n = name (textname) for nexus with tid $n
+* nexustid_order = list of the fields of nexusref to display, in display order
+
+* topicref = hashref of topic information
+	$n = name (textname) for topic with tid $n
+* topictid_order = list of the fields of topicref to display, in display order
+
+* story023_data = hashref of what the existing settings are
+	author = hashref for author settings
+		$n = existing setting for uid $n
+	nexus = hashref for nexus settings
+		$n = existing setting for tid $n
+	topic = hashref for topic settings
+		$n = existing setting for tid $n
+
+* section_descref = hashref of slashboxes
+* box_order = arrayref of slashbox order
+
+__title__
+
+__page__
+users
+__lang__
+en_US
+__name__
+tildeEd
+__template__
+<p>
+
+[% PROCESS titlebar title=title width="100%" %]
+
+[% criteria_msg %]
+
+[% story023_data = Slash.db.getDescriptions('story023');
+   checked = constants.markup_checked_attribute %]
+
+[%-	######################
+	# Sections and Authors
+	######################
+-%]
+
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="100%">
+<TR>
+
+[%-	# Sections (nexuses)
+-%]
+
+<TD VALIGN="TOP">
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR>
+		<TH>Sections</TH>
+		<TH>&nbsp;All&nbsp;</TH>
+		<TH>Best</TH>
+		<TH>None</TH>
+	</TR>
+[% FOREACH nexustid = nexustid_order %]
+	<TR ALIGN="CENTER">
+		[%-	# really should have nexusref have another field for the
+			# url of the (first) skin that uses it, and link this in
+			# here, but ... I'm in a hurry
+		-%]
+		<TD ALIGN="LEFT">[% nexusref.$nexustid | strip_literal %]</TD>
+[% FOREACH value = [ 3 2 0 ] -%]
+		<TD><INPUT TYPE="RADIO" NAME="nexustid[% nexustid %]" VALUE="[% value %]"
+			[%- IF story023_default.nexus.$nexustid == value; checked; END %]></TD>
+[%- END %]
+	</TR>
+[% END %]
+</TABLE>
+</TD>
+
+[%-	# Authors
+-%]
+
+<TD VALIGN="TOP">
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR>
+		<TH>Authors</TH>
+	</TR>
+[% FOR aid = aid_order %]
+	<TR>
+		<TD><INPUT TYPE="CHECKBOX" NAME="aid[% aid %]"
+			[%- IF story023_default.author.$aid > 0; checked; END %]>
+			[% authorref.$aid | strip_literal %]</TD>
+	</TR>
+[% END %]
+</TABLE>
+</TD>
+
+</TR></TABLE>
+
+[% IF constants.story_never_topic_allow == 2
+	|| (user_edit.is_subscriber && constants.story_never_topic_allow == 1) %]
+
+<BR>
+
+[%-	######################
+	# Topics
+	######################
+-%]
+
+<INPUT TYPE="HIDDEN" NAME="topictids_present" VALUE="1">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0" ALIGN="CENTER">
+	<TR BGCOLOR="[% user_edit.colors.bg_3 %]">
+		<TH COLSPAN="6"><FONT COLOR="[% user_edit.colors.fg_3 %]">Topics</FONT></TH>
+	</TR>
+
+	<TR><TD COLSPAN="6"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="100" HEIGHT="3"></TD></TR>
+
+[% FOREACH topictid = topictid_order -%]
+	[%- IF loop.index % 3 == 0 -%]
+		<TR BGCOLOR="[% user_edit.colors.bg_2 %]">
+	[%- END -%]
+		<TD VALIGN="TOP"><INPUT TYPE="CHECKBOX" NAME="topictid[% topictid %]"
+			[%- IF story023_default.topic.$topictid > 0; checked; END %]></TD>
+		<TD VALIGN="TOP" ALIGN="LEFT">&nbsp;
+	[%-	topicref.$topictid | strip_literal	-%]
+		</TD>
+	[%- IF loop.index % 3 == 2 -%]
+		</TR>
+	[% END %]
+[%- END -%]
+[% remaining_cells = 2 - (topictid_order.max % 3);
+   WHILE remaining_cells;
+   	remaining_cells = remaining_cells - 1; -%]
+	<TD>&nbsp;</TD><TD>&nbsp;</TD>
+[%- END -%]
+
+	</TR>
+</TABLE>
+
+[% END %]
+
+<p>
+
+[%-	######################
+	# Slashboxes
+	######################
+-%]
+
+[% PROCESS titlebar width='100%' title=customize_title %]
+
+<INPUT TYPE="CHECKBOX" NAME="useslashboxes"[% IF !user_edit.noboxes; checked; END %]> <B>Use Slashboxes</B>
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0" ALIGN="CENTER">
+[% FOREACH bid = box_order -%]
+	[%- IF loop.index % 3 == 0 -%]
+		<TR BGCOLOR="[% user.colors.bg_2 %]" VALIGN="TOP" ALIGN="LEFT">
+	[%- END -%]
+		<TD><INPUT TYPE="CHECKBOX" NAME="showbox_[% bid | strip_paramattr %]"[% section_descref.$bid.checked %]>
+		<A HREF="[% env.script_name %]?op=previewbox&amp;bid=[% bid | strip_paramattr %]">
+		[% IF bid == 'srandblock' %]
+			Semi-Random Box
+		[% ELSE %]
+			[% section_descref.$bid.title || bid %]
+		[% END %]
+		</A></TD>
+	[%- IF loop.index % 3 == 2 -%]
+		</TR>
+	[% END -%]
+[%- END -%]
+[%- remaining_cells = 2 - (box_order.max % 3);
+   WHILE remaining_cells;
+   	remaining_cells = remaining_cells - 1; -%]
+	<TD>&nbsp;</TD>
+[%- END -%]
+	</TR>
+</TABLE>
+
+[% tilded_customize_msg %]
+[% tilded_box_msg %]
+
+__seclev__
+500
+__version__
+$Id$

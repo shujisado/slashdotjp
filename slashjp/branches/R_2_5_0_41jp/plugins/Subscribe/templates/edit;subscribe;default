@@ -1,0 +1,211 @@
+__section__
+default
+__description__
+Edit subscription information
+
+* user = The user doing the editing, which may or may not be the
+	user being edited (if not, it's an admin).
+* user_edit = The user being edited.  Fields used are buypage_*
+	and hits_{paidfor,bought,bought_today_max}.
+* user_newvalues = Also passed in;  supercedes user_edit where its
+	fields are present.
+* pages = Arrayref of hashrefs, each hashref having fields:
+	pagename = name of the page type to append to "buypage_"
+	descr = description to print for page name
+
+__title__
+
+__page__
+subscribe
+__lang__
+en_US
+__name__
+edit
+__template__
+[% IF !user.is_admin; user_edit = user; END %]
+
+	[% IF (constants.subscribe_allow_gifts && (!constants.subscribe_gift_testing || user.is_admin)) %]
+		<P>You can buy a subscription for yourself or a gift subscription for another user.
+		Payment options include PayPal and credit-card.
+		<P>Recipients of gift subscriptions will be notified of your purchase through email.
+	
+		<FORM METHOD="POST" ACTION="[% gSkin.rootdir %]/subscribe.pl">
+		<CENTER><TABLE BORDER=0 CELLPADDING=3>
+		<TR><TD><INPUT TYPE="radio" name="subscription_type" value="user"> Buy Pages for [% user.nickname | strip_literal %]</TD></TR>
+		<TR><TD><INPUT TYPE="radio" name="subscription_type" value="gift"> Buy Gift Subscription for UID <INPUT TYPE="text" name="uid" size="6"></TD></TR>
+
+		<TR><TD><BR>
+			For gift subscriptions only:<BR>
+			Who do you want the recipient to be told the gift is from?<BR>
+			<INPUT TYPE="text" name="from" size="15" maxlength="30"> (30 character limit, defaults to your username if nothing is entered)
+		<TD></TR>
+		<TR><TD><INPUT TYPE="hidden" name="op" value="confirm"><INPUT TYPE="submit" value="Continue and choose payment type"></TD></TR>
+		</TABLE></CENTER>
+	</FORM>
+	[% ELSE %]
+		<P>Hit the PayPal or credit-card link below to subscribe to
+		[% constants.sitename %].
+		You will be able to purchase banner-ad-free pages.
+
+		<CENTER><TABLE BORDER=0 CELLPADDING=3><TR>
+		<TD>[% PROCESS paypalbut %]</TD>
+		<TD>[% PROCESS ccbut %]</TD>
+		</TR></TABLE></CENTER>
+	[% END %]
+
+[%
+	pages = [
+		{ pagename => "index",
+		  descr	   => "<b>Homepage</b> (Plum: see the Mysterious Future!)" },
+		{ pagename => "article",
+		  descr	   => "<b>Stories</b> (Plum: reading Mysterious Future stories)" },
+		{ pagename => "comments",
+		  descr	   => "<b>Comments</b>" },
+	];
+%]
+
+[%
+	hits_paidfor          = user_newvalues.hits_paidfor
+		|| user_edit.hits_paidfor          || 0;
+	hits_bought           = user_newvalues.hits_bought
+		|| user_edit.hits_bought           || 0;
+	hits_bought_today     = user_newvalues.hits_bought_today
+		|| user_edit.hits_bought_today     || 0;
+	hits_bought_today_max = user_newvalues.hits_bought_today_max;
+	FOREACH page = pages;
+		thispagename = "buypage_${page.pagename}";
+		IF user_newvalues.$thispagename.defined;
+			page.isbought = user_newvalues.$thispagename;
+		ELSE;
+			page.isbought = user_edit.$thispagename;
+		END;
+	END;
+%]
+
+[% IF user.is_admin || ( hits_paidfor && (hits_paidfor > hits_bought) );
+	can_buy = 1; ELSE; can_buy = 0; END %]
+
+<P>[% IF user.uid == user_edit.uid %]You have[% ELSE %]User "[% user_edit.nickname | strip_literal %]" has[% END %]
+paid for a total of [% hits_paidfor %] pages
+and so far [% hits_bought %] have been used up
+([% hits_bought_today %] today).
+[% IF hits_paidfor && user.uid == user_edit.uid %]
+	Thank you for supporting [% constants.sitename %]! We appreciate your
+	contribution very much.
+[% END %]
+
+<p>(We use Greenwich Mean Time to decide where "today" begins and
+ends. Your day may vary.)
+
+[% IF can_buy %]
+
+	<FORM ACTION="[% env.script_name %]">
+
+	[% IF user.uid != user_edit.uid %]
+	<INPUT TYPE="hidden" NAME="uid" VALUE="[% user_edit.uid %]">
+	[% END %]
+
+[% END %]
+
+[% IF user.is_admin %]
+
+	<P>Want to buy
+	[% IF user.uid != user_edit.uid %]"[% user_edit.nickname | strip_literal %]"[% END %]
+	some pages? You're an admin, so take as many as you want:
+	<INPUT TYPE="TEXT" NAME="buymore" VALUE="0" SIZE="6">
+
+[% END %]
+
+[% IF can_buy %]
+
+	<P>We give you some control over deciding where to suppress ads.
+	New subscribers default to suppressing ads everywhere except on
+	comments pages. For accounting purposes, we'd appreciate if you
+	had at least one type of ad being suppressed.
+
+	<P><TABLE BORDER=0 CELLSPACING=1 WIDTH="100%">
+	<TR><TH>&nbsp;&nbsp;Ads&nbsp;&nbsp;</TH>
+	<TH>&nbsp;&nbsp;No&nbsp;Ads&nbsp;&nbsp;</TH>
+	<TH WIDTH="100%">&nbsp;&nbsp;</TH></TR>
+
+	[% FOREACH page = pages %]
+
+	<TR>
+	<TD VALIGN="top" ALIGN="center"><INPUT TYPE="RADIO"
+		NAME="buypage_[% page.pagename %]"
+		VALUE="0" [% IF !page.isbought; constants.markup_checked_attribute; END %]></TD>
+	<TD VALIGN="top" ALIGN="center"><INPUT TYPE="RADIO"
+		NAME="buypage_[% page.pagename %]"
+		VALUE="1" [% IF  page.isbought; constants.markup_checked_attribute; END %]></TD>
+	<TD VALIGN="top" ALIGN="left">&nbsp;[% page.descr %]</TD>
+	</TR>
+
+	[% END %]
+
+	<TR><TD>&nbsp;</TD><TD COLSPAN="2" VALIGN="top" ALIGN="left"
+	>&nbsp;Set "No Ads" anywhere, and you'll get ads disabled for
+	free on other pages too.
+	(<A HREF="[% gSkin.rootdir %]/faq/subscriptions.shtml#ss1400">More
+	info</A>.)</TD></TR>
+
+	</TABLE>
+
+[% END %]
+
+[% IF can_buy %]
+
+	<p>Optionally, if you want to make sure you don't use up
+	your subscription too quickly, you may set a limit of the
+	maximum number of ads you will suppress per day. Beyond
+	this daily limit, pages will not count against your
+	subscription (and ads will begin to appear again). Enter
+	the value here, or 0 to disable the limit, or blank to
+	use the default value
+	[% IF constants.subscribe_hits_btmd %]
+	of [% constants.subscribe_hits_btmd %][% ELSE %]
+	(default is no limit)[% END %]:&nbsp;<INPUT
+	TYPE="TEXT" NAME="hbtm"
+	VALUE="[% hits_bought_today_max %]"
+	SIZE="6">
+	[% IF constants.subscribe_hits_btmd && constants.subscribe_hits_btmd > 2 %]
+	<BR>Note that setting this value between 1 and
+	[% constants.subscribe_hits_btmd - 1 %]
+	will disable some
+	<A HREF="[% gSkin.rootdir %]/faq/subscriptions.shtml#ss1600">plums</A>.
+	[% END %]
+
+[% END %]
+
+[% IF can_buy %]
+
+	<P><INPUT TYPE="SUBMIT" NAME="op" VALUE="save">
+
+	</FORM>
+
+[% END %]
+[% IF user.is_admin %]
+	<FORM METHOD="POST" ACTION="[% gSkin.rootdir %]/subscribe.pl">
+	<P>You're an admin so feel free to grant free pages to deserving users.<BR>
+	<TABLE>
+	<TR><TD>Number of pages:</TD><TD><INPUT TYPE="TEXT" NAME="pages" VALUE="0" SIZE="6"></TD></TR>
+	<TR><TD>User UID:</TD><TD><INPUT TYPE="TEXT" NAME="uid" VALUE="" SIZE="8"></TD></TR>
+	<TR><TD COLSPAN="2"><INPUT TYPE="SUBMIT" NAME="op" VALUE="grant"></TD></TR>
+	</TABLE>
+	</FORM>
+
+[% END %]
+
+
+<P>If you have any questions or concerns about billing, ad&nbsp;display,
+or other subscription-related issues, please contact
+<A HREF="mailto:[% constants.subscribe_email %]">[% constants.subscribe_email %]</A>.
+If your question is about your daily headlines email, you can edit that at
+<A HREF="[% gSkin.rootdir %]/my/messages">[% gSkin.absolutedir %]/my/messages</A>.
+For a list of subscriber-only benefits, see
+<A HREF="[% gSkin.rootdir %]/faq/subscriptions.shtml#ss1600">the FAQ</a>.
+
+__seclev__
+10000
+
+__version__
+$Id$

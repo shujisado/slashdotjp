@@ -1,0 +1,62 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+stats
+__lang__
+en_US
+__name__
+make_graph
+__template__
+[% UNLESS (days);
+      days = form.stats_days;
+   END;
+
+   IF (gtitle);
+      gtitle = gtitle | fixparam;
+      gtitle = '&amp;title=' _ gtitle;
+   END;
+
+   UNLESS skid.defined;
+      skid = form.stats_skid;
+   END;
+   skid = skid | fixparam;
+   statstring = '';
+
+   FOREACH stat = statdata;
+       IF (stat.0);
+          nstat = stat.0 | fixparam;
+
+          nskid = stat.1 | fixparam;
+          IF (!nskid);
+             nskid = skid;
+          END;
+
+          nlabel = stat.2 | fixparam;
+          IF (!nskid);
+             nlabel = '';
+          END;
+
+       ELSE;
+          nstat = stat | fixparam;
+          nskid = skid;
+          nlabel = '';
+       END;
+
+       statstring = statstring _ '&amp;stats_graph_multiple=' _ nstat _ ',' _ nskid _ ',' _ nlabel;
+   END;
+   statstring = BLOCK -%]
+&amp;type=[% type | fixparam %]&amp;stats_days=[% days | fixparam %]&amp;byweekavg=[% byweekavg | fixparam %]&amp;showtotal=[% showtotal | fixparam %][% statstring %][% gtitle %]
+[%- END %]
+
+<P>
+<A HREF="[% gSkin.rootdir %]/stats.pl?op=table[% statstring %]"
+><IMG SRC="[% gSkin.rootdir %]/stats.pl?op=graph[% statstring %]"></A>
+</P>
+__seclev__
+1000
+__version__
+$Id$

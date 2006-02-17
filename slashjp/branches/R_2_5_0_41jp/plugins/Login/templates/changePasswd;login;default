@@ -1,0 +1,71 @@
+__section__
+default
+__description__
+Change password form
+
+__title__
+
+__page__
+login
+__lang__
+en_US
+__name__
+changePasswd
+__template__
+<h2>[% IF form.note == "Please change your password now!";
+	"Please change your password now! ";
+END; note %]</h2>
+
+[% title = "Change password for $user.nickname ($user.uid)" %]
+[% PROCESS prefs_titlebar tab_selected='password' %]
+
+<table align="CENTER" width="100%" bgcolor="[% user.colors.bg_5 %]">
+	<tr>
+		<td>
+[% IF constants.offer_insecure_login_link -%]
+		<p>You can automatically log in by clicking
+		 <a href="[% constants.real_rootdir %]/index.pl?op=userlogin&amp;logtoken=[% user.logtoken | fixparam %]">This Link</a> and Bookmarking the resulting page. 
+		This is totally insecure, but very convenient.
+		</p>
+[%- END %]
+
+		<form action="[% constants.real_rootdir %]/login.pl" method="POST">
+		[% PROCESS formkey_tag %]
+		<input type="HIDDEN" name="uid" value="[% user.uid %]">
+
+[%- session = Slash.db.getDescriptions('session_login');
+   session_sel = Slash.createSelect('session_login', session, user.session_login, 1);
+
+   clocation = Slash.db.getDescriptions('cookie_location');
+   clocation_order = [];
+   FOREACH cloc = ['none', 'classbid', 'subnetid', 'ipid'];
+      clocation_order.push(cloc) IF clocation.$cloc;
+   END;
+   clocation_sel = Slash.createSelect('cookie_location', clocation, user.cookie_location, 1, 0, clocation_order);
+-%]
+
+		My <b><a href="[% gSkin.rootdir %]/faq/accounts.shtml#ac1200">login session</a></b> [% session_sel %] and [% clocation_sel %]
+
+		<p>Note: changing your password or login cookie preferences will disable all
+		other cookies for this account, requiring all other browsers using this account
+		to reauthenticate.</p>
+
+		[% PROCESS formLabel value => "Current Password" comment => "To change your password, enter your current password" %]
+		<input type="PASSWORD" name="oldpass" size="20" maxlength="20" value=""><br>
+
+		[% PROCESS formLabel value => "New Password" comment => "Enter your new password twice, must be 6-20 chars long" %]
+		<input type="PASSWORD" name="pass1" size="20" maxlength="20">
+		<input type="PASSWORD" name="pass2" size="20" maxlength="20">
+
+		</td>
+	</tr>
+</table>
+
+<input type="HIDDEN" name="op" value="saveprefs">
+<input type="SUBMIT" value="Change Login Prefs">
+</form>
+
+__seclev__
+500
+__version__
+$Id$

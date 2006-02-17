@@ -1,0 +1,127 @@
+__section__
+default
+__description__
+* storylistref
+* ndays_represented = the number of days that appear in the listing
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+listStories
+__template__
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+		[% IF constants.label_ui %]
+	<TR>
+		<TD><B>Edit</B></TD>
+		<TD><B>Preview</B></TD>
+		<TD><B>Author</B></TD>
+		<TD><B>Topic</B></TD>
+		<TD><B>Skin</B></TD>
+		<TD><B>Hits</B></TD>
+		<TD><B>Comments</B></TD>
+		<TD><B>Date</B></TD>
+	</TR>
+		[% END %]
+
+[% IF storylistref && storylistref.size > 0;
+
+storiestoday = 0;
+IF ndays_represented > (constants.admin_maxdays_divider || 10);
+	showdayboundaries = 0;
+ELSE;
+	showdayboundaries = 1;
+END;
+FOREACH story = storylistref;
+	IF showdayboundaries && story.td != yesterday;
+		storiestoday = storiestoday > 1 ? storiestoday : '';
+%]
+	<TR>
+		<TD ALIGN="RIGHT" BGCOLOR="[% user.colors.bg_2 %]">
+			<FONT SIZE="2">[% storiestoday %]</FONT>
+		</TD>
+		<TD COLSPAN="7" ALIGN="right" BGCOLOR="[% user.colors.bg_3 %]">
+			<FONT COLOR="[% user.colors.fg_3 %]" SIZE="2">[% story.td %]</FONT>
+		</TD>
+	</TR>
+[%		storiestoday = 0;
+	END;
+
+	yesterday = story.td;
+	storiestoday = storiestoday + 1;
+
+	bgcolor = '#FFFFFF';
+	IF story.displaystatus > 0;
+		bgcolor = '#CCCCCC';
+	ELSIF story.in_trash == 'yes' || story.displaystatus < 0;
+		bgcolor = '#999999';
+	END %]
+
+	<TR BGCOLOR="[% bgcolor %]">
+		<TD ALIGN="RIGHT">
+		<FONT SIZE="2">
+		[<A HREF="[% gSkin.rootdir %]/admin.pl?op=edit&amp;sid=[% story.sid %]">[% story.x %]</A>]
+		</FONT>
+
+		</TD>
+		<TD>
+		<FONT SIZE="2">
+		<A HREF="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
+		[% IF story.in_trash == 'yes' %]<S>[% END; story.title; IF story.in_trash == 'yes' %]</S>[% END %]&nbsp;</A>
+		</FONT>
+		</TD>
+		<TD><FONT SIZE="2"><B>[% story.aid %]</B></FONT></TD>
+
+		<TD><FONT SIZE="2">[% story.topic.substr(0, 5) %]</FONT></TD>
+
+	[% # Here we used to exclude the name of the section if this was
+	   # a section-only listing.  But now the primaryskin may indeed
+	   # differ from the section being displayed.  So list it. %]
+		<TD>
+		<FONT SIZE="2">
+		[% IF story.skinname.match("^_") %]
+			[% story.skinname.substr(0, 5) %]
+		[% ELSE %]
+			<A HREF="[% env.script_name %]?section=[% story.skinname %]">
+				[% story.skinname.substr(0, 5) %]</A>
+		[% END %]
+		</FONT>
+		</TD>
+
+		<TD>
+		<FONT SIZE="2">
+[% IF story.hits %]
+		[% story.hits %]
+[% ELSE %]
+		n/a	
+[% END %]
+		</FONT>
+		</TD>
+		<TD>
+		<FONT SIZE="2">[% story.commentcount %]</FONT>
+		</TD>
+
+		<TD><FONT SIZE="2">[% story.td2 %]&nbsp;
+		<FONT SIZE="2">[% story.time %]</TD>
+	</TR>
+
+[% END %]
+[% ELSE %]
+<TR><TD><B>No stories.</B></TD></TR>
+[% END %]
+
+</TABLE>
+
+[% IF story.x > 0 and left > 0 %]
+<P ALIGN="RIGHT">
+<B>
+<A HREF="[% env.script_name %]?section=[% form.section %]&amp;op=list&amp;next=[% story.x %]">[% left %] More</A></B></P>
+[% END %]
+
+
+__seclev__
+500
+__version__
+$Id$
