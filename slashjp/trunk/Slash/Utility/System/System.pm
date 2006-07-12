@@ -25,6 +25,8 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
+use open ":utf8";
+use open ":std";
 use Fcntl qw(:flock :seek);
 use File::Basename;
 use File::Path;
@@ -36,6 +38,7 @@ use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Symbol 'gensym';
 use Time::HiRes ();
+use Encode;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT @EXPORT_OK);
@@ -119,14 +122,33 @@ sub sendEmail {
 		return 0;
 	}
 
+	# Character Code Conversion; target encoding must be valid name
+	# Characters not representable in the destination character set
+	# and encoding will be replaced with \x{HHHH} place-holders
+	# (s. Encode(3) perldoc, Handling Malformed Data)
+	my $b_code = $constants->{mail_charset_body} || "UTF-8";
+	my $h_code = $constants->{mail_charset_header} || "MIME-Header";
+	$content = encode( $b_code, $content, Encode::FB_PERLQQ );
+	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
+
+	# set enverope from
+	my $sender = $constants->{mailfrom};
+	if ($constants->{bounce_address}) {
+		$sender = $constants->{bounce_address};
+		my $bounce_addr = $addr;
+		$bounce_addr =~ s/@/=/;
+		$sender =~ s/###ADDR###/$bounce_addr/;
+	}
+
 	my %data = (
+		Sender		=> $sender,
 		From		=> $constants->{mailfrom},
 		Smtp		=> $constants->{smtp_server},
 		Subject		=> $subject,
 		Message		=> $content,
 		To		=> $addr,
 		# put in vars ... ?
-		'Content-type'			=> 'text/plain; charset="us-ascii"',
+		'Content-type'			=> qq|text/plain; charset="$b_code"|,
 		'Content-transfer-encoding'	=> '8bit',
 		'Message-Id'			=> messageID(),
 	);
@@ -190,6 +212,12 @@ sub bulkEmail {
 
 	my @list = grep { emailValid($_) } @$addrs;
 
+	# Character Code Conversion; see comments in sendEmail()
+	my $b_code = $constants->{mail_charset_body} || "UTF-8";
+	my $h_code = $constants->{mail_charset_header} || "MIME-Header";
+	$content = encode( $b_code, $content, Encode::FB_PERLQQ );
+	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
+
 	my $bulk = Slash::Custom::Bulkmail->new(
 		From    => $constants->{mailfrom},
 		Smtp	=> $constants->{smtp_server},
@@ -200,7 +228,7 @@ sub bulkEmail {
 		BAD	=> $badfile,
 		ERRFILE	=> $errfile,
 		# put in vars ... ?
-		'Content-type'			=> 'text/plain; charset="us-ascii"',
+		'Content-type'			=> qq|text/plain; charset="$b_code"|,
 		'Content-transfer-encoding'	=> '8bit',
 		'Message-Id'			=> messageID(),
 	);

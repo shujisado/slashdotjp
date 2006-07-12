@@ -2085,9 +2085,9 @@ sub editComm {
 	}
 
 	my @reasons = ( );
-	my $reasons = $slashdb->getReasons();
-	for my $id (sort { $a <=> $b } keys %$reasons) {
-		push @reasons, $reasons->{$id}{name};
+	my $reasons_raw = $slashdb->getReasons();
+	for my $id (sort { $a <=> $b } keys %$reasons_raw) {
+		push @reasons, $reasons_raw->{$id}{name};
 	}
 
 	my %reason_select;
@@ -2203,7 +2203,9 @@ sub editComm {
 		highlightthresh_select	=> $highlightthresh_select,
 		uthreshold_select	=> $uthreshold_select,
 		posttype_select		=> $posttype_select,
+		range			=> \@range,
 		reasons			=> \@reasons,
+		reasons_raw		=> $reasons_raw,
 		reason_select		=> \%reason_select,
 		people			=> \@people,
 		people_select		=> \%people_select,

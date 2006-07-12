@@ -13,7 +13,6 @@ use Slash::Utility;
 
 use vars qw($VERSION);
 use base 'Exporter';
-use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -201,6 +200,7 @@ sub create {
 	my($date) = $self->sqlSelect('date', 'journals', "id=$id");
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { journal_last_entry_date => $date });
+	$self->updateUsersJournal($uid);
 
 	return $id;
 }
@@ -248,7 +248,31 @@ sub remove {
 	}
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { -journal_last_entry_date => $date });
+	$self->updateUsersJournal($uid);
+
 	return $count;
+}
+
+sub updateUsersJournal {
+	my ($self, $uid) = @_;
+
+	my $count = $self->sqlCount("journals", "uid=$uid");
+	my $jid = $self->sqlSelect("MAX(id)", "journals", "uid=$uid");
+	my $date = $self->sqlSelect("date", "journals", "id=$jid");
+	if ($self->sqlUpdate("users_journal",
+			     { count => $count,
+			       jid => $jid,
+			       date => $date },
+			     "uid=$uid") < 1) {
+		if ($self->sqlInsert("users_journal",
+				     { uid => $uid,
+				       jid => $jid,
+				       count => $count,
+				       date => $date }) < 1) {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 sub top {
@@ -257,10 +281,9 @@ sub top {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count(j.uid) AS c, u.nickname, j.uid, MAX(date), MAX(id)
-FROM journals AS j, users AS u
-WHERE j.uid = u.uid
-GROUP BY u.nickname ORDER BY c DESC
+SELECT count AS c,nickname,users_journal.uid,date,jid AS id
+FROM users_journal JOIN users USING (uid)
+ORDER BY count DESC
 LIMIT $limit
 EOT
 
@@ -286,27 +309,16 @@ sub topRecent {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count(j.id), u.nickname, u.uid, MAX(j.date) AS date, MAX(id)
-FROM journals AS j, users AS u
-WHERE j.uid = u.uid
-GROUP BY u.nickname
+SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article
+FROM users_journal JOIN users USING (uid)
+JOIN journals ON jid=journals.id
+JOIN journals_text ON jid=journals_text.id
 ORDER BY date DESC
 LIMIT $limit
 EOT
 
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);
 	return [ ] if !$losers || !@$losers;
-
-	my $id_list = join(", ", map { $_->[4] } @$losers);
-	my $loserid_hr = $self->sqlSelectAllHashref(
-		"id",
-		"id, description",
-		"journals",
-		"id IN ($id_list)");
-
-	for my $loser (@$losers) {
-		$loser->[5] = $loserid_hr->{$loser->[4]}{description};
-	}
 
 	return $losers;
 }

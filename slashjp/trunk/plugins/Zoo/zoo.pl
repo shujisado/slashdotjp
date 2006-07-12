@@ -11,6 +11,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Zoo;
 use Slash::XML;
+use Digest::SHA1;
 use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -371,6 +372,61 @@ sub _rss {
 		image	=> 1,
 		items	=> \@items,
 		rdfitemdesc => 1,
+	});
+}
+
+sub _foaf {
+	my( $entries, $uid, $type) = @_;
+	my $constants	= getCurrentStatic();
+	my $form	= getCurrentForm();
+	my $reader	= getObject('Slash::DB', { db_type => 'reader' });
+	my $user	= $reader->getUser($uid, ['nickname', 'realemail','homepage', 'journal_last_entry_date', 'emaildisplay']);
+	my $nickname	= $user->{nickname};
+	my $userpage	= "$constants->{rootdir}/~" . fixparam($nickname) . "/";
+
+
+	# basic foaf:Person
+	my $person = {
+			nick		=> $nickname,
+			holdsAccount => {
+				OnlineAccount => {
+					accountName => $nickname,
+					page => $userpage,
+					accountServiceHomepage => $constants->{rootdir},
+				},
+			}
+		};
+
+	# add various field is defined
+	# email address depending on display setting
+	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail} && $user->{emaildisplay} >= 1;
+        $person->{mbox} = "mailto:" . $user->{realemail} if $user->{realemail} && $user->{emaildisplay} >= 2; 
+	$person->{homepage} = $user->{homepage} if $user->{homepage};
+	$person->{weblog} = $userpage . "journal/" if $user->{journal_last_entry_date};
+
+	# add person's relationship
+	my @knows; 
+	for my $entry (@$entries) {
+		my $p = $reader->getUser( $entry->[0] , ['nickname','realemail','emaildisplay'] );
+		my $other = { Person => {
+			nick		=> $p->{nickname},
+			seeAlso		=> "$constants->{rootdir}/~" . fixparam($p->{nickname}) . "/$type.rdf",
+		}};
+		$other->{Person}{mbox_sha1sum} = Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}) if $p->{emaildisplay} >= 1;
+		push @knows, $other;
+	
+	}
+	$person->{knows} = \@knows;
+
+	# output RDF
+	$type = $type eq "foaf" ? "Friends and Foes" : $type;
+	xmlDisplay("foaf" ,{
+		Document => {
+			title	=> "FOAF File for $nickname, with $type",
+			maker   => "Slashcode zoo.pl $VERSION",
+		},
+		Person => $person, 
+		
 	});
 }
 

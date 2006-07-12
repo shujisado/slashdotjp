@@ -485,7 +485,7 @@ sub displayForm {
 	}
 
 	my $skins = $slashdb->getSkins();
-	my $topic_values = $slashdb->getDescriptions('non_nexus_topics-submittable');
+	my $topic_values = $slashdb->getDescriptions('highlighted-topics-submittable'); # TODO: check
 	my $skin_values = $slashdb->getDescriptions('skins-submittable');
 
 	$form->{tid} ||= 0;

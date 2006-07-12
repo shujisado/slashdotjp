@@ -26,6 +26,7 @@ Slash::XML aids in creating XML.  Right now, only RSS is supported.
 use strict;
 use Apache::Constants ':http';
 use Digest::MD5 'md5_hex';
+use Encode 'encode_utf8';
 use Time::Local;
 use Slash;
 use Slash::Utility;

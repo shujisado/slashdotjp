@@ -1853,6 +1853,8 @@ sub filter_params {
 				$form{$_} = \@multi;
 				$form{_multi}{$_} = \@multi;
 				next;
+			} elsif (/^op_(.+)$/){
+				$form{'op'} = $1;
 			}
 		}
 	}
@@ -1885,6 +1887,8 @@ sub filter_params {
 
 sub filter_param {
 	my($key, $data) = @_;
+	my @candencs = qw/utf8 ascii euc-jp cp932 7bit-jis/;
+	my $enc;
 
 	# Paranoia - Clean out any embedded NULs. -- cbwood
 	# hm.  NULs in a param() value means multiple values
@@ -1901,6 +1905,18 @@ sub filter_param {
 	} else {
 		for my $ri (@regints) {
 			$data = fixint($data) if /$ri/;
+		}
+
+		# convert input to internal character encoding
+		# don't do any conversion if code can't be guessed
+		while ( !ref($enc) && @candencs){
+			$enc = guess_encoding( $data, @candencs );
+			if (ref($enc)){
+				$data = $enc->decode( $data );
+				last;
+			}else{
+				pop( @candencs );
+			}
 		}
 	}
 

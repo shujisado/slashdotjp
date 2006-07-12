@@ -28,6 +28,7 @@ use strict;
 use Apache;
 use Apache::Constants ':http';
 use Digest::MD5 'md5_hex';
+use Encode 'encode_utf8';
 use Slash::Display;
 use Slash::Utility::Data;
 use Slash::Utility::Display;
@@ -141,6 +142,9 @@ sub header {
 # 		} else {
 # 			$r->header_out('Cache-Control', 'private');
 # 		}
+
+		$options->{last_modified} &&
+			$r->header_out('Last-Modified',  $options->{last_modified});
 
 		$r->send_http_header;
 		return if $r->header_only;
@@ -266,7 +270,7 @@ sub http_send {
 
 	if ($opt->{etag} || $opt->{do_etag}) {
 		if ($opt->{do_etag} && $opt->{content}) {
-			$opt->{etag} = md5_hex($opt->{content});
+			$opt->{etag} = md5_hex(encode_utf8($opt->{content})); 
 		}
 		$r->header_out('ETag', $opt->{etag});
 

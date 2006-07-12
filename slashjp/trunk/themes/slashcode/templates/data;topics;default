@@ -21,6 +21,14 @@ __template__
 	[% returnme.data_constant = 1 %]
  	[% constants.sitename %]: Topics
 
+[% CASE 'recent_topics' %]
+	[% returnme.data_constant = 1 %]
+	Recent Topics
+
+[% CASE 'current_topics' %]
+	[% returnme.data_constant = 1 %]
+	Current Topic Categories
+
 [% END %]
 
 __seclev__

@@ -778,7 +778,7 @@ Encrypted password.
 
 sub encryptPassword {
 	my($passwd) = @_;
-	return md5_hex($passwd);
+	return md5_hex(Encode::encode_utf8($passwd));
 }
 
 #========================================================================
@@ -2323,7 +2323,7 @@ sub noFollow {
 
 sub html2text {
 	my($html, $col) = @_;
-	my($text, $tree, $form, $refs);
+	my($text, $tree, $form, $refs, $was_utf8);
 
 	my $user      = getCurrentUser();
 	my $gSkin     = getCurrentSkin();
@@ -2334,11 +2334,15 @@ sub html2text {
 	$form = new HTML::FormatText (leftmargin => 0, rightmargin => $col-2);
 	$refs = new HTML::FormatText::AddRefs;
 
+	$was_utf8 = Encode::is_utf8( $html );
 	$tree->parse($html);
 	$tree->eof;
 	$refs->parse_refs($tree);
 	$text = $form->format($tree);
 	1 while chomp($text);
+
+	# restore UTF-8 Flag lost by HTML::TreeBuilder
+	$text = Encode::decode_utf8( $text );
 
 	return $text, $refs->get_refs($gSkin->{absolutedir});
 }
@@ -3481,7 +3485,7 @@ sub xmlencode {
 	$text = XML::Parser::Expat->xml_escape($text, ">");
 
 	# convert ASCII-non-printable to numeric entities
-	$text =~ s/([^\s\040-\176])/ "&#" . ord($1) . ";" /ge;
+	$text =~ s/([^\s\040-\176])/ "&#" . ord($1) . ";" /ge if $constants->{rss_entitize_nonascii};
 
 	return $text;
 }
@@ -3956,11 +3960,14 @@ sub findWords {
 	my $use_stemming = $constants->{stem_uncommon_words};
 	my $language = $constants->{rdflanguage} || "EN-US";
 	$language = uc($language);
-	my $stemmer = Lingua::Stem->new(-locale => $language);
-	$stemmer->stem_caching({ -level => 2 });
+	my $stemmer;
 	my $text_return_hr = {};
 	my @word_stems;
 
+	if ($use_stemming){
+		$stemmer = Lingua::Stem->new(-locale => $language);
+		$stemmer->stem_caching({ -level => 2 });
+	}
 
 	# Return a hashref;  keys are the words, values are hashrefs
 	# with the number of times they appear and so on.
@@ -4061,7 +4068,7 @@ sub findWords {
 			$wordcount->{$word}{count}++;
 		}
 	}
-	$stemmer->clear_stem_cache();
+	$stemmer->clear_stem_cache() if $use_stemming;
 
 	return $wordcount;
 }
@@ -4154,9 +4161,9 @@ sub sitename2filename {
 	if ($section eq 'mainpage') {
 		$filename = 'index';
 	} elsif ($section ne 'light') {
-		$filename = $section || lc getCurrentStatic('sitename');
+		$filename = $section || lc getCurrentStatic('siteid');
 	} else {
-		$filename = lc getCurrentStatic('sitename');
+		$filename = lc getCurrentStatic('siteid');
 	}
 
 	$filename =~ s/\W+//g;

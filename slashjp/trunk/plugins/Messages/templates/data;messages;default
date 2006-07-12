@@ -18,6 +18,10 @@ __template__
 	[% returnme.data_constant = 1 %]
 	[% constants.sitename %] Message Center
 
+[% CASE 'prefshead' %]
+	[% returnme.data_constant = 1 %]
+	Message Options
+
 [% CASE 'prefs saved' %]
 	[% returnme.data_constant = 1 %]
 	Preferences Saved

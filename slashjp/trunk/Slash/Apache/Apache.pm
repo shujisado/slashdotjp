@@ -349,10 +349,11 @@ sub IndexHandler {
 		}
 	}
 
-	if ($gSkin->{rootdir}) {
-		my $path = URI->new($gSkin->{rootdir})->path;
-		$uri =~ s/^\Q$path//;
-	}
+	# harmful if deciding skin on directory
+	#if ($gSkin->{rootdir}) {
+	#	my $path = URI->new($gSkin->{rootdir})->path;
+	#	$uri =~ s/^\Q$path//;
+	#}
 
 	# Comment this in if you want to try having this do the right
 	# thing dynamically
@@ -501,6 +502,14 @@ sub IndexHandler {
 				return DONE;
 			}
 		}
+	}
+
+	# .pl in section dirs are served by scripts in basedir
+	if( $uri =~ m|^.+/(\w+\.pl)$| ){
+		my $basedir = $constants->{basedir};
+		$r->filename("$basedir/$1");
+		$r->set_handlers(PerlTransHandler => undef);
+		return OK;
 	}
 
 	if (!$dbon && $uri !~ /\.(?:shtml|html|jpg|gif|png|rss|rdf|xml|txt|css)$/) {

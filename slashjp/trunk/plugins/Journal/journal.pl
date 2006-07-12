@@ -310,7 +310,8 @@ sub displayTopRSS {
 
 		push @items, {
 			title	=> $title,
-			'link'	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/"
+			link	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/",
+			description => strip_notags($entry->[6]),
 		};
 	}
 
@@ -410,6 +411,8 @@ sub displayArticle {
 	my $user_change = {};
 	my $head_data = {};
 
+	my $slashdb = getCurrentDB();
+
 	if ($form->{uid} || $form->{nick}) {
 		$uid		= $form->{uid} ? $form->{uid} : $journal_reader->getUserUID($form->{nick});
 		my $tmpuser	= $journal_reader->getUser($uid, ['nickname', 'karma']);
@@ -432,6 +435,7 @@ sub displayArticle {
 
 	$head_data->{nickname} = $nickname;
 	$head_data->{uid} = $uid;
+	$head_data->{last_modified} = timeCalc($slashdb->getUser($uid, 'journal_last_entry_date'), "%a, %d %b %Y %H:%M:%S %Z", 0);
 
 	if (isAnon($uid)) {
 		# Don't write user_change.
@@ -916,6 +920,7 @@ sub removeArticle {
 sub _printHead {
 	my($head, $data, $edit_the_uid) = @_;
 	my $title = getData($head, $data);
+	my $options = { last_modified => $data->{last_modified} };
 
 	my $links = {
 		title		=> $title,
@@ -924,7 +929,7 @@ sub _printHead {
 			nickname	=> $data->{nickname}
 		}
 	};
-	header($links) or return;
+	header($links, undef, $options) or return;
 
 	$data->{menutype} ||= 'users';
 	$data->{width} = '100%';
