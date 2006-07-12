@@ -1,0 +1,117 @@
+__section__
+default
+__description__
+Display login form
+
+* newnick = new nickname
+* title = passed to titlebar
+* msg = message to display
+* title2 = second title ?
+
+Um ... I think this template is not in use any longer. -- pudge
+
+__title__
+
+__page__
+users
+__lang__
+en_US
+__name__
+displayForm
+__template__
+
+	[% PROCESS titlebar title=title %]
+	<div class="generalbody">
+		[% IF form.unickname %]
+			<div class="error">
+				You didn't log in!  You apparently put in the wrong password, or the wrong nickname.  Try again, or click on the mail password button if you forgot your password.
+			</div>
+			[% IF constants.allow_anonymous %]
+				<p class="message">
+	   				Logging in will allow you to post comments as yourself.  If you don't log in, you will only be able to post as [% Slash.getCurrentAnonymousCoward("nickname") %].
+				</p> 
+			[% ELSE %]
+				<p class="message">
+					You can only post comments if you have a valid account.
+				</p>
+			[% END %]
+		[% ELSE %]
+		[% END %]
+
+		<form action="[% env.script_name %]" method="get">
+			<fieldset>
+				<legend>
+					Login
+				</legend>
+				<input type="hidden" name="op" value="userlogin">
+				<label>
+					Nickname
+				</label>
+				<input type="text" name="unickname" size="20" value="[% form.unickname | strip_attribute %]">
+				<label>
+					Password
+				</label>
+				<input type="password" name="upasswd" size="20" maxlength="20">
+				[% PROCESS formNote note="(6-20 characters long)" %]
+				</div>
+				<input type="checkbox" name="login_temp" value="yes"> Public Terminal
+				<input type="submit" name="userlogin" value="Log in">
+			</fieldset>
+		</form>
+
+		<form action="[% env.script_name %]" method="get">
+			[% PROCESS titlebar title="Mail Password" %]
+			<input type="hidden" name="op" value="mailpasswd">
+			<fieldset>
+			        <legend>
+        	  	      		Forget your password? 
+        			</legend>
+				<p>
+					Enter your nickname here to have the system mail your password to you.
+				</p>
+			        <label>
+		                	Nickname
+        			</label>
+			        <input type="text" name="unickname" size="20" value="[% form.unickname | strip_attribute %]">
+				<input type="submit" name="mailpasswd" value="Mail Password">
+			</fieldset>
+		</form>
+
+		<form action="[% env.script_name %]" method="get">
+		[% PROCESS titlebar title=title2 %]
+		<input type="hidden" name="op" value="newuser">
+			<fieldset>
+				<legend>
+					New User Information
+				</legend>
+				<p class="message">
+					[% msg2 %]
+				</p>
+				<div class="note">
+					(Note: only the characters <tt>0-9a-zA-Z_.+!*'(),-\$</tt>, plus space, are allowed in nicknames, and all others will be stripped out.)
+				</div>
+				<label>
+					Nickname of choice
+				</label>
+				<input type="text" name="newusernick" size="20" maxlength="20" value="[% newnick %]">
+				<label>
+					Valid email address
+				</label>
+				<input type="text" name="email" size="20" value="[% form.email | strip_attribute %]">
+				<div class="note">
+					Address to send your registration information. This address will <b>not</b> be displayed on [% constants.sitename %].
+				</div>
+				<input type="submit" name="newuser" value="Create Account">
+				[% PROCESS formNote note="Click the button to create your account and be mailed a password." %]
+				</div>
+				<p class="submessage">
+					[% msg1 %]
+				</p>
+			</fieldset>
+		</form>
+	</div>
+
+__seclev__
+500
+__version__
+$Id$
