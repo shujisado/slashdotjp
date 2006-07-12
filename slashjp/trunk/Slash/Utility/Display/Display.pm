@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -49,12 +49,14 @@ use vars qw($VERSION @EXPORT);
 	matchingStrings
 	pollbooth
 	portalbox
+	portalsidebox
 	processSlashTags
 	selectMode
 	selectSection
 	selectSortcode
 	selectThreshold
 	selectTopic
+	sidebox
 	titlebar
 );
 
@@ -84,7 +86,16 @@ hashref, where the keys and values are the same.
 
 =item DEFAULT
 
-Default value for the list.
+Default value for the list.  If MULTIPLE is not set,
+this should be the key in DATA that should start out
+selected in the popup.  If MULTIPLE is set, this should
+be a hashref;  keys which are present and which have
+true values will all start out selected in the popup.
+
+If DEFAULT is a hashref, and no other values follow it,
+then it is an options hashref, containing possible values
+for the keys C<default>, C<return>, C<nsort>, C<ordered>,
+C<multiple>, C<onchange>.
 
 =item RETURN
 
@@ -100,10 +111,22 @@ If an arrayref is passed, an already-sorted array reference of keys.
 If non-ref, then an arrayref of hash keys is created sorting the
 hash values, alphabetically and case-insensitively.
 If ORDERED is passed in either form, then the NSORT parameter is ignored.
+### Pudge: would the change below be worth making?  All it would do
+### is, in the case where DATA is passed in as an arrayref and the
+### desired behavior is to present the items in that order (which
+### would probably be typical for callers that pass in an arrayref),
+### ORDERED could be passed in as 0 instead of a copy of DATA. -Jamie
+#If ORDERED is false, and DATA is passed in a hashref, then its keys are
+#sorted in string order.  If ORDERED is false, and DATA is passed in an
+#arrayref, then the data is presented in that arrayref's order.
 
 =item MULTIPLE
 
 Boolean: do <SELECT MULTIPLE...> instead of <SELECT...>
+
+=item ONCHANGE
+
+Value for the C<onchange=""> attribute.
 
 =back
 
@@ -126,7 +149,21 @@ The 'select' template block.
 sub createSelect {
 	my($label, $hashref, $default, $return, $nsort, $ordered, $multiple) = @_;
 
+	my($onchange, $onclick);
+
+	if (ref $default eq 'HASH' && @_ == 3) {
+		($default, $return, $nsort, $ordered, $multiple, $onchange, $onclick) =
+			@{$default}{qw(default return nsort ordered multiple onchange onclick)};
+	}
+
 	if (ref $hashref eq 'ARRAY') {
+### Pudge: see above. -Jamie
+###		if (!$ordered) {
+###			# If ORDERED is false, and DATA is passed in an
+###			# arrayref, then the data is presented in that
+###			# arrayref's order.
+###			$ordered = \@{ $hashref };
+###		}
 		$hashref = { map { ($_, $_) } @$hashref };
 	} else {
 		# If $hashref is a hash whose elements are also hashrefs, and
@@ -163,12 +200,14 @@ sub createSelect {
 	}
 
 	my $display = {
-		label	=> $label,
-		items	=> $hashref,
-		default	=> $default,
-		numeric	=> $nsort,
-		ordered	=> $ordered,
-		multiple => $multiple,
+		label		=> $label,
+		items		=> $hashref,
+		default		=> $default,
+		numeric		=> $nsort,
+		ordered		=> $ordered,
+		multiple	=> $multiple,
+		onchange	=> $onchange,
+		onclick		=> $onclick,
 	};
 
 	if ($return) {
@@ -335,10 +374,10 @@ sub selectMode {
 
 #========================================================================
 
-=head2 selectThreshold(COUNTS)
+=head2 selectThreshold(COUNTS[, OPTIONS])
 
 Creates a drop-down list of thresholds in HTML.  Default is the user's
-preference.  Calls C<createSelect>.
+preference.  Calls C<createSelect()>.
 
 =over 4
 
@@ -349,6 +388,10 @@ preference.  Calls C<createSelect>.
 =item COUNTS
 
 An arrayref of thresholds -E<gt> counts for that threshold.
+
+=item OPTIONS
+
+Options for C<createSelect()>.
 
 =back
 
@@ -365,7 +408,7 @@ The 'selectThreshLabel' template block.
 =cut
 
 sub selectThreshold  {
-	my($counts) = @_;
+	my($counts, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
@@ -373,11 +416,15 @@ sub selectThreshold  {
 	foreach my $c ($constants->{comment_minscore} .. $constants->{comment_maxscore}) {
 		$data{$c} = slashDisplay('selectThreshLabel', {
 			points	=> $c,
-			count	=> $counts->[$c - $constants->{comment_minscore}],
+			count	=> $counts->[$c - $constants->{comment_minscore}] || 0,
 		}, { Return => 1, Nocomm => 1 });
 	}
 
-	createSelect('threshold', \%data, getCurrentUser('threshold'), 1, 1);
+	$options->{default}	= $user->{threshold} unless defined $options->{default};
+	$options->{'return'}	= 1                  unless defined $options->{'return'};
+	$options->{nsort}	= 1                  unless defined $options->{nsort};
+
+	createSelect('threshold', \%data, $options);
 }
 
 #========================================================================
@@ -454,8 +501,11 @@ sub linkStory {
 	}
 
 	my $story_ref = $reader->getStory($story_link->{stoid} || $story_link->{sid});
+	$params{sid} ||= $story_ref->{sid};
 
-	$story_link->{link} = $story_ref->{title} if $story_link->{'link'} eq '';
+	if (!defined $story_link->{link} || $story_link->{link} eq '') {
+		$story_link->{link} = $story_ref->{title};
+	}
 	$title = $story_link->{link};
 	$story_link->{skin} ||= $story_link->{section} || $story_ref->{primaryskid};
 	if ($constants->{tids_in_urls}) {
@@ -463,7 +513,8 @@ sub linkStory {
 			$params{tids} = $story_link->{tids};
 		} else {
 			$params{tids} = $reader->getTopiclistForStory(
-				$story_link->{stoid} || $story_link->{sid});
+				$story_link->{stoid} || $story_link->{sid} || $story_ref->{sid}
+			);
 		}
 	}
 
@@ -488,8 +539,8 @@ sub linkStory {
 		# we don't NEED to do this ... 404.pl can redirect appropriately if necessary,
 		# but we would need to `mv articles mainpage`, or ln -s, and it just seems better
 		# to me to keep the same URL scheme if possible
-		my $skinname = $skin->{name} eq 'mainpage' ? '/articles' : '';
-		$url .= "$skinname/$story_link->{sid}.shtml";
+		my $skinname = $skin->{name} eq 'mainpage' ? 'articles' : $skin->{name};
+		$url .= "/$skinname/" . ($story_link->{sid} || $story_ref->{sid}) . ".shtml";
 		# manually add the tid(s), if wanted
 		if ($constants->{tids_in_urls} && $params{tids}) {
 			$url .= '?';
@@ -522,7 +573,7 @@ sub linkStory {
 
 #========================================================================
 
-=head2 pollbooth(QID [, NO_TABLE, CENTER, RETURNTO])
+=head2 pollbooth(QID [, NO_TABLE, CENTER])
 
 Creates a voting pollbooth.
 
@@ -546,13 +597,6 @@ If false, then will be formatted inside a C<fancybox>.
 Whether or not to center the tabled pollbooth (only
 works with NO_TABLE).
 
-=item RETURNTO
-
-If this parameter is specified, the voting widget will take the vote and return
-the user to the specified URI. Note that you WILL NOT be able to redirect
-outside of the site using this parameter for security reasons (hence the need for
-URIs as opposed to URLs).
-
 =back
 
 =item Return value
@@ -573,7 +617,7 @@ The 'pollbooth' template block.
 # attention
 
 sub pollbooth {
-	my($qid, $no_table, $center, $returnto) = @_;
+	my($qid, $no_table, $center) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $constants = getCurrentStatic();
 	my $gSkin = getCurrentSkin();
@@ -583,7 +627,7 @@ sub pollbooth {
 	}
 	
 	# If no qid (or no sitewide poll), short-circuit out.
-	return '' if $qid eq '';
+	return '' if !$qid;
 
 	my $poll = $reader->getPoll($qid);
 	return '' unless %$poll;
@@ -591,8 +635,6 @@ sub pollbooth {
 	my $n_comments = $reader->countCommentsBySid(
 		$poll->{pollq}{discussion});
 	my $poll_open = $reader->isPollOpen($qid);
-	my $has_voted = $reader->hasVotedIn($qid);
-	my $can_vote = !$has_voted && $poll_open;
 
 	return slashDisplay('pollbooth', {
 		question	=> $poll->{pollq}{question},
@@ -600,11 +642,8 @@ sub pollbooth {
 		qid		=> $qid,
 		has_activated   => $reader->hasPollActivated($qid),
 		poll_open	=> $poll_open,
-		has_voted	=> $has_voted,
-		can_vote	=> $can_vote,
 		voters		=> $poll->{pollq}{voters},
 		comments	=> $n_comments,
-		returnto	=> $returnto,
 	}, 1);
 }
 
@@ -629,20 +668,18 @@ The 'currentAdminUsers' template block.
 =cut
 
 sub currentAdminUsers {
-	my $html_to_display;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-# 	my $now = UnixDate(ParseDate($slashdb->getTime()), "%s");
 	my $now = timeCalc($slashdb->getTime(), "%s", 0);
 	my $aids = $slashdb->currentAdmin();
 	for my $data (@$aids) {
-		my($usernick, $usertime, $lasttitle, $uid) = @$data;
+		my($usernick, $usertime, $lasttitle, $last_subid, $last_sid, $uid) = @$data;
 		if ($usernick eq $user->{nickname}) {
 			$usertime = "-";
 		} else {
-			$usertime = $now - timeCalc($usertime, "%s", 0); # UnixDate(ParseDate($usertime), "%s");
+			$usertime = $now - timeCalc($usertime, "%s", 0);
 			if ($usertime <= 99) {
 				$usertime .= "s";
 			} elsif ($usertime <= 3600) {
@@ -652,12 +689,15 @@ sub currentAdminUsers {
 					. int(($usertime%3600)/60+0.5) . "m";
 			}
 		}
-		@$data = ($usernick, $usertime, $lasttitle, $uid);
+		@$data = ($usernick, $usertime, $lasttitle, $last_subid, $last_sid, $uid);
 	}
+
+	my @reader_vus = $slashdb->getDBVUsForType("reader");
 
 	return slashDisplay('currentAdminUsers', {
 		ids		=> $aids,
 		can_edit_admins	=> $user->{seclev} > 10000,
+		reader_vus	=> \@reader_vus,
 	}, 1);
 }
 
@@ -689,8 +729,8 @@ sub horizmenu {
 	$horizmenu =~ s/\s*$//mg;
 	$horizmenu =~ s/<NOBR>//gi;
 	$horizmenu =~ s/<\/NOBR>//gi;
-	$horizmenu =~ s/<HR(?:>|\s[^>]*>)//g;
-	$horizmenu = join ' | ', split /<BR>/, $horizmenu;
+	$horizmenu =~ s#<HR(?:[^>]*>)##gi;
+	$horizmenu = join ' | ', split m#<BR(?:[^>]*>)#i, $horizmenu;
 	$horizmenu =~ s/[\|\s]+$//;
 	$horizmenu =~ s/^[\|\s]+//;
 	return "[ $horizmenu ]";
@@ -812,29 +852,25 @@ The 'fancybox' template block.
 
 sub fancybox {
 	my($width, $title, $contents, $center, $return, $class, $id) = @_;
-	return unless $title && $contents;
-
-	my $tmpwidth = $width;
-	# allow width in percent or raw pixels
-	my $pct = 1 if $tmpwidth =~ s/%$//;
-	# used in some blocks
-	my $mainwidth = $tmpwidth-4;
-	my $insidewidth = $mainwidth-8;
-	if ($pct) {
-		for ($mainwidth, $insidewidth) {
-			$_ .= '%';
-		}
-	}
+	return '' unless $title && $contents;
 
 	slashDisplay('fancybox', {
 		width		=> $width,
 		contents	=> $contents,
 		title		=> $title,
 		center		=> $center,
-		mainwidth	=> $mainwidth,
-		insidewidth	=> $insidewidth,
 		class           => $class,
 		id              => $id,
+	}, $return);
+}
+
+sub sidebox {
+	my ($title, $contents, $name, $return) = @_;
+	return '' unless $title && $contents;
+	slashDisplay('sidebox', {
+		contents	=> $contents,
+		title		=> $title,
+		name            => $name,
 	}, $return);
 }
 
@@ -894,7 +930,7 @@ The 'fancybox', 'portalboxtitle', and
 
 sub portalbox {
 	my($width, $title, $contents, $bid, $url, $getblocks, $class, $id) = @_;
-	return unless $title && $contents;
+	return '' unless $title && $contents;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	$getblocks ||= 'index';
@@ -915,6 +951,32 @@ sub portalbox {
 	}
 
 	fancybox($width, $title, $contents, 0, 1, $class, $id);
+}
+
+sub portalsidebox {
+	my($title, $contents, $bid, $url, $getblocks, $name) = @_;
+	return '' unless $title && $contents;
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	$getblocks ||= 'index';
+
+	$title = slashDisplay('portalboxtitle', {
+		title	=> $title,
+		url	=> $url,
+	}, { Return => 1, Nocomm => 1 });
+
+	if (
+		   ($user->{slashboxes} && $getblocks == $constants->{mainpage_skid})
+		|| ($user->{slashboxes} && $constants->{slashbox_sections})
+	) {
+		$title = slashDisplay('portalmap', {
+			title	=> $title,
+			bid	=> $bid,
+		}, { Return => 1, Nocomm => 1 });
+	}
+	$name ||= $bid;
+
+	sidebox($title, $contents, $name, 1);
 }
 
 #========================================================================
@@ -1078,6 +1140,8 @@ sub createMenu {
 	my $user = getCurrentUser();
 	my $gSkin = getCurrentSkin();
 
+	return if $menu eq 'users' && $constants->{users_menu_no_display};
+
 	# The style of menu desired.  While we're "evolving" the way we do
 	# menus, createMenu() handles several different styles.
 	my $style = $options->{style} || "";
@@ -1189,10 +1253,11 @@ sub createMenu {
 # use lockTest to test if a story is being edited by someone else
 ########################################################
 sub getImportantWords {
-	my $s = shift;
+	my($s) = @_;
+	return ( ) if !defined($s) || $s eq '';
 	$s =~ s/[^A-Z0-9 ]//gi;
 	my @w = split m/ /, $s;
-	my @words;
+	my @words = ( );
 	foreach (@w) {
 		if (length($_) > 3 || (length($_) < 4 && uc($_) eq $_)) {
 			push @words, $_;
@@ -1228,12 +1293,12 @@ sub lockTest {
 	my $msg;
 	my $locks = $slashdb->getSessions([qw|lasttitle uid|]);
 	for (values %$locks) {
-		if ($_->{uid} ne getCurrentUser('uid') && (my $pct = matchingStrings($_->{subject}, $subj))) {
+		if ($_->{uid} ne getCurrentUser('uid') && (my $pct = matchingStrings($_->{lasttitle}, $subj))) {
 			$msg .= slashDisplay('lockTest', {
 				percent		=> $pct,
-				subject		=> $_->{subject},
+				subject		=> $_->{lasttitle},
 				nickname	=> $slashdb->getUser($_->{uid}, 'nickname')
-				}, 1);
+			}, 1);
 		}
 	}
 	return $msg;
@@ -1247,11 +1312,9 @@ sub _hard_linkComment {
 	my $constants = getCurrentStatic();
 	my $gSkin = getCurrentSkin();
 
-	my $subject = $comment->{color}
-	? qq|<FONT COLOR="$comment->{color}">$comment->{subject}</FONT>|
-		: $comment->{subject};
+	my $subject = $comment->{subject};
 
-	my $display = qq|<A HREF="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}|;
+	my $display = qq|<a href="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}|;
 	$display .= "&amp;op=$comment->{op}" if $comment->{op};
 # $comment->{threshold}? Hmm. I'm not sure what it
 # means for a comment to have a threshold. If it's 0,
@@ -1273,12 +1336,13 @@ sub _hard_linkComment {
 		$display .= "#$comment->{cid}" if $comment->{cid};
 	}
 
-	$display .= qq|">$subject</A>|;
+	$display .= qq|" onclick="$comment->{onclick}| if $comment->{onclick};
+	$display .= qq|">$subject</a>|;
 	if (!$comment->{subject_only}) {
 		$display .= qq| by $comment->{nickname}|;
-		$display .= qq| <FONT SIZE="-1">(Score:$comment->{points})</FONT> |
+		$display .= qq| (Score:$comment->{points})|
 			if !$user->{noscores} && $comment->{points};
-		$display .= qq| <FONT SIZE="-1">| . timeCalc($comment->{date}) . qq| </FONT>|
+		$display .= " " . timeCalc($comment->{date}) 
 			if $date;
 	}
 	$display .= "\n";
@@ -1338,18 +1402,10 @@ sub _cleanSlashLink {
 	my $reloDB = getObject('Slash::Relocate');
 
 	if ($reloDB) {
-		if (!$token->[1]{id}) {
-			my $link  = $reloDB->create({ url => $token->[1]{href} });
-			my $href  = strip_attribute($token->[1]{href});
-			my $title = strip_attribute($token->[1]{title});
-			$$newtext =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="link">#is;
-		} else {
-			my $url   = $reloDB->get($token->[1]{id}, 'url');
-			my $link  = $reloDB->create({ url => $token->[1]{href} });
-			my $href  = strip_attribute($token->[1]{href});
-			my $title = strip_attribute($token->[1]{title});
-			$$newtext =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="link">#is;
-		}
+		my $link  = $reloDB->create({ url => $token->[1]{href} });
+		my $href  = strip_attribute($token->[1]{href});
+		my $title = strip_attribute($token->[1]{title});
+		$$newtext =~ s#\Q$token->[3]\E#<slash href="$href" id="$link" title="$title" type="link">#is;
 	}
 }
 
@@ -1364,7 +1420,7 @@ sub _cleanSlashRelated {
 		$text = $tokens->get_text("/slash");
 	}
 
-	my $content = qq|<SLASH HREF="$href" TYPE="related">$text</SLASH>|;
+	my $content = qq|<slash href="$href" type="related">$text</slash>|;
 	if ($token->[1]{text}) {
 		$$newtext =~ s#\Q$token->[3]\E#$content#is;
 	} else {
@@ -1390,7 +1446,7 @@ sub _cleanSlashUser {
 
 	$uid = strip_attribute($uid);
 	$nickname = strip_attribute($nickname);
-	my $content = qq|<SLASH NICKNAME="$nickname" UID="$uid" TYPE="user">|;
+	my $content = qq|<slash nickname="$nickname" uid="$uid" type="user">|;
 	$$newtext =~ s#\Q$token->[3]\E#$content#is;
 }
 
@@ -1402,7 +1458,7 @@ sub _cleanSlashStory {
 	if ($token->[1]{text}) {
 		$text = $token->[1]{text};
 	} else {
-		$text = $tokens->get_text("/slash");
+		$text = $tokens->get_text('/slash');
 	}
 
 	my $slashdb = getCurrentDB();
@@ -1411,11 +1467,11 @@ sub _cleanSlashStory {
 		: strip_attribute($slashdb->getStory($token->[1]{story}, 'title', 1));
 	my $sid = strip_attribute($token->[1]{story});
 
-	my $content = qq|<SLASH STORY="$sid" TITLE="$title" TYPE="story">$text</SLASH>|;
+	my $content = qq|<slash story="$sid" title="$title" type="story">$text</slash>|;
 	if ($token->[1]{text}) {
 		$$newtext =~ s#\Q$token->[3]\E#$content#is;
 	} else {
-		$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
+		$$newtext =~ s#\Q$token->[3]$text</slash>\E#$content#is;
 	}
 }
 
@@ -1429,10 +1485,14 @@ sub processSlashTags {
 	return unless $text;
 
 	my $newtext = $text;
-	my $user = getCurrentUser();
 	my $tokens = Slash::Custom::TokeParser->new(\$text);
 
 	return $newtext unless $tokens;
+
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $close = $constants->{xhtml} ? ' /' : '';
+
 	while (my $token = $tokens->get_tag('slash')) {
 		my $type = lc($token->[1]{type});
 		if (ref($slashTags->{$type}) eq 'CODE') {
@@ -1450,12 +1510,12 @@ sub processSlashTags {
 		my $form = getCurrentForm();
 		if ($user->{state}{pagebreaks}) {
 			if ($user->{state}{editing}) {
-				$newtext =~ s/<SLASH TYPE="break">/<HR>/gis;
+				$newtext =~ s|<slash type="break">|<hr$close>|gis;
 			} else {
-				my @parts = split /<SLASH TYPE="break">/is, $newtext;
+				my @parts = split m|<slash type="break">|is, $newtext;
 				if ($form->{pagenum}) {
 					$newtext = $parts[$form->{pagenum} - 1];
-					if ($newtext eq "") { # nonexistent page, reset
+					if ($newtext eq '') { # nonexistent page, reset
 						$newtext = $parts[0];
 						$form->{pagenum} = 0;
 					}
@@ -1477,7 +1537,7 @@ sub _slashFile {
 
 	my $id = $token->[1]{id};
 	my $title = $token->[1]{title};
-	my $text = $tokens->get_text("/slash");
+	my $text = $tokens->get_text('/slash');
 	$title ||= $text;
 	my $content = slashDisplay('fileLink', {
 		id    => $id,
@@ -1489,14 +1549,14 @@ sub _slashFile {
 	});
 	$content ||= Slash::getData('SLASH-UNKNOWN-FILE');
 
-	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
+	$$newtext =~ s#\Q$token->[3]$text</slash>\E#$content#is;
 }
 
 sub _slashImage {
 	my($tokens, $token, $newtext) = @_;
 
 	if (!$token->[1]{width} || !$token->[1]{height}) {
-		my $blob = getObject("Slash::Blob", { db_type => 'reader' });
+		my $blob = getObject('Slash::Blob', { db_type => 'reader' });
 		my $data = $blob->get($token->[1]{id});
 		if ($data && $data->{data}) {
 			my($w, $h) = imgsize(\$data->{data});
@@ -1526,7 +1586,7 @@ sub _slashImage {
 sub _slashLink {
 	my($tokens, $token, $newtext) = @_;
 
-	my $text = $tokens->get_text("/slash");
+	my $text = $tokens->get_text('/slash');
 	my $content = slashDisplay('hrefLink', {
 		id		=> $token->[1]{id},
 		href		=> $token->[1]{href},
@@ -1539,7 +1599,7 @@ sub _slashLink {
 
 	$content ||= Slash::getData('SLASH-UNKNOWN-LINK');
 
-	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
+	$$newtext =~ s#\Q$token->[3]$text</slash>\E#$content#is;
 }
 
 sub _slashRelated {
@@ -1547,7 +1607,7 @@ sub _slashRelated {
 	my $user = getCurrentUser();
 
 	my $link = $token->[1]{href};
-	my $text = $tokens->get_text("/slash");
+	my $text = $tokens->get_text('/slash');
 
 	push @{$user->{state}{related_links}}, [ $text, $link ];
 	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E##is;
@@ -1581,15 +1641,15 @@ sub _slashStory {
 
 	my $content;
 	if ($storylinks->[0] && $storylinks->[2]) {
-		$content = '<A HREF="' . strip_attribute($storylinks->[0]) . '"';
-		$content .= ' TITLE="' . strip_attribute($storylinks->[2]) . '"'
+		$content = '<a href="' . strip_attribute($storylinks->[0]) . '"';
+		$content .= ' title="' . strip_attribute($storylinks->[2]) . '"'
 			if $storylinks->[2] ne '';
-		$content .= '>' . strip_html($storylinks->[1]) . '</A>';
+		$content .= '>' . strip_html($storylinks->[1]) . '</a>';
 	}
 
 	$content ||= Slash::getData('SLASH-UNKNOWN-STORY');
 
-	$$newtext =~ s#\Q$token->[3]$text</SLASH>\E#$content#is;
+	$$newtext =~ s#\Q$token->[3]$text</slash>\E#$content#is;
 }
 
 sub _slashPageBreak {

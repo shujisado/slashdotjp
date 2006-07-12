@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -29,6 +29,7 @@ $task{$me}{code} = sub {
 	my %dirty_skins = ( );
 	my $stories;
 
+
 	# Every tenth invocation, we do a big chunk of work.  The other
 	# nine times, we update the top three stories and the front
 	# page, skipping all other nexuses and other stories -- and to
@@ -50,6 +51,21 @@ $task{$me}{code} = sub {
 		? $constants->{freshenup_max_stories}
 		: 100;
 	$max_stories = 3 unless $do_all;
+
+	my $stoids_to_refresh = [];
+	if ($constants->{task_options}{stoid} || $constants->{task_options}{sid}) {
+		my $sids_to_refresh = [];
+		@$stoids_to_refresh = split (/ /, $constants->{task_options}{stoid}) if $constants->{task_options}{stoid};
+		@$sids_to_refresh = split (/ /, $constants->{task_options}{sid}) if $constants->{task_options}{sid};
+		foreach (@$sids_to_refresh) {
+			my $stoid = $slashdb->getStoidFromSidOrStoid($_);
+			push @$stoids_to_refresh, $stoid if $stoid;
+		}
+		foreach (@$stoids_to_refresh) {
+			$slashdb->markStoryDirty($_);
+		}
+		$do_all = 1 if @$stoids_to_refresh;
+	}
 
 	############################################################
 	# deletions
@@ -168,8 +184,10 @@ $task{$me}{code} = sub {
 	$stories = [ ];
 	if (!$task_exit_flag) {
 		my $mp_tid = $constants->{mainpage_nexus_tid};
+		my $gstr_options = {};
+		$gstr_options->{stoid} = $stoids_to_refresh if @$stoids_to_refresh;
 		$stories = $slashdb->getStoriesToRefresh($max_stories,
-			$do_all ? 0 : $mp_tid);
+			$do_all ? 0 : $mp_tid, $gstr_options);
 	}
 
 	my $bailed = 0;
@@ -310,8 +328,8 @@ $task{$me}{code} = sub {
 	if ($do_setstories) {
 		for my $stoid (sort { $a <=> $b } keys %story_set) {
 			my $options = undef;
-			$options->{last_updated} = $story_set{last_updated}
-				if $story_set{last_updated};
+			$options->{last_update} = $story_set{$stoid}{last_update}
+				if $story_set{$stoid}{last_update};
 			my $set_ok = $slashdb->setStory($stoid, $story_set{$stoid}, $options);
 			if (!$set_ok) {
 				$logmsg .= "; setStory($stoid) '$set_ok'";
@@ -369,8 +387,8 @@ $task{$me}{code} = sub {
 	for my $cleanme (@$dirty_skins) { $dirty_skins{$cleanme} = 1 }
 
 	$args = "$vu ssi=yes";
-	if ($dirty_skins{$constants->{mainpage_skid}} ne "" || $w ne "ok") {
-		my $mp_skid = $constants->{mainpage_skid};
+	my $mp_skid = $constants->{mainpage_skid} || 1;
+	if ($dirty_skins{$mp_skid} || $w ne "ok") {
 		my($base) = split(/\./, $gSkin->{index_handler});
 		$slashdb->setVar("writestatus", "ok");
 		prog2file(
@@ -449,7 +467,7 @@ sub _read_and_unlink_cchp_file {
 	my $constants = getCurrentStatic();
 	my($cc, $hp) = (undef, undef);
 	my $default_hp = join(",", ("0") x
-		($constants->{maxscore}-$constants->{minscore}+1));
+		($constants->{comment_maxscore}-$constants->{comment_minscore}+1));
 
 	# Now we extract what we need from the file we created
 	Time::HiRes::sleep(0.5); # let filesystem settle
@@ -458,6 +476,7 @@ sub _read_and_unlink_cchp_file {
 	} else {
 		my $cchp = <$cchp_fh>;
 		close $cchp_fh;
+		$cchp = '' if !defined($cchp);
 		if ($cchp && (($cc, $hp) = $cchp =~
 			/count (\d+), hitparade (.+)$/m)) {
 		} else {

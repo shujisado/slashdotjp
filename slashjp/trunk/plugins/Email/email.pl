@@ -1,13 +1,13 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
 # Slash::Email - web script
 # 
 # Email a Slash site story to a friend!
-# (c) OSDN 2002
+# (c) OSTG 2002
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -30,8 +30,8 @@ sub main {
 	my $gSkin       = getCurrentSkin();
 
 	# Primary fields.
-	my $sid		= $form->{sid};
-	my $email	= $form->{email};
+	my $sid		= $form->{sid} || '';
+	my $email	= $form->{email} || '';
 
 	# Use for ops where anonymous access is optional.
 	my $allow_anon =
@@ -177,17 +177,10 @@ sub emailStory {
 		return;
 	}
 
-	for (qw(ipid subnetid uid)) {
-		# We skip the UID test for anonymous users.
-		next if $_ eq 'uid' && $user->{is_anon};
-		# Otherwise we perform the specific read-only test.
-		my $read_only = $slashdb->checkReadOnly('nopost', {
-			$_ => $user->{$_},
-		});
-		if ($read_only) {
-			print getData('readonly');
-			return;
-		}
+	# XXXSRCID might want to do this on a reader db
+	if ($slashdb->checkAL2($user->{srcids}, 'nopost')) {
+		print getData('readonly');
+		return;
 	}
 
 	# Retrieve story and all information necessary for proper display.
@@ -280,8 +273,8 @@ sub removeOptoutForm {
 sub removeOptout {
 	my($slashdb, $constants, $user, $form, $gSkin, $Plugins) = @_;
 
-	my $email = decode_entities($form->{email});
-	my $rc = $Plugins->{Email}->removeFromOptoutList($form->{email});
+	my $email = decode_entities($form->{email} || '');
+	my $rc = $Plugins->{Email}->removeFromOptoutList($form->{email} || '');
 	print getData('optout_removed', { result => $rc });
 
 	removeOptoutForm(@_);

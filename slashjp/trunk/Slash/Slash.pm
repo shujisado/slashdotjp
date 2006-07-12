@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -38,20 +38,23 @@ use Time::HiRes;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-$VERSION   	= '2.003000';  # v2.3.0
+$VERSION   	= '2.005000';  # v2.5.0
 # note: those last two lines of functions will be moved elsewhere
 @EXPORT		= qw(
 	constrain_score
 	getData
 	gensym
 
-	dispComment displayStory displayThread dispStory
+	dispComment displayStory displayRelatedStories displayThread dispStory
 	getOlderStories getOlderDays moderatorCommentLog printComments
+	jsSelectComments
+
+	tempUofmLinkGenerate tempUofmCipherObj
 );
 
 
 # this is the worst damned warning ever, so SHUT UP ALREADY!
-$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
+#$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 
 # BENDER: Fry, of all the friends I've had ... you're the first.
 
@@ -68,6 +71,14 @@ sub selectComments {
 	my($min, $max) = ($constants->{comment_minscore}, 
 			  $constants->{comment_maxscore});
 	my $num_scores = $max - $min + 1;
+
+	my $commentsort = defined $options->{commentsort}
+		? $options->{commentsort}
+		: $user->{commentsort};
+	my $threshold = defined $options->{threshold}
+		? $options->{threshold}
+		: $user->{threshold};
+
 
 	my $comments; # One bigass hashref full of comments
 	for my $x (0..$num_scores-1) {
@@ -110,7 +121,7 @@ sub selectComments {
 		# By setting pid to zero, we remove the threaded
 		# relationship between the comments. Don't ignore threads
 		# in forums, or when viewing a single comment (cid > 0)
-		$C->{pid} = 0 if $user->{commentsort} > 3
+		$C->{pid} = 0 if $commentsort > 3
 			&& $cid == 0
 			&& $user->{mode} ne 'parents'; # Ignore Threads
 
@@ -118,7 +129,7 @@ sub selectComments {
 		# precisely, it munges up other things).
 		# I'm still looking into how to get parent links and
 		# children to show up properly in flat mode. - Jamie 2002/07/30
-#		$user->{state}{noreparent} = 1 if $user->{commentsort} > 3;
+#		$user->{state}{noreparent} = 1 if $commentsort > 3;
 
 		$C->{points} = _get_points($C, $user, $min, $max, $max_uid, $reasons);
 
@@ -127,11 +138,11 @@ sub selectComments {
 	}
 
 	# If we are sorting by highest score we resort to figure in bonuses
-	if ($user->{commentsort} == 3) {
+	if ($commentsort == 3) {
 		@$thisComment = sort {
 			$b->{points} <=> $a->{points} || $a->{cid} <=> $b->{cid}
 		} @$thisComment;
-	} elsif ($user->{commentsort} == 1 || $user->{commentsort} == 5) {
+	} elsif ($commentsort == 1 || $commentsort == 5) {
 		@$thisComment = sort {
 			$b->{cid} <=> $a->{cid}
 		} @$thisComment;
@@ -143,7 +154,7 @@ sub selectComments {
 
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
-	# is in the index of the hash (based on its cid).
+	# in the index of the hash (based on its cid).
 	for my $C (@$thisComment) {
 		# So we save information. This will only have data if we have 
 		# happened through this cid while it was a pid for another
@@ -159,21 +170,32 @@ sub selectComments {
 		$comments->{$C->{cid}}{kids} = $tmpkids;
 		$comments->{$C->{cid}}{visiblekids} = $tmpvkids;
 
-		# The comment pushes itself onto it own kids structure 
-		# which should make it the first -Brian
+		# The comment pushes itself onto its parent's
+		# kids array.
 		push @{$comments->{$C->{pid}}{kids}}, $C->{cid};
 
 		# The next line deals with hitparade -Brian
 		#$comments->{0}{totals}[$C->{points} - $min]++;  # invert minscore
 
-		# This deals with what will appear.
+		# Increment the parent comment's count of visible kids,
+		# if this comment is indeed visible.
 		$comments->{$C->{pid}}{visiblekids}++
-			if $C->{points} >= (defined $user->{threshold} ? $user->{threshold} : $min);
+			if $C->{points} >= (defined $threshold ? $threshold : $min);
 
 		# Can't mod in a discussion that you've posted in.
 		# Just a point rule -Brian
 		$user->{points} = 0 if $C->{uid} == $user->{uid}; # Mod/Post Rule
 	}
+
+	# After that loop, there may be comments in the $comments hashref
+	# which have no visible parents and thus which incremented an
+	# otherwise-empty comment's visiblekids field and appended to an
+	# otherwise-empty kids arrayref.  For cleanliness' sake, eliminate
+	# those comments.  We do leave "comment 0" alone, though.
+	my @phantom_cids =
+		grep { $_ > 0 && !defined $comments->{$_}{cid} }
+		keys %$comments;
+	delete @$comments{@phantom_cids};
 
 	my $count = @$thisComment;
 
@@ -190,14 +212,83 @@ sub selectComments {
 
 	_print_cchp($discussion, $count, $comments->{0}{totals});
 
-	reparentComments($comments, $reader);
+	reparentComments($comments, $reader, $options);
 	return($comments, $count);
 }
 
+sub jsSelectComments {
+	require Data::JavaScript::Anon;
+	my($slashdb, $constants, $user, $form) = @_;
+	$slashdb   ||= getCurrentDB();
+	$constants ||= getCurrentStatic();
+	$user      ||= getCurrentUser();
+	$form      ||= getCurrentForm();
+
+	$user->{mode} = 'thread';
+	$user->{reparent} = 0;
+	$user->{state}{max_depth} = $constants->{max_depth} + 3;
+
+	my $threshold = $user->{threshold};
+	my $highlightthresh = $user->{highlightthresh};
+	$highlightthresh = $threshold if $highlightthresh < $threshold;
+
+	my $id = $form->{sid};
+	return unless $id;
+
+	my $cid = $form->{cid} || 0;
+
+	my($comments) = selectComments(
+		$slashdb->getDiscussion($id),
+		$cid,
+		{
+			commentsort	=> 0,
+			threshold	=> -1
+		}
+	);
+
+	delete $comments->{0}; # non-comment data
+
+	my @roots = $cid ? $cid : grep { !$comments->{$_}{pid} } keys %$comments;
+
+	if ($form->{full}) {
+		my $comment_text = $slashdb->getCommentTextCached(
+			$comments, [ keys %$comments ],
+		);
+
+		for my $cid (keys %$comment_text) {
+			$comments->{$cid}{comment} = $comment_text->{$cid};
+		}
+	} else {
+		my $comments_new;
+		my @keys = qw(pid kids points uid);
+		for my $cid (keys %$comments) {
+			@{$comments_new->{$cid}}{@keys} = @{$comments->{$cid}}{@keys};
+		}
+		$comments = $comments_new;
+	}
+
+	my $anon_comments = Data::JavaScript::Anon->anon_dump($comments);
+	my $anon_roots    = Data::JavaScript::Anon->anon_dump(\@roots);
+
+	return <<EOT;
+comments = $anon_comments;
+
+root_comments = $anon_roots;
+root_comment = $cid;
+
+user_uid = $user->{uid};
+user_is_anon = $user->{is_anon};
+user_threshold = $threshold;
+user_highlightthresh = $highlightthresh;
+
+discussion_id = $id;
+EOT
+}
+
 sub constrain_score {
-	my ($score) = @_;
+	my($score) = @_;
 	my $constants = getCurrentStatic();
-	my ($min, $max) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
+	my($min, $max) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
 	$score = $min if $score < $min;
 	$score = $max if $score > $max;
 	return $score;
@@ -209,7 +300,7 @@ sub _get_points {
 		score_start => constrain_score($C->{pointsorig} + $C->{tweak_orig}),
 		moderations => constrain_score($C->{points} + $C->{tweak}) - constrain_score($C->{pointsorig} + $C->{tweak_orig}),
 	};
-	my $points = $hr->{score_start};
+	my $points = $hr->{score_start} || 0;
 
 	# User can setup to give points based on size.
 #	my $len = length($C->{comment});
@@ -242,10 +333,10 @@ sub _get_points {
 
 	# Adjust reasons. Do we need a reason?
 	# Are you threatening me?
-	my $reason_id = $reasons->{$C->{reason}}{id};
-	if ($user->{"reason_alter_$reason_id"}) {
+	my $reason_name = $reasons->{$C->{reason}}{name};
+	if ($reason_name && $user->{"reason_alter_$reason_name"}) {
 		$hr->{reason_bonus} =
-			$user->{"reason_alter_$reason_id"};
+			$user->{"reason_alter_$reason_name"};
 	}
 
 	# Keep your friends close but your enemies closer.
@@ -289,7 +380,7 @@ sub _get_points {
 			$user->{subscriber_bonus};
 	}
 
-	for my $key (grep !/^score_/, keys %$hr) { $points += $hr->{$key} }
+	for my $key (grep !/^score_/, keys %$hr) { $points += $hr->{$key} || 0 }
 	$points = $max if $points > $max;
 	$points = $min if $points < $min;
 	$hr->{score_end} = $points;
@@ -309,7 +400,7 @@ sub _print_cchp {
 	my($discussion, $count, $hp_ar) = @_;
 	return unless $discussion->{stoid};
 	my $form = getCurrentForm();
-	return unless $form->{ssi} eq 'yes' && $form->{cchp};
+	return unless $form->{ssi} && $form->{ssi} eq 'yes' && $form->{cchp};
 	my $file_suffix = $form->{cchp};
 	$count ||= 0;
 	$hp_ar ||= [ ];
@@ -349,51 +440,89 @@ sub _print_cchp {
 
 ########################################################
 sub reparentComments {
-	my($comments, $reader) = @_;
+	my($comments, $reader, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $depth = $constants->{max_depth} || 7;
+	my $threshold = defined $options->{threshold}
+		? $options->{threshold}
+		: $user->{threshold};
 
-	return if $user->{state}{noreparent} || (!$depth && !$user->{reparent});
+	my $max_depth_allowed = $user->{state}{max_depth} || $constants->{max_depth} || 7;
 
-	# adjust depth for root pid or cid
-	if (my $cid = $form->{cid} || $form->{pid}) {
-		while ($cid && (my($pid) = $reader->getComment($cid, 'pid'))) {
-			$depth++;
-			$cid = $pid;
+	return if $user->{state}{noreparent} || (!$max_depth_allowed && !$user->{reparent});
+
+	# Adjust the max_depth_allowed for the root pid or cid.
+	# Actually I'm not sure this should be done at all.
+	# My guess is that it does the opposite of what's desired
+	# when $form->{cid|pid} is set.  And besides, max depth we
+	# display is for display, so it should be based on how much
+	# we're displaying, not on absolute depth of this thread.
+	my $root_cid_or_pid = $form->{cid} || $form->{pid} || 0;
+	if ($root_cid_or_pid) {
+		my $tmpcid = $root_cid_or_pid;
+		while ($tmpcid) {
+			my $pid = $reader->getComment($tmpcid, 'pid') || 0;
+			last unless $pid;
+			$max_depth_allowed++;
+			$tmpcid = $pid;
 		}
 	}
 
-	# You know, we do assume comments are linear -Brian
+	# The below algorithm assumes that comments are inserted into
+	# the database with cid's that increase chronologically, in order
+	# words that for any two comments where A's cid > B's cid, that
+	# A's timestamp > B's timestamp also.
+
 	for my $x (sort { $a <=> $b } keys %$comments) {
 		next if $x == 0; # exclude the fake "cid 0" comment
 
-		my $pid = $comments->{$x}{pid};
-		my $reparent;
+		my $pid = $comments->{$x}{pid} || 0;
+		my $reparent = 0;
 
-		# do threshold reparenting thing
-		if ($user->{reparent} && $comments->{$x}{points} >= $user->{threshold}) {
+		# First, if this comment is above the user's desired threshold
+		# (and thus will likely be shown), but its parent is below
+		# the desired threshold (and thus will not likely be shown),
+		# bounce it up the chain until we can reparent it to a comment
+		# that IS being shown.  Effectively we pretend the invisible
+		# comments between this comment and its (great-etc.) grandparent
+		# do not exist.
+		#
+		# But, if all its (great-etc.) grandparents are either invisible
+		# or chronologically precede the root comment, don't reparent it
+		# at all.
+		if ($user->{reparent} && $comments->{$x}{points} >= $threshold) { # XXX either $comments->{$x}{points} or $threshold is undefined here, not sure which or why
 			my $tmppid = $pid;
-			while ($tmppid && $comments->{$tmppid}{points} < $user->{threshold}) {
-				$tmppid = $comments->{$tmppid}{pid};
+			while ($tmppid
+				&& $comments->{$tmppid} && defined($comments->{$tmppid}{points})
+				&& $comments->{$tmppid}{points} < $threshold) {
+				$tmppid = $comments->{$tmppid}{pid} || 0;
 				$reparent = 1;
 			}
 
-			if ($reparent && $tmppid >= ($form->{cid} || $form->{pid})) {
+			if ($reparent && $tmppid >= $root_cid_or_pid) {
 				$pid = $tmppid;
 			} else {
 				$reparent = 0;
 			}
 		}
 
-		if ($depth && !$reparent) { # don't reparent again!
+		# Second, if the above did not find a suitable (great)grandparent,
+		# we try a second method of collapsing to a (great)grandparent:
+		# check whether the depth of this comment is too great to show
+		# nested so deeply, and if so, ratchet it back.  Note that since
+		# we are iterating through %$comments in cid order, the parents of
+		# this comment will already have gone through this code and thus
+		# already should have their {depth}s set.  (At least that's the
+		# theory, I'm not sure that part really works.)
+		if ($max_depth_allowed && !$reparent) {
 			# set depth of this comment based on parent's depth
-			$comments->{$x}{depth} = ($pid ? $comments->{$pid}{depth} : 0) + 1;
+			$comments->{$x}{depth} = ($pid ? ($comments->{$pid}{depth} ||= 0) : 0) + 1;
 
-			# go back each pid until we find one with depth less than $depth
-			while ($pid && $comments->{$pid}{depth} >= $depth) {
+			# go back each pid until we find one with depth less than $max_depth_allowed
+			while ($pid && defined($comments->{$pid})
+				&& ($comments->{$pid}{depth} ||= 0) >= $max_depth_allowed) {
 				$pid = $comments->{$pid}{pid};
 				$reparent = 1;
 			}
@@ -401,7 +530,7 @@ sub reparentComments {
 
 		if ($reparent) {
 			# remove child from old parent
-			if ($pid >= ($form->{cid} || $form->{pid})) {
+			if ($pid >= $root_cid_or_pid) {
 				@{$comments->{$comments->{$x}{pid}}{kids}} =
 					grep { $_ != $x }
 					@{$comments->{$comments->{$x}{pid}}{kids}}
@@ -428,38 +557,52 @@ sub _can_mod {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	# set time_unixepoch to current time if we aren't passed a
-	# comment this is the case for the check for the moderate button
-	# on the article page 
+	# Do some easy and high-priority initial tests.  If any of
+	# these is true, this comment is not moderatable, and these
+	# override the ACL and seclev tests.
+	return 0 if !$comment;
+	return 0 if
+		    $user->{is_anon}
+		|| !$constants->{allow_moderation}
+		||  $comment->{no_moderation};
+	
+	# More easy tests.  If any of these is true, the user has
+	# authorization to mod any comments, regardless of any of
+	# the tests that come later.
+	return 1 if
+		    $constants->{authors_unlimited}
+		&&  $user->{seclev} >= $constants->{authors_unlimited};
+	return 1 if
+		    $user->{acl}{modpoints_always};
 
-	$comment->{time_unixepoch} = time unless $comment;
-	$comment->{time_unixepoch} = timeCalc($comment->{date}, "%s", 0)
-		unless $comment->{time_unixepoch};
-	my $retval =
-		   !$user->{is_anon}
-		&& $constants->{allow_moderation}
-		&& !$comment->{no_moderation}
-		&& ( (
-		       $user->{points} > 0
-		    && $user->{willing}
-		    && $comment->{uid} != $user->{uid}
-		    && $comment->{lastmod} != $user->{uid}
-		    && $comment->{ipid} ne $user->{ipid}
-		    && (!$constants->{mod_same_subnet_forbid}
-		    	|| $comment->{subnetid} ne $user->{subnetid} )
-		    && (!$user->{state}{discussion_archived}
-			|| $constants->{comments_moddable_archived})
-		    && ($comment->{time_unixepoch} >= time() - 3600*
-			($constants->{comments_moddable_hours}
-			|| 24*$constants->{archive_delay}))
-		) || (
-		       $constants->{authors_unlimited}
-		    && $user->{seclev} >= $constants->{authors_unlimited}
-		) || (
-		       $user->{acl}{modpoints_always}
-		) );
+	# OK, the user is an ordinary user, so see if they have mod
+	# points and do some other fairly ordinary tests to try to
+	# rule out whether they can mod.
+	return 0 if
+		    $user->{points} <= 0
+		|| !$user->{willing}
+		||  $comment->{uid} == $user->{uid}
+		||  $comment->{lastmod} == $user->{uid}
+		||  $comment->{ipid} eq $user->{ipid};
+	return 0 if
+		    $constants->{mod_same_subnet_forbid}
+		&&  $comment->{subnetid} eq $user->{subnetid};
+	return 0 if
+		   !$constants->{comments_moddable_archived}
+		&&  $user->{state}{discussion_archived};
 
-	return $retval;
+	# Last test; this one involves a bit of calculation to set
+	# time_unixepoch in the comment structure itself, which is
+	# why we saved it for last.  timeCalc() is not the world's
+	# fastest function.
+	$comment->{time_unixepoch} ||= timeCalc($comment->{date}, "%s", 0);
+	my $hours = $constants->{comments_moddable_hours}
+		|| 24 * $constants->{archive_delay};
+	return 0 if $comment->{time_unixepoch} < time - 3600*$hours;
+
+	# All the ordinary tests passed, there's nothing stopping
+	# this user from modding this comment.
+	return 1;
 }
 
 #========================================================================
@@ -512,6 +655,16 @@ sub printComments {
 		print getData('no_such_sid', {}, '');
 		return 0;
 	}
+
+	my $discussion2 = $user->{discussion2} && $user->{discussion2} =~ /^(?:slashdot|uofm)$/;
+
+	if ($discussion2 && $user->{mode} ne 'metamod') {
+		$user->{mode} = $form->{mode} = 'thread';
+		$user->{commentsort} = 0;
+		$user->{reparent} = 0;
+		$user->{state}{max_depth} = $constants->{max_depth} + 3;
+	}
+
 	# Couple of rules on how to treat the discussion depending on how mode is set -Brian
 	$discussion->{type} = isDiscussionOpen($discussion);
 
@@ -602,12 +755,34 @@ sub printComments {
 	# Flat and theaded mode don't index, even on large stories, so they
 	# need to use more, smaller pages. if $cid is 0, then we get the
 	# totalviskids for the story 		--Pater
-	my $total = ($user->{mode} eq 'flat' || $user->{mode} eq 'nested') ? $comments->{$cidorpid}{totalvisiblekids} : $cc;
+	my $total = ($user->{mode} eq 'flat' || $user->{mode} eq 'nested')
+		? $comments->{$cidorpid}{totalvisiblekids}
+		: $cc;
 
-	my $lcp = linkCommentPages($discussion->{id}, $pid, $cid, $total);
+	my $lcp = $discussion2
+		? ''
+		: linkCommentPages($discussion->{id}, $pid, $cid, $total);
+
+	# Figure out whether to show the moderation button.  We do, but
+	# only if at least one of the comments is moderatable.
+	my $can_mod_any = _can_mod($comment);
+	if (!$can_mod_any) {
+		CID: for my $cid (keys %$comments) {
+			if (_can_mod($comments->{$cid})) {
+				$can_mod_any = 1;
+				last CID;
+			}
+		}
+	}
+
+	my $anon_dump;
+	if ($discussion2) {
+		require Data::JavaScript::Anon;
+		$anon_dump = \&Data::JavaScript::Anon::anon_dump;
+	}
 
 	my $comment_html = slashDisplay('printCommComments', {
-		can_moderate	=> _can_mod($comment),
+		can_moderate	=> $can_mod_any,
 		comment		=> $comment,
 		comments	=> $comments,
 		'next'		=> $next,
@@ -618,120 +793,16 @@ sub printComments {
 		cc		=> $cc,
 		lcp		=> $lcp,
 		lvl		=> $lvl,
+		discussion2	=> $discussion2,
+		anon_dump	=> $anon_dump,
 	}, { Return => 1 });
 
 	# We have to get the comment text we need (later we'll search/replace
 	# them into the text).
-	my $comment_text = { };
-
-	# Should we read/write the parsed comments to/from memcached?
-	# This will be possible only if some particular prefs of this user
-	# are set to the standard values.  If this is possible, then for
-	# almost every comment, we can pull fully rendered text directly
-	# from memcached and not have to touch the DB.
-	# Currently, the only user prefs that affect comment rendering at
-	# this level are whether domaintags are the default, and whether
-	# maxcommentsize is the default.
-	my $mcd = $slashdb->getMCD();
-	$mcd = undef if
-		   $form->{mode} eq 'archive'
-		|| $user->{domaintags} != 2
-		|| $user->{maxcommentsize} != $constants->{default_maxcommentsize};
-
-	# loop here, pull what cids we can
-	my $cids_needed_ar = $user->{state}{cids} || [ ];
-	my($mcd_debug, $mcdkey, $mcdkeylen);
-	if ($mcd) {
-		# MemCached key prefix "ctp" means "comment_text, parsed".
-		# Prepend our site key prefix to try to avoid collisions
-		# with other sites that may be using the same servers.
-		$mcdkey = "$slashdb->{_mcd_keyprefix}:ctp:";
-		$mcdkeylen = length($mcdkey);
-		if ($constants->{memcached_debug}) {
-			$mcd_debug = { start_time => Time::HiRes::time };
-		}
-	}
-	$mcd_debug->{total} = scalar @$cids_needed_ar if $mcd_debug;
-	if ($mcd) {
-		if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 2) {
-			print STDERR scalar(gmtime) . " printComments memcached mcdkey '$mcdkey'\n";
-		}
-		my @keys_try =
-			map { "$mcdkey$_" }
-			grep { $_ != $form->{cid} }
-			@$cids_needed_ar;
-		$comment_text = $mcd->get_multi(@keys_try);
-		my @old_keys = keys %$comment_text;
-		if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
-			print STDERR scalar(gmtime) . " printComments memcached got keys '@old_keys' tried for '@keys_try'\n"
-		}
-		$mcd_debug->{hits} = scalar @old_keys if $mcd_debug;
-		for my $old_key (@old_keys) {
-			my $new_key = substr($old_key, $mcdkeylen);
-			$comment_text->{$new_key} = delete $comment_text->{$old_key};
-		}
-		@$cids_needed_ar = grep { !exists $comment_text->{$_} } @$cids_needed_ar;
-	}
-	if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
-		print STDERR scalar(gmtime) . " printComments memcached mcd '$mcd' con '$constants->{memcached}' mcd '$mcd' dt '$user->{domaintags}' mcs '$user->{maxcommentsize}' still needed: '@$cids_needed_ar'\n";
-	}
-
-	# Now we get fresh with the comment text. We take all of the cids
-	# that we have found and we then speed through the text replacing
-	# the tags that were there to hold them.
-	my $more_comment_text = $slashdb->getCommentText($cids_needed_ar) || {}
-		if @$cids_needed_ar;
-	if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
-		print STDERR scalar(gmtime) . " more_comment_text keys: '" . join(" ", sort keys %$more_comment_text) . "'\n";
-	}
-
-	for my $cid (keys %$more_comment_text) {
-		if ($form->{mode} ne 'archive'
-			&& $comments->{$cid}{len} > $user->{maxcommentsize}
-			&& $form->{cid} ne $cid)
-		{
-			# We remove the domain tags so that strip_html will not
-			# consider </a blah> to be a non-approved tag.  We'll
-			# add them back at the last step.  In-between, we chop
-			# the comment down to size, then massage it to make sure
-			# we still have good HTML after the chop.
-			$more_comment_text->{$cid} =~ s{</A[^>]+>}{</A>}gi;
-			my $text = chopEntity($more_comment_text->{$cid},
-				$user->{maxcommentsize});
-			$text = strip_html($text);
-			$text = balanceTags($text);
-			$more_comment_text->{$cid} = addDomainTags($text);
-		}
-
-		# Now write the new data into our hashref and write it out to
-		# memcached if appropriate.  For these purposes, if we were
-		# cleared to read from memcached, the data we just got is also
-		# valid to write to memcached.
-		$comment_text->{$cid} = parseDomainTags($more_comment_text->{$cid},
-			$comments->{$cid}{fakeemail});
-		if ($mcd && $form->{cid} ne $cid) {
-			my $exptime = $constants->{memcached_exptime_comtext};
-			$exptime = 86400 if !defined($exptime);
-			my $retval = $mcd->set("$mcdkey$cid", $comment_text->{$cid}, $exptime);
-			if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
-				my $exp_at = $exptime ? scalar(gmtime(time + $exptime)) : "never";
-				print STDERR scalar(gmtime) . " printComments memcached writing '$mcdkey$cid' length " . length($comment_text->{$cid}) . " retval=$retval expire: $exp_at\n";
-			}
-		}
-	}
-
-	if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
-		print STDERR scalar(gmtime) . " comment_text keys: '" . join(" ", sort keys %$comment_text) . "'\n";
-	}
-
-	if ($mcd_debug) {
-		$mcd_debug->{hits} ||= 0;
-		printf STDERR scalar(gmtime) . " printComments memcached"
-			. " tried=" . ($mcd ? 1 : 0) . " total_cids=%d hits=%d misses=%d elapsed=%6.4f\n",
-			$mcd_debug->{total} , $mcd_debug->{hits},
-			$mcd_debug->{total} - $mcd_debug->{hits},
-			Time::HiRes::time - $mcd_debug->{start_time};
-	}
+	my $comment_text = $slashdb->getCommentTextCached(
+		$comments, $user->{state}{cids},
+		{ mode => $form->{mode}, cid => $form->{cid} }
+	);
 
 	# OK we have all the comment data in our hashref, so the search/replace
 	# on the nearly-fully-rendered page will work now.
@@ -1062,6 +1133,10 @@ sub displayThread {
 	my $hidden = my $skipped = 0;
 	my $return = '';
 
+	my $discussion2 = $user->{discussion2} && $user->{discussion2} =~ /^(?:slashdot|uofm)$/;
+	my $highlightthresh = $user->{highlightthresh};
+	$highlightthresh = $user->{threshold} if $highlightthresh < $user->{threshold};
+
 	# FYI: 'archive' means we're to write the story to .shtml at the close
 	# of the discussion without page breaks.  'metamod' means we're doing
 	# metamoderation.
@@ -1079,7 +1154,7 @@ sub displayThread {
 
 	unless ($const) {
 		for (map { ($_ . "begin", $_ . "end") }
-			qw(table cage cagebig indent comment)) {
+			qw(table cage cagebig indent comment fullcomment)) {
 			$const->{$_} = getData($_, '', '');
 		}
 	}
@@ -1092,26 +1167,37 @@ sub displayThread {
 		# ahead more, counting all the visible kids.	--Pater
 		$skipped += $comment->{totalvisiblekids} if ($user->{mode} eq 'flat' || $user->{mode} eq 'nested');
 		$form->{startat} ||= 0;
-		next if $skipped <= $form->{startat};
+		next if $skipped <= $form->{startat} && !$discussion2;
 		$form->{startat} = 0; # Once We Finish Skipping... STOP
 
+		my $class = 'oneline';
 		if ($comment->{points} < $user->{threshold}) {
 			if ($user->{is_anon} || ($user->{uid} != $comment->{uid})) {
-				$hidden++;
-				next;
+				if ($discussion2) {
+					$class = 'hidden';
+					$hidden++;
+				} else {
+					$hidden++;
+					next;
+				}
 			}
 		}
 
-		my $highlight = 1 if $comment->{points} >= $user->{highlightthresh};
+		my $highlight = 1 if $comment->{points} >= $highlightthresh && $class ne 'hidden';
+		$class = 'full' if $highlight;
+
+		$user->{state}{comments}{totals}{$class}++;
+
 		my $finish_list = 0;
 
-		if ($full || $highlight) {
+		if ($full || $highlight || $discussion2) {
 			if ($lvl && $indent) {
 				$return .= $const->{tablebegin} .
-					dispComment($comment) . $const->{tableend};
+					dispComment($comment, { class => $class }) .
+					$const->{tableend};
 				$cagedkids = 0;
 			} else {
-				$return .= dispComment($comment);
+				$return .= dispComment($comment, { class => $class });
 			}
 			$displayed++;
 		} else {
@@ -1120,30 +1206,28 @@ sub displayThread {
 				linkComment($comment, $pntcmt, 1);
 			$finish_list++;
 		}
+		$return .= $const->{fullcommentend} if ($user->{mode} eq 'flat');
 
 		if ($comment->{kids} && ($user->{mode} ne 'parents' || $pid)) {
-			$return .= $const->{cagebegin} if $cagedkids;
-			$return .= $const->{indentbegin} if $indent;
-			$return .= displayThread($sid, $cid, $lvl+1, $comments, $const);
-			$return .= $const->{indentend} if $indent;
-			$return .= $const->{cageend} if $cagedkids;
-
+			if (my $str = displayThread($sid, $cid, $lvl+1, $comments, $const)) {
+				$return .= $const->{cagebegin} if $cagedkids;
+				$return .= $const->{indentbegin} if $indent;
+				$return .= $str;
+				$return .= "$const->{indentend}" if $indent;
+				$return .= $const->{cageend} if $cagedkids;
+			}
 			# in flat or nested mode, all visible kids will
 			# be shown, so count them.	-- Pater
 			$displayed += $comment->{totalvisiblekids} if ($user->{mode} eq 'flat' || $user->{mode} eq 'nested');
 		}
 
-		$return .= $const->{commentend} if $finish_list;
+		$return .= "$const->{commentend}" if $finish_list;
+		$return .= "$const->{fullcommentend}" if (($full || $highlight || $discussion2) && $user->{mode} ne 'flat');
 
-		last if $displayed >= $user->{commentlimit};
+		last if $displayed >= $user->{commentlimit} && !$discussion2;
 	}
 
-	if ($hidden
-		&& ! $user->{hardthresh}
-		&& $user->{mode} ne 'archive'
-		&& $user->{mode} ne 'metamod') {
-
-		$return .= $const->{cagebigbegin} if $cagedkids;
+	if ($hidden && ($discussion2 || (!$user->{hardthresh} && $user->{mode} ne 'archive' && $user->{mode} ne 'metamod'))) {
 		my $link = linkComment({
 			sid		=> $sid,
 			threshold	=> $constants->{comment_minscore},
@@ -1153,10 +1237,21 @@ sub displayThread {
 					   }, ''),
 			subject_only	=> 1,
 		});
-		$return .= slashDisplay('displayThread', { 'link' => $link },
-			{ Return => 1, Nocomm => 1 });
-		$return .= $const->{cagebigend} if $cagedkids;
-
+		if ($discussion2) {
+			$return .= slashDisplay('displayThread', {
+				'link'		=> $link,
+				discussion2	=> $discussion2,
+				pid		=> $pid,
+				hidden		=> $hidden
+			}, { Return => 1, Nocomm => 1 });
+		} else {
+			$return .= $const->{cagebigbegin} if $cagedkids;
+			$return .= slashDisplay('displayThread',
+				{ 'link' => $link },
+				{ Return => 1, Nocomm => 1 }
+			);
+			$return .= $const->{cagebigend} if $cagedkids;
+		}
 	}
 
 	return $return;
@@ -1204,7 +1299,6 @@ sub dispComment {
 	my $maxcommentsize = $options->{maxcommentsize} || $user->{maxcommentsize};
 
 	my($comment_shrunk, %reasons);
-
 	if ($form->{mode} ne 'archive'
 		&& $comment->{len} > $maxcommentsize
 		&& $form->{cid} ne $comment->{cid})
@@ -1217,6 +1311,12 @@ sub dispComment {
 		$comment->{sig} =~ s/^\s*-{1,5}\s*<(?:P|BR)>//i;
 		$comment->{sig} = getData('sigdash', {}, 'comments')
 			. $comment->{sig};
+	}
+
+	if (!$comment->{karma_bonus} || $comment->{karma_bonus} eq 'no') {
+		for ($comment->{sig}, $comment->{comment}) {
+			$_ = noFollow($_);
+		}
 	}
 
 	my $reasons = $reader->getReasons();
@@ -1234,9 +1334,8 @@ sub dispComment {
 		vislenify($comment); # create $comment->{ipid_vis} and {subnetid_vis}
 		if ($constants->{comments_hardcoded}) {
 			$comment->{ipid_display} = <<EOT;
-<BR><FONT FACE="$constants->{mainfontface}" SIZE=1>IPID:
-<A HREF="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{ipid}&amp;fieldname=ipid">$comment->{ipid_vis}</A>&nbsp;&nbsp;SubnetID: 
-<A HREF="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{subnetid}&amp;fieldname=subnetid">$comment->{subnetid_vis}</A></FONT>
+<br>IPID: <a href="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{ipid}&amp;fieldname=ipid">$comment->{ipid_vis}</a>&nbsp;&nbsp;SubnetID: 
+<a href="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{subnetid}&amp;fieldname=subnetid">$comment->{subnetid_vis}</a>
 EOT
 		} else {
 			$comment->{ipid_display} = slashDisplay(
@@ -1251,10 +1350,12 @@ EOT
 	$comment->{fakeemail_vis} = ellipsify($comment->{fakeemail});
 	push @{$user->{state}{cids}}, $comment->{cid};
 
+	$options->{class} ||= 'full';
+
 	return _hard_dispComment(
 		$comment, $constants, $user, $form, $comment_shrunk,
-		$can_mod, $reasons
-	) if $constants->{comments_hardcoded} && !$user->{light};
+		$can_mod, $reasons, $options
+	) if $constants->{comments_hardcoded};
 
 	return slashDisplay('dispComment', {
 		%$comment,
@@ -1262,6 +1363,7 @@ EOT
 		reasons		=> $reasons,
 		can_mod		=> $can_mod,
 		is_anon		=> isAnon($comment->{uid}),
+		class		=> $options->{class}
 	}, { Return => 1, Nocomm => 1 });
 }
 
@@ -1331,17 +1433,23 @@ sub dispStory {
 
 	$other->{preview} ||= 0;
 	my %data = (
-		story	=> $story,
-		topic	=> $topic,
-		author	=> $author,
-		full	=> $full,
-		stid	=> $other->{stid},
-		topics	=> $other->{topics_chosen},
-		topiclist => $other->{topiclist},
-		magic	=> $other->{magic},
-		width	=> $constants->{titlebar_width},
-		preview => $other->{preview}
+		story		=> $story,
+		topic		=> $topic,
+		author		=> $author,
+		full		=> $full,
+		stid	 	=> $other->{stid},
+		topics	 	=> $other->{topics_chosen},
+		topiclist 	=> $other->{topiclist},
+		magic	 	=> $other->{magic},
+		width	 	=> $constants->{titlebar_width},
+		preview  	=> $other->{preview},
+		dispmode 	=> $other->{dispmode},
+		dispoptions	=> $other->{dispoptions} || {},
+		thresh_commentcount => $other->{thresh_commentcount},
+		expandable 	=> $other->{expandable},
+		getintro	=> $other->{getintro},
 	);
+
 #use Data::Dumper; print STDERR scalar(localtime) . " dispStory data: " . Dumper(\%data);
 
 	return slashDisplay($template_name, \%data, 1);
@@ -1414,16 +1522,25 @@ sub displayStory {
 
 	# There are many cases when we'd not want to return the pre-rendered text
 	# from the DB.
+	#
+	# XXXNEWINDEX - Currently don't have a rendered copy for brief mode
+	#               This is probably okay since brief mode contains basically
+	#               the same info as storylinks which is generated dynamically
+	#               and different users will have different links / threshold counts
+
 	if (	   !$constants->{no_prerendered_stories}
 		&& $constants->{cache_enabled}
 		&& $story->{rendered} && !$options->{force_cache_freshen}
-		&& !$form->{light} && !$user->{light}
+		&& !$form->{simpledesign} && !$user->{simpledesign}
+		&& !$form->{lowbandwidth} && !$user->{lowbandwidth}
 		&& (!$form->{ssi} || $form->{ssi} ne 'yes')
 		&& !$user->{noicons}
 		&& !$form->{issue}
 		&& $gSkin->{skid} == $constants->{mainpage_skid}
 		&& !$full
 		&& !$options->{is_future}	 # can $story->{is_future} ever matter?
+		&& ($options->{mode} && $options->{mode} ne "full")
+		&& (!$options->{dispmode} || $options->{dispmode} ne "brief")
 	) {
 		$return = $story->{rendered};
 	} else {
@@ -1433,8 +1550,11 @@ sub displayStory {
 		my $topic = $reader->getTopic($story->{tid});
 		$story->{atstorytime} = "__TIME_TAG__";
 
-		$story->{introtext} = parseSlashizedLinks($story->{introtext});
-		$story->{introtext} = processSlashTags($story->{introtext});
+		if (!$options->{dispmode} || $options->{dispmode} ne "brief" || $options->{getintro}) {
+			$story->{introtext} = parseSlashizedLinks($story->{introtext});
+			$story->{introtext} = processSlashTags($story->{introtext});
+		}
+
 		if ($full) {
 			$story->{bodytext} = parseSlashizedLinks($story->{bodytext});
 			$story->{bodytext} = processSlashTags($story->{bodytext}, { break => 1 });
@@ -1448,17 +1568,71 @@ sub displayStory {
 		$return = dispStory($story, $author, $topic, $full, $options);
 
 	}
-	my $df = ($user->{mode} eq "archive" || ($story->{is_archived} eq "yes" && $user->{is_anon}))
-		? $constants->{archive_dateformat} : "";
-	my $storytime = timeCalc($story->{'time'}, $df);
-	my $atstorytime;
-	if ($options->{is_future} && !($user->{author} || $user->{is_admin})) {
-		$atstorytime = $constants->{subscribe_future_name};
-	} else {
-		$atstorytime = $user->{aton} . " " . timeCalc($story->{'time'}, $df);
-	}
-	$return =~ s/\Q__TIME_TAG__\E/$atstorytime/ unless $options->{force_cache_freshen};
 
+	if (!$options->{force_cache_freshen}) {
+		# Only do the following if force_cache_freshen is not set:
+		# as it is by freshenup.pl when (re)building the 'rendered'
+		# cached data for a story.
+		my $df = ($user->{mode} eq "archive" || ($story->{is_archived} eq "yes" && $user->{is_anon}))
+			? $constants->{archive_dateformat} : "";
+		my $storytime = timeCalc($story->{'time'}, $df);
+		my $atstorytime;
+		if ($options->{is_future} && !($user->{author} || $user->{is_admin})) {
+			$atstorytime = $constants->{subscribe_future_name};
+		} else {
+			$atstorytime = $user->{aton} . " " . timeCalc($story->{'time'}, $df);
+		}
+		$return =~ s/\Q__TIME_TAG__\E/$atstorytime/;
+
+		if ($constants->{plugin}{Tags}
+			&&  $user->{tags_canread_stories}
+			&& !$user->{tags_turnedoff}
+			&& (!$options->{dispmode} || $options->{dispmode} ne 'brief')) {
+
+			my @tags_top = split / /, ($story->{tags_top} || '');
+			my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+			my @tags_example = $tags_reader->getExampleTagsForStory($story);
+			$return .= slashDisplay('tagsstorydivtagbox', {
+				story		=>  $story,
+				tags_top	=> \@tags_top,
+				tags_example	=> \@tags_example,
+			}, { Return => 1 });
+
+		}
+	}
+
+	return $return;
+}
+
+#========================================================================
+
+sub displayRelatedStories {
+	my($stoid) = @_;
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $gSkin = getCurrentSkin();
+	my $return = "";
+
+	my $related = $reader->getRelatedStoriesForStoid($stoid);
+
+	foreach my $rel (@$related) {
+		if ($rel->{rel_sid}) {
+			my $viewable = $reader->checkStoryViewable($rel->{rel_sid});
+			next if !$viewable;
+			my $related_story = $reader->getStory($rel->{rel_sid});
+			$return .= displayStory($related_story->{stoid}, 0, { dispmode => "brief", getintro => 1, expandable => 1 });
+		} elsif ($rel->{cid}) {
+			my $comment = $reader->getComment($rel->{cid});
+			my $discussion = $reader->getDiscussion($comment->{sid});
+			my $comment_user = $reader->getUser($comment->{uid});
+			my $is_anon = isAnon($comment->{uid});
+			$return .= slashDisplay("comment_related", { comment => $comment, comment_user => $comment_user, discussion => $discussion, is_anon => $is_anon }, { Return => 1});
+		} elsif ($rel->{title}) {
+			$return .= slashDisplay("url_related", { title => $rel->{title}, url => $rel->{url} }, { Return => 1 });
+		}
+	}
 	return $return;
 }
 
@@ -1505,17 +1679,14 @@ sub getOlderStories {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $months = $reader->getDescriptions('months');
-	my $dow = $reader->getDescriptions('days_of_week');
 
 	for my $story (@$stories) {
 		# Use one call and parse it, it's cheaper :) -Brian
 		my($day_of_week, $month, $day, $secs) =
-			split m/ /, timeCalc($story->{time}, "%w %m %d %s");
+			split m/ /, timeCalc($story->{time}, "%A %B %d %s");
 		$day =~ s/^0//;
-		$month =~ s/^0//;
-		$story->{day_of_week} = $dow->{$day_of_week};
-		$story->{month} = $months->{$month}; 
+		$story->{day_of_week} = $day_of_week;
+		$story->{month} = $month;
 		$story->{day} = $day;
 		$story->{secs} = $secs;
 		$story->{issue} ||= timeCalc($story->{time}, '%Y%m%d');
@@ -1532,6 +1703,7 @@ sub getOlderStories {
 	$form->{start} ||= 0;
 
 	my $artcount = $user->{is_anon} ? $section->{artcount} : $user->{maxstories};
+	$artcount ||= 0;
 
 	# The template won't display all of what's passed to it (by default
 	# only the first $section->{artcount}).  "start" is just an offset
@@ -1563,13 +1735,13 @@ sub getOlderDays {
 			$today    = $reader->getDay(0);
 			$tomorrow = timeCalc(scalar localtime(
 				timelocal(0, 0, 12, $d, $m - 1, $y - 1900) + 86400
-			), '%Y%m%d');
+			), '%Y%m%d', 0);
 			$yesterday = timeCalc(scalar localtime(
 				timelocal(0, 0, 12, $d, $m - 1, $y - 1900) - 86400
-			), '%Y%m%d');
+			), '%Y%m%d', 0);
 			$week_ago  = timeCalc(scalar localtime(
 				timelocal(0, 0, 12, $d, $m - 1, $y - 1900) - 86400 * 8 
-			), '%Y%m%d');
+			), '%Y%m%d', 0);
 		}
 	} else {
 		$today     = $reader->getDay(0);
@@ -1646,9 +1818,16 @@ sub getData {
 	my $opts_getname = $opts; $opts_getname->{GetName} = 1;
 
 	my $name = slashDisplayName('data', $hashref, $opts_getname);
+	return undef if !$name || !$name->{tempdata} || !defined($name->{tempdata}{tpid});
 	my $var  = $cache->{getdata}{ $name->{tempdata}{tpid} } ||= { };
 
 	if (defined $var->{$value}) {
+		# restore our original values; this is done if
+		# slashDisplay is called, but it is not called here -- pudge
+		my $user = getCurrentUser();
+		$user->{currentSkin}	= $name->{origSkin};
+		$user->{currentPage}	= $name->{origPage};
+
 		return $var->{$value};
 	}
 
@@ -1664,7 +1843,8 @@ sub getData {
 
 sub _dataCacheRefresh {
 	my($cache) = @_;
-	if ($cache->{getdata}{_last_refresh} < time - $cache->{getdata}{_expiration}) {
+	if (($cache->{getdata}{_last_refresh} || 0)
+		< time - ($cache->{getdata}{_expiration} || 0)) {
 		$cache->{getdata} = {};
 		$cache->{getdata}{_last_refresh} = time;
 		$cache->{getdata}{_expiration} = getCurrentStatic('block_expire');
@@ -1674,7 +1854,7 @@ sub _dataCacheRefresh {
 ########################################################
 # this sucks, but it is here for now
 sub _hard_dispComment {
-	my($comment, $constants, $user, $form, $comment_shrunk, $can_mod, $reasons) = @_;
+	my($comment, $constants, $user, $form, $comment_shrunk, $can_mod, $reasons, $options) = @_;
 	my $gSkin = getCurrentSkin();
 
 	my($comment_to_display, $score_to_display,
@@ -1682,20 +1862,27 @@ sub _hard_dispComment {
 		$time_to_display, $comment_link_to_display, $userinfo_to_display)
 		= ("") x 7;
 
+	my $discussion2 = $user->{discussion2} && $user->{discussion2} =~ /^(?:slashdot|uofm)$/;
+
+	$comment_to_display = qq'<div id="comment_body_$comment->{cid}">$comment->{comment}</div>';
+	my $sighide = $comment_shrunk ? ' hide' : '';
+	$comment_to_display .= qq'<div id="comment_sig_$comment->{cid}" class="sig$sighide">$comment->{sig}</div>' if $comment->{sig} && !$user->{nosigs};
+
 	if ($comment_shrunk) {
-		# Guess what should be in a template? -Brian
-		my $link = linkComment({
-			sid	=> $comment->{sid},
-			cid	=> $comment->{cid},
-			pid	=> $comment->{cid},
-			subject	=> 'Read the rest of this comment...',
-			subject_only => 1,
-		}, 1);
-		$comment_to_display = "$comment->{comment}<P><B>$link</B>";
-	} elsif ($user->{nosigs}) {
-		$comment_to_display = $comment->{comment};
-	} else {
-		$comment_to_display = "$comment->{comment}<BR>$comment->{sig}";
+		my $readtext = 'Read the rest of this comment...';
+		my $link;
+		if ($discussion2) {
+			$link = qq'<a href="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}&amp;cid=$comment->{cid}" onclick="return readRest($comment->{cid})">$readtext</a>';
+		} else {
+			$link = linkComment({
+				sid	=> $comment->{sid},
+				cid	=> $comment->{cid},
+				pid	=> $comment->{cid},
+				subject	=> $readtext,
+				subject_only => 1,
+			}, 1);
+		}
+		$comment_to_display .= qq'<div id="comment_shrunk_$comment->{cid}" class="commentshrunk">$link</div>';
 	}
 
 	$time_to_display = timeCalc($comment->{date});
@@ -1709,7 +1896,7 @@ sub _hard_dispComment {
 	}
 
 	if ($comment->{sid} && $comment->{cid}) {
-		$comment_link_to_display = qq| (<A HREF="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}&amp;cid=$comment->{cid}">#$comment->{cid}</A>)|;
+		$comment_link_to_display = qq| (<a href="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}&amp;cid=$comment->{cid}">#$comment->{cid}</a>)|;
 	} else {
 		$comment_link_to_display = " ";
 	}
@@ -1717,7 +1904,8 @@ sub _hard_dispComment {
 	if (isAnon($comment->{uid})) {
 		$user_nick_to_display = strip_literal($comment->{nickname});
 	} else {
-		my $nick = fixparam($comment->{nickname});
+		my $nick_literal = strip_literal($comment->{nickname});
+		my $nick_param   = strip_paramattr($comment->{nickname});
 
 		my $homepage = $comment->{homepage} || '';
 		$homepage = '' if length($homepage) <= 8;
@@ -1730,33 +1918,35 @@ sub _hard_dispComment {
 		$homepage = strip_literal($homepage);
 
 		$userinfo_to_display = "";
-		$userinfo_to_display = qq[<A HREF="$comment->{homepage}">$homepage</A>]
+		my $nofollow = '';
+		if (!$comment->{karma_bonus} || $comment->{karma_bonus} eq 'no') {
+			$nofollow = ' rel="nofollow"';
+		}
+		$userinfo_to_display = qq[<a href="$comment->{homepage}"$nofollow>$homepage</a>]
 			if $homepage;
 		if ($comment->{journal_last_entry_date} =~ /[1-9]/) {
 			$userinfo_to_display .= " | " if $userinfo_to_display;
-			$userinfo_to_display .= sprintf('Last Journal: <A HREF="%s/~%s/journal/">%s</A>',
+			$userinfo_to_display .= sprintf('Last Journal: <a href="%s/~%s/journal/">%s</a>',
 				$constants->{real_rootdir},
-				$nick,
+				$nick_param,
 				timeCalc($comment->{journal_last_entry_date})
 			);
 		}
-		$userinfo_to_display = "<BR><FONT SIZE=\"-1\">($userinfo_to_display)</FONT>" if $userinfo_to_display;
+		$userinfo_to_display = "<br>($userinfo_to_display)" if $userinfo_to_display;
 
-		my $nick_literal = strip_literal($comment->{nickname});
-		my $nick_param = fixparam($comment->{nickname});
-		$user_nick_to_display = qq{<A HREF="$constants->{real_rootdir}/~$nick_param">$nick_literal ($comment->{uid})</A>};
+		$user_nick_to_display = qq{<a href="$constants->{real_rootdir}/~$nick_param">$nick_literal ($comment->{uid})</a>};
 		if ($constants->{plugin}{Subscribe} && $constants->{subscribe}
 			&& $comment->{subscriber_bonus} eq 'yes') {
 			if ($constants->{plugin}{FAQSlashdot}) {
-				$user_nick_to_display .= qq{ <A HREF="/faq/com-mod.shtml#cm2600">*</A>};
+				$user_nick_to_display .= qq{ <a href="/faq/com-mod.shtml#cm2600">*</a>};
 			} else {
 				$user_nick_to_display .= " *";
 			}
 		}
 		if ($comment->{fakeemail}) {
 			my $mail_literal = strip_literal($comment->{fakeemail_vis});
-			my $mail_param = fixparam($comment->{fakeemail});
-			$user_email_to_display = qq{ &lt;<A HREF="mailto:$mail_param">$mail_literal</A>&gt;};
+			my $mail_param = strip_paramattr($comment->{fakeemail});
+			$user_email_to_display = qq{ &lt;<a href="mailto:$mail_param">$mail_literal</a>&gt;};
 		}
 	}
 
@@ -1764,48 +1954,67 @@ sub _hard_dispComment {
 	unless ($user->{is_anon} || isAnon($comment->{uid}) || $comment->{uid} == $user->{uid}) {
 		my $person = $comment->{uid};
 		if (!$user->{people}{FRIEND()}{$person} && !$user->{people}{FOE()}{$person} && !$user->{people}{FAN()}{$person} && !$user->{people}{FREAK()}{$person} && !$user->{people}{FOF()}{$person} && !$user->{people}{EOF()}{$person}) {
-				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;type=friend&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/neutral.gif" ALT="Alter Relationship" TITLE="Alter Relationship"></A>|;
+				$zoosphere_display .= qq|<a href="$gSkin->{rootdir}/zoo.pl?op=check&amp;type=friend&amp;uid=$person"><img src="$constants->{imagedir}/neutral.gif" alt="Alter Relationship" title="Alter Relationship"></a>|;
 		} else {
 			if ($user->{people}{FRIEND()}{$person}) {
 				my $title = $user->{people}{people_bonus_friend} ? "Friend ($user->{people}{people_bonus_friend})" : "Friend";
-				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/friend.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<a href="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><img src="$constants->{imagedir}/friend.gif" alt="$title" title="$title"></a>|;
 			}
 			if ($user->{people}{FOE()}{$person}) {
 				my $title = $user->{people}{people_bonus_foe} ? "Foe ($user->{people}{people_bonus_foe})" : "Foe";
-				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/foe.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<a href="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><img src="$constants->{imagedir}/foe.gif" alt="$title" title="$title"></a>|;
 			}
 			if ($user->{people}{FAN()}{$person}) {
 				my $title = $user->{people}{people_bonus_fan} ? "Fan ($user->{people}{people_bonus_fan})" : "Fan";
-				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/fan.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<a href="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><img src="$constants->{imagedir}/fan.gif" alt="$title" title="$title"></a>|;
 			}
 			if ($user->{people}{FREAK()}{$person}) {
 				my $title = $user->{people}{people_bonus_freak} ? "Freak ($user->{people}{people_bonus_freak})" : "Freak";
-				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/freak.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<a href="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><img src="$constants->{imagedir}/freak.gif" alt="$title" title="$title"></a>|;
 			}
 			if ($user->{people}{FOF()}{$person}) {
 				my $title = $user->{people}{people_bonus_fof} ? "Friend of a Friend ($user->{people}{people_bonus_fof})" : "Friend of a Friend";
-				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/fof.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<a href="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><img src="$constants->{imagedir}/fof.gif" alt="$title" title="$title"></a>|;
 			}
 			if ($user->{people}{EOF()}{$person}) {
 				my $title = $user->{people}{people_bonus_eof} ? "Foe of a Friend ($user->{people}{people_bonus_eof})" : "Foe of a Friend";
-				$zoosphere_display .= qq|<A HREF="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><IMG BORDER="0" SRC="$constants->{imagedir}/eof.gif" ALT="$title" TITLE="$title"></A>|;
+				$zoosphere_display .= qq|<a href="$gSkin->{rootdir}/zoo.pl?op=check&amp;uid=$person"><img src="$constants->{imagedir}/eof.gif" alt="$title" title="$title"></a>|;
 			}
 		}
 	}
-	
-	my $title = qq|<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>|;
+
+	my $class = $options->{class}; 
+	my $classattr = $discussion2 ? qq[ class="$class"] : '';
+
+	my $head = $discussion2 ? <<EOT1 : <<EOT2;
+			<h4><a id="comment_link_$comment->{cid}" name="comment_link_$comment->{cid}" href="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}&amp;cid=$comment->{cid}" onclick="return setFocusComment($comment->{cid})">$comment->{subject}</a></h4>
+EOT1
+			<h4><a name="$comment->{cid}">$comment->{subject}</a></h4>
+EOT2
+
 	my $return = <<EOT;
-			<TR><TD BGCOLOR="$user->{colors}{bg_2}">
-				<FONT SIZE="3" COLOR="$user->{colors}{fg_2}">
-				$title $score_to_display
-				</FONT>
-				<BR>by $user_nick_to_display$zoosphere_display$user_email_to_display
+<li id="tree_$comment->{cid}" class="comment">
+<div id="comment_status_$comment->{cid}" class="commentstatus"></div>
+<div id="comment_$comment->{cid}"$classattr>
+	<div class="commentTop">
+		<div class="title">
+$head
+		 	<span class="score">$score_to_display</span>
+		</div>
+		<div class="details">
+			by $user_nick_to_display$zoosphere_display
+			<span class="otherdetails">
+				$user_email_to_display
 				on $time_to_display$comment_link_to_display
-				$userinfo_to_display $comment->{ipid_display}
-			</TD></TR>
-			<TR><TD>
-				$comment_to_display
-			</TD></TR>
+				<small>$userinfo_to_display $comment->{ipid_display}</small>
+			</span>
+		</div>
+	</div>
+	<div class="commentBody">	
+		$comment_to_display
+	</div>
+
+	<div class="commentSub">
 EOT
 
 	# Do not display comment navigation and reply links if we are in
@@ -1823,6 +2032,7 @@ EOT
 			op	=> 'Reply',
 			subject	=> 'Reply to This',
 			subject_only => 1,
+			# onclick	=> ($discussion2 ? "return replyTo($comment->{cid})" : '')
 		}) unless $user->{state}{discussion_archived};
 
 		push @link, linkComment({
@@ -1831,31 +2041,73 @@ EOT
 			pid	=> $comment->{original_pid},
 			subject	=> 'Parent',
 			subject_only => 1,
-		}, 1) if $comment->{original_pid};
+			onclick	=> ($discussion2 ? "return selectParent($comment->{original_pid})" : '')
+		}, 1) if $comment->{original_pid};# && !($discussion2 &&
+#			(!$form->{cid} || $form->{cid} != $comment->{cid})
+#		);
 
-		push @link, createSelect("reason_$comment->{cid}",
-			$reasons, '', 1, 1) if $can_mod
-				&& $user->{mode} ne 'archive'
+		push @link, "<div class=\"modsel\">".createSelect("reason_$comment->{cid}",
+			$reasons, '', 1, 1)."</div>" if $can_mod
 				&& ( !$user->{state}{discussion_archived}
 					|| $constants->{comments_moddable_archived} );
 
-		push @link, qq|<INPUT TYPE="CHECKBOX" NAME="del_$comment->{cid}">|
+		push @link, qq|<input type="checkbox" name="del_$comment->{cid}">|
 			if $user->{is_admin};
 
 		my $link = join(" | ", @link);
 
 		if (@link) {
 			$return .= <<EOT;
-				<TR><TD>
-					<FONT SIZE="2">
 					[ $link ]
-					</FONT>
-				</TD></TR>
 EOT
 		}
 
 	}
+
+	$return .= "</div></div>\n\n";
+
+	if ($discussion2) {
+		$return .= <<EOT;
+<div id="replyto_$comment->{cid}"></div>
+
+<ul id="group_$comment->{cid}">
+	<li id="hiddens_$comment->{cid}" class="hide"></li>
+</ul>
+
+EOT
+	}
+
 	return $return;
+}
+
+sub tempUofmLinkGenerate {
+	require URI::Escape;
+
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+
+	my $cipher = tempUofmCipherObj() or return;
+
+	my $encrypted = $cipher->encrypt($user->{uid} . '|' . $user->{nickname});
+	return sprintf($constants->{uofm_address}, URI::Escape::uri_escape($encrypted));
+}
+
+sub tempUofmCipherObj {
+	my $constants = getCurrentStatic();
+	return unless $constants->{uofm_key} && $constants->{uofm_iv};
+
+	require Crypt::CBC;
+
+	my $cipher = Crypt::CBC->new({
+		key		=> $constants->{uofm_key},
+		iv		=> $constants->{uofm_iv},
+		cipher		=> 'Blowfish',
+		regenerate_key	=> 0,
+		padding		=> 'null',
+		prepend_iv	=> 0
+	});
+
+	return $cipher;
 }
 
 1;

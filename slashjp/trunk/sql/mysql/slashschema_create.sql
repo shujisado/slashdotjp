@@ -18,7 +18,7 @@ CREATE TABLE abusers (
 	ipid char(32) DEFAULT '' NOT NULL,
 	subnetid char(32) DEFAULT '' NOT NULL,
 	pagename varchar(20) DEFAULT '' NOT NULL,
-	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	reason varchar(120) DEFAULT '' NOT NULL,
 	querystring varchar(200) DEFAULT '' NOT NULL,
 	PRIMARY KEY (abuser_id),
@@ -29,43 +29,6 @@ CREATE TABLE abusers (
 	KEY ts (ts)
 ) TYPE=InnoDB;
 
-DROP TABLE IF EXISTS accesslist; 
-CREATE TABLE accesslist (
-	id mediumint(9) NOT NULL auto_increment,
-	adminuid mediumint(8) unsigned NOT NULL default '0',
-	uid mediumint(8) unsigned NOT NULL default '0',
-	ipid varchar(32) default NULL,
-	subnetid varchar(32) default NULL,
-	ts datetime NOT NULL default '0000-00-00 00:00:00',
-	reason varchar(255) NOT NULL default '',
-	now_ban enum('no','yes') NOT NULL default 'no',
-	now_nopost enum('no','yes') NOT NULL default 'no',
-	now_nosubmit enum('no','yes') NOT NULL default 'no',
-	now_norss enum('no','yes') NOT NULL default 'no',
-	now_nopalm enum('no','yes') NOT NULL default 'no',
-	now_proxy enum('no','yes') NOT NULL default 'no',
-	now_trusted enum('no','yes') NOT NULL default 'no',
-	was_ban enum('no','yes') NOT NULL default 'no',
-	was_nopost enum('no','yes') NOT NULL default 'no',
-	was_nosubmit enum('no','yes') NOT NULL default 'no',
-	was_norss enum('no','yes') NOT NULL default 'no',
-	was_nopalm enum('no','yes') NOT NULL default 'no',
-	was_proxy enum('no','yes') NOT NULL default 'no',
-	was_trusted enum('no','yes') NOT NULL default 'no',
-	estimated_users smallint UNSIGNED default 1,
-	PRIMARY KEY  (id),
-	KEY uid (uid),
-	KEY ipid (ipid),
-	KEY subnetid (subnetid),
-	KEY ts (ts),
-	KEY now_ban (now_ban),
-	KEY now_nopost (now_nopost),
-	KEY now_nosubmit (now_nosubmit),
-	KEY now_norss (now_norss),
-	KEY now_proxy (now_proxy),
-	KEY now_trusted (now_trusted)
-) TYPE=InnoDB;
-
 DROP TABLE IF EXISTS accesslog; 
 CREATE TABLE accesslog (
 	id int UNSIGNED NOT NULL auto_increment,
@@ -74,7 +37,7 @@ CREATE TABLE accesslog (
 	op varchar(254),
 	dat varchar(254),
 	uid mediumint UNSIGNED NOT NULL,
-	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	query_string varchar(50),
 	user_agent varchar(50),
 	skid SMALLINT UNSIGNED DEFAULT 0 NOT NULL,
@@ -98,7 +61,7 @@ CREATE TABLE accesslog_admin (
 	op varchar(254),
 	dat varchar(254),
 	uid mediumint UNSIGNED NOT NULL,
-	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	query_string varchar(50),
 	user_agent varchar(50),
 	skid SMALLINT UNSIGNED DEFAULT 0 NOT NULL,
@@ -114,10 +77,66 @@ CREATE TABLE accesslog_admin (
 DROP TABLE IF EXISTS accesslog_artcom;
 CREATE TABLE accesslog_artcom (
 	uid mediumint UNSIGNED NOT NULL,
-	ts datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+	ts datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
 	c smallint unsigned NOT NULL DEFAULT '0',
 	INDEX uid (uid),
 	INDEX ts (ts)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'al2'
+# (The 'value' column could and should be of type BIT(32), if
+# Slash required MySQL 5.0.5 or later.  Since we don't, the
+# code in MySQL.pm treats the INT UNSIGNED like a bit field.)
+#
+
+CREATE TABLE al2 (
+	srcid           BIGINT UNSIGNED NOT NULL DEFAULT '0',
+	value           INT UNSIGNED NOT NULL DEFAULT '0',
+	updatecount     INT UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY (srcid),
+	INDEX value (value)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'al2_log'
+#
+
+CREATE TABLE al2_log (
+	al2lid          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	srcid           BIGINT UNSIGNED NOT NULL DEFAULT '0',
+	ts              DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+	adminuid        MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	al2tid          TINYINT UNSIGNED NOT NULL DEFAULT '0',
+	val             ENUM('set', 'clear') DEFAULT NULL,
+	PRIMARY KEY (al2lid),
+	INDEX ts (ts),
+	INDEX srcid_ts (srcid, ts),
+	INDEX al2tid_val_srcid (al2tid, val, srcid)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'al2_log_comments'
+#
+
+CREATE TABLE al2_log_comments (
+	al2lid          INT UNSIGNED NOT NULL DEFAULT '0',
+	comment         TEXT NOT NULL DEFAULT '',
+	PRIMARY KEY (al2lid)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'al2_types'
+#
+
+CREATE TABLE al2_types (
+	al2tid          TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	bitpos          TINYINT UNSIGNED DEFAULT NULL,
+	name            VARCHAR(30) NOT NULL DEFAULT '',
+	title           VARCHAR(64) NOT NULL DEFAULT '',
+	PRIMARY KEY (al2tid),
+	UNIQUE name (name),
+	UNIQUE bitpos (bitpos)
 ) TYPE=InnoDB;
 
 #
@@ -242,7 +261,8 @@ CREATE TABLE comments (
 	sid mediumint UNSIGNED NOT NULL,
 	cid mediumint UNSIGNED NOT NULL auto_increment,
 	pid mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	date datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+	last_update TIMESTAMP NOT NULL,
 	ipid char(32) DEFAULT '' NOT NULL,
 	subnetid char(32) DEFAULT '' NOT NULL,
 	subject varchar(50) NOT NULL,
@@ -303,6 +323,43 @@ CREATE TABLE content_filters (
 ) TYPE=InnoDB;
 
 #
+# Table structure for table 'css_type'
+#
+DROP TABLE IF EXISTS css_type;
+CREATE TABLE css_type (
+	ctid TINYINT(3) UNSIGNED NOT NULL AUTO_INCREMENT,
+	name VARCHAR(32) NOT NULL DEFAULT '',
+	ordernum TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY  (ctid)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'css'
+#
+
+DROP TABLE IF EXISTS css;
+CREATE TABLE css (
+	csid int(11) NOT NULL AUTO_INCREMENT,
+	rel VARCHAR(32) DEFAULT 'stylesheet',
+	type VARCHAR(32) DEFAULT 'text/css',
+	media VARCHAR(32) DEFAULT 'screen, projection',
+	file VARCHAR(64),
+	title VARCHAR(32),
+	skin VARCHAR(32) DEFAULT '',
+	page VARCHAR(32) DEFAULT '',
+	admin ENUM('no','yes') DEFAULT 'no',
+	theme VARCHAR(32) DEFAULT '',
+	ctid TINYINT(4) NOT NULL DEFAULT '0',
+	ordernum int(11) DEFAULT '0',
+	ie_cond VARCHAR(16) DEFAULT '',
+	lowbandwidth ENUM('no','yes') DEFAULT 'no',
+	PRIMARY KEY  (csid),
+	KEY ctid (ctid),
+	KEY page_skin (page,skin),
+	KEY skin_page (skin,page)
+) TYPE=InnoDB;
+
+#
 # Table structure for table 'dateformats'
 #
 
@@ -335,7 +392,7 @@ CREATE TABLE dbs (
 
 DROP TABLE IF EXISTS dbs_readerstatus;
 CREATE TABLE dbs_readerstatus (
-	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	dbid mediumint UNSIGNED NOT NULL,
 	was_alive enum("no","yes") DEFAULT "yes" NOT NULL,
 	was_reachable enum("no","yes") DEFAULT "yes",
@@ -343,8 +400,8 @@ CREATE TABLE dbs_readerstatus (
 	slave_lag_secs float DEFAULT '0',
 	query_bog_secs float DEFAULT '0',
 	bog_rsqid mediumint UNSIGNED DEFAULT NULL,
-	had_weight tinyint UNSIGNED NOT NULL DEFAULT 1,
-	had_weight_adjust float UNSIGNED NOT NULL DEFAULT 1,
+	had_weight tinyint UNSIGNED DEFAULT 1,
+	had_weight_adjust float UNSIGNED DEFAULT 1,
 	KEY ts_dbid (ts, dbid)
 ) TYPE=InnoDB;
 
@@ -367,12 +424,13 @@ CREATE TABLE dbs_readerstatus_queries (
 DROP TABLE IF EXISTS discussions;
 CREATE TABLE discussions (
 	id mediumint UNSIGNED NOT NULL auto_increment, 
+	dkid TINYINT UNSIGNED NOT NULL DEFAULT 1,
 	stoid mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	sid char(16) DEFAULT '' NOT NULL,
 	title varchar(128) NOT NULL,
 	url varchar(255) NOT NULL,
 	topic smallint UNSIGNED NOT NULL,
-	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	type ENUM("open","recycle","archived") DEFAULT 'open' NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
 	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
@@ -388,6 +446,18 @@ CREATE TABLE discussions (
 	KEY (primaryskid,ts),
 	INDEX (type,uid,ts),
 	PRIMARY KEY (id)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'discussion_kinds'
+#
+
+DROP TABLE IF EXISTS discussion_kinds;
+CREATE TABLE discussion_kinds (
+	dkid        TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	name        VARCHAR(30) NOT NULL DEFAULT '',
+	PRIMARY KEY (dkid),
+	UNIQUE name (name)
 ) TYPE=InnoDB;
 
 #
@@ -437,6 +507,46 @@ CREATE TABLE formkeys (
 	KEY last_ts (ts),
 	KEY submit_ts (submit_ts)
 ) TYPE=InnoDB;
+
+#
+# Table structure for table 'globjs' (global objects)
+#
+
+DROP TABLE IF EXISTS globjs;
+CREATE TABLE globjs (
+	globjid		int UNSIGNED NOT NULL auto_increment,
+	gtid		smallint UNSIGNED NOT NULL,
+	target_id	int UNSIGNED NOT NULL,
+	PRIMARY KEY (globjid),
+	UNIQUE target (gtid, target_id)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'globj_types'
+#
+
+DROP TABLE IF EXISTS globj_types;
+CREATE TABLE globj_types (
+	gtid		smallint UNSIGNED NOT NULL auto_increment,
+	maintable	VARCHAR(64) NOT NULL,
+	PRIMARY KEY (gtid),
+	UNIQUE maintable (maintable)
+) TYPE=InnoDB;
+
+#
+# Table structure for table 'globj_urls'
+#
+
+DROP TABLE IF EXISTS globj_urls;
+CREATE TABLE globj_urls (
+	id INT(10) UNSIGNED NOT NULL auto_increment,
+	globjid INT UNSIGNED NOT NULL DEFAULT 0,
+	url_id INT(10) UNSIGNED NOT NULL NOT NULL DEFAULT 0,
+	PRIMARY KEY (id),
+	UNIQUE globjid_url_id (globjid, url_id)
+) TYPE=InnoDB;
+
+
 
 #
 # Table structure for table 'hooks'
@@ -497,11 +607,11 @@ CREATE TABLE misc_user_opts (
 	name varchar(32) NOT NULL,
 	optorder mediumint(5),
 	seclev mediumint UNSIGNED NOT NULL,
-	default_val text DEFAULT '' NOT NULL,
-	vals_regex text DEFAULT '',
-	short_desc text DEFAULT '',
-	long_desc text DEFAULT '',
-	opts_html text DEFAULT '',
+	default_val text NOT NULL,
+	vals_regex text,
+	short_desc text,
+	long_desc text,
+	opts_html text,
 	PRIMARY KEY (name)
 ) TYPE=InnoDB;
 
@@ -516,8 +626,8 @@ CREATE TABLE moderatorlog (
 	subnetid char(32) DEFAULT '' NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
 	val tinyint DEFAULT '0' NOT NULL,
-	sid mediumint UNSIGNED DEFAULT '' NOT NULL,
-	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	sid mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	cid mediumint UNSIGNED NOT NULL,
 	cuid mediumint UNSIGNED NOT NULL,
 	reason tinyint UNSIGNED DEFAULT '0',
@@ -564,9 +674,10 @@ DROP TABLE IF EXISTS open_proxies;
 CREATE TABLE open_proxies (
         ip	VARCHAR(15) NOT NULL,
 	port	SMALLINT UNSIGNED NOT NULL DEFAULT '0',
-	ts	DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-	xff	VARCHAR(15) DEFAULT NULL,
-	ipid char(32) DEFAULT '' NOT NULL,
+	dur	FLOAT DEFAULT NULL,
+	ts	DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+	xff	VARCHAR(40) DEFAULT NULL,
+	ipid	CHAR(32) DEFAULT '' NOT NULL,
 	PRIMARY KEY (ip),
 	KEY ts (ts),
 	KEY ipid (ipid)
@@ -641,6 +752,20 @@ CREATE TABLE querylog (
 	KEY type (type)
 ) TYPE=InnoDB;
 
+DROP TABLE IF EXISTS related_stories;
+CREATE TABLE related_stories (
+	id mediumint(8) unsigned NOT NULL auto_increment,
+	stoid mediumint(8) unsigned default '0',
+	rel_stoid mediumint(8) unsigned default '0',
+	rel_sid varchar(16) NOT NULL default '',
+	title varchar(255) default '',
+	url varchar(255) default '',
+	cid mediumint(8) unsigned NOT NULL default '0',
+	ordernum smallint unsigned NOT NULL default '0',
+	PRIMARY KEY (id),
+	KEY stoid (stoid)
+) TYPE=InnoDB;
+
 #
 # Table structure for table 'rss_raw'
 #
@@ -683,15 +808,18 @@ CREATE TABLE related_links (
 
 DROP TABLE IF EXISTS remarks;
 CREATE TABLE remarks (
-	rid mediumint UNSIGNED NOT NULL auto_increment,
-	uid mediumint UNSIGNED NOT NULL,
+	rid MEDIUMINT UNSIGNED NOT NULL auto_increment,
+	uid MEDIUMINT UNSIGNED NOT NULL,
 	stoid MEDIUMINT UNSIGNED NOT NULL,
-	time DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL,
-	remark varchar(100),
+	priority SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+	time DATETIME DEFAULT '1970-01-01 00:00:00' NOT NULL,
+	type ENUM("system","user") DEFAULT "user",
+	remark VARCHAR(100),
 	PRIMARY KEY (rid),
 	INDEX uid (uid),
 	INDEX stoid (stoid),
-	INDEX time (time)
+	INDEX time (time),
+	INDEX priority (priority)
 ) TYPE=InnoDB;
 
 #
@@ -702,15 +830,25 @@ DROP TABLE IF EXISTS sessions;
 CREATE TABLE sessions (
 	session mediumint UNSIGNED NOT NULL auto_increment,
 	uid mediumint UNSIGNED,
-	logintime datetime,
 	lasttime datetime,
 	lasttitle varchar(50),
 	last_subid mediumint UNSIGNED,
 	last_sid varchar(16),
-	INDEX (uid),
+	UNIQUE (uid),
 	PRIMARY KEY (session)
 ) TYPE=InnoDB;
 
+DROP TABLE IF EXISTS signoff;
+CREATE TABLE signoff (
+        soid 	MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	stoid		MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+  	uid 		MEDIUMINT UNSIGNED NOT NULL,
+	signoff_time	TIMESTAMP,
+	signoff_type	VARCHAR(16) DEFAULT '' NOT NULL,
+	PRIMARY KEY(soid),
+	INDEX (stoid)
+) TYPE=InnoDB;
+				
 #
 # Table structure for table 'site_info'
 #
@@ -735,19 +873,22 @@ CREATE TABLE skins (
 	nexus SMALLINT UNSIGNED NOT NULL,
 	artcount_min MEDIUMINT UNSIGNED DEFAULT '10' NOT NULL,
 	artcount_max MEDIUMINT UNSIGNED DEFAULT '30' NOT NULL,
+	older_stories_max MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL,
 	name VARCHAR(30) NOT NULL,
 	title VARCHAR(64) DEFAULT '' NOT NULL,
 	issue ENUM('no', 'yes') DEFAULT 'no' NOT NULL,
 	submittable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL,
 	searchable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL,
 	storypickable ENUM('no', 'yes') DEFAULT 'yes' NOT NULL,
+	skinindex ENUM('no', 'yes') DEFAULT 'yes' NOT NULL,
 	url VARCHAR(255) DEFAULT '' NOT NULL,
 	hostname VARCHAR(128) DEFAULT '' NOT NULL,
 	cookiedomain VARCHAR(128) DEFAULT '' NOT NULL,
 	index_handler VARCHAR(30) DEFAULT 'index.pl' NOT NULL,
 	max_rewrite_secs MEDIUMINT UNSIGNED DEFAULT '3600' NOT NULL,
-	last_rewrite TIMESTAMP NOT NULL,
+	last_rewrite timestamp NOT NULL,
 	ac_uid mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	require_acl VARCHAR(32) DEFAULT '' NOT NULL,
 	PRIMARY KEY (skid),
 	UNIQUE name (name)
 ) TYPE=InnoDB;
@@ -760,7 +901,7 @@ DROP TABLE IF EXISTS skin_colors;
 CREATE TABLE skin_colors (
 	skid SMALLINT UNSIGNED NOT NULL,
 	name VARCHAR(24) NOT NULL,
-	hexcolor CHAR(6) NOT NULL,
+	skincolor CHAR(12) NOT NULL,
 	UNIQUE skid_name (skid, name)
 ) TYPE=InnoDB;
 
@@ -785,7 +926,7 @@ CREATE TABLE slashd_status (
 
 DROP TABLE IF EXISTS slashd_errnotes;
 CREATE TABLE slashd_errnotes (
-	ts DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	ts DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
 	taskname VARCHAR(50) NOT NULL DEFAULT 'SLASHD',
 	line MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
 	errnote VARCHAR(255) NOT NULL DEFAULT '',
@@ -834,7 +975,7 @@ CREATE TABLE stories (
 	sid CHAR(16) NOT NULL,
 	uid MEDIUMINT UNSIGNED NOT NULL,
 	dept VARCHAR(100),
-	time DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	time DATETIME DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	hits MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL,
 	discussion MEDIUMINT UNSIGNED,
 	primaryskid SMALLINT UNSIGNED,
@@ -844,9 +985,9 @@ CREATE TABLE stories (
 	hitparade VARCHAR(64) DEFAULT '0,0,0,0,0,0,0' NOT NULL,
 	is_archived ENUM('no', 'yes') DEFAULT 'no' NOT NULL,
 	in_trash ENUM('no', 'yes') DEFAULT 'no' NOT NULL,
-	day_published DATE DEFAULT '0000-00-00' NOT NULL,
+	day_published DATE DEFAULT '1970-01-01' NOT NULL,
 	qid MEDIUMINT UNSIGNED DEFAULT NULL,
-	last_update TIMESTAMP NOT NULL,
+	last_update timestamp NOT NULL,
 	body_length MEDIUMINT UNSIGNED DEFAULT 0 NOT NULL,
 	word_count MEDIUMINT UNSIGNED DEFAULT 0 NOT NULL,
 	PRIMARY KEY (stoid),
@@ -904,7 +1045,7 @@ CREATE TABLE story_param (
 	param_id mediumint UNSIGNED NOT NULL auto_increment,
 	stoid MEDIUMINT UNSIGNED NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
-	value text DEFAULT '' NOT NULL,
+	value text NOT NULL,
 	UNIQUE story_key (stoid,name),
 	PRIMARY KEY (param_id)
 ) TYPE=InnoDB;
@@ -917,7 +1058,7 @@ DROP TABLE IF EXISTS story_topics_chosen;
 CREATE TABLE story_topics_chosen (
 	stoid MEDIUMINT UNSIGNED NOT NULL,
 	tid SMALLINT(5) UNSIGNED NOT NULL,
-	weight FLOAT UNSIGNED DEFAULT 1 NOT NULL,
+	weight FLOAT DEFAULT 1 NOT NULL,
 	UNIQUE story_topic (stoid, tid),
 	INDEX tid_stoid (tid, stoid)
 ) TYPE=InnoDB;
@@ -993,7 +1134,7 @@ CREATE TABLE submission_param (
 	param_id mediumint UNSIGNED NOT NULL auto_increment,
 	subid mediumint UNSIGNED NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
-	value text DEFAULT '' NOT NULL,
+	value text NOT NULL,
 	UNIQUE submission_key (subid,name),
 	PRIMARY KEY (param_id)
 ) TYPE=InnoDB;
@@ -1084,7 +1225,7 @@ CREATE TABLE topic_param (
 	param_id mediumint UNSIGNED NOT NULL auto_increment,
 	tid SMALLINT UNSIGNED NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
-	value text DEFAULT '' NOT NULL,
+	value text NOT NULL,
 	UNIQUE topic_key (tid,name),
 	PRIMARY KEY (param_id)
 ) TYPE=InnoDB;
@@ -1097,7 +1238,7 @@ DROP TABLE IF EXISTS topic_parents;
 CREATE TABLE topic_parents (
 	tid SMALLINT UNSIGNED NOT NULL,
 	parent_tid SMALLINT UNSIGNED NOT NULL,
-	min_weight FLOAT UNSIGNED DEFAULT 1 NOT NULL,
+	min_weight FLOAT DEFAULT 10 NOT NULL,
 	UNIQUE child_and_parent (tid, parent_tid),
 	INDEX parent_tid (parent_tid)
 ) TYPE=InnoDB;
@@ -1118,6 +1259,31 @@ CREATE TABLE tzcodes (
 ) TYPE=InnoDB;
 
 #
+# Table structure for table 'urls'
+#
+
+DROP TABLE IF EXISTS urls;
+CREATE TABLE urls (
+	url_id INT(10) UNSIGNED NOT NULL auto_increment,
+	url_digest VARCHAR(32) NOT NULL,
+	url TEXT NOT NULL,
+	is_success TINYINT(4),
+	createtime datetime,
+	last_attempt datetime,
+	last_success datetime,
+	believed_fresh_until datetime,
+	status_code SMALLINT(6),
+	reason_phrase VARCHAR(30),
+	content_type VARCHAR(60),
+	initialtitle VARCHAR(255),
+	validatedtitle VARCHAR(255),
+	tags_top VARCHAR(255) DEFAULT '' NOT NULL,
+	popularity float DEFAULT '0' NOT NULL,
+	PRIMARY KEY (url_id),
+	UNIQUE url_digest (url_digest)
+);
+
+#
 # Table structure for table 'users'
 #
 
@@ -1129,7 +1295,7 @@ CREATE TABLE users (
 	fakeemail varchar(75),
 	homepage varchar(100),
 	passwd char(32) DEFAULT '' NOT NULL,
-	sig varchar(160),
+	sig varchar(200),
 	seclev mediumint UNSIGNED DEFAULT '0' NOT NULL,	/* This is set to 0 as a safety factor */
 	matchname varchar(20),
 	newpasswd varchar(8),
@@ -1194,7 +1360,7 @@ CREATE TABLE users_comments (
 DROP TABLE IF EXISTS users_hits;
 CREATE TABLE users_hits (
 	uid mediumint UNSIGNED NOT NULL,
-	lastclick TIMESTAMP,
+	lastclick timestamp,
 	hits int DEFAULT '0' NOT NULL,
 	PRIMARY KEY (uid)
 ) TYPE=InnoDB;
@@ -1206,13 +1372,17 @@ CREATE TABLE users_hits (
 DROP TABLE IF EXISTS users_index;
 CREATE TABLE users_index (
 	uid mediumint UNSIGNED NOT NULL,
-	story_never_topic text DEFAULT '' NOT NULL,
+	story_never_topic text NOT NULL,
 	story_never_author varchar(255) DEFAULT '' NOT NULL,
 	story_never_nexus varchar(255) DEFAULT '' NOT NULL,
-	story_always_topic text DEFAULT '' NOT NULL,
+	story_always_topic text NOT NULL,
 	story_always_author varchar(255) DEFAULT '' NOT NULL,
 	story_always_nexus varchar(255) DEFAULT '' NOT NULL,
-	slashboxes text DEFAULT '' NOT NULL,
+	story_full_brief_nexus varchar(255) DEFAULT '' NOT NULL,
+	story_brief_always_nexus varchar(255) DEFAULT '' NOT NULL,
+	story_full_best_nexus varchar(255) DEFAULT '' NOT NULL,
+	story_brief_best_nexus varchar(255) DEFAULT '' NOT NULL,
+	slashboxes text NOT NULL,
 	maxstories tinyint UNSIGNED DEFAULT '30' NOT NULL,
 	noboxes tinyint DEFAULT '0' NOT NULL,
 	PRIMARY KEY (uid)
@@ -1227,16 +1397,16 @@ CREATE TABLE users_info (
 	uid mediumint UNSIGNED NOT NULL,
 	totalmods mediumint DEFAULT '0' NOT NULL,
 	realname varchar(50),
-	bio text,
+	bio text NOT NULL,
 	tokens mediumint DEFAULT '0' NOT NULL,
-	lastgranted datetime DEFAULT '0000-00-00 00:00' NOT NULL,
+	lastgranted datetime DEFAULT '1970-01-01 00:00' NOT NULL,
 	m2info varchar(64) DEFAULT '' NOT NULL,
 	karma mediumint DEFAULT '0' NOT NULL,
 	maillist tinyint DEFAULT '0' NOT NULL,
 	totalcomments mediumint UNSIGNED DEFAULT '0',
-	lastmm datetime DEFAULT '0000-00-00 00:00' NOT NULL,
+	lastmm datetime DEFAULT '1970-01-01 00:00' NOT NULL,
 	mods_saved varchar(120) DEFAULT '' NOT NULL,
-	lastaccess date DEFAULT '0000-00-00' NOT NULL,
+	lastaccess date DEFAULT '1970-01-01' NOT NULL,
 	m2fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	up_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	down_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
@@ -1264,7 +1434,7 @@ CREATE TABLE users_info (
 	user_expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
 	initdomain VARCHAR(30) DEFAULT '' NOT NULL,
 	created_ipid VARCHAR(32) DEFAULT '' NOT NULL,
-	created_at datetime DEFAULT '0000-00-00 00:00' NOT NULL,
+	created_at datetime DEFAULT '1970-01-01 00:00' NOT NULL,
 	people MEDIUMBLOB,
 	PRIMARY KEY (uid),
 	KEY (initdomain),
@@ -1282,12 +1452,14 @@ CREATE TABLE users_logtokens (
 	uid MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
 	locationid CHAR(32) NOT NULL DEFAULT '',
 	temp ENUM("yes","no") NOT NULL DEFAULT "no",
+	public ENUM("yes","no") NOT NULL DEFAULT "no",
 	expires DATETIME NOT NULL DEFAULT '2000-01-01 00:00:00',
 	value CHAR(22) NOT NULL DEFAULT '',
 	PRIMARY KEY (lid),
-	UNIQUE uid_locationid_temp (uid, locationid, temp),
+	UNIQUE uid_locationid_temp_public (uid, locationid, temp, public),
 	KEY (locationid),
-	KEY (temp)
+	KEY (temp),
+	KEY (public)
 ) TYPE=InnoDB;
 
 #
@@ -1299,7 +1471,7 @@ CREATE TABLE users_param (
 	param_id mediumint UNSIGNED NOT NULL auto_increment,
 	uid mediumint UNSIGNED NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
-	value text DEFAULT '' NOT NULL,
+	value text NOT NULL,
 	UNIQUE uid_key (uid,name),
 	KEY (uid),
 	PRIMARY KEY (param_id)
@@ -1334,12 +1506,14 @@ CREATE TABLE vars (
 	PRIMARY KEY (name)
 ) TYPE=InnoDB;
 
-ALTER TABLE backup_blocks ADD FOREIGN KEY (bid) REFERENCES blocks(bid);
-ALTER TABLE comment_text ADD FOREIGN KEY (cid) REFERENCES comments(cid);
+#ALTER TABLE backup_blocks ADD FOREIGN KEY (bid) REFERENCES blocks(bid);
+#ALTER TABLE comment_text ADD FOREIGN KEY (cid) REFERENCES comments(cid);
 #ALTER TABLE discussions ADD FOREIGN KEY (topic) REFERENCES topics(tid);
-ALTER TABLE metamodlog ADD FOREIGN KEY (mmid) REFERENCES moderatorlog(id);
-ALTER TABLE pollquestions ADD FOREIGN KEY (discussion) REFERENCES discussions(id);
-ALTER TABLE pollquestions ADD FOREIGN KEY (uid) REFERENCES users(uid);
+#ALTER TABLE metamodlog ADD FOREIGN KEY (mmid) REFERENCES moderatorlog(id);
+# This doesn't work, since discussion may be 0.
+#ALTER TABLE pollquestions ADD FOREIGN KEY (discussion) REFERENCES discussions(id);
+# This doesn't work, since in the install pollquestions is populated before users, alphabetically
+#ALTER TABLE pollquestions ADD FOREIGN KEY (uid) REFERENCES users(uid);
 # This doesn't work, makes createStory die
 #ALTER TABLE stories ADD FOREIGN KEY (uid) REFERENCES users(uid);
 # These don't work, should check why...
@@ -1360,6 +1534,8 @@ ALTER TABLE pollquestions ADD FOREIGN KEY (uid) REFERENCES users(uid);
 # but it doesn't explain why discussions.topic SMALLINT UNSIGNED NOT NULL
 # DEFAULT '0' is able to be foreign-keyed to topics.tid SMALLINT UNSIGNED
 # NOT NULL AUTO_INCREMENT.
+# (And note that MySQL 4.0 allows an AUTO_INCREMENT column to be declared
+# with a DEFAULT, but MySQL 4.1 throws an error on that formulation.)
 
 #ALTER TABLE blocks ADD FOREIGN KEY (rss_template) REFERENCES templates(name);
 #ALTER TABLE discussions ADD FOREIGN KEY (sid) REFERENCES stories(sid);

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -226,6 +226,34 @@ sub main {
 			formname	=> $formname,
 			checks		=> ['regen_formkey'],
 		},
+		showtags => {
+			function	=> \&showTags,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> [],
+			tab_selected	=> 'tags',
+		},
+		showbookmarks => {
+			function	=> \&showBookmarks,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> [],
+			tab_selected	=> 'bookmarks',
+		},
+		edittags => {
+			function	=> \&editTags,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> [],
+			tab_selected	=> 'tags',
+		},
+		savetags => {
+			function	=> \&saveTags,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> [],
+			tab_selected	=> 'tags',
+		},
 #		userclose	=>  {
 #			function	=> \&displayForm,
 #			seclev		=> 0,
@@ -312,7 +340,7 @@ sub main {
 	}
 
 	if ($op eq 'userlogin' && ! $user->{is_anon}) {
-		redirect(cleanRedirectUrl($form->{returnto}));
+		redirect(cleanRedirectUrl($form->{returnto} || ''));
 		return;
 
 	# this will only redirect if it is a section-based rootdir with
@@ -548,13 +576,13 @@ sub newUser {
 		return;
 	} elsif ($matchname ne '' && $form->{newusernick} ne '') {
 		if ($constants->{newuser_portscan}) {
-			my $is_trusted = $slashdb->checkIsTrusted($user->{ipid});
-			if ($is_trusted ne 'yes') {
+			my $is_trusted = $slashdb->checkAL2($user->{srcids}, 'trusted');
+			if (!$is_trusted) {
 				my $is_proxy = $slashdb->checkForOpenProxy($user->{hostip});
 				if ($is_proxy) {
 					print getError('new user open proxy', {
-					unencoded_ip	=> $ENV{REMOTE_ADDR},
-					port		=> $is_proxy,
+						unencoded_ip	=> $ENV{REMOTE_ADDR},
+						port		=> $is_proxy,
 					});
 					return;
 				}
@@ -626,6 +654,7 @@ sub mailPasswd {
 	my $uid = $hr->{uid} || 0;
 
 	my $slashdb = getCurrentDB();
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $form = getCurrentForm();
 
 	print createMenu("users", {
@@ -655,9 +684,14 @@ sub mailPasswd {
 		$err_name = 'mailpasswd_notmailed_err';
 	}
 	if (!$err_name) {
-		$user_edit = $slashdb->getUser($uid);
+		# Check permissions of _this_ user, not the target
+		# user, to determine whether this IP is OK'd to
+		# send the mail to the target user.
+		# XXXSRCID This should check a separate field like
+		# 'openproxy' instead of piggybacking off of 'nopost'
+		my $srcids_to_check = $user->{srcids};
 		$err_name = 'mailpasswd_readonly_err'
-			if $slashdb->checkReadOnly;
+			if $reader->checkAL2($srcids_to_check, 'nopost');
 	}
 	if (!$err_name) {
 		$err_name = 'mailpasswd_toooften_err'
@@ -666,8 +700,8 @@ sub mailPasswd {
 	
 	if (!$err_name) {
 		if ($constants->{mailpasswd_portscan}) {
-			my $is_trusted = $slashdb->checkIsTrusted($user->{ipid});
-			if ($is_trusted ne 'yes') {
+			my $is_trusted = $slashdb->checkAL2($user->{srcids}, 'trusted');
+			if (!$is_trusted) {
 				my $is_proxy = $slashdb->checkForOpenProxy($user->{hostip});
 				if ($is_proxy) {
 					$err_name = 'mailpasswd open proxy';
@@ -687,7 +721,7 @@ sub mailPasswd {
 	}
 
 	my $newpasswd = $slashdb->getNewPasswd($uid);
-	my $tempnick = fixparam($user_edit->{nickname});
+	my $tempnick = $user_edit->{nickname};
 
 	my $emailtitle = getTitle('mailPassword_email_title', {
 		nickname	=> $user_edit->{nickname}
@@ -798,6 +832,7 @@ sub showComments {
 	) if $commentcount;
 
 	if (ref($comments) eq 'ARRAY') {
+		my $kinds = $reader->getDescriptions('discussion_kinds');
 		for my $comment (@$comments) {
 			# This works since $sid is numeric.
 			$comment->{replies} = $reader->countCommentsBySidPid($comment->{sid}, $comment->{cid});
@@ -806,11 +841,11 @@ sub showComments {
 			# ...however, the "sid" parameter here must be the string
 			# based SID from either the "stories" table or from
 			# pollquestions.
-			my $discussion  = $reader->getDiscussion($comment->{sid});
+			my $discussion = $reader->getDiscussion($comment->{sid});
 
-			if ($discussion->{url} =~ /journal/i) {
+			if ($kinds->{ $discussion->{dkid} } =~ /^journal(?:-story)?$/) {
 				$comment->{type} = 'journal';
-			} elsif ($discussion->{url} =~ /poll/i) {
+			} elsif ($kinds->{ $discussion->{dkid} } eq 'poll') {
 				$comment->{type} = 'poll';
 			} else {
 				$comment->{type} = 'story';
@@ -905,19 +940,33 @@ sub showInfo {
 
 	} elsif ($user->{is_admin}) {
 		$id ||= $form->{userfield} || $user->{uid};
-		if ($id =~ /^\d+$/) {
-			$fieldkey = 'uid';
-			$requested_user = $reader->getUser($id);
-			$uid = $requested_user->{uid};
-			$nick = $requested_user->{nickname};
-			if ((my $conflict_id = $reader->getUserUID($id)) && $form->{userinfo}) {
-				slashDisplay('showInfoConflict', {
-					op		=> 'userinfo',
-					id		=> $uid,
-					nick		=> $nick,
-					conflict_id	=> $conflict_id
-				});
-				return 1;
+		if ($id =~ /^[0-9a-f]{16}$/) {
+			$requested_user->{nonuid} = 1;
+			$fieldkey = "srcid";
+			$requested_user->{$fieldkey} = $id;
+		} elsif ($id =~ /^\d+$/) {
+			# If it's longer than a uid could possibly be, it
+			# must be a srcid.  The uid column right now is a
+			# MEDIUMINT (max 16M) but at most might someday
+			# be an INT (max 4G).
+			if (length($id) > 11) {
+				$requested_user->{nonuid} = 1;
+				$fieldkey = "srcid";
+				$requested_user->{$fieldkey} = $id;
+			} else {
+				$fieldkey = 'uid';
+				$requested_user = $reader->getUser($id);
+				$uid = $requested_user->{uid};
+				$nick = $requested_user->{nickname};
+				if ((my $conflict_id = $reader->getUserUID($id)) && $form->{userinfo}) {
+					slashDisplay('showInfoConflict', {
+						op		=> 'userinfo',
+						id		=> $uid,
+						nick		=> $nick,
+						conflict_id	=> $conflict_id
+					});
+					return 1;
+				}
 			}
 
 		} elsif (length($id) == 32) {
@@ -929,7 +978,6 @@ sub showInfo {
 				$fieldkey = 'md5id';
 			}
 			$requested_user->{$fieldkey} = $id;
-
 		} elsif ($id =~ /^(\d{1,3}\.\d{1,3}.\d{1,3}\.0)$/ 
 				|| $id =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3})\.?$/) {
 			$fieldkey = 'subnetid';
@@ -1011,9 +1059,12 @@ sub showInfo {
 		} elsif ($requested_user->{md5id}) {
 			$netid = $requested_user->{md5id} ;
 
+		} elsif ($requested_user->{srcid}) {
+			$netid = $requested_user->{srcid} ;
 		} else {
 			$netid = $requested_user->{subnetid} ;
 		}
+
 		my $data = {
 			id => $id,
 			md5id => $netid,
@@ -1107,29 +1158,31 @@ sub showInfo {
 	}
 
 	my $cids_seen = {};
+	my $kinds = $slashdb->getDescriptions('discussion_kinds');
 	for my $comment (@$comments) {
 		$cids_seen->{$comment->{cid}}++;
 		my $type;
 		# This works since $sid is numeric.
 		my $replies = $reader->countCommentsBySidPid($comment->{sid}, $comment->{cid});
 
-		# This is ok, since with all luck we will not be hitting the DB
-		# ...however, the "sid" parameter here must be the string
-		# based SID from either the "stories" table or from
-		# pollquestions.
-		my($discussion) = $reader->getDiscussion($comment->{sid});
-
-		if ($discussion->{url} =~ /journal/i) {
+		# This is cached.
+		my $discussion = $reader->getDiscussion($comment->{sid});
+		if (!$discussion || !$discussion->{dkid}) {
+			# A comment with no accompanying discussion;
+			# basically we pretend it doesn't exist.
+			next;
+		} elsif ($kinds->{ $discussion->{dkid} } =~ /^journal(?:-story)?$/) {
 			$type = 'journal';
-		} elsif ($discussion->{url} =~ /poll/i) {
+		} elsif ($kinds->{ $discussion->{dkid} } eq 'poll') {
 			$type = 'poll';
 		} else {
 			$type = 'story';
 		}
+
 		$comment->{points} += $user->{karma_bonus}
 			if $user->{karma_bonus} && $comment->{karma_bonus} eq 'yes';
 		$comment->{points} += $user->{subscriber_bonus}
-			if $user->{subscriber_bonus} && $comment->{subscriber} eq 'yes';
+			if $user->{subscriber_bonus} && $comment->{subscriber_bonus} eq 'yes';
 
 		# fix points in case they are out of bounds
 		$comment->{points} = $constants->{comment_minscore} if $comment->{points} < $constants->{comment_minscore};
@@ -1166,11 +1219,12 @@ sub showInfo {
 		}
 		push @$commentstruct, $data;
 	}
+#	if (grep { !defined($_->{disc_time}) || !defined($_->{sid}) } @$commentstruct) { use Data::Dumper; print STDERR "showInfo undef in commentstruct for id=$id: " . Dumper($commentstruct) }
 	# Sort so the chosen group of comments is sorted by discussion
 	@$commentstruct = sort {
 		$b->{disc_time} cmp $a->{disc_time} || $b->{sid} <=> $a->{sid}
 	} @$commentstruct
-		unless $user->{user_comment_sort_type} == 1;
+		unless $user->{user_comment_sort_type} && $user->{user_comment_sort_type} == 1;
 
 	my $cid_list = [ keys %$cids_seen ];
 	my $cids_to_mods = {};
@@ -1250,6 +1304,12 @@ sub showInfo {
 		my $metamods;
 		$metamods = $reader->getMetamodlogForUser($uid, 30) if $admin_flag;
 
+		my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+		my $tagshist = [];
+		if ($tags_reader && $user->{is_admin}) {
+			$tagshist = $tags_reader->getAllTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', limit => 20 });
+		}
+
 		slashDisplay('userInfo', {
 			title			=> $title,
 			uid			=> $uid,
@@ -1270,7 +1330,8 @@ sub showInfo {
 			comment_time		=> $comment_time,
 			submissions		=> $submissions,
 			subcount		=> $subcount,
-			metamods		=> $metamods
+			metamods		=> $metamods,
+			tagshist		=> $tagshist
 		});
 	}
 
@@ -1321,11 +1382,9 @@ sub _get_lastjournal {
 		$maxsize = 600 if $maxsize > 600;
 		$art_shrunk = chopEntity($art_shrunk, $maxsize);
 
-		my $approvedtags_break = $constants->{approvedtags_break}
-			|| [qw(HR BR LI P OL UL BLOCKQUOTE DIV)];
+		my $approvedtags_break = $constants->{approvedtags_break} || [];
 		my $break_tag = join '|', @$approvedtags_break;
 		if (scalar(() = $art_shrunk =~ /<(?:$break_tag)>/gi) > 2) {
-			# extract first line of journal entry
 			$art_shrunk =~ s/\A
 			(
 				(?: <(?:$break_tag)> )?
@@ -1333,24 +1392,24 @@ sub _get_lastjournal {
 				.*?
 			)	<(?:$break_tag)>.*
 			/$1/six;
-			# returning undef is totally broken,
-			# because user will have no journal entries
-			# in userInfo  -- Oliver
-			#if (length($art_shrunk) < 15) {
+			if (length($art_shrunk) < 15) {
 				# This journal entry has too much whitespace
 				# in its first few chars;  scrap it.
-			#	return undef;
-			#}
-			$art_shrunk = chopEntity($art_shrunk);
+				undef $art_shrunk;
+			}
+			$art_shrunk = chopEntity($art_shrunk) if defined($art_shrunk);
 		}
-		if (length($art_shrunk) < length($lastjournal->{article})) {
-			$art_shrunk .= " ...";
+
+		if (defined $art_shrunk) {
+			if (length($art_shrunk) < length($lastjournal->{article})) {
+				$art_shrunk .= " ...";
+			}
+			$art_shrunk = strip_html($art_shrunk);
+			$art_shrunk = balanceTags($art_shrunk);
 		}
+
 		$lastjournal->{article_shrunk} = $art_shrunk;
 
-		# Now default:  normalize the text and count comments.
-		$art_shrunk = strip_html($art_shrunk);
-		$art_shrunk = balanceTags($art_shrunk);
 		if ($lastjournal->{discussion}) {
 			$lastjournal->{commentcount} = $reader->getDiscussion(
 				$lastjournal->{discussion}, 'commentcount');
@@ -1443,6 +1502,113 @@ sub validateUser {
 	slashDisplay('regResult');
 }
 
+#####################################################################
+sub editTags {
+	my($hr) = @_;
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser(); 
+	my $constants = getCurrentStatic();
+	my $note = $hr->{note} || "";
+
+	return if $user->{is_anon}; # shouldn't be, but can't hurt to check
+
+	print createMenu("users", {
+		style =>	'tabbed',
+		justify =>	'right',
+		color =>	'colored',
+		tab_selected =>	$hr->{tab_selected_1} || "",
+	});
+
+	my $edit_user = $slashdb->getUser($user->{uid});
+	my $title = getTitle('editTags_title');
+
+	slashDisplay('editTags', {
+		user_edit	=> $user,
+		title		=> $title,
+		note		=> $note,
+	});
+}
+
+sub saveTags {
+	my($hr) = @_;
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
+	return if $user->{is_anon}; # shouldn't be, but can't hurt to check
+
+	$slashdb->setUser($user->{uid}, {
+		tags_turnedoff =>	$form->{showtags} ? '' : 1 });
+	my $edit_user = $slashdb->getUser($user->{uid});
+	editTags({ note => getMessage('savetags_msg') });
+}
+
+#####################################################################
+sub showTags {
+	my($hr) = @_;
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+
+	my($uid, $user_edit);
+	if ($form->{uid} || $form->{nick}) {
+		$uid = $form->{uid} || $tags_reader->getUserUID($form->{nick});
+		$user_edit = $tags_reader->getUser($uid);
+	}
+	if (!$user_edit || $user_edit->{is_anon}) {
+		$uid = $user->{uid};
+		$user_edit = $user;
+	}
+	my $nickname = $user_edit->{nickname};
+
+	if (!$constants->{plugin}{Tags}) {
+		print getError('bad_op', { op => $form->{op}});
+		return;
+	}
+
+	my $tags_ar = $tags_reader->getGroupedTagsFromUser($user_edit->{uid});
+	slashDisplay('usertags', {
+		useredit	=> $user_edit,
+		tags_grouped	=> $tags_ar,
+	});
+}
+
+#################################################################
+sub showBookmarks {
+	my($hr) = @_;
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+
+	my($uid, $user_edit);
+	if ($form->{uid} || $form->{nick}) {
+		$uid = $form->{uid} || $tags_reader->getUserUID($form->{nick});
+		$user_edit = $tags_reader->getUser($uid);
+	}
+	if (!$user_edit || $user_edit->{is_anon}) {
+		$uid = $user->{uid};
+		$user_edit = $user;
+	}
+	my $nickname = $user_edit->{nickname};
+
+	if (!$constants->{plugin}{Tags}) {
+		print getError('bad_op', { op => $form->{op}});
+		return;
+	}
+
+	my $tags_ar = $tags_reader->getGroupedTagsFromUser($user_edit->{uid}, { type => "urls", only_bookmarked => 1 });
+
+	slashDisplay('userbookmarks', {
+		useredit	=> $user_edit,
+		tags_grouped	=> $tags_ar,
+	});
+}
+
 #################################################################
 sub editKey {
 	my($uid) = @_;
@@ -1514,7 +1680,8 @@ sub tildeEd {
 	my %prefs = ( );
 	for my $field (qw(
 		story_never_topic	story_never_author	story_never_nexus
-		story_always_topic	story_always_author	story_always_nexus
+		story_always_topic	story_always_author	story_always_nexus	story_brief_always_nexus
+		story_full_brief_nexus	story_full_best_nexus	story_brief_best_nexus
 	)) {
 		for my $id (
 			grep /^\d+$/,
@@ -1555,22 +1722,35 @@ sub tildeEd {
 	}
 
 	# Set up $nexus_hr, @nexustid_order, and $story023_default{nexus}.
-
 	my $topic_tree = $reader->getTopicTree();
-	my $nexus_tids_ar = $reader->getNexusChildrenTids($constants->{mainpage_nexus_tid});
-	@$nexus_tids_ar = grep {$topic_tree->{$_}{storypickable}} @$nexus_tids_ar;
+	my $nexus_tids_ar = $reader->getStorypickableNexusChildren($constants->{mainpage_nexus_tid}, 1);
 	my $nexus_hr = { };
+	
 	for my $tid (@$nexus_tids_ar) {
 		$nexus_hr->{$tid} = $topic_tree->{$tid}{textname};
 	}
-	my @nexustid_order = sort { lc $nexus_hr->{$a} cmp lc $nexus_hr->{$b} } keys %$nexus_hr;
+	my @nexustid_order = sort {($b == $constants->{mainpage_nexus_tid}) <=> ($a == $constants->{mainpage_nexus_tid}) || 
+				    lc $nexus_hr->{$a} cmp lc $nexus_hr->{$b} } keys %$nexus_hr;
+
 	for my $tid (@nexustid_order) {
 		     if ($prefs{story_never_nexus}{$tid}) {
 			$story023_default{nexus}{$tid} = 0;
 		} elsif ($prefs{story_always_nexus}{$tid}) {
+			$story023_default{nexus}{$tid} = 5;
+		} elsif ($prefs{story_full_brief_nexus}{$tid}) {
+			$story023_default{nexus}{$tid} = 4;
+		} elsif ($prefs{story_brief_always_nexus}{$tid}) {
 			$story023_default{nexus}{$tid} = 3;
-		} else {
+		} elsif ($prefs{story_full_best_nexus}{$tid}) {
 			$story023_default{nexus}{$tid} = 2;
+		} elsif ($prefs{story_brief_best_nexus}) {
+			$story023_default{nexus}{$tid} = 1;
+		} else {
+			if ($constants->{brief_sectional_mainpage}) {
+				$story023_default{nexus}{$tid} = 4;
+			} else {
+				$story023_default{nexus}{$tid} = 2;
+			}
 		}
 	}
 
@@ -1842,7 +2022,8 @@ sub editHome {
 	$formats = $slashdb->getDescriptions('dateformats');
 	$tzformat_select = createSelect('tzformat', $formats, $user_edit->{dfid}, 1);
 
-	my $l_check = $user_edit->{light}	? $constants->{markup_checked_attribute} : '';
+	my $lb_check = $user_edit->{lowbandwidth} ? $constants->{markup_checked_attribute} : '';
+	my $sd_check = $user_edit->{simpledesign} ? $constants->{markup_checked_attribute} : '';
 	my $i_check = $user_edit->{noicons}	? $constants->{markup_checked_attribute} : '';
 	my $w_check = $user_edit->{willing}	? $constants->{markup_checked_attribute} : '';
 
@@ -1853,9 +2034,10 @@ sub editHome {
 		admin_block		=> $admin_block,
 		user_edit		=> $user_edit,
 		tzformat_select		=> $tzformat_select,
-		l_check			=> $l_check,
 		i_check			=> $i_check,
 		w_check			=> $w_check,
+		lb_check		=> $lb_check,
+		sd_check		=> $sd_check,
 		tilde_ed		=> $tilde_ed,
 		note			=> $note,
 	});
@@ -1903,9 +2085,9 @@ sub editComm {
 	}
 
 	my @reasons = ( );
-	my $reasons_raw = $slashdb->getReasons();
-	for my $id (sort { $a <=> $b } keys %$reasons_raw) {
-		push @reasons, $reasons_raw->{$id}{name};
+	my $reasons = $slashdb->getReasons();
+	for my $id (sort { $a <=> $b } keys %$reasons) {
+		push @reasons, $reasons->{$id}{name};
 	}
 
 	my %reason_select;
@@ -2021,9 +2203,7 @@ sub editComm {
 		highlightthresh_select	=> $highlightthresh_select,
 		uthreshold_select	=> $uthreshold_select,
 		posttype_select		=> $posttype_select,
-		range			=> \@range,
 		reasons			=> \@reasons,
-		reasons_raw		=> $reasons_raw,
 		reason_select		=> \%reason_select,
 		people			=> \@people,
 		people_select		=> \%people_select,
@@ -2045,11 +2225,11 @@ sub saveUserAdmin {
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
-	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
 	my($user_edits_table, $user_edit) = ({}, {});
 	my $author_flag;
 	my $note = '';
+	my $srcid;
 	my $id;
 	my $user_editfield_flag;
 	my $banned = 0;
@@ -2058,47 +2238,91 @@ sub saveUserAdmin {
 		$user_editfield_flag = 'uid';
 		$id = $form->{uid};
 		$user_edit = $slashdb->getUser($id);
+		$srcid = $id;
 
 	} elsif ($form->{subnetid}) {
 		$user_editfield_flag = 'subnetid';
 		($id, $user_edit->{subnetid})  = ($form->{subnetid}, $form->{subnetid});
 		$user_edit->{nonuid} = 1;
+		$srcid = convert_srcid(subnetid => $id);
 
 	} elsif ($form->{ipid}) {
 		$user_editfield_flag = 'ipid';
 		($id, $user_edit->{ipid})  = ($form->{ipid}, $form->{ipid});
 		$user_edit->{nonuid} = 1;
+		$srcid = convert_srcid(ipid => $id);
 
 	} elsif ($form->{md5id}) {
 		$user_editfield_flag = 'md5id';
 		my $fieldname = $form->{fieldname} || 'md5id';
 		($id, $user_edit->{$fieldname})
 			= ($form->{md5id}, $form->{md5id});
+		warn "form field md5id specified, no srcid saving possible";
+	
+	} elsif ($form->{srcid}) {
+		$user_editfield_flag = 'srcid';
+		my $fieldname = $form->{fieldname} || 'srcid';
+		($id, $user_edit->{$fieldname})
+			= ($form->{srcid}, $form->{srcid});
+		$srcid = $id;
 
 	} else {
 		# If we were not fed valid data, don't do anything.
 		return ;
 	}
 
-	my @access_add = ( );
-	my @access_remove = ( );
-	for my $now (qw( ban nopost nosubmit nopalm norss nopalm proxy trusted )) {
-		# To affect the "now_trusted" bit, you need a seclev of 10000
-		# or higher.
-		next if $now eq 'trusted' && $user->{seclev} < 10000;
-		if ($form->{"accesslist_$now"} eq 'on') {
-			push @access_add, $now;
-		} else {
-			push @access_remove, $now;
-		}
-	}
-	my $reason = $form->{accesslist_reason};
-	$slashdb->changeAccessList($user_edit, \@access_add, \@access_remove, $reason);
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $all_al2types = $reader->getAL2Types;
+	my $al2_change = { };
 
-	if ($form->{accesslist_ban} eq 'on') {
-		$slashdb->getBanList(1); # reload the list
-	}
+	# First, get a hash of what aclams (AL2's and ACLs) this user
+	# had when the previous admin page was loaded.
+	# XXXSRCID Right now acl_old is just calculated for debugging
+	# printing purposes, not actually used.
+	my @al2_old = ( );
+	@al2_old =
+		@{ $form->{al2_old_multiple}   } if $form->{al2_old_multiple};
+	my %al2_old = ( map { ($_, 1) } @al2_old );
+	my @acl_old = ( );
+	@acl_old =
+		@{ $form->{acl_old_multiple}   } if $form->{acl_old_multiple};
+	my %acl_old = ( map { ($_, 1) } @acl_old );
 
+	# Next, get the list of the new data submitted.  Separate
+	# it out into AL2's which are legitimate.  Anything left
+	# over is an ACL.
+	my @al2_new_formfields = ( );
+	@al2_new_formfields = @{ $form->{aclams_new_multiple} } if $form->{aclams_new_multiple};
+	my @al2_new_submitted = map { s/^aclam_//; $_ } @al2_new_formfields;
+	my @al2_new = grep { exists $all_al2types->{$_} } @al2_new_submitted;
+	my %al2_new = ( map { ($_, 1) } @al2_new );
+	my @acl_new = grep { !$al2_new{$_} } @al2_new_submitted;
+	my %acl_new = ( map { ($_, 1) } @acl_new );
+
+	# Find out what changed for AL2's.
+	for my $al2 (@al2_old, @al2_new) {
+		next if defined($al2_old{$al2}) && defined($al2_new{$al2})
+			&& $al2_old{$al2} == $al2_new{$al2};
+		$al2_change->{$al2} = $al2_new{$al2} ? 1 : 0;
+	}
+#print STDERR "al2_change for '$srcid': " . Dumper($al2_change);
+	# If there's a comment, throw that in.
+	if ($form->{al2_new_comment}) {
+		$al2_change->{comment} = $form->{al2_new_comment};
+	}
+	$al2_change = undef if !keys %$al2_change;
+
+	# Find out what changed for ACL's.
+	my $acl_change = { };
+	for my $acl (@acl_old, @acl_new) {
+		next if $acl_old{$acl} == $acl_new{$acl};
+		$acl_change->{$acl} = $acl_new{$acl} ? 1 : 0;
+	}
+	$acl_change = undef if !keys %$acl_change;
+
+	if ($user->{is_admin} && $srcid) {
+		$slashdb->setAL2($srcid, $al2_change);
+	}
 	if ($user->{is_admin} && ($user_editfield_flag eq 'uid' ||
 		$user_editfield_flag eq 'nickname')) {
 
@@ -2107,18 +2331,9 @@ sub saveUserAdmin {
 		$user_edits_table->{author} = $form->{author} ? 1 : 0 ;
 		$user_edits_table->{defaultpoints} = $form->{defaultpoints};
 		$user_edits_table->{tokens} = $form->{tokens};
+		$user_edits_table->{tag_clout} = $form->{tag_clout};
 		$user_edits_table->{m2info} = $form->{m2info};
-
-		# As far as ACLs, first we set all the ACLs that we're
-		# setting, to 1.
-		$user_edits_table->{acl} = { map { ($_, 1) } @{$form->{newacls_multiple}} };
-		# Then we run through all the ACLs, and any that we're not
-		# setting, go to 0 so they get deleted..
-		my $all_acls_hr = $reader->getAllACLs();
-		my @all_acls = sort keys %$all_acls_hr;
-		for my $acl (@all_acls) {
-			$user_edits_table->{acl}{$acl} ||= 0;
-		}
+		$user_edits_table->{acl} = $acl_change if $acl_change;
 
 		my $author = $slashdb->getAuthor($id);
 		my $was_author = ($author && $author->{author}) ? 1 : 0;
@@ -2142,10 +2357,10 @@ sub saveUserAdmin {
 
 	if (!$user_edit->{nonuid}) {
 		if ($form->{expired} eq 'on') {
-			$slashdb->setExpired($user_edit->{uid});
+#			$slashdb->setExpired($user_edit->{uid});
 
 		} else {
-			$slashdb->setUnexpired($user_edit->{uid});
+#			$slashdb->setUnexpired($user_edit->{uid});
 		}
 	}
 
@@ -2274,21 +2489,20 @@ sub saveUser {
 		}
 	}
 
-	# The schema is 160 chars but we limit their input to 120.
-	my(%extr, $err_message);
-	$extr{sig} = chopEntity($form->{sig}, 120);
-	$extr{bio} = chopEntity($form->{bio}, $constants->{users_bio_length} || 1024);
+	my(%extr, $err_message, %limit);
+	$limit{sig} = 120;  # schema is 200, give an extra buffer for domain tags
+	$limit{bio} = $constants->{users_bio_length} || 1024; # can be up to 2^16
 
-	for my $key (keys %extr) {
-		my $dat = $extr{$key};
+	for my $key (keys %limit) {
+		my $dat = chopEntity($form->{$key}, $limit{$key});
 		$dat = strip_html($dat);
-		$dat = balanceTags($dat, 1); # only 1 nesting tag (UL, OL, BLOCKQUOTE) allowed
+		$dat = balanceTags($dat, { deep_nesting => 2, length => $limit{$key} });
 		$dat = addDomainTags($dat) if $dat;
 
 		# If the sig becomes too long to fit (domain tagging causes
 		# string expansion and tag balancing can too), warn the user to
 		# use shorter domain names and don't save their change.
-		if ($key eq 'sig' && defined($dat) && length($dat) > 160) {
+		if ($key eq 'sig' && defined($dat) && length($dat) > 200) {
 			print getError('sig_too_long_err');
 			$extr{sig} = undef;
 		}
@@ -2418,7 +2632,7 @@ sub saveComm {
 	my $user_edit = $slashdb->getUser($uid);
 	my $new_fakeemail = '';		# at emaildisplay 0, don't show any email address
 	if ($form->{emaildisplay}) {
-		$new_fakeemail = getArmoredEmail($uid)	if $form->{emaildisplay} == 1;
+		$new_fakeemail = getArmoredEmail($uid)		if $form->{emaildisplay} == 1;
 		$new_fakeemail = $user_edit->{realemail}	if $form->{emaildisplay} == 2;
 	}
 
@@ -2457,6 +2671,7 @@ sub saveComm {
 	my $clbig_bonus = ($form->{clbig_bonus} !~ /^[\-+]?\d+$/) ? 0 : $form->{clbig_bonus};
 
 	my $user_edits_table = {
+		discussion2		=> $form->{discussion2} || undef,
 		clsmall			=> $form->{clsmall},
 		clsmall_bonus		=> ($clsmall_bonus || undef),
 		clbig			=> $form->{clbig},
@@ -2466,7 +2681,7 @@ sub saveComm {
 		commentsort		=> $form->{commentsort},
 		commentspill		=> $form->{commentspill},
 		domaintags		=> ($form->{domaintags} != 2 ? $form->{domaintags} : undef),
-		emaildisplay		=> $form->{emaildisplay} ? $form->{emaildisplay} : undef,
+		emaildisplay		=> $form->{emaildisplay} || undef,
 		fakeemail		=> $new_fakeemail,
 		highlightthresh		=> $form->{highlightthresh},
 		maxcommentsize		=> $form->{maxcommentsize},
@@ -2515,11 +2730,10 @@ sub saveComm {
 		push @reasons, $reasons->{$id}{name};
 	}
 
-	for my $reason_id (keys %$reasons) {
-		next unless $reasons->{$reason_id}{listable};
-		my $key = "reason_alter_$reason_id";
-		my $answer = $form->{$key};
-		$answer = 0 if $answer !~ /^[\-+]?\d+$/;
+	for my $reason_name (@reasons) {
+		my $key = "reason_alter_$reason_name";
+		my $answer = $form->{$key} || 0;
+		$answer = 0 if !$answer || $answer !~ /^[\-+]?\d+$/;
 		$user_edits_table->{$key} = ($answer == 0) ? '' : $answer;
 	}
 
@@ -2584,7 +2798,7 @@ sub saveHome {
 		for my $key (sort grep /^showbox_/, keys %$form) {
 			my($bid) = $key =~ /^showbox_(\w+)$/;
 			next if length($bid) < 1 || length($bid) > 30 || $bid !~ /^\w+$/;
-			if (!$slashboxes{$bid}) {
+			if (! exists $slashboxes{$bid}) {
 				$slashboxes{$bid} = 999; # put it at the end
 			}
 		}
@@ -2611,8 +2825,10 @@ sub saveHome {
 	my $author_hr = $slashdb->getDescriptions('authors');
 	my $tree = $slashdb->getTopicTree();
 	my(@story_never_topic,  @story_never_author,  @story_never_nexus);
-	my(@story_always_topic, @story_always_author, @story_always_nexus);
-	my($story_topic_all,    $story_author_all,    $story_nexus_all);
+	my(@story_always_topic, @story_always_author);
+	my(@story_always_nexus, @story_full_brief_nexus, @story_brief_always_nexus, @story_full_best_nexus, @story_brief_best_nexus);
+	my($story_topic_all, $story_author_all, $story_nexus_all) = (0, 0, 0);
+	
 	# Topics are either present (value=2) or absent (value=0).  If absent,
 	# push them onto the never list.  Otherwise, do nothing.  (There's no
 	# way to have an "always" topic, at the moment.)  If the hidden
@@ -2637,8 +2853,13 @@ sub saveHome {
 		$story_author_all++;
 		if (!$form->{$key}) {			push @story_never_author, $aid	}
 	}
-	# Nexuses can have value 0, 2 or 3.  0 means the never list,
-	# and 3 means the always list.
+	# Nexuses can have value 0, 1, 2, 3, 4, 5.  
+	# 0 means the never list,
+	# 1 means brief view of mainpage articles only
+	# 2 means full view of mainpage articles only
+	# 3 means brief view of all content
+	# 4 means full view of mainpage content, brief view of sectional
+	# 5 means full view of all content
 	for my $tid (
 		sort { $a <=> $b }
 		map { /^nexustid(\d+)$/; $1 }
@@ -2649,42 +2870,64 @@ sub saveHome {
 		next unless $tid && $tree->{$tid} && $tree->{$tid}{nexus};
 		$story_nexus_all++;
 		   if (!$form->{$key}) {		push @story_never_nexus, $tid	}
-		elsif ($form->{$key} == 3) {		push @story_always_nexus, $tid	}
+		elsif ($form->{$key} == 5 ) {		push @story_always_nexus, $tid	}
+		elsif ($form->{$key} == 4 ) {		push @story_full_brief_nexus, $tid }
+		elsif ($form->{$key} == 3 ) {		push @story_brief_always_nexus, $tid }
+		elsif ($form->{$key} == 2 ) {		push @story_full_best_nexus, $tid }
+		elsif ($form->{$key} == 1 ) {		push @story_brief_best_nexus, $tid }
+		
+						
 	}
 #use Data::Dumper; $Data::Dumper::Sortkeys = 1; print STDERR scalar(localtime) . " s_n_t '@story_never_topic' s_n_a '@story_never_author' s_n_n '@story_never_nexus' s_a_n '@story_always_nexus' form: " . Dumper($form);
 	# Sanity check.
-	$#story_never_topic   = 299 if $#story_never_topic   > 299;
-	$#story_never_author  = 299 if $#story_never_author  > 299;
-	$#story_never_nexus   = 299 if $#story_never_nexus   > 299;
-	$#story_always_topic  = 299 if $#story_always_topic  > 299;
-	$#story_always_author = 299 if $#story_always_author > 299;
-	$#story_always_nexus  = 299 if $#story_always_nexus  > 299;
+	$#story_never_topic		= 299 if $#story_never_topic   > 299;
+	$#story_never_author		= 299 if $#story_never_author  > 299;
+	$#story_never_nexus 		= 299 if $#story_never_nexus   > 299;
+	$#story_always_topic		= 299 if $#story_always_topic  > 299;
+	$#story_always_author 		= 299 if $#story_always_author > 299;
+	$#story_always_nexus 		= 299 if $#story_always_nexus  > 299;
+	$#story_full_brief_nexus 	= 299 if $#story_full_brief_nexus > 299;
+	$#story_brief_always_nexus	= 299 if $#story_brief_always_nexus > 299;
+	$#story_brief_best_nexus 	= 299 if $#story_brief_best_nexus > 299;
+	$#story_full_best_nexus		= 299 if $#story_full_best_nexus > 299;
+	
 	my $story_never_topic   = join ",", @story_never_topic;
 	$story_never_topic = ($constants->{subscribe} && $user->{is_subscriber})
 		? checkList($story_never_topic, 1024)
 		: checkList($story_never_topic);
-	my $story_never_author  = checkList(join ",", @story_never_author);
-	my $story_never_nexus   = checkList(join ",", @story_never_nexus);
-	my $story_always_topic  = checkList(join ",", @story_always_topic);
+	my $story_never_author  	= checkList(join ",", @story_never_author);
+	my $story_never_nexus   	= checkList(join ",", @story_never_nexus);
+	my $story_always_topic  	= checkList(join ",", @story_always_topic);
 	$story_always_topic = ($constants->{subscribe} && $user->{is_subscriber})
 		? checkList($story_always_topic, 1024)
 		: checkList($story_always_topic);
-	my $story_always_author = checkList(join ",", @story_always_author);
-	my $story_always_nexus  = checkList(join ",", @story_always_nexus);
+	my $story_always_author 	= checkList(join ",", @story_always_author);
+
+	my $story_always_nexus  	= checkList(join ",", @story_always_nexus);
+	my $story_full_brief_nexus	= checkList(join ",", @story_full_brief_nexus);
+	my $story_brief_always_nexus    = checkList(join ",", @story_brief_always_nexus);
+	my $story_brief_best_nexus	= checkList(join ",", @story_brief_best_nexus);
+	my $story_full_best_nexus	= checkList(join ",", @story_full_best_nexus);
+	
 
 	my $user_edits_table = {
-		story_never_topic	=> $story_never_topic,
-		story_never_author	=> $story_never_author,
-		story_never_nexus	=> $story_never_nexus,
-		story_always_topic	=> $story_always_topic,
-		story_always_author	=> $story_always_author,
-		story_always_nexus	=> $story_always_nexus,
+		story_never_topic		=> $story_never_topic,
+		story_never_author		=> $story_never_author,
+		story_never_nexus		=> $story_never_nexus,
+		story_always_topic		=> $story_always_topic,
+		story_always_author		=> $story_always_author,
+		story_always_nexus		=> $story_always_nexus,
+		story_brief_always_nexus	=> $story_brief_always_nexus,
+		story_full_brief_nexus 		=> $story_full_brief_nexus,
+		story_full_best_nexus		=> $story_full_best_nexus,
+		story_brief_best_nexus		=> $story_brief_best_nexus,
 
 		slashboxes	=> checkList($slashboxes, 1024),
 
 		maxstories	=> 30, # XXXSKIN fix this later
 		noboxes		=> ($form->{useslashboxes} ? 0 : 1),
-		light		=> ($form->{light} ? 1 : 0),
+		lowbandwidth	=> ($form->{lowbandwidth} ? 1 : 0),
+		simpledesign	=> ($form->{simpledesign} ? 1 : 0),
 		noicons		=> ($form->{noicons} ? 1 : 0),
 		willing		=> ($form->{willing} ? 1 : 0),
 	};
@@ -2704,7 +2947,13 @@ sub saveHome {
 	# purpose), plus the fact that this could be used to amplify the
 	# seriousness of any future vulnerabilities, means it's way past
 	# time to shut this feature down.  - Jamie 2002/03/06
-	$user_edits_table->{mylinks} = strip_html($form->{mylinks} || '');
+
+	# it's a VARCHAR ...
+	my $mylinks_limit = 255;
+	$user_edits_table->{mylinks} = balanceTags(strip_html(
+		chopEntity($form->{mylinks} || '', $mylinks_limit)
+	), { deep_nesting => 2, length => $mylinks_limit });
+
 	$user_edits_table->{mylinks} = '' unless defined $user_edits_table->{mylinks};
 
 	$error = 1;
@@ -2743,6 +2992,10 @@ sub saveHome {
 				'story_always_topic' => 1,
 				'story_always_author' => 1,
 				'story_always_nexus' => 1,
+				'story_full_brief_nexus' => 1,
+				'story_brief_always_nexus' => 1,
+				'story_full_best_nexus' => 1,
+				'story_brief_best_nexus' => 1,
 				'maxstories' => 1,
 				'noboxes' => 1,
 				'light' => 1,
@@ -2840,7 +3093,7 @@ sub saveMiscOpts {
 sub listReadOnly {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
-	my $readonlylist = $reader->getAccessList(0, 'nopost');
+	my $readonlylist = $reader->getAL2List('nopost');
 
 	slashDisplay('listReadOnly', {
 		readonlylist => $readonlylist,
@@ -2852,7 +3105,7 @@ sub listReadOnly {
 sub listBanned {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
-	my $bannedlist = $reader->getAccessList(0, 'ban');
+	my $bannedlist = $reader->getAL2List('ban');
 
 	slashDisplay('listBanned', {
 		bannedlist => $bannedlist,
@@ -2957,7 +3210,7 @@ sub displayForm {
 
 	my($title, $title2, $msg1, $msg2) = ('', '', '', '');
 
-	if ($form->{op} eq 'userclose') {
+	if ($op eq 'userclose') {
 		$title = getMessage('userclose');
 
 	} elsif ($op eq 'displayForm') {
@@ -3042,6 +3295,7 @@ sub getUserAdmin {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $logdb = getObject('Slash::DB', { db_type => 'log_slave' });
 
+
 	my $user	= getCurrentUser();
 	my $form	= getCurrentForm();
 	my $constants	= getCurrentStatic();
@@ -3050,28 +3304,29 @@ sub getUserAdmin {
 
 	my($expired, $uidstruct, $readonly);
 	my($user_edit, $user_editfield, $ipstruct, $ipstruct_order, $authors, $author_flag, $topabusers, $thresh_select,$section_select);
+	my $srcid;
 	my $proxy_check = {};
 	my @accesshits;
 	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
-	my $accesslist;
 	my $sectionref = $reader->getDescriptions('skins');
 	$sectionref->{''} = getData('all_sections');
 
 	$field ||= 'uid';
 	if ($field eq 'uid') {
-		$user_edit = $reader->getUser($id);
+		$user_edit = $slashdb->getUser($id);
 		$user_editfield = $user_edit->{uid};
-		$expired = $reader->checkExpired($user_edit->{uid}) ? $constants->{markup_checked_attribute} : '';
-		$ipstruct = $reader->getNetIDStruct($user_edit->{uid});
+		$srcid = convert_srcid( uid => $id );
+		#$expired = $slashdb->checkExpired($user_edit->{uid}) ? $constants->{markup_checked_attribute} : '';
+		$ipstruct = $slashdb->getNetIDStruct($user_edit->{uid});
 		@accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{uid}) if defined($logdb);
 		$section_select = createSelect('section', $sectionref, $user_edit->{section}, 1);
 
 	} elsif ($field eq 'nickname') {
-		$user_edit = $reader->getUser($reader->getUserUID($id));
+		$user_edit = $slashdb->getUser($slashdb->getUserUID($id));
 		$user_editfield = $user_edit->{nickname};
-		$expired = $reader->checkExpired($user_edit->{uid}) ? $constants->{markup_checked_attribute} : '';
-		$ipstruct = $reader->getNetIDStruct($user_edit->{uid});
+		#$expired = $slashdb->checkExpired($user_edit->{uid}) ? $constants->{markup_checked_attribute} : '';
+		$ipstruct = $slashdb->getNetIDStruct($user_edit->{uid});
 		@accesshits = $logdb->countAccessLogHitsInLastX('uid', $user_edit->{uid}) if defined($logdb);
 		$section_select = createSelect('section', $sectionref, $user_edit->{section}, 1);
 
@@ -3079,18 +3334,19 @@ sub getUserAdmin {
 		$user_edit->{nonuid} = 1;
 		$user_edit->{md5id} = $id;
 		if ($form->{fieldname} && $form->{fieldname} =~ /^(ipid|subnetid)$/) {
-			$uidstruct = $reader->getUIDStruct($form->{fieldname}, $user_edit->{md5id});
+			$uidstruct = $slashdb->getUIDStruct($form->{fieldname}, $user_edit->{md5id});
 			@accesshits = $logdb->countAccessLogHitsInLastX($form->{fieldname}, $user_edit->{md5id}) if defined($logdb);
 		} else {
-			$uidstruct = $reader->getUIDStruct('md5id', $user_edit->{md5id});
+			$uidstruct = $slashdb->getUIDStruct('md5id', $user_edit->{md5id});
 			@accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{md5id}) if defined($logdb);
 		}
 
 	} elsif ($field eq 'ipid') {
 		$user_edit->{nonuid} = 1;
 		$user_edit->{ipid} = $id;
+		$srcid = convert_srcid( ipid => $id );
 		$user_editfield = $id;
-		$uidstruct = $reader->getUIDStruct('ipid', $user_edit->{ipid});
+		$uidstruct = $slashdb->getUIDStruct('ipid', $user_edit->{ipid});
 		@accesshits = $logdb->countAccessLogHitsInLastX('host_addr', $user_edit->{ipid}) if defined($logdb);
 
 		if ($form->{userfield} =~/^\d+\.\d+\.\d+\.(\d+)$/) {
@@ -3102,6 +3358,7 @@ sub getUserAdmin {
 
 	} elsif ($field eq 'subnetid') {
 		$user_edit->{nonuid} = 1;
+		$srcid = convert_srcid( ipid => $id );
 		if ($id =~ /^(\d+\.\d+\.\d+)(?:\.\d)?/) {
 			$id = $1 . ".0";
 			$user_edit->{subnetid} = $id;
@@ -3110,33 +3367,97 @@ sub getUserAdmin {
 		}
 
 		$user_editfield = $id;
-		$uidstruct = $reader->getUIDStruct('subnetid', $user_edit->{subnetid});
+		$uidstruct = $slashdb->getUIDStruct('subnetid', $user_edit->{subnetid});
 		@accesshits = $logdb->countAccessLogHitsInLastX($field, $user_edit->{subnetid}) if defined($logdb);
 
+	} elsif ($field eq "srcid") {
+		$user_edit->{nonuid} = 1;
+		$user_edit->{srcid}  = $id;
+		$srcid = $id;
+		
 	} else {
-		$user_edit = $id ? $reader->getUser($id) : $user;
+		$user_edit = $id ? $slashdb->getUser($id) : $user;
 		$user_editfield = $user_edit->{uid};
-		$ipstruct = $reader->getNetIDStruct($user_edit->{uid});
+		$ipstruct = $slashdb->getNetIDStruct($user_edit->{uid});
 		@accesshits = $logdb->countAccessLogHitsInLastX('uid', $user_edit->{uid}) if defined($logdb);
 	}
 
-	for my $access_type (qw( ban nopost nosubmit norss nopalm proxy trusted )) {
-		$accesslist->{$access_type} = "";
-		my $info_hr = $reader->getAccessListInfo($access_type, $user_edit);
-		next if !$info_hr; # no match
-		$accesslist->{reason}	||= $info_hr->{reason};
-		$accesslist->{ts}	||= $info_hr->{ts};
-		$accesslist->{adminuid}	||= $info_hr->{adminuid};
-		$accesslist->{estimated_users} ||= $info_hr->{estimated_users};
-		$accesslist->{$access_type} = $constants->{markup_checked_attribute};
+	##########
+	# Put together the array and hashref that the template will need
+	# to construct the list for display to the admin.
+	# Note that currently a srcid which is not a uid (i.e. which
+	# represents an IP address or masked IP network) cannot have
+	# any ACLs assigned to it.  This may change in the future.
+	# The term "aclam" is used because it has a field set for both
+	# every ACL and every access modifier (i.e. AL2 bit) that is set
+	# for this user or srcid.
+	# For now, ACLs will be listed for IPs as well.
+	# First get the list of ACLs that can be used.
+	my $all_acls_ar = $reader->getAllACLNames();
+	my $all_acls_hr = { map { ( $_, 1 ) } @$all_acls_ar };
+	# Add in any ACLs selected for this user (just in case
+	# getAllACLNames is cached and stale).
+	for my $acl (keys %{$user_edit->{acl}}) {
+		$all_acls_hr->{$acl} = 1;
 	}
-	if (exists $accesslist->{adminuid}) {
-		$accesslist->{adminnick} = $accesslist->{adminuid}
-			? $reader->getUser($accesslist->{adminuid}, 'nickname')
-			: '(unknown)';
+	# Start creating the $all_aclam_hr data, in which the keys are
+	# the HTML selection names that all begin with aclam_ and the
+	# the values are their names/descriptions shown to the admin.
+	# First put all the ACLs into the hash, if we're editing a user.
+	my $all_aclam_hr = { };
+	if (!$user_edit->{nonuid}) {
+		$all_aclam_hr = { map { ( "aclam_$_", "ACL: $_" ) } keys %$all_acls_hr };
 	}
+	# Next put in all the al2 types.
+	my $all_al2types = $reader->getAL2Types;
+	for my $key (keys %$all_al2types) {
+		next if $key eq 'comment'; # skip the 'comment' type
+		$all_aclam_hr->{"aclam_$key"} = $all_al2types->{$key}{title};
+	}
+	# Finally, sort the keys of the hash into the order that we
+	# want them displayed to the admin (ACLs first).
+	my $all_acls_longkeys_hr = { map { ( "aclam_$_", 1 ) } keys %$all_acls_hr };
+	my $all_aclam_ar = [
+		sort {
+			(exists($all_acls_longkeys_hr->{$a}) ? -1 : 1) <=> (exists($all_acls_longkeys_hr->{$b}) ? -1 : 1)
+			||
+			$all_aclam_hr->{$a} cmp $all_aclam_hr->{$b}
+		} keys %$all_aclam_hr
+	];
+	# Now put together the hashref that identifies which of those
+	# items are selected for this user.
+	my $user_aclam_hr = { };
+	for my $acl (keys %{ $user_edit->{acl} }) {
+		$user_aclam_hr->{"aclam_$acl"} = 1;
+	}
+	my $al2_tid_comment = $all_al2types->{comment}{al2tid} || 0;
+	my $al2_log_ar = [ ];
+	my $al2_hr = { };
+	# XXXSRCID Once we get rid of the silly 'md5id' field and all the
+	# other bizarre backward-compatibility code paths early in this
+	# function, this won't be necessary, but until then we need this
+	# sanity check...
+	if ($srcid) {
+		# getAL2 works with either a srcids hashref or a single srcid
+		$al2_hr = $slashdb->getAL2($srcid);
+		for my $al2 (keys %{ $al2_hr }) {
+			$user_aclam_hr->{"aclam_$al2"} = 1;
+		}
+		$al2_log_ar = $slashdb->getAL2Log($srcid);
+	}
+	# Generate al2_nick_hr, which will be populated with keys of all
+	# the (presumably) admin uids who have logged rows for this al2,
+	# and values of their nicks.
+	my $al2_nick_hr = { };
+	for my $al2_log (@$al2_log_ar) {
+		my $uid = $al2_log->{adminuid};
+		next if !$uid; # odd error, might want to flag this
+		$al2_nick_hr->{$uid} ||= $slashdb->getUser($uid, 'nickname');
+	}
+	##########
 
-	$user_edit->{author} = ($user_edit->{author} == 1) ? $constants->{markup_checked_attribute} : '';
+	$user_edit->{author} = ($user_edit->{author} && $user_edit->{author} == 1)
+		? $constants->{markup_checked_attribute} : '';
 	if (! $user->{nonuid}) {
 		my $threshcodes = $reader->getDescriptions('threshcode_values','',1);
 		$thresh_select = createSelect('defaultpoints', $threshcodes, $user_edit->{defaultpoints}, 1);
@@ -3169,26 +3490,36 @@ sub getUserAdmin {
 	my $post_restrictions = {};
 	my ($subnet_karma, $ipid_karma);
 
-	if ($ipid and !$subnetid) {
+	if ($ipid && !$subnetid) {
 		$ipid = md5_hex($ipid) if length($ipid) != 32;
 		$proxy_check->{ipid} = $ipid;
 		$proxy_check->{currently} = $slashdb->getKnownOpenProxy($ipid, "ipid");
-		$subnetid = $reader->getSubnetFromIPID($ipid);
+		# This next call is very slow.
+		$subnetid = $reader->getSubnetFromIPIDBasedOnComments($ipid);
 	}
 
 	if ($subnetid) {
 		$subnetid = md5_hex($subnetid) if length($subnetid) != 32;
+		# These next three calls can be very slow.  In fact, getNetIDKarma
+		# is actually called twice on the same subnetid;  if we can cache
+		# that data somehow that wouldn't be a bad idea.
 		$post_restrictions = $reader->getNetIDPostingRestrictions("subnetid", $subnetid);
 		$subnet_karma = $reader->getNetIDKarma("subnetid", $subnetid);
 		$ipid_karma = $reader->getNetIDKarma("ipid", $ipid) if $ipid;
 	}
 
-	my $all_acls = $reader->getAllACLs();
-	my $all_acls_hr = { map { ( $_, $_ ) } keys %$all_acls };
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
 		useredit		=> $user_edit,
-		accesslist		=> $accesslist,
+		srcid			=> $srcid,
+		all_aclam_ar		=> $all_aclam_ar,
+		all_aclam_hr		=> $all_aclam_hr,
+		user_aclam_hr		=> $user_aclam_hr,
+		al2_old			=> $al2_hr,
+		al2_log			=> $al2_log_ar,
+		al2_tid_comment		=> $al2_tid_comment,
+		al2_nick		=> $al2_nick_hr,
+
 		userinfo_flag		=> $user_editinfo_flag,
 		userfield		=> $user_editfield,
 		ipstruct		=> $ipstruct,

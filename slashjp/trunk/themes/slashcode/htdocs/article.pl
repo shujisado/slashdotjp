@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -19,15 +19,30 @@ sub main {
 	my $story;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
-	my $sid = $form->{sid};
+	my $sid = $form->{sid} || '';
 	if ($sid =~ /^\d+$/) {
 		# Don't accept a stoid;  we need to be fed a sid to
 		# get to the right story.  This prevents crawling
 		# through article.pl?sid=1, article.pl?sid=2, etc.
-		$sid = "";
+		$sid = '';
 	}
 
 	$story = $reader->getStory($sid);
+	if ($story && $story->{primaryskid}
+		&& !($form->{ssi} && $form->{ssi} eq "yes")) {
+		# Make sure the reader is viewing this story in the
+		# proper skin.
+		my $cur_skid = determineCurrentSkin();
+		if ($story->{primaryskid} != $cur_skid) {
+			my $cur_skin = $reader->getSkin($cur_skid);
+			my $story_skin = $reader->getSkin($story->{primaryskid});
+			if ($story_skin && $story_skin->{rootdir}
+				&& $story_skin->{rootdir} ne $cur_skin->{rootdir}) {
+				redirect("$story_skin->{rootdir}$ENV{REQUEST_URI}");
+				return;
+			}
+		}
+	}
 
 	# Set the $future_err flag if a story would be available to be
 	# displayed, except it is in the future, and the user is not
@@ -37,7 +52,8 @@ sub main {
 	my $future_err = 0;
 	if ($story
 		&& $story->{is_future} && !$story->{neverdisplay}
-		&& !($user->{is_admin} || $user->{author})) {
+		&& !( $user->{is_admin} || $user->{author} || $user->{has_daypass} )
+	) {
 		$future_err = 1 if !$constants->{subscribe}
 			|| !$user->{is_subscriber}
 			|| !$user->{state}{page_plummy};
@@ -141,6 +157,7 @@ sub main {
 		header($links, $story->{section}, {
 			story_title	=> $story->{title},
 			meta_desc	=> $meta_desc,
+			Page 		=> 'article',
 		}) or return;
 
 		# Can't do this before getStoryByTime because
@@ -164,7 +181,7 @@ sub main {
 		if ($story->{discussion}) {
 			# Still not happy with this logic -Brian
 			my $discussion = $reader->getDiscussion($story->{discussion});
-			$discussion->{is_future} = $story->{is_future};
+			$discussion->{is_future} = $story->{is_future} if $discussion;
 			if ($constants->{tids_in_urls}) {
 				# This is to get tid in comments. It would be a mess to
 				# pass it directly to every comment -Brian
@@ -182,7 +199,7 @@ sub main {
 				$called_pc = 1;
 			}
 		}
-		if (!$called_pc && $form->{ssi} eq 'yes' && $form->{cchp}) {
+		if (!$called_pc && $form->{ssi} && $form->{ssi} eq 'yes' && $form->{cchp}) {
 			# This is a real hack, we're kind of skipping down
 			# two levels of code.  But the cchp printing is an
 			# important optimization;  we avoid having to do

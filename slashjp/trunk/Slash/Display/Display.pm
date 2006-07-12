@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -184,6 +184,15 @@ sub slashDisplay {
 		# and this is the only good way to get the actual name,
 		# page, skin, we bite the bullet and do it
 		$tempdata ||= $reader->getTemplateByName($name, [qw(tpid page skin)]);
+
+		# might as well bail here if we can't find the template
+		if (!$tempdata) {
+			# restore our original values
+			$user->{currentSkin}	= $origSkin;
+			$user->{currentPage}	= $origPage;
+			return;
+		}
+
 		$TEMPNAME = "ID $tempdata->{tpid}, " .
 			"$name;$tempdata->{page};$tempdata->{skin}";
 	}
@@ -197,7 +206,8 @@ sub slashDisplay {
 
 	# we only populate $err if !$ret ... still, if $err
 	# is false, then we assume everything is OK
-	my($err, $ret, $out);
+	my($err, $ret);
+	my $out = '';
 
 	{
 		local $SIG{__WARN__} = \&tempWarn;
@@ -250,14 +260,11 @@ sub slashDisplayName {
 
 	# allow slashDisplay(NAME, DATA, RETURN) syntax
 	if (! ref $opt) {
-		$opt = $opt == 1 ? { Return => 1 } : {};
+		$opt = ($opt && $opt == 1) ? { Return => 1 } : {};
 	}
 
 	if ($opt->{Skin} && $opt->{Skin} eq 'NONE') {
 		$user->{currentSkin} = 'default';
-	# light is a special case
-	} elsif ($user->{light}) {
-		$user->{currentSkin} = 'light';
 	} elsif ($opt->{Skin}) {
 		$user->{currentSkin} = $opt->{Skin};
 	}
@@ -333,22 +340,23 @@ my $strip_mode = sub {
 # for a template and you don't want your tags running
 # up against each other.		- Cliff 8/1/01
 %FILTERS = (
-	decode_entities	=> \&decode_entities,
-	fixparam	=> \&fixparam,
-	fixurl		=> \&fixurl,
-	fudgeurl	=> \&fudgeurl,
-	strip_paramattr	=> \&strip_paramattr,
-	strip_urlattr	=> \&strip_urlattr,
-	strip_anchor	=> \&strip_anchor,
-	strip_attribute	=> \&strip_attribute,
-	strip_code	=> \&strip_code,
-	strip_extrans	=> \&strip_extrans,
-	strip_html	=> \&strip_html,
-	strip_literal	=> \&strip_literal,
-	strip_nohtml	=> \&strip_nohtml,
-	strip_notags	=> \&strip_notags,
-	strip_plaintext	=> \&strip_plaintext,
-	strip_mode	=> [ $strip_mode, 1 ],
+	decode_entities		=> \&decode_entities,
+	fixparam		=> \&fixparam,
+	fixurl			=> \&fixurl,
+	fudgeurl		=> \&fudgeurl,
+	strip_paramattr		=> \&strip_paramattr,
+	strip_paramattr_nonhttp	=> \&strip_paramattr_nonhttp,
+	strip_urlattr		=> \&strip_urlattr,
+	strip_anchor		=> \&strip_anchor,
+	strip_attribute		=> \&strip_attribute,
+	strip_code		=> \&strip_code,
+	strip_extrans		=> \&strip_extrans,
+	strip_html		=> \&strip_html,
+	strip_literal		=> \&strip_literal,
+	strip_nohtml		=> \&strip_nohtml,
+	strip_notags		=> \&strip_notags,
+	strip_plaintext		=> \&strip_plaintext,
+	strip_mode		=> [ $strip_mode, 1 ],
 	%FILTERS
 );
 

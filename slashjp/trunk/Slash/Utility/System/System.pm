@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -25,8 +25,6 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use open ":utf8";
-use open ":std";
 use Fcntl qw(:flock :seek);
 use File::Basename;
 use File::Path;
@@ -38,7 +36,6 @@ use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Symbol 'gensym';
 use Time::HiRes ();
-use Encode;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT @EXPORT_OK);
@@ -49,7 +46,6 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 	doEmail
 	sendEmail
 	doLog
-	doClampeLog
 	doLogInit
 	doLogPid
 	doLogExit
@@ -123,33 +119,14 @@ sub sendEmail {
 		return 0;
 	}
 
-	# Character Code Conversion; target encoding must be valid name
-	# Characters not representable in the destination character set
-	# and encoding will be replaced with \x{HHHH} place-holders
-	# (s. Encode(3) perldoc, Handling Malformed Data)
-	my $b_code = $constants->{mail_charset_body} || "UTF-8";
-	my $h_code = $constants->{mail_charset_header} || "MIME-Header";
-	$content = encode( $b_code, $content, Encode::FB_PERLQQ );
-	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
-
-	# set enverope from
-	my $sender = $constants->{mailfrom};
-	if ($constants->{bounce_address}) {
-		$sender = $constants->{bounce_address};
-		my $bounce_addr = $addr;
-		$bounce_addr =~ s/@/=/;
-		$sender =~ s/###ADDR###/$bounce_addr/;
-	}
-
 	my %data = (
-		Sender		=> $sender,
 		From		=> $constants->{mailfrom},
 		Smtp		=> $constants->{smtp_server},
 		Subject		=> $subject,
 		Message		=> $content,
 		To		=> $addr,
 		# put in vars ... ?
-		'Content-type'			=> qq|text/plain; charset="$b_code"|,
+		'Content-type'			=> 'text/plain; charset="us-ascii"',
 		'Content-transfer-encoding'	=> '8bit',
 		'Message-Id'			=> messageID(),
 	);
@@ -213,12 +190,6 @@ sub bulkEmail {
 
 	my @list = grep { emailValid($_) } @$addrs;
 
-	# Character Code Conversion; see comments in sendEmail()
-	my $b_code = $constants->{mail_charset_body} || "UTF-8";
-	my $h_code = $constants->{mail_charset_header} || "MIME-Header";
-	$content = encode( $b_code, $content, Encode::FB_PERLQQ );
-	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
-
 	my $bulk = Slash::Custom::Bulkmail->new(
 		From    => $constants->{mailfrom},
 		Smtp	=> $constants->{smtp_server},
@@ -229,7 +200,7 @@ sub bulkEmail {
 		BAD	=> $badfile,
 		ERRFILE	=> $errfile,
 		# put in vars ... ?
-		'Content-type'			=> qq|text/plain; charset="$b_code"|,
+		'Content-type'			=> 'text/plain; charset="us-ascii"',
 		'Content-transfer-encoding'	=> '8bit',
 		'Message-Id'			=> messageID(),
 	);
@@ -374,35 +345,6 @@ sub doLog {
 	close $fh;
 }
 
-# this is a temporary function needed to log to an arbitrary directory for
-# stats gathering. It can probably be deleted once clampe's research is done
-# but is needed for now, since I don't want to hack up doLog() just for some
-# temporary stats. --Pater
-sub doClampeLog {
-        my($fname, $msg, $stdout, $sname) = @_;
-        my @msg;
-        if (ref($msg) && ref($msg) eq 'ARRAY') {
-                @msg = @$msg;
-        } else {
-                @msg = ( $msg );
-        }       
-        chomp(@msg);
-                
-        $sname    ||= '';
-        $sname     .= ' ' if $sname;
-        my $fh      = gensym();
-        my $dir     = getCurrentStatic('clampe_stats_dir') || '/var/local/logs';
-        my $file    = catfile($dir, "$fname.log");
-        my $log_msg = scalar(localtime) . " $sname@msg\n";
-
-        open $fh, ">> $file\0" or die "Can't append to $file: $!\nmsg: @msg\n";
-        # flock($fh, LOCK_EX);
-        seek($fh, 0, SEEK_END);
-        print $fh $log_msg;
-        print     $log_msg if $stdout;
-        close $fh;
-}
-
 # Originally from open_backend.pl
 # will write out any data to a given file, but first check to see
 # if the data has changed, so clients don't
@@ -422,9 +364,14 @@ sub save2file {
 		return if $current eq $new;
 	}
 
-	open my $fh, '>', $file or die "Can't open > $file: $!";
-	print $fh $data;
-	close $fh;
+	if (open my $fh, '>', $file) {
+		print $fh $data;
+		close $fh;
+		return 1;
+	} else {
+		warn "Can't open > $file: $!";
+		return 0;
+	}
 }
 
 
@@ -488,7 +435,7 @@ sub prog2file {
 		close $errfh if $errfh;
 		unlink $errfile if $errfile;
 	}
-	my $bytes = length $data;
+	my $bytes = defined($data) ? length($data) : 0;
 
 	if ($stderr_text =~ /\b(ID \d+, \w+;\w+;\w+) :/) {
 		my $template = $1;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -139,12 +139,12 @@ $werder = new Silly::Werder;
 		elsif ($mode_rand < 0.50)	{ $comment = strip_html     ($comment) }
 		elsif ($mode_rand < 0.75)	{ $comment = strip_extrans  ($comment) }
 		else				{ $comment = strip_code     ($comment) }
-		$comment = balanceTags($comment, $constants->{nesting_maxdepth});
+		$comment = balanceTags($comment, { deep_nesting => 1 });
 		$comment = addDomainTags($comment);
 
 		my $score = 1;
 		if ($uid == $constants->{anonymous_coward_uid}
-			or $user->{karma} < $constants->{badkarma}) {
+			|| $user->{karma} < $constants->{badkarma}) {
 			$score = 0;
 		} elsif ($user->{karma} > $constants->{goodkarma}) {
 			$score = 2;
@@ -324,7 +324,7 @@ sub make_werds {
 	$werder->set_syllables_num($min_syl, $min_syl + int(rand(5)+1));
 	my @links = qw(
 		http://slashdot.org/            http://www.brunching.com/
-		http://www.newsforge.com        http://osdn.com
+		http://www.newsforge.com        http://ostg.com
 		http://whitehouse.gov           http://www.whitehouse.gov/
 		http://us.imdb.com/             http://www.kernel.org
 		http://ic.ac.uk                 http://cr.yp.to/
@@ -363,19 +363,21 @@ sub make_werds {
 			$new_werds = $werder->sentence;
 		}
 		if ($link_prob && rand(1) < $link_prob) {
-			my @new_werds = split / /, $new_werds;
-			my $a_href = q{<a href="} . $links[rand @links] . q{">} . (rand(1)<0.1?" ":"");
-			my $close_a = (rand(1)<0.1?" ":"") . "</a>";
-			my $insert_start = int(rand(@new_werds-2));
-			my $insert_end = $insert_start + int(rand(4))+1;
-			$insert_end = scalar @new_werds if $insert_end > scalar @new_werds;
-			$new_werds = join(" ",
-				@new_werds[0..$insert_start-1],
-				$a_href . $new_werds[$insert_start],
-				@new_werds[$insert_start+1..$insert_end-1],
-				$new_werds[$insert_end] . $close_a,
-				@new_werds[$insert_end+1..$#new_werds]
-			);
+                        my @new_werds = split / /, $new_werds;
+                        if ($#new_werds > 2) {
+                                my $a_href = q{<a href="} . $links[rand @links] . q{">} . (rand(1)<0.1?" ":"");
+                                my $close_a = (rand(1)<0.1?" ":"") . "</a>";
+                                my $insert_start = int(rand($#new_werds-2));
+                                my $insert_end = $insert_start + int(rand(4))+1;
+                                $insert_end = $#new_werds - 1 if $insert_end > $#new_werds - 1;
+                                $new_werds = join(" ",
+                                        @new_werds[0..$insert_start-1],
+                                        $a_href . $new_werds[$insert_start],
+                                        @new_werds[$insert_start+1..$insert_end-1],
+                                        $new_werds[$insert_end] . $close_a,
+                                        @new_werds[$insert_end+1..$#new_werds]
+                                );
+                        }
 		}
 		if ($cur_werds && !$tag && rand > 0.9) {
 			if (rand(1) < 0.95) { $tag = "i" }
@@ -493,7 +495,7 @@ sub version {
 $PROGNAME $VERSION
 
 This code is a part of Slash, and is released under the GPL.
-Copyright 1997-2004 by Open Source Development Network. See README
+Copyright 1997-2005 by Open Source Technology Group. See README
 and COPYING for more information, or see http://slashcode.com/.
 
 EOT

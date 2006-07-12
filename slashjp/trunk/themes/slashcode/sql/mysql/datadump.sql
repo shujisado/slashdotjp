@@ -30,7 +30,7 @@
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('articles_more','',1000,'static',NULL,'articles',5,'Articles',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('features','<!-- begin features block -->\r\nThis is a place where you can put linkage to important stories\r\nthat you have on your site.\r\nYou can edit this space easily by just logging into backSlash, clicking\r\n\'Config\' and then \'Blocks\' from the admin menu, and editing the block named \'features\'.\r\n<!-- end features block -->\r\n\r\n',500,'static',NULL,'mainpage',1,'features',1,'index.pl?section=features',NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('features_more','',1000,'static',NULL,'features',5,'more',0,NULL,NULL,0);
-INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('features_qlinks','<!-- begin quicklinks block -->\n<A HREF=\"http://newsforge.com/\">NewsForge</A><BR>\n<A HREF=\"http://lists.slashdot.org/mailman/listinfo.cgi\">Slash Mailing lists</A><BR>\n<A HREF=\"http://www.slashcode.com/\">Slashcode.com</A><BR>\n<A HREF=\"http://slashdot.org/\">Slashdot</A><BR>\n<A HREF=\"http://osdn.com/\">OSDN</A><BR>\n<A HREF=\"http://CmdrTaco.net/\">CmdrTaco.net</A><BR>\n<A HREF=\"http://www.cowboyneal.org/\">Cowboyneal.org</A><BR>\n<A HREF=\"http://pudge.net/\">Pudge.Net</A><BR>\n<A HREF=\"http://tangent.org/\">TangentOrg</A><BR>\n<A HREF=\"http://thinkgeek.com/\">ThinkGeek</A><BR>\n\n<!-- end quicklinks block -->',500,'static',NULL,'features',7,'Quick Links',0,NULL,NULL,0);
+INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('features_qlinks','<!-- begin quicklinks block -->\n<A HREF=\"http://newsforge.com/\">NewsForge</A><BR>\n<A HREF=\"http://lists.slashdot.org/mailman/listinfo.cgi\">Slash Mailing lists</A><BR>\n<A HREF=\"http://www.slashcode.com/\">Slashcode.com</A><BR>\n<A HREF=\"http://slashdot.org/\">Slashdot</A><BR>\n<A HREF=\"http://ostg.com/\">OSTG</A><BR>\n<A HREF=\"http://CmdrTaco.net/\">CmdrTaco.net</A><BR>\n<A HREF=\"http://www.cowboyneal.org/\">Cowboyneal.org</A><BR>\n<A HREF=\"http://pudge.net/\">Pudge.Net</A><BR>\n<A HREF=\"http://tangent.org/\">TangentOrg</A><BR>\n<A HREF=\"http://thinkgeek.com/\">ThinkGeek</A><BR>\n\n<!-- end quicklinks block -->',500,'static',NULL,'features',7,'Quick Links',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('index_more','',1000,'static',NULL,'mainpage',5,'Older Stuff',1,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('index_qlinks','<!-- begin quicklinks block -->\r\n\r\nYou should put some links here to other sites that your users might enjoy.\r\n\r\n<!-- end quicklinks block -->\r\n\r\n',10000,'static',NULL,'mainpage',7,'Quick Links',1,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('mysite','By editing the section called \"User Space\" on the user\r\npreferences page, you can cause this space to be filled\r\nwith some HTML code. Personal URLs?  Your Credit Card\r\nNumbers and Social Security numbers?  Well, maybe you\r\nbetter stick to URLs.\r\n',10000,'static',NULL,'mainpage',-10,'User Space',1,NULL,NULL,0);
@@ -122,7 +122,7 @@ INSERT INTO discussions (id, stoid, sid, title, url, ts, topic, uid, commentcoun
 INSERT INTO menus (menu, label, sel_label, value, seclev, showanon, menuorder) VALUES ('users','Logout','logout','/my/logout',1,0,10);
 INSERT INTO menus (menu, label, sel_label, value, seclev, showanon, menuorder) VALUES ('users','Preferences','preferences','/users.pl?op=edituser',1,0,20);
 INSERT INTO menus (menu, label, sel_label, value, seclev, showanon, menuorder) VALUES ('users','Password','password','[% constants.real_rootdir %]/my/password',1,0,40);
-INSERT INTO menus (menu, label, sel_label, value, seclev, showanon, menuorder) VALUES ('users','~[% user.nickname | fixparam %] ([% user.uid %])','me','/~[% user.nickname | fixparam %]',1,0,50);
+INSERT INTO menus (menu, label, sel_label, value, seclev, showanon, menuorder) VALUES ('users','~[% user.nickname | strip_literal %] ([% user.uid %])','me','/~[% user.nickname | fixparam %]',1,0,50);
 
 #
 # Dumping data for table 'metamodlog'
@@ -153,8 +153,8 @@ INSERT INTO pollanswers (qid, aid, answer, votes) VALUES (2,5,'manic depressive'
 # Dumping data for table 'pollquestions'
 #
 
-INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES (1, 'What flavor of ice cream?', 5, '2000-01-16 19:11:10', 3, 2);
-INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES (2, 'Are you happy?', 7, '2000-01-19 16:23:00', 4, 2);
+INSERT INTO pollquestions (qid, question, voters, topic, date, uid, discussion, primaryskid) VALUES (1, 'What flavor of ice cream?', 5, 1, '2000-01-16 19:11:10', 2, 3, 1);
+INSERT INTO pollquestions (qid, question, voters, topic, date, uid, discussion, primaryskid) VALUES (2, 'Are you happy?', 7, 1, '2000-01-19 16:23:00', 2, 4, 1);
 
 #
 # Dumping data for table 'pollvoters'
@@ -204,42 +204,42 @@ INSERT INTO skins (skid, nexus, artcount_min, artcount_max, name, title, issue, 
 # Dumping data for table 'skin_colors'
 #
 
-INSERT INTO skin_colors VALUES (1, 'fg_0', 'FFFFFF');
-INSERT INTO skin_colors VALUES (1, 'fg_1', '222222');
-INSERT INTO skin_colors VALUES (1, 'fg_2', '111111');
-INSERT INTO skin_colors VALUES (1, 'fg_3', 'DDDDDD');
-INSERT INTO skin_colors VALUES (1, 'fg_4', '999999');
-INSERT INTO skin_colors VALUES (1, 'fg_5', '111111');
-INSERT INTO skin_colors VALUES (1, 'bg_0', 'DDDDDD');
-INSERT INTO skin_colors VALUES (1, 'bg_1', 'FFFFFF');
-INSERT INTO skin_colors VALUES (1, 'bg_2', 'DDDDDD');
-INSERT INTO skin_colors VALUES (1, 'bg_3', '660000');
-INSERT INTO skin_colors VALUES (1, 'bg_4', 'BBBBBB');
-INSERT INTO skin_colors VALUES (1, 'bg_5', 'DDDDDD');
-INSERT INTO skin_colors VALUES (2, 'fg_0', 'FFFFFF');
-INSERT INTO skin_colors VALUES (2, 'fg_1', '222222');
-INSERT INTO skin_colors VALUES (2, 'fg_2', '111111');
-INSERT INTO skin_colors VALUES (2, 'fg_3', 'DDDDDD');
-INSERT INTO skin_colors VALUES (2, 'fg_4', '999999');
-INSERT INTO skin_colors VALUES (2, 'fg_5', '111111');
-INSERT INTO skin_colors VALUES (2, 'bg_0', 'DDDDDD');
-INSERT INTO skin_colors VALUES (2, 'bg_1', 'FFFFFF');
-INSERT INTO skin_colors VALUES (2, 'bg_2', 'DDDDDD');
-INSERT INTO skin_colors VALUES (2, 'bg_3', '660000');
-INSERT INTO skin_colors VALUES (2, 'bg_4', 'BBBBBB');
-INSERT INTO skin_colors VALUES (2, 'bg_5', 'DDDDDD');
-INSERT INTO skin_colors VALUES (3, 'fg_0', 'FFFFFF');
-INSERT INTO skin_colors VALUES (3, 'fg_1', '222222');
-INSERT INTO skin_colors VALUES (3, 'fg_2', '111111');
-INSERT INTO skin_colors VALUES (3, 'fg_3', 'DDDDDD');
-INSERT INTO skin_colors VALUES (3, 'fg_4', '999999');
-INSERT INTO skin_colors VALUES (3, 'fg_5', '111111');
-INSERT INTO skin_colors VALUES (3, 'bg_0', 'DDDDDD');
-INSERT INTO skin_colors VALUES (3, 'bg_1', 'FFFFFF');
-INSERT INTO skin_colors VALUES (3, 'bg_2', 'DDDDDD');
-INSERT INTO skin_colors VALUES (3, 'bg_3', '660000');
-INSERT INTO skin_colors VALUES (3, 'bg_4', 'BBBBBB');
-INSERT INTO skin_colors VALUES (3, 'bg_5', 'DDDDDD');
+INSERT INTO skin_colors VALUES (1, 'fg_0', '#FFFFFF');
+INSERT INTO skin_colors VALUES (1, 'fg_1', '#222222');
+INSERT INTO skin_colors VALUES (1, 'fg_2', '#111111');
+INSERT INTO skin_colors VALUES (1, 'fg_3', '#DDDDDD');
+INSERT INTO skin_colors VALUES (1, 'fg_4', '#999999');
+INSERT INTO skin_colors VALUES (1, 'fg_5', '#111111');
+INSERT INTO skin_colors VALUES (1, 'bg_0', '#DDDDDD');
+INSERT INTO skin_colors VALUES (1, 'bg_1', '#FFFFFF');
+INSERT INTO skin_colors VALUES (1, 'bg_2', '#DDDDDD');
+INSERT INTO skin_colors VALUES (1, 'bg_3', '#660000');
+INSERT INTO skin_colors VALUES (1, 'bg_4', '#BBBBBB');
+INSERT INTO skin_colors VALUES (1, 'bg_5', '#DDDDDD');
+INSERT INTO skin_colors VALUES (2, 'fg_0', '#FFFFFF');
+INSERT INTO skin_colors VALUES (2, 'fg_1', '#222222');
+INSERT INTO skin_colors VALUES (2, 'fg_2', '#111111');
+INSERT INTO skin_colors VALUES (2, 'fg_3', '#DDDDDD');
+INSERT INTO skin_colors VALUES (2, 'fg_4', '#999999');
+INSERT INTO skin_colors VALUES (2, 'fg_5', '#111111');
+INSERT INTO skin_colors VALUES (2, 'bg_0', '#DDDDDD');
+INSERT INTO skin_colors VALUES (2, 'bg_1', '#FFFFFF');
+INSERT INTO skin_colors VALUES (2, 'bg_2', '#DDDDDD');
+INSERT INTO skin_colors VALUES (2, 'bg_3', '#660000');
+INSERT INTO skin_colors VALUES (2, 'bg_4', '#BBBBBB');
+INSERT INTO skin_colors VALUES (2, 'bg_5', '#DDDDDD');
+INSERT INTO skin_colors VALUES (3, 'fg_0', '#FFFFFF');
+INSERT INTO skin_colors VALUES (3, 'fg_1', '#222222');
+INSERT INTO skin_colors VALUES (3, 'fg_2', '#111111');
+INSERT INTO skin_colors VALUES (3, 'fg_3', '#DDDDDD');
+INSERT INTO skin_colors VALUES (3, 'fg_4', '#999999');
+INSERT INTO skin_colors VALUES (3, 'fg_5', '#111111');
+INSERT INTO skin_colors VALUES (3, 'bg_0', '#DDDDDD');
+INSERT INTO skin_colors VALUES (3, 'bg_1', '#FFFFFF');
+INSERT INTO skin_colors VALUES (3, 'bg_2', '#DDDDDD');
+INSERT INTO skin_colors VALUES (3, 'bg_3', '#660000');
+INSERT INTO skin_colors VALUES (3, 'bg_4', '#BBBBBB');
+INSERT INTO skin_colors VALUES (3, 'bg_5', '#DDDDDD');
 
 #
 # Dumping data for table 'stories'

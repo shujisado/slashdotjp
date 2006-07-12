@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -22,7 +22,7 @@ sub main {
 	my $error_flag = 0;
 	my $postflag = $user->{state}{post};
 
-	my $op = lc($form->{op});
+	my $op = lc($form->{op}) || '';
 
 	my($formkey, $stories);
 
@@ -31,6 +31,11 @@ sub main {
 		# there will only be a discussions creation form if 
 		# the user is anon, or if there's an sid, therefore, we don't want 
 		# a formkey if it's not a form 
+		dynamic_display	=> {
+			function		=> \&dynamicDisplay,
+			seclev			=> 1,
+			checks			=> [],
+		},
 		display		=> { 
 			function		=> \&displayComments,
 			seclev			=> 0,
@@ -96,11 +101,17 @@ sub main {
 	delete $form->{newdiscussion};
 	if ($op =~ /^(?:creator_index|personal_index|user_created_index|index|create_discussion|delete_forum)/) {
 		redirect($gSkin->{rootdir} . '/journal.pl');
+		return;
+	}
+
+	if ($op eq 'setdiscussion2') {
+		setDiscussion2($form, $slashdb, $user, $constants, $gSkin);
+		return;
 	}
 
 	# This is here to save a function call, even though the
 	# function can handle the situation itself
-	my ($discussion, $section);
+	my($discussion, $section);
 
 	my $future_err = 0;
 	if ($form->{sid}) {
@@ -122,12 +133,18 @@ sub main {
 				$user->{state}{tid} = $discussion->{topic};
 			}
 		}
-		# The is_future field isn't automatically added by getDiscussion
-		# like it is with getStory.  We have to add it manually here.
-		$discussion->{is_future} = 1 if $slashdb->checkDiscussionIsInFuture($discussion);
+
+		my $kinds = $slashdb->getDescriptions('discussion_kinds');
+
 		# Now check to make sure this discussion can be seen.
-		if (!($user->{author} || $user->{is_admin}) && $discussion) {
+		if (!( $user->{author} || $user->{is_admin} || $user->{has_daypass} )
+			&& $discussion && $kinds->{ $discussion->{dkid} } eq 'story') {
 			my $null_it_out = 0;
+
+			# The is_future field isn't automatically added by getDiscussion
+			# like it is with getStory.  We have to add it manually here.
+			$discussion->{is_future} = 1 if $slashdb->checkDiscussionIsInFuture($discussion);
+
 			if ($discussion->{is_future}) {
 				# Discussion is from the future;  decide here
 				# whether the user is allowed to see it or not.
@@ -164,20 +181,34 @@ sub main {
 
 	$form->{pid} ||= "0";
 
+	# this is so messed up ... it's done again under header(), but
+	# sometimes we need it done before header() is called, because,
+	# like i said, this is so messed up ...
+	{
+		my $skid;
+		if ($section) {
+			my $skin = $slashdb->getSkin($section);
+			$skid = $skin->{skid} if $skin;
+		}
+		setCurrentSkin($skid || determineCurrentSkin());
+		Slash::Utility::Anchor::getSkinColors();
+	}
+
+
 	# If this is a comment post, we can't write the header yet,
 	# because submitComment() _may_ want to do a redirect
 	# instead of emitting a webpage.
 
 	my $header_emitted = 0;
 	my $title = $discussion ? $discussion->{'title'} : 'Comments';
-	if ($op ne 'submit') {
+	if ($op ne 'submit' && $op ne 'dynamic_display') {
 		header($title, $section) or return;
 		$header_emitted = 1;
 	}
 
 #print STDERR scalar(localtime) . " $$ A op=$op header_emitted=$header_emitted\n";
 
-	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
+	if ($user->{is_anon} && $form->{upasswd} && length($form->{upasswd}) > 1) {
 		if (!$header_emitted) {
 			header($title, $section) or return;
 			$header_emitted = 1;
@@ -185,8 +216,11 @@ sub main {
 		print getError('login error');
 		$op = 'preview';
 	}
-	$op = 'default' if ( ($user->{seclev} < $ops->{$op}{seclev}) || ! $ops->{$op}{function});
-	$op = 'default' if (! $postflag && $ops->{$op}{post});
+	$op = 'default' if
+		   !$ops->{$op}
+		|| !$ops->{$op}{function}
+		|| $user->{seclev} < $ops->{$op}{seclev}
+		|| !$postflag && $ops->{$op}{post};
 
 	if ($future_err) {
 		if (!$header_emitted) {
@@ -218,12 +252,24 @@ sub main {
 		# yeah, the next step is to loop through the array of $ops->{$op}{check}
 		my $formname;
 		my $options = {};
+
+		# Disable HumanConf, if...
 		$options->{no_hc} = 1 if
+				# HumanConf is not running...
 			   !$constants->{plugin}{HumanConf}
 			|| !$constants->{hc}
-			|| !$constants->{hc_sw_comments}
-			|| (!$user->{is_anon}
-			   && $user->{karma} > $constants->{hc_maxkarma});
+				# ...or it's turned off for comments...
+			|| $constants->{hc_sw_comments} == 0
+				# ...or it's turned off for logged-in users
+				# and this user is logged-in...
+			|| $constants->{hc_sw_comments} == 1
+			   && !$user->{is_anon}
+				# ...or it's turned off for logged-in users
+				# with high enough karma, and this user
+				# qualifies.
+			|| $constants->{hc_sw_comments} == 2
+			   && !$user->{is_anon}
+			   &&  $user->{karma} > $constants->{hc_maxkarma};
  
 		my $done = 0;
 		DO_CHECKS: while (!$done) {
@@ -313,8 +359,15 @@ sub main {
 
 	writeLog($form->{sid});
 
-	footer();
+	footer() unless $op eq 'dynamic_display';
 }
+
+
+sub dynamicDisplay {
+	my($form, $slashdb, $user, $constants) = @_;
+	print jsSelectComments($slashdb, $constants, $user, $form);
+}
+
 
 #################################################################
 sub _buildargs {
@@ -419,10 +472,32 @@ sub editComment {
 	# Get the comment we may be responding to. Remember to turn off
 	# moderation elements for this instance of the comment.
 	my $pid = $form->{pid} || 0; # this is guaranteed numeric, from filter_params
-	my $reply = $slashdb->getCommentReply($sid, $pid);
+	my $reply = $slashdb->getCommentReply($sid, $pid) || { };
 
-	if ($user->{is_anon} && !$slashdb->checkAllowAnonymousPosting($user->{uid})) {
-		print getError('no anonymous posting');
+	# An attempt to reply to a comment that doesn't exist is an error.
+	if ($pid && !%$reply) {
+		print getError('no such parent');
+		return;
+	}
+
+	# calculate proper points value ... maybe this should be a public,
+	# and *sane*, API?  like, no need to pass reasons, users, or min/max,
+	# or even user (get those all automatically if not passed);
+	# but that might be dangerous, since $reply/$comment is a little
+	# bit specific -- pudge
+	# Yeah, this API needs to be... saner. Agreed. - Jamie
+	$reply->{points} = Slash::_get_points(
+		$reply, $user,
+		$constants->{comment_minscore}, $constants->{comment_maxscore},
+		$slashdb->countUsers({ max => 1 }), $slashdb->getReasons
+	) if %$reply;
+
+	# If anon posting is turned off, forbid it.  The "post anonymously"
+	# checkbox should not appear in such a case, but check that field
+	# just in case the user fudged it.
+	if (($user->{is_anon} || $form->{postanon})
+		&& !$slashdb->checkAllowAnonymousPosting($user->{uid})) {
+		print getError('anonymous disallowed');
 		return;
 	}
 
@@ -435,7 +510,7 @@ sub editComment {
 		$preview = previewForm(\$error_message) or $error_flag++;
 	}
 
-	if ($pid && !$form->{postersubj}) {
+	if (%$reply && !$form->{postersubj}) {
 		$form->{postersubj} = decode_entities($reply->{subject});
 		$form->{postersubj} =~ s/^Re://i;
 		$form->{postersubj} =~ s/\s\s/ /g;
@@ -451,7 +526,8 @@ sub editComment {
 		if $disc_skin && $disc_skin->{nexus};
 
 	my $gotmodwarning;
-	$gotmodwarning = 1 if (($error_message eq getError("moderations to be lost")) || $form->{gotmodwarning});
+	$gotmodwarning = 1 if $form->{gotmodwarning}
+		|| $error_message && $error_message eq getError("moderations to be lost");
 	slashDisplay('edit_comment', {
 		error_message 	=> $error_message,
 		label		=> $label,
@@ -480,22 +556,33 @@ sub validateComment {
 	my $form_success = 1;
 	my $message = '';
 
-	my $read_only;
 	if (!dbAvailable("write_comments")) {
 		$$error_message = getError('comment_db_down');
 		$form_success = 0;
 		return;
 	}
-	for (qw(ipid subnetid uid)) {
-		# We skip the UID test for anonymous users.
-		next if $_ eq 'uid' && $user->{is_anon};
-		# Otherwise we perform the specific read-only test.
-		$read_only = $slashdb->checkReadOnly('nopost', {
-			$_ => $user->{$_},
-		});
-		# Bail if a specific test returns TRUE
-		last if $read_only;
-	}
+
+	my $srcids_to_check = $user->{srcids};
+
+	# We skip the UID test for anonymous users (anonymous posting
+	# is banned by setting nopost for the anonymous uid, and we
+	# want to check that separately elsewhere).  Note that
+	# checking the "post anonymously" checkbox doesn't eliminate
+	# a uid check for a logged-in user.
+	delete $srcids_to_check->{uid} if $user->{is_anon};
+
+	# If the user is anonymous, or has checked the 'post anonymously'
+	# box, check to see whether anonymous posting is turned off for
+	# this srcid.
+	my $read_only = 0;
+	$read_only = 1 if ($user->{is_anon} || $form->{postanon})
+		&& $reader->checkAL2($srcids_to_check, 'nopostanon');
+
+	# Whether the user is anonymous or not, check to see whether
+	# all posting is turned off for this srcid.
+	$read_only ||= $reader->checkAL2($srcids_to_check, 'nopost');
+
+	# If posting is disabled, return the error message.
 	if ($read_only) {
 		$$error_message = getError('readonly');
 		$form_success = 0;
@@ -513,8 +600,8 @@ sub validateComment {
 		&& ( $constants->{comments_portscan} == 2
 			|| $constants->{comments_portscan} == 1 && $user->{is_anon} )
 	) {
-		my $is_trusted = $slashdb->checkIsTrusted($user->{ipid});
-		if ($is_trusted ne 'yes') {
+		my $is_trusted = $slashdb->checkAL2($user->{srcids}, 'trusted');
+		if (!$is_trusted) {
 #use Time::HiRes; my $start_time = Time::HiRes::time;
 			my $is_proxy = $slashdb->checkForOpenProxy($user->{hostip});
 #my $elapsed = sprintf("%.3f", Time::HiRes::time - $start_time); print STDERR scalar(localtime) . " comments.pl cfop returned '$is_proxy' for '$user->{hostip}' in $elapsed secs\n";
@@ -536,10 +623,11 @@ sub validateComment {
 	# controls it (that var is turned into a hashref in MySQL.pm when
 	# the vars table is read in, whose keys we loop over to find the
 	# appropriate level).
-	
+	# See also comments_maxposts in formkeyErrors - Jamie 2005/05/30
+
 	my $min_cid_1_day_old = $slashdb->getVar('min_cid_last_1_days','value', 1) || 0;
 	
-	if ($user->{is_anon} && $constants->{comments_perday_anon}
+	if (($user->{is_anon} || $form->{postanon}) && $constants->{comments_perday_anon}
 		&& !$user->{is_admin}) {
 		my($num_comm, $sum_mods) = $reader->getNumCommPostedAnonByIPID(
 			$user->{ipid}, 24, $min_cid_1_day_old);
@@ -633,10 +721,9 @@ sub validateComment {
 		}
 	}
 
-	unless (defined($$comm = balanceTags($$comm, $constants->{nesting_maxdepth}))) {
-		# If we didn't return from right here, one or more later
-		# error messages would overwrite this one.
-		$$error_message = getError('nesting too deep');
+	unless (defined($$comm = balanceTags($$comm, { deep_nesting => 1 }))) {
+		# only time this should return an error is if the HTML is busted
+		$$error_message = getError('broken html');
 		return ;
 	}
 
@@ -768,6 +855,10 @@ sub previewForm {
 	# to have many linebreaks and runs of whitespace; this makes the
 	# compression filter more lenient about allowing them.
 
+	if ($form->{posttype} == PLAINTEXT || $form->{posttype} == HTML) {
+		$tempComment = url2html($tempComment);
+	}
+
 	$tempComment = strip_mode($tempComment,
 		# if no posttype given, pick a default
 		$form->{posttype} || PLAINTEXT
@@ -799,7 +890,10 @@ sub previewForm {
 	my $extras = [];	
 	my $disc_skin = $slashdb->getSkin($discussion->{primaryskid});
 	
-	$extras =  $slashdb->getNexusExtrasForChosen({$disc_skin->{nexus} => 1}, {content_type => "comment"}) if $disc_skin && $disc_skin->{nexus};
+	$extras = $slashdb->getNexusExtrasForChosen(
+		{ $disc_skin->{nexus} => 1 },
+		{ content_type => "comment" })
+		if $disc_skin && $disc_skin->{nexus};
 
 	my $preview = {
 		nickname		=> $form->{postanon}
@@ -821,12 +915,18 @@ sub previewForm {
 	}
 
 	if ($constants->{plugin}{Subscribe}) {
-		$preview->{subscriber_bonus} = $user->{is_subscriber} && $form->{nosubscriberbonus} ne 'on'
+		$preview->{subscriber_bonus} =
+			$user->{is_subscriber}
+			&& (!$form->{nosubscriberbonus} || $form->{nosubscriberbonus} ne 'on')
 			? 1 : 0;
 	}
 
+	#####
+	# Set the user mode temporarily to 'archive' for purposes of
+	# displaying this comment.
 	my $tm = $user->{mode};
-	$user->{mode} = 'preview';
+	$user->{mode} = 'archive';
+
 	my $previewForm;
 	if ($form->{newdiscussion} && $user->{seclev} < $constants->{discussion_create_seclev}) { 
 		$previewForm = slashDisplay('newdiscussion', {
@@ -838,7 +938,9 @@ sub previewForm {
 			preview => $preview,
 		}, 1);
 	}
+
 	$user->{mode} = $tm;
+	#####
 
 	return $previewForm;
 }
@@ -851,6 +953,7 @@ sub previewForm {
 # called manually.
 sub submitComment {
 	my($form, $slashdb, $user, $constants, $discussion) = @_;
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
 	$form->{nobonus}  = $user->{nobonus}	unless $form->{nobonus_present};
 	$form->{postanon} = $user->{postanon}	unless $form->{postanon_present};
@@ -878,24 +981,14 @@ sub submitComment {
 	# See the comment above validateComment() called from previewForm.
 	# Same thing applies here.
 
+	if ($form->{posttype} == PLAINTEXT || $form->{posttype} == HTML) {
+		$tempComment = url2html($tempComment);
+	}
+
 	$tempComment = strip_mode($tempComment,
 		# if no posttype given, pick a default
 		$form->{posttype} || PLAINTEXT
 	);
-
-	if ($constants->{anonymous_comment_interval} && ($user->{is_anon} || $form->{postanon})) {
-		my $ipid = getCurrentUser('ipid');
-		my $ipid_count = $slashdb->sqlSelect('count(*)', 'comments',
-			"sid='$form->{sid}'
-			AND uid=1
-			AND date > SUBDATE(NOW(), INTERVAL $constants->{anonymous_comment_interval} MINUTE)
-			AND ipid='$ipid'");
-		if ($ipid_count > 0) {
-			header('Comments', $discussion->{section}) or return;
-			editComment(@_, getError('anonymous_comment_interval'));
-			return 0;
-		}
-	}
 
 	unless (validateComment(
 		\$tempComment, \$tempSubject, $error_message, 1,
@@ -989,7 +1082,7 @@ sub submitComment {
 			&& !$form->{nobonus};
 		$subscriber_bonus = 1 if $constants->{plugin}{Subscribe}
 			&& $user->{is_subscriber}
-			&& $form->{nosubscriberbonus} ne 'on';
+			&& (!$form->{nosubscriberbonus} || $form->{nosubscriberbonus} ne 'on');
 	}
 	# This is here to prevent posting to discussions that don't exist/are nd -Brian
 	unless ($user->{is_admin} || $form->{newdiscussion}) {
@@ -1003,7 +1096,7 @@ sub submitComment {
 	}
 	my $posters_uid = $user->{uid};
 	if ($form->{postanon}
-		&& $slashdb->checkAllowAnonymousPosting()
+		&& $reader->checkAllowAnonymousPosting()
 		&& $user->{karma} > -1
 		&& $discussion->{commentstatus} eq 'enabled') {
 		$posters_uid = getCurrentAnonymousCoward('uid');
@@ -1015,7 +1108,7 @@ sub submitComment {
 		subject		=> $tempSubject,
 		comment		=> $tempComment,
 		sid		=> $id , 
-		pid		=> $form->{pid} ,
+		pid		=> $form->{pid},
 		ipid		=> $user->{ipid},
 		subnetid	=> $user->{subnetid},
 		uid		=> $posters_uid,
@@ -1096,7 +1189,10 @@ sub submitComment {
 		}) if !isAnon($clean_comment->{uid});
 
 		my($messages, $reply, %users);
-		if ($form->{pid} || $discussion->{url} =~ /\bjournal\b/ || $constants->{commentnew_msg}) {
+		my $kinds = $reader->getDescriptions('discussion_kinds');
+		if ($form->{pid}
+			|| $kinds->{ $discussion->{dkid} } =~ /^journal/
+			|| $constants->{commentnew_msg}) {
 			$messages = getObject('Slash::Messages');
 			$reply = $slashdb->getCommentReply($form->{sid}, $maxCid);
 		}
@@ -1122,7 +1218,7 @@ sub submitComment {
 		}
 
 		# reply to journal
-		if ($messages && $discussion->{url} =~ /\bjournal\b/) {
+		if ($messages && $kinds->{ $discussion->{dkid} } =~ /^journal/) {
 			my $users  = $messages->checkMessageCodes(MSG_CODE_JOURNAL_REPLY, [$discussion->{uid}]);
 			if (_send_comment_msg($users->[0], \%users, $pts, $clean_comment)) {
 				my $data  = {
@@ -1147,12 +1243,27 @@ sub submitComment {
 				reply		=> $reply,
 				discussion	=> $discussion,
 			};
+
+			my @users_send;
 			for my $usera (@$users) {
 				next if $users{$usera};
-				$messages->create($usera, MSG_CODE_NEW_COMMENT, $data);
+				push @users_send, $usera;
 				$users{$usera}++;
 			}
+			$messages->create(\@users_send, MSG_CODE_NEW_COMMENT, $data) if @users_send;
 		}
+
+		if ($constants->{validate_html}) {
+			my $validator = getObject('Slash::Validator');
+			my $test = parseDomainTags($tempComment);
+			$validator->isValid($test, {
+				data_type	=> 'comment',
+				data_id		=> $maxCid,
+				message		=> 1
+			}) if $validator;
+		}
+
+
 		# If discussion created
 		if ($form->{newdiscussion}) {
 			if (!$header_emitted) {
@@ -1506,6 +1617,30 @@ sub isTroll {
 
 	return $slashdb->getIsTroll($good_behavior);
 }
+
+
+##################################################################
+sub setDiscussion2 {
+	my($form, $slashdb, $user, $constants, $gSkin) = @_;
+	return if $user->{is_anon};
+	$slashdb->setUser($user->{uid}, {
+		discussion2 => $form->{discussion2_slashdot} ? 'slashdot' : ''
+	});
+
+	my $referrer = $ENV{HTTP_REFERER};
+	my $url;
+	if ($referrer && $referrer =~ m|https?://(?:[\w.]+.)?$constants->{basedomain}/|) {
+		$url = $referrer;
+	} else {
+		$url = $gSkin->{rootdir} . '/comments.pl';
+		$url .= '?sid=' . $form->{sid};
+		$url .= '&cid=' . $form->{cid} if $form->{cid};
+		$url .= '&pid=' . $form->{pid} if $form->{pid};
+	}
+
+	redirect($url);
+}
+
 
 ##################################################################
 createEnvironment();

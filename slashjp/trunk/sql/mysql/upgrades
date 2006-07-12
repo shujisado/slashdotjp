@@ -62,7 +62,7 @@ CREATE TABLE submission_param (
        param_id mediumint UNSIGNED NOT NULL auto_increment,
        subid varchar(15) NOT NULL,
        name varchar(32) DEFAULT '' NOT NULL,
-       value text DEFAULT '' NOT NULL,
+       value text NOT NULL,
        UNIQUE submission_key (subid,name),
        PRIMARY KEY (param_id)
 ) TYPE = myisam;
@@ -232,7 +232,7 @@ CREATE TABLE submission_param (
    param_id mediumint UNSIGNED NOT NULL auto_increment,
    subid varchar(15) NOT NULL,
    name varchar(32) DEFAULT '' NOT NULL,
-   value text DEFAULT '' NOT NULL,
+   value text NOT NULL,
    UNIQUE submission_key (subid,name),
    PRIMARY KEY (param_id)
 ) TYPE = myisam;
@@ -306,7 +306,7 @@ CREATE TABLE submission_param (
    param_id mediumint UNSIGNED NOT NULL auto_increment,
    subid mediumint UNSIGNED NOT NULL,
    name varchar(32) DEFAULT '' NOT NULL,
-   value text DEFAULT '' NOT NULL,
+   value text NOT NULL,
    UNIQUE submission_key (subid,name),
    PRIMARY KEY (param_id)
 ) TYPE = myisam;
@@ -827,7 +827,7 @@ REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('info', 'Norm
 REPLACE INTO menus (menu, label, value, seclev, menuorder) values ('info', 'Config', '[% gSkin.rootdir %]/admin.pl?op=topics', 500, 13);
 INSERT INTO vars (name, value, description) VALUES ('content_type_webpage','text/html','The Content-Type field for webpages');
 
-# This needs to be set for all OSDN sites, and we should make sure that sites are using the right DB. -Brian
+# This needs to be set for all OSTG sites, and we should make sure that sites are using the right DB. -Brian
 INSERT INTO vars (name, value, description) VALUES ('log_db_user','','The virtual user of the database that the code should write accesslog to. If you don\'t know what this is for, you should leave it blank.');
 INSERT INTO vars (name, value, description) VALUES ('search_text_length','80','This will tell search how many characters should be returned for text bodies in searches (think introtext for stories and article for journals).');
 INSERT INTO vars (name, value, description) VALUES ('search_method', '', 'Method to use to weight scores for search returns (and to narrow down possible matches)');
@@ -852,7 +852,7 @@ DELETE FROM menus WHERE menu='users';
 INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Logout', 'logout', '/my/logout', 1, 0, 10);
 INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Preferences', 'preferences', '/users.pl?op=edituser', 1, 0, 20);
 INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Password', 'password', '/login.pl?op=changeprefs', 1, 0, 40);
-INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', '[% USE Slash; user.nickname | strip_literal %]', 'me', '/~[% user.nickname | fixparam %]', 1, 0, 50);
+INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', '[% user.nickname | strip_literal %]', 'me', '/~[% user.nickname | fixparam %]', 1, 0, 50);
 
 # Change for plugins/Subscribe (ignore if not using that plugin)
 INSERT INTO menus (id, menu, label, sel_label, value, seclev, showanon, menuorder) VALUES (NULL, 'users', 'Subscription', 'subscription', '/subscribe.pl', 1, 0, 30);
@@ -1475,9 +1475,8 @@ CREATE TABLE users_acl (
 	acl varchar(32) NOT NULL,
 	UNIQUE uid_key (uid,acl),
 	KEY uid (uid),
-	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (id)
-) TYPE = myisam;
+) TYPE = MyISAM;
 
 # End of T_2_3_0_88, Start of T_2_3_0_89 - 2003/04/23
 
@@ -2331,11 +2330,10 @@ INSERT INTO vars (name, value, description) VALUES ('user_comments_force_index',
 
 INSERT INTO vars (name, value, description) VALUES ('ignore_uid_date_index', '1', 'Ignore uid_date index on comments where it may slow performance');
 
-# End of T_2_3_0_156, Start of T_2_3_0_157 - 2004/06/01
-
+######################################################################
 ######################################################################
 
-# End of T_2_3_0_157, Start of T_2_5_0_1 - 2004/07/01
+# End of T_2_3_0_156, Start of T_2_5_0_1 - 2004/07/01
 
 # End of T_2_5_0_1, Start of T_2_5_0_2 - 2004/07/02
 
@@ -2343,16 +2341,11 @@ INSERT INTO vars (name, value, description) VALUES ('ignore_uid_date_index', '1'
 
 # End of T_2_5_0_3, Start of T_2_5_0_4 - 2004/07/02
 
-# You want to run utils/convertDBto200406 here, then follow its
-# instructions, read its output.  Shut your site down and execute
-# the commands it gives.  Then if all looks well, do a 'make install'
-# and run utils/convertDBto200406_suggest and execute whatever of
-# _its_ commands you see fit to.  Finally, run
-# utils/convertDBto200406_render.  Of course, you need more detailed
-# instructions than this because without them you don't know what
-# the heck you're reading or what you "see fit to," but we're working
-# on those instructions, they aren't written yet.  This is the fun
-# part about cutting-edge code, isn't it!
+######################################################################
+# See the comments at the top of utils/convertDBto200406 (v 1.28 or
+# later) for instructions on upgrading a Slash site from a T_2_3_* tag
+# to a T_2_5_* tag!
+######################################################################
 
 # You probably want to install the CPAN module GraphViz here, along
 # with whatever it needs;  see plugins/Admin/README for details.
@@ -2474,7 +2467,7 @@ CREATE TABLE topic_param (
 	param_id mediumint UNSIGNED NOT NULL auto_increment,
 	tid SMALLINT UNSIGNED NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
-	value text DEFAULT '' NOT NULL,
+	value text NOT NULL,
 	UNIQUE topic_key (tid,name),
 	PRIMARY KEY (param_id)
 ) TYPE=InnoDB;
@@ -2779,8 +2772,6 @@ INSERT INTO vars (name, value, description) VALUES ('dbs_reader_weight_increase_
 
 ALTER TABLE submissions ADD INDEX time_emaildomain (time, emaildomain);
 
-# SLASHCLUSTER LAST UPDATED HERE
-
 # End of T_2_5_0_39, Start of T_2_5_0_40 - 2004/11/24
 
 DELETE FROM users_param WHERE name='sigdash';
@@ -2805,11 +2796,1175 @@ DELETE FROM vars where name in
 "discussionrecycle", "get_titles", "m2_if_smoother", "m2_range_offset", "messages_send_maxsize", "mod_elig_hoursback", "paypal", 
 "prepuser_backup_prob", "selectcomm_backup_prob", "siteowner", "submissions_listing_page_size", "subnet_karma_comments_needed", "test", "today", "zoo_process_limit", "zoo_timer");
 
+# End of T_2_5_0_40, Start of T_2_5_0_41 - 2004/11/30
+
+# End of T_2_5_0_41, Start of T_2_5_0_42 - 2004/12/07
+
+INSERT INTO vars (name, value, description) VALUES ('ircslash_dbalert_bogthresh','30','Alert the IRC channel when DB query bog exceeds this value, in seconds, for the last minute average');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_dbalert_lagthresh','30','Alert the IRC channel when DB replication lag exceeds this value, in seconds, for the last minute average');
+
+# End of T_2_5_0_42, Start of T_2_5_0_43 - 2004/12/14
+
+INSERT INTO vars (name, value, description) VALUES ('dbsparklines_disp','0','Display dbsparklines in the currentAdminUsers box?');
+INSERT INTO vars (name, value, description) VALUES ('dbsparklines_height',40,'Pixel height of sparkline graphs');
+INSERT INTO vars (name, value, description) VALUES ('dbsparklines_pngsuffix',FLOOR(RAND()*900000000+100000000),'Random number to make it hard for unauthorized users to read these PNGs without permission');
+INSERT INTO vars (name, value, description) VALUES ('dbsparklines_secsback',30*60,'How many seconds to look back for the sparklines');
+INSERT INTO vars (name, value, description) VALUES ('dbsparklines_width',150,'Pixel width of sparkline graphs');
+INSERT INTO vars (name, value, description) VALUES ('dbsparklines_ymax',20,'Max bog value (clip higher values to this)');
+INSERT INTO vars (name, value, description) VALUES ('dbsparklines_ymin',-20,'Min lag value (clip lower values to this) - should be negative');
+
+# End of T_2_5_0_43, Start of T_2_5_0_44 - 2005/01/04
+
+# End of T_2_5_0_44, Start of T_2_5_0_45 - 2005/01/11
+
+# End of T_2_5_0_45, Start of T_2_5_0_46 - 2005/01/18
+
+# Your site almost certainly is using 6-hex-digit colors in the hexcolor
+# fields, which should be prefixed with "#".  If you want to use textual
+# color names, change them (from e.g. "#000000" to "black") after the
+# UPDATE below.
+ALTER TABLE skin_colors CHANGE COLUMN hexcolor skincolor CHAR(12) DEFAULT '' NOT NULL;
+UPDATE skin_colors SET skincolor=CONCAT("#", skincolor);
+
+
+# Turn this on if you have a separate log_slave database 
+INSERT INTO vars (name, value, description) VALUES ('adminmail_check_replication', 0, 'Check replication if is caught up before starting adminmail');
+
+# This only needs to be run on your log_slave DB
+DROP TABLE IF EXISTS accesslog_build_unique_host_addr;
+
+ALTER TABLE users MODIFY sig varchar(200);
+
+# Change for plugins/HumanConf (ignore if not using that plugin)
+INSERT INTO vars (name, value, description) VALUES ('hc_q1_linethick', '2', 'For question 1 (images), thickness of the lines that are drawn to confuse OCR');
+
+# End of T_2_5_0_46, Start of T_2_5_0_47 - 2005/02/02
+
+ALTER TABLE remarks ADD type ENUM("system","user") DEFAULT "user";
+
+# These are only necessary if the Subscribe plugin is installed
+INSERT INTO message_codes (code, type, seclev, modes, send, subscribe) VALUES (15, 'Subscription Running Low', 1, '', 'now', 1);
+INSERT INTO message_codes (code, type, seclev, modes, send, subscribe) VALUES (16, 'Subscription Expired', 1, '', 'now', 1);
+
+# End of T_2_5_0_47, Start of T_2_5_0_48 - 2005/02/08
+
+# End of T_2_5_0_48, Start of T_2_5_0_49 - 2005/02/15
+
+# End of T_2_5_0_49, Start of T_2_5_0_50 - 2005/02/22
+
+
+INSERT INTO misc_user_opts (name, optorder, seclev, default_val, vals_regex, short_desc, long_desc, opts_html) VALUES ('disable_submit_bin_refresh',100,100,'0',NULL,'Disable bin refresh?','Do you want to disable refreshing the submissions bin?',NULL);
+
+# End of T_2_5_0_50, Start of T_2_5_0_51 - 2005/03/01
+
+# End of T_2_5_0_51, Start of T_2_5_0_52 - 2005/03/08
+
+# End of T_2_5_0_52, Start of T_2_5_0_53 - 2005/03/15
+
+INSERT INTO message_codes (code, type, seclev) VALUES (18, 'Invalid HTML Input', 100);
+
+# Changes for plugins/Daypass (ignore if not using that plugin)
+ALTER TABLE daypass_available ADD COLUMN minduration SMALLINT NOT NULL DEFAULT 0 AFTER adnum, ADD COLUMN aclreq VARCHAR(32) DEFAULT NULL;
+ALTER TABLE daypass_keys ADD COLUMN earliest_confirmable DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00' AFTER key_given;
+INSERT INTO vars (name, value, description) VALUES ('daypass_adnum', '13', 'Which ad number to pass to getAd?');
+INSERT INTO vars (name, value, description) VALUES ('daypass_offer_onlywhentmf', '0', 'Offer daypasses only when there is a story in The Mysterious Future?');
+
+# End of T_2_5_0_53, Start of T_2_5_0_54 - 2005/03/29
+
+INSERT INTO vars (name, value, description) VALUES ('daypass_tz', 'PST', 'What timezone are daypasses considered to be in (this determines where "midnight" starts and ends the day)');
+
+# End of T_2_5_0_54, Start of T_2_5_0_55 - 2005/03/31
+
+# Changes for plugins/Dilemma (ignore if not using that plugin)
+INSERT INTO vars (name, value, description) VALUES ('dilemma_draw_graph_ticks', '100', 'Draw graph every this many ticks (roughly -- before this tickcount, draw every time; after 20x this tickcount, draw 1/3 as often');
+ALTER TABLE dilemma_agents ADD COLUMN trid INT UNSIGNED NOT NULL AFTER daid, DROP INDEX alive, ADD INDEX trid_alive (trid, alive);
+UPDATE dilemma_agents SET trid=1;
+RENAME TABLE dilemma_info TO dilemma_tournament_info;
+ALTER TABLE dilemma_tournament_info ADD COLUMN trid INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST, CHANGE COLUMN alive active ENUM("no", "yes") DEFAULT "yes" NOT NULL, CHANGE COLUMN max_runtime max_tick INT UNSIGNED DEFAULT 1000 NOT NULL, CHANGE COLUMN food_per_time food_per_tick FLOAT UNSIGNED DEFAULT 1.0 NOT NULL, DROP COLUMN mean_meets, ADD COLUMN min_meets INT UNSIGNED DEFAULT 10 NOT NULL, ADD COLUMN max_meets INT UNSIGNED DEFAULT 30 NOT NULL, ADD COLUMN graph_drawn_tick INT UNSIGNED DEFAULT 0 NOT NULL;
+UPDATE dilemma_tournament_info SET trid=1;
+CREATE TABLE dilemma_stat_names ( dstnmid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, name CHAR(16) NOT NULL, PRIMARY KEY (dstnmid) ) TYPE=InnoDB;
+INSERT INTO dilemma_stat_names (dstnmid, name) VALUES (1, 'num_alive');
+INSERT INTO dilemma_stat_names (dstnmid, name) VALUES (2, 'sumfood');
+ALTER TABLE dilemma_stats ADD COLUMN trid INT UNSIGNED NOT NULL FIRST, CHANGE COLUMN tick tick INT UNSIGNED DEFAULT 0 NOT NULL, CHANGE COLUMN dsid dsid SMALLINT UNSIGNED DEFAULT 0 NOT NULL, ADD COLUMN dstnmid SMALLINT UNSIGNED DEFAULT 0 NOT NULL, DROP INDEX tick, DROP INDEX dsid, ADD UNIQUE ttdd (trid, tick, dsid, dstnmid), ADD INDEX tdd (trid, dsid, dstnmid);
+UPDATE dilemma_stats SET trid=1;
+UPDATE dilemma_stats SET dstnmid=1 WHERE name='num_alive';
+UPDATE dilemma_stats SET dstnmid=2 WHERE name='sumfood';
+ALTER TABLE dilemma_stats DROP COLUMN name;
+ALTER TABLE dilemma_meetlog ADD COLUMN trid INT UNSIGNED NOT NULL AFTER meetid, DROP INDEX tick, ADD INDEX trid_tick (trid, tick);
+UPDATE dilemma_meetlog SET trid=1;
+
+# End of T_2_5_0_55, Start of T_2_5_0_56 - 2005/04/05
+
+# Changes for plugins/Daypass (ignore if not using that plugin)
+UPDATE vars SET value='60' WHERE name='daypass_cache_expire';
+INSERT INTO vars (name, value, description) VALUES ('daypass_offer_method', '0', 'How to determine whether a daypass is offered: 0=use daypass_available table, 1=check adpos text against regex');
+INSERT INTO vars (name, value, description) VALUES ('daypass_offer_method1_acl', '', 'ACL required to be offered a daypass (blank for none, i.e. all users eligible)');
+INSERT INTO vars (name, value, description) VALUES ('daypass_offer_method1_adpos', '31', 'If daypass_offer_method is 1, which ad position to check?');
+INSERT INTO vars (name, value, description) VALUES ('daypass_offer_method1_minduration', '10', 'Minimum time allowed before click');
+INSERT INTO vars (name, value, description) VALUES ('daypass_offer_method1_regex', '!placeholder for ad position', 'If daypass_offer_method is 1, what regex on that ad text tells us that a daypass is available? A leading ! inverts logic (regex match means daypass not available)');
+
+# End of T_2_5_0_56, Start of T_2_5_0_57 - 2005/04/08
+
+#############
+# be careful with below, make sure right for your site
+
+# this is not required, but highly advised; it shouldn't have an adverse
+# effect on most sites, but on sites that use alternative charsets ... dunno
+UPDATE vars SET value = '1' WHERE name = 'draconian_charset';
+
+# look at this carefully, make sure it has all the tags you want, and none you don't
+# note that you cannot introduce new tags this way anymore, those must be added in
+# the code directly, then *enabled* here
+REPLACE INTO vars (name, value, description) VALUES ('approvedtags','b|i|p|br|a|ol|ul|li|dl|dt|dd|em|strong|tt|blockquote|div|ecode','Tags that you can use');
+
+# we add N option and use it for alt
+REPLACE INTO vars (name, value, description) VALUES ('approvedtags_attr', 'a:href_RU img:src_RU,alt_N,width,height,longdesc_U', 'definition of approvedtags attributes in the following format a:href_RU img:src_RU,alt,width,height,longdesc_U see Slash::Utility::Data.pm for more details');
+
+# this should not need any modification
+REPLACE INTO vars (name, value, description) VALUES ('approvedtags_break','p|br|ol|ul|li|dl|dt|dd|blockquote|div|img|hr|h1|h2|h3|h4|h5|h6','Tags that break words (see breakHtml())');
+
+# this still won't be in effect unless sub or sup is in approvedtags, of course
+INSERT INTO vars (name, value, description) VALUES ('nest_su_maxdepth','3','Maximum depth to which <SUP> and <SUB> tags can be nested');
+
+# HTML is recommended, but if you are using XHTML, by all means, set this to 1
+INSERT INTO vars (name, value, description) VALUES ('xhtml','0','Boolean for whether we are using XHTML');
+
+#
+#############
+
+# End of T_2_5_0_57, Start of T_2_5_0_58 - 2005/04/13
+
+# End of T_2_5_0_58, Start of T_2_5_0_59 - 2005/04/15
+
+#############
+# be careful with below, make sure right for your site
+
+# add span, div, tables, and slash
+INSERT INTO vars (name, value, description) VALUES ('approvedtags_attr_admin', 'div:id,class,title,style,dir,lang span:id,class,title,style,dir,lang slash:type_R,id,href_U,story,nickname,uid,user,align,width,height,title table:align,bgcolor,border,cellpadding,cellspacing,width tr:align,bgcolor,valign th:align,bgcolor,colspan,height,rowspan,valign,width td:align,bgcolor,colspan,height,rowspan,valign,width', 'see approvedtags_attr for more details');
+
+#
+#############
+
+# End of T_2_5_0_59, Start of T_2_5_0_60 - 2005/04/15
+
+CREATE TABLE al2 (
+    srcid       BIGINT UNSIGNED NOT NULL DEFAULT '0',
+    value       INT UNSIGNED NOT NULL DEFAULT '0',
+    updatecount INT UNSIGNED NOT NULL DEFAULT '0',
+    PRIMARY KEY (srcid)
+) TYPE=InnoDB;
+
+CREATE TABLE al2_log (
+    al2lid      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    srcid       BIGINT UNSIGNED NOT NULL DEFAULT '0',
+    ts      DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+    adminuid    MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+    al2tid      TINYINT UNSIGNED NOT NULL DEFAULT '0',
+    val     ENUM('set', 'clear') DEFAULT NULL,
+    PRIMARY KEY (al2lid),
+    INDEX ts (ts),
+    INDEX srcid_ts (srcid, ts)
+) TYPE=InnoDB;
+
+CREATE TABLE al2_log_comments (
+    al2lid      INT UNSIGNED NOT NULL DEFAULT '0',
+    comment     TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (al2lid)
+) TYPE=InnoDB;
+
+CREATE TABLE al2_types (
+    al2tid      TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    bitpos      TINYINT UNSIGNED DEFAULT NULL,
+    name        VARCHAR(30) NOT NULL DEFAULT '',
+    title       VARCHAR(64) NOT NULL DEFAULT '',
+    PRIMARY KEY (al2tid),
+    UNIQUE name (name),
+    UNIQUE bitpos (bitpos)
+) TYPE=InnoDB;
+
+INSERT INTO al2_types VALUES (1, NULL, 'comment', 'Comment');
+INSERT INTO al2_types VALUES (2, 0, 'ban', 'Ban');
+INSERT INTO al2_types VALUES (3, 1, 'expired', 'Expired');
+INSERT INTO al2_types VALUES (4, 2, 'nopost', 'No Comment Post');
+INSERT INTO al2_types VALUES (5, 3, 'nopalm', 'No Palm');
+INSERT INTO al2_types VALUES (6, 4, 'norss', 'No RSS');
+INSERT INTO al2_types VALUES (7, 5, 'nosubmit', 'No Story Submit');
+INSERT INTO al2_types VALUES (8, 6, 'trusted', 'Trusted');
+INSERT INTO al2_types VALUES (9, 7, 'proxy', 'Valid Proxy');
+
+# run utils/accesslisttoal2 -u YOURSITEUSERNAME
+
+# End of T_2_5_0_60, Start of T_2_5_0_61 - 2005/04/26
+
+# End of T_2_5_0_61, Start of T_2_5_0_62 - 2005/04/28
+
+REPLACE INTO vars (name, value, description) VALUES ('approvedtags_attr_admin', 'a:href_U,name,title div:id,class,title,style,dir,lang span:id,class,title,style,dir,lang slash:type_R,id,href_U,story,nickname,uid,user,align,width,height,title table:align,bgcolor,border,cellpadding,cellspacing,width tr:align,bgcolor,valign th:align,bgcolor,colspan,height,rowspan,valign,width td:align,bgcolor,colspan,height,rowspan,valign,width', 'inherits from approvedtags_attr');
+
+# End of T_2_5_0_62, Start of T_2_5_0_63 - 2005/05/03
+
+# End of T_2_5_0_63, Start of T_2_5_0_64 - 2005/05/10
+
+# End of T_2_5_0_64, Start of T_2_5_0_65 - 2005/05/10
+
+ALTER TABLE al2_log ADD INDEX al2tid_val_srcid (al2tid, val, srcid);
+ALTER TABLE al2 ADD INDEX value (value);
+
+# End of T_2_5_0_65, Start of T_2_5_0_66 - 2005/05/17
+
+# Caution!  "Update statements that refer to user variables
+# (that is, variables of the form @var_name) are badly
+# replicated in 3.23 and 4.0. This is fixed in 4.1."
+# <http://dev.mysql.com/doc/mysql/en/replication-features.html>
+# If you are running reader DBs, you will definitely want to
+# check the al2_types table after the following command has
+# replicated to see if the data is correct.
+SELECT @maxbitpos := MAX(bitpos) FROM al2_types;
+INSERT INTO al2_types VALUES (NULL, @maxbitpos+1, 'nopostanon', 'No Comment Post Anon');
+
+# add class/style for table elements, for convenience
+REPLACE INTO vars (name, value, description) VALUES ('approvedtags_attr_admin', 'a:href_U,name,title div:id,class,title,style,dir,lang span:id,class,title,style,dir,lang slash:type_R,id,href_U,story,nickname,uid,user,align,width,height,title table:align,bgcolor,border,cellpadding,cellspacing,width,style,class tr:align,bgcolor,valign,style,class th:align,bgcolor,colspan,height,rowspan,valign,width,style,class td:align,bgcolor,colspan,height,rowspan,valign,width,style,class', 'inherits from approvedtags_attr');
+
+INSERT INTO vars (name, value, description) VALUES ('comments_anon_speed_limit','0','seconds delay before repeat posting for anonymous user.  If 0 uses defaults to speed_limit for all users');
+
+INSERT INTO vars (name, value, description) VALUES ('comments_anon_speed_limit_mult','1', 'Multiply speedlimit by this amount for each comment previously posted in the past 24 hours');
+
+# Jabber support for ircslash
+INSERT INTO vars (name, value, description) VALUES ('jabberslash','0','Enable the ircslash task for Jabber, and connect to a Jabber channel whenever slashd starts');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_channel','jabberslash','Which channel to join');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_channel_password','','Password for jabberslash_channel');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_channel_server','jabberslash','Which Jabber server to use for the channel (defaults to jabberslash_server)');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_ircname','','Account name to use on Jabber server (defaults to "(slashsite) slashd")');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_nick','','Nick to use on IRC server (has a reasonable default); is used for jabber Resource and channel alias');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_password','','Password for jabberslash_ircname account');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_port','5222','Port to use on Jabber server');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_server','jabber.org','Which Jabber server to connect to');
+INSERT INTO vars (name, value, description) VALUES ('jabberslash_tls','0','Try to connect using TLS?');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_jabber_users','','Pipe-separated list of userids ("userid" or "userid/resource") to send Jabber messages to, instead of sending to channel');
+INSERT INTO vars (name, value, description) VALUES ('ircslash_lcr_sites','','Pipe-separated list of site names to use for lcr cmd');
+
+# End of T_2_5_0_66, Start of T_2_5_0_67 - 2005/05/24
+
+# End of T_2_5_0_67, Start of T_2_5_0_68 - 2005/05/28
+
+ALTER TABLE open_proxies ADD COLUMN dur FLOAT DEFAULT NULL AFTER port;
+
+# End of T_2_5_0_68, Start of T_2_5_0_69 - 2005/05/31
+
+# Changes for plugins/HumanConf (ignore if not using that plugin)
+UPDATE vars SET description='HumanConf switch for posting comments: 0=off, 1=anon only, 2=also logged-in with low karma' WHERE name='hc_sw_comments';
+
+# End of T_2_5_0_69, Start of T_2_5_0_70 - 2005/06/01
+
+# End of T_2_5_0_70, Start of T_2_5_0_71 - 2005/06/07
+
+INSERT INTO vars (name, value, description) VALUES ('formkey_minloggedinkarma','1','The min karma a user must have to "count" as a logged-in user for some purposes');
+
+ALTER TABLE open_proxies CHANGE COLUMN xff xff VARCHAR(40) DEFAULT NULL;
+
+# Changes for plugins/HumanConf (ignore if not using that plugin)
+INSERT INTO vars (name, value, description) VALUES ('hc_q1_lettersomit', 'hlou', 'For question 1 (images), which letters should never appear? Lowercase');
+
+# End of T_2_5_0_72, Start of T_2_5_0_73 - 2005/06/14
+
+# End of T_2_5_0_73, Start of T_2_5_0_74 - 2005/06/21
+
+# End of T_2_5_0_74, Start of T_2_5_0_75 - 2005/06/28
+
+# Changes for plugins/HumanConf (ignore if not using that plugin)
+# and if you use the first, you may want to customize the second
+INSERT INTO vars (name, value, description) VALUES ('hc_q1_usedict', '', 'For question 1 (images), use words from a dictionary? if blank, no; otherwise, value is the absolute path to the newline-delimited file e.g. /usr/dict/words and hc_q1_lettersomit is ignored');
+INSERT INTO vars (name, value, description) VALUES ('hc_q1_usedict_excl', 'shiny$ metal ^daffodil', 'If hc_q1_usedict is set, space-sep list of regexes to exclude from words to use');
+INSERT INTO vars (name, value, description) VALUES ('hc_q1_linecloseness', '8', 'For question 1 (images), closeness of the lines drawn over the letters, higher means more density');
+
+# SLASHCLUSTER LAST UPDATED HERE
+
+# End of T_2_5_0_75, Start of T_2_5_0_76 - 2005/07/20
+
+INSERT INTO vars (name, value, description) VALUES ('ssihead_inc_pages', 'article', 'Pages that should always use their own .inc for ssihead');
+INSERT INTO vars (name, value, description) VALUES ('css_expire','3600','Time in seconds before css cache expires');
+
+CREATE TABLE css_type (
+	ctid TINYINT(3) UNSIGNED NOT NULL AUTO_INCREMENT,
+	name VARCHAR(32) NOT NULL DEFAULT '',
+	ordernum TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY  (ctid)
+) TYPE=InnoDB;
+
+CREATE TABLE css (
+	csid int(11) NOT NULL AUTO_INCREMENT,
+	rel VARCHAR(32) DEFAULT 'stylesheet',
+	type VARCHAR(32) DEFAULT 'text/css',
+	media VARCHAR(32) DEFAULT 'screen, projection',
+	file VARCHAR(64),
+	title VARCHAR(32),
+	skid INT(11) DEFAULT '0',
+	page VARCHAR(32) DEFAULT '',
+	admin ENUM('no','yes') DEFAULT 'no',
+	theme VARCHAR(32) DEFAULT '',
+	ctid TINYINT(4) NOT NULL DEFAULT '0',
+	ordernum int(11) DEFAULT '0',
+	ie_cond VARCHAR(16) DEFAULT '',
+	PRIMARY KEY  (csid),
+	KEY ctid (ctid),
+	KEY page_skid (page,skid),
+	KEY skid_page (skid,page)
+) TYPE=InnoDB;
+
+INSERT INTO css_type (ctid, name, ordernum) VALUES (1,'base',1);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (2,'page',2);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (3,'theme',3);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (4,'user_theme',4);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (5,'print',5);
+
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','base.css','Slashcode',0,'','no','',1,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'comments','no','',2,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'article','no','',2,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','print','print.css','Print',0,'','no','',5,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','admin.css','Slashcode',0,'','yes','',1,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'pollBooth','no','',2,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','slashcode_lite.css','Slashcode',0,'','no','light',4,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'journal','no','',2,0);
+
+
+# Run this only if you don't already have this CSS file already in the table or whatever theme you may be using instead 
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','slashcode.css','Slashcode',0,'','no','',3,0);
+
+# Caution!  "Update statements that refer to user variables
+# (that is, variables of the form @var_name) are badly
+# replicated in 3.23 and 4.0. This is fixed in 4.1."
+# <http://dev.mysql.com/doc/mysql/en/replication-features.html>
+# If you are running reader DBs, you will definitely want to
+# check the css table after the following command has
+# replicated to see if the data is correct.
+SELECT @page_ctid := ctid FROM css_type where name="page";
+# Run this only if you have search installed and don't
+# currently have this line in your css file
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','search.css','Slashcode',0,'search','no','',@page_ctid,0);
+# Run this only if you have pollBooth installed and
+# don't currently have this line in your css file
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','polls.css','Slashcode',0,'pollBooth','no','',@page_ctid,0);
+
+UPDATE css set title="" where file="print.css";
+
+DELETE FROM vars where name = 'ssihead_inc_pages';
+
+# run this unless you have a reason not to (like, you have your own html;article;default)
+DELETE FROM templates WHERE name = 'header' AND skin = 'default' AND page='article';
+UPDATE vars set description="Time in seconds before css cache expires" where name="css_expire";
+
+INSERT INTO vars (name, value, description) VALUES ('feed_types', 'rss|atom', 'Feed types allowed.');
+
+# End of T_2_5_0_76, Start of T_2_5_0_77 - 2005/07/27
+
+UPDATE css_type SET ordernum = 6 where name="print";
+UPDATE css_type SET ordernum = 5 where name="user_theme";
+
+INSERT INTO css_type (ctid, name, ordernum) VALUES (6,'skin',4);
+INSERT INTO vars (name, value, description) VALUES ('accesslog_css_skip', '1', 'Skip logging css hits to accesslog table?');
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'metamod','no','',2,0);
+INSERT INTO vars (name, value, description) VALUES ('users_menu_no_display', '0', 'Hide users menu?');
+
+# End of T_2_5_0_77, Start of T_2_5_0_78 - 2005/08/25
+
+# Changes for plugins/ScheduleShifts (ignore if not using that plugin,
+# and you almost certainly are not using it)
+ALTER TABLE shifts TYPE=InnoDB;
+
+# End of T_2_5_0_78, Start of T_2_5_0_79 - 2005/09/01
+
+# Double check before running this.  No title is best unless you know you need a title on something custom you set up. 
+UPDATE css set title='';
+
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','handheld','handheld.css','',0,'','no','',7,0);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (7, 'handheld', 7);
+
+# Verify you want to delete these.  They are no longer needed by default slashcode theme, but may be needed if you have this template in your theme
+DELETE FROM templates WHERE name = "dispComment" AND page = "misc" AND skin = "light";
+DELETE FROM templates WHERE name = "dispStory" AND page = "misc" AND skin = "light";
+DELETE FROM templates WHERE name = "fancybox" AND page = "misc" AND skin = "light";
+DELETE FROM templates WHERE name = "storylink" AND page = "misc" AND skin = "light";
+DELETE FROM templates WHERE name = "titlebar" AND page = "misc" AND skin = "light";
+
+ALTER TABLE css ADD skin VARCHAR(32) DEFAULT ''AFTER skid;
+ALTER TABLE css DROP INDEX page_skid;
+ALTER TABLE css DROP INDEX skid_page;
+UPDATE css,skins SET css.skin = skins.name WHERE css.skid=skins.skid;
+ALTER TABLE css DROP skid;
+ALTER TABLE css ADD INDEX page_skin (page,skin);
+ALTER TABLE css ADD INDEX skin_page (skin,page);
+UPDATE css set theme='', skin='light' WHERE theme = "light";
+
+# End of T_2_5_0_79, Start of T_2_5_0_80 - 2005/09/19
+
+# End of T_2_5_0_80, Start of T_2_5_0_81 - 2005/09/21
+
+ALTER TABLE dbs_readerstatus CHANGE COLUMN had_weight had_weight tinyint UNSIGNED DEFAULT 1, CHANGE COLUMN had_weight_adjust had_weight_adjust float UNSIGNED DEFAULT 1;
+
+# End of T_2_5_0_81, Start of T_2_5_0_82 - 2005/09/23
+
+# Changes for plugins/Admin (which you are almost certainly using)
+INSERT INTO vars (name, value, description) VALUES ('ispell_is_really_aspell_with_lang', '', 'Some systems install aspell and a script that mimics the behavior of ispell; if yours does, set this to your preferred language name, e.g. "english"');
+
+DROP TABLE IF EXISTS accesslist;
+
+# End of T_2_5_0_82, Start of T_2_5_0_83 - 2005/09/27
+
+INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode','T_2_5_0_82','The current cvs tag that the code was updated to - this does not affect site behavior but may be useful for your records');
+
+# You almost certainly want to install the plugin ResKey at this point.
+
+# Changes for plugins/ResKey (which you should be using)
+INSERT INTO vars VALUES ('reskey_checks_duration_max-failures_zoo', 4, 'how many failures per reskey');
+INSERT INTO vars VALUES ('reskey_checks_duration_max-failures_comments', 10, 'how many failures per reskey');
+
+UPDATE vars SET value = 'T_2_5_0_83' WHERE name = 'cvs_tag_currentcode';
+
+# End of T_2_5_0_83, Start of T_2_5_0_84 - 2005/10/04
+
+# Install MIME::Types if any of your Slash sites are using the Blob plugin.
+
+# Changes for plugins/Daypass
+ALTER TABLE daypass_keys DROP INDEX uid_daypasskey;
+ALTER TABLE daypass_keys DROP COLUMN uid, ADD COLUMN daid SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER daypasskey;
+ALTER TABLE daypass_keys ADD UNIQUE INDEX daypasskey (daypasskey);
+CREATE TABLE daypass_confcodes (
+	confcode	CHAR(20) NOT NULL DEFAULT '',
+	gooduntil	DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	PRIMARY KEY confcode (confcode)
+) TYPE=InnoDB;
+DROP TABLE daypass_users;
+
+INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode_emit','1','Emit cvs_tag_currentcode revision number in the X-Powered-By header. If you are paranoid or believe in security through obscurity feel free to leave this false, but in the event of a security hole it may help us contact you');
+
+# Changes for plugins/ResKey (which you should be using)
+INSERT IGNORE INTO vars VALUES ('reskey_srcid_masksize', 24, 'which srcid mask size to use for reskeys');
+INSERT IGNORE INTO vars VALUES ('reskey_timeframe', 14400, 'Default timeframe base to use for max-uses (in seconds)');
+
+INSERT IGNORE INTO reskey_resources VALUES (1, 'comments');
+INSERT IGNORE INTO reskey_resources VALUES (2, 'zoo');
+INSERT INTO reskey_resources VALUES (3, 'journal');
+INSERT INTO reskey_resources VALUES (4, 'journal-soap');
+
+### do this, but be careful, if you've changed the defaults, to note those changes
+DELETE FROM vars WHERE name LIKE 'reskey_checks_%';
+
+DROP TABLE IF EXISTS reskey_vars;
+CREATE TABLE reskey_vars (
+    rkrid TINYINT UNSIGNED NOT NULL,
+    name VARCHAR(48) DEFAULT '' NOT NULL,
+    value TEXT,
+    description VARCHAR(255),
+    UNIQUE name_rkrid (name, rkrid)
+) TYPE=InnoDB;
+
+##### comments
+### checks
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::Duration',            601);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 1, 'use', 'Slash::ResKey::Checks::ProxyScan',          1001);
+
+### vars
+INSERT INTO reskey_vars VALUES (1, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (1, 'acl_no', 'reskey_no_comments', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (1, 'user_seclev', 0, 'Minimum seclev to use resource');
+INSERT INTO reskey_vars VALUES (1, 'user_karma', '', 'No minimum karma to use resource');
+INSERT INTO reskey_vars VALUES (1, 'duration_max-uses',      30, 'how many uses per timeframe');
+INSERT INTO reskey_vars VALUES (1, 'duration_max-failures',  10, 'how many failures per reskey');
+INSERT INTO reskey_vars VALUES (1, 'duration_uses',         120, 'min duration (in seconds) between uses');
+INSERT INTO reskey_vars VALUES (1, 'duration_creation-use',   5, 'min duration between (in seconds) creation and use');
+
+##### zoo
+### checks
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 2, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 2, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 2, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 2, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 2, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT IGNORE INTO reskey_resource_checks VALUES (NULL, 2, 'all', 'Slash::ResKey::Checks::Duration',            601);
+
+### vars
+INSERT INTO reskey_vars VALUES (2, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (2, 'acl_no', 'reskey_no_zoo', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (2, 'user_seclev', 1, 'Minimum seclev to use resource');
+INSERT INTO reskey_vars VALUES (2, 'duration_max-uses',      30, 'how many uses per timeframe');
+INSERT INTO reskey_vars VALUES (2, 'duration_max-failures',   4, 'how many failures per reskey');
+INSERT INTO reskey_vars VALUES (2, 'duration_uses',           2, 'min duration (in seconds) between uses');
+INSERT INTO reskey_vars VALUES (2, 'duration_creation-use',   2, 'min duration (in seconds) between creation and use');
+
+##### journal
+### checks
+INSERT INTO reskey_resource_checks VALUES (NULL, 3, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 3, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 3, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT INTO reskey_resource_checks VALUES (NULL, 3, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT INTO reskey_resource_checks VALUES (NULL, 3, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT INTO reskey_resource_checks VALUES (NULL, 3, 'all', 'Slash::ResKey::Checks::Duration',            601);
+
+### vars
+INSERT INTO reskey_vars VALUES (3, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (3, 'acl_no', 'reskey_no_journal', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (3, 'user_seclev', 1, 'Minimum seclev to use resource');
+INSERT INTO reskey_vars VALUES (3, 'duration_max-uses',      30, 'how many uses per timeframe');
+INSERT INTO reskey_vars VALUES (3, 'duration_max-failures',  10, 'how many failures per reskey');
+INSERT INTO reskey_vars VALUES (3, 'duration_uses',          30, 'min duration (in seconds) between uses');
+INSERT INTO reskey_vars VALUES (3, 'duration_creation-use',   2, 'min duration (in seconds) between creation and use');
+
+
+##### journal-soap
+### checks
+INSERT INTO reskey_resource_checks VALUES (NULL, 4, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 4, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 4, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT INTO reskey_resource_checks VALUES (NULL, 4, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT INTO reskey_resource_checks VALUES (NULL, 4, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT INTO reskey_resource_checks VALUES (NULL, 4, 'all', 'Slash::ResKey::Checks::Duration',            601);
+
+### vars
+INSERT INTO reskey_vars VALUES (4, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (4, 'acl_no', 'reskey_no_journal', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (4, 'user_seclev', 1, 'Minimum seclev to use resource');
+INSERT INTO reskey_vars VALUES (4, 'duration_max-uses',      30, 'how many uses per timeframe');
+INSERT INTO reskey_vars VALUES (4, 'duration_max-failures',  10, 'how many failures per reskey');
+INSERT INTO reskey_vars VALUES (4, 'duration_uses',          30, 'min duration (in seconds) between uses');
+
+UPDATE vars SET value = 'T_2_5_0_84' WHERE name = 'cvs_tag_currentcode';
+
+# End of T_2_5_0_84, Start of T_2_5_0_85 - 2005/10/11
+
+# Changes for plugins/ResKey (which you should be using)
+ALTER TABLE reskeys CHANGE COLUMN reskey reskey CHAR(20) DEFAULT '' NOT NULL, TYPE=InnoDB;
+ALTER TABLE reskey_resources TYPE=InnoDB;
+ALTER TABLE reskey_resource_checks TYPE=InnoDB;
+
+# we only want this for comments, though you may wish it for other things ...
+DELETE FROM reskey_resource_checks WHERE class = 'Slash::ResKey::Checks::ProxyScan';
+
+DROP TABLE IF EXISTS reskey_failures;
+CREATE TABLE reskey_failures (
+    rkid        INT NOT NULL,
+    failure     VARCHAR(255) DEFAULT '' NOT NULL,
+    PRIMARY KEY (rkid)
+) TYPE=InnoDB;
+
+INSERT INTO reskey_resources VALUES (5, 'pollbooth');
+
+##### pollbooth
+### checks
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'all', 'Slash::ResKey::Checks::Duration',            601);
+
+### vars
+INSERT INTO reskey_vars VALUES (5, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (5, 'acl_no', 'reskey_no_pollbooth', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (5, 'duration_max-uses',      10, 'how many uses per timeframe');
+INSERT INTO reskey_vars VALUES (5, 'duration_max-failures',   3, 'how many failures per reskey');
+INSERT INTO reskey_vars VALUES (5, 'duration_uses',          10, 'min duration (in seconds) between uses');
+INSERT INTO reskey_vars VALUES (5, 'duration_creation-use',   2, 'min duration (in seconds) between creation and use');
+
+ALTER TABLE css ADD ie_cond VARCHAR(16) DEFAULT '';
+
+UPDATE vars SET value = 'T_2_5_0_85' WHERE name = 'cvs_tag_currentcode';
+
+# End of T_2_5_0_85, Start of T_2_5_0_86 - 2005/10/18
+
+DELETE FROM reskey_vars WHERE rkrid=5 AND name='duration_creation-use';
+
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'use', 'Slash::ResKey::Checks::Post',                151);
+INSERT INTO reskey_resource_checks VALUES (NULL, 5, 'all', 'Slash::PollBooth::ResKey',                   251);
+
+INSERT INTO vars (name, value, description) VALUES ('lowbandwidth_bids_regex','_more$','bids we want to show in low bandwidth mode.  NONE if we don\'t want to show any');
+
+ALTER TABLE css ADD lowbandwidth ENUM("no","yes") DEFAULT "no";
+
+# Caution!  "Update statements that refer to user variables
+# (that is, variables of the form @var_name) are badly
+# replicated in 3.23 and 4.0. This is fixed in 4.1."
+# <http://dev.mysql.com/doc/mysql/en/replication-features.html>
+# If you are running reader DBs, you will definitely want to
+# check the css table after the following command has
+# replicated to see if the data is correct.
+#
+# Or if you want to be safe just do the select manually and replace
+# @ut_ctid with the result of the select
+
+SELECT @ut_ctid := ctid FROM css_type where name="user_theme";
+INSERT INTO css (rel, type, media, file, title, skin, page, admin, theme, ctid, ordernum, ie_cond, lowbandwidth) VALUES ('stylesheet','text/css','screen, projection','slashcode_low_bw.css','','','','no','',@ut_ctid, 99, "", "yes");
+
+# Removing light section templates.  Light as a section no longer exists so these can go.
+DELETE FROM templates where skin="light";
+
+
+# Run this perl script for each of your sites' virtual users.  This will set all users with light mode turned on to have 
+# simpledesign and lowbandwidth settings turned on initially
+# Replace virtusername with the virtual user for your site
+# perl -MSlash::Test=virtusername -e 'my $uids = $slashdb->sqlSelectColArrayref("uid","users_prefs","light=1"); $slashdb->setUser($_, {simpledesign => 1, lowbandwidth => 1}) foreach @$uids;'
+
+UPDATE css set theme="light", skin="" WHERE file="slashcode_lite.css";
+
+# 2005-10-26
+UPDATE vars SET value = 'T_2_5_0_86' WHERE name = 'cvs_tag_currentcode';
+
+# You should update all your THEME and PLUGIN files to use css= instead of htdoc= for .css files that are managed through the site's css table
+INSERT INTO vars (name, value, description) VALUES ('css_use_imagedir','0','Place .css files in imagedir instead for your rootdir?  You may want to utilize this if you are using boa or another lightweight webserver to serve images.  Run symlink-tool after switching var');
+
+# If users_acl has a foreign key on users.uid, or journals has one to
+# topics.tid, now's a good time to drop them.  We're not providing SQL
+# for that because I don't think there's a good programmatic way to
+# determine the name of those keys.
+
+# plugins/Journal (ignore if not using that plugin)
+ALTER TABLE journals ADD INDEX uid_date_id (uid, date, id);
+
+
+INSERT INTO reskey_resources VALUES (6, 'submit');
+INSERT INTO reskey_resources VALUES (7, 'journal-soap-get');
+
+##### submit
+### checks
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'use', 'Slash::ResKey::Checks::Post',                151);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::Duration',            601);
+
+### vars
+INSERT INTO reskey_vars VALUES (6, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (6, 'acl_no', 'reskey_no_submit', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (6, 'duration_max-uses',      20, 'how many uses per timeframe');
+INSERT INTO reskey_vars VALUES (6, 'duration_max-failures',  10, 'how many failures per reskey');
+INSERT INTO reskey_vars VALUES (6, 'duration_uses',         300, 'min duration (in seconds) between uses');
+INSERT INTO reskey_vars VALUES (6, 'duration_creation-use',  20, 'min duration (in seconds) between creation and use');
+
+
+##### journal-soap-get
+### checks
+INSERT INTO reskey_resource_checks VALUES (NULL, 7, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 7, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 7, 'all', 'Slash::ResKey::Checks::Duration',            601);
+
+### vars
+INSERT INTO reskey_vars VALUES (7, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+#INSERT INTO reskey_vars VALUES (7, 'acl',    'reskey_journal-soap', 'If this ACL present, can use resource');
+INSERT INTO reskey_vars VALUES (7, 'acl_no', 'reskey_no_journal', 'If this ACL present, can\'t use resource');
+#INSERT INTO reskey_vars VALUES (7, 'user_is_subscriber', 1, 'Require user to be subscriber');
+INSERT INTO reskey_vars VALUES (7, 'duration_max-failures',   1, 'how many failures per reskey');
+
+# 2005-11-01
+UPDATE vars SET value = 'T_2_5_0_87' WHERE name = 'cvs_tag_currentcode';
+
+# This was omitted from PollBooth mysql_dump earlier;  do this only if you
+# have PollBooth installed.  It may or may not do anything, which is OK.
+INSERT IGNORE INTO vars (name, value, description) VALUES ('allow_anon_poll_voting', '1', 'Set this to decide whether anonymous users can vote in polls)');
+
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::AL2::NoSubmit',       551);
+
+# 2005-11-09
+UPDATE vars SET value = 'T_2_5_0_88' WHERE name = 'cvs_tag_currentcode';
+
+UPDATE vars SET description='Should we be saving incoming submissions for rss' WHERE name='rss_store';
+UPDATE vars SET name='rss_max_items_incoming', description='Max number of rss items shown in a slashbox, by default' WHERE name='max_items';
+INSERT INTO vars (name, value, description) VALUES ('rss_max_items_outgoing','10','Max number of rss items emitted in an rss/rdf/atom feed');
+
+# Add the following if you have the Journal plugin installed
+ALTER TABLE journals ADD submit ENUM ("no", "yes") DEFAULT "no";
+ALTER TABLE journals ADD last_update TIMESTAMP NOT NULL;
+INSERT INTO vars (name, description, value) VALUES ("journal2submit_skid", "skid to submit journal entries to, if not set they go to mainpage skid", 0);
+INSERT INTO vars (name, description, value) VALUES ("journal_allow_journal2submit", "Allow journals to be submitted as submissions?", 0);
+INSERT INTO hooks (param, class, subroutine) VALUES ('journal_save_success', 'Slash::Journal', 'promoteJournal');
+
+# 2005-11-28
+UPDATE vars SET value = 'T_2_5_0_89' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE topic_parents CHANGE COLUMN min_weight min_weight FLOAT DEFAULT 1 NOT NULL;
+ALTER TABLE story_topics_chosen CHANGE COLUMN weight weight FLOAT DEFAULT 1 NOT NULL;
+
+INSERT INTO vars (name, value, description) VALUES ('topiclist_ignore_prefix', '', 'prefix of any topic keywords that should not show up on topic list or hierarchy, leave blank if you don\'t want any ignored');
+INSERT INTO vars (name, value, description) VALUES ('search_ignore_skids', '', 'list of skids that you want to not include in search results.  Delimit skids with |');
+
+DROP TABLE IF EXISTS journal_transfer;
+CREATE TABLE journal_transfer (
+	id MEDIUMINT UNSIGNED NOT NULL,
+	subid MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	stoid MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY key(id)
+);
+
+# 2005-12-06
+UPDATE vars SET value = 'T_2_5_0_90' WHERE name = 'cvs_tag_currentcode';
+
+# Shut down your slashd and webheads before beginning the next commands.
+# You don't want any writes to these tables while this series of commands
+# executes.
+ALTER TABLE users_logtokens ADD COLUMN public ENUM("yes","no") NOT NULL DEFAULT "no" AFTER temp;
+ALTER TABLE users_logtokens DROP INDEX uid_locationid_temp;
+ALTER TABLE users_logtokens ADD UNIQUE uid_locationid_temp_public (uid, locationid, temp, public);
+ALTER TABLE users_logtokens ADD KEY (public);
+# fix admin accounts
+UPDATE users_logtokens, users SET public='yes' WHERE users_logtokens.uid=users.uid AND seclev > 1;
+# Now you can turn your slashd and webheads back on.
+
+# 2005-12-11
+UPDATE vars SET value = 'T_2_5_0_91' WHERE name = 'cvs_tag_currentcode';
+
+# 2005-12-19
+UPDATE vars SET value = 'T_2_5_0_92' WHERE name = 'cvs_tag_currentcode';
+
+# Changes for plugins/Daypass
+INSERT INTO vars (name, value, description) VALUES ('daypass_offer_onlytologgedin', '0', 'If 1, offer a daypass only tologged-in users');
+
+DROP TABLE IF EXISTS discussion_kinds;
+CREATE TABLE discussion_kinds (
+        dkid        TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        name        VARCHAR(30) NOT NULL DEFAULT '',
+        PRIMARY KEY (dkid),
+        UNIQUE name (name)
+) TYPE=InnoDB;
+
+INSERT INTO discussion_kinds (dkid, name) VALUES (1, 'story');
+INSERT INTO discussion_kinds (dkid, name) VALUES (2, 'user_created');
+# plugins/Journal (ignore if not using that plugin)
+INSERT INTO discussion_kinds (dkid, name) VALUES (NULL, 'journal');
+INSERT INTO discussion_kinds (dkid, name) VALUES (NULL, 'journal-story');
+# plugins/PollBooth (ignore if not using that plugin)
+INSERT INTO discussion_kinds (dkid, name) VALUES (NULL, 'poll');
+
+# You may want to wrap these next lines in a transaction, and if
+# an error occurs you may want to ROLLBACK until you figure it out.
+# On Slashdot this will likely take under 10 minutes.
+# START TRANSACTION;
+ALTER TABLE discussions ADD COLUMN dkid TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER id;
+UPDATE discussions SET last_update=last_update, dkid=2;
+UPDATE discussions, skins SET last_update=last_update, dkid=1 WHERE sid != '' AND discussions.url REGEXP CONCAT('^(http:)?//', skins.hostname, '/article\\.pl\\?sid=(', sid, '|[0-9]+$)');
+UPDATE discussions, discussion_kinds, skins SET last_update=last_update, discussions.dkid=discussion_kinds.dkid WHERE discussion_kinds.name='journal' AND discussions.dkid=2 AND (discussions.url REGEXP CONCAT('^(http:)?//', skins.hostname, '/~[^/]+/journal/[0-9]+$') OR discussions.url REGEXP CONCAT('^(http:)?//', skins.hostname, '/journal\\.pl\\?op=display&id=[0-9]+&uid=', discussions.uid));
+UPDATE discussions, discussion_kinds, skins SET last_update=last_update, discussions.dkid=discussion_kinds.dkid WHERE discussion_kinds.name='poll' AND discussions.dkid=2 AND discussions.url REGEXP CONCAT('^(http:)?//', skins.hostname, '/pollBooth\\.pl\\?(qid=[0-9]+&aid=-1|op=vote&qid=[0-9]+)$');
+# COMMIT;
+
+ALTER TABLE sessions DROP COLUMN logintime;
+
+UPDATE users_info SET bio='' WHERE bio IS NULL;
+ALTER TABLE users_info CHANGE COLUMN bio bio text NOT NULL;
+
+# 2006-01-03
+UPDATE vars SET value = 'T_2_5_0_93' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE remarks MODIFY COLUMN remark VARCHAR(255);
+
+# Changes for plugins/Submit (which you are almost certainly using)
+INSERT INTO vars (name, value, description) VALUES ('submissions_link_relnofollow', '0', 'Add a rel="nofollow" to the submitter\'s vanity link for all submissions?');
+UPDATE vars SET value=REPLACE(value, 'a:href_U,name,title ', 'a:href_U,name,title,rel ') WHERE name='approvedtags_attr_admin';
+
+# 2006-01-11
+UPDATE vars SET value = 'T_2_5_0_94' WHERE name = 'cvs_tag_currentcode';
+
+DELETE FROM sessions;
+ALTER TABLE sessions DROP INDEX uid;
+ALTER TABLE sessions ADD UNIQUE uid (uid);
+
+# Fairly major update to index selection - sectional stories are now by default shown in a brief / abbreviated mode
+# on the mainpage.  This default can be overriden by switching the "brief_sectional_mainpage" var to 0.  A user
+# will still be able to switch on brief mode in their options.  If you want to avoid this remove the options
+# by editting the tildeEd template. 
+#
+# A skins artcount_max now affects the number of stories selected, you should make sure this number is larger than the
+# number of stories you would post on your highest posting days (assuming you want to ensure the index shows all of "today's" stories
+#
+# -- vroom
+
+ALTER TABLE users_index ADD COLUMN story_full_brief_nexus VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN story_brief_always_nexus VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN story_full_best_nexus VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN story_brief_best_nexus VARCHAR(255) NOT NULL DEFAULT "" AFTER story_always_nexus;
+
+INSERT INTO vars (name, value, description) VALUES ("brief_sectional_mainpage", "1", "Show sectional stories in brief form on mainpage? 1 = yes,  0 = don't show");
+
+ALTER TABLE skins ADD COLUMN skinindex ENUM('no', 'yes') DEFAULT 'yes' NOT NULL AFTER storypickable;
+
+# Leaving this set to 0 will allow the current behavior of showing whatever leftover stories are left from the select for the main column of the index
+# Changing this value to something positive will limit the number showing up in the Older Stories Slashbox
+ALTER TABLE skins ADD COLUMN older_stories_max MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL;  
+
+# 2006-01-18
+UPDATE vars SET value = 'T_2_5_0_95' WHERE name = 'cvs_tag_currentcode';
+
+# 2006-01-22
+UPDATE vars SET value = 'T_2_5_0_96' WHERE name = 'cvs_tag_currentcode';
+
+DROP TABLE IF EXISTS signoff;
+CREATE TABLE signoff (
+        soid    MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        stoid   MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+        uid     MEDIUMINT UNSIGNED NOT NULL,
+        signoff_time    TIMESTAMP,
+        PRIMARY KEY(soid),
+        INDEX (stoid)
+) TYPE=InnoDB;
+
+INSERT INTO vars (name, value, description) VALUES ("gse_mp_max_days_back", "0", "Max days back to go in gSE select for mainpage in instances where we haven't passed an offset / issue -- 0 if you don't want to use this");
+INSERT INTO vars (name, value, description) VALUES ("gse_fallback_min_stoid", "0", "Set by set_gse_min_stoid to define how far back to search max when not passing an issue or offset");
+
+ALTER TABLE skins ADD COLUMN require_acl VARCHAR(32)  DEFAULT '' NOT NULL;
+
+CREATE TABLE globjs (
+        globjid         int UNSIGNED NOT NULL auto_increment,
+        gtid            smallint UNSIGNED NOT NULL,
+        target_id       int UNSIGNED NOT NULL,
+        PRIMARY KEY (globjid),
+        UNIQUE target (gtid, target_id)
+) TYPE=InnoDB;
+
+CREATE TABLE globj_types (
+        gtid            smallint UNSIGNED NOT NULL auto_increment,
+        maintable       VARCHAR(64) NOT NULL,
+        PRIMARY KEY (gtid),
+        UNIQUE maintable (maintable)
+) TYPE=InnoDB;
+
+INSERT INTO globj_types VALUES (NULL, 'stories');
+
+# 2006-01-25
+UPDATE vars SET value = 'T_2_5_0_97' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE signoff ADD COLUMN signoff_type VARCHAR(16)  DEFAULT '' NOT NULL;
+INSERT INTO vars (name, value, description) VALUES ("signoff_notify", "0", "Add remark for bot on each signoff / update / save ?");
+INSERT INTO vars (name, value, description) VALUES ("signoff_use", "0", "Use signoff functionalilty?");
+
+DROP TABLE IF EXISTS related_stories;
+CREATE TABLE related_stories (
+        id mediumint(8) unsigned NOT NULL auto_increment,
+        stoid mediumint(8) unsigned default '0',
+        rel_stoid mediumint(8) unsigned default '0',
+        rel_sid varchar(16) NOT NULL default '',
+        title varchar(255) default '',
+        url varchar(255) default '',
+	cid mediumint(8) unsigned NOT NULl default '0',
+	ordernum smallint unsigned NOT NULLdefault '0',
+        PRIMARY KEY (id),
+        KEY stoid (stoid)
+) TYPE=InnoDB;
+
+# 2006-02-01
+UPDATE vars SET value = 'T_2_5_0_98' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE reskey_resources CHANGE COLUMN rkrid rkrid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT;
+ALTER TABLE reskey_resource_checks CHANGE COLUMN rkrid rkrid SMALLINT UNSIGNED NOT NULL;
+ALTER TABLE reskey_vars CHANGE COLUMN rkrid rkrid SMALLINT UNSIGNED NOT NULL;
+ALTER TABLE reskeys CHANGE COLUMN rkrid rkrid SMALLINT UNSIGNED NOT NULL;
+
+ALTER TABLE remarks ADD COLUMN priority SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER stoid;
+ALTER TABLE remarks ADD INDEX priority (priority);
+
+# only do if you already installed Ajax plugin recently ... if you had it installed
+# from awhile ago, important: go back and install the schema, then the dump, files
+# for the plugin
+UPDATE ajax_ops SET reskey_type = 'createuse' WHERE op = 'remarks_fetch';
+
+# 2006-02-08
+UPDATE vars SET value = 'T_2_5_0_99' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE journal_transfer ADD COLUMN updated TINYINT UNSIGNED NOT NULL DEFAULT '0';
+ALTER TABLE journal_transfer ADD KEY stoid_updated (stoid, updated);
+
+# Changes for plugins/Ajax
+INSERT INTO ajax_ops VALUES(NULL, 'admin_signoff', 'Slash::Admin', 'ajax_signoff', 'ajax_admin', 'createuse');
+
+INSERT INTO vars (name, value, description) VALUES ('memcached_exptime_story','600','Number of seconds a story record lives in memcached before requiring a re-read from the DB');
+UPDATE vars SET value='60' WHERE name='story_expire';
+
+# 2006-02-15
+UPDATE vars SET value = 'T_2_5_0_100' WHERE name = 'cvs_tag_currentcode';
+
+INSERT INTO vars (name, value, description) VALUES ('referrer_external_static_redirect','1','If true, redirect anon requests referred from other sites for dynamic article.pl to static .shtml. This can greatly improve chances of surviving aslashdotting');
+
+# Changes for plugins/Ajax
+INSERT INTO ajax_ops VALUES(NULL, 'admin_slashdbox', 'Slash::Admin', 'ajax_slashdbox', 'ajax_admin', 'createuse');
+INSERT INTO ajax_ops VALUES(NULL, 'admin_storyadminbox', 'Slash::Admin', 'ajax_storyadminbox', 'ajax_admin', 'createuse');
+INSERT INTO ajax_ops VALUES(NULL, 'admin_authorbox', 'Slash::Admin', 'ajax_authorbox', 'ajax_admin', 'createuse');
+INSERT INTO ajax_ops VALUES(NULL, 'admin_perfbox', 'Slash::Admin', 'ajax_perfbox', 'ajax_admin', 'createuse');
+
+# 2006-02-22
+UPDATE vars SET value = 'T_2_5_0_101' WHERE name = 'cvs_tag_currentcode';
+
+# Changes for plugins/Tags
+UPDATE templates SET page='misc' WHERE name='tagsstorydivtagbox' AND page='index' AND skin='default';
+
+UPDATE users_info, users_hits SET lastaccess = lastclick WHERE users_info.uid=users_hits.uid AND lastaccess < lastclick;
+
+# 2006-02-28
+UPDATE vars SET value = 'T_2_5_0_102' WHERE name = 'cvs_tag_currentcode';
+
+# Changes for plugins/Submit (which you are almost certainly using)
+DROP TABLE IF EXISTS submissions_notes;
+CREATE TABLE submissions_notes (
+        noid mediumint(8) unsigned NOT NULL auto_increment,
+        uid mediumint(8) unsigned NOT NULL default '0',
+        submatch varchar(32) NOT NULL default '',
+        subnote text,
+        time datetime default NULL,
+  PRIMARY KEY  (noid)
+) TYPE=InnoDB;
+
+# Changes for plugins/Remarks
+INSERT INTO ajax_ops VALUES (NULL, 'remarks_config', 'Slash::Remarks', 'ajaxFetchConfigPanel', 'ajax_admin', 'createuse');
+INSERT INTO ajax_ops VALUES (NULL, 'remarks_config_save', 'Slash::Remarks', 'ajaxConfigSave', 'ajax_admin', 'createuse');
+
+# Changes for plugins/Tags
+INSERT INTO ajax_ops VALUES (NULL, 'tags_story_history', 'Slash::Tags', 'ajaxTagHistoryStory', 'ajax_admin', 'createuse');
+ALTER TABLE tags DROP INDEX uid_globjid_tagnameid;
+ALTER TABLE tags ADD COLUMN inactivated DATETIME DEFAULT NULL;
+ALTER TABLE tags ADD INDEX uid_globjid_tagnameid_inactivated (uid, globjid, tagnameid, inactivated);
+UPDATE vars SET value='^\!?[a-z][a-z0-9/]{0,62}$' WHERE name='tags_tagname_regex';
+DROP TABLE IF EXISTS tag_params;
+CREATE TABLE tag_params (
+        tagid           int UNSIGNED NOT NULL,
+        name            VARCHAR(32) DEFAULT '' NOT NULL,
+        value           VARCHAR(64) DEFAULT '' NOT NULL,
+        UNIQUE tag_name (tagid, name)
+) TYPE=InnoDB;
+DROP TABLE IF EXISTS tagcommand_adminlog;
+CREATE TABLE tagcommand_adminlog (
+        id              int UNSIGNED NOT NULL AUTO_INCREMENT,
+        cmdtype         VARCHAR(6) NOT NULL,
+        tagnameid       int UNSIGNED NOT NULL,
+        globjid         int UNSIGNED DEFAULT NULL,
+        adminuid        mediumint UNSIGNED NOT NULL,
+        created_at      datetime NOT NULL,
+        PRIMARY KEY id (id),
+        KEY created_at (created_at),
+        KEY tagnameid_globjid (tagnameid, globjid)
+) TYPE=InnoDB;
+
+# 2006-03-14
+UPDATE vars SET value = 'T_2_5_0_103' WHERE name = 'cvs_tag_currentcode';
+
+DROP TABLE IF EXISTS urls;
+CREATE TABLE urls (
+	url_id INT(10) UNSIGNED NOT NULL auto_increment,
+	url_digest VARCHAR(32) NOT NULL,
+	url TEXT NOT NULL,
+	is_success TINYINT(4),
+	createtime datetime,
+	last_attempt datetime,
+	last_success datetime,
+	believed_fresh_until datetime,
+	status_code SMALLINT(6),
+	reason_phrase VARCHAR(30),
+	content_type VARCHAR(60),
+	initialtitle VARCHAR(255),
+	validatedtitle VARCHAR(255),
+	PRIMARY KEY (url_id),
+	UNIQUE url_digest (url_digest)
+) Type=InnoDB;
+
+INSERT INTO globj_types VALUES (NULL, 'urls');
+
+INSERT IGNORE INTO reskey_resources VALUES (8, 'bookmark');
+
+# 2006-03-21
+UPDATE vars SET value = 'T_2_5_0_104' WHERE name = 'cvs_tag_currentcode';
+
+# 2006-03-24
+UPDATE vars SET value = 'T_2_5_0_105' WHERE name = 'cvs_tag_currentcode';
+
+# For plugins/Ajax
+UPDATE ajax_ops set reskey_type="use" where op="admin_signoff";
+
+# For bookmarks plugin
+INSERT INTO vars (name, description, value) VALUES ('bookmark_popular_days', "Number of days back to look for popular bookmarks", 1);
+INSERT INTO vars (name, description, value) VALUES ('bookmark_allowed_schemes', "Schemes to allow for bookmarks.  Separate entries with |", "http|https");
+
+# 2006-03-29
+UPDATE vars SET value = 'T_2_5_0_106' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE comments ADD COLUMN last_update TIMESTAMP NOT NULL AFTER date;
+UPDATE comments SET last_update = date;
+
+INSERT INTO reskey_resource_checks (rkrcid, rkrid, type, class, ordernum) VALUES (NULL, 8, 'use', 'Slash::ResKey::Checks::Post', 151);
+INSERT INTO reskey_resource_checks (rkrcid, rkrid, type, class, ordernum) VALUES (NULL, 8, 'all', 'Slash::ResKey::Checks::Duration', 601);
+INSERT INTO reskey_resource_checks (rkrcid, rkrid, type, class, ordernum) VALUES (NULL, 8, 'all', 'Slash::ResKey::Checks::User', 101);
+
+# Changes for plugins/Tags
+INSERT INTO menus VALUES (NULL, 'tagszg', 'Active', 'active', '[% gSkin.rootdir %]/tags',        1, 1, 1);
+INSERT INTO menus VALUES (NULL, 'tagszg', 'Recent', 'recent', '[% gSkin.rootdir %]/tags/recent', 1, 1, 2);
+INSERT INTO menus VALUES (NULL, 'tagszg', 'All',    'all',    '[% gSkin.rootdir %]/tags/all',    1, 1, 3);
+UPDATE vars SET name='tags_stories_examples_pre' WHERE name='tags_stories_examples';
+INSERT INTO vars (name, value, description) VALUES ('tags_stories_examples', '', 'Example tags for stories');
+
+# Changes for plugins/Ajax
+INSERT INTO ajax_ops VALUES (NULL, 'admin_learnword', 'Slash::Admin', 'admin_learnword', 'ajax_admin', 'createuse');
+
+# 2006-04-05
+UPDATE vars SET value = 'T_2_5_0_107' WHERE name = 'cvs_tag_currentcode';
+
+# Changes for plugins/Relocate which ONLY need be applied if you
+# installed it pre-June 2004.  Somehow these changes were omitted
+# from this upgrades file at that time.  If you installed it
+# after that time, you already have these changes.
+ALTER TABLE links_for_stories ADD COLUMN stoid MEDIUMINT UNSIGNED NOT NULL FIRST;
+UPDATE links_for_stories, stories SET links_for_stories.stoid=stories.stoid WHERE links_for_stories.sid=stories.sid;
+ALTER TABLE links_for_stories DROP PRIMARY KEY, DROP KEY sid, ADD PRIMARY KEY (id, stoid), ADD KEY stoid (stoid), DROP COLUMN sid;
+
+# Updates for plugins/Tags
+UPDATE ajax_ops SET subroutine="ajaxTagHistory" where subroutine = "ajaxTagHistoryStory";
+UPDATE ajax_ops SET op="tags_history" WHERE op="tags_story_history";
+INSERT INTO vars (name, value, description) VALUES ('tags_urls_examples_pre', 'plus minus binspam', 'Example tags for urls');
+INSERT INTO vars (name, value, description) VALUES ('tags_urls_examples', '', 'Example tags for urls');
+INSERT INTO vars (name, value, description) VALUES ('tags_urls_lastscanned', '0', 'The last tagid scanned to update url');
+INSERT INTO vars (name, value, description) VALUES ('tags_urls_top_minscore', '2', 'Minimum score a tag must have to make it into the top tags for a url');
+INSERT INTO ajax_ops VALUES (NULL, 'tags_get_user_urls', 'Slash::Tags', 'ajaxGetUserUrls', 'ajax_tags_write', 'createuse');
+INSERT INTO ajax_ops VALUES (NULL, 'tags_create_for_url', 'Slash::Tags', 'ajaxCreateForUrl', 'ajax_tags_write', 'use');
+INSERT INTO ajax_ops VALUES (NULL, 'tags_get_admin_url', 'Slash::Tags', 'ajaxGetAdminUrl', 'ajax_admin', 'createuse');
+
+ALTER TABLE urls ADD COLUMN tags_top VARCHAR(255) DEFAULT '' NOT NULL AFTER validatedtitle;
+
+# 2006-04-11
+UPDATE vars SET value = 'T_2_5_0_108' WHERE name = 'cvs_tag_currentcode';
+
+INSERT INTO globj_types VALUES (NULL, 'submissions');
+INSERT INTO globj_types VALUES (NULL, 'journals');
+DROP TABLE IF EXISTS globj_urls;
+CREATE TABLE globj_urls (
+    id INT UNSIGNED NOT NULL auto_increment,
+    globjid INT UNSIGNED NOT NULL DEFAULT 0,
+    url_id INT UNSIGNED NOT NULL NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE globjid_url_id (globjid, url_id)
+) TYPE=InnoDB;
+ALTER TABLE urls TYPE=InnoDB, ADD COLUMN popularity float DEFAULT '0' NOT NULL;
+
+# updates for plugins/Tags
+INSERT INTO vars (name, value, description) VALUES ('tags_urls_pos_tags', 'plus', '| separated list of tags applied which positively affect url popularity');
+INSERT INTO vars (name, value, description) VALUES ('tags_urls_neg_tags', 'minus|binspam', '| separated list of tags applied which negatively affect url popularity');
+
+# updates for plugins/Bookmark
+UPDATE reskey_vars set value='1' where name='user_seclev' AND rkrid=8;
+DROP TABLE IF EXISTS bookmark_feeds;
+CREATE TABLE bookmark_feeds (
+    id MEDIUMINT UNSIGNED NOT NULL auto_increment,
+    uid MEDIUMINT UNSIGNED NOT NULL,
+    feed VARCHAR(255),
+    tags VARCHAR(255),
+    PRIMARY KEY(id)
+) TYPE=InnoDB;
+
+# Update for plugins/Ajax
+UPDATE ajax_ops SET subroutine="ajax_learnword" where subroutine = "admin_learnword";
+
+# 2006-04-19
+UPDATE vars SET value = 'T_2_5_0_109' WHERE name = 'cvs_tag_currentcode';
+
+INSERT INTO vars (name, value, description) VALUES ('url_checker_user_agent', '', 'user Agent to use for url checking task, empty string results in lwp user agent being used');
+
+# 2006-04-26
+UPDATE vars SET value = 'T_2_5_0_110' WHERE name = 'cvs_tag_currentcode';
+
+# Update for plugins/Tags
+CREATE TABLE tagboxes (
+        tbid                    smallint UNSIGNED NOT NULL AUTO_INCREMENT,
+        name                    varchar(32) DEFAULT '' NOT NULL,
+        affected_type           ENUM('user', 'globj') NOT NULL,
+        weight                  float UNSIGNED DEFAULT 1.0 NOT NULL,
+        last_tagid_logged       int UNSIGNED NOT NULL,
+        last_run_completed      datetime,
+        PRIMARY KEY tbid (tbid),
+        UNIQUE name (name)
+) TYPE=InnoDB;
+CREATE TABLE tagbox_feederlog (
+        tfid            int UNSIGNED NOT NULL AUTO_INCREMENT,
+        created_at      datetime NOT NULL,
+        tbid            smallint UNSIGNED NOT NULL,
+        tagid           int UNSIGNED NOT NULL,
+        affected_id     int UNSIGNED NOT NULL,
+        importance      FLOAT UNSIGNED DEFAULT 1.0 NOT NULL,
+        PRIMARY KEY tfid (tfid),
+        KEY tbid_tagid (tbid, tagid),
+        KEY tbid_affectedid (tbid, affected_id)
+) TYPE=InnoDB;
+INSERT INTO tagboxes VALUES (NULL, 'tag_count', 'user', '1.0', 0, NULL);
+
+# 2006-05-02
+UPDATE vars SET value = 'T_2_5_0_111' WHERE name = 'cvs_tag_currentcode';
+
+UPDATE tagboxes SET name='TagCountUser' WHERE name='tag_count';
+ALTER TABLE tagboxes ADD COLUMN last_tdid_logged int UNSIGNED NOT NULL, ADD COLUMN last_tuid_logged int UNSIGNED NOT NULL;
+RENAME TABLE tagbox_feederlog TO tagboxlog_feeder;
+CREATE TABLE tagbox_userkeyregexes (
+        name                    varchar(32) NOT NULL,
+        userkeyregex            varchar(255) NOT NULL,
+        UNIQUE name_regex (name, userkeyregex)
+) TYPE=InnoDB;
+CREATE TABLE tagboxlog_deactivated (
+        tdid            int UNSIGNED NOT NULL AUTO_INCREMENT,
+        tagid           int UNSIGNED NOT NULL,
+        PRIMARY KEY tdid (tdid),
+        KEY tagid (tagid)
+) TYPE=InnoDB;
+CREATE TABLE tagboxlog_userchange (
+        tuid            int UNSIGNED NOT NULL AUTO_INCREMENT,
+        created_at      datetime NOT NULL,
+        uid             mediumint UNSIGNED NOT NULL,
+        user_key        varchar(32) NOT NULL,
+        value_old       text,
+        value_new       text,
+        PRIMARY KEY tuid (tuid),
+        KEY uid (uid)
+) TYPE=InnoDB;
+
+# 2006-05-17
+UPDATE vars SET value = 'T_2_5_0_112' WHERE name = 'cvs_tag_currentcode';
+
+# Update for plugins/Tags
+RENAME TABLE tagboxlog_deactivated TO tags_deactivated;
+RENAME TABLE tagboxlog_userchange TO tags_userchange;
+
+# 2006-05-24
+UPDATE vars SET value = 'T_2_5_0_113' WHERE name = 'cvs_tag_currentcode';
+
+# PUDGE LAST UPDATED HERE
+
+ALTER TABLE tagboxlog_feeder CHANGE COLUMN tagid tagid int UNSIGNED DEFAULT NULL AFTER importance, ADD COLUMN tdid int UNSIGNED DEFAULT NULL, ADD COLUMN tuid int UNSIGNED DEFAULT NULL, ADD KEY tbid_tdid (tbid, tdid), ADD KEY tbid_tuid (tbid, tuid);
+
+# 2006-06-01
+UPDATE vars SET value = 'T_2_5_0_114' WHERE name = 'cvs_tag_currentcode';
+
+# 2006-06-07
+UPDATE vars SET value = 'T_2_5_0_115' WHERE name = 'cvs_tag_currentcode';
+
+# 2006-06-13
+UPDATE vars SET value = 'T_2_5_0_116' WHERE name = 'cvs_tag_currentcode';
+
+# 2006-06-20
+UPDATE vars SET value = 'T_2_5_0_117' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE related_stories ADD COLUMN cid mediumint(8) unsigned NOT NULL default '0', ADD COLUMN ordernum smallint unsigned NOT NULL default '0';
+
+INSERT INTO vars (name, value, description) VALUES ('index_readmore_with_bytes', '0', 'Include bytes / word count in readmore link where applicable?');
+
+# 2006-07-05
+UPDATE vars SET value = 'T_2_5_0_118' WHERE name = 'cvs_tag_currentcode';
+
 # SLASHCODE/USEPERL LAST UPDATED HERE
 
 # SLASHDOT LAST UPDATED HERE
 
-# End of T_2_5_0_40, Start of T_2_5_0_41 - 2004/11/30
+# Update for plugins/Tags
+# You can rm the symlink at $SLASH_PREFIX/site/$SITENAME/tasks/tags_update.pl
+# here, if desired.  But it's not necessary, it won't hurt anything.  (The
+# symlink-tool script doesn't yet do this automatically when a task is
+# removed from a THEME/PLUGIN file.)
+# Run `utils/tags_declout.plx VIRTUAL_USER` after running these upgrades
+UPDATE vars SET name='tagbox_top_minscore_stories' WHERE name='tags_stories_top_minscore';
+UPDATE vars SET name='tagbox_top_minscore_urls'    WHERE name='tags_urls_top_minscore';
+UPDATE vars SET name='tagbox_top_urls_tags_pos'    WHERE name='tags_urls_pos_tags';
+UPDATE vars SET name='tagbox_top_urls_tags_neg'    WHERE name='tags_urls_neg_tags';
+DELETE FROM vars WHERE name IN ('tags_stories_lastscanned', 'tags_urls_lastscanned');
 
-# End of T_2_5_0_41, Start of T_2_5_0_42 - 2004/12/07
+# 2006-07-11
+UPDATE vars SET value = 'T_2_5_0_119' WHERE name = 'cvs_tag_currentcode';
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -14,12 +14,15 @@ sub main {
 	my $form    = getCurrentForm();
 	my $user    = getCurrentUser();
 
-	my $data = ($form->{op} eq 'hierarchy') ? { admin => 1, adminmenu => 'info', tab_selected => 'hierarchy' } : {};
+	my $hierarchy_op = $form->{op} && $form->{op} eq 'hierarchy';
+	my $data = $hierarchy_op
+		? { admin => 1, adminmenu => 'info', tab_selected => 'hierarchy' }
+		: { };
 	header(getData('head'), $form->{section}, $data) or return;
 
 	print createMenu('topics');
 
-	if ($form->{op} eq 'hierarchy') {
+	if ($hierarchy_op) {
 		hierarchy();
 	} else {
 		listTopics();
@@ -65,7 +68,7 @@ sub listTopics {
 	}
 
 	slashDisplay('listTopics', {
-		title		=> getData('current_topics'),
+		title		=> 'Current Topic Categories',
 		width		=> '90%',
 		topic_admin	=> getCurrentUser('seclev') >= 500,
 		topics		=> [ values %$topics ],

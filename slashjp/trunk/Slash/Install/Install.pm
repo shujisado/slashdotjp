@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -144,7 +144,7 @@ sub installTheme {
 	my($self, $answer, $themes, $symlink) = @_;
 	$themes ||= $self->{'_themes'};
 
-	$self->_install($themes->{$answer}, $symlink);
+	$self->_install($themes->{$answer}, $symlink, 'theme');
 }
 
 sub installThemes {
@@ -153,8 +153,8 @@ sub installThemes {
 
 	for my $answer (@$answers) {
 		for (keys %$themes) {
-			if ($answer eq $themes->{$_}{installorder}) {
-				$self->_install($themes->{$_}, $symlink, 0);
+			if ($answer eq $themes->{$_}{order}) {
+				$self->_install($themes->{$_}, $symlink, 'theme');
 			}
 		}
 	}
@@ -164,7 +164,7 @@ sub installPlugin {
 	my($self, $answer, $plugins, $symlink) = @_;
 	$plugins ||= $self->{'_plugins'};
 
-	$self->_install($plugins->{$answer}, $symlink, 1);
+	$self->_install($plugins->{$answer}, $symlink, 'plugin');
 }
 
 sub installPlugins {
@@ -174,10 +174,30 @@ sub installPlugins {
 	for my $answer (@$answers) {
 		for (keys %$plugins) {
 			if ($answer eq $plugins->{$_}{order}) {
-				$self->_install($plugins->{$_}, $symlink, 1);
+				$self->_install($plugins->{$_}, $symlink, 'plugin');
 			}
 		}
 	}
+}
+
+sub installTagbox {
+        my($self, $answer, $tagboxes, $symlink) = @_;
+        $tagboxes ||= $self->{'_tagboxes'};
+    
+        $self->_install($tagboxes->{$answer}, $symlink, 'tagbox');
+}
+
+sub installTagboxes {
+        my($self, $answers, $tagboxes, $symlink) = @_;
+        $tagboxes ||= $self->{'_tagboxes'};
+
+        for my $answer (@$answers) {
+                for (keys %$tagboxes) {
+                        if ($answer eq $tagboxes->{$_}{order}) {
+                                $self->_install($tagboxes->{$_}, $symlink, 'tagbox');
+                        }
+                }
+        }
 }
 
 # Used internally by the _process_fh_into_sql method (which in
@@ -227,14 +247,16 @@ sub _process_fh_into_sql {
 };
 
 sub _install {
-	my($self, $hash, $symlink, $is_plugin) = @_;
+	my($self, $hash, $symlink, $type) = @_;
+
 	# Yes, performance wise this is questionable, if getValue() was
 	# cached.... who cares this is the install. -Brian
 	if ($self->exists('hash', $hash->{name})) {
 		print STDERR "Plugin $hash->{name} has already been installed\n";
 		return;
 	}
-	if ($is_plugin) {
+
+	if ($type eq 'plugin') {
 		return if $self->exists('plugin', $hash->{name});
 
 		$self->create({
@@ -247,7 +269,9 @@ sub _install {
 			value           => $symlink ? 1 : 0,
 			description     => "$hash->{name} plugin files installed symlink?"
 		});
-	} else {
+	}
+	
+	if ($type eq 'theme') {
 		# not sure if this is what we want, but leave it
 		# in until someone complains.  really, we should
 		# have reinstall theme/plugin methods or
@@ -259,20 +283,32 @@ sub _install {
 		return if $self->exists('theme', $hash->{name});
 
 		$self->create({
-			name            => 'theme',
-			value           => $hash->{'name'},
-			description     => $hash->{'description'},
+			name		=> 'theme',
+			value		=> $hash->{'name'},
+			description	=> $hash->{'description'},
 		});
 		$self->create({
-			name            => 'theme_' . $hash->{name} . '_symlink',
-			value           => $symlink ? 1 : 0,
-			description     => "$hash->{name} theme files installed symlink?"
+			name		=> 'theme_' . $hash->{name} . '_symlink',
+			value		=> $symlink ? 1 : 0,
+			description	=> "$hash->{name} theme files installed symlink?"
 		});
 	}
+
+	if ($type eq 'tagbox') {
+		return if $self->exists('tagbox', $hash->{name});
+
+		$self->create({
+			name		=> 'tagbox',
+			value		=> $hash->{'name'},
+			description	=> $hash->{'description'},
+		}); 
+	}
+
 	my $driver = $self->getValue('db_driver');
 	my $prefix_site = $self->getValue('site_install_directory');
 
 	my %stuff = ( # [relative directory, executable]
+		css		=> ["htdocs",			1],
 		htdoc		=> ["htdocs",			1],
 		htdoc_code	=> ["htdocs/code",		0],
 		htdoc_faq	=> ["htdocs/faq",		0],
@@ -381,7 +417,7 @@ sub _install {
 		}
 	}
 
-	unless ($is_plugin) {
+	if ($type eq "theme") {
 		my(%templates, @no_templates);
 		for my $name (@{$hash->{'include_theme'}}) {
 			my $slash_prefix = $self->get('base_install_directory')->{value};
@@ -455,7 +491,7 @@ sub _install {
 		}
 	}
 
-	unless ($is_plugin) {
+	if ($type eq "theme") {
 		# This is where we cleanup any templates that don't belong
 		for (@{$hash->{'no-template'}}) {
 			my($name, $page, $skin) = split /;/, $_;
@@ -482,6 +518,13 @@ sub getThemeList {
 	# Don't care about installorder for themes, since only one
 	# gets installed.
 	return $theme_list;
+}
+
+sub getTagboxList {
+	my $tagbox_list = _getList(@_, 'tagboxes', 'TAGBOX');
+	setListOrder($tagbox_list);
+	setListInstallOrder($tagbox_list);
+	return $tagbox_list;
 }
 
 sub getSiteTemplates {
@@ -575,7 +618,7 @@ sub _getList {
 			my($key, $val) = split(/=/, $_, 2);
 			$key = lc $key;
 			if ($key =~ /^(
-				htdoc | htdoc_code | htdoc_faq | 
+				css | htdoc | htdoc_code | htdoc_faq | 
 				image | image_award | image_banner | image_faq |
 				no-template | include_theme | task | template | sbin | misc | topic
 			)s?$/x) {

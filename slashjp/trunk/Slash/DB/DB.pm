@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -41,9 +41,9 @@ sub new {
 		$self->sqlConnect();
 		return $self;
 	} elsif ($dsn) {
-		die "Database $dsn unsupported! (virtual user: $user)";
+		die "Database $dsn unsupported! (virtual user '$user')";
 	} else {
-		die "DBIx::Password returned *nothing* for virtual user $user DSN (is the username correct?)";
+		die "DBIx::Password has no information about the virtual user '$user'. Most likely either you mistyped it (maybe in slash.sites or your SlashVirtualUser directive?), or DBIx::Password is misconfigured somehow";
 	}
 }
 
@@ -874,28 +874,6 @@ Fixed KEY.
 =back
 
 =head2 deleteSession(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
-=head2 deleteAuthor(KEY)
 
 I am the default documentation, short and stout.
 

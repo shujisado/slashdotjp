@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -29,13 +29,16 @@ $task{$me}{code} = sub {
 	setCurrentSkin($constants->{mainpage_skid});
 	my $gSkin = getCurrentSkin();
 
+	my $mp_max_days_back = $constants->{gse_mp_max_days_back};
+	my $fallback_min_stoid;
+
 	# Normally gSE will pad the returned value with this much.
 	my $limit_extra = int(($gSkin->{artcount_min} + $gSkin->{artcount_max})/2);
 	# But for a safety margin, we want more.
 	$limit_extra = $limit_extra * 3 + 100;
 
 	# Normally gSE will look this far in the future for stories.
-	my $future_secs = $constants->{subscribe_future_secs};
+	my $future_secs = $constants->{subscribe_future_secs} || 0;
 	# But again for a safety margin, we want more.
 	$future_secs = $future_secs * 3 + 86400;
 
@@ -52,6 +55,11 @@ $task{$me}{code} = sub {
 	# This optimization won't help us if it includes a significant
 	# fraction of the rows in the stories table -- write a zero.
 	$min_stoid = 0 if $min_stoid < 500;
+
+	if ($mp_max_days_back) {
+		my $gse_fallback_min_stoid = $slashdb->sqlSelect("MIN(stoid)", "stories", "time > DATE_SUB(NOW(), INTERVAL $mp_max_days_back DAY)");
+		$slashdb->setVar("gse_fallback_min_stoid", $gse_fallback_min_stoid);
+	}
 
 	$slashdb->setVar("gse_min_stoid", $min_stoid);
 	return "wrote $min_stoid";

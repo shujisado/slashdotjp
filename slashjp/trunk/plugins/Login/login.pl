@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -91,8 +91,8 @@ sub newUser {
 		$error = 1;
 	} elsif ($matchname ne '' && $form->{newusernick} ne '') {
 		if ($constants->{newuser_portscan}) {
-			my $is_trusted = $slashdb->checkIsTrusted($user->{ipid});
-			if ($is_trusted ne 'yes') {
+			my $is_trusted = $slashdb->checkAL2($user->{srcids}, 'trusted');
+			if (!$is_trusted) {
 				my $is_proxy = $slashdb->checkForOpenProxy($user->{hostip});
 				if ($is_proxy) {
 					push @note, getData('new_user_open_proxy', {
@@ -216,7 +216,19 @@ sub mailPasswd {
 	my $user_send = $reader->getUser($uid);
 
 	if (!$error) {
-		if ($reader->checkReadOnly(nopost => { ipid => $user->{ipid} })) {
+		# A user coming from a srcid that's been marked as not
+		# acceptable for posting from also does not get to
+		# mail a password to anyone.
+
+		## XXX: we added uid to srcids, so now this is broken;
+		## anywhere else we need to address this?
+		my %srcids;
+		@srcids{keys %{$user->{srcids}}} = values %{$user->{srcids}};
+		delete $srcids{uid};
+
+		if ($reader->checkAL2(\%srcids, 'nopost')
+			|| $reader->checkAL2(\%srcids, 'nopostanon')
+		) {
 			push @note, getData('mail_readonly');
 			$error = 1;
 
@@ -242,7 +254,7 @@ sub _sendMailPasswd {
 
 	my $uid       = $user_send->{uid};
 	my $newpasswd = $slashdb->getNewPasswd($uid);
-	my $tempnick  = fixparam($user_send->{nickname});
+	my $tempnick  = $user_send->{nickname};
 	my $subject   = getData('mail_subject', { nickname => $user_send->{nickname} });
 
 	# Pull out some data passed in with the request.  Only the IP
@@ -355,7 +367,6 @@ sub savePrefs {
 		$slashdb->setUser($user->{uid}, $user_save);
 		$note = getData('passchanged');
 
-		my $value  = $slashdb->getLogToken($uid, 1);
 		my $cookie = bakeUserCookie($uid, $slashdb->getLogToken($uid, 1));
 		setCookie('user', $cookie, $user_save->{session_login});
 	}

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -56,7 +56,13 @@ Slash::Test - Command-line Slash testing
 Will export everything from Slash, Slash::Utility, Slash::Display,
 Slash::Constants, Slash::XML, and Data::Dumper into the current namespace.
 Will export $user, $anon, $form, $constants, $slashdb, and $gSkin as global
-variables into the current namespace.
+variables into the current namespace, along with a few other useful
+variables: $self (alias to $slashdb), $reader_db, $log_db, $writer_db,
+and $search_db.
+
+Also the name of each plugin will be a global variable referencing its
+object (e.g., C<$journal> is automatically created as a L<Slash::Journal>
+object).
 
 So use it one of three ways (use the default Virtual User,
 or pass it in via the import list, or pass in with slashTest()), and then
@@ -146,7 +152,8 @@ None.
 =item Side effects
 
 Set up the environment with createEnvironment(), export $user, $anon,
-$form, $constants, $slashdb, and $gSkin into current namespace.
+$form, $constants, $slashdb, and $gSkin into current namespace.  $self
+is an alias to $slashdb.
 
 =back
 
@@ -163,7 +170,7 @@ sub slashTest {
 
 	setCurrentSkin(determineCurrentSkin());
 
-	$::slashdb   = getCurrentDB();
+	$::self = $::slashdb = getCurrentDB();
 	$::constants = getCurrentStatic();
 	$::user      = getCurrentUser();
 	$::anon      = getCurrentAnonymousCoward();

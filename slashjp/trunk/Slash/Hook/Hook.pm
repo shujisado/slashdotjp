@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -25,40 +25,23 @@ sub slashHook {
 	my($param, $options) = @_;
 	my $slashdb = getCurrentDB();
 
+	my $retval = undef;
 	my $hooks = $slashdb->getHooksByParam($param);
 	for my $hook (@$hooks) {
-		my $class = $hook->{class};
-		my $function = $class . '::' . $hook->{subroutine};
+		my $function = $hook->{class} . '::' . $hook->{subroutine};
 
-		if ($classes{$class}) {			# already require'd
-			if ($classes{$class} eq 'NA') {	# already failed
-				next;
-			}
-		} else {
-			eval "require $class";		# we cache because this is expensive,
-							# even if it has already succeeded or
-							# failed, just by doing the eval -- pudge
-			if ($@) {			# failed
-				$classes{$class} = 'NA';
-				next;
-			} else {			# success!
-				$classes{$class} = 1;
-			}
-		}
-
-		my $code;
-		{
-			no strict 'refs';
-			$code = \&{ $function };
-		}
-		if (defined (&$code)) {
-			unless ($code->($options)) {
-				errorLog("Failed executing hook ($param) - $function");
+		my $code = loadCoderef($hook->{class}, $hook->{subroutine});
+		if ($code) {
+			$retval = $code->($options);
+			if (! defined $retval) {
+				errorLog("Failed executing hook ($param) - $function: no return value");
 			}
 		} else {
 			errorLog("Failed trying to do hook ($param) - $function");
 		}
 	}
+
+	$retval;
 }
 
 1;

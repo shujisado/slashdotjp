@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -35,6 +35,7 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $form      = getCurrentForm();
 	my $user      = getCurrentUser();
+	setCurrentSkin(determineCurrentSkin());
 	my $gSkin     = getCurrentSkin();
 	my $slashdb   = getCurrentDB();
 	my $searchDB  = getObject('Slash::Search', { db_type => 'search' });
@@ -53,6 +54,9 @@ sub main {
 
 	# switch search mode to poll if in polls skin and other
 	# search type isn't specified
+# I've caught gSkin being {} here, on a test box.  Not sure if that's a
+# bug or just a misconfiguration of mine. - Jamie 2005-11-26
+use Data::Dumper; print STDERR "search.pl gSkin: " . Dumper($gSkin) if !$gSkin->{name};
 	if ($gSkin->{name} eq 'polls' && !$form->{op}) {
 		$form->{op} = 'polls';
 		$form->{section} = '';
@@ -70,7 +74,7 @@ sub main {
 			unless $constants->{submiss_view};
 	}
 
-	if ($form->{content_type} eq 'rss') {
+	if ($form->{content_type} && $form->{content_type} =~ $constants->{feed_types}) {
 		# Here, panic mode is handled within the individual funcs.
 		# We want to return valid (though empty) RSS data even
 		# when search is down.
@@ -81,6 +85,7 @@ sub main {
 		my $header_title   = getData('search_header_title',   { text => $text });
 		my $titlebar_title = getData('search_titlebar_title', { text => $text });
 		header($header_title) or return;
+		print getData("search_slashboxes");	
 		titlebar("100%", $titlebar_title);
 
 		$form->{op} = 'stories' unless exists $ops{$form->{op}};
@@ -153,9 +158,9 @@ sub _buildargs {
 		my $x = "";
 		$x =  $form->{$_} if defined $form->{$_} && $x eq "";
 		$x =~ s/ /+/g;
-		$uri .= "$_=$x&" unless $x eq "";
+		$uri .= "$_=$x&amp;" unless $x eq "";
 	}
-	$uri =~ s/&$//;
+	$uri =~ s/&amp;$//;
 
 	return fixurl($uri);
 }
@@ -172,10 +177,11 @@ sub commentSearch {
 		'threshold', $formats, $form->{threshold}, 1
 	);
 
+	my $topic_ref = $form->{tid} ? $slashdb->getTopic($form->{tid}) : { };
 	slashDisplay('searchform', {
 #		sections	 => 1, # _skins(),
 #		topics		 => 1, # _topics(),
-		tref		 => $slashdb->getTopic($form->{tid}),
+		tref		 => $topic_ref,
 		op		 => $form->{op},
 		'sort'		 => _sort(),
 		threshhold 	 => 1,
@@ -268,10 +274,11 @@ sub storySearch {
 	my $start = $form->{start} || 0;
 	my $stories = $searchDB->findStory($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 
+	my $topic_ref = $form->{tid} ? $slashdb->getTopic($form->{tid}) : { };
 	slashDisplay('searchform', {
 		sections	=> 1, # _skins(),
 		topics		=> 1, # _topics(),
-		tref		=> $slashdb->getTopic($form->{tid}),
+		tref		=> $topic_ref,
 		op		=> $form->{op},
 		authors		=> _authors(),
 		'sort'		=> _sort(),
@@ -321,11 +328,12 @@ sub pollSearch {
 
 	my $start = $form->{start} || 0;
 	my $polls = $searchDB->findPollQuestion($form, $start, $constants->{search_default_display} + 1, $form->{sort});
+	my $topic_ref = $form->{tid} ? $slashdb->getTopic($form->{tid}) : { };
 	slashDisplay('searchform', {
 		op		=> $form->{op},
 #		topics		=> 1, # _topics(),
 #		sections	=> 1, # _skins(),
-		tref		=> $slashdb->getTopic($form->{tid}),
+		tref		=> $topic_ref,
 		'sort'		=> _sort(),
 	});
 
@@ -375,16 +383,20 @@ sub commentSearchRSS {
 		$comments = $searchDB->findComments($form, $start, 15, $form->{sort});
 	}
 
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+
 	my @items;
 	for my $entry (@$comments) {
 		my $time = timeCalc($entry->{date});
 		push @items, {
 			title	=> "$entry->{subject} ($time)",
+			time	=> $entry->{date},
+			creator	=> $reader->getUser($entry->{uid}, 'nickname'),
 			'link'	=> ($gSkin->{absolutedir} . "/comments.pl?sid=$entry->{did}&cid=$entry->{cid}"),
 		};
 	}
 
-	xmlDisplay(rss => {
+	xmlDisplay($form->{content_type} => {
 		channel => {
 			title		=> "$constants->{sitename} Comment Search",
 			'link'		=> "$gSkin->{absolutedir}/search.pl",
@@ -412,11 +424,12 @@ sub userSearchRSS {
 		my $time = timeCalc($entry->{journal_last_entry_date});
 		push @items, {
 			title	=> $entry->{nickname},
+			time	=> $entry->{journal_last_entry_date},
 			'link'	=> ($gSkin->{absolutedir} . '/users.pl?nick=' . $entry->{nickname}),
 		};
 	}
 
-	xmlDisplay(rss => {
+	xmlDisplay($form->{content_type} => {
 		channel => {
 			title		=> "$constants->{sitename} User Search",
 			'link'		=> "$gSkin->{absolutedir}/search.pl",
@@ -439,6 +452,8 @@ sub storySearchRSS {
 		$stories = $searchDB->findStory($form, $start, 15, $form->{sort});
 	}
 
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+
 	my @items;
 	for my $entry (@$stories) {
 		my $time = timeCalc($entry->{time});
@@ -446,12 +461,14 @@ sub storySearchRSS {
 		# so why didn't make it sectional?
 		push @items, {
 			title	=> $entry->{title},
+			time	=> $entry->{time},
+			creator	=> $reader->getUser($entry->{uid}, 'nickname'),
 			'link'	=> ($gSkin->{absolutedir} . '/article.pl?sid=' . $entry->{sid}),
 			description	=> $entry->{introtext}
 		};
 	}
 
-	xmlDisplay(rss => {
+	xmlDisplay($form->{content_type} => {
 		channel => {
 			title		=> "$constants->{sitename} Story Search",
 			'link'		=> "$gSkin->{absolutedir}/search.pl",
@@ -483,11 +500,12 @@ sub pollSearchRSS {
 		my $link = $url || $gSkin->{absolutedir};
 		push @items, {
 			title	=> "$entry->{question} ($time)",
+			time	=> $entry->{date},
 			'link'	=> ($link . '/pollBooth.pl?qid=' . $entry->{qid}),
 		};
 	}
 
-	xmlDisplay(rss => {
+	xmlDisplay($form->{content_type} => {
 		channel => {
 			title		=> "$constants->{sitename} Poll Search",
 			'link'		=> "$gSkin->{absolutedir}/search.pl",
@@ -559,12 +577,14 @@ sub journalSearchRSS {
 		my $time = timeCalc($entry->{date});
 		push @items, {
 			title	=> "$entry->{description} ($time)",
+			time	=> $entry->{date},
+			creator	=> $entry->{nickname},
 			'link'	=> ($gSkin->{absolutedir} . '/~' . fixparam($entry->{nickname}) . '/journal/' . $entry->{id}),
 			description	=> $constants->{article},
 		};
 	}
 
-	xmlDisplay(rss => {
+	xmlDisplay($form->{content_type} => {
 		channel => {
 			title		=> "$constants->{sitename} Journal Search",
 			'link'		=> "$gSkin->{absolutedir}/search.pl",
@@ -583,12 +603,13 @@ sub submissionSearch {
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findSubmission($form, $start, $constants->{search_default_display} + 1, $form->{sort});
+	my $topic_ref = $form->{tid} ? $slashdb->getTopic($form->{tid}) : { };
 	slashDisplay('searchform', {
 		op		=> $form->{op},
 		sections	=> 1, # _skins(),
 		topics		=> 1, # _topics(),
 		submission_notes => $slashdb->getDescriptions('submission-notes'),
-		tref		=> $slashdb->getTopic($form->{tid}),
+		tref		=> $topic_ref,
 		'sort'		=> _sort(),
 	});
 
@@ -642,12 +663,13 @@ sub submissionSearchRSS {
 		my $time = timeCalc($entry->{time});
 		push @items, {
 			title		=> "$entry->{subj} ($time)",
+			time		=> $entry->{time},
 			'link'		=> ($gSkin->{absolutedir} . '/submit.pl?subid=' . $entry->{subid}),
 			'description'	=> $entry->{story},
 		};
 	}
 
-	xmlDisplay(rss => {
+	xmlDisplay($form->{content_type} => {
 		channel => {
 			title		=> "$constants->{sitename} Submission Search",
 			'link'		=> "$gSkin->{absolutedir}/search.pl",
@@ -676,7 +698,7 @@ sub rssSearch {
 	# we pop it off
 	if ($entries && @$entries) {
 		for (@$entries) {
-			$_->{title} = strip_plaintext($_->{introtext});
+			$_->{title} = strip_notags($_->{introtext});
 			$_->{description} = _shorten(strip_notags($_->{description}));
 		}
 		my $forward;
@@ -721,12 +743,13 @@ sub rssSearchRSS {
 		my $time = timeCalc($entry->[2]);
 		push @items, {
 			title	=> "$entry->{title} ($time)",
+			time	=> $entry->[2],
 			'link'	=> $entry->{link}, # No, this is not right -Brian
 			'description'	=> $entry->{description},
 		};
 	}
 
-	xmlDisplay(rss => {
+	xmlDisplay($form->{content_type} => {
 		channel => {
 			title		=> "$constants->{sitename} RSS Search",
 			'link'		=> "$gSkin->{absolutedir}/search.pl",

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -126,6 +126,10 @@ then the item is passed to rss_story().  Otherwise, "title" and "link" must
 be defined keys, and any other single-level key may be defined
 (no multiple level hash keys).
 
+=item nocreate
+
+Don't actually create RSS feed, just return data structure.
+
 =back
 
 =back
@@ -141,9 +145,9 @@ The complete RSS data as a string.
 
 sub create {
 	my($class, $param) = @_;
-	my $self = bless {}, $class;
+	return unless ref($param->{items}) eq 'ARRAY';
 
-	return unless exists $param->{items};
+	my $self = bless {}, $class;
 
 	my $constants = getCurrentStatic();
 	my $gSkin = getCurrentSkin();
@@ -164,16 +168,19 @@ sub create {
 		encoding	=> $encoding,
 	);
 
-	my $absolutedir = defined &Slash::Apache::ConnectionIsSSL
-	                  && Slash::Apache::ConnectionIsSSL()
-		? $gSkin->{absolutedir_secure}
-		: $gSkin->{absolutedir};
+	my $dynamic = 0;
+	my $absolutedir = $gSkin->{absolutedir};
+	if (defined &Slash::Apache::ConnectionIsSSL) {
+		$dynamic = 1;
+		$absolutedir = $gSkin->{absolutedir_secure} if Slash::Apache::ConnectionIsSSL();
+	}
 
 	# set defaults
 	my %channel = (
 		title		=> $constants->{sitename},
 		description	=> $constants->{slogan},
 		'link'		=> $absolutedir . '/',
+		selflink	=> '',
 
 		# dc
 		date		=> $self->date2iso8601(),
@@ -224,6 +231,15 @@ sub create {
 	} else {  # 0.9
 		for (keys %channel) {
 			delete $channel{$_} unless /^(?:link|title|description)$/;
+		}
+	}
+
+	# help users get notification that this feed is specifically for them
+	if ($dynamic && getCurrentForm('logtoken')) {
+		my $user = getCurrentUser();
+		if (!$user->{is_anon}) {
+			$channel{$_} .= ": Generated for $user->{nickname} ($user->{uid})"
+				for qw(title description);
 		}
 	}
 
@@ -291,6 +307,11 @@ sub create {
 			if ($item->{story}) {
 				# set up story params in $encoded_item ref
 				$self->rss_story($item, $encoded_item, $version, \%channel);
+			} else {
+				$encoded_item->{dc}{date} = $self->encode($self->date2iso8601($item->{'time'}))
+					if $item->{'time'};
+				$encoded_item->{dc}{creator} = $self->encode($item->{creator})
+					if $item->{creator};
 			}
 
 			for my $key (keys %$item) {
@@ -320,7 +341,7 @@ sub create {
 		$rss->add_item(%$_);
 	}
 
-	return $rss->as_string;
+	return $param->{nocreate} ? $rss : $rss->as_string;
 }
 
 #========================================================================
@@ -366,25 +387,37 @@ sub rss_story {
 	my $constants = getCurrentStatic();
 	my $reader    = getObject('Slash::DB', { db_type => 'reader' });
 
-	my $topics = $reader->getTopics();
+	my $topics = $reader->getTopics;
+	my $other_creator;
 
 	$encoded_item->{title}  = $self->encode($story->{title})
 		if $story->{title};
 	if ($story->{sid}) {
+		my $edit = "admin.pl?op=edit&sid=$story->{sid}";
 		if ($story->{primaryskid}) {
 			my $dir = url2abs(
 				$reader->getSkin($story->{primaryskid})->{rootdir},
 				$channel->{'link'}
 			);
-			$encoded_item->{'link'} = $self->encode(
-                                _tag_link("$dir/article.pl?sid=$story->{sid}"),
-                                'link'
-                        );
+			$encoded_item->{'link'} = _tag_link("$dir/article.pl?sid=$story->{sid}");
+			$edit = "$dir/$edit";
 		} else {
-			$encoded_item->{'link'} = $self->encode(
-				_tag_link("$channel->{'link'}article.pl?sid=$story->{sid}"),
-				'link'
-			);
+			$encoded_item->{'link'} = _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
+			$edit = "$channel->{'link'}$edit";
+		}
+		$_ = $self->encode($_, 'link') for ($encoded_item->{'link'}, $edit);
+
+		if (getCurrentUser('is_admin')) {
+			$story->{introtext} .= qq[\n\n<p><a href="$edit">[ Edit ]</a></p>];
+		}
+
+		if ($story->{journal_id}) {
+			my $journal = getObject('Slash::Journal');
+			if ($journal) {
+				my $journal_uid = $journal->get($story->{journal_id}, "uid");
+				$other_creator = $reader->getUser($journal_uid, 'nickname')
+					if $journal_uid;
+			}
 		}
 	}
 
@@ -398,12 +431,22 @@ sub rss_story {
 			if $story->{'time'};
 		$encoded_item->{dc}{subject} = $self->encode($topics->{$story->{tid}}{keyword})
 			if $story->{tid};
-		$encoded_item->{dc}{creator} = $self->encode($reader->getUser($story->{uid}, 'nickname'))
-			if $story->{uid};
+
+		my $creator;
+		if ($story->{uid}) {
+			$creator = $reader->getUser($story->{uid}, 'nickname');
+			$creator = "$other_creator (posted by $creator)" if $other_creator;
+		} elsif ($other_creator) {
+			$creator = $other_creator;
+		}
+		$encoded_item->{dc}{creator} = $self->encode($creator) if $creator;
 
 		$encoded_item->{slash}{comments}   = $self->encode($story->{commentcount})
 			if $story->{commentcount};
-		$encoded_item->{slash}{hitparade}  = $self->encode($story->{hitparade})
+		# old bug, was "hit_parade" in mod_slash RSS module, so since that
+		# has been around forever, we just change the new created feeds
+		# to use that
+		$encoded_item->{slash}{hit_parade}  = $self->encode($story->{hitparade})
 			if $story->{hitparade};
 		$encoded_item->{slash}{department} = $self->encode($story->{dept})
 			if $story->{dept} && $constants->{use_dept};
@@ -450,6 +493,7 @@ The fixed description.
 
 sub rss_item_description {
 	my($self, $desc) = @_;
+	$desc ||= '';
 
 	my $constants = getCurrentStatic();
 
@@ -461,6 +505,12 @@ sub rss_item_description {
 			# rss_story() -- pudge
 			$desc = parseSlashizedLinks($desc);
 			$desc = processSlashTags($desc);
+
+			# here we could reprocess content as XHTML if we
+			# choose to, since that is in some ways better
+			# for feeds ... just set $constants->{xhtml}
+			# and run through balanceTags again?
+
 
 		} else {
 			$desc = strip_notags($desc);
@@ -475,7 +525,7 @@ sub rss_item_description {
 				$desc =~ s/[\w'-]+$//;  # don't trim in middle of word
 				if ($self->{rdfitemdesc_html}) {
 					$desc =~ s/<[^>]*$//;
-					$desc = balanceTags($desc);
+					$desc = balanceTags($desc, { deep_nesting => 1 });
 				}
 				$desc =~ s/\s+$//;
 				$desc .= '...';
@@ -492,11 +542,13 @@ sub rss_item_description {
 
 sub _tag_link {
 	my($link) = @_;
-	if ($link =~ /\?/) {
-		$link .= '&from=rss';
+	my $uri = URI->new($link);
+	if (my $orig_query = $uri->query) {
+		$uri->query("$orig_query&from=rss");
 	} else {
-		$link .= '?from=rss';
+		$uri->query("from=rss");
 	}
+	return $uri->as_string;
 }
 
 1;

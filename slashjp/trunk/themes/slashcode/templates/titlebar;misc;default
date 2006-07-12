@@ -7,7 +7,7 @@ Prints the bar above each story, containing the actual title of the story.
 * title = text for title
 * future = boolean: whether story is in the future
 	(currently not used)
-* td_extra = extra_table cell(s) and contents to include after after the title table-cell
+* max_min_button = html for maximize / minimize buttons
 
 __title__
 
@@ -18,21 +18,23 @@ en_US
 __name__
 titlebar
 __template__
-<TABLE WIDTH="[% width %]" BORDER="0" CELLPADDING="0" CELLSPACING="0">
-	<TR VALIGN="TOP">
-		<TD BGCOLOR="[% user.colors.bg_3 %]"><IMG SRC="[% constants.imagedir %]/cl.gif" WIDTH="7" HEIGHT="10" ALT=""><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="4" HEIGHT="4" ALT=""></TD>
-		<TD BGCOLOR="[% user.colors.bg_3 %]" WIDTH="100%">
-		<TABLE WIDTH="100%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
-			<TR>
-				<TD BGCOLOR="[% user.colors.bg_3 %]"><FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.colors.fg_0 %]"><B>[% title %]</B></FONT></TD>
-			</TR>
-		</TABLE>
-		</TD>
-		<TD BGCOLOR="[% user.colors.bg_3 %]" ALIGN="right"><IMG SRC="[% constants.imagedir %]/cr.gif" WIDTH="7" HEIGHT="10" ALT=""></TD>
-		[% td_extra %]
-	</TR>
-</TABLE>
 
+[% IF future %]
+<div class="future">
+[% END %]
+<div class="generaltitle">
+	<div class="title">
+		<h3>
+			[% title %]
+			[% IF max_min_button %]
+			<span class="max_min_button">[% max_min_button %]</span>
+			[% END %]
+		</h3>
+	</div>
+</div>
+[% IF future %]
+</div>
+[% END %]
 [% future = 0 %]
 
 __seclev__

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -89,19 +89,14 @@ sub href2SlashTag {
 			if ($token->[0] eq 'slash') {
 				#Skip non HREF links
 				next unless $token->[1]{href} && $token->[1]{type} eq 'link';
-				if (!$token->[1]{id}) {
-					my $link = $self->create({ stoid => $stoid, url => $token->[1]{href}});
-					my $href = strip_attribute($token->[1]{href});
-					my $title = strip_attribute($token->[1]{title});
-					$text =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="LINK">#is;
-				} else {
+				if ($token->[1]{id}) {
 					my $url = $self->get($token->[1]{id}, 'url');
 					next if $url eq $token->[1]{href};
-					my $link = $self->create({ stoid => $stoid, url => $token->[1]{href}});
-					my $href = strip_attribute($token->[1]{href});
-					my $title = strip_attribute($token->[1]{title});
-					$text =~ s#\Q$token->[3]\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="LINK">#is;
 				}
+				my $link = $self->create({ stoid => $stoid, url => $token->[1]{href}});
+				my $href = strip_attribute($token->[1]{href});
+				my $title = strip_attribute($token->[1]{title});
+				$text =~ s#\Q$token->[3]\E#<slash href="$href" id="$link" title="$title" type="link">#is;
 			# New links to convert!!!!
 			} else {
 				# We ignore some types of href
@@ -110,11 +105,12 @@ sub href2SlashTag {
 				next if ($token->[1]{href} =~ /^mailto/i);
 				#This allows you to have a link bypass this system
 				next if ($token->[1]{FORCE} && $user->{is_admin});
+
 				my $link = $self->create({ stoid => $stoid, url => $token->[1]{href}});
-				my $data = $tokens->get_text("/a");
+				my $data = $tokens->get_text('/a');
 				my $href = strip_attribute($token->[1]{href});
 				my $title = strip_attribute($token->[1]{title});
-				$text =~ s#\Q$token->[3]$data</a>\E#<SLASH HREF="$href" ID="$link" TITLE="$title" TYPE="LINK">$data</SLASH>#is;
+				$text =~ s#\Q$token->[3]$data</a>\E#<slash href="$href" id="$link" title="$title" type="link">$data</slash>#is;
 			}
 		}
 	}

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -120,8 +120,8 @@ sub countStoriesTopHits {
 	my($self) = @_;
 	my $stories = $self->sqlSelectAll(
 		'stories.sid, title, primaryskid, hits, users.nickname',
-		"stories, story_text, users
-		 LEFT JOIN story_param
+		"story_text, users,
+		 stories LEFT JOIN story_param
 			ON stories.stoid=story_param.stoid AND story_param.name='neverdisplay'",
 		'stories.stoid=story_text.stoid
 		 AND story_param.name IS NULL

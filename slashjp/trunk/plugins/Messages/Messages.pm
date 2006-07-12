@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -59,7 +59,7 @@ Will drop a serialized message into message_drop.
 =item TO_ID
 
 The UID of the user the message is sent to.  Must match a valid
-uid in the users table.
+uid in the users table.  Can be an arrayref of UIDs.
 
 =item TYPE
 
@@ -95,7 +95,7 @@ Default is 'now'.
 
 =item Return value
 
-The created message's "id" in the message_drop table.
+The created message's "id" (or multiple ids) in the message_drop table.
 
 =item Dependencies
 
@@ -122,18 +122,29 @@ sub create {
 		return 0;
 	}
 
+	$uid = [$uid] unless ref $uid;
+	my @users;
+
 	if (!$altto) {
 		# check for $uid existence
-		my $slashdb = getCurrentDB();
-		unless ($slashdb->getUser($uid)) {
-			messagedLog(getData("user not found", { uid => $uid }, "messages"));
-			return 0;
+		my $reader = getObject('Slash::Journal', { db_type => 'reader' });
+		for my $u (@$uid) {
+			if ($reader->existsUid($u)) {
+				push @users, $u;
+			} else {
+				messagedLog(getData("user not found", { uid => $u }, "messages"));
+			}
 		}
 	} else {
-		if (!defined($uid) || $uid =~ /\D/) {
-			$uid = 0;
+		for my $u (@$uid) {
+			if (!defined($uid) || $uid =~ /\D/) {
+				$u = 0;
+			}
+			push @users, $u;
 		}
 	}
+
+	return 0 unless @users;
 
 	if (!ref $data) {
 		$message = $data;
@@ -183,9 +194,14 @@ sub create {
 		return 0;
 	}
 
-	my($msg_id) = $self->_create($uid, $code, $message, $fid, $altto, $send);
-	return $msg_id;
+	my @msg_ids;
+	for my $u (@users) {
+		my($msg_id) = $self->_create($u, $code, $message, $fid, $altto, $send);
+		push @msg_ids, $msg_id if $msg_id;
+	}
+	return @msg_ids > 1 ? @msg_ids : $msg_ids[0];
 }
+
 
 #========================================================================
 
@@ -500,6 +516,7 @@ sub quicksend {
 	my $slashdb = getCurrentDB();
 
 	return unless $tuser;
+	$code = -1 unless defined $code;
 	($code, my($type)) = $self->getDescription('messagecodes', $code);
 	$code = -1 unless defined $code;
 
@@ -558,7 +575,7 @@ sub bulksend {
 	my $subject = $self->callTemplate('msg_email_subj', $msg);
 
 	if (bulkEmail($addrs, $subject, $content)) {
-		$self->log($msg, MSG_MODE_EMAIL);
+		$self->log($msg, MSG_MODE_EMAIL, scalar @$addrs);
 		return 1;
 	} else {
 		messagedLog(getData("send mail error", {
@@ -580,7 +597,7 @@ sub getWeb {
 
 sub getWebByUID {
 	my($self, $uid) = @_;
-	$uid ||= $ENV{SLASH_USER};
+	$uid ||= getCurrentUser('uid');
 
 	my $msguser = $self->getUser($uid);
 	my $msgs = $self->_get_web_by_uid($uid) or return 0;
@@ -968,10 +985,16 @@ always return a list of (code, description).
 
 sub getDescription {
 	my($self, $codetype, $key) = @_;
+if (!defined($key) || !length($key)) {
+my $codetype_str = defined($codetype) ? $codetype : '(undef)';
+my $key_str = defined($key) ? $key : '(undef)';
+print STDERR "Message.pm getDescription called with codetype='$codetype_str' key='$key_str'\n";
+return;
+}
 
 	my $codes = $self->getDescriptions($codetype);
 
-	if ($key =~ /^\d+$/) {
+	if ($key =~ /^-?\d+$/) {
 		unless (exists $codes->{$key}) {
 			return;
 		}

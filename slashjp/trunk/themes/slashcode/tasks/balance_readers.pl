@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -64,6 +64,7 @@ sub sleep_until {
 	}
 }
 
+# This should be in Static/MySQL.pm
 { # cheap closure cache
 my $reader_dbid;
 sub get_reader_dbid {
@@ -78,6 +79,7 @@ sub get_reader_dbid {
 }
 } # end closure
 
+# This should be in Static/MySQL.pm
 sub get_readers {
 	my $slashdb = getCurrentDB();
 	my $readers = { };
@@ -95,6 +97,7 @@ sub check_readers {
 	my $reader_info = { };
 
 	# Weed out readers that are isalive='no'
+	# This should be in Static/MySQL.pm
 	my $vu_hr = $slashdb->sqlSelectAllHashref(
 		"virtual_user",
 		"virtual_user, IF(isalive='yes',1,0) AS isalive, weight, weight_adjust",
@@ -148,7 +151,7 @@ sub check_readers {
 			# by 4.0.21 -- the Time field on some processes
 			# can be the unsigned version of a small
 			# negative number.  Call it zero.
-			$hr->{Time} = 0 if $hr->{Time} > 4_200_000_000;
+			$hr->{Time} = 0 if !$hr->{Time} || $hr->{Time} > 4_200_000_000;
 
 			# Store the record of what this process is doing.
 			$process{$vu}{$hr->{Id}} = \%{ $hr };
@@ -270,7 +273,10 @@ sub get_sql_type_from_state {
 		|| $state =~ /waiting for binlog update/
 		|| $state eq 'init'
 		|| $state eq 'creating table'
+		|| $state eq 'Locked'
 		|| $state eq 'preparing'
+		|| $state eq 'removing tmp table'
+		|| $state eq 'rename result table'
 		|| $state eq 'query end'
 		|| $state eq 'end'
 	) {
@@ -428,6 +434,7 @@ sub set_reader_weight_adjust {
 	my $reduce_max = $constants->{dbs_reader_weight_reduce_max}*$delay/60;
 	my $increase_max = $constants->{dbs_reader_weight_increase_max}*$delay/60;
 
+	# This should be in Static/MySQL.pm
 	$slashdb->sqlUpdate("dbs",
 		{ -weight_adjust	=> "GREATEST(0, weight_adjust-$reduce_max,
 						LEAST(1, weight_adjust+$increase_max,

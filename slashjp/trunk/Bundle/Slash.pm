@@ -4,7 +4,7 @@ package Bundle::Slash;
 # $Id$
 #
 
-$Bundle::Slash::VERSION = '2.34';
+$Bundle::Slash::VERSION = '2.51';
 
 1;
 
@@ -109,6 +109,15 @@ LWP::Parallel
 
 Lingua::Stem
 
+URI::Find
+
+Config::General		- HTML validator
+
+Set::IntSpan		- HTML validator
+
+Text::Iconv		- HTML validator
+
+Data::JavaScript::Anon	- perl2js data structures
 
 =head1 DESCRIPTION
 
@@ -119,6 +128,6 @@ Our optional modules, which are not required for a default install
 and thus not installed by default, but which may become required as
 you edit your site configuration, are: Cache::Memcached Silly::Werder
 GD GD::Text GD::Graph Apache::SSI Apache::RegistryFilter GraphViz
-Net::IRC Proc::ProcessTable
+Net::IRC Proc::ProcessTable Net::Jabber IO::Socket::SSL
 
 =cut

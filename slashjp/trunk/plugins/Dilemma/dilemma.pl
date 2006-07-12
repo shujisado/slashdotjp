@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -17,7 +17,7 @@ sub main {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
 	my($stories, $Stories); # could this be MORE confusing please? kthx
-	if ($form->{op} eq 'userlogin' && !$user->{is_anon}
+	if ($form->{op} && $form->{op} eq 'userlogin' && !$user->{is_anon}
 			# Any login attempt, successful or not, gets
 			# redirected to the homepage, to avoid keeping
 			# the password or nickname in the query_string of
@@ -28,6 +28,7 @@ sub main {
 		redirect($refer); return;
 	}
 
+	setCurrentSkin(determineCurrentSkin());
 	my $gSkin = getCurrentSkin();
 	my $skin_name = $gSkin->{name};
 
@@ -79,24 +80,24 @@ sub main {
 	my $dilemma_reader = getObject('Slash::Dilemma', { db_type => 'reader' });
 	my $dilemma_db = getObject('Slash::Dilemma');
 
-	my $info = $dilemma_reader->getDilemmaInfo();
-	my $species_hr = $dilemma_reader->getDilemmaSpeciesInfo();
-	my $species_order = [
-		sort {
-			$species_hr->{$b}{alivecount} <=> $species_hr->{$a}{alivecount}
-			||
-			$species_hr->{$b}{totalcount} <=> $species_hr->{$a}{totalcount}
-			||
-			$a cmp $b
-		}
-		keys %$species_hr
-	];
-
-	slashDisplay('maininfo', {
-		info		=> $info,
-		species		=> $species_hr,
-		species_order	=> $species_order,
-	});
+#	my $info = $dilemma_reader->getDilemmaInfo();
+#	my $species_hr = $dilemma_reader->getDilemmaSpeciesInfo();
+#	my $species_order = [
+#		sort {
+#			$species_hr->{$b}{alivecount} <=> $species_hr->{$a}{alivecount}
+#			||
+#			$species_hr->{$b}{totalcount} <=> $species_hr->{$a}{totalcount}
+#			||
+#			$a cmp $b
+#		}
+#		keys %$species_hr
+#	];
+#
+#	slashDisplay('maininfo', {
+#		info		=> $info,
+#		species		=> $species_hr,
+#		species_order	=> $species_order,
+#	});
 
 	slashDisplay('index', {
 		metamod_elig    => 0,

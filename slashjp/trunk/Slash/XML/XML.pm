@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -26,7 +26,6 @@ Slash::XML aids in creating XML.  Right now, only RSS is supported.
 use strict;
 use Apache::Constants ':http';
 use Digest::MD5 'md5_hex';
-use Encode 'encode_utf8';
 use Time::Local;
 use Slash;
 use Slash::Utility;
@@ -98,7 +97,8 @@ sub xmlDisplay {
 	my($type, $param, $opt) = @_;
 
 	my($class, $file);
-	for my $try (uc($type), $type) {
+	$type =~ s/[^\w]+//g;
+	for my $try (uc($type), $type, ucfirst($type)) {
 		$class = "Slash::XML::$try";
 		$file  = "Slash/XML/$try.pm";
 
@@ -126,26 +126,36 @@ sub xmlDisplay {
 	}
 
 	if (! ref $opt) {
-		$opt = $opt == 1 ? { Return => 1 } : {};
+		$opt = ($opt && $opt == 1) ? { Return => 1 } : {};
 	}
 
 	if ($opt->{Return}) {
 		return $content;
 	} else {
 		my $r = Apache->request;
+		my $content_type = 'text/xml';
+		my $suffix = 'xml';
 
+		# normalize for etag
 		my $temp = $content;
-		# normalize
-		if ($type eq 'rss') {
+
+		if ($type =~ /^rss$/i) {
 			$temp =~ s|[dD]ate>[^<]+</||;
+			$content_type = 'application/rss+xml';
+			$suffix = 'rss';
+		} elsif ($type =~ /^atom$/) {
+			$temp =~ s|updated>[^<]+</||;
+			$content_type = 'application/atom+xml';
+			$suffix = 'atom';
 		}
 
-		$opt->{filename} .= '.xml' if $opt->{filename} && $opt->{filename} !~ /\./;
+		$opt->{filename} .= ".$suffix" if $opt->{filename} && $opt->{filename} !~ /\./;
 
 		http_send({
-			content_type	=> 'text/xml',
+			content_type	=> $content_type,
 			filename	=> $opt->{filename},
-			etag		=> md5_hex(encode_utf8($temp)),
+			etag		=> md5_hex($temp),
+			dis_type	=> 'inline',
 			content		=> $content
 		});
 	}
@@ -153,7 +163,7 @@ sub xmlDisplay {
 
 #========================================================================
 
-=head2 date2iso8601([TIME])
+=head2 date2iso8601([TIME, Z])
 
 Return a standard ISO 8601 time string.
 
@@ -168,6 +178,16 @@ Return a standard ISO 8601 time string.
 Some sort of string in GMT that can be parsed by Date::Parse.
 If no TIME given, uses current time.
 
+=item Z
+
+By default, strings of the form "2005-04-18T22:38:55+00:00" are returned,
+where the "+00:00" denotes the time zone differential.  If Z is true, the
+alternate form "2005-04-18T22:38:55Z" will be used, where the string is
+forced into UTC and "Z" is used to denote the fact.
+
+Both forms should be acceptable, but some applications may require one
+or the other.
+
 =back
 
 =item Return value
@@ -179,17 +199,20 @@ The time string.
 =cut
 
 sub date2iso8601 {
-	my($self, $time) = @_;
+	my($self, $time, $z) = @_;
 	if ($time) {	# force to GMT
 		$time .= ' GMT' unless $time =~ / GMT$/;
 	} else {	# get current seconds
 		my $t = defined $time ? 0 : time();
-		$time = scalar localtime($t);
+		$time = $z ? scalar gmtime($t) : scalar localtime($t);
 	}
 
 	# calculate timezone differential from GMT
-	my $diff = (timelocal(localtime) - timelocal(gmtime)) / 36;
-	($diff = sprintf '%+0.4d', $diff) =~ s/(\d{2})$/:$1/;
+	my $diff = 'Z';
+	unless ($z) {
+		$diff = (timelocal(localtime) - timelocal(gmtime)) / 36;
+		($diff = sprintf '%+0.4d', $diff) =~ s/(\d{2})$/:$1/;
+	}
 
 	return scalar timeCalc($time, "%Y-%m-%dT%H:%M:%S$diff", 0);
 }

@@ -28,7 +28,7 @@
 # 	ISBN: 0-596-00200-2
 
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -99,7 +99,9 @@ sub main {
 	# routine in admin.pl to use it instead -- pudge
 	my @story_links;
 	my $tree = new HTML::TreeBuilder;
-	$tree->parse(parseSlashizedLinks($story->{introtext} . $story->{bodytext}));
+	my $storytext = $story->{introtext} || '';
+	$storytext .= $story->{bodytext} if defined $story->{bodytext};
+	$tree->parse(processSlashTags(parseSlashizedLinks($storytext)));
 	$tree->eof;
 	my $links = $tree->extract_links('a');  # get "A" tags only
 
@@ -153,9 +155,12 @@ sub main {
 # Thanks for the assist here, pudge!
 sub get_content {
 	my($ref) = @_;
-	my $content;
+	return '' if !$ref || !ref($ref->{_content});
 
-	$content .= (ref) ? get_content($_) : $_ for @{$ref->{_content}};
+	my $content = '';
+	for my $c (@{$ref->{_content}}) {
+		$content .= ref($c) ? get_content($c) : $c;
+	}
 	
 	return $content;
 }

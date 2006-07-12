@@ -37,6 +37,7 @@ $task{$me}{code} = sub {
 	update_modlog_ids($virtual_user, $constants, $slashdb, $user);
 	mark_m2_oldzone($virtual_user, $constants, $slashdb, $user);
 	adjust_m2_freq($virtual_user, $constants, $slashdb, $user) if $constants->{adjust_m2_freq};
+	delete_old_mod_rows($virtual_user, $constants, $slashdb, $user);
 	return ;
 };
 
@@ -244,7 +245,7 @@ sub give_out_tokens {
 	my %update_uids = ( );
 	for (my $x = 0; $x < $num_tokens; $x++) {
 		my $uid = $eligible_uids[rand @eligible_uids];
-		next if $update_uids{$uid} >= $maxtokens_add;
+		next if ($update_uids{$uid} ||= 0) >= $maxtokens_add;
 		$update_uids{$uid}++;
 	}
 	my $n_update_uids = scalar(keys %update_uids);
@@ -288,6 +289,7 @@ sub give_out_tokens {
 sub reconcile_m2 {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $consensus = $constants->{m2_consensus};
 	my $reasons = $slashdb->getReasons();
 	my $sql;
@@ -303,7 +305,7 @@ sub reconcile_m2 {
 
 	# $mod_ids is an arrayref of moderatorlog IDs which need to be
 	# reconciled.
-	my $mods_ar = $slashdb->getModsNeedingReconcile();
+	my $mods_ar = $reader->getModsNeedingReconcile();
 
 	my $both0 = { };
 	my $tievote = { };
@@ -311,7 +313,7 @@ sub reconcile_m2 {
 	for my $mod_hr (@$mods_ar) {
 
 		# Get data about every M2 done to this moderation.
-		my $m2_ar = $slashdb->getMetaModerations($mod_hr->{id});
+		my $m2_ar = $reader->getMetaModerations($mod_hr->{id});
 
 		my $nunfair = scalar(grep { $_->{active} && $_->{val} == -1 } @$m2_ar);
 		my $nfair   = scalar(grep { $_->{active} && $_->{val} ==  1 } @$m2_ar);
@@ -357,8 +359,8 @@ sub reconcile_m2 {
 			);
 			if ($statsSave) {
 				my $token_change = $use_possible
-					? $csq->{m1_tokens}{num_possible}
-					: $csq->{m1_tokens}{num_base};
+					? ($csq->{m1_tokens}{num_possible} || 0)
+					: ($csq->{m1_tokens}{num_base} || 0);
 				if ($token_change > 0) {
 					$newstats{mod_tokens_gain_m1fair} += $token_change;
 				} elsif ($token_change < 0) {
@@ -388,7 +390,7 @@ sub reconcile_m2 {
 		) if $new_m2info ne $old_m2info;
 
 		# Now update the moderator's tally of csq bonuses/penalties.
-		my $csqtc = $csq->{csq_token_change}{num};
+		my $csqtc = $csq->{csq_token_change}{num} || 0;
 		my $val = sprintf("csq_bonuses %+0.3f", $csqtc);
 		$slashdb->setUser(
 			$mod_hr->{uid},
@@ -424,8 +426,8 @@ sub reconcile_m2 {
 			}
 			if ($statsSave) {
 				my $token_change = $use_possible
-					? $csq->{$key}{num_possible}
-					: $csq->{$key}{num_base};
+					? ($csq->{$key}{num_possible} || 0)
+					: ($csq->{$key}{num_base} || 0);
 				if ($token_change > 0) {
 					$newstats{mod_tokens_gain_m2majority} += $token_change;
 				} elsif ($token_change < 0) {
@@ -567,6 +569,7 @@ sub add_m2info {
 	my %val = ( );
 	for my $item (@old, "$thismonth $nfair$nunfair") {
 		my($date, $more) = $item =~ /^(\w+)\s+(.+)$/;
+		next unless $date;
 		$val{$date} = [ ] if !defined($val{$date});
 		push @{$val{$date}}, $more;
 	}
@@ -798,6 +801,11 @@ sub adjust_m2_freq {
 		if defined $constants->{m2_freq_max} && $new_m2_freq > $constants->{m2_freq_max};
 	slashdLog("adjusting m2_freq from $cur_m2_freq to $new_m2_freq");	
 	$slashdb->setVar('m2_freq', $new_m2_freq);
+}
+
+sub delete_old_mod_rows {
+	my($virtual_user, $constants, $slashdb, $user) = @_;
+	$slashdb->deleteOldModRows({ sleep_between => 30 });
 }
 
 1;

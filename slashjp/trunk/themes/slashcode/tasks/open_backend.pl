@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -17,24 +17,27 @@ $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin) = @_;
 
-	my $backupdb = getObject('Slash::DB', { db_type => 'reader' });
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $max_items = $constants->{rss_max_items_outgoing} || 10;
 
-	my $stories = $backupdb->getBackendStories;
+	my $stories = $reader->getBackendStories({ limit => $max_items });
 	if ($stories && @$stories) {
 		newxml(@_, undef, $stories);
 		newrdf(@_, undef, $stories);
 		newrss(@_, undef, $stories);
+		newatom(@_, undef, $stories);
 	}
 
 	my $skins = $slashdb->getSkins();
 	for my $skid (keys %$skins) {
 		my $name = $skins->{$skid}{name};
 		my $nexus = $skins->{$skid}{nexus};
-		$stories = $backupdb->getBackendStories({ topic => $nexus });
+		$stories = $reader->getBackendStories({ limit => $max_items, topic => $nexus });
 		if ($stories && @$stories) {
 			newxml(@_, $name, $stories);
 			newrdf(@_, $name, $stories);
 			newrss(@_, $name, $stories);
+			newatom(@_, $name, $stories);
 		}
 	}
 
@@ -51,20 +54,38 @@ sub fudge {
 }
 
 sub _do_rss {
-	my($virtual_user, $constants, $backupdb, $user, $info, $gSkin,
-		$name, $stories, $version) = @_;
+	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin,
+		$name, $stories, $version, $type) = @_;
+
+	$type ||= 'rss';
 
 	my $file    = sitename2filename($name);
-	my $skin    = {};
-	$skin       = $backupdb->getSkin($name) if $name;
+	my $skin    = { };
+	$skin       = $slashdb->getSkin($name) if $name;
 	my $link    = ($skin->{url}  || $gSkin->{absolutedir}) . '/';
 	my $title   = $constants->{sitename};
-	$title = "$title: $skin->{title}" if $skin->{skid} != $constants->{mainpage_skid};
+	$title = "$title: $skin->{title}"
+		if $skin->{skid} && $skin->{skid} != $constants->{mainpage_skid} && $skin->{title};
 
-	my $rss = xmlDisplay('rss', {
+	my $description = $constants->{slogan};
+
+	# XXX: temporary, until we can add a skin_param table
+	if ($constants->{sitename} eq 'Slashdot') {
+		if ($skin->{title} && $skin->{title} eq 'AMD') {
+			$title .= ' Sponsored Content';
+			$description = 'Special Advertising Section';
+		}
+	}
+
+	my $ext = $version == 0.9 && $type eq 'rss' ? 'rdf' : $type;
+	my $filename = "$file.$ext";
+
+	my $rss = xmlDisplay($type, {
 		channel		=> {
 			title		=> $title,
 			'link'		=> $link,
+			selflink	=> "$link$filename",
+			description	=> $description,
 		},
 		version		=> $version,
 		textinput	=> 1,
@@ -72,15 +93,17 @@ sub _do_rss {
 		items		=> [ map { { story => $_ } } @$stories ],
 	}, 1);
 
-	my $ext = $version == 0.9 ? 'rdf' : 'rss';
-	save2file("$constants->{basedir}/$file.$ext", $rss, \&fudge);
+	save2file("$constants->{basedir}/$filename", $rss, \&fudge);
+	save2file("$constants->{basedir}/privaterss/$filename", $rss, \&fudge)
+		if -d "$constants->{basedir}/privaterss/";
 }
 
-sub newrdf { _do_rss(@_, "0.9") } # RSS 0.9
-sub newrss { _do_rss(@_, "1.0") } # RSS 1.0
+sub newrdf  { _do_rss(@_, '0.9') } # RSS 0.9
+sub newrss  { _do_rss(@_, '1.0') } # RSS 1.0
+sub newatom { _do_rss(@_, '1.0', 'atom') } # Atom 1.0
 
 sub newxml {
-	my($virtual_user, $constants, $backupdb, $user, $info, $gSkin,
+	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin,
 		$name, $stories) = @_;
 
 	my $x = <<EOT;
@@ -91,7 +114,7 @@ EOT
 
 	for my $story (@$stories) {
 		my @str = (xmlencode($story->{title}), xmlencode($story->{dept}));
-		my $author = $backupdb->getAuthor($story->{uid}, 'nickname');
+		my $author = $slashdb->getAuthor($story->{uid}, 'nickname');
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2003 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -92,7 +92,10 @@ END { $dbh->disconnect if $dbh }
 chomp($hostname_f = `hostname -f`) if $^O eq 'linux';
 unless ($opts{'H'}) {
 	print "
-What is hostname of your Slash site
+Feel free to ^C this script at any time up to when you see the
+'last chance to abort' prompt.  If you do, no changes will be made.
+
+What is the hostname of your Slash site
 (e.g., www.slashdot.org)? [$hostname_f] ";
 	chomp($hostname = <STDIN>);
 	$hostname ||= $hostname_f;
@@ -102,7 +105,7 @@ What is hostname of your Slash site
 ($host_noport = $hostname) =~ s/:.+$//;
 
 unless ($opts{'o'}) {
-	print "\nWhat user would you like to run your Slash site as? [nobody] ";
+	print "\nWhat unix user would you like to run your Slash site as? [nobody] ";
 	chomp($owner = <STDIN>);
 	$owner ||= 'nobody';
 } else {
@@ -119,7 +122,7 @@ unless ($opts{'g'}) {
 	my $tmpgroup;
 	$tmpgroup = getgrgid($owner_id) if $Config{d_getgrent};
 	$tmpgroup = defined($tmpgroup) ? $tmpgroup : 'nobody';
-	print "\nWhat group would you like to run your Slash site under? [$tmpgroup] ";
+	print "\nWhat unix group would you like to run your Slash site under? [$tmpgroup] ";
 	chomp($group = <STDIN>);
 	$group ||= $tmpgroup;
 } else {
@@ -209,7 +212,7 @@ if ($opts{'P'}) {
 	push @plugins, @default_plugins if @default_plugins;
 } else {
 	my %order_to_name = ( );
-	print "\nPlease select which plugins you would like ('*' marks the default and minimum).\n";
+	print "\nPlugins:\n";
 	for my $key (@all_plugins) {
 		my $c = " ";
 		if ($themes->{$theme}{plugin}{$plugins->{$key}{name}}) {
@@ -219,7 +222,12 @@ if ($opts{'P'}) {
 		$order_to_name{$plugins->{$key}{order}} = $key;
 	}
 	my $select = 'a';
-	print "Hit 'a' to select all, otherwise select comma separated numbers or 'q' to quit\n";
+	print "Please select which plugins you would like ('*' marks the default and minimum).\n";
+	print "Note that some optional plugins may have additional system requirements:\n";
+	print "if you select any beyond the default, you must look over their\n";
+	print "$SLASH_PREFIX/plugins/*/README* files.\n";
+	print "Enter 'a' to select all (which is probably a bad idea). Better, enter\n";
+	print "comma-separated numbers, or 'q' for none.\n";
 	while ($select ne 'q'){
 		chomp($select = <STDIN>);
 		if ($select =~ /^[\d ,]+$/) {
@@ -286,9 +294,9 @@ if (!$Config{d_symlink}) {
 	$symlink = $opts{'L'};
 } else {
 	print "
-Would you like to install all the files as symlinks
-to the original?  (If not, each file will be copied to
-your Slash directories). [Y] ";
+Would you like to install all the files as symlinks to the original?
+(This is recommended.  If not, each file will be copied to your
+Slash directories). [Y] ";
 	chomp(my $ans = <STDIN>);
 	$ans ||= 'Y';
 	$symlink = $ans =~ /^\s*[Yy]/;
@@ -322,6 +330,15 @@ unless ($opts{'e'}) {
 } else {
 	$email = $opts{'e'};
 }
+
+unless ($opts{'f'}) {
+	print "\nThis is your last chance to abort installation.\n";
+	print "Hit return to install or press ^C now to abort: ";
+	my $line = <STDIN>;
+	$line = ''; # avoid a warning about var only used once
+}
+
+print "\nInstalling...\n";
 
 my $trgst = '';
 
@@ -529,28 +546,55 @@ $include
     # and template_cache_size is 0.  Set to On/Off.
     # Default is off since most sites don't need it
     # much and startup performance, as well as
-    # memory usage, degrades when it is On.
+    # memory usage, degrades when it is On...
+    # setting template_cache_size to 100 or so is
+    # probably a lot better
     SlashCompileTemplates Off
-    
-    PerlAccessHandler  Slash::Apache::Banlist
-    PerlAccessHandler  Slash::Apache::User
-    PerlCleanupHandler Slash::Apache::Log
-    PerlCleanupHandler Slash::Apache::Log::UserLog
+ 
+    ########################
+
+    # First Apache phase:  post-read-request
 
     # if you have a frontend/backend setup and have X-Forwarded-For
     # headers (such as from mod_proxy_add_forward), use this
     # to properly populate remote_ip for formkeys etc.
     #PerlPostReadRequestHandler Slash::Apache::ProxyRemoteAddr
 
+    # Second Apache phase:  URI translation
+
     # this directive will redirect non-logged-in users to
     # index.shtml if they request the home page; turn it
     # on to help increase performance or if you are using something
     # other then index.pl for the index
     PerlTransHandler Slash::Apache::IndexHandler
-
     # this directive will enable you to display user's pages
     # with /~username
     PerlTransHandler Slash::Apache::User::userdir_handler
+
+    # Third Apache phase:  header parsing
+
+    # Fourth Apache phase:  access control
+    PerlAccessHandler  Slash::Apache::Banlist
+    PerlAccessHandler  Slash::Apache::User
+
+    # Fifth Apache phase:  authentication
+        
+    # Sixth Apache phase:  authorization
+        
+    # Seventh Apache phase:  MIME type checking
+
+    # Eighth Apache phase:  fixups
+
+    # Ninth Apache phase:  response, aka content handler:
+    # Apache::Registry and whatever else is in the slash.conf file
+
+    # Tenth Apache phase:  logging
+
+    # Eleventh Apache phase:  cleanup
+    PerlCleanupHandler Slash::Apache::Log
+    PerlCleanupHandler Slash::Apache::Log::UserLog
+
+    ########################
 
     # this can be used to preload your .pl scripts in the parent,
     # saving both startup time and memory in the child
@@ -574,10 +618,11 @@ $include
     DirectoryIndex index.pl index.shtml
     ErrorDocument 404 /404.pl
 
-    AddType text/xml .rdf
-    AddType text/xml .rss
     AddType text/xml .xml
-    AddType text/xml .wml
+    AddType application/rss+xml .rdf
+    AddType application/rss+xml .rss
+    AddType application/atom+xml .atom
+    AddType text/vnd.wap.wml .wml
 
     # change default of "iso-8859-1" here (to, for example, utf-8)
     # if you change "content_type_webpage" in vars, and vice versa
@@ -616,6 +661,9 @@ during the install.  Some plugins do INSERT IGNOREs which may fail and
 that is harmless, notably the Search plugin if SOAP is not installed,
 which will report that the soap_methods table does not exist.)
 
+If you installed optional plugins, remember to read their README files,
+if any.
+
 You will need to edit your httpd.conf file to have it Include the
 Slash file that (in turn) Includes this site's .conf data.  Assuming
 this is the first Slash site you've installed for this Apache, you
@@ -632,10 +680,14 @@ You may want to take a look at it. If you are using virtual hosting by
 hostname you may also need to add a NameVirtualHost to your httpd.conf.
 
 If you do not have your Slash site in the root of the web server (e.g.,
-"http://www.example.com/mysite/" instead of "http://mysite.example.com/"),
+"http://www.example.com/mysite/" instead of "http://www.example.com/"),
 you will need to adjust the rootdir, rdfimage, imagedir, absolutedir,
 and cookiepath variables, and you also need to change your Apache config
-appropriately.  These are all in the "vars" table of your database.
+appropriately.  If you're planning on having sections with more than two dots
+in the hostname (e.g. your mainpage will be at "http://division.company.com/"
+with a section at "http://newprojects.division.company.com/") you will
+also want to set the cookiedomain var (e.g. to ".division.company.com").
+These are all in the "vars" table of your database.
 
 To restart apache do:
 
@@ -686,6 +738,8 @@ Main options:
 	-h	Help (this message)
 	-v	Version
 	-u	Virtual user
+	-f	Skip 'last chance' prompt (force installation -- combine
+		this with the other opts below to eliminate interaction)
 
 Site options:
 	-H	Hostname
@@ -715,7 +769,7 @@ sub version {
 $PROGNAME $VERSION
 
 This code is a part of Slash, and is released under the GPL.
-Copyright 1997-2004 by Open Source Development Network. See README
+Copyright 1997-2005 by Open Source Technology Group. See README
 and COPYING for more information, or see http://slashcode.com/.
 
 EOT

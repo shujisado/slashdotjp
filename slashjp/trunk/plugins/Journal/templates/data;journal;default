@@ -22,18 +22,21 @@ __template__
 	[% constants.sitename %] Journal System
 
 [% CASE 'userhead' %]
-[% IF user.light %]
-	<A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/journal/">Journal</A> of <A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/">[% nickname %]</A> ([% uid %])
+[% IF user.lowbandwidth %]
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/journal/">Journal</a> of <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a> ([% uid %])
 [% ELSE %]
-	<A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/journal/"><FONT COLOR="[% user.colors.fg_0 %]">Journal</FONT></A> of <A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/"><FONT COLOR="[% user.colors.fg_0 %]">[% nickname | strip_literal %]</FONT></A> ([% uid %])  [% PROCESS zoo_icons person=uid implied="" %]
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/journal/">Journal</a> of <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a> ([% uid %])  [% PROCESS zoo_icons person=uid implied="" %]
 [% END %]
 
 [% CASE 'friendhead' %]
-[% IF user.light %]
-	<A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/">[% nickname %]</A>'s <A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/friends/">Friends</A>
+[% IF user.lowbandwidth %]
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a>'s <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/friends/">Friends</a>
 [% ELSE %]
-	<A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/"><FONT COLOR="[% user.colors.fg_0 %]">[% nickname %]</FONT></A>'s <A HREF="[% gSkin.rootdir %]/~[% nickname | fixparam %]/friends/"><FONT COLOR="[% user.colors.fg_0 %]">Friends</FONT></A>
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a>'s <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/friends/">Friends</a>
 [% END %]
+
+[% CASE 'noedit' %]
+	You may not edit this journal entry.
 
 [% CASE 'nousers' %]
 	No users with journals found matching "[% form.nickname | strip_literal %]".
@@ -42,7 +45,11 @@ __template__
 	User "[% nouser.nickname | strip_literal %]" ([% nouser.uid %]) has no journal entries.
 
 [% CASE 'noentries' %]
-	[% nickname ? "$nickname has" : "You have" %] not created any journal entries.
+	[% IF nickname;
+		nickname | strip_literal %] has[%
+	   ELSE %]
+	   	You have
+	[% END %] not created any journal entries.
 
 [% CASE 'nofriends' %]
 	[% returnme.data_constant = 1 %]
@@ -68,17 +75,12 @@ __template__
 	[% returnme.data_constant = 1 %]
 	Sorry, the requested journal entries were not found.
 
-[% CASE 'rss_title' %]
-	[% nickname %]'s Journal
+[% CASE 'journalfoot' %]
+	</div></div>
 
-[% CASE 'rss_desc' %]
-	[% nickname %]'s [% constants.sitename %] Journal
-
-[% CASE 'rss_fv_title' %]
-	[% nickname %]'s Friends' Journals
-
-[% CASE 'rss_fv_desc' %]
-	[% nickname %]'s Friends' [% constants.sitename %] Journals
+[% CASE 'submit_must_enable_comments' %]
+	You must enable comments if you plan on allowing this journal to be
+	used as a site submission.
 
 [% END %]
 

@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -12,7 +12,6 @@ Slash::Display::Plugin - Template Toolkit plugin for Slash
 
 =head1 SYNOPSIS
 
-	[% USE Slash %]
 	[% Slash.someFunction('some data') %]
 	[% Slash.db.someMethod(var1, var2) %]
 
@@ -22,7 +21,7 @@ Slash::Display::Plugin - Template Toolkit plugin for Slash
 Call available exported functions from Slash and Slash::Utility
 from within your template.  Also call methods from Slash::DB
 with the C<db> method.  Constants from Slash::Constants are
-available.  Invoke with C<[% USE Slash %]>.
+available.
 
 C<[% Slash.version %]> gives the version of Slash.
 C<[% Slash.VERSION %]> (note case) gives the version

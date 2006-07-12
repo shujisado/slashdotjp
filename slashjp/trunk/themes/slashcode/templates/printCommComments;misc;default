@@ -4,6 +4,7 @@ __description__
 The printing of the comments
 
 * can_moderate = boolean for whether current user is eligible to moderate
+	at least one comment
 * comment = hashref of main comment to display (if cid is specified)
 * comments = big ol' arrayref of comments
 * next = hashref of next comment for "next" link
@@ -23,23 +24,32 @@ en_US
 __name__
 printCommComments
 __template__
-[% USE Slash %]
-[% moderate_form   = can_moderate %]
-[% moderate_button = (can_moderate && user.mode != 'archive' && ( !user.state.discussion_archived || constants.comments_moddable_archived)) %]
-
+[% moderate_form   = can_moderate || user.acl.candelcomments_always %]
+[% moderate_button = (can_moderate
+	&& user.mode != 'archive'
+	&& ( !user.state.discussion_archived || constants.comments_moddable_archived)) %]
 [% IF moderate_form %]
-	<FORM ACTION="[% gSkin.rootdir %]/comments.pl" METHOD="POST">
-	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="[% sid %]">
-	<INPUT TYPE="HIDDEN" NAME="cid" VALUE="[% cid %]">
-	<INPUT TYPE="HIDDEN" NAME="pid" VALUE="[% pid %]">
+	<form action="[% gSkin.rootdir %]/comments.pl" method="post">
 [% END %]
 
+[% IF discussion2 %]
+	[% IF user.discussion2 == "slashdot" %]
+	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
+	[%- ELSE %]
+	<script src="http://socialcomputingresearch.net/slashdot/js/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
+	[%- END %]
+	<script type="text/javascript">
+<!--
+	$('commentControlBoxStatus').className = '';
+[% Slash.jsSelectComments(Slash.db, constants, user, { sid => sid, cid => cid }) %]
+//-->
+	</script>
+[% END %]
 
 [% IF cid %]
+	<ul id="commentlisting" class="[% user.mode %]"[% IF discussion2 %] onmouseover="floatButtons();"[% END %]>
 	[% Slash.dispComment(comment) %]
-	</TD></TR>
-	<TR><TD BGCOLOR="[% user.colors.bg_2 %]" ALIGN="CENTER">
-
+	<div class="comment_footer">
 	[% IF previous %]
 		&lt;&lt;[% Slash.linkComment(previous, 1) %]
 	[% END %]
@@ -47,7 +57,7 @@ __template__
 	[% IF previous && (comment.pid || next) %]
 		|
 	[% END %]
-
+	
 	[% IF comment.pid %]
 		[% Slash.linkComment(comment, 1) %]
 	[% END %]
@@ -59,41 +69,57 @@ __template__
 	[% IF next %]
 		[% Slash.linkComment(next, 1) %]&gt;&gt;
 	[% END %]
-
-	</TD></TR>
-	<TR><TD ALIGN="CENTER">
+	</div>
 	[% Slash.moderatorCommentLog('cid', cid, { show_m2s => (form.show_m2s.defined ? form.show_m2s : user.m2_with_comm_mod), need_m2_form => !moderate_form, need_m2_button => 1, title=>" " }); %]
-	</TD></TR>
 [% END %]
 
 	[% lcp %]
 	[% IF lvl %]
-	<TR><TD>
 	[% END %]
-	[% Slash.displayThread(sid, pid, lvl, comments) %]
+	[% thread = Slash.displayThread(sid, pid, lvl, comments) %]
+	[% IF thread %]
+		[% UNLESS cid %]<ul id="commentlisting"[% IF discussion2 %] onmouseover="floatButtons();"[% END %]>[% END %]
+			[% thread %]
+			<li id="roothiddens" class="hide"></li>
+		[% UNLESS cid %]</ul>[% END %]
+	[% END %]
+	[% IF cid %]</ul>[% END %]
 	[% IF lvl %]
-	</TD></TR>
 	[% END %]
 	[% lcp %]
 
 [% IF moderate_form %]
 	[% IF moderate_button %]
-		<TR><TD>
-			<P>Have you read the
-			<A HREF="[% gSkin.rootdir %]/moderation.shtml">Moderator Guidelines</A>
-			yet?
-			<INPUT TYPE="HIDDEN" NAME="op" VALUE="moderate">
-			<INPUT TYPE="SUBMIT" VALUE="moderate">
+		<div>Have you read the
+		<a href="[% gSkin.rootdir %]/moderation.shtml">Moderator Guidelines</a>
+		yet?
+		<input type="hidden" name="op" value="moderate">
+		<input type="hidden" name="sid" value="[% sid %]">
+		<input type="hidden" name="cid" value="[% cid %]">
+		<input type="hidden" name="pid" value="[% pid %]">
+		<input type="submit" value="moderate" class="button">
+		</div>
 		[% IF (constants.authors_unlimited && user.seclev >= constants.authors_unlimited)
 			|| user.acl.candelcomments_always %]
-			<BR><B>NOTE: Checked comments will be deleted.</B>
+			[% PROCESS formNote note='Checked comments will be deleted.' %]
 		[% END %]
-		</TD></TR>
 	[% END %]
-	</FORM>
+	</form>
 [% END %]
 
-</TABLE>
+[% IF discussion2 %]
+	<script type="text/javascript">
+<!--
+		currents['hidden']   = [% user.state.comments.totals.hidden  || 0 %];
+		currents['full']     = [% user.state.comments.totals.full    || 0 %];
+		currents['oneline']  = [% user.state.comments.totals.oneline || 0 %];
+		// currents_total = [% (user.state.comments.totals.hidden || 0 ) + (user.state.comments.totals.full || 0) + (user.state.comments.totals.oneline || 0)  %];
+
+		finishLoading();
+//-->
+	</script>
+[% END %]
+
 __seclev__
 10000
 __version__

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -12,6 +12,7 @@ use Slash 2.003;	# require Slash 2.3.x
 use Slash::Constants qw(:web :messages);
 use Slash::Display;
 use Slash::Utility;
+use Slash::XML;
 use Time::HiRes;
 use vars qw($VERSION);
 
@@ -37,6 +38,8 @@ my $start_time = Time::HiRes::time;
 		display		=> [ !$user->{is_anon},	\&display_message	],
 		delete_message	=> [ $user_ok,		\&delete_message	],
 		deletemsgs	=> [ $user_ok,		\&delete_messages	],
+
+		list_rss	=> [ !$user->{is_anon},	\&list_messages_rss	],
 
 # 		send_message	=> [ $user_ok,		\&send_message		],
 # 		edit_message	=> [ !$user->{is_anon},	\&edit_message		],
@@ -203,25 +206,26 @@ sub display_prefs {
 
 	header(getData('header')) or return;
 	print createMenu('users', {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	'preferences',
+		style		=> 'tabbed',
+		justify 	=> 'right',
+		color		=> 'colored',
+		tab_selected	=> 'preferences',
 	});
-	slashDisplay('prefs_titlebar', {
-		nickname => $user->{nickname},
-		uid => $user->{uid},
-		tab_selected => 'messages',
-		title => getData( 'prefshead' )
-	});
-	print createMenu('messages');
 	slashDisplay('journuserboxes');
+	my $prefs_titlebar = slashDisplay('prefs_titlebar', {
+		nickname	=> $user->{nickname},
+		uid		=> $user->{uid},
+		tab_selected	=> 'messages'
+	}, { Return => 1 });
+	my $messages_menu =  createMenu('messages');
 	slashDisplay('display_prefs', {
 		userm		=> $userm,
 		prefs		=> $prefs,
 		note		=> $note,
 		messagecodes	=> $messagecodes,
 		deliverymodes	=> $deliverymodes,
+		prefs_titlebar	=> $prefs_titlebar,
+		messages_menu	=> $messages_menu
 	});
 	footer();
 }
@@ -267,29 +271,58 @@ sub list_messages {
 	header(getData('header')) or return;
 # Spank me, this won't be here for long (aka Pater's cleanup will remove it) -Brian
 	print createMenu('users', {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	'me',
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> 'me',
 	});
-	slashDisplay('user_titlebar', {
-		nickname => $user->{nickname},
-		uid => $user->{uid},
-		tab_selected => 'messages'
-	});
-	print createMenu('messages'); # [ Message Preferences | Inbox ]
 	slashDisplay('journuserboxes');
+	my $user_titlebar = slashDisplay('user_titlebar', {
+		nickname	=> $user->{nickname},
+		uid		=> $user->{uid},
+		tab_selected	=> 'messages'
+	}, { Return => 1} );
+	my $messages_menu = createMenu('messages'); # [ Message Preferences | Inbox ]
 	slashDisplay('list_messages', {
 		note		=> $note,
 		messagecodes	=> $messagecodes,
 		message_list	=> $message_list,
+		messages_menu 	=> $messages_menu,
+		user_titlebar	=> $user_titlebar,
 	});
 	footer();
 }
 
-sub list_message_rss {
+sub list_messages_rss {
 	my($messages, $constants, $user, $form) = @_;
-	# ...
+
+	my @items;
+	my $message_list = $messages->getWebByUID();
+	for my $message (@$message_list) {
+		my $title = "Message #$message->{id}";
+		$title .= ": $message->{subject}" if $message->{subject};
+
+		push @items, {
+			story	=> {
+				'time'	=> $message->{date}
+			},
+			title		=> $title,
+			description	=> $message->{message} || '',
+			'link'		=> root2abs() . "/messages.pl?op=display&id=$message->{id}",
+		};
+	}
+
+	xmlDisplay($form->{content_type} => {
+		channel => {
+			title		=> "$constants->{sitename} Messages",
+			description	=> "$constants->{sitename} Messages",
+			'link'		=> root2abs() . '/my/inbox/',
+		},
+		image	=> 1,
+		items	=> \@items,
+		rdfitemdesc		=> 1,
+		rdfitemdesc_html	=> 1,
+	});
 }
 
 sub display_message {

@@ -18,10 +18,6 @@ __template__
 	[% returnme.data_constant = 1 %]
 	[% constants.sitename %] Message Center
 
-[% CASE 'prefshead' %]
-	[% returnme.data_constant = 1 %]
-	Message Options
-
 [% CASE 'prefs saved' %]
 	[% returnme.data_constant = 1 %]
 	Preferences Saved
@@ -63,6 +59,9 @@ __template__
 
 [% CASE 'unknown mode' %]
 	Unknown delivery mode '[% mode %]' for user [% uid %]
+
+[% CASE 'messages_div_begin' %]
+	<div id="users">
 
 [% END %]
 __seclev__

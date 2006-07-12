@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -24,14 +24,14 @@ $task{$me}{resource_locks} = { logdb => 1 };
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
+	my $log_slave = getObject('Slash::DB', { db_type => 'log_slave' } );
 	my $logdb = getObject('Slash::DB', { db_type => 'log' } );
 	my $counter = 0;
 	my $hoursback = $constants->{accesslog_hoursback} || 60;
 	my $failures = 10; # This is probably related to a lock failure
-	my $id = $logdb->sqlSelect('MAX(id)',
-		'accesslog',
+	my $id = $log_slave->sqlSelectNumericKeyAssumingMonotonic(
+		'accesslog', 'max', 'id',
 		"ts < DATE_SUB(NOW(), INTERVAL $hoursback HOUR)");
-
 	if (!$id) {
 		slashdLog("no accesslog rows older than $hoursback hours");
 		return "nothing to do";

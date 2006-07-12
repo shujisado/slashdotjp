@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -30,7 +30,7 @@ use Slash::Display;
 use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Slash::Utility::System;
-use Slash::Constants qw(:web :people);
+use Slash::Constants qw(:web :people :messages);
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -393,11 +393,13 @@ sub checkFormPost {
 		if ($slashdb->checkTimesPosted($formname, $max, $id, $formkey_earliest)) {
 			undef $formkey unless $formkey =~ /^\w{10}$/;
 
-			unless ($formkey && $slashdb->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
-				$slashdb->createAbuse("invalid form key", $formname, $ENV{QUERY_STRING});
-				$$err_message = Slash::getData('invalidformkey', '', '');
-				return;
-			}
+# wtf?  no method checkFormkey exists ...
+# of course, checkFormPost is never even called ...
+#			unless ($formkey && $slashdb->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
+#				$slashdb->createAbuse("invalid form key", $formname, $ENV{QUERY_STRING});
+#				$$err_message = Slash::getData('invalidformkey', '', '');
+#				return;
+#			}
 
 			if (submittedAlready($formkey, $formname, $err_message)) {
 				$slashdb->createAbuse("form already submitted", $formname, $ENV{QUERY_STRING});
@@ -519,6 +521,12 @@ sub compressOk {
 	require Compress::Zlib;
 	my($formname, $field, $content, $wsfactor) = @_;
 	$wsfactor ||= 1;
+
+	# If no content (or I suppose the single char '0') is passed in,
+	# just report that it passes the test.  Hopefully the caller is
+	# performing other checks to make sure that boundary condition
+	# is addresses.
+	return 1 if !$content;
 
 	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
@@ -732,8 +740,7 @@ sub setUserExpired {
 
 		my $reg_subj = Slash::getData('rereg_email_subject', '', '');
 
-		# Send the message (message code == -2)
-		doEmail($uid, $reg_subj, $reg_msg, -2);
+		doEmail($uid, $reg_subj, $reg_msg, MSG_CODE_REGISTRATION);
 	} else {
 		# We only need to clear these.
 		$slashdb->setUser($uid, {

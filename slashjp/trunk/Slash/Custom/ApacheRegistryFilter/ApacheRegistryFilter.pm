@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -39,13 +39,11 @@ sub run {
 
   # We temporarily override the header-sending routines to make them
   # noops.  This lets people leave these methods in their scripts.
-  my $warn = $^W;
-  undef $^W;
+  no warnings 'redefine';
   local *Apache::send_http_header = sub {
 	$r->content_type($_[0]) if @_;
   };
   local *Apache::send_cgi_header = sub {};
-  $^W = $warn;
 
   $pr->SUPER::run(@_);
 }

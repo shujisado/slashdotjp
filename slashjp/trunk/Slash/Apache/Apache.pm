@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -18,7 +18,7 @@ use URI;
 
 require DynaLoader;
 require AutoLoader;
-use vars qw($REVISION $VERSION @ISA $USER_MATCH);
+use vars qw($REVISION $VERSION @ISA $USER_MATCH $DAYPASS_MATCH);
 
 @ISA		= qw(DynaLoader);
 $VERSION   	= '2.003000';  # v2.3.0
@@ -28,6 +28,7 @@ $USER_MATCH = qr{ \buser=(?!	# must have user, but NOT ...
 	(?: nobody | %[20]0 )?	# nobody or space or null or nothing ...
 	(?: \s | ; | $ )	# followed by whitespace, ;, or EOS
 )}x;
+$DAYPASS_MATCH = qr{\bdaypassconfcode=};
 
 bootstrap Slash::Apache $VERSION;
 
@@ -241,6 +242,8 @@ sub SlashCompileTemplates ($$$) {
 	$slashdb->{_dbh}->disconnect;
 }
 
+# This handler is called in the first Apache phase, post-read-request.
+#
 # This can be used in conjunction with mod_proxy_add_forward or somesuch,
 # if you use a frontend/backend Apache setup, where all requests come
 # from 127.0.0.1 or some other predictable IP number(s).  For speed, we
@@ -287,16 +290,18 @@ sub ConnectionIsSSL {
 
 	# That probably didn't work so let's get that data the hard way.
 	my $r = Apache->request;
+	return 0 if !$r;
 	my $subr = $r->lookup_uri($r->uri);
-	my $https_on = ($subr && $subr->subprocess_env('HTTPS') eq 'on')
-		? 1 : 0;
-	return 1 if $https_on;
+	if ($subr) {
+		my $se = $subr->subprocess_env('HTTPS');
+		return 1 if $se && $se eq 'on'; # https is on
+	}
 
-	return 1 
-		if $r->header_in('X-SSL-On') eq 'yes'; 
+	my $x = $r->header_in('X-SSL-On');
+	return 1 if $x && $x eq 'yes'; 
 
-	# Nope, it's not SSL.  We're out of ideas, if the above didn't
-	# work we must not be on SSL.
+	# We're out of ideas.  If the above didn't work we must not be
+	# on SSL.
 	return 0;
 }
 
@@ -335,13 +340,19 @@ sub IndexHandler {
 	my $gSkin     = getCurrentSkin();
 
 	my $uri = $r->uri;
-	my $is_user = $r->header_in('Cookie') =~ $USER_MATCH;
+	my $cookie = $r->header_in('Cookie');
+	my $is_user = $cookie =~ $USER_MATCH;
+	my $has_daypass = 0;
+	if (!$is_user) {
+		if ($constants->{daypass} && $cookie =~ $DAYPASS_MATCH) {
+			$has_daypass = 1;
+		}
+	}
 
-	# harmful if deciding skin on directory
-	#if ($gSkin->{rootdir}) {
-	#	my $path = URI->new($gSkin->{rootdir})->path;
-	#	$uri =~ s/^\Q$path//;
-	#}
+	if ($gSkin->{rootdir}) {
+		my $path = URI->new($gSkin->{rootdir})->path;
+		$uri =~ s/^\Q$path//;
+	}
 
 	# Comment this in if you want to try having this do the right
 	# thing dynamically
@@ -349,17 +360,13 @@ sub IndexHandler {
 	# my $dbon = $slashdb->sqlConnect(); 
 	my $dbon = dbAvailable();
 
-	# URI ends with a slash and is equal to the skin's rootdir
-	if ($uri =~ m|(.*)/$| && URI->new($gSkin->{rootdir})->path eq $1
-	    && $gSkin->{index_handler} ne 'IGNORE') {
+	if ($uri eq '/' && $gSkin->{index_handler} ne 'IGNORE') {
 		my $basedir = $constants->{basedir};
 
 		# $USER_MATCH defined above
-		if ($dbon && $is_user) {
-			$r->uri( $uri . $gSkin->{index_handler} );
+		if ($dbon && ($is_user || $has_daypass)) {
+			$r->uri("/$gSkin->{index_handler}");
 			$r->filename("$basedir/$gSkin->{index_handler}");
-			# URI->filname conversion done, don't continue
-			$r->set_handlers(PerlTransHandler => undef);
 			return OK;
 		} elsif (!$dbon) {
 			# no db (you may wish to symlink index.shtml to your real
@@ -386,6 +393,64 @@ sub IndexHandler {
 		}
 	}
 
+	# match /section/ or /section
+	if ($uri =~ m|^/(\w+)/?$|) {
+		my $key = $1;
+		
+		if (!$dbon) {
+			$r->uri('/index.shtml');
+			return DECLINED;
+		}
+
+		my $slashdb = getCurrentDB();
+		my $new_skin = $slashdb->getSkin($key);
+		my $new_skid = $new_skin->{skid} || $constants->{mainpage_skid};
+#print STDERR scalar(localtime) . " $$ IndexHandler B new_skid=$new_skid\n";
+		setCurrentSkin($new_skid);
+		$gSkin = getCurrentSkin();
+
+		my $index_handler = $gSkin->{index_handler};
+		if ($index_handler ne 'IGNORE') {
+			my $basedir = $constants->{basedir};
+
+			# $USER_MATCH defined above
+			if ($dbon && ($is_user || $has_daypass)) {
+				$r->args("section=$key");
+				# For any directory which can be accessed by a
+				# logged-in user in the URI form /foo or /foo/,
+				# but which is not a skin's directory, there
+				# is a problem;  we cannot simply bounce the uri
+				# back to /index.pl or whatever, since the
+				# index handler will not recognize the section
+				# key argument above and will just present the
+				# ordinary homepage.  I don't know the best way
+				# to handle this situation at the moment, so
+				# instead I'm hardcoding in the solution for the
+				# most common problem. - Jamie 2004/07/17
+				if ($key eq "faq" || $key eq "palm") {
+					$r->uri("/$key/index.shtml");
+				} elsif ($key eq "docs"
+					|| $key eq "privaterss") {
+					$r->uri("/$key/");
+				} else {
+					$r->uri("/$index_handler");
+				}
+				$r->filename("$basedir/$index_handler");
+				return OK;
+			} else {
+				# user not logged in
+
+				# consider using File::Basename::basename() here
+				# for more robustness, if it ever matters -- pudge
+				my($base) = split(/\./, $index_handler);
+				$r->uri("/$key/$base.shtml");
+				$r->filename("$basedir/$key/$base.shtml");
+				writeLog('shtml');
+				return OK;
+			}
+		}
+	}
+
 	if ($uri eq '/authors.pl') {
 		my $filename = $r->filename;
 		my $basedir  = $constants->{basedir};
@@ -407,13 +472,17 @@ sub IndexHandler {
 		return OK;
 	}
 
-	# redirect to static if not a user, and
+	# redirect to static if
+	# * not a user, nor a daypass holder,
+	# and
 	# * var is on
 	# * is article.pl
 	# * no page number > 1 specified
 	# * sid specified
 	# * referrer exists AND is external to our site
-	if ($constants->{referrer_external_static_redirect} && !$is_user && $uri eq '/article.pl') {
+	if ($constants->{referrer_external_static_redirect}
+		&& !$is_user && !$has_daypass
+		&& $uri eq '/article.pl') {
 		my $referrer = $r->header_in("Referer");
 		my $referrer_domain = $constants->{referrer_domain} || $gSkin->{basedomain};
 		my $the_request = $r->the_request;
@@ -432,14 +501,6 @@ sub IndexHandler {
 				return DONE;
 			}
 		}
-	}
-
-	# .pl in section dirs are served by scripts in basedir
-	if( $uri =~ m|^.+/(\w+\.pl)$| ){
-		my $basedir = $constants->{basedir};
-		$r->filename("$basedir/$1");
-		$r->set_handlers(PerlTransHandler => undef);
-		return OK;
 	}
 
 	if (!$dbon && $uri !~ /\.(?:shtml|html|jpg|gif|png|rss|rdf|xml|txt|css)$/) {

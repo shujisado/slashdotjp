@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -22,15 +22,13 @@ sub main {
 		list		=> \&listpolls,
 		default		=> \&default,
 		vote		=> \&vote,
-		vote_return	=> \&vote_return,
 		get		=> \&poll_booth,
 		preview         => \&editpoll,
 		detach		=> \&detachpoll,
 		linkstory	=> \&link_story_to_poll
 	);
 
-	my $op = $form->{op};
-	$op = 'default' unless $ops{$form->{op}};
+	my $op = $form->{op} && $ops{$form->{op}} ? $form->{op} : 'default';
 
 	if (defined $form->{aid}) {
 		# Only allow a short range of answer ids here.
@@ -53,7 +51,7 @@ sub main {
 sub poll_booth {
 	my($form) = @_;
 
-	print pollbooth($form->{'qid'}, 0, 1);
+	print sidebox('Poll', pollbooth($form->{'qid'}, 0, 1), 'poll', 1);
 }
 
 #################################################################
@@ -230,10 +228,13 @@ sub editpoll {
 		$question->{sid} = $form->{override_sid} if $form->{override_sid};
 		
 		if ($question->{sid}) {
-			$story_ref = $reader->sqlSelectHashref("sid,qid,time,primaryskid,tid,displaystatus",
+			$story_ref = $reader->sqlSelectHashref("sid,qid,time,primaryskid,tid",
 				"stories",
 				"sid=" . $reader->sqlQuote($question->{sid})
 			);
+			
+			$story_ref->{displaystatus} = $reader->_displaystatus($story_ref->{stoid}) if $story_ref;
+
 			if ($story_ref) {
 				$question->{'date'}		= $story_ref->{'time'};
 				$question->{topic}		= $story_ref->{'tid'};
@@ -369,7 +370,7 @@ sub savepoll {
 	if ($constants->{poll_discussions}) {
 		my $poll = $slashdb->getPollQuestion($qid);
 		my $discussion;
-		if ($poll->{sid}) {
+		if ($form->{sid}) {
 			# if sid lookup fails, then $discussion is empty,
 			# and the poll's discussion is not set
 			$discussion = $slashdb->getStory(
@@ -377,6 +378,7 @@ sub savepoll {
 			);
 		} elsif (!$poll->{discussion}) {
 			$discussion = $slashdb->createDiscussion({
+				kind		=> 'pollbooth',
 				title		=> $form->{question},
 				topic		=> $form->{topic},
 				approved	=> 1, # Story discussions are always approved -Brian
@@ -398,36 +400,13 @@ sub savepoll {
 }
 
 #################################################################
-sub vote_return {
-	my($form, $slashdb) = @_;
-	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-
-	my $qid = $form->{'qid'};
-	my $aid = $form->{'aid'};
-	return unless $qid && $aid;
-
-	my(%all_aid) = map { ($_->[0], 1) }
-		@{$reader->getPollAnswers($qid, ['aid'])};
-	my $poll_open = $reader->isPollOpen($qid);
-	my $has_voted = $slashdb->hasVotedIn($qid);
-
-	if ($has_voted) {
-		# Specific reason why can't vote.
-	} elsif (!$poll_open) {
-		# Voting is closed on this poll.
-	} elsif (exists $all_aid{$aid}) {
-		$slashdb->createPollVoter($qid, $aid);
-	}
-}
-
-#################################################################
 sub vote {
 	my($form, $slashdb) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
 	my $qid = $form->{'qid'};
 	my $aid = $form->{'aid'};
-	return unless $qid;
+	return unless $qid && $aid;
 
 	my(%all_aid) = map { ($_->[0], 1) }
 		@{$reader->getPollAnswers($qid, ['aid'])};
@@ -441,18 +420,19 @@ sub vote {
 
 	my $question = $reader->getPollQuestion($qid, ['voters', 'question']);
 	my $notes = getData('display');
-	if (getCurrentUser('is_anon') && !getCurrentStatic('allow_anon_poll_voting')) {
-		$notes = getData('anon');
-	} elsif ($aid > 0) {
+	if ($aid > 0) {
 		my $poll_open = $reader->isPollOpen($qid);
-		my $has_voted = $slashdb->hasVotedIn($qid);
 
-		if ($has_voted) {
-			# Specific reason why can't vote.
-			$notes = getData('uid_voted');
-		} elsif (!$poll_open) {
+		if (!$poll_open) {
 			# Voting is closed on this poll.
 			$notes = getData('poll_closed');
+		}
+
+		my $reskey = getObject('Slash::ResKey');
+		my $rkey = $reskey->key('pollbooth', { qid => $qid });
+
+		if (!$rkey->createuse) {
+			$notes = $rkey->errstr;
 		} elsif (exists $all_aid{$aid}) {
 			$notes = getData('success', { aid => $aid });
 			$slashdb->createPollVoter($qid, $aid);
@@ -498,11 +478,23 @@ sub deletepolls {
 
 #################################################################
 sub listpolls {
-	my($form) = @_;
+	my($form, $slashdb, $constants) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $min = $form->{min} || 0;
 	my $type = $form->{type};
 	my $questions = $reader->getPollQuestionList($min, { type => $type });
+	my $gSkin = getCurrentSkin();
+	my $opts = ();
+	$opts->{type} = $form->{type};
+	$opts->{section} = $gSkin->{skid};
+
+	my $section = $gSkin->{name};
+	if ($gSkin->{skid} == $constants->{mainpage_skid}) {
+		$opts->{section} = '';
+	}
+
+	$questions = $reader->getPollQuestionList($min, $opts);
+
 	my $sitename = getCurrentStatic('sitename');
 
 	# Just me, but shouldn't title be in the template?

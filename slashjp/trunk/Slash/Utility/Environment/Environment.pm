@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -28,8 +28,7 @@ use strict;
 use Apache::ModuleConfig;
 use Digest::MD5 'md5_hex';
 use Time::HiRes;
-use Encode;
-use Encode::Guess;
+use Socket qw( inet_aton inet_ntoa );
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -70,10 +69,12 @@ use vars qw($VERSION @EXPORT);
 	getObject
 	getAnonId
 	isAnon
+	isAdmin
 	isSubscriber
 	prepareUser
 	filter_params
-	get_ipids
+	loadClass
+	loadCoderef
 
 	setUserDate
 	isDST
@@ -81,6 +82,9 @@ use vars qw($VERSION @EXPORT);
 	bakeUserCookie
 	eatUserCookie
 	setCookie
+	getPublicLogToken
+
+	getPollVoterHash
 
 	debugHash
 	slashProf
@@ -93,6 +97,16 @@ use vars qw($VERSION @EXPORT);
 	writeLog
 
 	determineCurrentSkin
+
+	get_ipids
+	get_srcids
+	convert_srcid
+	get_srcid_prependbyte
+	get_srcid_sql_in
+	get_srcid_sql_out
+	get_srcid_type
+	get_srcid_vis
+	decode_srcid_prependbyte
 
 );
 
@@ -1049,11 +1063,52 @@ sub isAnon {
 	my $slashdb = getCurrentDB();
 	my $skins = $slashdb->getSkins();
 	for my $skid (keys %$skins) {
-		return 1 if $uid == $skins->{$skid}{ac_uid};
+		return 1 if $skins->{$skid}{ac_uid} && $uid == $skins->{$skid}{ac_uid};
 	}
 
 	# Nope, this UID is not anonymous.
 	return 0;
+}
+
+#========================================================================
+
+=head2 isAdmin(UID)
+
+Tests to see if the uid passed in is an admin.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item UID
+
+Value UID.  Can also be standard C<$user> hashref.
+
+=back
+
+=item Return value
+
+Returns true if the UID is an admin, otherwise false.
+
+=back
+
+=cut
+
+sub isAdmin {
+	my($user) = @_;
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	# $user can be real $user, or $uid
+	my $usercheck = ref $user
+		? $user
+		: $slashdb->getUser($user, [qw(seclev)]);
+
+	return $usercheck->{seclev} >= 100
+		? 1
+		: 0;
 }
 
 #========================================================================
@@ -1078,7 +1133,10 @@ If you pass a UID instead of a USER, then the function will call getUser() for y
 
 =item Return value
 
-Returns true if the USER is a subscriber, otherwise false.
+Returns true if the USER is a subscriber, otherwise false.  Also returns
+true if the C<subscribe> var is false (everyone is a subscriber if there
+are no subscriptions), so check in your caller if you need subscriptions
+turned on.
 
 =back
 
@@ -1094,7 +1152,7 @@ sub isSubscriber {
 	if ($constants->{subscribe}) {
 		if (! ref $suser) {
 			my $slashdb = getCurrentDB();
-			$suser = $slashdb->getUser($suser);
+			$suser = $slashdb->getUser($suser, [qw(hits_paidfor hits_bought)]);
 		}
 
 		$subscriber = 1 if $suser->{hits_paidfor} &&
@@ -1110,8 +1168,7 @@ sub isSubscriber {
 
 =head2 getAnonId([FORMKEY])
 
-Creates an anonymous ID that is used to set an AC cookie,
-with some random data (well, as random as random gets)
+Returns a string of random alphanumeric characters.
 
 =over 4
 
@@ -1119,11 +1176,15 @@ with some random data (well, as random as random gets)
 
 =over 4
 
-=item FORMKEY
+=item NOPREFIX
 
-Return the same value as normal, but without prepending with a '-1-'.
-The normal case, with '-1-', is for easy identification of cookies.
-This case is for use with formkeys.
+Don't prepend a "-1-" string. That prefix is no longer used anywhere in
+the code, so basically everyplace this function is used passes in true
+for noprefix.  All part of the slow evolution of the codebase!
+
+=item COUNT
+
+Number of characters (default 10).
 
 =back
 
@@ -1138,9 +1199,11 @@ A random value based on alphanumeric characters
 {
 	my @chars = (0..9, 'A'..'Z', 'a'..'z');
 	sub getAnonId {
-		my $str;
-		$str = '-1-' unless $_[0];
-		$str .= join('', map { $chars[rand @chars] }  0 .. 9);
+		my($noprefix, $count) = @_;
+		$count ||= 10;
+		my $str = "";
+		$str = '-1-' unless $noprefix;
+		$str .= join('', map { $chars[rand @chars] } 1 .. $count);
 		return $str;
 	}
 }
@@ -1166,7 +1229,8 @@ User ID.
 
 =item VALUE
 
-Cookie's value.
+Cookie's value.  This used to be called 'passwd' but the value that gets
+put into user cookies now isn't a password anymore.
 
 =back
 
@@ -1180,8 +1244,8 @@ Created cookie.
 
 # create a user cookie from ingredients
 sub bakeUserCookie {
-	my($uid, $passwd) = @_;
-	my $cookie = $uid . '::' . $passwd;
+	my($uid, $value) = @_;
+	my $cookie = $uid . '::' . $value;
 	return $cookie;
 }
 
@@ -1219,8 +1283,8 @@ sub eatUserCookie {
 	my($cookie) = @_;
 	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/ge
 		unless $cookie =~ /^\d+::/;
-	my($uid, $passwd) = split(/::/, $cookie, 2);
-	return($uid, $passwd);
+	my($uid, $value) = split(/::/, $cookie, 2);
+	return($uid, $value);
 }
 
 #========================================================================
@@ -1246,7 +1310,11 @@ Value to be placed in the cookie.
 
 =item SESSION
 
-Flag to determine if the cookie should be a session cookie.
+Flag to determine if the cookie should be a session cookie.  "1" means
+yes, expire it after the current session.  "2" means to expire it
+according to the login_temp_minutes var.  And a value that looks like
+a session time, like "+24h", is passed along directly (in that case,
+expires 24 hours from now).
 
 =back
 
@@ -1301,6 +1369,8 @@ sub setCookie {
 	# lines, and uncomment the one right above "bake"
 	if (!$val) {
 		$cookie->expires('-1y');  # delete
+	} elsif ($session && $session =~ /^\+\d+[mhdy]$/) {
+		$cookie->expires($session);
 	} elsif ($session && $session > 1) {
 		my $minutes = $constants->{login_temp_minutes};
 		$cookie->expires("+${minutes}m");
@@ -1315,6 +1385,48 @@ sub setCookie {
 		$cookie->bake;
 	}
 }
+
+#========================================================================
+
+=head2 getPollVoterHash([UID])
+
+=cut
+
+sub getPollVoterHash {
+	my $constants = getCurrentStatic();
+	my $remote_addr = $ENV{REMOTE_ADDR} || '';
+        if ($constants->{poll_fwdfor} && $ENV{HTTP_X_FORWARDED_FOR}) {
+                return md5_hex($remote_addr . $ENV{HTTP_X_FORWARDED_FOR});
+        } else {
+                return md5_hex($remote_addr);
+        }
+}
+
+#========================================================================
+
+=head2 getPublicLogToken([UID])
+
+Just a wrapper around:
+
+	bakeUserCookie($uid, $slashdb->getLogToken($uid, 1, 2));
+
+to get a public logtoken.  Uses current user's UID if none supplied.
+
+=cut
+
+sub getPublicLogToken {
+	my($uid) = @_;
+	$uid ||= getCurrentUser('uid');
+	if ($uid) {
+		my $slashdb = getCurrentDB();
+		my $logtoken = $slashdb->getLogToken($uid, 1, 2);
+		if ($logtoken) {
+			return bakeUserCookie($uid, $logtoken);
+		}
+	}
+	return '';
+}
+
 
 #========================================================================
 
@@ -1428,12 +1540,15 @@ sub prepareUser {
 	}
 
 	$user->{state}{post}	= $method eq 'POST' ? 1 : 0;
-	@{$user}{qw[ipid subnetid classbid hostip]} = get_ipids($hostip);
+	$user->{srcids}		= get_srcids({ ip => $hostip, uid => $uid });
+	@{$user}{qw[ipid subnetid classbid hostip]} = get_ipids();
+#	@{$user}{qw[ipid subnetid classbid hostip]} = get_srcids({ ip => $hostip },
+#		{ return_only => [qw( ipid subnetid classbid ip )] });
 
 	my @defaults = (
 		['mode', 'thread'], qw[
 		savechanges commentsort threshold
-		posttype noboxes light
+		posttype noboxes lowbandwidth simpledesign
 	]);
 
 	for my $param (@defaults) {
@@ -1481,7 +1596,7 @@ sub prepareUser {
 
 	if ($uri =~ m[^/$]) {
 		$user->{currentPage} = 'index';
-	} elsif ($uri =~ m{(?:/|\b)([^/]+)\.pl$}) {
+	} elsif ($uri =~ m{\b([^/]+)\.pl\b}) {
 		$user->{currentPage} = $1;
 	} else {
 		$user->{currentPage} = 'misc';
@@ -1501,8 +1616,7 @@ sub prepareUser {
 
 	if ($constants->{subscribe}) {
 		# Decide whether the user is a subscriber.
-		$user->{is_subscriber} = 1 if $user->{hits_paidfor}
-			&& $user->{hits_bought} < $user->{hits_paidfor};
+		$user->{is_subscriber} = isSubscriber($user);
 		# Make other decisions about subscriber-related attributes
 		# of this page.  Note that we still have $r lying around,
 		# so we can save Subscribe.pm a bit of work.
@@ -1513,19 +1627,30 @@ sub prepareUser {
 			$user->{state}{page_adless} = $subscribe->adlessPage($r, $user);
 		}
 	}
+	if (!$user->{is_subscriber} && $constants->{daypass}) {
+		# If the user is not a subscriber, they may still be
+		# _effectively_ a subscriber if they have a daypass.
+		my $daypass_db = getObject('Slash::Daypass', { db_type => 'reader' });
+		if ($daypass_db->userHasDaypass($user)) {
+#			$user->{is_subscriber} = 1;
+			$user->{has_daypass} = 1;
+			$user->{state}{page_plummy} = 1;
+			$user->{state}{page_buying} = 0;
+			$user->{state}{page_adless} = 0;
+print STDERR scalar(localtime) . " Env.pm $$ userHasDaypass uid=$user->{uid} cs=$constants->{subscribe} is=$user->{is_subscriber} cd=$constants->{daypass}\n";
+		}
+	}
+
 	if ($user->{seclev} >= 100) {
 		$user->{is_admin} = 1;
 		# can edit users and do all sorts of cool stuff
 		$user->{is_super_admin} = 1 if $user->{seclev} >= 10_000 || $user->{acl}{super_admin};
-		my $sid;
-		#This cookie could go, and we could have session instance
-		#do its own thing without the cookie. -Brian
-		if ($cookies->{session}) {
-			$sid = $slashdb->getSessionInstance($uid, $cookies->{session}->value);
-		} else {
-			$sid = $slashdb->getSessionInstance($uid);
-		}
-		setCookie('session', $sid) if $sid;
+
+		# cookie no longer used, remove it if it is there -- pudge
+		setCookie('session', '') if $cookies->{session};
+		# this no longer "gets" anything, it only sets -- pudge
+		$slashdb->getSessionInstance($uid);
+
 		if ($constants->{admin_check_clearpass}
 			&& !Slash::Apache::ConnectionIsSecure()) {
 			$user->{state}{admin_clearpass_thisclick} = 1;
@@ -1538,6 +1663,34 @@ sub prepareUser {
 		# change their password.
 		$user->{seclev} = 1;
 		$user->{state}{lostprivs} = 1;
+	}
+
+	if ($constants->{plugin}{Tags}) {
+		my $write = $constants->{tags_stories_allowwrite} || 0;
+		$user->{tags_canwrite_stories} = 0;
+		$user->{tags_canwrite_stories} = 1 if
+			!$user->{is_anon} && (
+				   $write >= 4
+				|| $write >= 3 && $user->{karma} >= 0
+				|| $write >= 2.5 && $user->{acl}{tags_stories_allowwrite}
+				|| $write >= 2 && $user->{is_subscriber}
+				|| $write >= 1 && $user->{is_admin}
+			);
+		my $read;
+		if ($user->{tags_canwrite_stories}) {
+			$user->{tags_canread_stories} = 1;
+		} else {
+			$read = $constants->{tags_stories_allowread} || 0;
+			$user->{tags_canread_stories} = 0;
+			$user->{tags_canread_stories} = 1 if
+				!$user->{is_anon} && (
+					   $read >= 4
+					|| $read >= 3 && $user->{karma} >= 0
+					|| $read >= 2.5 && $user->{acl}{tags_stories_allowread}
+					|| $read >= 2 && $user->{is_subscriber}
+					|| $read >= 1 && $user->{is_admin}
+				);
+		}
 	}
 
 	return $user;
@@ -1583,37 +1736,6 @@ sub saveUserDBs {
 	for my $type (keys %$user_types) {
 		$user->{state}{dbs}{$type} = $user_types->{$type};
 	}
-}
-
-#========================================================================
-
-sub get_ipids {
-	my($hostip, $no_md5, $locationid) = @_;
-
-	$locationid = getCurrentStatic('cookie_location') if @_ > 2 && !$locationid;
-
-	if (!$hostip && $ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
-		$hostip = $r->connection->remote_ip;
-	} elsif (!$hostip) {
-		$hostip = '';
-	}
-
-	my $ipid = $no_md5 ? $hostip : md5_hex($hostip);
-	(my $subnetid = $hostip) =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
-	$subnetid = $no_md5 ? $subnetid : md5_hex($subnetid);
-	(my $classbid = $hostip) =~ s/(\d+\.\d+)\.\d+\.\d+/$1\.0\.0/;
-	$classbid = $no_md5 ? $classbid : md5_hex($classbid);
-
-	if ($locationid) {
-		return $locationid eq 'classbid' ? $classbid
-		     : $locationid eq 'subnetid' ? $subnetid
-		     : $locationid eq 'ipid'     ? $ipid
-		     : $locationid eq 'ip'       ? $hostip
-		     : '';
-	}
-
-	return($ipid, $subnetid, $classbid, $hostip);
 }
 
 #========================================================================
@@ -1672,12 +1794,24 @@ Hashref of cleaned-up data.
 		url_id spider_id miner_id keyword_id
 		st_main_select stc_main_select
 		parent_topic child_topic
+		skid primaryskid
+	),
+	# Survey
+	qw(
+		svid sqid ordnum next_sqid condnext_sqid sqcid
+		owneruid discussionid uid_min uid_max
+		expyear expmonth expday exphour expmin
+		openyear openmonth openday openhour openmin
 	);
 
 	# fields that have ONLY a-zA-Z0-9_
 	my %alphas = map {($_ => 1)} qw(
 		fieldname formkey commentstatus filter
-		hcanswer mode op section thisname type
+		hcanswer mode op section thisname type reskey
+	),
+	# Survey
+	qw(
+		svsid
 	);
 
 	# regexes to match dynamically generated numeric fields
@@ -1719,8 +1853,6 @@ sub filter_params {
 				$form{$_} = \@multi;
 				$form{_multi}{$_} = \@multi;
 				next;
-			} elsif (/^op_(.+)$/){
-				$form{'op'} = $1;
 			}
 		}
 	}
@@ -1753,8 +1885,6 @@ sub filter_params {
 
 sub filter_param {
 	my($key, $data) = @_;
-	my @candencs = qw/utf8 ascii euc-jp cp932 7bit-jis/;
-	my $enc;
 
 	# Paranoia - Clean out any embedded NULs. -- cbwood
 	# hm.  NULs in a param() value means multiple values
@@ -1771,18 +1901,6 @@ sub filter_param {
 	} else {
 		for my $ri (@regints) {
 			$data = fixint($data) if /$ri/;
-		}
-
-		# convert input to internal character encoding
-		# don't do any conversion if code can't be guessed
-		while ( !ref($enc) && @candencs){
-			$enc = guess_encoding( $data, @candencs );
-			if (ref($enc)){
-				$data = $enc->decode( $data );
-				last;
-			}else{
-				pop( @candencs );
-			}
 		}
 	}
 
@@ -2092,14 +2210,22 @@ sub getObject {
 	# clean up dangerous characters
 	$class =~ s/[^\w:]+//g;
 
-	# only if passed a hash, or no passed data at all
+	# Determine the db_type and the virtual user, based on the data
+	# passed in (if any), the 'classes' var (see getClasses()),
+	# and $user->{state}{dbs}.
 	if (!$data || ref $data eq 'HASH') {
+		# If we were passed a hash, or no data at all...
 		$data ||= {};
 		if ($data->{virtual_user}) {
 			$vuser = $data->{virtual_user};
 
 		} else {
-			# this really isn't used and is not well-tested anymore -- pudge
+			# For now, the $class specified is really only used to
+			# bless the returned object.  In theory setting rows in
+			# the classes table properly (which ends up in the var
+			# named 'classes') should also provide correct db_type
+			# and fallback data for that class.  But the classes
+			# table hasn't been tested in production.
 			my $classes = getCurrentStatic('classes');
 
 			# try passed db first, then db for given class
@@ -2111,15 +2237,14 @@ sub getObject {
 
 			return undef if $db_type && $fallback && !$vuser;
 		}
-	}
-
-	# if plain string, use it as vuser
-	elsif (!ref $data) {
+	} elsif (!ref $data) {
+		# If we were passed a plain string, use that as
+		# the virtual user...
 		$data = { virtual_user => $data };
 		$vuser = $data->{virtual_user};
 	}
 
-	# in the future, we may default to something else, but for now it is the writer
+	# The writer is the logical DB to default to if nothing is specified.
 	$vuser ||= $user->{state}{dbs}{writer} || getCurrentVirtualUser();
 	return undef unless $vuser && $class;
 
@@ -2141,11 +2266,7 @@ sub getObject {
 		}
 
 	} else {
-		# see if module has been loaded in already ...
-		(my $file = $class) =~ s|::|/|g;
-		# ... because i really hate eval
-		local $@; # $@ won't get cleared unless eval is performed
-		eval "require $class" unless exists $INC{"$file.pm"};
+		loadClass($class);
 
 		if ($@) {
 			errorLog($@);
@@ -2164,6 +2285,65 @@ sub getObject {
 		return undef;
 	}
 }
+
+{
+my %classes;
+sub loadClass {
+	my($class) = @_;
+
+	if ($classes{$class}) {
+		if ($classes{$class} eq 'NA') {
+			return 0;  # previous failure
+		}
+		return $classes{$class};  # previous success
+	}
+
+	# see if module has been loaded in already ...
+	(my $file = $class) =~ s|::|/|g;
+	# ... because i really hate eval
+	undef $@;  # for good measure
+	eval "require $class" unless exists $INC{"$file.pm"};
+
+	if ($@) {
+		$classes{$class} = 'NA';
+		return 0;
+	} else {
+		return $classes{$class} = 1;
+	}
+}
+}
+
+{
+my %coderefs;
+sub loadCoderef {
+	my($class, $function) = @_;
+	my $full = $class . '::' . $function;
+
+
+	if ($coderefs{$full}) {
+		if ($coderefs{$full} eq 'NA') {
+			return 0;  # previous failure
+		}
+		return $coderefs{$full};  # previous success
+	}
+
+	return 0 unless loadClass($class);
+
+	my $code;
+	{
+		no strict 'refs';
+		$code = \&{ $full };
+	}
+
+	if (defined &$code) {
+		return $coderefs{$full} = $code;
+	} else {
+		$coderefs{$full} = 'NA';
+		return 0;
+	}
+}
+}
+
 
 #========================================================================
 
@@ -2187,6 +2367,11 @@ Returns 0;
 sub errorLog {
 	return if $Slash::Utility::NO_ERROR_LOG;
 
+	# if set to 0, goes until no more callers found
+	my $max_level = defined $Slash::Utility::MAX_ERROR_LOG_LEVEL
+		? $Slash::Utility::MAX_ERROR_LOG_LEVEL
+		: 2;
+
 	my $level = 1;
 	$level++ while (caller($level))[3] =~ /log/i;  # ignore other logging subs
 
@@ -2194,8 +2379,13 @@ sub errorLog {
 
 	($package, $filename, $line) = caller($level++);
 	push @errors, ":$package:$filename:$line:@_";
-	($package, $filename, $line) = caller($level++);
-	push @errors, "Which was called by:$package:$filename:$line:@_" if $package;
+	$max_level--;
+
+	while ($max_level--) {
+		($package, $filename, $line) = caller($level++);
+		last unless $package;
+		push @errors, "Which was called by:$package:$filename:$line";
+	}
 
 	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		$errors[0] = $ENV{SCRIPT_NAME} . $errors[0];
@@ -2237,7 +2427,8 @@ No value is returned.
 
 sub writeLog {
 	return unless $ENV{GATEWAY_INTERFACE};
-	my $dat = join("\t", @_);
+	my @args = grep { defined $_ } @_;
+	my $dat = @args ? join("\t", @args) : '';
 
 	my $r = Apache->request;
 
@@ -2285,6 +2476,7 @@ sub getOpAndDatFromStatusAndURI {
 	} elsif ($uri =~ /\.png$/) {
 		$uri = 'image';
 	} elsif ($uri =~ /\.rss$/ || $uri =~ /\.xml$/ || $uri =~ /\.rdf$/ || $ENV{QUERY_STRING} =~ /\bcontent_type=rss\b/) {
+		$dat = $uri;
 		$uri = 'rss';
 	} elsif ($uri =~ /\.pl$/) {
 		$uri =~ s|^/(.*)\.pl$|$1|;
@@ -2338,10 +2530,21 @@ sub createLog {
 	my $logdb = getObject('Slash::DB', { virtual_user => $constants->{log_db_user} });
 
 	my($op, $new_dat) = getOpAndDatFromStatusAndURI($status, $uri, $dat);
+	my $user = getCurrentUser();
 
-	$logdb->createAccessLog(	$op, $new_dat, $status);
-	$logdb->createAccessLogAdmin(	$op, $new_dat, $status)
-		if getCurrentUser('is_admin');
+	# Always log this hit to accesslog, unless this is an admin hitting
+	# admin.pl and the log_admin var has been set to false (this will
+	# help small sites keep admin traffic out of that log, which really
+	# is of questionable value since crawlers will be just as bad, but
+	# hey, we offer site admins the option anyway).
+	unless (!$constants->{log_admin} && $user->{is_admin} && $uri =~ /admin\.pl/) {
+		$logdb->createAccessLog($op, $new_dat, $status);
+	}
+
+	# If this is an admin user, all hits go into accesslog_admin.
+	if ($user->{is_admin}) {
+		$logdb->createAccessLogAdmin($op, $new_dat, $status);
+	}
 }
 
 #========================================================================
@@ -2464,29 +2667,22 @@ sub determineCurrentSkin {
 	my $skin;
 
 	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
-		my $hostname = $r->header_in('host');
+		my $hostname = $r->header_in('host') || '';
 		$hostname =~ s/:\d+$//;
  
-		# filter skins by hostname
 		my $skins = $reader->getSkins;
-		my @potSkin = grep { lc $skins->{$_}{hostname} eq lc $hostname }
-			sort { $a <=> $b } keys %$skins;
-
-		# match /section/...,  / is matched to 
-		if ($r->uri() =~ m|^/(\w+)/|){
-			my $key = $1;
-			($skin) = grep {$skins->{$_}{name} eq $key } @potSkin;
-		}else{
-			($skin) = @potSkin;
-		}
+		($skin) = grep {
+				(my $tmp = lc $skins->{$_}{hostname} || '') =~ s/:\d+$//;
+				$tmp eq lc $hostname
+			} sort { $a <=> $b } keys %$skins;
 
 		# don't bother warning if $hostname is numeric IP
 		if (!$skin && $hostname !~ /^\d+\.\d+\.\d+\.\d+$/) {
 			$skin = getCurrentStatic('mainpage_skid');
 			if (!$skin) {
-				errorLog("determineCurrentSkin called but no skin found (even default) for $hostname\n");
+				errorLog("determineCurrentSkin called but no skin found (even default) for '$hostname'\n");
 			} else {
-				#errorLog("determineCurrentSkin called but no skin found (so using default) for $hostname\n");
+				errorLog("determineCurrentSkin called but no skin found (so using default) for '$hostname'\n");
 			}
 		}
 	} else {
@@ -2500,6 +2696,496 @@ sub determineCurrentSkin {
 	}
  
 	return $skin;
+}
+
+#========================================================================
+# XXXSRCID eliminate this or bring it back or something
+sub get_ipids {
+	my($hostip, $no_md5, $locationid) = @_;
+ 
+	$locationid = getCurrentStatic('cookie_location') if @_ > 2 && !$locationid;
+ 
+	if (!$hostip && $ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$hostip = $r->connection->remote_ip;
+	} elsif (!$hostip) {
+		$hostip = '';
+	}
+ 
+	my $ipid = $no_md5 ? $hostip : md5_hex($hostip);
+	(my $subnetid = $hostip) =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
+	$subnetid = $no_md5 ? $subnetid : md5_hex($subnetid);
+	(my $classbid = $hostip) =~ s/(\d+\.\d+)\.\d+\.\d+/$1\.0\.0/;
+	$classbid = $no_md5 ? $classbid : md5_hex($classbid);
+ 
+	if ($locationid) {
+		return $locationid eq 'classbid' ? $classbid
+		     : $locationid eq 'subnetid' ? $subnetid
+		     : $locationid eq 'ipid'     ? $ipid
+		     : $locationid eq 'ip'       ? $hostip
+		     : '';
+	}
+ 
+	return($ipid, $subnetid, $classbid, $hostip);
+}
+
+#========================================================================
+
+=head2 get_srcids
+
+Converts an IP address and/or user id to a hashref containing one or
+more srcids.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item DATA
+
+A hashref containing one or more of two possible fields:  (1) "uid",
+whose value is a user id;  and/or (2) "ip", whose value is a text string
+representing an IPv4 address in the form of "1.2.3.4" (IPv6 is not
+yet supported), or a false value which means to use the current Apache
+connection's remote_ip if invoked within Apache, or the dummy value
+"0.0.0.0" otherwise.
+
+=item OPTIONS
+
+An optional hashref containing zero or more options.  The option
+'no_md5', if its field is any true value, ensures that IPs encoded into
+the returned hashref, while still masked, are not MD5'd but kept in string
+"1.2.3.4" form.
+
+The option 'masks' can be a scalar containing a single value or an
+arrayref containing multiple values.  By default, only two masked-off
+values of an IP are encoded:  a 32-bit and a 24-bit mask (the IP itself
+and its Class C subnet).  Any additional values between 1 and 32 may be
+passed in in 'masks' and those additional mask sizes will also be
+calculated and encoded in the returned hashref.
+
+The option 'return_only' will change the returned value from a hashref
+with multiple fields into an array which contains the values of one or
+more of what those fields would have been.  The value(s) of 'return_only'
+can be: (1) the string "uid" to return just the uid, (2) an integer
+between 1 and 32 (which will be implied into the 'masks' option as well),
+(3) one of the three strings "ipid", "subnetid", or "classbid" which
+are the equivalent of the integers 32, 24, and 16 respectively, or (4)
+the string "cookie_location", which will be replaced by the value of
+the var 'cookie_location'.
+
+=back
+
+=item Return value
+
+The uid and/or ip converted to an encoded hashref.  If a uid was passed
+in, the field "uid" stores the converted uid (which happens to be the
+uid itself).  If an ip was passed in, there will be one or more fields
+whose names are integer values between 1 and 32 and whose values are
+64-bit (16-char) lowercase hex strings with the encoded values of the ip.
+There will also be the convenience field "ip" set which contains the
+original ip value passed in.  (But see OPTIONS:  if return_only is set,
+only one of the fields of the hashref will be returned.)
+
+=back
+
+=cut
+
+sub get_srcids {
+	my($hr, $options) = @_;
+	$hr ||= { };
+	my $retval = { };
+	my($no_md5, $return_only, $masks) = _get_srcids_options($options);
+
+	# UIDs are the easy part.  The encoded value of a uid is the uid
+	# itself, in decimal form, so we just pass this input along to
+	# the output.
+	if (my $uid = $hr->{uid}) {
+		$retval->{uid} = $uid;
+	}
+
+	# IPs are the tricky part.
+	if (defined(my $ip = $hr->{ip})) {
+		if (!defined($no_md5)) {
+			# Error in options passed.
+			warn "Error in options passed to get_srcids";
+#use Data::Dumper; $Data::Dumper::Sortkeys=1; print STDERR "options: " . Dumper($options);
+			return undef;
+		}
+		if (!$ip) {
+			if ($ENV{GATEWAY_INTERFACE}) {
+				my $r = Apache->request;
+				$ip = $r->connection->remote_ip;
+			} elsif (!$ip) {
+				$ip = '0.0.0.0';
+			}
+		}
+
+		$retval->{ip} = $ip; # return the IP passed in, for convenience
+
+		# For each entry in @$masks, we truncate the IPv4 address
+		# to that many bits (so 32 is the whole IP address, this
+		# works the same way as a /32 mask).  Then convert to
+		# a text string of the dotted-quad, truncate to the
+		# proper width, and prepend the code indicating what kind
+		# of mask has been applied.
+
+		# XXX For IPv6, here's where we need to decide how to
+		# extend the value of 'masks' to a 128-bit IP address.
+		# For IPv4, we convert the string "1.2.3.4" to the
+		# number 0x01020304, mask it, then convert back to
+		# dotted-quad string.
+		my $n = unpack("N", inet_aton($ip));
+
+		for my $mask (@$masks) {
+			my $prepend_code = get_srcid_prependbyte({
+				type =>         'ipid',
+				mask =>         $mask,
+			});
+			my $bitmask = ~( 2**(32-$mask) - 1 );
+			my $nm = $n & $bitmask;
+			my $str = inet_ntoa(pack("N", $nm));
+			my $val;
+			if ($no_md5) {
+				$val = $str;
+			} else {
+				my $md5 = md5_hex($str);
+				my $md5_trunc = substr($md5, 0, 14);
+				$val = lc("$prepend_code$md5_trunc");
+			}
+			$retval->{$mask} = $val;
+		}
+
+	}
+
+	if ($return_only) {
+		# Return just the value(s) requested, no hashref
+		# wrapper around them.
+		my @retvals = ( );
+		for my $field (@$return_only) {
+			push @retvals, $retval->{$field};
+		}
+		return @retvals;
+	}
+
+	return $retval;
+}
+
+{ # closure
+my %mask_size_name = (
+	ipid =>         32,
+	subnetid =>     24,
+	classbid =>     16,
+);
+
+sub convert_srcid {
+	my($type, $old_id_str) = @_;
+	# UIDs are easy, they haven't changed.
+	return $old_id_str if $type eq 'uid';
+	# IPs, Subnets, and Class B's get converted to MD5s and then
+	# treated like IPIDs, SubnetIDs, and ClassBIDs..
+	if ($mask_size_name{"${type}id"}) {
+		$old_id_str = md5_hex($old_id_str);
+		$type = "${type}id";
+	}
+	# IPIDs, SubnetIDs, and ClassBIDs get a prepended byte and a
+	# truncate to convert them..
+	if ($mask_size_name{$type}) {
+		my $str_trunc = lc(substr($old_id_str, 0, 14));
+		my $prependbyte = get_srcid_prependbyte({
+			type => 'ipid',
+			mask => $mask_size_name{$type}
+		});
+		return "$prependbyte$str_trunc";
+	}
+	# XXXSRCID this is a logic error but handle it better
+	die "logic error convert_srcid: type='$type' ois='$old_id_str'";
+}
+
+sub _get_srcids_options {
+	my($options) = @_;
+	my $no_md5 = $options->{no_md5} || 0;
+
+	my $return_only = '';
+	if (defined $options->{return_only}) {
+		# Pass in no defined value for the return_only field,
+		# and get_srcids returns the whole hashref.
+		# Pass in a defined value which is either a common
+		# name of a mask size, or an integer indicating a
+		# mask size, and this function returns only that one
+		# value out of the hashref.
+		# Pass in the word 'cookie_location', and this function
+		# returns only the one value named in the var 'cookie_location'.
+		if ($options->{return_only} eq 'cookie_location') {
+			$return_only = getCurrentStatic('cookie_location');
+		} else {
+			$return_only = $options->{return_only};
+		}
+		my %ro = ( );
+		my @k = ref($return_only) ? @$return_only : ( $return_only );
+		my @ret = ( );
+		for my $k (@k) {
+			if ($k =~ /^\d+$/ && $k >= 1 && $k <= 32) {
+				# It's already a valid number indicating mask size.
+				push @ret, $k;
+			} else {
+				if ($mask_size_name{$k}) {
+					# It's the name of a valid mask.
+					push @ret, $mask_size_name{$k};
+				} elsif ( $mask_size_name{"${k}id"} ) {
+					# It's the name of a valid mask
+					# minus the "id", which is close
+					# enough.
+					push @ret, $mask_size_name{"${k}id"};
+				} else {
+					# Invalid value, abort.
+#use Data::Dumper; $Data::Dumper::Sortkeys=1; print STDERR "k='$k' options: " . Dumper($options);
+					return undef;
+				}
+			}
+		}
+		$return_only = \@ret;
+	}
+
+	my $masks = [ ];
+	if ($return_only) {
+		# If we've been asked to return specific values,
+		# calculate just those values.
+		$masks = [ @$return_only ];
+	} else {
+		if (defined $options->{masks}) {
+			$masks = $options->{masks};
+			if (!ref $masks) {
+				$masks = [ $masks ];
+			}
+		}
+		@$masks = sort grep { /^\d+$/ } @$masks;
+		if (!@$masks) {
+			# Bad or no option passed in;  use default.
+			# XXXSRCID This should be a var.
+			$masks = [qw( 16 24 32 )];
+		}
+	}
+
+	# Return the options the caller's caller asked for.
+	return ($no_md5, $return_only, $masks);
+}
+} # closure
+
+#========================================================================
+
+=head2 get_srcid_prependbyte
+
+This returns the two-character hex code that should be prepended
+to a 14-character hex value to create the 16-character hex value
+representing either a user ID or an encoded IP address MD5.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item PARAMS
+
+A hash of the parameters.  'type' is a required parameter; its only
+defined values so far are 'ipid', indicating an encoded IP address of
+some type, or 'uid', indicating a user ID.  Other values may be
+possible in future.
+
+=over 4
+
+If 'type' eq 'ipid', the parameter 'mask' must be present, a number
+from 1 to 32 indicating how many bits will be present.  For example,
+a 24 here would have the same meaning as in '192.168.0.0/24',
+signifying the address is a Class C.
+
+=back
+
+=over 4
+
+If 'type' eq 'uid', no other parameters are necessary.
+
+=back
+
+=back
+
+=item Return value
+
+Two-character hex code to prepend.  The bit values of this code are
+currently defined as follows:
+
+=over 4
+
+bits 0-2 (MSBs): 0b000=uid; 0b001=IPv4 ipid; other values reserved
+for future use.
+
+bits 3-7 (LSBs): if uid, all 0; if IPv4 ipid, 32 minus the mask
+size (so 0b00000 indicates a mask size of 32, 0b01000 24, etc.)
+
+=back
+
+Thus the most commonly returned values will be: "00" = uid,
+"20" = ipid, "28" = subnetid, "30" = classbid.
+
+=cut
+
+sub get_srcid_prependbyte {
+	my($hr) = @_;
+	my $val = 0;
+	my $type = $hr->{type};
+	if ($type eq 'ipid') {
+		my $mask32 = 32 - $hr->{mask};
+		$val = 0x20 + $mask32;
+	} else {
+		$val = 0x00;
+	}
+	return sprintf("%02x", $val);
+}
+
+#========================================================================
+
+=head2 decode_srcid_prependbyte(BYTE)
+
+Decodes the byte encoded by encode_prepend_byte.  Returns a
+hashref with fields 'type' and, if type is 'ipid', 'mask'.
+
+=cut
+
+sub decode_srcid_prependbyte {
+	my($byte) = @_;
+	my $val = hex($byte);
+	my $type = ($val & 0b11100000) >> 5;
+	if ($type == 0) {
+		return { type => 'uid' };
+	}
+	my $mask = 32 - ($val & 0b00011111);
+	return {
+		type => 'ipid',
+		mask => $mask,
+	};
+}
+
+#========================================================================
+
+=head2 get_srcid_sql_in
+
+Pass this a srcid, either in decimal form (which is what uids will
+typically be in) or as a 64-bit (16-char) hex string, and it will return
+an SQL function or value which can be used as part of a test against
+or an assignment into an SQL integer value.  This value should _not_ be
+quoted but rather inserted directly into an SQL request.  For example,
+if passed "123" (a user id), will return "'123'" (same value,
+quoted);  if passed "200123456789abcd" (an encoded IP), will return
+"CONV('200123456789abcd', 16, 10)" which can be used as an assignment
+into or test against a BIGINT column.
+
+For speed, does not do error-checking against the value passed in.
+
+Usage:
+
+$slashdb->sqlInsert("al2", { srcid => get_srcid_sql_in($srcid) });
+
+=cut
+
+sub get_srcid_sql_in {
+	my($srcid) = @_;
+	if ($srcid !~ /^[0-9a-f]+$/) {
+		my @caller_info = ( );
+		for (my $lvl = 1; $lvl < 99; ++$lvl) {
+			my @c = caller($lvl);
+			last unless @c;
+			next if $c[0] =~ /^Template/;
+			push @caller_info, "$c[0] line $c[2]";
+			last if scalar(@caller_info) >= 3;
+		}
+		warn "Invalid param to get_srcid_sql_in, callers: @caller_info";
+	}
+	my $slashdb = getCurrentDB();
+	my $srcid_q = $slashdb->sqlQuote($srcid);
+	my $type = get_srcid_type($srcid);
+	if ($type eq 'uid') {
+		return $srcid_q;
+	}
+	return "CONV($srcid_q, 16, 10)";
+}
+
+#========================================================================
+
+=head2 get_srcid_sql_out
+
+Pass this the name of a column with srcid data, and it returns the SQL
+necessary to retrieve data from that column in srcid format.  The
+column data is returned in decimal format if it can be represented in
+decimal in an ordinarily-compiled perl, as a hex string otherwise.
+"Non-decimal characters in the result will be uppercase," say the docs,
+so we lowercase them.
+
+Usage:
+
+$slashdb->sqlSelectColArrayref(get_srcid_sql_out('srcid') . ' AS srcid',
+'al2', 'value=1');
+
+=cut
+
+sub get_srcid_sql_out {
+	my($colname) = @_;
+	return "IF($colname < (1 << 31), $colname, LOWER(CONV($colname, 10, 16)))";
+}
+
+#========================================================================
+
+=head2 get_srcid_type
+
+Pass this a srcid, either in decimal form (which is what uids will
+typically be in) or as a 64-bit (16-char) hex string, and it will return
+the name of the field in a srcid hashref that the data belongs in: either
+"uid" for a uid, or an integer between 1 and 32 for an encoded IP.
+
+For speed, does not do error-checking against the value passed in.
+
+=cut
+
+sub get_srcid_type {
+	my($srcid) = @_;
+	my $is_hex = ( length($srcid) == 16 || $srcid !~ /^\d+$/ );
+	if (!$is_hex) {
+		# Only uids are allowed to be passed around in decimal
+		# form, so this must be a uid.
+		return 'uid';
+	}
+	# Read the code on the front of the string.
+	my $code = substr($srcid, 0, 2);
+	if ($code eq '00') {
+		# Hex-encoded UID.
+		return 'uid';
+	}
+	# That code indicates an IP, and its least significant 5 bits
+	# encode the size of the mask used on that IP, which we return.
+	my $decval = hex($code);
+	return $decval & 0b00011111;
+}
+
+#========================================================================
+
+=head2 get_srcid_vis
+
+Pass this a srcid, either in decimal form (which is what uids will
+typically be in) or as a 64-bit (16-char) hex string, and it will return
+a short text string suitable for display, typically as the text that
+is linked in HTML.
+
+For speed, does not do error-checking against the value passed in.
+
+=cut
+
+sub get_srcid_vis {
+	my($srcid) = @_;
+	my $type = get_srcid_type($srcid);
+	return $srcid if $type eq 'uid';
+	my $vislen = getCurrentStatic('id_md5_vislength') || 5;
+	return substr($srcid, 2, $vislen);
 }
 
 #========================================================================
@@ -2525,20 +3211,31 @@ sub slashProfEnd {
 	my $first = $prof[0][0];
 	my $last  = $first;  # Matthew 20:16
 	my $end   = $prof[-1][0];
-	my $total = ($end - $first) * 1_000;
+	my $total = $end - $first;
 
 	$total ||= $first || $end || 1;  # just in case
 
+	my $unit  = ' s';
+	my $multi = 1;
+
+	if ($total < 100) {
+		$unit    = 'ms';
+		$multi  *= 1_000;
+		$total  *= 1_000;
+	}
+
+	local $\;
+
 	print STDERR "\n*** Begin profiling ($$)\n";
-	print STDERR "*** Begin ordered ($$)\n";
-	printf STDERR <<'EOT', "PID", "what", "this #", "pct", "tot. #", "pct";
-%-6.6s: %-64.64s % 6.6s ms (%6.6s%%) / % 6.6s ms (%6.6s%%)
+	print STDERR "*** Begin ordered ($$)\n" if $use_profiling > 1;
+	printf STDERR <<"EOT", "PID", "what", "this #", "pct", "tot. #", "pct" if $use_profiling > 1;
+%-6.6s: %-64.64s % 6.6s $unit (%6.6s%%) / % 6.6s $unit (%6.6s%%)
 EOT
 
 	my(%totals, %begin);
 	for my $prof (@prof) {
-		my $t1 = ($prof->[0] - $first) * 1_000;
-		my $t2 = ($prof->[0] - $last) * 1_000;
+		my $t1 = ($prof->[0] - $first) * $multi;
+		my $t2 = ($prof->[0] - $last) * $multi;
 		my $p1 = $t1 / $total * 100;
 		my $p2 = $t2 / $total * 100;
 		my $s1 = sprintf('%.2f', $p1);
@@ -2581,20 +3278,23 @@ EOT
 		# mark new beginning
 		$begin{$prof->[5]} = $t1 if $prof->[5];
 
-		printf STDERR <<'EOT', $$, $where, $t2, $s2, $t1, $s1 if $use_profiling > 1;
-%-6d: %-64.64s % 6d ms (%6.6s%%) / % 6d ms (%6.6s%%)
+		printf STDERR <<"EOT", $$, $where, $t2, $s2, $t1, $s1 if $use_profiling > 1;
+%-6d: %-64.64s % 6d $unit (%6.6s%%) / % 6d $unit (%6.6s%%)
 EOT
 	}
 
 	print STDERR "\n*** Begin summary ($$)\n";
-	printf STDERR <<'EOT', "PID", "what", "time", "pct";
-%-6.6s: %-64.64s % 6.6s ms (%6.6s%%)
+	printf STDERR <<"EOT", "PID", "what", "time", "pct";
+%-6.6s: %-64.64s % 6.6s $unit (%6.6s%%)
+EOT
+	printf STDERR <<"EOT", $$, 'total', $total, '100.00';
+%-6d: %-64.64s % 6d $unit (%6.6s%%)
 EOT
 	for (sort { $totals{$b} <=> $totals{$a} } keys %totals) {
 		my $p = $totals{$_} / $total * 100;
 		my $s = sprintf('%.2f', $p);
-		printf STDERR <<'EOT', $$, $_, $totals{$_}, $s;
-%-6d: %-64.64s % 6d ms (%6.6s%%)
+		printf STDERR <<"EOT", $$, $_, $totals{$_}, $s;
+%-6d: %-64.64s % 6d $unit (%6.6s%%)
 EOT
 	}
 

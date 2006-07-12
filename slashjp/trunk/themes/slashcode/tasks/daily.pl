@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -16,7 +16,7 @@ use vars qw( %task $me );
 # GMT if you installed everything correctly.  So 2:00 AM GMT is a good
 # sort of midnightish time for the Western Hemisphere.  Adjust for
 # your audience and admins.
-$task{$me}{timespec} = '0 17 * * *'; # 2:00 AM JST
+$task{$me}{timespec} = '0 2 * * *';
 $task{$me}{timespec_panic_2} = ''; # if major panic, dailyStuff can wait
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
@@ -30,7 +30,6 @@ $task{$me}{code} = sub {
 
 	return;
 };
-
 
 sub daily_generateDailyMailees {
 	my($n_users, $h_users) = @_;
@@ -55,11 +54,13 @@ sub daily_generateDailyMailees {
 			my $user = $users->{$uid};
 
 			my $key  = $user->{sectioncollapse} || "";
-			for my $value (@{$user}{qw(
+			for my $cust_key (qw(
 				story_never_topic	story_never_author	story_never_nexus
 				story_always_topic	story_always_author	story_always_nexus
-			)}) {
-				$key .= '|' . join(',', sort( $value =~ /'(.+?)'/g ));
+			)) {
+				my $value = $user->{$cust_key};
+				my @values = sort grep /^\d+$/, split /[,']+/, $value;
+				$key .= '|' . join(',', @values);
 			}
 			# allow us to make certain emails sent individually,
 			# by including a unique value in users_param for
@@ -148,8 +149,10 @@ sub daily_mailingList {
 		slashdLog("Daily Mail ($mailing) begin for " . scalar(keys %$mkeys) . " mkeys");
 		for my $key (sort keys %$mkeys) {
 			my $user = $mkeys->{$key}{user};
-			my $text = daily_generateDailyMail($mailing, $user, $constants, $slashdb) or next;
-			if (my $n_users = scalar(@{ $mkeys->{$key}{mails} }) >= 100) {
+			my $n_users = scalar(@{ $mkeys->{$key}{mails} });
+			my $text = daily_generateDailyMail($mailing, $user, $constants, $slashdb);
+			next unless $text;
+			if ($n_users >= 100) {
 				slashdLog("Sending " . length($text) . " bytes to $n_users users: '$key'");
 			}
 			$messages->bulksend(

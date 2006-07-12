@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -137,11 +137,12 @@ sub init {
 }
 
 sub log {
-	my($self, $msg, $mode) = @_;
+	my($self, $msg, $mode, $count) = @_;
+	$count = 1 if !$count || $count < 1;
 	my $table = $self->{_log_table};
 	$msg->{user} ||= {};
 
-	$self->sqlInsert($table, {
+	my %data = (
 		id	=> $msg->{id},
 		user	=> (ref($msg->{user})
 				? ($msg->{user}{uid} || 0)
@@ -153,7 +154,10 @@ sub log {
 			   ),
 		code	=> $msg->{code},
 		mode	=> $mode,
-	}, { delayed => 1 });
+	);
+
+	$self->sqlInsert($table, \%data, { delayed => 1 })
+		for 1 .. $count;
 }
 
 sub _create_web {
@@ -222,7 +226,7 @@ sub _get_web_by_uid {
 	my $prime = "message_web.id=message_web_text.id AND user";
 	my $other = "ORDER BY date ASC";
 
-	my $id_db = $self->sqlQuote($uid || $ENV{SLASH_USER});
+	my $id_db = $self->sqlQuote($uid || getCurrentUser('uid'));
 	my $data = $self->sqlSelectAllHashrefArray(
 		$cols, $table, "$prime=$id_db", $other
 	);
@@ -234,7 +238,7 @@ sub _get_web_count_by_uid {
 	my $table = $self->{_web_table};
 	my $cols  = "readed";
 
-	my $uid_db = $self->sqlQuote($uid || $ENV{SLASH_USER});
+	my $uid_db = $self->sqlQuote($uid || getCurrentUser('uid'));
 	my $data = $self->sqlSelectAll(
 		$cols, $table, "user=$uid_db AND " .
 		"$self->{_web_table1}.$self->{_web_prime1} = $self->{_web_table2}.$self->{_web_prime2}",
@@ -267,7 +271,7 @@ sub _gets {
 	my $table = $self->{_drop_table};
 	my $cols  = $self->{_drop_cols};
 
-	$count = 1 if $count =~ /\D/;
+	$count = 1 if $count && $count =~ /\D/;
 	my $other = "ORDER BY date ASC";
 	$other .= " LIMIT $count" if $count;
 
@@ -370,12 +374,12 @@ sub _delete_web {
 	my $where2 = "$prime1=$id_db";
 
 	unless ($override) {
-		$uid ||= $ENV{SLASH_USER};
+		$uid ||= getCurrentUser('uid');
 		return 0 unless $uid;
 		my $uid_db = $self->sqlQuote($uid);
 		my $where  = $where1 . " AND user=$uid_db";
 		my($check) = $self->sqlSelect('user', $table1, $where);
-		return 0 unless $check eq $uid;
+		return 0 unless defined($check) && $check eq $uid;
 	}
 
 	$self->sqlDo("DELETE FROM $table1 WHERE $where1");
@@ -466,7 +470,7 @@ sub _getMessageUsers {
 	if ($acl) {
 		my $acl_q = $self->sqlQuote($acl);
 		my $aclt = "$table,users_acl";
-		my $aclw = " users_acl.uid = users_messages.uid AND users_acl.acl=$acl_q";
+		my $aclw = "$where AND users_acl.uid = users_messages.uid AND users_acl.acl=$acl_q";
 		my $aclu = $self->sqlSelectColArrayref($cols, $aclt, $aclw) || [];
 		push @users, @$aclu;
 	}

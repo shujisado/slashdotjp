@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -25,7 +25,7 @@ sub main {
 	# lc just in case
 	my $op = lc($form->{op});
 
-	my($tbtitle);
+	my $tbtitle = '';
 
 	my $ops = {
 		slashd		=> {
@@ -189,6 +189,12 @@ sub main {
 			adminmenu	=> 'info',
 			tab_selected	=> 'mcdstats',
 		},
+		signoff_stats 		=> {
+			function	=> \&displaySignoffStats,
+			seclev		=> 500,
+			adminmenu	=> 'info',
+			tab_selected	=> 'signoff'
+		}
 	};
 
 	# admin.pl is not for regular users
@@ -203,14 +209,14 @@ sub main {
 	$op = 'list' if $user->{seclev} < $ops->{$op}{seclev};
 	$op ||= 'list';
 
-	if (($form->{op} =~ /^preview|edit$/) && $form->{title}) {
+	if ($form->{op} && $form->{op} =~ /^preview|edit$/ && $form->{title}) {
 		# Show submission/article title on browser's titlebar.
 		$tbtitle = $form->{title};
 		$tbtitle =~ s/"/'/g;
 		$tbtitle = " - \"$tbtitle\"";
 		# Undef the form title value if we have SID defined, since the editor
 		# will have to get this information from the database anyways.
-		undef $form->{title} if ($form->{sid} && $form->{op} eq 'edit');
+		undef $form->{title} if $form->{sid} && $form->{op} eq 'edit';
 	}
 
 	my $db_time = $slashdb->getTime();
@@ -479,7 +485,7 @@ sub templateEdit {
 		$templateedit_flag = 1;
 	}
 
-	$templateform_flag = 1 if ((! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew});
+	$templateform_flag = 1 if (! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew};
 
 	slashDisplay('templateEdit', {
 		tpid 			=> $tpid,
@@ -525,6 +531,11 @@ sub templateSave {
 	$exists = 1 if ($name eq $temp->{name} &&
 			$skin eq $temp->{skin} &&
 			$page eq $temp->{page});
+
+	# Strip non-unix newlines.
+	for (qw( template title description )) {
+		$form->{$_} =~ s/(\r\n|\r)/\n/g;
+	}
 
 	if ($form->{save_new}) {
 		if ($id->{tpid} || $exists) {
@@ -608,7 +619,6 @@ sub blockEdit {
 	if ($bid) {
 		$blockref = $slashdb->getBlock($bid, '', 1);
 	}
-	my $sectionbid = $blockref->{section};
 	my $rss_templates = $slashdb->getTemplateList('','portald');
 	my $rss_ref = { map { ($_, $_) } values %{$rss_templates} };
 
@@ -659,10 +669,10 @@ sub blockEdit {
 		}
 	}
 
-	$blockform_flag = 1 if ((! $form->{blockdelete_confirm} && $bid) || $form->{blocknew});
+	$blockform_flag = 1 if (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew};
 
 	my $title = getTitle('blockEdit-title', { bid => $bid }, 1);
-	$blockref->{items} ||= $constants->{max_items};
+	$blockref->{items} ||= $constants->{rss_max_items_incoming};
 
 	slashDisplay('blockEdit', {
 		bid 			=> $bid,
@@ -677,7 +687,6 @@ sub blockEdit {
 		retrieve_checked	=> $retrieve_checked,
 		all_skins_checked	=> $all_skins_checked,
 		blocktype_select	=> $blocktype_select,
-		sectionbid		=> $sectionbid,
 		autosubmit_select	=> $autosubmit_select,
 		rss_select		=> $rss_select,
 		rss_template_code	=> $rss_template_code,
@@ -1039,8 +1048,8 @@ sub importImage {
 	}
 
 	my($w, $h) = imgsize("/tmp/slash/$tf");
-	return qq[<IMG SRC="$rootdir/$section/] .  getsiddir() . $filename
-		. qq[" WIDTH="$w" HEIGHT="$h" ALT="$section">];
+	return qq[<img src="$rootdir/$section/] .  getsiddir() . $filename
+		. qq[" width="$w" height="$h" alt="$section">];
 }
 
 ##################################################################
@@ -1090,180 +1099,6 @@ sub importText {
 		}
 	}
 	return $r;
-}
-
-##################################################################
-# Generates the 'Related Links' for Stories
-sub getRelated {
-	my($story_content, $tid) = @_;
-
-	my $slashdb = getCurrentDB();
-	my $user    = getCurrentUser;
-
-	my $rl = $slashdb->getRelatedLinks;
-	my @related_text = ( );
-	my @rl_keys = sort keys %$rl;
-
-	my @tids = ( $tid );
-	if (ref($tid) && ref($tid) eq 'ARRAY') {
-		@tids = @$tid;
-	}
-	my $tid_regex = "^_topic_id_"
-		. "(?:"
-			. join("|", map { "\Q$_" } @tids)
-		. ")"
-		. "(?!\\d)";
-
-	if ($rl) {
-		my @matchkeys =
-			sort grep {
-				$rl->{$_}{keyword} =~ $tid_regex
-				||
-				$rl->{$_}{keyword} !~ /^_topic_id_/
-					&& $story_content =~ /\b$rl->{$_}{keyword}\b/i
-			} @rl_keys;
-		for my $key (@matchkeys) {
-			# Instead of hard-coding the HTML here, we should
-			# do something a little more flexible.
-			my $str = qq[&middot; <a href="$rl->{$key}{link}">$rl->{$key}{name}</a><br>\n];
-			push @related_text, $str;
-		}
-	}
-
-	# And slurp in all of the anchor links (<A>) from the story just for
-	# good measure.  If TITLE attribute is present, use that for the link
-	# label; otherwise just use the A content.
-	while ($story_content =~ m|<a\s+(.*?)>(.*?)</a>|sgi) {
-		my($a_attr, $label) = ($1, $2);
-		next unless $a_attr =~ /\bhref\s*=\s*["']/si;
-		if ($a_attr =~ m/(\btitle\s*=\s*(["'])(.*?)\2)/si) {
-			$label = $3;
-			$a_attr =~ s/\Q$1\E//;
-		}
-
-		$a_attr =~ /\bhref\s*=\s*(["'])(.*?)\1/;
-		my $a_href = $2;
-		# If we want to exclude certain types of links from appearing
-		# in Related Links, we can make that decision based on the
-		# link target here.
-
-		$a_href =~ /(\w\.\w?)$/;
-		my $a_href_domain = $1;
-
-		$label = strip_notags($label);
-		$label =~ s/(\S{30})/$1 /g;
-		# Instead of hard-coding the HTML here, we should
-		# do something a little more flexible.
-		my $str;
-		if (submitDomainAllowed($a_href_domain)) {
-			$str = qq[&middot; <a $a_attr>$label</a><br>\n];
-		} else {
-			$str = qq[&middot; <blink><b><a style="color: #FF0000;" $a_attr>$label</a></b></blink><br>\n];
-		}
-		push @related_text, $str unless $label eq "?" || $label eq "[?]";
-	}
-
-	for (@{$user->{state}{related_links}}) {
-		push @related_text, sprintf(
-			# Instead of hard-coding the HTML here, we should
-			# do something a little more flexible.
-			qq[&middot; <a href="%s">%s</a><br>\n],
-			strip_attribute($_->[1]), $_->[0]
-		);
-	}
-
-	# Check to make sure we don't include the same link twice.
-	my %related_text = ( );
-	my $return_str = "";
-	for my $rt (@related_text) {
-		next if $related_text{$rt};
-		$return_str .= $rt;
-		$related_text{$rt} = 1;
-	}
-	return $return_str;
-}
-
-##################################################################
-sub otherLinks {
-	my($aid, $tid, $uid) = @_;
-
-	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-
-	my $topics = $reader->getTopics();
-	my @tids = ( $tid );
-	if (ref($tid) && ref($tid) eq 'ARRAY') {
-		@tids = ( @$tid );
-	}
-
-	return slashDisplay('otherLinks', {
-		uid		=> $uid,
-		aid		=> $aid,
-		tids		=> \@tids,
-		topics		=> $topics,
-	}, { Return => 1, Nocomm => 1 });
-}
-
-##################################################################
-sub get_slashd_box {
-	my $slashdb = getCurrentDB();
-	my $sldst = $slashdb->getSlashdStatuses();
-	for my $task (keys %$sldst) {
-		$sldst->{$task}{last_completed_hhmm} =
-			substr($sldst->{$task}{last_completed}, 11, 5)
-			if defined($sldst->{$task}{last_completed});
-		$sldst->{$task}{next_begin_hhmm} =
-			substr($sldst->{$task}{next_begin}, 11, 5)
-			if defined($sldst->{$task}{next_begin});
-		$sldst->{$task}{summary_trunc} =
-			substr($sldst->{$task}{summary}, 0, 30)
-			if $sldst->{$task}{summary};
-	}
-	# Yes, this really is the easiest way to do this.
-	# Yes, it is quite complicated.
-	# Sorry.  - Jamie
-	my @tasks_next = reverse (
-		map {				# Build an array of
-			$sldst->{$_}
-		} grep {			# the defined elements of
-			defined($_)
-		} ( (				# the first 3 elements of
-			sort {			# a sort of
-				$sldst->{$a}{next_begin} cmp $sldst->{$b}{next_begin}
-			} grep {		# the defined elements of
-				defined($sldst->{$_}{next_begin})
-				&& !$sldst->{$_}{in_progress}
-			} keys %$sldst		# the hash keys.
-		)[0..2] )
-	);
-	my @tasks_inprogress = (
-		map {				# Build an array of
-			$sldst->{$_}
-		} sort {			# a sort of
-			$sldst->{$a}{task} cmp $sldst->{$b}{task}
-		} grep {			# the in-progress elements of
-			$sldst->{$_}{in_progress}
-		} keys %$sldst			# the hash keys.
-	);
-	my @tasks_last = reverse (
-		map {				# Build an array of
-			$sldst->{$_}
-		} grep {			# the defined elements of
-			defined($_)
-		} ( (				# the last 3 elements of
-			sort {			# a sort of
-				$sldst->{$a}{last_completed} cmp $sldst->{$b}{last_completed}
-			} grep {		# the defined elements of
-				defined($sldst->{$_}{last_completed})
-				&& !$sldst->{$_}{in_progress}
-			} keys %$sldst		# the hash keys.
-		)[-3..-1] )
-	);
-	my $text = slashDisplay('slashd_box', {
-		tasks_next              => \@tasks_next,
-		tasks_inprogress        => \@tasks_inprogress,
-		tasks_last              => \@tasks_last,
-	}, , { Return => 1 });
-	return $text;
 }
 
 ##################################################################
@@ -1327,15 +1162,18 @@ sub editStory {
 		$storyref->{commentstatus} = $form->{commentstatus};
 
 		$storyref->{uid} ||= $user->{uid};
-		if ($constants->{use_dept_space2dash}){
-			$storyref->{dept} =~ s/[-\s]+/-/g;
-			$storyref->{dept} =~ s/^-//;
-			$storyref->{dept} =~ s/-$//;
-		}
+		$storyref->{dept} =~ s/[-\s]+/-/g;
+		$storyref->{dept} =~ s/^-//;
+		$storyref->{dept} =~ s/-$//;
 
+		my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form);
+		$storyref->{related_sids_hr} = $related_sids_hr;
+		$storyref->{related_urls_hr} = $related_urls_hr;
+		$storyref->{related_cids_hr} = $related_cids_hr;
 		my($chosen_hr) = extractChosenFromForm($form);
 		$storyref->{topics_chosen} = $chosen_hr;
 		my $rendered_hr = $slashdb->renderTopics($chosen_hr);
+		$storyref->{topics_rendered} = $rendered_hr;
 		$storyref->{primaryskid} = $slashdb->getPrimarySkidFromRendered($rendered_hr);
 		$storyref->{topiclist} = $slashdb->getTopiclistFromChosen($chosen_hr,
 			{ skid => $storyref->{primaryskid} });
@@ -1343,25 +1181,19 @@ sub editStory {
 		$extracolumns = $slashdb->getNexusExtrasForChosen($chosen_hr);
 
 		for my $field (qw( introtext bodytext )) {
-			$storyref->{$field} = $slashdb->autoUrl(
-				$form->{section}, $storyref->{$field});
-			$storyref->{$field} = slashizeLinks(
-				$storyref->{$field});
-			$storyref->{$field} = parseSlashizedLinks(
-				$storyref->{$field});
-			$storyref->{$field} = balanceTags(
-				$storyref->{$field});
+			local $Slash::Utility::Data::approveTag::admin = 1;
+			$storyref->{$field} = $slashdb->autoUrl($form->{section}, $storyref->{$field});
+			$storyref->{$field} = cleanSlashTags($storyref->{$field});
+			$storyref->{$field} = strip_html($storyref->{$field});
+			$storyref->{$field} = slashizeLinks($storyref->{$field});
+			$storyref->{$field} = parseSlashizedLinks($storyref->{$field});
+			$storyref->{$field} = balanceTags($storyref->{$field});
 		}
 
 		$form->{uid} ||= $user->{uid};
 		$subid = $form->{subid};
 		$sid = $form->{sid};
 
-		$storyref->{topics_chosen} = $chosen_hr;
-		$storyref->{topics_rendered} = $rendered_hr;
-		$storyref->{primaryskid} = $slashdb->getPrimarySkidFromRendered($rendered_hr);
-		$storyref->{topiclist} = $slashdb->getTopiclistFromChosen($chosen_hr,
-			{ skid => $storyref->{primaryskid} });
 		# not normally set here, so we force it to be safe
 		$storyref->{tid} = $storyref->{topiclist};
 
@@ -1385,6 +1217,24 @@ sub editStory {
 		$storyref = $slashdb->getStory($stoid, '', 1);
 		my $tmp = $user->{currentSkin} || $gSkin->{textname};
 		$user->{currentSkin} = $storyref->{skin}{name};
+		
+		my $related = $slashdb->getRelatedStoriesForStoid($storyref->{stoid});
+		my(@related_sids, @related_cids);
+		
+		foreach my $related (@$related) {
+			if ($related->{rel_sid}) {
+				push @related_sids, $related->{rel_sid} if $related->{rel_sid};
+			} elsif ($related->{cid}) {
+				push @related_cids, $related->{cid};
+			} elsif ($related->{url}) {
+				$storyref->{related_urls_hr}{$related->{url}} = $related->{title};
+			}
+		}
+
+		my %related_sids = map { $_ => $slashdb->getStory($_) } @related_sids; 
+		my %related_cids = map { $_ => $slashdb->getComment($_) } @related_cids;
+		$storyref->{related_sids_hr} = \%related_sids;
+		$storyref->{related_cids_hr} = \%related_cids;
 
 		$sid = $storyref->{sid};
 		$storyref->{is_dirty} = 1;
@@ -1459,27 +1309,18 @@ sub editStory {
 			# does, as we are bypassing it by going straight to
 			# dispStory() -- pudge
 			$story_copy{$field} = parseSlashizedLinks($storyref->{$field});
-			$story_copy{$field} = cleanSlashTags($storyref->{$field});
 			my $options = $field eq 'bodytext' ? { break => 1 } : undef;
-			$story_copy{$field} = processSlashTags($storyref->{$field}, $options);
+			$story_copy{$field} = processSlashTags($storyref->{$field}, $options) || '';
 		}
 
 		# Get the related text.
-		$storyref->{relatedtext} = getRelated(
+		my $admindb = getObject('Slash::Admin');
+		$storyref->{relatedtext} = $admindb->relatedLinks(
 			"$story_copy{title} $story_copy{introtext} $story_copy{bodytext}",
-			$storyref->{topic}
-		) . otherLinks(
+			$storyref->{topiclist},
 			$slashdb->getAuthor($storyref->{uid}, 'nickname'),
-			$storyref->{tid}, 
 			$storyref->{uid}
 		);
-		# If getRelated and otherLinks seem to be putting <li>
-		# tags around each item, they probably want a <ul></ul>
-		# surrounding the whole list.  This is a bit hacky but
-		# should help make strictly parsed versions of HTML
-		# work better.
-		$storyref->{relatedtext} = "<ul>\n$storyref->{relatedtext}\n</ul>"
-			if $storyref->{relatedtext} && $storyref->{relatedtext} =~ /^\s*<li>/;
 
 		my $author  = $slashdb->getAuthor($storyref->{uid});
 		my $topiclist = $slashdb->getTopiclistFromChosen($storyref->{topics_chosen});
@@ -1501,30 +1342,47 @@ sub editStory {
 	my $topic_select = Slash::Admin::PopupTree::getPopupTree($storyref->{topics_chosen});
 
 	my $authors = $slashdb->getDescriptions('authors', '', 1);
+	$authors->{$storyref->{uid}} = $slashdb->getUser($storyref->{uid}, 'nickname') if $storyref->{uid} && !defined($authors->{$storyref->{uid}});
 	my $author_select = createSelect('uid', $authors, $storyref->{uid}, 1);
 
-	$storyref->{dept} =~ s/ /-/gi if $constants->{use_dept_space2dash};
+	$storyref->{dept} =~ s/ /-/gi;
 
 	$locktest = lockTest($storyref->{title});
 
 	my $display_codes = $user->{section} ? 'displaycodes_sectional' : 'displaycodes';
 
-	$description = $slashdb->getDescriptions('commentcodes');
+	$description = $slashdb->getDescriptions('commentcodes_extended');
 	$commentstatus_select = createSelect('commentstatus', $description, $storyref->{commentstatus}, 1);
 
 	$fixquotes_check	= $constants->{markup_checked_attribute} if $form->{fixquotes};
 	$autonode_check		= $constants->{markup_checked_attribute} if $form->{autonode};
 	$fastforward_check	= $constants->{markup_checked_attribute} if $form->{fastforward};
 
+	my $last_admin_text = $slashdb->getLastSessionText($user->{uid});
+	my $lasttime = $slashdb->getTime();
+	$slashdb->setUser($user->{uid}, { adminlaststorychange => $lasttime }) if $last_admin_text ne $storyref->{title};
 	$slashdb->setSession($user->{uid}, {
 		lasttitle	=> $storyref->{title},
 		last_sid	=> $sid,
 		last_subid	=> '',
 	});
 
+	# Run a spellcheck on introtext, bodytext, and title if they're set.
+	my %introtext_spellcheck = get_ispell_comments($storyref->{introtext}) if $storyref->{introtext};
+	my %bodytext_spellcheck  = get_ispell_comments($storyref->{bodytext})  if $storyref->{bodytext};
+	my %title_spellcheck     = get_ispell_comments($storyref->{title})     if $storyref->{title};
+
+	# Set up our spellcheck template. Output is either a table (if errors were found) or an empty string.	
 	my $ispell_comments = {
-		introtext =>    get_ispell_comments($storyref->{introtext}),
-		bodytext =>     get_ispell_comments($storyref->{bodytext}),
+		introtext => (scalar keys %introtext_spellcheck)
+			? slashDisplay("spellcheck", { words => \%introtext_spellcheck, form_element => "introtext" }, { Page => "admin", Return => 1})
+			: "",
+		bodytext  => (scalar keys %bodytext_spellcheck)
+			? slashDisplay("spellcheck", { words => \%bodytext_spellcheck, form_element => "bodytext" }, { Page => "admin", Return => 1 })
+			: "",
+		title     => (scalar keys %title_spellcheck)
+			? slashDisplay("spellcheck", { words => \%title_spellcheck, form_element => "title" }, { Page => "admin", Return => 1 })
+			: "",
 	} unless $user->{no_spell};
 
 	my $future = $slashdb->getStoryByTimeAdmin('>', $storyref, 3);
@@ -1545,22 +1403,17 @@ sub editStory {
 				# Max of 12 chars per word.
 				$word = substr($word, 0, 12);
 			}
-			if (length($sim->{title}) > 35) {
-				# Max of 35 char title.
-				$sim->{title} = substr($sim->{title}, 0, 30);
-				$sim->{title} =~ s/\s+\S+$//;
-				$sim->{title} .= "...";
-			}
+			# Max of 35 char title.
+			$sim->{title} = chopEntity($sim->{title}, 35);
 		}
 	}
 
-	my $authortext = slashDisplay('futurestorybox', {
-		past	=> $past,
-		present	=> $storyref,
-		future	=> $future,
-	}, { Return => 1 });
 
-	my $slashdtext = get_slashd_box();
+	my $admindb = getObject('Slash::Admin');
+	my $authortext = $admindb->showStoryAdminBox($storyref);
+	my $slashdtext = $admindb->showSlashdBox();
+	
+	my $signofftext = $admindb->showSignoffBox($storyref->{stoid});
 	my $attached_files;
 	if ($constants->{plugin}{Blob}) {
 		my $blobdb = getObject("Slash::Blob");
@@ -1575,11 +1428,38 @@ sub editStory {
 	# <SELECT> into this template and let the template deal with the
 	# HTML, here. Formatting these elements outside of the template
 	# just defeats the purpose!	-- Cliff 2002-08-07
+
+	my $user_signoff = 0;
+	if ($stoid) {
+		$user_signoff = $slashdb->sqlCount("signoff", "uid=$user->{uid} AND stoid=$stoid");
+	}
+
+	my $add_related_text;
+	foreach (keys %{$storyref->{related_cids_hr}}) {
+#		$add_related_text .= "cid=$_\n";
+	}
+	foreach (keys %{$storyref->{related_urls_hr}}) {
+		$add_related_text .= "$storyref->{related_urls_hr}{$_} $_\n";
+	}
+
+	my $tagbox_html = '';
+	if ($constants->{plugin}{Tags} && $storyref->{sid}) {
+		my @tags_top = split / /, ($story->{tags_top} || '');
+		my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+		my @tags_example = $tags_reader->getExampleTagsForStory($story);
+		$tagbox_html .= slashDisplay('tagsstorydivtagbox', {
+			story		=> $storyref,
+			tags_top	=> \@tags_top,
+			tags_example	=> \@tags_example,
+		}, { Return => 1 });
+	}
+
 	slashDisplay('editStory', {
 		stoid			=> $stoid,
 		storyref 		=> $storyref,
 		story			=> $story,
 		storycontent		=> $storycontent,
+		tagbox_html		=> $tagbox_html,
 		sid			=> $sid,
 		subid			=> $subid,
 		authortext 		=> $authortext,
@@ -1597,9 +1477,77 @@ sub editStory {
 		extras			=> $extracolumns,
 		similar_stories		=> $similar_stories,
 		attached_files		=> $attached_files,
-		shown_in_desc		=> $shown_in_desc
+		shown_in_desc		=> $shown_in_desc,
+		signofftext		=> $signofftext,
+		user_signoff		=> $user_signoff,
+		add_related_text	=> $add_related_text,
 	});
 }
+
+
+##################################################################
+sub extractRelatedStoriesFromForm {
+	my($form) = @_;
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	my %related_urls;
+
+	my %related_urls_hr;
+	my %related_cids_hr;
+	
+	my($related, $related_cids);
+	if (ref($form->{_multi}{related_story}) eq 'ARRAY') {		
+		$related = $form->{_multi}{related_story};
+	} elsif ($form->{related_story}) {
+		$related = [ $form->{related_story} ];
+	}
+	
+	if (ref($form->{_multi}{related_comment}) eq 'ARRAY') {		
+		$related_cids = $form->{_multi}{related_comment};
+	} elsif ($form->{related_comment}) {
+		$related_cids = [ $form->{related_comment} ];
+	}
+
+# XXX this is broken because regexSid() matches things other than sid
+# but in theory, should use regexSid() ...
+#	my $regexsid = regexSid();
+
+	my $match = qr/(?:$constants->{basedomain})?\S*(\d\d\/\d\d\/\d\d\/\d+)/;
+	my $match_cid = qr/(?:$constants->{basedomain})?\S*cid=(\d+)/;
+
+	if ($form->{add_related}) {
+		my @add_related = split('\n', $form->{add_related});
+		foreach (@add_related) {
+			s/^\s+|\s+$//g;
+			next if !$_;
+			
+			if ($_ =~ /cid=(\d+)/) {
+				push @$related_cids, $1;
+			} elsif ($_ =~ $match) {
+				# XXX should use regexSid()
+				push @$related, $1;
+			} else {
+				my($title, $url) = $_ =~ /^(.*)\s+(\S+)$/;
+				$related_urls{$url} = $title;
+			}
+		}
+	}
+
+
+	# Extract sids from urls in introtext and bodytext
+	foreach ($form->{introtext}, $form->{bodytext}) {
+		push @$related, $1 while /$match/g;
+		push @$related_cids, $1 while /$match_cid/g;
+	}
+
+	# should probably filter and check that they're actually sids, etc...
+	my %related_sids = map { $_ => $slashdb->getStory($_) } grep { $_ } @$related;
+	my %related_cids = map { $_ => $slashdb->getComment($_) } grep {$_} @$related_cids;
+	
+	return(\%related_sids, \%related_urls, \%related_cids);
+}
+
 
 ##################################################################
 sub extractChosenFromForm {
@@ -1696,11 +1644,16 @@ sub getDescForTopicsRendered {
 					[$val, $_]
 				} @story_nexuses;
 
-	my $remove = qq{[<a href="javascript:st_main_add_really(%d,'%s',0,1)"><font color="$user->{colors}{fg_3}">x</font></a>]};
+	my $remove = qq{[<a href="javascript:st_main_add_really(%d,'%s',0,1)" class="nex_remove">x</a>]};
 
 	my $desc;
 	if (!@sorted_nexuses) {
-		$desc = "This story will not appear.";
+		$desc = "This story will not appear because ";
+		if (!%$topics_rendered) {
+			$desc .= "no topics are selected.";
+		} else {
+			$desc .= "no topics in any nexuses are selected.";
+		}
 	} else {
 		$desc = "This story ";
 		if ($display) {
@@ -1764,7 +1717,11 @@ sub write_to_temp_file {
 ##################################################################
 sub get_ispell_comments {
 	my($text) = @_;
+	my $constants = getCurrentStatic();
+
 	$text = strip_nohtml($text);
+	return "" unless $text && $text =~ /\S/;
+
 	# don't split to scalar context, it clobbers @_
 	my $n_text_words = scalar(my @junk = split /\W+/, $text);
 	my $slashdb = getCurrentDB();
@@ -1779,37 +1736,53 @@ sub get_ispell_comments {
 			if !-e $ispell or !-f _ or !-r _ or !-x _;
 	}
 
+	# Get the contents of the 'ispellok' template, separate it out to
+	# one word per line, and add a short header if aspell requires.
 	my $ok = $slashdb->getTemplateByName('ispellok', { cache_flag => 1, ignore_errors => 1 });
 	$ok = $ok ? ($ok->{template} || "") : "";
 	$ok =~ s/\s+/\n/g;
+	if ($constants->{ispell_is_really_aspell_with_lang}) {
+		my $n_lines = $ok =~ tr/\n/\n/;
+		$ok = "personal_ws-1.1 $constants->{ispell_is_really_aspell_with_lang} $n_lines\n$ok";
+	}
 
-	local *ISPELL;
+	my $ispell_fh;
 	my $tmptext = write_to_temp_file($text);
 	my $tmpok = "";
 	$tmpok = write_to_temp_file($ok) if $ok;
+	rename($tmpok, lc($tmpok));
+	$tmpok = lc($tmpok);
 	my $tmpok_flag = "";
 	$tmpok_flag = " -p $tmpok" if $tmpok;
-	if (!open(ISPELL, "$ispell -a -B -S -W 3$tmpok_flag < $tmptext 2> /dev/null |")) {
+	
+	if (!open($ispell_fh, "$ispell -a -B -S -W 3$tmpok_flag < $tmptext 2> /dev/null |")) {
 		errorLog("could not pipe to $ispell from $tmptext, $!");
 		return "could not pipe to $ispell from $tmptext, $!";
 	}
-	my %w;
-	while (defined(my $line = <ISPELL>)) {
+
+	my %misspelled_suggestion = ( );
+	while (defined(my $line = <$ispell_fh>)) {
 		# Grab all ispell's flagged words and put them in the hash
-		$w{$1}++ if $line =~ /^[#?&]\s+(\S+)/;
+		# If this is a "&" line, there may be one or more suggestions
+		# separated by commas and terminated by newlines;  they may
+		# contain spaces.
+		$misspelled_suggestion{$1} = ($2 || '')
+			if    $line =~ /^\& (.+) \d+ \d+: (.+)/
+			   || $line =~ /^\# (.+) \d+/;
 	}
-	close ISPELL;
+	close $ispell_fh;
 	unlink $tmptext, $tmpok;
 
-	my $comm = '';
-	for my $word (sort {lc($a) cmp lc($b) or $a cmp $b} keys %w) {
-		# if it's a repeated error, ignore it
-		next if $w{$word} >= 2 and $w{$word} > $n_text_words*0.002;
-		# a misspelling; report it
-		$comm = "ispell doesn't recognize:" if !$comm;
-		$comm .= " $word";
-	}
-	return $comm;
+	my %misspelled_words = ();
+	foreach my $mWord (keys %misspelled_suggestion) {
+		# Inititally set reference empty in case there are no suggestions.
+		$misspelled_words{$mWord} = [];
+		foreach my $suggestion (split(/,\s?/, $misspelled_suggestion{$mWord})) {
+			push(@{$misspelled_words{$mWord}}, $suggestion);
+		}
+	}	
+	
+	return(%misspelled_words);
 }
 
 ##################################################################
@@ -1830,7 +1803,7 @@ sub listStories {
 
 	my $storylistref = [];
 
-	if ($form->{op} eq 'delete') {
+	if ($form->{op} && $form->{op} eq 'delete') {
 		rmStory($form->{stoid} || $form->{sid});
 		titlebar('100%', getTitle('rmStory-title',
 			{ sid => $form->{stoid} || $form->{sid} } ));
@@ -1839,6 +1812,8 @@ sub listStories {
 	}
 
 	my $i = $first_story || 0;
+
+	my $stoid_list = [];
 	for my $story (@$storylist) {
 		my $time_plain   = $story->{'time'};
 		$story->{'time'} = timeCalc($time_plain, '%H:%M', 0);
@@ -1846,18 +1821,27 @@ sub listStories {
 		$story->{td2}    = timeCalc($time_plain, '%m/%d', 0);
 		$story->{aid}    = $slashdb->getAuthor($story->{uid}, 'nickname');
 		$story->{x}	 = ++$i;
-		$story->{title}  = substr($story->{title}, 0, 50) . '...' if (length $story->{title} > 55);
+		$story->{title}  = chopEntity($story->{title}, 50);
 		$story->{tbtitle} = fixparam($story->{title});
+		push @$stoid_list, $story->{stoid};
 	}
+
+	my $usersignoffs 	= $slashdb->getUserSignoffHashForStoids($user->{uid}, $stoid_list);
+	my $storysignoffcnt	= $slashdb->getSignoffCountHashForStoids($stoid_list);
+
+	my $needed_signoffs = $slashdb->getActiveAdminCount;
 
 	my %unique_tds = map { ($_->{td}, 1) } @$storylist;
 	my $ndays_represented = scalar(keys %unique_tds);
 
 	slashDisplay('listStories', {
-		storylistref	=> $storylist,
-		'x'		=> $i + $first_story,
-		left		=> $count - ($i + $first_story),
+		storylistref	  => $storylist,
+		'x'		  => $i + $first_story,
+		left		  => $count - ($i + $first_story),
 		ndays_represented => $ndays_represented,
+		user_signoffs 	  => $usersignoffs,
+		story_signoffs	  => $storysignoffcnt,
+		needed_signoffs	  => $needed_signoffs,
 	});
 }
 
@@ -1943,21 +1927,26 @@ sub updateStory {
 	my $tid_ref;
 	my $default_set = 0;
 
-	$form->{dept} =~ s/ /-/g if $constants->{use_dept_space2dash};
+	$form->{dept} =~ s/ /-/g;
 
 	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid', 1)
 		unless $form->{aid};
 
 	my($chosen_hr) = extractChosenFromForm($form);
+	my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form);
+	my $related_sids = join ',', keys %$related_sids_hr;
 	my($topic) = $slashdb->getTopiclistFromChosen($chosen_hr);
 #use Data::Dumper; print STDERR "admin.pl updateStory chosen_hr: " . Dumper($chosen_hr) . "admin.pl updateStory form: " . Dumper($form);
 
 	my $time = findTheTime();
 
-	$form->{introtext} = slashizeLinks($form->{introtext});
-	$form->{bodytext} =  slashizeLinks($form->{bodytext});
-	$form->{introtext} = balanceTags($form->{introtext});
-	$form->{bodytext} =  balanceTags($form->{bodytext});
+	for my $field (qw( introtext bodytext )) {
+		local $Slash::Utility::Data::approveTag::admin = 1;
+		$form->{$field} = cleanSlashTags($form->{$field});
+		$form->{$field} = strip_html($form->{$field});
+		$form->{$field} = slashizeLinks($form->{$field});
+		$form->{$field} = balanceTags($form->{$field});
+	}
 
 	my $reloDB = getObject("Slash::Relocate");
 	if ($reloDB) {
@@ -1965,26 +1954,18 @@ sub updateStory {
 		$form->{bodytext} = $reloDB->href2SlashTag($form->{bodytext}, $form->{sid});
 	}
 
-	$form->{introtext} = cleanSlashTags($form->{introtext});
-	$form->{bodytext} = cleanSlashTags($form->{bodytext});
+	my $story_text = "$form->{title} $form->{introtext} $form->{bodytext}";
+	{
+		local $Slash::Utility::Data::approveTag::admin = 1;
+		$story_text = parseSlashizedLinks($story_text);
+		$story_text = processSlashTags($story_text);
+	}
 
-	# grab our links for getRelated, but toss away the result -- pudge
-	processSlashTags("$form->{bodytext} $form->{introtext}");
-	$form->{relatedtext} = getRelated(
-		"$form->{title} $form->{bodytext} $form->{introtext}",
-		$topic
-	) . otherLinks(
-		$slashdb->getAuthor($form->{uid}, 'nickname'),
-		$topic,
-		$form->{uid}
+	my $admindb = getObject('Slash::Admin');
+	$form->{relatedtext} = $admindb->relatedLinks(
+		$story_text, $topic,
+		$slashdb->getAuthor($form->{uid}, 'nickname'), $form->{uid}
 	);
-	# If getRelated and otherLinks seem to be putting <li>
-	# tags around each item, they probably want a <ul></ul>
-	# surrounding the whole list.  This is a bit hacky but
-	# should help make strictly parsed versions of HTML
-	# work better.
-	$form->{relatedtext} = "<ul>\n$form->{relatedtext}\n</ul>"
-		if $form->{relatedtext} && $form->{relatedtext} =~ /^\s*<li>/;
 
 	$slashdb->setCommonStoryWords();
 
@@ -1999,7 +1980,9 @@ sub updateStory {
 		bodytext	=> $form->{bodytext},
 		introtext	=> $form->{introtext},
 		relatedtext	=> $form->{relatedtext},
+		related_sids	=> $related_sids,
 		-rendered	=> 'NULL', # freshenup.pl will write this
+		is_dirty	=> 1
 	};
 
 	for (qw(dept bodytext relatedtext)) {
@@ -2026,6 +2009,9 @@ sub updateStory {
 		editStory(@_);
 	} else {
 		titlebar('100%', getTitle('updateStory-title'));
+		$slashdb->setRelatedStoriesForStory($form->{sid}, $related_sids_hr, $related_urls_hr, $related_cids_hr);
+		my $st = $slashdb->getStory($form->{sid});
+		$slashdb->createSignoff($st->{stoid}, $user->{uid}, "updated");
 		# make sure you pass it the goods
 		listStories(@_);
 	}
@@ -2208,8 +2194,7 @@ sub displayRecentSubs {
 		return;
 	}
 
-	my $admindb = getObject("Slash::Admin", { db_type => 'log_slave' });
-
+	my $admindb = getObject("Slash::Admin");
 	my $startat = $form->{startat} || 0;
 	my $subs = $admindb->getRecentSubs($startat);
 	slashDisplay('recent_subs', {
@@ -2221,7 +2206,7 @@ sub displayRecentSubs {
 sub displayRecentWebheads {
 	my($form, $slashdb, $user, $constants) = @_;
 
-	my $admindb = getObject("Slash::Admin", { db_type => 'log' });
+	my $admindb = getObject("Slash::Admin", { db_type => 'log_slave' });
 
 	my $data_hr = $admindb->getRecentWebheads(10, 5000);
 
@@ -2269,27 +2254,31 @@ sub saveStory {
 	my $tid_ref;
 	my $default_set = 0;
 
-	$form->{dept} =~ s/ /-/g if $constants->{use_dept_space2dash};
+	$form->{dept} =~ s/ /-/g;
 
 	my($chosen_hr) = extractChosenFromForm($form);
 	my($tids) = $slashdb->getTopiclistFromChosen($chosen_hr);
+	my($related_sids_hr, $related_urls_hr) = extractRelatedStoriesFromForm($form);
 
-	my $story_text = "$form->{title} $form->{bodytext} $form->{introtext}";
-	$form->{relatedtext} = getRelated($story_text, $tids)
-		. otherLinks($edituser->{nickname}, $tids, $edituser->{uid});
+	for my $field (qw( introtext bodytext )) {
+		local $Slash::Utility::Data::approveTag::admin = 1;
+		$form->{$field} = cleanSlashTags($form->{$field});
+		$form->{$field} = strip_html($form->{$field});
+		$form->{$field} = slashizeLinks($form->{$field});
+		$form->{$field} = balanceTags($form->{$field});
+	}
 
-	# If getRelated and otherLinks seem to be putting <li>
-	# tags around each item, they probably want a <ul></ul>
-	# surrounding the whole list.  This is a bit hacky but
-	# should help make strictly parsed versions of HTML
-	# work better.
-	$form->{relatedtext} = "<ul>\n$form->{relatedtext}\n</ul>"
-		if $form->{relatedtext} && $form->{relatedtext} =~ /^\s*<li>/;
+	my $story_text = "$form->{title} $form->{introtext} $form->{bodytext}";
+	{
+		local $Slash::Utility::Data::approveTag::admin = 1;
+		$story_text = parseSlashizedLinks($story_text);
+		$story_text = processSlashTags($story_text);
+	}
 
-	$form->{introtext} = slashizeLinks($form->{introtext});
-	$form->{bodytext} =  slashizeLinks($form->{bodytext});
-	$form->{introtext} = balanceTags($form->{introtext});
-	$form->{bodytext} =  balanceTags($form->{bodytext});
+	my $admindb = getObject('Slash::Admin');
+	$form->{relatedtext} = $admindb->relatedLinks(
+		$story_text, $tids, $edituser->{nickname}, $edituser->{uid}
+	);
 
 	my $time = findTheTime();
 	$slashdb->setCommonStoryWords();
@@ -2330,8 +2319,11 @@ sub saveStory {
 	my $sid = $slashdb->createStory($data);
 
 	if ($sid) {
+		$slashdb->setRelatedStoriesForStory($sid, $related_sids_hr, $related_urls_hr);
 		slashHook('admin_save_story_success', { story => $data });
 		titlebar('100%', getTitle('saveStory-title'));
+		my $st = $slashdb->getStory($data->{sid});
+		$slashdb->createSignoff($st->{stoid}, $user->{uid}, "saved");
 
 		listStories(@_);
 	} else {
@@ -2383,6 +2375,32 @@ sub findTheTime {
 	# article.pl gets written first.
 	$time =~ s/( \d\d:\d\d):\d\d$/$1:00/;
 	return $time;
+}
+
+sub displaySignoffStats {
+	my($form, $slashdb, $user, $constants) = @_;
+	my $admin = getObject('Slash::Admin');
+
+	my %stoids_for_days;
+	my $author_info;
+	my $num_days = [7, 30, 90 ];
+	for my $days (7, 30, 90) {
+		my $signoff_info = $admin->getSignoffData($days);
+		foreach (@$signoff_info) {
+			$author_info->{$_->{uid}}{nickname} = $_->{nickname};
+			$author_info->{$_->{uid}}{$days}{cnt}++;	
+			$author_info->{$_->{uid}}{$days}{tot_time} += $_->{min_to_sign};
+			$stoids_for_days{$days}{$_->{stoid}}++;
+			push @{$author_info->{$_->{uid}}{$days}{mins}}, $_->{min_to_sign};
+		}
+	}
+
+	slashDisplay("signoff_stats", {
+		author_info	=> $author_info,
+		stoids_for_days	=> \%stoids_for_days,
+		num_days	=> $num_days
+	});
+
 }
 
 createEnvironment();

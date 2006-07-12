@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -28,7 +28,6 @@ use strict;
 use Apache;
 use Apache::Constants ':http';
 use Digest::MD5 'md5_hex';
-use Encode 'encode_utf8';
 use Slash::Display;
 use Slash::Utility::Data;
 use Slash::Utility::Display;
@@ -143,9 +142,6 @@ sub header {
 # 			$r->header_out('Cache-Control', 'private');
 # 		}
 
-		$options->{last_modified} &&
-			$r->header_out('Last-Modified',  $options->{last_modified});
-
 		$r->send_http_header;
 		return if $r->header_only;
 	}
@@ -195,6 +191,7 @@ sub header {
 	# Should we also pass thru {page} here or is that outdated?
 #print STDERR "header(options->page) defined: '$options->{page}' for title '$data->{title}'\n" if defined($options->{page});
 	$data->{tab_selected} = $options->{tab_selected} if $options->{tab_selected};
+	$data->{nopageid} = $options->{nopageid};
 
 	if ($options->{admin} && $user->{is_admin}) {
 		$user->{state}{adminheader} = 1;
@@ -269,7 +266,7 @@ sub http_send {
 
 	if ($opt->{etag} || $opt->{do_etag}) {
 		if ($opt->{do_etag} && $opt->{content}) {
-			$opt->{etag} = md5_hex(encode_utf8($opt->{content})); 
+			$opt->{etag} = md5_hex($opt->{content});
 		}
 		$r->header_out('ETag', $opt->{etag});
 
@@ -284,13 +281,18 @@ sub http_send {
 	if ($opt->{filename}) {
 		$opt->{filename} =~ s/[^\w_.-]/_/g;
 		my $val = "filename=$opt->{filename}";
-		$val = "attachment; $val" if $opt->{attachment};
+		# none by default, MSIE etc. had problems?
+		if ($opt->{dis_type}) {
+			$opt->{dis_type} =~ s/\W+//;
+			$val = "$opt->{dis_type}; $val";
+		}
 		$r->header_out('Content-Disposition', $val);
 	}
 
 	$r->status($opt->{status});
 	$r->send_http_header;
 	$r->rflush;
+#print STDERR "http_send sent, header_only='" . ($r->header_only) . "' length(content)='" . length($opt->{content}) ."'\n";
 	return 1 if $r->header_only;
 
 	if ($opt->{content}) {
@@ -343,7 +345,7 @@ sub footer {
 	my $display;
 
         if ($form->{ssi} && $form->{ssi} eq 'yes') {
-                ssiHeadFoot('footer', $options);
+		ssiHeadFoot('footer', $options);
                 return 1;
         }
 
@@ -432,10 +434,15 @@ sub ssiHeadFoot {
 
 	# if there's a special .inc header for this page, use it, else it's
 	# business as usual.
-	$page = '' unless ($page ne 'misc' && $slashdb->existsTemplate({
-		name	=> $headorfoot,
-	        skin	=> $gSkin->{name},
-	        page	=> $user->{currentPage} }));
+	$page = '' unless ($page ne 'misc' && 
+		$slashdb->existsTemplate({
+			name	=> $headorfoot,
+		        skin	=> $gSkin->{name},
+	        	page	=> $user->{currentPage} 
+		}) 
+
+	);
+	
 
 	my $ssiheadorfoot = 'ssi' . substr($headorfoot, 0, 4);
 
@@ -626,7 +633,7 @@ sub getAd {
 	# sometimes, when this is called from shtml, the section is not
 	# in $user like we'd like it to be. This attempts to remedy this.
 	# 					--Pater
-	$user->{currentSection} = $constants->{static_section} if $user->{currentSection} eq '';
+	$user->{currentSection} = $constants->{static_section} if !defined($user->{currentSection}) || $user->{currentSection} eq '';
 
 	unless ($ENV{SCRIPT_NAME}) {
 		# When run from a slashd task (or from the command line in
@@ -641,10 +648,9 @@ EOT
 	# If this is the first time that getAd() is being called, we have
 	# to set up all the ad data at once before we can return anything.
 	if (!defined $user->{state}{ad}) {
-		if ($constants->{use_minithin} && $constants->{plugin}{MiniThin}) {
-			# new way
-			my $minithin = getObject('Slash::MiniThin', { db_type => 'reader' });
-			$minithin->minithin;
+		if ($constants->{use_falk} && $constants->{plugin}{Falk}) {
+			my $falk = getObject('Slash::Falk', { db_type => 'reader' });
+			$falk->falk;
 		} else {
 			# old way
 			prepAds();
@@ -654,17 +660,18 @@ EOT
 	if ($num == 2 && $need_box) {
 		# we need the ad wrapped in a fancybox
 		if (defined $user->{state}{ad}{$num}
+			&& $user->{state}{ad}{$num} =~ /\S/
 			&& $user->{state}{ad}{$num} !~ /^<!-- no pos/
-			&& $user->{state}{ad}{$num} !~ /^<!-- place/) {
+			&& $user->{state}{ad}{$num} !~ /^<!-- (?:fDA )?place/) {
 			# if we're called from shtml, we won't have colors
 			# set, so we should get some set before making a
 			# box.				-- Pater
 			getSkinColors() unless $user->{colors};
 
-			return fancybox($constants->{fancyboxwidth}, 'Advertisement', "<CENTER>" . $user->{state}{ad}{$num} . "</CENTER>", 1, 1);
-		} else { return ""; }
+			return sidebox('Advertisement', qq'<div class="ad$num">' . $user->{state}{ad}{$num} . "</div>", "advertisement", 1);
+		} else { return ''; }
 	} else {
-		return $user->{state}{ad}{$num} || "";
+		return $user->{state}{ad}{$num} ? qq'<div class="ad$num">$user->{state}{ad}{$num}</div>': '';
 	}
 }
 
@@ -676,9 +683,7 @@ sub getSectionBlock {
 	my($name) = @_;
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
-	my $thissect = $user->{light}
-		? 'light'
-		: $user->{currentSection};
+	my $thissect = $user->{currentSection};
 
 	my $block;
 	if ($thissect && $thissect ne 'index') {
@@ -722,7 +727,7 @@ sub getSkinColors {
 
 	# The normal situation (no colorblock param in the URL).
 	if (my $gSkin = getCurrentSkin()) {
-		$user->{colors} = $gSkin->{hexcolors};
+		$user->{colors} = $gSkin->{skincolors};
 		return 1;
 	}
 

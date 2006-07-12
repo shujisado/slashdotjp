@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -39,6 +39,7 @@ setCurrentSkin(determineCurrentSkin());
 my $gSkin = getCurrentSkin();
 my $totalChangedStories = 1;
 
+my $br = $constants->{xhtml} ? '<br />' : '<br>';
 my $backupdb = getObject('Slash::DB', { db_type => 'reader' });
 
 ################################################################################
@@ -69,30 +70,31 @@ sub geturl {
 ################################################################################
 
 sub getTop10Comments {
-	my $A =	$backupdb->getTop10Comments();
+	my $A =	$backupdb->getTop10Comments;
 
-	my $reasons = $slashdb->getReasons();
+	my $reasons = $slashdb->getReasons;
 
-	my $block;
+	my $block = '<ul>';
 	foreach (@$A) {
 		my($sid, $title, $cid, $subj, $d, $nickname, $points, $reason) = @$_;
 		$block .= <<EOT;
 
-&middot; <B><A HREF="$gSkin->{rootdir}/comments.pl?sid=$sid&amp;cid=$cid">$subj</A>
+<li> <b><a href="$gSkin->{rootdir}/comments.pl?sid=$sid&amp;cid=$cid">$subj</a>
 	($points points, $reasons->{$reason}{name})
-	by $nickname</B>
+	by $nickname</b>
 	on $d
-	<FONT SIZE="1">attached to
-	<A HREF="$gSkin->{rootdir}/article.pl?sid=$sid">$title</A></FONT><BR>
+	<small>attached to
+	<a href="$gSkin->{rootdir}/article.pl?sid=$sid">$title</a></small></li>
 EOT
 	}
-	setblock("top10comments", $block);
+	$block .= '</ul>';
+	setblock('top10comments', $block);
 
 }
 
 #################################################################
 sub getSlashdotPoll {
-	setblock("poll", pollbooth('_currentqid', 1));
+	setblock('poll', pollbooth('_currentqid', 1));
 }
 
 
@@ -111,22 +113,22 @@ The fortune command.
 #################################################################
 sub getUptime {
 	my $x = `/usr/bin/uptime`;
-	$x = "<B>time:</B> $x";
-	$x =~ s/up/\n<BR><B>uptime:<\/B>/g;
-	$x =~ s/load average:/\n<BR><B>load average:<\/B>/;
+	$x = "<b>time:</b> $x";
+	$x =~ s/up/\n$br<b>uptime:<\/b>/g;
+	$x =~ s/load average:/\n<br><b>load average:<\/b>/;
 	my $ps = `/bin/ps aux | /usr/bin/wc -l`;
 	$ps--;
-	$x .= "<BR><B>processes:</B> $ps <BR>";
+	$x .= "$br<b>processes:</b> $ps$br";
 
 	my $stats = $x;
 
 #	my $tc = $constants->{totalComments};
 	my $th = $constants->{totalhits};
 
-#	$stats .= "<B>yesterday:</B> $yesterday<BR>
-#		<B>today:</B> $today<BR>
-#		<B>ever:</B> $th<BR>";
-	$stats .= "<B>totalhits:</B> $th<BR>";
+#	$stats .= "<b>yesterday:</b> $yesterday<br>
+#		<b>today:</b> $today<br>
+#		<b>ever:</b> $th<br>";
+	$stats .= "<b>totalhits:</b> $th$br";
 
 	setblock('uptime', $stats);
 }
@@ -142,13 +144,13 @@ sub setblock {
 
 #################################################################
 sub getRDF {
-	#gets an RDF file, and formats it as a /. block
+	#gets an RDF file, and formats it as a Slash block
 
 	my($bid, $url, $other) = @_;
 	my $rss = new XML::RSS;
 	my $template_name = $slashdb->getBlock($bid, 'rss_template');
 	my $items ||= $slashdb->getBlock($bid, 'items');
-	$items ||= $constants->{max_items};
+	$items ||= $constants->{rss_max_items_incoming};
 	$template_name ||= $constants->{default_rss_template};
 
 	my $d;
@@ -203,10 +205,11 @@ sub getRDF {
 			next unless $link;
 
 			# convert links to sections of our own site
-			# into a non-scheme-specific format
+			# into a non-scheme-specific format ...
+			# unless host begins with "rss." (this could be a separate var ...)
 			my $uri = URI->new($link);
 			if ($uri->can('authority')) {
-				$uri->scheme(undef) if $uri->authority =~ /\b$bd_regex\Z/;
+				$uri->scheme(undef) if $uri->authority =~ /\b$bd_regex\Z/ && $uri->authority !~ /^rss\./;
 			}
 
 			$item->{link} = $uri->as_string or next;

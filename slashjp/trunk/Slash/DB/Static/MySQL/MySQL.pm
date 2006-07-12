@@ -1,5 +1,5 @@
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2004 by Open Source Development Network. See README
+# Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
@@ -72,10 +72,14 @@ sub showQueryCount {
 # For rss, rdf etc feeds, basically used by tasks.
 # Ultimately this should be subsumed into
 # getStoriesEssentials since they serve the same purpose.
-# XXXSECTIONTOPICS let's get the NOW() out of here
+# XXXSECTIONTOPICS let's get the NOW() out of here.
+# This is much slower than getStoriesEssentials but fortunately
+# is not called very often.  Its calling code really should be
+# rewritten to use getStoriesEssentials.
 sub getBackendStories {
 	my($self, $options) = @_;
 
+	my $limit = $options->{limit} || 10;
 	my $topic = $options->{topic} || getCurrentStatic('mainpage_nexus_tid');
 
 	my $select = "stories.stoid AS stoid, sid, title, stories.tid AS tid, primaryskid, time,
@@ -88,7 +92,7 @@ sub getBackendStories {
 		AND stories.stoid = story_topics_rendered.stoid
 		AND story_topics_rendered.tid=$topic";
 
-	my $other = "ORDER BY time DESC LIMIT 10";
+	my $other = "ORDER BY time DESC LIMIT $limit";
 
 	my $returnable = $self->sqlSelectAllHashrefArray($select, $from, $where, $other);
 
@@ -105,6 +109,11 @@ sub getBackendStories {
 		for my $key (qw( image width height )) {
 			$story->{image}{$key} = $topic_hr->{$key};
 		}
+
+		# so we can assign proper "creator" if story was posted
+		# originally as a journal
+		my $journal_id = $self->getStory($story->{stoid}, 'journal_id');
+		$story->{journal_id} = $journal_id if $journal_id;
 	}
 
 	return $returnable;
@@ -157,8 +166,8 @@ sub getNewStoryTopics {
 
 	my $topics = $self->getTopics;
 	for my $topic (@$ar) {
-		@{ $topic                   }{qw(alttext image width height)} =
-		@{ $topics->{$topic->{tid}} }{qw(alttext image width height)};
+		@{ $topic                   }{qw(textname image width height)} =
+		@{ $topics->{$topic->{tid}} }{qw(textname image width height)};
 	}
 
 	return $ar;
@@ -223,6 +232,55 @@ sub getArchiveList {
 	return $returnable;
 }
 
+########################################################
+# For dbsparklines.pl
+# This is a bit tricky because some moments may not have rows in
+# the table, and times may not be exactly $resolution apart.
+# We get the key-value hashref and walk it looking for
+# appropriate rows.
+sub getSparklineData {
+	my($self, $dbid, $col, $now, $resolution, $secs_back, $max, $multiplier) = @_;
+	$multiplier ||= 1;
+ 
+	my $now_ut = timeCalc($now, "%s", 0);
+	my $start_ut = $now_ut - $secs_back;
+	my $now_q = $self->sqlQuote($now);
+	my $kv_hr = $self->sqlSelectAllKeyValue(
+		"UNIX_TIMESTAMP(ts) AS ut, $col",
+		"dbs_readerstatus",
+		"dbid=$dbid
+		 AND ts >= DATE_SUB($now_q, INTERVAL $secs_back SECOND)");
+	return [ ] unless %$kv_hr;
+
+	my @ut = sort { $a <=> $b } keys %$kv_hr;
+	my @quantized = ( );
+	my $t = $start_ut;
+	T: while ($t < $now_ut) {
+		my @q = ( );
+		for my $t1 ($t .. $t + $resolution-1) {
+			push @q, $kv_hr->{$t1} * $multiplier if defined $kv_hr->{$t1};
+		}
+
+		# If nothing was found, no value for this quantized
+		# time value, push undef (GD::Graph knows what to
+		# do with that).  Otherwise push the mean of the
+		# value(s) found.
+		my $q = undef;
+		for my $val (@q) {
+			$q ||= 0;
+			$q += $val;
+		}
+		if (defined $q) {
+			$q /= scalar @q;
+			$q = $max if $q > $max;
+		}
+		push @quantized, $q;
+
+		$t += $resolution;
+	}
+ 
+	return \@quantized;
+}
 
 ########################################################
 # For balance_readers.pl
@@ -241,6 +299,8 @@ sub getDBsReaderStatus {
 		"dbid",
 		"dbid,
 		 MIN(IF(was_alive='yes',1,0)) AS was_alive,
+		 MIN(IF(was_reachable='yes',1,0)) AS was_reachable,
+		 MIN(IF(was_running='yes',1,0)) AS was_running,
 		 AVG(slave_lag_secs) AS lag,
 		 AVG(query_bog_secs) AS bog",
 		"dbs_readerstatus",
@@ -324,7 +384,9 @@ sub forgetStoryTextRendered {
 	my $days_back = $constants->{freshenup_text_render_daysback} || 7;
 	return $self->sqlUpdate(
 		"story_text, stories",
-		{ rendered => undef },
+		{ rendered => undef,
+		  -last_update => 'last_update'
+		},
 		"story_text.stoid = stories.stoid
 		 AND rendered IS NOT NULL
 		 AND time < DATE_SUB(NOW(), INTERVAL $days_back DAY)");
@@ -335,8 +397,9 @@ sub forgetStoryTextRendered {
 sub forgetUsersLogtokens {
 	my($self) = @_;
 
+	# delete logtokens if they have been expired for a month
 	return $self->sqlDelete("users_logtokens",
-		"DATE_ADD(expires, INTERVAL 1 MONTH) < NOW()");
+		"public = 'no' AND DATE_ADD(expires, INTERVAL 1 MONTH) < NOW()");
 }
 
 ########################################################
@@ -347,7 +410,8 @@ sub forgetUsersLastLookTime {
 	my $reader = getObject('Slash::DB', { db_type => "reader" });
 	my $min_lastlooktime = time - ($constants->{lastlookmemory} + 86400*7);
 	my $uids = $reader->sqlSelectColArrayref("uid", "users_param",
-		"name='lastlooktime' AND value < '$min_lastlooktime'");
+		"name='lastlooktime' AND value < '$min_lastlooktime'") || [ ];
+	my $count = scalar @$uids;
 
 	my $splice_count = 2000;
 	while (@$uids) {
@@ -356,6 +420,7 @@ sub forgetUsersLastLookTime {
 		$self->sqlDelete("users_param",
 			"name IN ('lastlooktime', 'lastlookuid') AND uid IN ($uids_in)");
 	}
+	return $count;
 }
 
 ########################################################
@@ -367,7 +432,8 @@ sub forgetUsersMailPass {
 	my $max_hrs = $constants->{mailpass_max_hours} || 48;
 	my $min_mailpass_last_ts = time - ($max_hrs*3600 + 86400*7);
 	my $uids = $reader->sqlSelectColArrayref("uid", "users_param",
-		"name='mailpass_last_ts' AND value < '$min_mailpass_last_ts'");
+		"name='mailpass_last_ts' AND value < '$min_mailpass_last_ts'") || [ ];
+	my $count = scalar @$uids;
 
 	my $splice_count = 2000;
 	while (@$uids) {
@@ -376,6 +442,7 @@ sub forgetUsersMailPass {
 		$self->sqlDelete("users_param",
 			"name IN ('mailpass_last_ts', 'mailpass_num') AND uid IN ($uids_in)");
 	}
+	return $count;
 }
 
 ########################################################
@@ -515,7 +582,7 @@ sub forgetErrnotes {
 sub forgetRemarks {
 	my($self) = @_;
 	return $self->sqlDelete("remarks",
-		"time < DATE_SUB(NOW(), INTERVAL 365 DAY)");
+		"time < DATE_SUB(NOW(), INTERVAL 90 DAY)");
 }
 
 ########################################################
@@ -524,29 +591,68 @@ sub deleteDaily {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
-# This is now done more efficiently, throughout the day, by the
-# counthits.pl task.
-#	$self->updateStoriesCounts();
-
 	$self->sqlDelete('badpasswords', "TO_DAYS(NOW()) - TO_DAYS(ts) > 2");
-
 	$self->sqlDelete('pollvoters');
+	$self->sqlDelete('discussions', "type='recycle' AND commentcount=0")
+		unless $constants->{noflush_empty_discussions};
+	return 0;
+}
 
+########################################################
+# For run_moderatord.pl
+# Pass in option "sleep_between" of a few seconds, maybe up to a
+# minute, if for some reason the deletion still makes slave
+# replication lag... (but it shouldn't, anymore) - 2005/01/06
+sub deleteOldModRows {
+	my($self, $options) = @_;
+
+	my $reader = getObject('Slash::DB', { db_type => "reader" });
+	my $constants = getCurrentStatic();
+	my $max_rows = $constants->{mod_delete_maxrows} || 1000;
 	my $archive_delay_mod =
 		   $constants->{archive_delay_mod}
 		|| $constants->{archive_delay}
 		|| 14;
-	$self->sqlDelete('moderatorlog',
-		"TO_DAYS(NOW()) - TO_DAYS(ts) > $archive_delay_mod");
-	$self->sqlDelete('metamodlog',
-		"TO_DAYS(NOW()) - TO_DAYS(ts) > $archive_delay_mod");
+	my $sleep_between = $options->{sleep_between} || 0;
 
-# This is now done by the flush_formkeys task.
-#	my $delete_time = time() - $constants->{formkey_timeframe};
-#	$self->sqlDelete('formkeys', "ts < $delete_time");
+	# Find the minimum ID in these tables that should remain, then
+	# delete everything before it.  We do it this way to keep the
+	# slave DBs tied up on the replication of the deletion query as
+	# little as possible.  Turning off foreign key checking here is
+	# just pretty lame, I know...
 
-	$self->sqlDelete('discussions', "type='recycle' AND commentcount=0")
-		unless $constants->{noflush_empty_discussions};
+	$self->sqlDo("SET FOREIGN_KEY_CHECKS=0");
+
+	# First delete from the bottom up for the moderatorlog.
+
+	my $junk_bottom = $reader->sqlSelect('MIN(id)', 'moderatorlog');
+	my $need_bottom = $reader->sqlSelectNumericKeyAssumingMonotonic(
+		'moderatorlog', 'min', 'id',
+		"ts >= DATE_SUB(NOW(), INTERVAL $archive_delay_mod DAY)");
+	while ($need_bottom && $junk_bottom < $need_bottom) {
+		$junk_bottom += $max_rows;
+		$junk_bottom = $need_bottom if $need_bottom < $junk_bottom;
+		$self->sqlDelete('moderatorlog', "id < $junk_bottom");
+		sleep $sleep_between
+			if $sleep_between;
+	}
+
+	# Now delete from the bottom up for the metamodlog.
+
+	$junk_bottom = $reader->sqlSelect('MIN(id)', 'metamodlog');
+	$need_bottom = $reader->sqlSelectNumericKeyAssumingMonotonic(
+		'metamodlog', 'min', 'id',
+		"ts >= DATE_SUB(NOW(), INTERVAL $archive_delay_mod DAY)");
+	while ($need_bottom && $junk_bottom < $need_bottom) {
+		$junk_bottom += $max_rows;
+		$junk_bottom = $need_bottom if $need_bottom < $junk_bottom;
+		$self->sqlDelete('metamodlog', "id < $junk_bottom");
+		sleep $sleep_between
+			if $sleep_between && $junk_bottom < $need_bottom;
+	}
+
+	$self->sqlDo("SET FOREIGN_KEY_CHECKS=1");
+	return 0;
 }
 
 ########################################################
@@ -569,16 +675,24 @@ sub updateLastaccess {
 	my $splice_count = 200;
 	if ($constants->{subscribe} && !$constants->{subscribe_hits_only}) {
 		my @gmt = gmtime();
-		my $today = sprintf "%4d%02d%02d", $gmt[5] + 1900, $gmt[4] + 1, $gmt[3];
-		my $ar = $self->sqlSelectAll(
+		my $hr = $self->sqlSelectAllKeyValue(
 			"uid, lastclick",
 			"users_hits",
 			"TO_DAYS(NOW()) - TO_DAYS(lastclick) <= 1"
 		);
 		my %uids_day = ( );
-		for my $uid_ar (@$ar) {
-			my($uid, $lastclick) = @$uid_ar;
-			my $lastclick_day = substr($lastclick, 0, 8);
+		for my $uid (keys %$hr) {
+			my $lastclick = $hr->{$uid};
+			if ($lastclick =~ /^(\d{4})(\d{2})(\d{2})/) {
+				# Timestamp field users_hits.lastclick is
+				# being given to us in MySQL 4.0 format
+				# of YYYYMMDDhhmmss.  Convert it to the
+				# MySQL 4.1 and later format of
+				# YYYY-MM-DD.  See also getUser and
+				# _getUser_do_selects.
+				$lastclick = "$1-$2-$3";
+			}
+			my $lastclick_day = substr($lastclick, 0, 10);
 			$uids_day{$lastclick_day}{$uid} = 1;
 		}
 		for my $day (keys %uids_day) {
@@ -593,12 +707,12 @@ sub updateLastaccess {
 				);
 				# If there is more to do, sleep for a moment so we don't
 				# hit the DB too hard.
-				sleep 2 if @uids;
+				sleep int($splice_count/20+0.5) if @uids;
 			}
 		}
 	} else {
 		my @gmt = gmtime(time-86400);
-		my $yesterday = sprintf "%4d%02d%02d", $gmt[5] + 1900, $gmt[4] + 1, $gmt[3];
+		my $yesterday = sprintf "%4d-%02d-%02d", $gmt[5] + 1900, $gmt[4] + 1, $gmt[3];
 		my $uids_ar = $self->sqlSelectColArrayref(
 			"uid",
 			"accesslog",
@@ -617,7 +731,7 @@ sub updateLastaccess {
 			);
 			# If there is more to do, sleep for a moment so we don't
 			# hit the DB too hard.
-			Time::HiRes::sleep(0.2) if @uids;
+			sleep int($splice_count/20+0.5) if @uids;
 		}
 	}
 }
@@ -642,16 +756,24 @@ sub decayTokens {
 		"(lastaccess < DATE_SUB(NOW(), INTERVAL $days DAY) OR karma < $min_k)
 		 AND tokens > 0"
 	);
-	my $uids_in = join(",", sort @$uids_ar);
-	my $rows = 0;
-	if ($uids_in) {
-		$rows = $self->sqlUpdate(
-			"users_info",
-			{ -tokens => "GREATEST(0, tokens - $perday)" },
-			"uid IN ($uids_in) AND tokens > 0"
-		);
+	my $decayed = 0;
+	my $splice_count = 200;
+	while (@$uids_ar) {
+		my @uid_chunk = splice @$uids_ar, 0, $splice_count;
+		my $uids_in = join(",", @uid_chunk);
+		my $rows = 0;
+		if ($uids_in) {
+			$rows = $self->sqlUpdate(
+				"users_info",
+				{ -tokens => "GREATEST(0, tokens - $perday)" },
+				"uid IN ($uids_in)"
+			);
+		}
+		$decayed += $rows * $perday;
+		# If there is more to do, sleep for a moment so we don't
+		# hit the DB too hard.
+		sleep int($splice_count/20+0.5) if @$uids_ar;
 	}
-	my $decayed = $rows * $perday;
 	return $decayed;
 }
 
@@ -940,10 +1062,15 @@ sub getSkinInfo {
 
 		my $skinname = $skins->{ $tree->{$tid}{skid} }{name};
 		my $mp_tid = $constants->{mainpage_nexus_tid};
-		for my $child_tid (sort { lc $tree->{$a}{textname} cmp lc $tree->{$b}{textname} } keys %{$tree->{$tid}{child}}) {
+		my @children =
+			sort { lc $tree->{$a}{textname} cmp lc $tree->{$b}{textname} }
+			grep { $tree->{$tid}{child}{$_} > 0 } # poisoned children don't count
+			keys %{$tree->{$tid}{child}};
+		for my $child_tid (@children) {
 			next unless $tree->{$child_tid}{nexus} && $tree->{$child_tid}{skid};
+			$index{$skinname} ||= [ ];
 			if ($children{$child_tid}) {
-				push @{$index{$skinname}{$child_tid}}, $children{$child_tid};
+				push @{$index{$skinname}}, $children{$child_tid};
 				next;
 			}
 
@@ -1000,13 +1127,15 @@ sub getSkinInfo {
 sub convert_tokens_to_points {
 	my($self, $n_wanted) = @_;
 
+	my $reader = getObject("Slash::DB", { db_type => 'reader' });
+
 	my $constants = getCurrentStatic();
 	my %granted = ( );
 
 	return unless $n_wanted;
 
 	# Sanity check.
-	my $n_users = $self->countUsers();
+	my $n_users = $reader->countUsers();
 	$n_wanted = int($n_users/10) if $n_wanted > int($n_users)/10;
 
 	my $maxtokens = $constants->{maxtokens} || 60;
@@ -1017,7 +1146,7 @@ sub convert_tokens_to_points {
 	$tokentrade = $maxtokens if $tokentrade > $maxtokens; # sanity check
 	my $half_tokentrade = int($tokentrade/2); # another sanity check
 
-	my $uids = $self->sqlSelectColArrayref(
+	my $uids = $reader->sqlSelectColArrayref(
 		"uid",
 		"users_info",
 		"tokens >= $half_tokentrade",
@@ -1044,16 +1173,30 @@ sub convert_tokens_to_points {
 	# and seclev < 100.  These aren't meaningful limitations, so these
 	# updates should work as well.  - Jamie 2002/08/08
 	# Actually I don't think these are needed at all. - Jamie 2003/09/09
-	$self->sqlUpdate(
-		"users_comments",
-		{ points => $maxpoints },
-		"points > $maxpoints"
-	);
-	$self->sqlUpdate(
-		"users_info",
-		{ tokens => $maxtokens },
-		"tokens > $maxtokens"
-	);
+	#
+	# 2006/02/09:  I still don't think they're needed, and they are
+	# causing lags in replication...
+	#   Searching rows for update:
+	#   The thread is doing a first phase to find all matching
+	#   rows before updating them. This has to be done if the UPDATE
+	#   is changing the index that is used to find the involved rows.
+	# ...so I'm removing these.  I believe wherever the existing code
+	# increases points or tokens, it updates the oldvalue to
+	# LEAST(newvalue, maxvalue), so these adjustments should never
+	# change anything.
+	# 2006/02/12:  The lag is due to a MySQL bug in 4.1.16 that is
+	# fixed in 4.1.18.  <http://bugs.mysql.com/bug.php?id=15935>
+	# Still, we shouldn't need these.
+#	$self->sqlUpdate(
+#		"users_comments",
+#		{ points => $maxpoints },
+#		"points > $maxpoints"
+#	);
+#	$self->sqlUpdate(
+#		"users_info",
+#		{ tokens => $maxtokens },
+#		"tokens > $maxtokens"
+#	);
 
 	return \%granted;
 }
@@ -1138,7 +1281,7 @@ sub fetchEligibleModerators_accesslog_insertnew {
 	return if $lastmaxid > $newmaxid;
 	my $ac_uid = getCurrentStatic('anonymous_coward_uid');
 	$self->sqlDo("INSERT INTO accesslog_artcom (uid, ts, c)"
-		. " SELECT uid, AVG(ts) AS ts, COUNT(*) AS c"
+		. " SELECT uid, FROM_UNIXTIME(FLOOR(AVG(UNIX_TIMESTAMP(ts)))) AS ts, COUNT(*) AS c"
 		. " FROM accesslog"
 		. " WHERE id BETWEEN $lastmaxid AND $newmaxid"
 			. " AND (op='article' OR op='comments')"
@@ -1623,7 +1766,7 @@ sub _csq_bonuses {
 	# Lampe, C. and Resnick, P. "Slash(dot) and Burn: Moderation in a
 	# Large Scale Conversation Space."  Proceedings of the Conference on
 	# Computer Human Interaction (SIGCHI).  April 2004. Vienna, Austria.
-	# ACM Press.  (Forthcoming.)
+	# ACM Press.
 	#
 	# The goal of _csq_bonuses is to reward moderators who take
 	# a little extra effort, by giving them their next set of
@@ -1656,21 +1799,23 @@ sub _csq_bonuses {
 	# conversation and 7% for late comments [fifth quintile]."
 	# Here, quintile 5 is the latest 20% of the discussion, and
 	# quintile 1 is the earliest 20%.
-	if ($mod_hr->{cid_percentile} > 80) {
-		$num *= $constants->{m2_consequences_bonus_quintile_5} || 1;
-		push @applied, 'quintile_5';
-	} elsif ($mod_hr->{cid_percentile} > 60) {
-		$num *= $constants->{m2_consequences_bonus_quintile_4} || 1;
-		push @applied, 'quintile_4';
-	} elsif ($mod_hr->{cid_percentile} > 40) {
-		$num *= $constants->{m2_consequences_bonus_quintile_3} || 1;
-		push @applied, 'quintile_3';
-	} elsif ($mod_hr->{cid_percentile} > 20) {
-		$num *= $constants->{m2_consequences_bonus_quintile_2} || 1;
-		push @applied, 'quintile_2';
-	} else {
-		$num *= $constants->{m2_consequences_bonus_quintile_1} || 1;
-		push @applied, 'quintile_1';
+	if (defined $mod_hr->{cid_percentile}) {
+		if ($mod_hr->{cid_percentile} > 80) {
+			$num *= $constants->{m2_consequences_bonus_quintile_5} || 1;
+			push @applied, 'quintile_5';
+		} elsif ($mod_hr->{cid_percentile} > 60) {
+			$num *= $constants->{m2_consequences_bonus_quintile_4} || 1;
+			push @applied, 'quintile_4';
+		} elsif ($mod_hr->{cid_percentile} > 40) {
+			$num *= $constants->{m2_consequences_bonus_quintile_3} || 1;
+			push @applied, 'quintile_3';
+		} elsif ($mod_hr->{cid_percentile} > 20) {
+			$num *= $constants->{m2_consequences_bonus_quintile_2} || 1;
+			push @applied, 'quintile_2';
+		} else {
+			$num *= $constants->{m2_consequences_bonus_quintile_1} || 1;
+			push @applied, 'quintile_1';
+		}
 	}
 
 	# If a Fair moderation was applied to a comment that was
@@ -1768,6 +1913,13 @@ sub _set_csq {
                 $hr->{sql_possible} = "GREATEST($column-" . ($i+1) . ", $min)"
                         if $hr->{chance};
         }
+}
+
+# XXXSRCID This needs to actually be, like, written.
+sub recalcAL2 {
+        my($self, $srcid) = @_;
+	my $log = $self->getAL2Log($srcid);
+	# remember to delete from memcached
 }
 
 ########################################################
@@ -2011,10 +2163,25 @@ sub getStoriesToDelete {
 # files rewritten (which mainly means they have a row present
 # in the story_dirty table), starting with the most recent.
 sub getStoriesToRefresh {
-	my($self, $limit, $tid) = @_;
+	my($self, $limit, $tid, $options) = @_;
+	$options ||= {};
 	$limit ||= 10;
 	my $tid_clause = "";
 	$tid_clause = " AND story_topics_rendered.tid = $tid" if $tid;
+	my $stoid_clause = "";
+	
+	if ($options->{stoid}) {
+		my @stoids = ( );
+		if (ref $options->{stoid} eq "ARRAY") {
+			@stoids = @{$options->{stoid}}
+		} elsif (!ref $options->{stoid}) {
+			push @stoids, $options->{stoid};
+		}
+		if (@stoids) {
+			my $stoid_in = join ',', map { $self->sqlQuote($_) } @stoids;
+			$stoid_clause = " AND stories.stoid IN ($stoid_in) ";
+		}
+	}
 
 	# Include story_topics_rendered in this select just to make
 	# sure there is at least one topic assigned to such stories.
@@ -2022,14 +2189,15 @@ sub getStoriesToRefresh {
 	# don't include neverdisplay stories.
 	my $retval = $self->sqlSelectAllHashrefArray(
 		"DISTINCT stories.stoid AS stoid, sid, primaryskid, title, time",
-		"stories, story_text, story_topics_rendered
-		 LEFT JOIN story_dirty ON stories.stoid=story_dirty.stoid",
+		"story_text, story_topics_rendered,
+		 stories LEFT JOIN story_dirty ON stories.stoid=story_dirty.stoid",
 		"time < NOW()
 		 AND stories.primaryskid > 0
 		 AND stories.stoid = story_text.stoid
 		 AND story_dirty.stoid IS NOT NULL
 		 AND stories.stoid = story_topics_rendered.stoid
-		 $tid_clause",
+		 $tid_clause
+		 $stoid_clause",
 		"ORDER BY time DESC LIMIT $limit");
 	return [ ] if !@$retval;
 
@@ -2101,7 +2269,17 @@ sub deleteStoryAll {
 		story_topics_chosen story_topics_rendered )) {
 		$rows += $self->sqlDelete($table, "stoid=$stoid");
 	}
-	$self->deleteDiscussion($discussion_id) if $discussion_id;
+
+	if ($discussion_id && $story->{journal_id}) {
+		# journal_fix.pl task will revert discussion data later
+		# (although maybe better to make this happen immediately)
+		$self->sqlUpdate('journal_transfer', {
+			stoid	=> 0,
+		}, 'id=' . $self->sqlQuote($story->{journal_id}));
+	} elsif ($discussion_id) {
+		$self->deleteDiscussion($discussion_id);
+	}
+
 	$self->sqlDo("COMMIT");
 	$self->sqlDo("SET AUTOCOMMIT=1");
 	return $rows;
@@ -2115,8 +2293,12 @@ sub createAuthorCache {
 	my($self) = @_;
 	my $sql;
 	$sql  = "REPLACE INTO authors_cache ";
-	$sql .= "SELECT users.uid, nickname, GREATEST(fakeemail, ''),
-		GREATEST(homepage, ''), 0, GREATEST(bio, ''), author ";
+	$sql .= "SELECT users.uid, nickname,
+		GREATEST(IF(fakeemail IS NULL, '',	fakeemail), ''),
+		GREATEST(IF(homepage IS NULL, '',	homepage), ''),
+		0,
+		GREATEST(IF(bio IS NULL, '',		bio), ''),
+		author ";
 	$sql .= "FROM users, users_info ";
 	$sql .= "WHERE users.author=1 ";
 	$sql .= "AND users.uid=users_info.uid";
@@ -2124,9 +2306,12 @@ sub createAuthorCache {
 	$self->sqlDo($sql);
 
 	$sql  = "REPLACE INTO authors_cache ";
-	$sql .= "SELECT users.uid, nickname, GREATEST(fakeemail, ''),
-		GREATEST(homepage, ''), count(stories.uid),
-		GREATEST(bio, ''), author ";
+	$sql .= "SELECT users.uid, nickname,
+		GREATEST(IF(fakeemail IS NULL, '',	fakeemail), ''),
+		GREATEST(IF(homepage IS NULL, '',	homepage), ''),
+		COUNT(stories.uid),
+		GREATEST(IF(bio IS NULL, '',		bio), ''),
+		author ";
 	$sql .= "FROM users, stories, users_info ";
 	$sql .= "WHERE stories.uid=users.uid ";
 	$sql .= "AND users.uid=users_info.uid GROUP BY stories.uid";
@@ -2213,11 +2398,13 @@ sub refreshUncommonStoryWords {
 	@uncommon_words = split / /, $uncommon_words;
 
 	$self->sqlDo("LOCK TABLES uncommonstorywords LOW_PRIORITY WRITE");
+	$self->sqlDo("SET AUTOCOMMIT=0");
 	$self->sqlDelete("uncommonstorywords");
 	for my $word (@uncommon_words) {
-		$self->sqlInsert("uncommonstorywords", { word => $word },
-			{ delayed => 1 });
+		$self->sqlInsert("uncommonstorywords", { word => $word });
 	}
+	$self->sqlDo("COMMIT");
+	$self->sqlDo("SET AUTOCOMMIT=1");
 	$self->sqlDo("UNLOCK TABLES");
 }
 
@@ -2259,12 +2446,6 @@ sub deleteOldFormkeys {
 }
 
 ########################################################
-sub countAccesslogDaily {
-	my($self) = @_;
-	return $self->sqlCount("accesslog", "TO_DAYS(NOW()) - TO_DAYS(ts)=1");
-}
-
-########################################################
 # For tasks/run_moderatord.pl
 sub countM2M1Ratios {
 	my($self, $longterm) = @_;
@@ -2285,6 +2466,13 @@ sub countM2M1Ratios {
 sub countM2 {
 	my($self) = @_;
 	return 0;
+}
+
+########################################################
+# For tasks/topic_tree_draw.pl
+sub countStoriesWithTopic {
+	my($self, $tid) = @_;
+	return $self->sqlCount('story_topics_rendered', "tid=$tid");
 }
 
 ########################################################
@@ -2458,14 +2646,12 @@ sub getLastUIDCreatedBeforeDaysBack {
 	$yesterday = substr($yesterday, 0, 10);
 	my $where = '';
 	if ($where) {
-		$where = "created_at < DATE_SUB('$yesterday 00:00',INTERVAL $num_days DAY)";
+		$where = "created_at < DATE_SUB('$yesterday 00:00', INTERVAL $num_days DAY)";
 	} else {
 		$where = "created_at < '$yesterday 00:00'";
 	}
-	return $self->sqlSelect(
-		"MAX(uid)",
-		"users_info",
-		$where);
+	return $self->sqlSelectNumericKeyAssumingMonotonic(
+		'users_info', 'max', 'uid', $where);
 }
 
 ########################################################
@@ -2503,9 +2689,9 @@ sub getTopRecentRealemailDomains {
 	my $num = $options->{num_wanted} || 10;
 
 	my $min_uid = $self->getLastUIDCreatedBeforeDaysBack($daysback, $yesterday);
-	my $newaccounts = $self->sqlSelect('max(uid)','users') - $min_uid;
-	my $newnicks = {};
 	return [ ] unless $min_uid;
+	my $newaccounts = $self->countUsers({ max => 1 }) - $min_uid;
+	my $newnicks = {};
 	my $domains = $self->sqlSelectAllHashrefArray(
 		"initdomain, COUNT(*) AS c",
 		"users_info",
@@ -2513,14 +2699,21 @@ sub getTopRecentRealemailDomains {
 		"GROUP BY initdomain ORDER BY c DESC, initdomain LIMIT $num");
 
 	foreach my $domain (@$domains) {
-		my $nicks = $self->sqlSelectAll('nickname','users, users_info',"users.uid=users_info.uid AND users_info.uid >= $min_uid AND initdomain=".$self->sqlQuote($domain->{initdomain}),'ORDER BY users.uid DESC');
-		my $length = 5 + length($domain->{initdomain});
+		my $dom = $domain->{initdomain};
+		my $dom_q = $self->sqlQuote($dom);
+		my $nicks = $self->sqlSelectAll(
+			'nickname',
+			'users, users_info',
+			"users.uid=users_info.uid AND users_info.uid >= $min_uid
+			 AND initdomain=$dom_q",
+			'ORDER BY users.uid DESC');
+		my $length = 5 + length($dom);
 		my $i = 0;
-		$newnicks->{$domain->{initdomain}} = "";
+		$newnicks->{$dom} = '';
 
-		while ($length + length($nicks->[$i][0]) + 2 < 78) {
-			$newnicks->{$domain->{initdomain}} .= ', ' unless !$i;
-			$newnicks->{$domain->{initdomain}} .= $nicks->[$i][0];
+		while ($nicks->[$i] && $length + length($nicks->[$i][0]) + 2 < 78) {
+			$newnicks->{$dom} .= ', ' unless !$i;
+			$newnicks->{$dom} .= $nicks->[$i][0];
 			$length += length($nicks->[$i][0]) + 2;
 			$i++;
 		}
@@ -2577,21 +2770,22 @@ sub getModderModdeeSummary {
 	my ($self, $options) = @_;
 	my $ac_uid = getCurrentStatic('anonymous_coward_uid');
 	$options ||= {};
-	my @where;
-	push @where, "ts > date_sub(NOW(),INTERVAL $options->{days_back} DAY)" if $options->{days_back};
+
+	my @where = ( );
+	push @where, "ts > DATE_SUB(NOW(), INTERVAL $options->{days_back} DAY)" if $options->{days_back};
 	push @where, "cuid != $ac_uid" if $options->{no_anon_comments};
 	push @where, "id >= $options->{start_at_id}" if $options->{start_at_id};
 	push @where, "id <= $options->{end_at_id}" if $options->{end_at_id};
-	push @where, "ipid is not null and ipid!=''" if $options->{need_defined_ipid};
+	push @where, "ipid IS NOT NULL AND ipid != ''" if $options->{need_ipid};
 
 	my $where = join(" AND ", @where);
 
 	my $mods = $self->sqlSelectAllHashref(
 			[qw(uid cuid)],
-			"uid,cuid,count(*) as count",
+			"uid, cuid, COUNT(*) AS count",
 			"moderatorlog",
 			$where,
-			"group by uid, cuid");
+			"GROUP BY uid, cuid");
 
 	return $mods;
 }
@@ -2601,21 +2795,24 @@ sub getModderCommenterIPIDSummary {
 	my ($self, $options) = @_;
 	my $ac_uid = getCurrentStatic('anonymous_coward_uid');
 	$options ||= {};
-	my @where = ("moderatorlog.cid=comments.cid");
+
+	my @where = ( "moderatorlog.cid=comments.cid" );
 	push @where, "ts > date_sub(NOW(),INTERVAL $options->{days_back} DAY)" if $options->{days_back};
 	push @where, "cuid != $ac_uid" if $options->{no_anon_comments};
 	push @where, "cuid = $ac_uid" if $options->{only_anon_comments};
 	push @where, "id >= $options->{start_at_id}" if $options->{start_at_id};
 	push @where, "id <= $options->{end_at_id}" if $options->{end_at_id};
-	push @where, "ipid is not null and ipid!=''" if $options->{need_defined_ipid};
+	push @where, "comments.ipid IS NOT NULL AND comments.ipid!=''" if $options->{need_ipid};
+
 	my $where = join(" AND ", @where);
+
 	my $mods = $self->sqlSelectAllHashref(
 			[qw(uid ipid)],
-			"moderatorlog.uid as uid, comments.ipid as ipid, count(*) as count",
-			"moderatorlog,comments",
+			"moderatorlog.uid AS uid, comments.ipid AS ipid, COUNT(*) AS count",
+			"moderatorlog, comments",
 			$where,
-			"group by uid, comments.ipid");
-			
+			"GROUP BY uid, comments.ipid");
+
 	return $mods;
 }
 
@@ -2727,6 +2924,24 @@ sub avgDynamicDurationForMinutesBack {
 		 AND static='no'
 		 AND op IN ($op_clause)",
 		"GROUP BY op"
+	);
+}
+
+sub getUrlsNeedingFirstCheck {
+	my($self) = @_;
+	return $self->sqlSelectAllHashrefArray("*", "urls", "last_attempt IS NULL", "ORDER BY url_id ASC");
+}
+
+sub getUrlsNeedingRefresh {
+	my($self, $limit) = @_;
+	$limit ||= 50;
+	return $self->sqlSelectAllHashrefArray(
+		"*", 
+		"urls", 
+		"last_attempt IS NOT NULL 
+		 AND believed_fresh_until IS NOT NULL 
+		 AND believed_fresh_until < NOW()", 
+		"ORDER BY believed_fresh_until ASC LIMIT $limit"
 	);
 }
 
