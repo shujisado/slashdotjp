@@ -2732,8 +2732,9 @@ sub saveComm {
 		push @reasons, $reasons->{$id}{name};
 	}
 
-	for my $reason_name (@reasons) {
-		my $key = "reason_alter_$reason_name";
+	for my $reason_id (%$reasons) {
+		next unless $reasons->{$reason_id}{listable};
+		my $key = "reason_alter_$reason_id";
 		my $answer = $form->{$key} || 0;
 		$answer = 0 if !$answer || $answer !~ /^[\-+]?\d+$/;
 		$user_edits_table->{$key} = ($answer == 0) ? '' : $answer;

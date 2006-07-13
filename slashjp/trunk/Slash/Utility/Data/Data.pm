@@ -3475,6 +3475,7 @@ XML::Parser::Expat(3).
 sub xmlencode {
 	my($text, $nohtml) = @_;
 	return '' if !defined($text) || length($text) == 0;
+	my $constants = getCurrentStatic();
 
 	# if there is an & that is not part of an entity, convert it
 	# to &amp;

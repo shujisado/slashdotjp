@@ -333,10 +333,10 @@ sub _get_points {
 
 	# Adjust reasons. Do we need a reason?
 	# Are you threatening me?
-	my $reason_name = $reasons->{$C->{reason}}{name};
-	if ($reason_name && $user->{"reason_alter_$reason_name"}) {
+	my $reason_id = $reasons->{$C->{reason}}{id};
+	if ($reason_id && $user->{"reason_alter_$reason_id"}) {
 		$hr->{reason_bonus} =
-			$user->{"reason_alter_$reason_name"};
+			$user->{"reason_alter_$reason_id"};
 	}
 
 	# Keep your friends close but your enemies closer.

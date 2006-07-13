@@ -29,6 +29,8 @@ use Apache::ModuleConfig;
 use Digest::MD5 'md5_hex';
 use Time::HiRes;
 use Socket qw( inet_aton inet_ntoa );
+use Encode;
+use Encode::Guess;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -2687,10 +2689,18 @@ sub determineCurrentSkin {
 		$hostname =~ s/:\d+$//;
  
 		my $skins = $reader->getSkins;
-		($skin) = grep {
+		my @potSkin = grep {
 				(my $tmp = lc $skins->{$_}{hostname} || '') =~ s/:\d+$//;
 				$tmp eq lc $hostname
 			} sort { $a <=> $b } keys %$skins;
+
+		# match /section/...,  / is matched to
+		if ($r->uri() =~ m|^/(\w+)/|){
+			my $key = $1;
+			($skin) = grep {$skins->{$_}{name} eq $key } @potSkin;
+		} else {
+			($skin) = @potSkin;
+		}
 
 		# don't bother warning if $hostname is numeric IP
 		if (!$skin && $hostname !~ /^\d+\.\d+\.\d+\.\d+$/) {
@@ -2698,7 +2708,7 @@ sub determineCurrentSkin {
 			if (!$skin) {
 				errorLog("determineCurrentSkin called but no skin found (even default) for '$hostname'\n");
 			} else {
-				errorLog("determineCurrentSkin called but no skin found (so using default) for '$hostname'\n");
+				#errorLog("determineCurrentSkin called but no skin found (so using default) for '$hostname'\n");
 			}
 		}
 	} else {

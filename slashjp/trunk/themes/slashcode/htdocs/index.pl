@@ -776,11 +776,11 @@ sub displayStories {
 					$url = $gSkin->{rootdir} . '/' . $gSkin->{index_handler} . '?section=' . $skin->{name};
 				}
 	
-				push @links, [ $url, $skin->{hostname} || $skin->{title}, '', 'section'];
+				push @links, [ $url, $skin->{title}, '', 'section'];
 			}
 	
 			if ($user->{seclev} >= 100) {
-				push @links, [ "$gSkin->{rootdir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit'), '', 'edit' ];
+				push @links, [ "$gSkin->{absolutedir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit'), '', 'edit' ];
 				if ($constants->{plugin}{Ajax}) {
 					my $signoff =  slashDisplay("signoff", { stoid => $story->{stoid}, storylink => 1 }, { Return => 1 } ); 
 					push @links, $signoff;

@@ -33,6 +33,7 @@ sub main {
 		action	=> [ $user_ok,	\&action  ],
 		check	=> [ 1,		\&check   ],
 		all	=> [ 1,		\&people  ],
+		foaf	=> [ 1,		\&foaf    ],
 	);
 
 	$ops{$_} = $ops{action} for qw(add delete);
@@ -110,7 +111,11 @@ sub people {
 	my $editable = ($uid == $user->{uid} ? 1 : 0);
 	my $people = $zoo->getRelationships($uid, $zoo_vars->{constant});
 
-	if ($form->{content_type} && $form->{content_type} =~ $constants->{feed_types}) {
+	if ($form->{content_type} 
+	    && $form->{content_type} =~ $constants->{feed_types}
+	    && $form->{content_type} eq 'foaf' ) {
+		_foaf($people, $uid, $zoo_vars->{op});
+	} elsif ($form->{content_type} && $form->{content_type} =~ $constants->{feed_types}) {
 		_rss($people, $nick, $zoo_vars->{op});
 	} else {
 		my $implied;
@@ -375,8 +380,28 @@ sub _rss {
 	});
 }
 
+sub foaf {
+	my ($zoo, $constants, $user, $form, $slashdb) = @_;
+
+	my ($uid, $nick);
+	if ($form->{uid} || $form->{nick}) {
+		 $uid = $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
+		 $nick = $form->{nick} ? $form->{nick} : $slashdb->getUser($uid, 'nickname');
+	 } else {
+		 $uid = $user->{uid};
+		 $nick = $user->{nick};
+	 }
+
+	 my $known = $zoo->getRelationships($uid, FRIEND);
+	 my $foes = $zoo->getRelationships($uid, FOE);
+	 push( @$known,  @$foes );
+
+	 _foaf($known, $uid, "foaf" );
+
+ }
+
 sub _foaf {
-	my( $entries, $uid, $type) = @_;
+	my ($entries, $uid, $type) = @_;
 	my $constants	= getCurrentStatic();
 	my $form	= getCurrentForm();
 	my $reader	= getObject('Slash::DB', { db_type => 'reader' });

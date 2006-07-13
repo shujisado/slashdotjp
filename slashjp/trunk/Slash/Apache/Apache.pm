@@ -361,13 +361,17 @@ sub IndexHandler {
 	# my $dbon = $slashdb->sqlConnect(); 
 	my $dbon = dbAvailable();
 
-	if ($uri eq '/' && $gSkin->{index_handler} ne 'IGNORE') {
+	# URI ends with a slash and is equal to the skin's rootdir
+	if ($uri =~ m|(.*)/$| && URI->new($gSkin->{rootdir})->path eq $1
+	    && $gSkin->{index_handler} ne 'IGNORE') {
 		my $basedir = $constants->{basedir};
 
 		# $USER_MATCH defined above
 		if ($dbon && ($is_user || $has_daypass)) {
-			$r->uri("/$gSkin->{index_handler}");
+			$r->uri( $uri . $gSkin->{index_handler} );
 			$r->filename("$basedir/$gSkin->{index_handler}");
+			# URI->filname conversion done, don't continue
+			$r->set_handlers(PerlTransHandler => undef);
 			return OK;
 		} elsif (!$dbon) {
 			# no db (you may wish to symlink index.shtml to your real
@@ -391,64 +395,6 @@ sub IndexHandler {
 			}
 			writeLog('shtml');
 			return OK;
-		}
-	}
-
-	# match /section/ or /section
-	if ($uri =~ m|^/(\w+)/?$|) {
-		my $key = $1;
-		
-		if (!$dbon) {
-			$r->uri('/index.shtml');
-			return DECLINED;
-		}
-
-		my $slashdb = getCurrentDB();
-		my $new_skin = $slashdb->getSkin($key);
-		my $new_skid = $new_skin->{skid} || $constants->{mainpage_skid};
-#print STDERR scalar(localtime) . " $$ IndexHandler B new_skid=$new_skid\n";
-		setCurrentSkin($new_skid);
-		$gSkin = getCurrentSkin();
-
-		my $index_handler = $gSkin->{index_handler};
-		if ($index_handler ne 'IGNORE') {
-			my $basedir = $constants->{basedir};
-
-			# $USER_MATCH defined above
-			if ($dbon && ($is_user || $has_daypass)) {
-				$r->args("section=$key");
-				# For any directory which can be accessed by a
-				# logged-in user in the URI form /foo or /foo/,
-				# but which is not a skin's directory, there
-				# is a problem;  we cannot simply bounce the uri
-				# back to /index.pl or whatever, since the
-				# index handler will not recognize the section
-				# key argument above and will just present the
-				# ordinary homepage.  I don't know the best way
-				# to handle this situation at the moment, so
-				# instead I'm hardcoding in the solution for the
-				# most common problem. - Jamie 2004/07/17
-				if ($key eq "faq" || $key eq "palm") {
-					$r->uri("/$key/index.shtml");
-				} elsif ($key eq "docs"
-					|| $key eq "privaterss") {
-					$r->uri("/$key/");
-				} else {
-					$r->uri("/$index_handler");
-				}
-				$r->filename("$basedir/$index_handler");
-				return OK;
-			} else {
-				# user not logged in
-
-				# consider using File::Basename::basename() here
-				# for more robustness, if it ever matters -- pudge
-				my($base) = split(/\./, $index_handler);
-				$r->uri("/$key/$base.shtml");
-				$r->filename("$basedir/$key/$base.shtml");
-				writeLog('shtml');
-				return OK;
-			}
 		}
 	}
 

@@ -134,7 +134,7 @@ sub blankForm {
 	my $reskey = getObject('Slash::ResKey');
 	my $rkey = $reskey->key('submit');
 	if ($rkey->create) {
-		displayForm($user->{nickname}, $user->{fakeemail}, $form->{skin}, getData('defaulthead'));
+		displayForm($user->{nickname}, 'http://'.$constants->{basedomain}.'/~'.$user->{nickname}.'/', $form->{skin}, getData('defaulthead'));
 	} else {
 		print $rkey->errstr;
 	}		

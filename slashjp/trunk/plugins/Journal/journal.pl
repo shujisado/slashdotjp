@@ -243,7 +243,7 @@ sub displayRSS {
 				tid		=> $article->[5],
 			},
 			title		=> $article->[2],
-			description	=> balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 }),
+			description	=> strip_notags($article->[1]),
 			'link'		=> root2abs() . '/~' . fixparam($nickname) . "/journal/$article->[3]",
 		};
 	}
@@ -258,21 +258,21 @@ sub displayRSS {
 		($constants->{journal_rdfitemdesc_html} > 2 && !$user->{is_anon})
 	);
 
-	my($title, $journals, $link);
+	my($title, $desc, $link);
 	if ($form->{op} && $form->{op} eq 'friendview') {
-		$title    = "$juser->{nickname}'s Friends'";
-		$journals = 'Journals';
+		$title    = getData('rss_fv_title', { nickname => $juser->{nickname} });
+		$desc     = getData('rss_fv_desc', { nickname => $juser->{nickname} });
 		$link     = '/journal/friends/';
 	} else {
-		$title    = "$juser->{nickname}'s";
-		$journals = 'Journal';
+		$title    = getData('rss_title', { nickname => $juser->{nickname} });
+		$des      = getData('rss_desc', { nickname => $juser->{nickname} });
 		$link     = '/journal/';
 	}
 
 	xmlDisplay($form->{content_type} => {
 		channel => {
-			title		=> "$title $journals",
-			description	=> "$title $constants->{sitename} $journals",
+			title		=> $title,
+			description	=> $desc,
 			'link'		=> root2abs() . '/~' . fixparam($juser->{nickname}) . $link,
 		},
 		image	=> 1,
@@ -518,7 +518,7 @@ sub displayArticle {
 	}
 
 	push @sorted_articles, $collection;
-	my $theme = _checkTheme($journal_reader->getUser($uid, 'journal_theme'));
+	my $theme = _checkTheme($form->{theme} || $journal_reader->getUser($uid, 'journal_theme'));
 
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');

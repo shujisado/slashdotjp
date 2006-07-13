@@ -215,7 +215,8 @@ sub display_prefs {
 	my $prefs_titlebar = slashDisplay('prefs_titlebar', {
 		nickname	=> $user->{nickname},
 		uid		=> $user->{uid},
-		tab_selected	=> 'messages'
+		tab_selected	=> 'messages',
+		title => getData( 'prefshead' )
 	}, { Return => 1 });
 	my $messages_menu =  createMenu('messages');
 	slashDisplay('display_prefs', {
