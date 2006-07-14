@@ -45,6 +45,7 @@ use Slash::Constants qw(:strip);
 use Slash::Utility::Environment;
 use URI;
 use XML::Parser;
+use Encode;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -1510,6 +1511,7 @@ sub breakHtml {
 		? "<nobr>" : "";
 	my $workaround_end = $constants->{comment_startword_workaround}
 		? "<wbr></nobr> " : " ";
+	$constants->{tweak_japanese} and $workaround_start = $workaround_end = "";
 
 	# These are tags that "break" a word;
 	# a<P>b</P> breaks words, y<B>z</B> does not
@@ -2275,11 +2277,16 @@ Chomped string.
 
 sub chopEntity {
 	my($text, $length, $end) = @_;
-	if ($length && $end) {
-		$text = substr($text, -$length);
-	} elsif ($length) {
+	my $constants = getCurrentStatic();
+	Encode::is_utf8($text) or $text = Encode::decode_utf8($text);
+	$end and $text = join('', reverse(split(//, $text)));
+	if ($constants->{tweak_japanese}) {
+		require Jcode;
+		$text = [Jcode->new(Encode::encode_utf8($text), 'utf8')->jfold($length, '')]->[0];
+		$text = Encode::decode('euc-jp', $text);
+	} else {
 		$text = substr($text, 0, $length);
-	}	
+	}
 	$text =~ s/&#?[a-zA-Z0-9]*$//;
 	$text =~ s/<[^>]*$//;
 	return $text;

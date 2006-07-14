@@ -131,6 +131,7 @@ sub getRelated {
 
 	my $slashdb = getCurrentDB();
 	my $user    = getCurrentUser();
+	my $constants = getCurrentStatic();
 
 	my $rl = $slashdb->getRelatedLinks;
 	my @related_text = ( );
@@ -184,7 +185,7 @@ sub getRelated {
 
 		$label = strip_notags($label);
 		next if $label !~ /\S/;
-		$label =~ s/(\S{30})/$1 /g;
+		$label =~ s/(\S{30})/$1 /g unless $constants->{tweak_japanese};
 		# Instead of hard-coding the HTML here, we should
 		# do something a little more flexible.
 		my $str;
@@ -275,8 +276,8 @@ sub otherLinks {
 ##################################################################
 sub relatedLinks {
 	my($self, $story_content, $tids, $nick, $uid) = @_;
-	my $relatedtext = $self->getRelated($story_content, $tids) .
-		$self->otherLinks($nick, $tids, $uid);
+	my $relatedtext = $self->getRelated($story_content, $tids);
+	$relatedtext .= $self->otherLinks($nick, $tids, $uid) if $nick;
 
 	# If getRelated and otherLinks seem to be putting <li>
 	# tags around each item, they probably want a <ul></ul>

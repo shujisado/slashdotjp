@@ -239,15 +239,15 @@ sub findStory {
 			# XXX I haven't looked closely at this but at first
 			# glance I'm not sure why this is a LEFT JOIN and
 			# not an ordinary inner join. - Jamie 2005/12/16
-			$tables .= " LEFT JOIN story_topics_rendered ON stories.stoid = story_topics_rendered.stoid";
-			$where .= " AND story_topics_rendered.tid IN ($string)";
+			$tables .= " LEFT JOIN story_topics_chosen ON stories.stoid = story_topics_chosen.stoid";
+			$where .= " AND story_topics_chosen.tid IN ($string)";
 			$other = "GROUP by stoid $other";
 		} else {
 			my $topic_search_sid_limit = $constants->{topic_search_sid_limit} || 1000;
 			my $sids = $self->sqlSelectColArrayref(
-				'story_topics_rendered.stoid',
-				'story_topics_rendered, stories', 
-				"story_topics_rendered.stoid = stories.stoid AND story_topics_rendered.tid IN ($string)",
+				'story_topics_chosen.stoid',
+				'story_topics_chosen, stories', 
+				"story_topics_chosen.stoid = stories.stoid AND story_topics_chosen.tid IN ($string)",
 				"ORDER BY time DESC LIMIT $topic_search_sid_limit");
 			if ($sids && @$sids) {
 				$string = join(',', @{$self->sqlQuote($sids)});

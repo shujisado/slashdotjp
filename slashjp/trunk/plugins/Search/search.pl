@@ -766,8 +766,7 @@ sub _shorten {
 	my($text) = @_;
 	my $length = getCurrentStatic('search_text_length');
 	return $text if length($text) <= $length;
-	$text = chopEntity($text, $length);
-	$text =~ s/(.*) .*$/$1.../g;
+	$text = chopEntity($text, $length) . '...';
 	return $text;
 }
 

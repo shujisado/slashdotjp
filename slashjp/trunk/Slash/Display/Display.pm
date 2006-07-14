@@ -357,6 +357,7 @@ my $strip_mode = sub {
 	strip_notags		=> \&strip_notags,
 	strip_plaintext		=> \&strip_plaintext,
 	strip_mode		=> [ $strip_mode, 1 ],
+	chopEntity		=> [ \&chopEntityFactory, 1],
 	%FILTERS
 );
 
@@ -575,6 +576,15 @@ sub tempWarn {
 		}
 		warn @lines;
 	}
+}
+
+sub chopEntityFactory {
+	my $l = $_[1];
+	return sub {
+		my $s = shift;
+		my $r = &chopEntity($s, $l || 80);
+		$r . ($s ne $r ? "..." : "");
+	};
 }
 
 1;

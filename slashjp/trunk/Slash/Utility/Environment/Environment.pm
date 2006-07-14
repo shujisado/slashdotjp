@@ -1595,6 +1595,7 @@ sub prepareUser {
 	} else {
 		$user->{aton} = 'on'; # Slash::getData('aton');
 	}
+	$constants->{tweak_japanese} and $user->{aton} = '';
 
 	if ($uri =~ m[^/$]) {
 		$user->{currentPage} = 'index';
