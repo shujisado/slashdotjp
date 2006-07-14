@@ -10,6 +10,7 @@ use Slash::Constants qw(:web :messages);
 use Slash::Display;
 use Slash::Utility;
 use Slash::XML;
+use Slash::LDAPDB;
 use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -59,7 +60,7 @@ sub newUserForm {
 	_validFormkey('generate_formkey') or return;
 
 	header(getData('newuserformhead')) or return;
-	slashDisplay('newUserForm', { note => $note });
+	slashDisplay('newUserForm', { note => $note, form => $form });
 	footer();
 }
 
@@ -80,7 +81,11 @@ sub newUser {
 	my @note;
 	my $error = 0;
 
-	if (!$form->{email} || !emailValid($form->{email})) {
+	$ldap = Slash::LDAPDB->new(attrib_prefix => getCurrentStatic->{ldap_peer_attrib_prefix});
+	if (!$form->{agree_priv_cont}) {
+		push @note, getData('not_agree_priv_cont');
+		$error = 1;
+	} elsif (!$form->{email} || !emailValid($form->{email})) {
 		push @note, getData('email_invalid');
 		$error = 1;
 	} elsif ($form->{email} ne $form->{email2}) {
@@ -88,6 +93,12 @@ sub newUser {
 		$error = 1;
 	} elsif ($slashdb->existsEmail($form->{email})) {
 		push @note, getData('email_exists');
+		$error = 1;
+	} elsif ($constants->{ldap_enable} && (!defined($ldap) || !$ldap->bind())) {
+		push @note, getData('ldap_conn_fail');
+		$error = 1;
+	} elsif ($constants->{ldap_enable} && $ldap->getUser($matchname) && !$ldap->authUser($matchname, $form->{peerpasswd}) {
+		push @note, getData('ldap_peer_pass_fail');
 		$error = 1;
 	} elsif ($matchname ne '' && $form->{newusernick} ne '') {
 		if ($constants->{newuser_portscan}) {

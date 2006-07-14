@@ -15,10 +15,11 @@ use Storable qw(thaw freeze);
 use URI ();
 use Slash::Custom::ParUserAgent;
 use vars qw($VERSION $_proxy_port);
-use Encode;
 use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
+use Encode;
+use Slash::LDAPDB;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
@@ -2247,6 +2248,7 @@ sub deleteUser {
 	});
 	my $rows = $self->sqlDelete("users_param", "uid=$uid");
 	$self->setUser_delete_memcached($uid);
+	#Slash::LDAPDB->new()->deletUserByUid($uid); # do NOT delete entry. just remove site data...
 	return $rows;
 }
 
@@ -3087,13 +3089,14 @@ sub createUser {
 
 	$self->sqlDo("SET AUTOCOMMIT=0");
 
+	my $passwd = encryptPassword(changePassword());
 	$self->sqlInsert("users", {
 		uid		=> undef,
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
 		seclev		=> 1,
-		passwd		=> encryptPassword(changePassword())
+		passwd		=> $passwd,
 	});
 
 	my $uid = $self->getLastInsertId({ table => 'users', prime => 'uid' });
@@ -3148,6 +3151,13 @@ sub createUser {
 
 	$self->sqlDo("COMMIT");
 	$self->sqlDo("SET AUTOCOMMIT=1");
+
+	Slash::LDAPDB->new()->createUser($matchname, {
+		realemail	=> $email,
+		nickname	=> $newuser,
+		passwd		=> $passwd,
+		uid		=> $uid,
+	});
 
 	$self->setUser_delete_memcached($uid);
 
@@ -12011,6 +12021,8 @@ sub setUser {
 	# And delete from memcached again after we update the DB
 	$mcd_need_delete = 1 if $rows;
 	$self->setUser_delete_memcached($uid) if $mcd_need_delete;
+
+	Slash::LDAPDB->new()->setUserByUid($uid, $hashref);
 
 	return $rows;
 }
