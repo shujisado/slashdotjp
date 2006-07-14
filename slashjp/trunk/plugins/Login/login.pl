@@ -81,7 +81,7 @@ sub newUser {
 	my @note;
 	my $error = 0;
 
-	$ldap = Slash::LDAPDB->new(attrib_prefix => getCurrentStatic->{ldap_peer_attrib_prefix});
+	my $ldap = Slash::LDAPDB->new(attrib_prefix => getCurrentStatic->{ldap_peer_attrib_prefix});
 	if (!$form->{agree_priv_cont}) {
 		push @note, getData('not_agree_priv_cont');
 		$error = 1;
