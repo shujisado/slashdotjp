@@ -59,7 +59,7 @@ sub newUserForm {
 	_validFormkey('generate_formkey') or return;
 
 	header(getData('newuserformhead')) or return;
-	slashDisplay('newUserForm', { note => $note });
+	slashDisplay('newUserForm', { note => $note, form => $form });
 	footer();
 }
 
@@ -80,7 +80,10 @@ sub newUser {
 	my @note;
 	my $error = 0;
 
-	if (!$form->{email} || !emailValid($form->{email})) {
+	if (!$form->{agree_priv_cont}) {
+		push @note, getData('not_agree_priv_cont');
+		$error = 1;
+	} elsif (!$form->{email} || !emailValid($form->{email})) {
 		push @note, getData('email_invalid');
 		$error = 1;
 	} elsif ($form->{email} ne $form->{email2}) {
