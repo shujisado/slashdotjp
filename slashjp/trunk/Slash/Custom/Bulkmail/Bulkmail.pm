@@ -1208,7 +1208,22 @@ sub build_envelope {
 	};
 	
 	#Who's the message from?
-	print $bulk "MAIL FROM:<", $self->From, ">";
+	my $sender = $self->From;
+
+	if ($constants->{bounce_address_static}) {
+		# It will change bounce destination when $constants->{bounce_address_static} exists.
+		$sender = $constants->{bounce_address_static};
+	} elsif ($constants->{bounce_address}) {
+		# It will change bounce destination when $constants->{bounce_address} exists.
+		# $constants->{bounce_address} would be as below:
+		#   bounce+###ADDR###@example.com => bounce+user=example.net@example.com
+		#   ###ADDR###@bounce.example.com => user=example.net@bounce.example.com
+		$sender = $constants->{bounce_address};
+		my $bounce_addr = $self->To;
+		$bounce_addr =~ s/@/=/;
+		$sender =~ s/###ADDR###/$bounce_addr/;
+	}
+	print $bulk "MAIL FROM:<", $sender, ">";
 	$response = <$bulk> || "";
 	return $self->error("Invalid Sender: $response <" . $self->From() . ">") if ! $response || $response =~ /^[45]/;
 	if ($response =~ /^221/){
