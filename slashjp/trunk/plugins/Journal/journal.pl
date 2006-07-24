@@ -442,8 +442,6 @@ sub displayArticle {
 		return displayFriends(@_);
 	}
 
-	_printHead('userhead', $head_data, 1) or return;
-
 	# clean it up
 	my $start = fixint($form->{start}) || 0;
 	my $articles = $journal_reader->getsByUid($uid, $start,
@@ -458,6 +456,11 @@ sub displayArticle {
 		}
 		return;
 	}
+
+	if (@$articles == 1) {
+	    $head_data->{html_title} = $articles->[0]->[2];
+	}
+	_printHead('userhead', $head_data, 1) or return;
 
 	# check for extra articles ... we request one more than we need
 	# and if we get the extra one, we know we have extra ones, and
@@ -920,10 +923,11 @@ sub removeArticle {
 sub _printHead {
 	my($head, $data, $edit_the_uid) = @_;
 	my $title = getData($head, $data);
+	my $html_title = (defined($data->{html_title}) ? $data->{html_title}." - " : '') . $title;
 	my $options = { last_modified => $data->{last_modified} };
 
 	my $links = {
-		title		=> $title,
+		title		=> $html_title,
 		'link'		=> {
 			uid		=> $data->{uid},
 			nickname	=> $data->{nickname}
