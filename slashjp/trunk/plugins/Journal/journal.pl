@@ -265,7 +265,7 @@ sub displayRSS {
 		$link     = '/journal/friends/';
 	} else {
 		$title    = getData('rss_title', { nickname => $juser->{nickname} });
-		$des      = getData('rss_desc', { nickname => $juser->{nickname} });
+		$desc     = getData('rss_desc', { nickname => $juser->{nickname} });
 		$link     = '/journal/';
 	}
 

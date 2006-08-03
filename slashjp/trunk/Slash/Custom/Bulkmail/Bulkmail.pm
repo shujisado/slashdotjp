@@ -9,6 +9,7 @@ $VERSION = "2.051";
 use Socket;
 use Carp 'cluck';
 use 5.004;
+use Slash::Utility::Environment;
 
 use strict;
 
@@ -1182,6 +1183,7 @@ sub scalar_or_code {
 sub build_envelope {
 	my $self  = shift || undef;
 	my $email = shift || undef;
+	my $constants = getCurrentStatic();
 #print map {"EMAIL HASH KEYS: ($_): " . $email->{$_} . "\n"} keys %$email;
 	$email = ref $email eq "HASH" ? $email->{"BULK_EMAIL"} : $email;
 #print "CONNECTING\n";
