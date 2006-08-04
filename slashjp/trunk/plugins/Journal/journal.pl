@@ -449,6 +449,7 @@ sub displayArticle {
 	);
 
 	unless ($articles && @$articles) {
+		_printHead('userhead', $head_data, 1) or return;
 		print getData('noentries_found');
 		if ($user_change && %$user_change) {
 			my $slashdb = getCurrentDB();
