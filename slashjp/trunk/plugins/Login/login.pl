@@ -97,7 +97,7 @@ sub newUser {
 	} elsif ($constants->{ldap_enable} && (!defined($ldap) || !$ldap->bind())) {
 		push @note, getData('ldap_conn_fail');
 		$error = 1;
-	} elsif ($constants->{ldap_enable} && $ldap->getUser($matchname) && !$ldap->authUser($matchname, $form->{peerpasswd}) {
+	} elsif ($constants->{ldap_enable} && $ldap->getUser($matchname) && !$ldap->authUser($matchname, $form->{peerpasswd})) {
 		push @note, getData('ldap_peer_pass_fail');
 		$error = 1;
 	} elsif ($matchname ne '' && $form->{newusernick} ne '') {
