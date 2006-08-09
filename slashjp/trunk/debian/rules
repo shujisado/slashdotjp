@@ -1,0 +1,72 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+
+DEB_DH_INSTALL_SOURCEDIR := debian/tmp
+LOCAL_PERL_MAKEFLAGS = "DESTDIR=$(DEB_DESTDIR)"
+DEB_INSTALL_EXAMPLES_slash-backend = $(DEB_DESTDIR)/usr/share/slash/httpd
+DEB_DH_INSTALLINIT_ARGS = --init-script=slash
+DEB_DH_COMPRESS_ARGS = -Xutils/
+
+clean::
+	-$(MAKE) clean
+	-$(MAKE) -C Slash distclean
+	-for d in plugins/* tagboxes/*; do $(MAKE) -C $$d distclean; done
+	find . -name Makefile.old | xargs -r rm -f
+
+
+common-build-arch::
+	cd Slash && perl Makefile.PL
+	$(MAKE) -C Slash
+	set -e; for d in plugins/* tagboxes/*; do \
+	  (cd $$d && \
+	    if test -f Makefile.PL; then \
+	      perl Makefile.PL; \
+	      $(MAKE); \
+	      $(MAKE) test; \
+	    fi \
+	  ) \
+	done
+
+common-install-arch::
+	$(MAKE) -C Slash install_vendor DESTDIR=$(DEB_DESTDIR)
+	for d in plugins/* tagboxes/*; do \
+	  test -f $$d/Makefile.PL \
+	  && $(MAKE) -C $$d install_vendor DESTDIR=$(DEB_DESTDIR); \
+	done
+	$(MAKE) install -o plugins -o slash install -o tagboxes \
+		SLASH_PREFIX=$(DEB_DESTDIR)/usr/share/slash \
+		USER=nobody GROUP=nogroup
+	find $(DEB_DESTDIR)/usr/share/slash/plugins \
+		$(DEB_DESTDIR)/usr/share/slash/tagboxes \
+		-name Makefile.old -o -name Makefile.PL \
+		-o -name test.pl -o -name t | xargs -r rm -fr
+	find $(DEB_DESTDIR)/usr/lib/perl5 -name \*.so | xargs -r strip --remove-section=.comment --remove-section=.note --strip-unneeded
+	
+	# apply local patch
+	for f in $(CURDIR)/debian/append-patches/*; do \
+	  (cd $(DEB_DESTDIR); patch -p1 < $$f) || exit; \
+	done
+	
+	# fix perm...
+	find $(DEB_DESTDIR)/usr/share/slash/plugins \
+		$(DEB_DESTDIR)/usr/share/slash/tagboxes \
+		$(DEB_DESTDIR)/usr/share/slash/themes \
+		-type f -a -not -name \*.pl | xargs -r chmod -x
+	for f in Blob/blobLoader Messages/populate_message_log_stats.plx \
+		PollBooth/rebuildAutoPoll Zoo/rebuildPeople \
+		Zoo/rebuildPerson ; do \
+	  chmod +x $(DEB_DESTDIR)/usr/share/slash/plugins/$$f; \
+	done
+	chmod +x $(DEB_DESTDIR)/usr/share/perl5/Slash/block_proxy_net.pl
+
+install/slash-backend::
+	mkdir -p $(CURDIR)/debian/$(cdbs_curpkg)/var/lib/slash/site
+	mkdir -p $(CURDIR)/debian/$(cdbs_curpkg)/var/lib/slash/httpd
+	install -m 755 $(CURDIR)/debian/command-wrapper \
+		$(CURDIR)/debian/$(cdbs_curpkg)/usr/bin/slash-command-wrapper
+	mkdir -p $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/$(cdbs_curpkg)
+	cp -a $(CURDIR)/utils $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/$(cdbs_curpkg)
+	for f in `find $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/$(cdbs_curpkg)/utils -type f`; do \
+	  perl -i -npe '$$.==1 and m|#!(.*/)?perl( .*)?$$| and $$_="#!/usr/bin/perl$2\n"' $$f; \
+	done
