@@ -375,7 +375,8 @@ sub _get_points {
 	}
 
 	# And, the poster-was-a-subscriber bonus
-	if ($user->{subscriber_bonus} && $C->{subscriber_bonus} eq 'yes') {
+	if ($user->{subscriber_bonus} && defined($C->{subscriber_bonus})
+		&& $C->{subscriber_bonus} eq 'yes') {
 		$hr->{subscriber_bonus} =
 			$user->{subscriber_bonus};
 	}
