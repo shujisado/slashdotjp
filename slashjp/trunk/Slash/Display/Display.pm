@@ -265,6 +265,9 @@ sub slashDisplayName {
 
 	if ($opt->{Skin} && $opt->{Skin} eq 'NONE') {
 		$user->{currentSkin} = 'default';
+	} elsif ($user->{light}) {
+		# TODO: backported light mode. we should delete in future.
+		$user->{currentSkin} = 'light';
 	} elsif ($opt->{Skin}) {
 		$user->{currentSkin} = $opt->{Skin};
 	}
