@@ -26,7 +26,6 @@ Description: The code that runs Slashdot - Backend server
 Package: slash-frontend
 Architecture: any
 Depends: slash-common, libapache-mod-perl, libapache-request-perl, libgd-graph-perl, apache, ${shlibs:Depends}, ${misc:Depends}
-Recommends: libgd-graph-perl
 Description: The code that runs Slashdot - Frontend server settings
  Slash -- Slashdot Like Automated Storytelling Homepage -- is an architecture
  to put together web sites.  It comes with functionality for posting articles,

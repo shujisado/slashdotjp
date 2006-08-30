@@ -54,7 +54,7 @@ common-install-arch::
 		$(DEB_DESTDIR)/usr/share/slash/themes \
 		-type f -a -not -name \*.pl | xargs -r chmod -x
 	for f in Blob/blobLoader Messages/populate_message_log_stats.plx \
-		PollBooth/rebuildAutoPoll Zoo/rebuildPeople \
+		PollBooth/rebuildAutoPoll Zoo/rebuildPeople Tags/tagtimer \
 		Zoo/rebuildPerson ; do \
 	  chmod +x $(DEB_DESTDIR)/usr/share/slash/plugins/$$f; \
 	done
