@@ -2039,7 +2039,7 @@ The escaped data.
 
 sub fixparam {
 	my($url) = @_;
-	$url =~ s/([^$URI::unreserved ])/$URI::Escape::escapes{$1}/og;
+	$url =~ s/([^$URI::unreserved !*'"()])/$URI::Escape::escapes{$1}/og;
 	$url =~ s/ /+/g;
 	return $url;
 }
