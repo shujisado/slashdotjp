@@ -728,7 +728,9 @@ sub printComments {
 	slashDisplay('printCommentsMain', {
 		comments	=> $comments,
 		title		=> $discussion->{title},
-		'link'		=> $discussion->{url},
+		'link'		=> ($slashdb->getDescriptions('discussion_kinds')->{$discussion->{dkid}} eq 'journal-story'
+		       			? $constants->{rootdir}."/article.pl?sid=".$discussion->{sid}
+				       	: $discussion->{url}),
 		count		=> $count,
 		sid		=> $discussion->{id},
 		cid		=> $cid,
