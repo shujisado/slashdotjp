@@ -1455,7 +1455,15 @@ sub processCustomTags {
 				$codestr =~ s{<a href="[^"]+" rel="url2html-$$">(.+?)</a>}{$1}g;
 				my $code = strip_code($codestr);
 				my $newstr = "<blockquote>$code</blockquote>";
-				substr($str, $pos, $len) = $newstr;
+				# TODO: This 1-line fix for bug of perl in Debian sarge!?
+				# substr($str, $pos, $len) returns wrong string.
+				# In just one test case, returned value have length=122.
+				# I tested both 5.8.4-8sarge3 and 5.8.4-8sarge4.
+				# 5.8.4-8sarge3 works porperly when using substr as left value!
+				# However, 5.8.4-8sarge4 was broken in any case.
+				# I stop to use 3rd argument, temporarily.
+				#substr($str, $pos, $len) = $newstr;
+				$str = substr($str, 0, $pos).$newstr.substr($str,$pos+$len);
 				pos($str) = $pos + length($newstr);
 			}
 		}
