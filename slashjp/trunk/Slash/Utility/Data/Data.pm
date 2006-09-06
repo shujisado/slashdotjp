@@ -2968,6 +2968,9 @@ sub parseDomainTags {
 
 	$html =~ s{<a([^>]*) title="([^"]+")>} {<a$1>}gi if $notitle;
 	
+	# truncate long URL
+	$html =~ s|(<a[^>]+>\s*)(\w+://[^<]{70,}?)(</a)|$1.substr($2, 0, 70)."...$3"|iseg;
+
 	return $html;
 }
 
