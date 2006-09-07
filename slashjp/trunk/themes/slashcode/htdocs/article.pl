@@ -36,7 +36,7 @@ sub main {
 		if ($story->{primaryskid} != $cur_skid) {
 			my $cur_skin = $reader->getSkin($cur_skid);
 			my $story_skin = $reader->getSkin($story->{primaryskid});
-			if ($story_skin && $story_skin->{rootdir}
+			if (0 && $story_skin && $story_skin->{rootdir} # TODO: fix in future...
 				&& $story_skin->{rootdir} ne $cur_skin->{rootdir}) {
 				redirect("$story_skin->{rootdir}$ENV{REQUEST_URI}");
 				return;
