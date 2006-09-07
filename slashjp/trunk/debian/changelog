@@ -1,3 +1,9 @@
+slash (2.5.0.119-5) unstable; urgency=low
+
+  * make disable skin redirection forcely in article.pl
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu,  7 Sep 2006 18:55:30 +0900
+
 slash (2.5.0.119-4) unstable; urgency=low
 
   * change link of stories submitted by journal to article.pl in search.pl
