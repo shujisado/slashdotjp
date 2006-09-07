@@ -39,9 +39,10 @@ sub main {
 			if ($story_skin && $story_skin->{rootdir}
 				&& $story_skin->{rootdir} ne $cur_skin->{rootdir}){
 				my ($cur_pathbase) = $ENV{REQUEST_URI} =~ m|/([^/]+)|;
-				my ($story_pathbase) = "$story_skin->{rootdir}$ENV{REQUEST_URI}" =~ m|//[^/]+/([^/]+)|;
+				my ($story_pathbase, $article_path) = "$story_skin->{rootdir}$ENV{REQUEST_URI}" =~ m|//[^/]+/([^/]+).*?(/article\.pl.*)$|;
 				if ($cur_pathbase ne $story_pathbase){
-					redirect("$story_skin->{rootdir}$ENV{REQUEST_URI}");
+					#redirect("$story_skin->{rootdir}$ENV{REQUEST_URI}");
+					redirect("$story_skin->{rootdir}$article_path");
 					return;
 				}
 			}
