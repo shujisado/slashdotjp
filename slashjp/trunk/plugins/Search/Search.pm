@@ -43,7 +43,7 @@ sub findComments {
 	my $columns;
 	$columns .= "primaryskid, url, discussions.uid AS author_uid, discussions.title AS title, ";
 	$columns .= "pid, subject, ts, date, comments.uid AS uid, cid, ";
-	$columns .= "discussions.id AS did";
+	$columns .= "discussions.id AS did, dkid, discussions.sid";
 	$columns .= ", TRUNCATE( "
 		. $self->_score('comments.subject', $form->{query}, $constants->{search_method})
 		. ", 1) AS score "
@@ -91,6 +91,15 @@ sub findComments {
 
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $search = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+
+	my $desc = $reader->getDescriptions('discussion_kinds');
+	foreach my $c (@$search) {
+		# TODO: may fix in discussion table directly...
+		$desc->{$c->{dkid}} eq 'journal-story' and
+			$c->{url} = $constants->{rootdir}."/article.pl?sid=".$c->{sid};
+		delete $c->{dkid};
+		delete $c->{sid};
+	}
 
 	return $search;
 }
