@@ -2297,6 +2297,7 @@ sub chopEntity {
 	} else {
 		$text = substr($text, 0, $length);
 	}
+	$end and $text = join('', reverse(split(//, $text)));
 	$text =~ s/&#?[a-zA-Z0-9]*$//;
 	$text =~ s/<[^>]*$//;
 	return $text;
