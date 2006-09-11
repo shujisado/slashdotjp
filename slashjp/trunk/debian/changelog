@@ -1,6 +1,14 @@
+slash (2.5.0.119-7) unstable; urgency=low
+
+  * fix in chopEntity() (may return reversed string...)
+  * stop messaging for journal-story
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 11 Sep 2006 14:02:32 +0900
+
 slash (2.5.0.119-6) unstable; urgency=low
 
   * login.pl: fix condition for duplicate user error when create user.
+  * article.pl: make enable and strict check in skin redirection for dirskin.
 
  -- Tatsuki Sugiura <sugi@nemui.org>  Fri,  8 Sep 2006 14:46:33 +0900
 

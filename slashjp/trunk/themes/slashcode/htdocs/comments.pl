@@ -1232,7 +1232,7 @@ sub submitComment {
 		}
 
 		# reply to journal
-		if ($messages && $kinds->{ $discussion->{dkid} } =~ /^journal/) {
+		if ($messages && $kinds->{ $discussion->{dkid} } eq 'journal') {
 			my $users  = $messages->checkMessageCodes(MSG_CODE_JOURNAL_REPLY, [$discussion->{uid}]);
 			if (_send_comment_msg($users->[0], \%users, $pts, $clean_comment)) {
 				my $data  = {
