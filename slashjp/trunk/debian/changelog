@@ -1,3 +1,9 @@
+slash (2.5.0.119-8) unstable; urgency=low
+
+  * login.pl: fix condition for checking LDAP user when accout creation
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu, 14 Sep 2006 22:14:37 +0900
+
 slash (2.5.0.119-7) unstable; urgency=low
 
   * fix in chopEntity() (may return reversed string...)
