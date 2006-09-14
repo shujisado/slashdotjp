@@ -97,6 +97,12 @@ sub newUser {
 	} elsif ($constants->{ldap_enable} && (!defined($ldap) || !$ldap->bind())) {
 		push @note, getData('ldap_conn_fail');
 		$error = 1;
+	} elsif ($constants->{ldap_enable} && $ldap->getUser($matchname)
+	       		&& (!defined($form->{peerpasswd}) || $form->{peerpasswd} eq "")) {
+		push @note, getData('duplicate_user', { 
+			nick => $form->{newusernick},
+		});
+		$error = 1;
 	} elsif ($constants->{ldap_enable}
 	       		&& defined($form->{peerpasswd})
 			&& $form->{peerpasswd} ne ""
