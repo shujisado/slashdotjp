@@ -1,3 +1,12 @@
+slash (2.5.0.119-9) unstable; urgency=low
+
+  * remove 'SET NAMES utf8' from MySQL.pm.
+    So need to mysql_read_default_file in dbix-password.conf
+    and default-character-set in my.cnf
+  * change schedule of adminmail.pl to 4:50 AM (JST)
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  4 Oct 2006 17:23:16 +0900
+
 slash (2.5.0.119-8) unstable; urgency=low
 
   * login.pl: fix condition for checking LDAP user when accout creation
