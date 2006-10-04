@@ -303,7 +303,6 @@ sub sqlConnect{
 	my($self) = @_;
 	$self->SUPER::sqlConnect();
 	$self->{_dbh}->{mysql_enable_utf8} = 1;
-	$self->{_dbh}->do( "SET NAMES utf8");
 }
 
 ########################################################
