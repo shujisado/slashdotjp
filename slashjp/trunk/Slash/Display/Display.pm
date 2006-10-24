@@ -254,10 +254,6 @@ sub slashDisplayName {
 	my $user      = getCurrentUser();
 	my $gSkin     = getCurrentSkin();
 
-	# TODO: backported light mode. we should delete in future.
-	# This line for temp light mode, but maybe cause some probloems.
-	getCurrentForm('light') and $user->{light} = 1;
-
 	# save for later (local() seems not to work ... ?)
 	my $origSkin = $user->{currentSkin} || $gSkin->{name};
 	my $origPage = $user->{currentPage};
@@ -269,9 +265,6 @@ sub slashDisplayName {
 
 	if ($opt->{Skin} && $opt->{Skin} eq 'NONE') {
 		$user->{currentSkin} = 'default';
-	} elsif ($user->{light}) {
-		# TODO: backported light mode. we should delete in future.
-		$user->{currentSkin} = 'light';
 	} elsif ($opt->{Skin}) {
 		$user->{currentSkin} = $opt->{Skin};
 	}

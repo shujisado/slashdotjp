@@ -10972,8 +10972,6 @@ sub getTemplateByName {
 		$page ||= 'misc';
 	}
 	unless ($skin) {
-		# TODO: backported light mode. we should delete in future.
-		$skin = "light" if $user->{light};
 		$skin ||= getCurrentSkin('name');
 		$skin ||= 'default';
 	}
