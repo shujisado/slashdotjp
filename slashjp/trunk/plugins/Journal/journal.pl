@@ -351,6 +351,7 @@ sub displayArticleFriends {
 
 	unless ($articles && @$articles) {
 		print getData('noviewfriends');
+		print getData('journalfoot');
 		return;
 	}
 
