@@ -1,0 +1,64 @@
+__section__
+default
+__description__
+Display votes and graph of votes
+
+* qid = question ID
+* width = passed to titlebar
+* title = passed to titlebar
+* voters = number of voters
+* pollitems = arrayref of available answers
+* notes = any notes to display to voter
+__title__
+
+__page__
+pollBooth
+__lang__
+en_US
+__name__
+vote
+__template__
+<div id="wide">
+	[% PROCESS titlebar %]
+	<div class="generalbody">
+		<div class="message">
+			[% notes %]
+		</div>
+		[% FOR poll = pollitems %]
+		[% answer     = poll.0
+			imagewidth = poll.1
+			votes      = poll.2
+			percent    = poll.3
+		%]
+			<table width="100%" border="0" cellpadding="0" cellspacing="0" class="bar">
+				<caption class="barAnswer">[% answer %]</caption>
+			        <tr>
+				[% IF percent > 0 %]
+       	        			<td width="[% percent %]%" class="barColor">&nbsp;</td>
+				[% END %]	
+       	 		       		<td class="barPercent">[% percent %]%</td>
+					<td align="right" class="barVotes">[% votes %] votes</td>
+        			</tr>
+			</table>
+		[% END %]
+		<b class="totalVotes">[% voters %] total votes.</b>
+		<br>
+		[
+			<a href="[% env.script_name %]?qid=[% qid | strip_paramattr %]">Voting Booth</a> |
+			<a href="[% env.script_name %]">Other Polls</a> |
+			<a href="[% gSkin.rootdir %]/">Back Home</a>
+		]
+		<div class="note">
+			<ul>
+				<li>Don't complain about lack of options. You've got to pick a few when you do multiple choice.  Those are the breaks.</li>
+				<li>Feel free to suggest poll ideas if you're feeling creative. I'd strongly suggest reading the past polls first.</li>
+				<li>This whole thing is wildly inaccurate.  Rounding errors, ballot stuffers, dynamic IPs, firewalls.  If you're using these numbers to do anything important, you're insane.</li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+__seclev__
+10000
+__version__
+$Id$
