@@ -2233,7 +2233,7 @@ sub fudgeurl {
 			my $token = ':::INSERT__23__HERE:::';
 			# no # is OK, unless ...
 			$url =~ s/#/$token/g;
-			if ($url =~ m|^https?://|i || $url =~ m|^/|) {
+			if ($url =~ m|^https?://|i || $url =~ m|^/| || $url =~ m|^$token|) {
 				# HTTP, in which case the first # is OK
 				$url =~ s/$token/#/;
 			}
