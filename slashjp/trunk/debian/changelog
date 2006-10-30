@@ -1,3 +1,9 @@
+slash (2.5.0.119-10) unstable; urgency=low
+
+  * remove obsolete light mode code
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 30 Oct 2006 17:29:37 +0900
+
 slash (2.5.0.119-9) unstable; urgency=low
 
   * remove 'SET NAMES utf8' from MySQL.pm.
