@@ -1858,6 +1858,9 @@ sub filter_params {
 				next;
 			} elsif (/^op_(.+)$/){
 				$form{'op'} = $1;
+			} elsif ($_ eq 'light') {
+				$form{simpledesign} = $form{light};
+				$form{lowbandwidth} = $form{light};
 			}
 		}
 	}
