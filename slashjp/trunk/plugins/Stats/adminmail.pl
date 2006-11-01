@@ -375,7 +375,7 @@ EOT
 		$statsSave->createStatDaily("${op}_ipids", $uniq);
 		$statsSave->createStatDaily("${op}_bytes", $bytes);
 		$statsSave->createStatDaily("${op}_page", $pages);
-		if ($op eq "article") {
+		if ($op =~ m|^(?:[^/]+/)?article$|) {
 			my $avg = $stats->getAverageHitsPerStoryOnDay($yesterday, $pages);
 			$statsSave->createStatDaily("avg_hits_per_story", $avg);
 		}
@@ -478,7 +478,7 @@ EOT
 			$statsSave->createStatDaily("${op}_page", $pages, { skid => $skid});
 			$statsSave->createStatDaily("${op}_user", $users, { skid => $skid});
 
-			if ($op eq "article") {
+			if ($op =~ m|^(?:[^/]+/)?article$|) {
 				my $avg = $stats->getAverageHitsPerStoryOnDay($yesterday, $pages, { skid => $skid });
 				$statsSave->createStatDaily("avg_hits_per_story", $avg, { skid => $skid });
 			}
