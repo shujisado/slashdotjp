@@ -1,39 +1,48 @@
-<HTML>
-<HEAD>
-        <TITLE>Slashdot FAQ (���ܸ���) - UI</TITLE>
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - UI</title>
+
 <!--#include virtual="/slashhead.inc"-->
 
 <TABLE>
 	<TR>
-		<TD><A HREF="editorial.shtml">���Υ��������</A>
-		<TD><A HREF="com-mod.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="editorial.shtml">前のセクション</A>
+		<TD><A HREF="interviews.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 
 <HR><BR>
 
 <A NAME="ui100">
-<H2>�������뤿��Υ���å���ܥå������ߤ����Τ����ɡ�</H2> 
+<H2>○○するためのスラッシュボックスが欲しいのだけど…</H2> 
 
 
-	<P>����å���ܥå����Υݥꥷ���ϼ����̤�: 
+	<P>スラッシュボックスのポリシーは次の通り: 
 	
 	<OL> 
-		<LI>���������⡼�ȥ����Ȥ�����å���ɥåȤ˵��Ĥ�Ϳ���롣
+		<LI>該当するリモートサイトがスラッシュドットに許可を与える。
 		
-		<LI>��⡼�ȥ�����¦�ǲ����Ѥ�RDF�ե�������Ѱդ��롣(
-		<A HREF="/slashdot.rdf">rdf�ե�����</A>�Υ���ץ�).
+		<LI>リモートサイト側で解析用のRDFファイルを用意する。(
+		<A HREF="/slashdot.rdf">rdfファイル</A>のサンプル).
 
-		<LI>����å���ɥåȤ�Ŭ���Ƥ��뤫�ɤ����桹��Ƚ�Ǥ��롣
+		<LI>スラッシュドットに適しているかどうか我々が判断する。
 		
 	</OL>
 	
-	<P>���ΤȤ�������å���ܥå�������Ȥ�<A
-	HREF="mailto:pater@slashdot.org">CowboyNeal</A>�ʤΤǡ����RDF
-	�ե������URL�ȵ���ô���Ԥ�᡼����Τ餻�Ƥ��������������Υ�
-	��å���ܥå������ɲä��뤫�ɤ����Ϥ�����Ǹ�Ƥ���ޤ���
-
+	<P>今のところスラッシュボックスの大家は<A
+	HREF="mailto:pater@slashdot.org">CowboyNeal</A>なので、彼にRDF
+	ファイルのURLと技術担当者をメールで知らせてください。僕等のス
+	ラッシュボックスに追加するかどうかはこちらで検討します。
+	<P>(注：ジャパンはslashmaster<img src="http://images.slashdot.jp/a.gif">slashdot.jpに知らせてください)
 	<BR><BR>
 	<I><SMALL>
 	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
@@ -43,11 +52,11 @@
 
 
 <A NAME="ui200">
-<H2>���ȡ��꡼����ˤ��뾮���� [?] �ϲ��Ǥ���?</H2> 
+<H2>ストーリーの中にある小さな [?] は何ですか?</H2> 
 
-	<P><A HREF="http://www.everything2.com">Everything2</A>�ؤΥ�
-	���å��ꥹ�������󥯤Ǥ���ά���̾���ʤɡ��ۤ��οͤˤ�������
-	ɬ�פȻפ�����ˤϤ��Υ�󥯤��դ��Ƥ��ޤ���
+	<P><A HREF="http://www.everything2.com">Everything2</A>へのグ
+	ロッサリスタイルリンクです。略語や名前など、ほかの人には説明が
+	必要と思われる語句にはこのリンクが付いています。
 
 	<BR><BR>
 	<I><SMALL>
@@ -56,23 +65,33 @@
 	</SMALL></I> 
 	
 <A NAME="ui300">
-<H2>�Ť����ȡ��꡼�򸫤�ˤϤɤ�����Ф褤�Ǥ���?</H2> 
+<H2>古いストーリーを見るにはどうすればよいですか?</H2> 
 
-	<P>����å���ɥåȤǤϡ������ȳ�����������ΤۤȤ�ɤΥ��ȡ�
-	�꡼�򥢡������֤��Ƥ��ޤ����ᥤ�� �ڡ����� [�Ť����ȡ��꡼]
-	�򥯥�å����Ƥ���������
+	<P>スラッシュドットは、サイトの開始からのほとんどのストーリーを保存しています。 メインページの "older stuff" を押すか、フロントページの一番下にある検索フォームを使って、データベース中のストーリーを検索する事によってアクセスできます。
 
 	<BR><BR>
 	<I><SMALL>
 	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
 	Last Modified: 10/28/00 <BR>
 	</SMALL></I> 
+
+<A NAME="ui400">
+<H2>どうして私のメニューの中に他のユーザーのニックネームが表示されるのですか?</H2> 
+
+	<P>これはショートカットです。基本的に、ユーザーメニューのタブに、最後にあなたが見たユーザーのニックネームとUIDが表示されます。これはバグではありません! これはあなたの友達の情報やあなたの友達の友達情報を行き来できる有用なショートカットです。
+
+	<BR><BR>
+	<I><SMALL>
+	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
+	Last Modified: 3/3/03 <BR>
+	</SMALL></I> 
+
 <BR><HR>
 <TABLE>
 	<TR>
-		<TD><A HREF="editorial.shtml">���Υ��������</A>
-		<TD><A HREF="com-mod.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="editorial.shtml">前のセクション</A>
+		<TD><A HREF="interviews.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 

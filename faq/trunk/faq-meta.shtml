@@ -1,60 +1,63 @@
-<HTML>
-<HEAD>
-        <TITLE>Slashdot FAQ (���ܸ���) - �᥿FAQ</TITLE>
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - メタFAQ</title>
+
 <!--#include virtual="/slashhead.inc"-->
 
 <TABLE>
 	<TR>
-		<TD><A HREF="editorial.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="editorial.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 <HR><BR>
 
 <A NAME="fm100">
-<H2>����ʸ��ϲ��Ǥ���?</H2>
+<H2>この文書は何ですか?</H2>
 
-	<P>����ϡ�����å���ɥåȤ� FAQ (Frequently Asked Questions:
-	�褯�������) �ե�����Ǥ����Ĥޤꡢ����å���ɥåȤΥ����å�
-	���褯���������Ȥ��β����򤢤餫����ꥹ�Ȥ���ʸ��Ǥ���
-	
-	<P>���� FAQ �ϥС������ 1.1 �Ǥ���
+	<P>これはスラッシュドットのFAQファイルです。その名が示す通り、スラッシュドットのメンバーが繰り返し尋ねられる問題を解決する事を意図しています。
 	
 	<BR><BR>
 	<I><SMALL>
-	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
-	Last Modified: 6/26/00 <BR>
+	Answered by: Robo <BR>
+	Last Modified: 12/17/01 <BR>
 	</SMALL></I>
 
 <A NAME="fm200">	
-<H2>�Τꤿ�����Ȥ����뤱�ɡ����� FAQ �˺ܤäƤޤ���ï��ʹ���Ф����Ǥ���?</H2>
+<H2>FAQに書かれていない質問をしたいのですが、どうするべきですか?</H2>
 
-	<P>�����CmdrTaco�˥᡼�뤷�Ƥ��������������Ǥ���褦�٥��Ȥ�
-	�Ԥ����ޤ���Ʊ�����䤬����⤢�ä����ϡ�FAQ ���ɲä��뤳�Ȥ�
-	��Ƥ���ޤ���<BR>
-	(���ա�����å���ɥåȥ���ѥ�˴ؤ�������
-	<A HREF="mailto:slashmaster@slashdot.jp">����å��������</A>
-	�ؤɤ���)
+	<P>あなたの質問をEメールでCmdrTaco, Samzenpus, Roboのうちの誰かに送って下さい。我々はあなたが答えを得られるように最善を尽くし、それが以前見た事がある質問なら、それをFAQに追加する事を検討します。<br>
+	(注意：スラッシュドットジャパンに関する質問は
+Slashmaster<img src="http://images.slashdot.jp/a.gif">slashdot.jp
+へどうぞ)
 
 	<BR><BR>
 	<I><SMALL>
-	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
-	Last Modified: 6/26/00 <BR>
+	Answered by: Robo <BR>
+	Last Modified: 12/17/01 <BR>
 	</SMALL></I>
 
 <A NAME="fm300">	
-<H2>���� FAQ ����Ǥ�Ԥ�ï�Ǥ���?</H2>
+<H2>このFAQの責任者は誰ですか?</H2>
 
-	<P>��Ȥ�Ȥ� Rob "CmdrTaco" Malda ����ä���Τǡ��ۤȤ�ɤ�
-	�ब�ºݤ˽񤤤���ΤǤ���2000 ǯ 6 ��ˡ�Joe Merlino ��
-	Andover.net �˸ۤ��Ʋ������ޤ�����Joe �ϡ����Ƥ򹹿����Խ���
-	�ե����ޥåȤ�ľ���ơ��ۤ���ʸ��Ȥ����줷�ޤ�����CmdrTaco ��
-	Joe �Τۤ��ˤ⡢�ʲ��ο͡��ζ��Ϥ�����ޤ�����
+	<P>もともとは Rob "CmdrTaco" Malda が作ったもので、ほとんどは
+	彼が実際に書いたものです。2000 年 6 月に、Joe Merlino が
+	Andover.net に雇われて改訂しました。Joe は、内容を更新、編集、
+	フォーマットし直して、ほかの文書とも統一しました。CmdrTaco と
+	Joe のほかにも、以下の人々の協力がありました。
 
 		<UL>
 		
-			<LI><A HREF="mailto:loonxtall@hotmail.com">Loon</A>
-			<LI><A HREF="mailto:dkh2@po.cwru.edu">dkh2</A>
+			<LI>Loon
+			<LI>dkh2
 			 
 		</UL>
 		
@@ -65,22 +68,11 @@
 	Last Modified: 6/26/00 <BR>
 	</SMALL></I>
 
-<A NAME="fm400">	
-<H2>���� FAQ ��ۤ��ξ��ǡ�"TODO list" �Τ��Ȥ��񤫤�Ƥ��ޤ�����������Ǥ���?</H2>
-
-	<P>�֤�ʤ������� TODO list ����������Ƥ����Ϥ��Ǥ���
-	
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:joe@nigiri.org">Joe</A> <BR>
-	Last Modified: 10/28/00 <BR>
-	</SMALL></I>
-
 <BR><HR>	
 <TABLE>
 	<TR>
-		<TD><A HREF="editorial.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="editorial.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 

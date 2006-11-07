@@ -1,0 +1,81 @@
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - Interviews</title>
+
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR>
+		<TD><A HREF="UI.shtml">前のセクション</A>
+		<TD><A HREF="com-mod.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<HR><BR>
+
+<h2><a name="int1000" id="int1000">いくつまで質問できますか?</a></h2>
+        <p>質問したいだけ質問出来ます。</p>
+        <p>ですが、1つのコメントにおいて1つの質問だけにして下さい。</p>
+        <p>複数の事を1つにして質問する事は出来ますが、あまり複雑にしすぎると誰もあなたが何を言いたいのか分からなくなり、モデレートされにくくなります。もし熱烈な質問をいくつもしたいなら、落ち着いてあなたの考えを整理して、複数のコメントに分けて下さい。</p>
+        <p><em><small>
+                Answered by: Roblimo<br>
+                Last Modified: 4/30/03
+        </small></em></p>
+
+<h2><a name="int1100" id="int1100">私の質問が+5までモデレートされました。なのになぜ回答されないのですか?</a></h2>
+        <p>だいたい30から40個のコメントが+5にモデレートされますが、インタビューの回答者には10個しか送らないので、全ての高スコアの質問が回答されるわけではないのです。</p>
+        <p>大抵、いくつかの高スコアな質問は、同じ事を違う言葉で言っているか、非常に重複しており、我々は話題毎に1つの質問を送っています。もしあなたの質問が、スラッシュドットの編集者が質問の「グループ」の中で最も優れた物であると確信する物ならば、それが選ばれるでしょう。我々は意味のある題名がついているコメントを選ぶ傾向があります(ただ単に「質問」とするのは意味のある題名とは言えません)。また、短くて簡潔で、はっきりとしない質問を好みます。綴りや文法も重要です(インタビューのゲストの名前が正しいかを特に確認して下さい)。</P>
+        <p><em><small>
+                Answered by: <a href="mailto:roblimo@slashdot.org">Roblimo</a><br>
+                Last Modified: 4/30/03
+        </small></em></p>
+
+<h2><a name="int1150">11個目の質問はモデレートで高評価を得たやつじゃないよ! どういう事!</a></h2>最後の選択をする編集者は、コメントのスコアに基づいて選択をするよう要求されていません。我々はスコアをガイドラインとして使いますが、絶対的なルールとして使ってはいません。編集者は彼ら自身の質問をしたいかもしれませんし、回答が気になるかもしれませんし、とりわけ痛烈な質問だと考えるかもしれません。その上、 もしあなたが自分のルールをすぐに変えられないなら、おもしろい事は編集者にも依るだろう。
+        <p><em><small>
+                Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
+                Last Modified: 4/30/03
+        </small></em></p>
+
+<h2><a name="int1200" id="int1200">誰それに送った質問はひどすぎる。どういうつもりなんだ?!</a></h2>
+        <p>より良い質問を見たいなら、より良い質問を投稿する事です。あるいは、回答する代わりにモデレートすれば、あなたはより注意深くモデレートする事になるでしょう。あなたの様なスラッシュドットの読者は、質問する事もモデレートする事も出来る事を覚えておいて下さい。</p>
+        <p><em><small>
+                Answered by: Roblimo<br>
+                Last Modified: 4/30/03
+        </small></em></p>
+
+<h2><a name="int1300" id="int1300">誰それの回答はひどすぎる。なんで彼はもっとマシな回答をしなかったんだい?</a></h2>
+        <p>インタビューの回答者が質問にどのように回答するのか予測する事は難しい。ある人々は非常にドライで技術的に答えるだろうし、ある人々は長くて詳細に答えるだろうし、ある人々はおもしろおかしく答えるだろう。しばしば、時間は最も大きな要因になる。誰しも予定があるけど、個人的な事は変わりやすいし、それでインタビューに回答する。我々は長い回答が好きだけれど、簡潔な回答もまた然りだ。</p>
+        <p><em><small>
+                Answered by: Roblimo<br>
+                Last Modified: 4/30/03
+        </small></em></p>
+
+<h2><a name="int1400" id="int1400">インタビュー・ゲストを提案するにはどうすればいいのですか？</a></h2>
+        <p><a href="/submit.pl">「タレコむ」</a>を通して、あなたの推薦を送っていただくのが一番いい方法です。提案するゲストのもっともコンタクトがとれやすい連絡先を必ず含めてください。インタビューの申し込みが殺到しているような有名人や著名な政治家の場合は、何らかの個人的な紹介があると感謝します。世の中にはスラッシュドットを聞いたこともないひともいるんですよ。信じるかどうかは別として。</p>
+        <p>インタビューゲストには色んな方面の人を揃えたいという事に注意してほしい。例えばネットワークセキュリティアプライアンス会社のCEOにインタビューしたのが先週だとしたら、まぁ多分別のセキュリティ会社のCEOにインタビューするのはしばらく先の事になるね。</p>
+        <p>プログラマ、作家、漫画家、政治家、有名人、学者、実業家。どんな分野のインタビュー・ゲストでもお迎えをしたい。理想的には、ゲストは、スラッシュドットの読者のかなりの割合に知られているひとか、何らかの形でスラッシュドットの読者の生活に関わっているひとでないといけません。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:roblimo@slashdot.org">Roblimo</a><br>
+                Last Modified: 4/30/03
+        </small></em></p>
+
+
+<BR><HR>
+<TABLE>
+	<TR>
+		<TD><A HREF="UI.shtml">前のセクション</A>
+		<TD><A HREF="com-mod.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->

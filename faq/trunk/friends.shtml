@@ -1,0 +1,127 @@
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - トモダチと日記システム</title>
+
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="accounts.shtml">前のセクション</A>
+		<TD><A HREF="slashmeta.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+<HR><BR>
+
+<h2><a name="fj100" id="fj100">わたしの日記はどこにありますか?</a></h2>
+        <p><em>あなたの</em>日記は <a href="http://slashdot.jp/my/journal">http://slashdot.jp/my/journal</a> にあります。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj200" id="fj200">日記を何に使えばいいでしょうか?</a></h2>
+        <p>何に使わなければならないというきまりはありません。何にでも好きなようにお使いください。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj300" id="fj300">スラッシュドットは日記を検閲できる?</a></h2>
+        <p>いいえ。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj400" id="fj400">わたしの日記を読めるのは誰ですか / ほかの人の日記を読むことはできますか?</a></h2>
+        <p>あなたの日記は<strong>誰でも</strong>読むことができます。</p>
+        <p>したがって、<em>あなたも</em>誰の日記でも読むことができます。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj500" id="fj500">ほかの人に日記を読ませないようにすることはできますか?</a></h2>
+        <p>残念ながらできません。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj600" id="fj600">ほかの人の日記を見つけるには?</a></h2>
+        <p>ほかのユーザの日記を見つけるには、<a href="http://slashdot.jp/my/friends">トモダチのリスト</a>を開いてください。 そこにあなたのトモダチの最新の日記が表示されます。 知らない人の日記を見つけたい場合は、スラッシュドットの検索機能を利用してください。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj700" id="fj700">自分のトモダチやテキはどこで見られますか?</a></h2>
+        <p><a href="http://slashdot.jp/my/friends">http://slashdot.jp/my/friends</a></p>
+        <p><a href="http://slashdot.jp/my/foes">http://slashdot.jp/my/foes</a></p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj800" id="fj800">ほかの人のトモダチやテキを見ることはできますか?</a></h2>
+        <p>もちろん。 方法は自分のトモダチやテキのリストを見るときと同じですが(http://slashdot.jp/my/friends)、&quot;/my/friends&quot; の部分を &quot;/~ユーザ名/friends&quot; に置き換えてください。ほかのユーザのテキのリストを見るときも同様です。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:Robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj900" id="fj900">ファンやアンチって何?</a></h2>
+        <p>あなたが誰かをトモダチとして選ぶと、あなたはそのユーザのファンになります。 あなたをトモダチとして選んでくれた人 (あなたのファン) のリストを見るには、<a href="http://slashdot.jp/my/fans">http://slashdot.jp/my/fans</a> を開きます。ほかのユーザのファンを見たい場合は、&quot;/my/fans&quot; の部分を &quot;/~ユーザ名/fans&quot; に置き換えてください。</p>
+        <p>アンチはファンに似ていますが、あなたをテキとして選んだという点が異なります。 あなたをテキとして選んだユーザは、アンチのリスト ( <a href="http://slashdot.jp/my/freaks">http://slashdot.jp/my/freaks</a>) に表示されます。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<h2><a name="fj990" id="fj990">コメントのスコア補正とはどのような仕組みですか / http://slashdot.jp/my/comments は何をするところですか?</a></h2>
+        <p>コメントのスコア補正は、ストーリーのコメントに簡単にフィルタをかけるための仕組みです。 さまざまな<a href="http://slashdot.jp/my/comments">スコア補正</a>オプションが用意されています。 トモダチ/テキによるスコア補正を例にとると、トモダチ、テキ、ファン、アンチ、トモのトモ、トモのテキのコメントに対して、それぞれスコア補正をかけることができます。 コメントのスコア補正を使って、スコアを6 ポイント足したり引いたりできます。</p>
+        <p>これがどんなときに役立つかというと、たとえばトモダチのコメントをすべて読みたいのに、彼らのコメントの多くがスコア 1 にとどまっていて、あなたがしきい値を 2 に設定しているような場合です。 <a href="http://slashdot.jp/my/comments">コメントオプションの設定</a>を利用すれば、トモダチのコメントがすべてスコア 5 で表示されるようにすることができます。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 09/15/02
+        </small></em></p>
+
+<h2><a name="fj980" id="fj980">トモのトモやトモのテキって何ですか?</a></h2>
+        <p>トモのトモが何なのかは一目瞭然でしょう。 でも混乱している人がいるとい
+けないので、1 つ例を挙げておきます。 わたしこと <a href="http://slashdot.org/~Ro
+bogoatgruff">Robo</a> は、<a href="http://slashdot.org/~Cmdrtaco">CmdrTaco</a>を<a href="http://slashdot.org/~Robogoatgruff/friends/">トモダチ</a>の 1 人として追加しました。 CmdrTaco は、<a href="http://slashdot.org/~chrisd">chrisd</a> を彼のトモダチの 1 人として追加しました。 その結果、chrisd はわたしの<a href="http://slashdot.org/~Robogoatgruff/friends/friends">トモのトモ</a>になります。 あなたのトモのトモを見るには、<a href="http://slashdot.jp/my/friends/friends">http://slashdot.jp/my/friends/friends</a> を参照してください。</p>
+        <p>トモのテキも、トモのトモと同じような仕組みです。 あなたのトモダチの1人が誰かをテキとして追加した場合、そのテキはあなたの<a href="http://slashdot.jp/my/friends/foes">トモのテキ</a>になります。</p>
+        <p>トモのトモのアイコンやトモのテキのアイコンを見たいときは、<a href="com-mod.shtml#cm2200">ここ</a>を参照してください。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 09/15/02
+        </small></em></p>
+
+<h2><a name="fj1000" id="fj1000">トモやテキを追加または削除する方法は?</a></h2>
+        <p>一番簡単なのは、ユーザを<a href="http://slashdot.jp/search.pl?">検索</a>して <img src="http://images.slashdot.jp/neutral.gif" alt=""> アイコンをクリックし、そのユーザをトモダチまたはテキとして追加する方法です。</p>
+        <p>アイコンはユーザのコメントや、サイトのそのほかの場所にも表示されます。 基本的に、<img src="http://images.slashdot.jp/neutral.gif" alt=""> というアイコンが表示される場所であれば、ユーザをトモダチまたはテキとして追加することができます。</p>
+        <p>トモダチやテキを削除する場合は、そのユーザのトモダチ/テキのアイコンをクリックし、元の中立に戻します。</p>
+        <p><em><small>
+                Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br>
+                Last Modified: 01/04/02
+        </small></em></p>
+
+<BR><HR>
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="accounts.shtml">前のセクション</A>
+		<TD><A HREF="slashmeta.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->

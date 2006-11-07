@@ -1,49 +1,54 @@
-<HTML>
-<HEAD>
-        <TITLE>Slashdot FAQ (���ܸ���) - ����å���Υ᥿�ͥ�</TITLE>
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - スラッシュのメタネタ</title>
+
 <!--#include virtual="/slashhead.inc"-->
 
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="accounts.shtml">���Υ��������</A>
-		<TD><A HREF="tech.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="friends.shtml">前のセクション</A>
+		<TD><A HREF="tech.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 <HR><BR>
 
 <A NAME="sm100">
-<H2>����å���ɥåȤμ�żԤ�ï�Ǥ���?</H2> 
+<H2>スラッシュドットの主催者は誰ですか?</H2> 
 	
-	<P>�����ϡ�<A HREF="mailto:malda@slashdot.org">
-	Rob "CmdrTaco" Malda</A> �� 1997 ǯ 9 ���Ω���夲�ޤ�
-	�������ߤ�<A HREF="http://www.valinux.com">
-	VA Linux Systems</A>����ͭ���Ƥ��ޤ���
+	<P>元々は、<A HREF="mailto:malda@slashdot.org">
+	Rob "CmdrTaco" Malda</A> が 1997 年 9 月に立ち上げまし
+	た。現在は<A HREF="http://ostg.com/">OSTG Inc.</A>が所有しています。
 
-	<P>����å���ɥåȤϡ����顢�錄��(Rob)��
-	<A HREF="http://Hemos.net">Jeff "Hemos" Bates</A>����
-	�Ĥ��Ƥ��ޤ�����Hemos �ϡ����ȡ��꡼��Ƥȹ��𥻡��륹�Ƚ�ɾ��
-	ô�����Ƥ��ޤ�����
+	<P>スラッシュドットは、当初、わたし(Rob)と
+	<A HREF="http://Hemos.net">Jeff "Hemos" Bates</A>が運
+	営していました。Hemos は、ストーリー投稿と広告セールスと書評を
+	担当していました。
 
 	<P><A HREF="http://www.slashcode.com">
-	Slashcode</A>�ˤĤ��Ƥε����䡢����¾�ƥ��˥���ʤ��Ȥϡ�
-	Andover �� geek �����ब�����ޤ�����(geek �ʥ��С�: Adam
-	Green��Patrick "CaptTofu" Galbraith��Chris "Pudge" Nandor��
-	Kurt Grey��Scoop��Liz��BSD-Pat��PatG��Jon "CowboyNeal" Pater)
+	Slashcode</A>についての議論や、その他テクニカルなことは、
+	Andover の geek チームが係わりました。(geek なメンバー: Adam
+	Green、Patrick "CaptTofu" Galbraith、Chris "Pudge" Nandor、
+	Kurt Grey、Scoop、Liz、BSD-Pat、PatG、Jon "CowboyNeal" Pater)
 
-	<P>�Խ��̤Ǥϡ�Robin "Roblimo" Miller ���ǶỲ�ä��ơ������Ȥ�
-	�����̤Ȥ���(�ä��٤����Ȥ�) ���ȡ��꡼����ƤȤ�������äƤ�
-	�롣���Τۤ��Υ���å���ɥåȤ��Խ�������ϼ��ΤȤ���:
-	Timothy Lord (�ޥ͡�����󥨥ǥ���)��Emmett Plant (�����å� ��
-	�ݡ���)��Cliff Wood (����å���ɥåȤ�ʹ��! �Υ��ǥ���)��
-	Michael Sims �� Jamie McCarthy (YRO ���������Υ��ǥ���)��Jon
-	'CowboyNeal' Pater (Very Large�ʥ��ǥ���)��
+	<P>編集面では、Robin "Roblimo" Miller が最近参加して、サイトの
+管理面とか、(驚くべきことに) ストーリーの投稿とかを手伝ってい
+る。そのほかのスラッシュドットの編集チームは次のとおり:
+Timothy Lord (マネージャ兼エディタ)、Emmett Plant (スタッフ レポータ)、
+Cliff Wood (スラッシュドットに聞け! のエディタ)、
+	Michael Sims と Jamie McCarthy (YRO セクションのエディタ)、Jon
+'CowboyNeal' Pater (Very Largeなエディタ)。
 
-	<P>�Ӱ����ȥ�������������<A HREF="http://www.exodus.net">
-	Exodus.NET</A>���ϡ��ɥ�������
-	<A HREF="http://www.valinux.com">VA Linux Systems</A>
-	�Τ�ΤǤ�(�����ξܺ٤�<A HREF="tech.shtml#te050">
-	������</A>�򻲾�)��
+	(設備の詳細は<A HREF="tech.shtml#te050">
+	こちら</A>を参照)
 
 	<BR><BR>
 	<I><SMALL>
@@ -52,16 +57,16 @@
 	</SMALL></I> 
 	
 <A NAME="sm150">
-<H2>����å���ɥåȤäƤɤ�������̣?</H2>
+<H2>スラッシュドットってどういう意味?</H2>
 
-	<P>�����Τ��դ����Ǥ����ǽ�˥ɥᥤ�����Ͽ�����Ȥ������ۤߤ�
-	����ȯ����ǽ�� URL �ˤ������ä���"http://slashdot.org" ������
-	�Ф����ɤ�Ǥߤ�Ȥ褯�狼��Ϥ��Ǥ���(����ä��夹��ä��夹
-	��ä���ɤäȤɤäȤ��뤰��) �Ǥ��ɤϤᤰ��ᤰ�ä�
-	��ʬ��ŷȳ������ޤ���������ä��夦���ä�ï���� URL �Ȥ��᡼
-	�� ���ɥ쥹�򶵤��ʤ���ʤ�ʤ��ʤäƤ��ޤä�����Ǥ����ߤ��
-	�֥ɥåȤ� d��o��t ? ����Ȥ�ԥꥪ��?�פȤ����𤷤ޤ��äơ���
-	�������ݤ����᤮�Ǥ���
+	<P>ただのおふざけです。最初にドメインを登録したとき、アホみたいで
+発音不能な URL にしたかった。"http://slashdot.org" を声に
+出して読んでみるとよくわかるはずです。
+(すらっしゅすらっしゅすらっしゅどっとどっとおるぐ。)
+でも結局はめぐりめぐって自分に天罰が下りました。
+しょっちゅう電話で誰かに URL とかメール アドレスを教えなきゃならなく
+なってしまったからです。みんな「ドットは d・o・t ? それともピリオド?」
+とか混乱しまくって、説明が面倒くさ過ぎです。
 
 	<BR><BR>
 	<I><SMALL>
@@ -70,18 +75,17 @@
 	</SMALL></I> 
 
 <A NAME="sm120">
-<H2>Rob �� Jeff �ϡ�����å���ɥåȤ���Ѥ������Ȥ������Ƥ���?</H2> 
+<H2>Rob と Jeff は、スラッシュドットを売却したことを後悔している?</H2> 
 
 
-	<P>������Ƥ�����ʬ�⤢�뤷�������Ǥʤ���ʬ�⤢�롣����å���
-	�ɥåȤα��Ĥ��ɤ�ʤ˵��粽����ʣ�����������Ȥ����Τϡ��ɼԤ�
-	�Ϥ���ä����򤷤ˤ����Ȥ������Ȼפ����Ť��ɤ�����������ळ��
-	�⤢�뤱�ɡ����Υ�٥��ͥ������ OSDN (VA Linux)��
-	����ե饹�ȥ饯�����
-	���ˤϼ¸��Ǥ��ʤ��ä�������� OSDN (VA Linux)���ͥåȥ��
-	�α��ѤȤ�����Υ����륹�Ȥ����äƤ���뤫�餳������ʬã��
-	���ȡ��꡼����ƤȤ������ɤγ�ȯ�Ȥ��������ʤ��Ȥ��ä�
-	�����������͡�
+	<P>後悔している部分もあるし、そうでない部分もある。
+スラッシュドットの運営がどんなに巨大化かつ複雑化したかというのは、
+読者にはちょっと理解しにくいところだと思う。古き良き日を懐かしむこと
+もあるけど、今のレベルの優位性は OSDN (VA Linux)のインフラストラクチャ
+なしには実現できなかった。それに OSDN (VA Linux)がネットワークの運用とか
+広告のセールスとかをやってくれるからこそ、自分達はストーリーの投稿とか
+コードの発とか、好きなことをやって
+	いられるんだしね。
 
 	<BR><BR>
 	<I><SMALL>
@@ -91,10 +95,10 @@
 
 
 <A NAME="sm121">
-<H2>��Ѥ��ơ�����ʲ�ҥ��䥸�ˤʤä���Ǥ���?</H2> 
+<H2>売却して、退屈な会社オヤジになったんですか?</H2> 
 
 
-	<P>�إء��ޤ����� 
+	<P>ヘヘ、まさか。 
 
 	<BR><BR>
 	<I><SMALL>
@@ -103,20 +107,20 @@
 	</SMALL></I> 
 	
 <A NAME="sm122">
-<H2>���ä��饹��å���ɥå�PT���롼�����ʤ��ï���ͤ������?</H2> 
+<H2>だったらスラッシュドットPTクルーザーなんて誰が考えたんだ?</H2> 
 
-	<P>�ޡ����ƥ������礵���Ŀ�Ū�ˤϲ�����(Rob��Jeff)�ϥ���å���
-	�ɥåȥ��롼�����ʤ���ϼ��ߤ������Ȥ��ȻפäƤ뤷��������ʹ
-	���Ƥ����Ф�����������
-	�ޡ����ƥ�������ϡ����̤ϥץ��⡼�����δ��ˤĤ��Ƥϲ�ã�����̤�
-	�Ƥ���뤱�ɡ���̳�Ȥ����櫓����ʤ���������ϲ������̤�ʤ�����
-	����������ɾȽ���������顢���⤳��ǳؤ���󤸤�ʤ����ʡ�
+	<P>マーケティング部門さ。個人的には俺たち(RobとJeff)はスラッシュ
+	ドットクルーザーなんて馬鹿みたいことだと思ってるし、事前に聞
+	いてくれればそう答えた。
+	マーケティング部門は、普通はプロモーションの企画については俺達に
+相談してくれるけど、義務というわけじゃないし、今回は何の相談もなし
+だった。すごく評判が悪いから、彼らもこれで学んだんじゃないかな。
 	<BR>
-	(���ա�OSDN.com��Ω���˥���å���ɥåȥ��顼���Ф����̥�
-	����Ȥ��졢¦�̤˥ǥ��ǥ���"Slashdot"�����������줿�֤�����
-	����¿ʬ�����Τ��Ȥ����������줬����ꥫ�ͤ�ȯ�ۤʤΤ��ʤȻפ�
-	�Ƥ��������ⵤ�����äƤϤʤ��ä��褦�������ʾ��Τϴ��ۤ���
-	�ۤ������ɡ���������ʤ�ʤ��ʤ�������ʴ������ä�����̣�ʤ��͡�)
+	(注意：OSDN.com設立時にスラッシュドットカラーの緑で全面ペ
+	イントされ、側面にデカデカと"Slashdot"ロゴが描かれた車が作られ
+	た。多分、そのことだろう。あれがアメリカ人の発想なのかなと思っ
+	ていたが彼らも気に入ってはなかったようだ。普段乗るのは勘弁して
+	ほしいけど、見るだけならなかなかクールな感じだった。意味ないね。)
 
 	<BR><BR>
 	<I><SMALL>
@@ -125,10 +129,10 @@
 	</SMALL></I> 
 
 <A NAME="sm200">
-<H2>����å���ɥåȤˡ��������ߤ�����</H2> 
+<H2>スラッシュドットに○○して欲しい。</H2> 
 	
-	<P><A HREF="suggestions.shtml">Suggestions</A>�Υ���������
-	�ȡ�
+	<P><A HREF="suggestions.shtml">Suggestions</A>のセクションを参
+	照。
 
 	<BR><BR>
 	<I><SMALL>
@@ -137,12 +141,12 @@
 	</SMALL></I> 
 	
 <A NAME="sm250"> 
-<H2>����å���ɥåȤ��ɼԤ�����ʹ����ꡢ������äƤ�ۤ���¿���󤸤�ʤ�? ��ʬ�ǤϤɤ��פäƤ��? �⤷��������ʤ��Ȥ����ʤ顢�ʤ�����ʤ������οͤ������פäƤ�Τ����������ߤ�����</H2>
+<H2>スラッシュドットの読者の声を聞くより、言い争ってるほうが多いんじゃない? 自分ではどう思ってるの? もしそうじゃないというなら、なぜこんなに大勢の人がそう思ってるのか説明して欲しい。</H2>
 
-	<P>���Ͻ��� 20 �� 30 ���֤ϥ���å���ɥåȤ˴ؤ���᡼�����
-	�ळ�Ȥ�������䤷�Ƥ롣������ͤ����Ϥ褯ʹ���Ƥ롣�������ߤ�
-	�ʤ�˾�ळ�Ȥ򤤤Ĥ���櫓����ʤ���˾�ߤɤ���ˤʤ�ʤ���ʢ
-	��Ω�Ƥ�ʸ��򤤤��ۤ⤤�뤱�ɡ��������Ф��뤳�ȤϤǤ��ʤ��衣
+	<P>俺は週に 20 〜 30 時間はスラッシュドットに関するメールを
+読むことだけに費やしてる。だから人の声はよく聞いてる。ただ、みんなが
+望むことをいつもやるわけじゃない。望みどおりにならないと腹を立てて
+文句をいう奴もいるけど、全員を喜ばせることはできないよ。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -151,11 +155,11 @@
 	</SMALL></I> 
 	
 <A NAME="sm260"> 
-<H2>����å���ɥå��ɼԤ���ˤϡ�����å���ɥåȤ����˷���ˤ�äȻ��ä������ȻפäƤ�ͤ�¿���Ǥ�������å���ɥåȤα��ĤˤĤ��Ƥ�äȥ᥿�ǥ������å���󤹤뵡�����Ĳ�ǽ���Ϥ���ޤ���?</H2>
+<H2>スラッシュドット読者の中には、スラッシュドットの方針決定にもっと参加したいと思ってる人も多いです。スラッシュドットの運営についてもっとメタディスカッションする機会を持つ可能性はありますか?</H2>
 
-	<P>�᥿�ǥ������å�����ȿ�Ф��뵤�Ϥʤ��Ǥ����������������
-	����ɥåȤα��Ĥȡ�����å���ɥåȤα��ĤˤĤ��Ƥ��ä��礤�ȡ�
-	����ξ�����äƤ���֤��ʤ���Ǥ�������ϻ��֤����������Ǥ���
+	<P>メタディスカッションに反対する気はないですが、ただ、
+スラッシュドットの運営と、スラッシュドットの運営についての話し合いと、
+その両方をやってる時間がないんです。これは時間の制約の問題です。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -163,22 +167,22 @@
 	Last Modified: 10/28/00 <BR>
 	</SMALL></I> 
 <A NAME="sm300">
-<H2>����å���ɥåȤΥȥ�ե��å��Ϥɤ줯�餤�Ǥ���?</H2> 
+<H2>スラッシュドットのトラフィックはどれくらいですか?</H2> 
 
-	1 ����� 3,000 ���ڡ����ӥ塼�Ǥ���<BR>
-	(���ա�����5,000�����餤������ѥ�Ϥޤ��ޤ��ڡ��ڡ�)
+	Slashdotは概ね1か月に8,000万ページビューを記録する。平日では300万ページビューほどで、週末はそれよりわずかに少なくなる。<BR>
+	(注意：今は1億はあるのかな。ジャパンは2000万ぐらいです。)
 
 	<BR><BR>
 	<I><SMALL>
 	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/13/00 <BR>
+	Last Modified: 7/12/04 <BR>
 	</SMALL></I> 
 	
 <A NAME="sm330">
-<H2>�ʤ�����å���ɥåȤϤ���ʤ����������ΤǤ���?</H2>
+<H2>なぜスラッシュドットはこんなに成功したのですか?</H2>
 
-	<P>������������Ʊ����ͳ�Ǥ���ɬ�פȤ�����Τ�ï�����᤯
-	�󶡤����Ǥ�������ɤ���Τˤ���褦�ˡ��Ȥ�ʴ�ˤ���Ư���Ƥޤ���
+	<P>あらゆる成功と同じ理由です。必要とされるものを誰よりも早く
+	提供し、できるだけ良いものにするように、身を粉にして働いてます。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -187,21 +191,20 @@
 	</SMALL></I> 
 	  
 <A NAME="sm400">
-<H2>"CmdrTaco" �� "Hemos" �Ȥ����˥å��͡���Ϥɤ�������̣?</H2>
+<H2>"CmdrTaco" と "Hemos" というニックネームはどういう意味?</H2>
 
-	<P>�ʡ���Ǥɤ��Ĥ⤳���Ĥ⤽��ʤ����Τꤿ�����������͡�
-	"CmdrTaco" �äƤ����Τϡ�Dave Barry �ε����ǡ��ǡ��Ȥ�Ŭ���ʤ�
-	���ꥹ�ȤäƤ����Τ˺ܤäƤ����ɤ������Τ�ʤ� "The
-	Commander Taco" �Ȥ��ʤ�Ȥ�����̾�������ä����������� BBS
-	�Ǥ� "Icarus" �äƤ����˥å��͡����ȤäƤ����ɡ��⹻����˥�
-	�󥿡��ͥåȤ�Ȥ��Ϥ᤿�Ȥ���ï�����⤦�ȤäƤ������Ѥ������
-	�衣
+	<P>なーんでどいつもこいつもそんなこと知りたがるんだろうね。
+"CmdrTaco" っていうのは、Dave Barry の記事で、デートに適さない
+場所リストっていうのに載ってた、どこだか知らない 
+"The Commander Taco" とかなんとかいう名前から取った。ローカル BBS
+では "Icarus" っていうニックネームを使ってたけど、高校時代に
+インターネットを使い始めたときに誰かがもう使ってたから変えたんだよ。
 
-	<P>"Hemos" �ϡ��ߥ�����κ����������Ƥ�⤸��⤸��ʿ�ʪ����
-	�󤫤�̾���������褯�Τ��Jeff ���Ѥ��ۤ�����
+	<P>"Hemos" は、ミシガンの砂漠に生えてるもじゃもじゃな植物か
+なんかの名前だろ。よく知らん。Jeff も変な奴だし。
 
-	<P>(���ա����ʤߤ�Oliver����̾���Τޤ�ޤ����������ܸ�̾�ǤϤ�
-	�����������ɡ�kazekiri��kazuboso�ˤǤ�ʹ���Ƥ��졣)
+	<P>(注意：ちなみにOliverは本名そのまんまだろう。日本語名では
+なさそうだけど。kazekiriはkazubosoにでも聞いてくれ。)
 
 	<BR><BR>
 	<I><SMALL>
@@ -210,32 +213,31 @@
 	</SMALL></I> 
 
 <A NAME="sm500">
-<H2>���ǥ�ݡ������Ϥ��ʤ������Υ˥å��͡����ͳ����Τꤿ����ΤǤ��礦?</H2>
+<H2>何でレポーターはあなたたちのニックネームの由来を知りたがるのでしょう?</H2>
 
-	<P>�ºݤΤȤ����Τ�󤬡�¿ʬ�����������ȤǤϤʤ������Ĥޤꡢ
-	���¤������ǤϤߤ�ʡ����ޤ줿�Ȥ����դ���줿 "Bob" �Ȥ�
-	"George" �Ȥ� "Archibald" �Ȥ�����̾������餷�Ƥ��롣��������
-	�����ɡ�����ʤ�����̾���ȤϤ����ʤ���
+	<P>実際のところ知らんが、多分こういうことではないか。つまり、
+現実の世界ではみんな、生まれたときに付けられた "Bob" とか
+"George" とか "Archibald" とかいう名前で暮らしている。当たり前
+だけど、そんなに面白い名前とはいえない。
 	
-	<P>��ݡ������ϡ����Ǥ⤤���������򤽤��ʤ�Τ���Ƥ�����
-	�ʡ������ɡ�"Bob" �äƤ���̾�����ۤˡ�"Bob" ��ͳ���ʹ���Ƥ⤷��
-	�����ʤ� ("���䡼�������ǥ��륯���ä���Ǥ�" �Ȥ�?)����ʬ����
-	���̾������ʤ�����͡��Ǥ� geek �������Ǥϡ���ʬ��̾�������֡�
-	�������ݡ������ϡ�"��������CmdrTaco �Ȥϲ��Ȱż�Ū��̾������
-	����̾�����������ο�ʪ�κ����̤�����˰㤤�ʤ���" �ʤɤȹͤ���
-	��ǤϤʤ�����
+	<P>レポーターは、何でもいいから面白そうなものを求めているん
+だな。だけど、"Bob" っていう名前の奴に、"Bob" の由来を聞いても
+しょうがない ("いやー、前世でコルクだったんでね" とか?)。自分で
+選んだ名前じゃないからね。でも geek な世界では、自分で名前を選ぶ。
+だからレポーターは、"おぉー、CmdrTaco とは何と暗示的な名前か。
+この名前こそがこの人物の魂へ通ずる窓に違いない。" などと考えるんではないか。
 
-	<P>�����������ʤ��Ȥˡ�geek �Ϥ���ʽ���ʰ�̣�����ä�̾������
-	����櫓�ǤϤʤ��������������ͤȰ�ä���Τ���Ƥ�������Ȼ�
-	����Bob �ϲ������ͤ��뤫�狼��ʤ����ɡ�CmdrTaco �ʤ��̾����
-	�ۤȤ�ɸ�������ʤ�(Quake �� EverQuest �����Фˤϲ���̾����
-	���ۤ�����褦����)����ݡ����������μ���򤹤뤿�Ӥˡ�"������
-	�ʤ�Υҥͥ��ʤ��ۤ���" �Ȼפ���"����å���ɥåȤ�Ϥ�Ʋ�
-	ǯ�ˤʤ�ޤ���?" �Ȥ���"����å���ɥåȤȤϲ��Ǥ���?" ��Ʊ��
-	���餤���󤶤ꤹ��褦�ʼ�����衣
+	<P>しかし皮肉なことに、geek はそんな重大な意味があって名前を
+付けるわけではない。ただ、何か人と違ったものを求めてるだけだと思う。
+Bob は何兆億人いるかわからないけど、CmdrTaco なんて名前は
+ほとんど見当たらない(Quake と EverQuest サーバには俺の名を
+騙る奴がいるようだが)。レポーターがこの質問をするたびに、"あぁ、
+なんのヒネリもない奴だな" と思う。"スラッシュドットを始めて何年に
+なりますか?" とか、"スラッシュドットとは何ですか?" と同じくらい
+うんざりするような質問だよ。
 
-	<P>�������ݡ���������˸���������geek �Υ˥å��͡����ͳ���
-	ʹ���Τϡ������ˤȤäƻ��֤�̵�̤��ȡ�
+	<P>だからレポーター諸氏に言いたい。geek のニックネームの由来を
+聞くのは、双方にとって時間の無駄だと。
 
 	<BR><BR>
 	<I><SMALL>
@@ -244,32 +246,32 @@
 	</SMALL></I>
 	
 <A NAME="sm550">
-<H2>�����Ȥˤ褯�ФƤ��� "Free Speech/Free Beer" �Ȥϲ��Τ��ȤǤ���?</H2>
+<H2>コメントによく出てくる "Free Speech/Free Beer" とは何のことですか?</H2>
 
-	<P>����ϡ��ե꡼ ���եȥ������ȥ����ץ� ��������ư���˴ؤ���
-	�濴Ū�ʥǥ��١��Ȥ�ؤ�ά��ߤ����ʤ�ΤǤ��������ϱѸ�η��
-	��ͳ�褷�ޤ�����"free" �Ȥ������դˤ� 2 �Ĥΰ�̣������ޤ���1
-	�Ĥϡ�"Free Speech" �� "free"������ϡ��ʹ֤δ���Ū�͸��Ǥ���
-	"�����μ�ͳ" �ʤɤ� "��ͳ" ��ɽ�� "free"��
+	<P>これは、フリー ソフトウェアとオープン ソースの動きに関する
+	中心的なディベートを指す略語みたいなものです。元々は英語の欠陥
+	に由来しますが、"free" という言葉には 2 つの意味があります。1
+	つは、"Free Speech" の "free"。これは、人間の基本的人権である
+	"言論の自由" などの "自由" を表す "free"。
 
-	<P>�⤦ 1 �Ĥ� "Free Beer" �� "free"������ϡ����ߤä��줿�ʹ�
-	�ˤ��ʤ��ߤθ��դǡ�"�ӡ������̵��" �ʤɤ� "̵��" ��ɽ��
-	"free"�������� "Free Beer" �ϡ�ï���������ˤ����ʧ���������
-	�����Ȥ�����̣������ޤ���
+	<P>もう 1 つは "Free Beer" の "free"。これは、しみったれた人間
+	におなじみの言葉で、"ビール一杯無料" などの "無料" を表す
+	"free"。だから "Free Beer" は、誰かが何かにお金を払いたがらな
+	い、という意味を持ちます。
 
-	<P>����ˤϡ������ץ� ������ ���˥������� (OSI) �ȥե꡼ ����
-	�ȥ����� �ե�����ǡ������ (FSF) ����̯�ʰ㤤��ط����Ƥ��ޤ���
-	OSI �ϡ����եȥ������ϥ����ץ�Ǥ���ۤ������ͥ�줿��ȯ����ǽ
-	�Ǥ��롢�ȹͤ��Ƥ��ޤ���FSF �Ǥϡ����եȥ������������ץ�Ǥʤ�
-	�Τ�������ְ�äƤ���ȹͤ��Ƥ��ޤ�������ä�ñ�㲽���᤮����
-	�����Ǥ��������ΤϤ����������ȤǤ���
+	<P>これには、オープンソースイニシアチブ (OSI) と
+フリーソフトウェアファウンデーション (FSF) の微妙な違いも関係してきます。
+OSI は、ソフトウェアはオープンであるほうがより優れた開発が可能である、
+と考えています。FSF では、ソフトウェアがオープンでなのは倫理上
+間違っていると考ています。ちょっと単純化し過ぎた言い方ですが、
+大体はそういうことです。
 
-	<P>����Ū�ʿ͡��Ϥ����������Ȥ˴ؤ��Ƥ�����ʤ��Ȥ���äƤ��ơ�
-	���������򤹤뤳�Ȥ�������å���ɥåȤ��濴Ū�ʥǥ��١��Ȥ�
-	���򤹤������˽��פǤ���
+	<P>狂信的な人々はこういうことに関していろんなことを言っていて、
+それらを理解することが、スラッシュドットの中心的なディベートを理解する上で
+重要です。
 	
-	<P>���η�ˤĤ��Ƥ�ä��Τꤿ�����ϡ��ʲ���Web �����Ȥ򻲹�
-	�ˤ���Ȥ褤�Ǥ��礦��
+	<P>この件についてもっと知りたい場合は、以下のWeb サイトを参考
+にするとよいでしょう。
 	
 	<UL>
 		<LI><A HREF="http://www.fsf.org">The Free Software 
@@ -286,25 +288,25 @@
 
 
 <A NAME="sm600">
-<H2>"����å���ɥåȸ���" �äƲ��Ǥ���?</H2>
+<H2>"スラッシュドット効果" って何ですか?</H2>
 
-	<P>����å���ɥåȤ��ɤ����Υ����Ȥ˥�󥯤�ĥ��ȡ���������
-	�Ԥ����ȡ��꡼���ɤ���ꥰ��ե��å��򸫤褦�Ȥ��ƥ�󥯤�ҥ�
-	�Ȥ���Τǡ�1 �ĤΥ����Ȥ��ۤ�ο�ʬ�֤ǿ�����ҥåȤ���뤳
-	�Ȥ�����ޤ����礭�ʾ��ȥ����Ȥʤ�����Ϥʤ��ΤǤ���������å���
-	�ɥåȤ���󥯤��륵���Ȥ���ˤϡ����ʤ� 1 ��������������ҥ�
-	�ȤȤ��������ʥ����Ȥ⤿�����󤢤�ޤ����������������Ȥ˥����
-	����ɥå��ɼԤ������󤻤�ȡ������Ȥ�������˰�¾��֤ˤʤäƸ�
-	����Ķ���Ƥ��ޤ��������������֤�"����å���ɥåȤ��줿"
-	(Slashdotted)�ȸƤӤޤ���
+	<P>スラッシュドットがどこかのサイトにリンクを張ると、大勢の
+読者がストーリーを読んだりグラフィックを見ようとしてリンクをヒット
+するので、1 つのサイトがほんの数分間で数千回もヒットされることが
+あります。大きな商業サイトなら問題はないのですが、スラッシュドットが
+リンクするサイトの中には、普段は 1 日せいぜい数千ヒットという小さな
+サイトもたくさんあります。そういうサイトにスラッシュドット読者が
+押し寄せると、サイトが完全に飽和状態になって
+限界を超えてしまう。こういう状態を、"スラッシュドットされた"
+(Slashdotted)と呼びます。
 	
-	<P>�Ƕ�Ǥϡ�"����å���ɥåȸ���"(Slashdot Effect)�Ȥ�
-	"����å���ɥåȤ��줿"(Slashdotted)�Ȥ������դ����̲�����ơ�
-	Web �����Ȥ�ȯ������û���֤Υȥ�
-	�ե��å���������̤�ؤ��褦�ˤʤäƤ��Ƥ��ޤ���
+	<P>最近では、"スラッシュドット効果"(Slashdot Effect)とか
+"スラッシュドットされた"(Slashdotted)という言葉が一般化されて、
+Web サイトに発生する短期間のトラフィックジャム全般を
+指すようになってきています。
 
-	<P><A HREF="suggestions.shtml#su900">�ڡ����򥭥�å��夹�뤳
-	�Ȥ�ͤ����ޤ���������Ϥޤä����̤�����Ǥ���</A> 
+	<P><A HREF="suggestions.shtml#su900">ページをキャッシュする
+ことも考えられますが、それはまったく別の問題です。</A> 
 	
 	<BR><BR>
 	<I><SMALL>
@@ -313,13 +315,14 @@
 	</SMALL></I> 
 	
 <A NAME="sm700">
-<H2>����ޤǤΥ���å���ɥå� ���ȡ��꡼����ǰ������򤫤ä���Τ�?</H2>
+<H2>これまでのスラッシュドット ストーリーの中で一番面白かったものは?</H2>
 
-	<P>�ְ㤤�ʤ���<A
+	<P>間違いなく、<A
 	HREF="http://slashdot.org/articles/99/10/16/1017231.shtml">Jeff
-	�βȤ�ǳ������</A>�Ǥ��礦��<BR>
-	(���ա�Hemos��α����˲Ȥ�ǳ���Ƥ��ޤä����äǤ���¨�¤�
-	��Hemos is Homeless�פȤ�����������Ƥ���ޤ�����)
+	の家が燃えた話</A>でしょう。<p>
+	(注意：Hemosが留守中に家が燃えてしまったお話です。即座に
+	「Hemos is Homeless」という記事が投稿されました。
+現在のFAQでは、<A HREF="http://slashdot.org/article.pl?sid=02/02/14/143254">Kathleen Fent Read This Story</A>となっています。CmdrTacoがSlashdot上で公開プロポーズをしたストーリーです。)
 	
 	<BR><BR>
 	<I><SMALL>
@@ -328,11 +331,11 @@
 	</SMALL></I> 
 	
 <A NAME="sm800">
-<H2>"Geeks in Space" ��³���Ϻ��ʤ��ΤǤ���?</H2>
+<H2>"Geeks in Space" の続きは作らないのですか?</H2>
 
-	<P>�ߤ�ʳ��ˤ��ʤ���ǡ����Τ��񤷤��ʤäƤ롣�Ǥ�ï������
-	�Ȥ��Ϥ�����ȻפäƤ�衣
-
+	<P>みんな街にいないんで、作るのが難しくなってる。でも誰かいる
+	ときはやろうと思ってるよ。
+	<P>(<A HREF="http://www.thesync.com/geeks/">Geeks in Space</A>はSlashdotのネットラジオのこと。<a href="http://slashdot.org/radio/">Radioセクション</A>から当時の状況がわかる。<A HREF="http://www.thesync.com/geeks/archivesframe.html">過去のアーカイブ</A>もある。)
 	<BR><BR>
 	<I><SMALL>
 	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
@@ -340,9 +343,9 @@
 	</SMALL></I> 
 	
 <A NAME="sm900">
-<H2>hidden sids�ˤĤ��ƤϤɤ��ͤ��Ƥ����?</H2>
+<H2>hidden sidsについてはどう考えているの?</H2>
 
-	<P>�������֤��Ȥ����顢�ڤ����ȤäƤ��硼������
+	<P>そこに置いとくから、楽しく使ってちょーだい。
 
 	<BR><BR>
 	<I><SMALL>
@@ -350,12 +353,22 @@
 	Last Modified: 10/28/00 <BR>
 	</SMALL></I> 
 	
+<h2><a name="sm1000" id="sm1000">CowboyNeal って誰/何?</a></h2>
+        <p>そういうヤツがいるってだけのことです。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 03/18/02</small></em></p>
+
+<h2><a name="sm1100" id="sm1100">スラッシュドットではみんなが RIAA、MPAA、それにMicrosoft を嫌っていると思っていました。 なのになぜ CD や映画や Windows のゲームを派手に宣伝するのですか?</a></h2>
+        <p>大企業とはそういうものです。 彼らは片方の手でかっこいい商品を売り、もう片方の手で自由への締め付けを強化します。 彼らを憎むこともあれば、愛着を感じることもある。その繰り返しです。 これも現代社会の生活の一部なので、陰と陽を取り込み、良いことをどのように行うかを見いだすために最善を尽くしてください。 もしすべてに白黒をつけるべきだとお考えなら、それも結構。あなたの意見を分かち合ってください。ただし、誰もが同じように考えるとは期待しないことです。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 04/02/02</small></em></p>
+
+
+
 <BR><HR>
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="accounts.shtml">���Υ��������</A>
-		<TD><A HREF="tech.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="friends.shtml">前のセクション</A>
+		<TD><A HREF="tech.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 

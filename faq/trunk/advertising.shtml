@@ -1,13 +1,22 @@
-<HTML>
-<HEAD>
-        <TITLE>Slashdot FAQ (English) - advertising</TITLE>
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - 広告</title>
+
 <!--#include virtual="/slashhead.inc"-->
 
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="tech.shtml">Previous Section</A>
-		<TD><A HREF="suggestions.shtml">Next section</A>
-		<TD><A HREF="index.shtml">Index</A>
+		<TD><A HREF="tech.shtml">前のセクション</A>
+		<TD><A HREF="suggestions.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 <HR><BR>
@@ -15,14 +24,13 @@
 
 
 <A NAME="ad100">
-<H2>Can I advertise on Slashdot? </H2>
+<H2>スラッシュドット上に広告を出すことができますか? </H2>
 
 	
-	<P>Yes! You too can have banner ads at the top of Slashdot. Impress
-	your friends! Terrify your competitors!
+	<P>はい! スラッシュドットのページトップに広告を出すことができます。仲間を感動させなさい! 商売敵を震え上がらせなさい!
+
 	
-	<P>Visit the <A HREF=/advertising.shtml>Advertising</A> page to learn 
-	how. 
+	<P>広告を出す方法は<A HREF="http://osdn.jp/advertise/">広告ページ</A>からどうぞ。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -32,17 +40,15 @@
 
 
 <A NAME="ad400">
-<H2>What is AdFu?</H2> 
+<H2>AdFuって何ですか?</H2> 
 
-	<P><A HREF=http://www.adfu.com>AdFu</A> was written in mod_perl by <A
-	HREF=http://www.blockstackers.com>BSI</A> to be a flexible system for
-	serving banner ads for Slashdot and  <A
-	HREF=http://www.everything2.com</A>Everything</A>. However, Slashdot
-	isn't using it anymore (<A HREF="advertising.shtml#ad500">See below
-	</A>). 
-	
-	<P>It's far from perfect, but you're welcome to download the code and
-	try it out for yourself on your own website.
+	<P>AdFuはスラッシュドットと<A HREF="http://www.everything2.com/">Everything2</A>上にバナー広告を出すためにBSIの連中によってmod_perlで書かれた
+柔軟なシステムです
+けど、スラッシュドットはもうそれを使っていません。
+(<A HREF="advertising.shtml#ad500">下記参照</A>)
+
+	<P>それはとても完璧とは言えません。けども、自由にコードをダウンロードしてよいですし、あなた自身のwebサイトで自由に試してもらって構いません。
+
 
 	<BR><BR>
 	<I><SMALL>
@@ -52,13 +58,14 @@
 
 
 <A NAME="ad500">
-<H2>Why aren't you using AdFu any more?</H2>
+<H2>何故、今はもうAdFuを使っていないのですか?</H2>
 
-	<P>I liked AdFu, but Andover wanted to use a consistent system across
-	their whole network, and they were more comfortable using their own
-	system. Since it isn't my job to administer the ad server, I didn't
-	care. AdFu continues to serve banner ads for several other sites, such
-	as <A HREF=http://www.everything2.com>Everything2</A>.
+	<P>私はAdfuを気に入ってましたが、Andoverは彼らの全サイトで一貫した
+システムを使用したがりましたし、彼らには彼ら自身のシ ステムを
+使用することがより居心地がいいものです。
+広告サーバーを管理することは私のジョブではないので、私はそのことを
+気にかけませんでした。AdFuは他の幾つかのサイトでバナー広告を出す
+ために働いています。
 
 	<BR><BR>
 	<I><SMALL>
@@ -68,14 +75,16 @@
 
 
 <A NAME="ad600">
-<H2>A banner ad is screwing up my browser!</H2>
+<H2>バナー広告は私のブラウザを台無しにしています!</H2>
 
-	<P>Email <A HREF=mailto:hemos@slashdot.org>Hemos</A> and complain.  We
-	have a pretty strict set of rules about what is allowed in a Slashdot
-	banner ad, but occasionally an ad slips by unnoticed that breaks these
-	rules. If you see a 50k banner or one that is launching Java or
-	something, let us know and we'll take it down.  Our goal is to make our
-	readers happy first and foremost.  
+	<P>Hemosにメールを送って不満を言ってください。
+スラッシュドットではかなり厳格なバナー広告の規則を定めていますが、
+時折これらの規則を破る広告が気付かれないでこっそり入り込んで
+しまいます。
+50kものバナー、もしくはJavaまたは何かを動かしてるようなものを
+見つけたのであれば知らせてください。我々はそれを降ろすでしょう。
+我々のゴールは、まっさきに我々の読者を幸せにすることです。
+
 
 	<BR><BR>
 	<I><SMALL>
@@ -86,9 +95,9 @@
 <BR><HR>
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="tech.shtml">Previous Section</A>
-		<TD><A HREF="suggestions.shtml">Next section</A>
-		<TD><A HREF="index.shtml">Index</A>
+		<TD><A HREF="tech.shtml">前のセクション</A>
+		<TD><A HREF="suggestions.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 

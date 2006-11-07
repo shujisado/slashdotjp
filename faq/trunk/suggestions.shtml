@@ -1,365 +1,121 @@
-<HTML>
-<HEAD>
-        <TITLE>Slashdot FAQ (English) - suggestions</TITLE>
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - 提案</title>
+
 <!--#include virtual="/slashhead.inc"-->
 
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="advertising.shtml">Previous Section</A>
-		<TD><A HREF="index.shtml">Index</A>
+		<TD><A HREF="advertising.shtml">前のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 <HR><BR>
 
+<h2><a name="su100" id="su100">NNTP ニュースゲートウェイを実装したらどうでしょう?</a></h2>
+        <p>そうしたいのはやまやまですが、いくつか込み入った問題があります。 1 つ目は、プログラムを書く時間がないことです。 NNTP ゲートウェイはたしかに TO DO リストに入っているのですが、もっと優先順位の高い項目がたくさんあります。 2 つ目は広告です。 スラッシュドットの運営には毎月かなりのコストがかかっており、我々の業績は金銭とページによって評価されます。 NNTP のコメントに手際よく広告を (心配いりません。ほんのわずかですから) 挟み込む方法を編み出すことができれば、それで万事解決となるのですが。 最後は、モデレーションシステムに相当するものが NNTP にないことです。</p>
+        <p>ですから、仮にあなたがまとめ上げてかなり気の利いたものを持っているにしても、いろいろ問題があるということです。 いつかは実現するでしょうが、今日明日というわけではありません。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/14/00</small></em></p>
 
-<A NAME="su100">
-<H2>How about an NNTP news gateway? </H2>
+<h2><a name="su200" id="su200">スラッシュドットを C で書き直そうと考えたことは?</a></h2>
+        <p>スラッシュドットの処理は MySQL へのデータベース呼び出しとテキスト解析がほとんどなので、Perl が理想的な言語です。 重たい処理は (すでに C++ で書かれている) MySQL が担当しますし、文字列の処理は Perl の得意技です。 たとえ C でコードを書き直しても、それに見合うだけのパフォーマンスの向上が得られるかどうかは疑問です。 どのみち mod_perl で Perl スクリプトをプリコンパイルしてキャッシュするので、オーバーヘッドはそれほど悪くありません。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/14/00</small></em></p>
 
-	<P>I'd love to, but there are several problems that complicate this:
-	first is the time to program it.  An NNTP gateway is definitely on the
-	TO-DO list, but it's lower on the priority list then many other things.
-	Second is advertising: Slashdot costs a lot to run each month, and our
-	performance is measured in terms of dollars and pages.  If we can
-	figure out a way to put advertising (and don't worry, it'd be
-	reasonably minimal) into the NNTP comments cleanly, we'd be all set. 
-	Finally, the moderation system really doesn't have a counterpart in
-	NNTP. 
-	
-	<P>So you put it all together and you have something that would be
-	pretty nifty, but it has several problems. It'll happen someday,
-	but not tomorrow.
+<h2><a name="su300" id="su300">PHP の使用を検討したことは?</a></h2>
+        <p>PHP は少しの間だけ試しましたが、Perl との比較で採用を見送りました。 PHP を悪く言うつもりはまったくありません。単に、わたしはすでに Perl を知っていて、この言語が大いに気に入っていたというだけのことです。 PHP を試したのは数年前で、それ以降 PHP が大幅に強化されて成熟していることは承知しています。ですから、当時好ましくない印象を受けた制限や扱いにくさは、ほとんど解消していると思います。 しかし今となっては、すべて Perl で書かれた大量のコードベースがあるため、書き換えには途方もない作業が必要となります。 それに、Perl はよくできていますから。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/14/00</small></em></p>
 
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
+<h2><a name="su400" id="su400">保留中や却下されたタレコミのためのページを用意したらどうでしょう?</a></h2>
+        <p>これは形を変えて頻繁に出される要望ですが、実質的に同じ回答に行き着きます。 時間と悪用という問題です。</p>
+        <p><strong>時間</strong>は常に不足しているため、スラッシュドットの維持管理にかかる時間を増やすようなことは何であれ、慎重に検討する必要があります。 良い例が、現在のタレコミ監視機能です。 通知の機能を追加したところ、却下されたタレコミに関して送られてくるメールの量が<em>倍以上に</em>増えました。保留中や却下されたタレコミのための公開フォーラムを用意しても、単に編集者の苦労が増えるだけではないかと思います。</p>
+        <p><strong>悪用</strong>は、それよりはるかに困った問題です。 スラッシュドットには、毎日何百件というタレコミがあります。我々が求めているのは量ではなく質の向上です。 現状のようなトラフィックを受ける公開フォーラムは、たとえばスラッシュドットのコメントのように悪用されがちです。 我々は &quot;First Posts&quot; や &quot;Natalie Portman&quot; タイプの荒らしやスパムをタレコミページから削除するようなことはしたくありません。 それでなくても手一杯なのです。</p>
+        <p><strong>適切さ</strong> そこから、スラッシュドットにタレコまれるきわめて悪質なたくさんのストーリーの話に移ります。 ひどくオフトピックだったり、有害だったり、単純に薄気味悪かったりするストーリーです。 生きている人の死亡記事、起きてもいない出来事に関する大言壮語、でたらめな陰謀説、バグレポート、機能要求などなど。 こんなものを増殖させたくありませんし、公開フォーラムを増やせば問題を悪化させるだけではないかと思います。 タレコまれる素材の中には非常に興味深いページになりそうなものもありますし、いつかは実現するかもしれません。 しかし現状では、オーバーヘッドと悪用の可能性が高すぎるため、手を出すつもりはありません。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/21/00</small></em></p>
 
+<h2><a name="su500" id="su500">タレコミが却下された理由を開示してはどうでしょう?</a></h2>
+        <p>これはもっともな要望です。 現状では &quot;却下&quot; または &quot;採用&quot; と表示されるだけで、その<em>理由</em>は投稿者の想像に任されています。 「オフトピック」、「退屈」、「書き方が下手」、「重複」などの簡単な理由を示せば、その問題の解消に大いに役立つでしょう。 しかしそうすると、やはり編集者の負担が増えてしまいます。 現在、我々は毎週  3,000 件のタレコミを削除しています。 ボタンをクリックするのに 0.5 秒ずつかかります。 タレコミ 1 件あたりの維持管理の時間がわずか 10 秒ずつ増えるだけで、週にまる <em>1 日分</em>の作業量が増えるのです。 ですから、答えは「そのうち」ということになります。</p>
+        <p>正直なところ、これがあまりいい考えとは思えない理由がもう 1 つあります。 ストーリーが却下されたかどうかを通知する機能を追加したところ、タレコミに関して送られてくるメールの量が倍以上に増えました。 1 日 500 人に「ノー」と言わなければならないとすると、必然的にそのうち数十人は決定に異議を唱えてきます。 理由を示せば、メールの量がさらに増えるだけでしょうし (「俺のストーリーが退屈とはどういう意味だ、この野郎!」)、それではわたしの手首が持ちません ;)</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/14/00</small></em></p>
 
-<A NAME="su200">
-<H2>Have you considered rewriting Slashdot in C? </H2>
+<h2><a name="su600" id="su600">タレコミページを読者が直接管理できるようにしたらどうですか?</a></h2>
+        <p>スラッシュドットはとても開放的なコミュニティです。読者はユーザコメントで自由に意見を述べることができます。 しかし、スラッシュドットの独自性は、ホームページの内容が少数の人々によって決定されることに由来する部分が大きいというのが我々の考えです。</p>
+        <p>ホームページの内容を一般投票で決めるという考え方に基づいた、とてもすてきな Web サイトを構築することももちろんできるでしょうが、それは &quot;スラッシュドット&quot; とは違うものです。 たとえ &quot;委員会制&quot; でやろうとしても、委員会が実施する多くのプロジェクトと同様、退屈になってしまうという問題に苦しむだけでしょう。</p>
+        <p>あるいはこういう言い方もできます。 コメントでは、Linux 寄りのコメントやアンチ MS のコメントがたいてい高いスコアを獲得します。 Microsoft が何かちょっとでも悪さをするたびに、それが 50 回はタレコまれます。 では、それをスラッシュドットのホームページに掲載すべきでしょうか。 個人的には、&quot;Microsoft をこき下ろすだけの&quot; Web サイトなど読みたくありません。しかし、大多数の意見に基づく統治を行った場合、スラッシュドットはそこまで堕ちる可能性が非常に高いのです。 スラッシュドットの開設当初から、わたしは常に<em>自分が</em>面白いと思ったストーリーを掲載することを第 1 の目標にしてきました。 この面白いという考えに賛同する人がたくさんいて、それがスラッシュドットの成功の一因になったと考えています。</p>
+        <p>スラッシュドットは少数の人々に管理されているとはいえ、誰もが寄稿できる多岐にわたるストーリーで成り立っています。 わたしは、スラッシュドットの個性と特徴がサイトの楽しさや魅力の一部であると考えており、それがなくなったら終わりだと考えています。 このようなわけで、ホームページに何を掲載するかの決定は、これからもわたし、Hemos、およびその他の仲間が引き続き行います。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/14/00</small></em></p>
 
-	<P>Since Slashdot is almost entirely database calls to MySQL and text
-	parsing, Perl is the ideal language for it: the hefty work is handled
-	by MySQL (which is already written in C++) and string processing is
-	already Perl's forte.  I doubt that we would get a worthwhile enough
-	performance boost by rewriting the code in C to make it worth the
-	effort. mod_perl precompiles and caches the Perl scripts anyway, so
-	the overhead is not really that bad.
+<h2><a name="su700" id="su700">AvantGo チャネルやその他の PDA インタフェースを使えるようにしませんか?</a></h2>
+        <p>AvantGo にはサービスが用意されています。サービスでは基本的に URL <a href="http://slashdot.org/palm/">http://slashdot.org/palm/</a> が使われます。 この URL は、スラッシュドットクリッピングアプリケーションでコンテンツを取得するためにも使われます。以前はアプリケーションを <a href="ftp://ftp.slashdot.org/pub/slashdot.pqa">ftp://ftp.slashdot.org/pub/slashdot.pqa</a> からダウンロードできたのですが、あいにくもうサポートされていません。</p>
+        <p><em><small>Answered by: <a href="mailto:jamie@slashdot.org">Jamie</a><br> Last Modified: 10/24/03</small></em></p>
 
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
+<h2><a name="su800" id="su800">WAP インタフェースへの対応はどうでしょう?</a></h2>
+        <p>WAP 対応のブラウザを使って <a href="http://slashdot.org/slashdot.wml">http://slashdot.org/slashdot.wml</a> からスラッシュドットにアクセスすれば、WAP 用にデザインされた簡略版のスラッシュドットを表示できるはずです。  ただし、わたしが 12x4 Qualcomm で利用したかったので、表示はかなり簡略化されています。 ヘッドラインとストーリーだけで、コメントは表示されません。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 2/13/02</small></em></p>
 
+<h2><a name="su850" id="su850">'finger @www.slashdot.org' でスラッシュドットのヘッドラインを取得できたら便利だと思いませんか?</a></h2>
+        <p><a href="http://slashdot.org/slashdot.rdf">RDF ファイル</a>に対して  wget または lynx --source を実行すれば同じことができます。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 10/28/00</small></em></p>
 
-<A NAME="su300">
-<H2>Have you considered PHP? </H2>
+<h2><a name="su900" id="su900">スラッシュドット効果を防ぐためにページをキャッシュすべきだ!</a></h2>
+        <p>たしかに良い考えですが、それによってさまざまな影響が生じます。 たとえば、商用サイトでは収入をバナー広告でまかなっています。 そうしたページをキャッシュすると、彼らの統計データの邪魔をして、バナー広告を台無しにしてしまいます。 言い換えれば、彼らの怒りを買ってしまいます。</p>
+        <p>もちろん、ほとんどの場合、バナー広告から収入を得ている商用サイトはスラッシュドット効果に容易に耐えることができます。 ですから、広告を掲載していないサイトだけを対象にすればいいかもしれません。 なんと言っても、そうしたサイトのほうが予想外のヒットの増大に耐えきれない可能性が高いわけですから。 しかし、こちらがキャッシュしたサイトを先方が更新した場合はどうなるでしょうか。 またしてもスラッシュドットは送るべきでないデータを送信してしまうことになります。ただしこの場合は、古くなったキャッシュという意味です。</p>
+        <p>許可を求めるという方法もありますが、リンクの許可が得られるまで最新のストーリーが 6 時間もおあずけになるのを我慢できるでしょうか。</p>
+        <p>つまり簡単に言えば、「たしかにキャッシュも悪くないね」ということです。 サーバがダウンしたときにはずいぶん助かるでしょうが、複雑な問題なので、具体化する前にかなり綿密に検討を重ねる必要があります。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/14/00</small></em></p>
 
-	<P>I tried PHP briefly but rejected it in favor of Perl.  This is in no
-	way a criticism of PHP, I just knew Perl already and was quite in love
-	with the language.  This <I>was</I> several years ago, and I understand
-	PHP has grown and matured greatly since I made this decision, so my
-	guess is that the limitations and awkwardness that made it undesirable
-	to me back then is largely gone. But at this point, we have a
-	substantial code base all written in Perl, and the effort involved in
-	rewriting it would be prohibitive.  Besides, Perl is cool.
+<h2><a name="su910" id="su910">ストーリーを掲載する前に、スラッシュドットからリンク先の META タグをチェックすることはできませんか? サーバがスラッシュドット効果の負荷に耐えきれないことがよくあります。 サイトでタグを指定して、スラッシュドットのストーリーからのリンクを拒否できるようにしたらどうでしょう?</a></h2>
+        <p>考えられなくはありませんが、実際に効果があるとは思えません。 スラッシュドット効果を受けるサイトの多くは、そのための備えをしています。つぶされるサイトはたいてい完全に不意をつかれており、謎めいたオプトアウトのメタタグのことなど知る由もないでしょう。 (<a href="http://slashdot.org/faq/suggestions.shtml#su900">スラッシュドットのストーリーのキャッシュ</a>の項目も参照してください)。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 10/28/00</small></em></p>
 
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
+<h2><a name="su920" id="su920">多くのモデレータが、よりしきい値の高い、より古いコメントを優先して読むせいで、ボーナス付きで投稿されたコメントや、すでに良い評価を受けているコメントしか見ていないように思えます。 最新のコメントを優先し、しきい値 0 で読むようにモデレータに義務付けたほうがよいのではありませんか?</a></h2>
+        <p>おっしゃるとおりです。 これについては現在検討中で、制度が変わる可能性があります (あるいは、コメントやスレッドの順序をランダム化する可能性もあります)。 問題は、モデレーションがあまり大きな負担にならないようにする必要があることです。 負担が大きすぎると、進んでモデレートしようとする人が減り、モデレータが務めを果たさなくなります。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 10/19/00</small></em></p>
 
-<A NAME="su400">
-<H2>How about a page for rejected or pending story submissions? </H2>
+<h2><a name="su930" id="su930">モデレート中はコメントのスコアが表示されないようにしたらどうでしょう? &quot;集団思考&quot; の解消に役立つかもしれません</a></h2>
+        <p>はい、これについても検討しました。 問題は、モデレータは相互に抑制しあう役割も担っていることです。 評価が高すぎると思うコメントについては、スコアを下げることができます。 モデレータ同士が抑制しあうことができないと、この &quot;集団思考&quot; に対する効果が相殺されてしまう可能性があります。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 10/19/00</small></em></p>
 
-	<P>This is a frequently requested feature that has several variations
-	that essentially have the same answer: Time and Abuse.
+<h2><a name="su1000" id="su1000">モデレーションを改善するための提案があります</a></h2>
+        <p>提案を電子メールで送る前に、<a href="com-mod.shtml">「コメントとモデレーション」セクション</a>をお読みください。 こちらに送られてくる提案の大部分は、すでにそこで説明されているアイデアです。 残りの提案の多くは、おそらくそこに追加すべきアイデアでしょう。 概して忘れられがちなのは、モデレーションシステムは悪用を防ぐために作られたチェックアンドバランスの複雑な集合体だということです。 わたしのインボックスに届くほぼ<em>すべての</em>提案は、いかによかれと思ってなされたものでも悪用のきっかけを作ります。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 6/14/00</small></em></p>
 
-	<P><B>Time</B> is a resource that we always lack, so anything that we
-	do that increases the amount of time required to maintain Slashdot has
-	to be weighed carefully.  A good example is the existing submission
-	monitoring functionality.  The amount of email I got regarding rejected
-	submissions more then <I>doubled</I> when I added notification.  I'm
-	afraid that a public forum for pending/rejected stories would simply
-	complicate the life of our authors.
+<h2><a name="su1100" id="su1100">Kuro5hin、everything2、または advogato.org で使われているようなほかのモデレーション方式を採用してはどうでしょう?</a></h2>
+        <p>ほかのサイトの動向を見るのは面白いのですが、どのサイトのトラフィックもスラッシュドットには遠く及びません。 スラッシュドットの規模で動かすモデレーションシステムは、適用してもサーバを停止させないだけの十分な効率を備えている必要があります。 現行のシステムは完全とはいえませんが、この規模に対応するシステムとしては、これまで見てきた中で最高です。 システムを改善する方法は常に探し求めていますし、見つかれば実装するつもりですが、今のところはこのままでいく予定です。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 10/19/00<br></small></em></p>
 
-	<P><B>Abuse</B> is much worse.  We get hundreds of submissions a day:
-	we don't need more submissions, we need better ones. A public forum
-	that gets the kind of traffic we get tends to be abused (like, say, the
-	Slashdot comments for example).  We don't want to be deleting "First
-	Posts" and "Natalie Portman" type trolls and spams from the submission
-	bin: we're busy enough as is.  
-	
-	<P><B>Appropriateness</B> From there, we move to the many stories that
-	are submitted which are very wrong for Slashdot.  They are horribly off
-	topic, or offensive, or just plain scary. Obituaries for people that
-	aren't dead?  Rants about events that never occurred? Random Conspiracy
-	Theories? Bug reports?  Feature requests?  I don't want to propagate
-	this stuff, and I'm afraid that another public forum for them would
-	only make the problem worse. There is some stuff submitted that would
-	make for a very interesting page, and maybe someday we'll implement
-	that.  But as it stands, the overhead and the potential for abuse is
-	so high that we don't want to mess with it.
+<h2><a name="su1200" id="su1200">一部のサブセクションが独立したサイトとしてスピンオフすることはありますか?</a></h2>
+        <p>たとえば、YRO セクションが近々何らかの形で印刷媒体に載ることになったとしたらすごいでしょうね。 プレザントヴィルのサラリーマンのレーダーにも捕捉されるぐらい重要な出来事です。</p>
+        <p>現時点で正式な計画はありませんが、これについては真剣に検討しています。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 10/28/00</small></em></p>
 
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/21/00 <BR>
-	</SMALL></I> 
+<h2><a name="su1300" id="su1300">論文執筆のためにスラッシュドットに関する情報が必要です!</a></h2>
+        <p>信じられないかもしれませんが、多くの方々からこのような問い合わせをいただいています。 申し訳ない。ぜひお力になりたいのですが、時間の余裕がありません。</p>
+        <p><em><small>Answered by: <a href="mailto:robo@slashdot.org">Robo</a><br> Last Modified: 03/04/02</small></em></p>
+
+<h2><a name="su1400" id="su1400">スラッシュドットのアイコンをわたしのサイトで自由に使ってかまいませんか?</a></h2>
+        <p>はい、スラッシュドットのどの<a href="http://slashdot.org/topics.shtml">アイコン</a>でもサイトで使っていただいてかまいません。ただし、<strong>許可を求めること</strong>と、<strong>スラッシュドットに逆リンクして画像の出所を明らかにすること</strong>を条件とします。</p>
+        <p>もちろん、アイコンの中にはほかの人が著作権を持つものもあります。 ですから、それらを公正使用のもとで実際に使用できるかどうかご自身で判断する必要があります。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 04/14/02</small></em></p>
+
+<h2><a name="su1500" id="su1500">スラッシュドットにバグを見つけました。誰に連絡すればよいですか?</a></h2>
+        <p>愉快で刺激的な我々の <a href="http://sourceforge.net/projects/slashcode/">SourceForge プロジェクトページ</a>にアクセスしてください。そこで未解決のバグと機能の要望のリストを参照できるほか、あなたが見つけたバグを登録することもできます。</p>
+        <p>申し訳ありませんが、バグを登録するには SourceForge にログインする必要があります。 匿名によるバグ/機能のフィードバックを許可しようとしたのですが、例によって少数の悪党たちに台無しにされました。あるいは、少なくとも全員にちょっとした迷惑がかかってしまいました。</p>
+        <p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br> Last Modified: 06/18/03</small></em></p>
 
 
-<A NAME="su500">
-<H2>How about giving us a reason for rejecting submissions?</H2> 
-
-	<P>This is a fair request. As it stands, people merely see "Rejected"
-	or "Accepted".  The <I>reasons</I> are simply left to their
-	imagination. A simple reason like Offtopic, Boring, Badly Written,
-	Repeat etc would go a long ways towards alleviating that problem.  But
-	again, this is more work for our authors: right now we delete 3000
-	submissions a week.  Each takes a half a second to click a button. 
-	Even if this adds only 10 seconds of upkeep to each submission, that
-	adds a full <I>day</I> of work each week! So, the answer is "someday".
-
-	<P>Honestly, I don't think its a very good idea for another reason too:
-	the amount of email I got regarding story submissions more then doubled
-	when we added the note telling people if their story was rejected. 
-	When you have to say 'No' to 500 people a day, it's only logical that
-	dozens of them will contest your decision.  I'm afraid that if they
-	have more data, they'll email even more ("What do you mean my story was
-	boring, you bastard!") and my wrists can't handle that ;)
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
-
-
-<A NAME="su600">
-<H2>How about allowing readers to directly administer the submissions bin?</H2>
-
-	<P>Slashdot is a very open community; in the user comments our readers
-	are free to say whatever they please.  But we feel that the unique
-	nature of Slashdot is largely because the contents of the homepage are
-	determined by a handful of people.  
-
-	<P>I'm sure a very cool website could be developed based on the concept
-	of allowing public voting to determine the content of the homepage, but
-	that website wouldn't be "Slashdot". If we tried to do it "by
-	committee" it would suffer from the same problem that most projects
-	done by committee suffer from: it would get bland.
-
-	<P>Let me put this another way: in the comments, any pro-Linux or
-	anti-MS comment is probably gonna get rated up.  Any time Microsoft
-	does anything even slightly naughty, it gets submitted 50 times.  Does
-	that mean that it should be posted to the Slashdot homepage?  For me
-	personally, I don't want to read the "Bitch at Microsoft" website, but
-	if ruled by popular consensus, Slashdot would very likely degenerate to
-	this point.  Since the days of Chips & Dips and the first days of
-	Slashdot, my first goal has always been to post stories that <I>I</I>
-	thought were interesting. I think a lot of people share my idea of
-	interesting, and that's part of why Slashdot became successful.  
-
-	<P>Slashdot is an eclectic mix of stories maintained by a small group
-	of people, but contributed to by anyone who wants to.  I think that the
-	personality and character of Slashdot is part of the fun and charm of
-	the site, and I think it would suck to lose it.  That's why the decision
-	of what ends up on the homepage will continue to be determined by me,
-	Hemos, and the rest of the guys.
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
-
-
-<A NAME="su700">
-<H2>How about an AvantGo channel or some other PDA interface</H2>
-
-<P>
-        There is one if you go to AvantGo, which basically uses the URL 
-        <A HREF="http://slashdot.org/palm">http://slashdot.org/palm</A>, which is
-        also the URL where the Slashdot clipping app gets its content, which 
-        can be downloaded from <A HREF="ftp://ftp.slashdot.org/pub/slashdot.pqa">
-        ftp://ftp.slashdot.org/pub/slashdot.pqa.</a>
-
-        <BR><BR>
-        <I><SMALL>
-        Answered by: <A HREF="mailto:capttofu@slashdot.org">CaptTofu</A> <BR>
-        Last Modified: 12/01/00 <BR>
-        </SMALL></I> 
-</P>
-
-<A NAME="su800">
-<H2>How about a WAP Interface?</H2>
-
-	<P>If you visit Slashdot with a WAP compliant browser, you should get a
-	stripped down view of Slashdot designed for WAP.  I wanted it to work
-	on my 12x4 Qualcomm though, so it's pretty stripped down: no comments. 
-	Just headlines and stories.
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
-
-<A NAME="su850">
-<H2>Getting the slashdot headlines by 'finger @www.slashdot.org' would be nice, don't you think?</H2>
-
-	<P>You can accomplish the same thing by running wget or lynx --source on
-	the <A HREF="http://slashdot.org/slashdot.rdf">RDF file</A>.
-	
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 10/28/00 <BR>
-	</SMALL></I> 
-
-<A NAME="su900">
-<H2>Slashdot should cache pages to prevent the Slashdot Effect! </H2>
-
-	<P>Sure, it's a great idea, but it has a lot of implications. For
-	example, commercial sites rely on their banner ads to generate revenue.
-	If I cache one of their pages, this will mess with their statistics,
-	and mess with their banner ads. In other words, this will piss them
-	off. 
-
-	<P>Of course, most of the time, the commercial sites that actually have
-	income from banner ads easily withstand the Slashdot Effect.  So
-	perhaps we could draw the line at sites that don't have ads. They
-	are, after all, much more likely to buckle under the pressure of all
-	those unexpected hits. But what happens if I cache the site, and they
-	update themselves? Once again, I'm transmitting data that I shouldn't
-	be, only this time my cache is out of date!
-
-	<P>I could try asking permission, but do you want to wait 6 hours for a
-	cool breaking story while we wait for permission to link someone?  
-
-	<P>So the quick answer is: "Sure, caching would be neat." It would make
-	things a lot easier when servers go down, but it's a complicated issue
-	that would need to be thought through in great detail before being
-	implemented.
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
-	
-<A NAME="su910">
-<H2>Is is possible to have META tags that Slashdot looks for in a story link 	
-before allowing it to be submitted/posted? Many times a server can't 			handle the load of a Slashdotting. So can the site have tags to prevent 
-it from being added to a Slashdot story?</H2>
-
-	<P>Not inconceivable, but I don't really think it's worth the work. 
-	Most of the sites that are Slashdotted are prepared for it, and the
-	sites that get smashed usually are caught completely off guard; they
-	wouldn't know of this mysterious opt-out meta tag. (See also <A
-	HREF="http://slashdot/org/faq/suggestions.shtml#su900">Caching Slashdot
-	Stories</A>).
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 10/28/00 <BR>
-	</SMALL></I> 
-
-<A NAME="su920">
-<H2>It seems that many moderators, because of the way they read comments, 
-(higher thresholds, older comments first), only see comments that are 
-posted with a bonus, or have already been moderated up. Wouldn't it make
-more sense to require moderators to read at a threshold of 0 with newest
-comments first?</H2>
-
-	<P>Yes, it would. This is something we're looking at, and may change. 
-	(Another possibility might be randomizing the order of comments or 
-	threads.) The  problem is that we don't want to make moderating too
-	much of a pain for anyone. This would result in fewer people being
-	willing to moderate, and moderators not doing their job.
-	
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 10/19/00 <BR>
-	</SMALL></I> 
-	
-<A NAME="su930">
-<H2>Have you ever thought about hiding comment scores when people are moderating? It might help alleviate "Group Think."</H2>
-
-	<P>Yes, this is another thing we've considered. The problem here is that
-	moderators are also supposed to keep one another in check. If a 
-	moderator thinks something is rated too high, he or she can bring the 
-	score down. So, the effect it might have on "group think" might actually
-	be neutralized if moderators aren't able to counter each other.
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 10/19/00 <BR>
-	</SMALL></I> 
-	
-
-<A NAME="su1000">
-<H2>I have a suggestion for improving moderation.</H2> 
-
-	<P>Please read the <A HREF="com-mod.shtml">Comments & Moderation
-	section</A> before emailing any of us with your suggestion.  The vast
-	majority of suggestions I get are ideas that are already explained 
-	there.  Of the remaining suggestions, most are ideas that I probably
-	should put there.  The thing that is typically forgotten is that the
-	moderation system is a complicated collection of checks and balances
-	designed to prevent abuse: almost <I>every</I> suggestion that winds up
-	in my inbox, however well intended, opens up a hole for abuse.
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/14/00 <BR>
-	</SMALL></I> 
-	
-<A NAME="su1100">
-<H2>What about other moderation models such as those used by Kuro5hin,
-everything2, or advogato.org?</H2>
-
-	<P>While it's interesting to see what other sites are doing, these
-	sites don't have anywhere near the traffic that Slashdot does. In
-	order to  make it work on Slashdot's scale, any moderation system needs
-	to be  efficient enough that we can apply it without grinding our
-	servers to a  halt. The system we have now, while not perfect, is the
-	best thing we've  seen for the scale we're working on. We're always
-	looking for ways to improve it, and when we find  them we'll implement
-	them, but for now we'll stick with what we've  got.
-	
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 10/19/00 <BR>
-	</SMALL></I> 
-
-<A NAME="su1200">
-<H2>Will some of the subsections spin off as sites in their own right?  
-For example, it would be cool if the YRO section were to hit dead tree
-form in some way like soon. It's too important to remain outside the
-radars of 9-5ers in  Pleasantville. </H2>
-
-	<P>There are no formal plans at this time, but it's something we're
-	thinking seriously about.	
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 10/28/00 <BR>
-	</SMALL></I> 
 <BR><HR>
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="advertising.shtml">Previous Section</A>
-		<TD><A HREF="index.shtml">Index</A>
+		<TD><A HREF="advertising.shtml">前のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 

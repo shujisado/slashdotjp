@@ -1,145 +1,90 @@
-<HTML>
-<HEAD>
-	<TITLE>Slashdot FAQ (���ܸ���)</TITLE>
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rev="MADE" href="mailto:slashmaster@slashdot.jp">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版)</title>
+
 <!--#include virtual="/slashhead.inc"-->
-
-<!--
-
-This is the index page to the revised Slashdot FAQ. This rewrite is intended to meet several goals:
-
-	1) Improved readability,
-	2) Unify several existing sources of information
-	3) Provide a coherent framework for future revisions
-	4) Get the ball rolling on further Slashdot documentation projects
-	
-This FAQ is divided into several sections, each contained in a separate file in the same directory as this index. For the time being, this structure needs to be preserved in order for the relative linking to work. These sections are:
-
-	FAQ-meta
-		Information about this FAQ.
-		
-	Editorial
-		Information about Slashdot's editorial policies and 
-		procedures
-		
-	UI
-		Information about using the Slashdot user interface
-		
-	Comments and Moderation
-		Information about the system of posting and moderating
-		comments. 
-		
-	Metamoderation 
-		This section contains information about metamoderation
-		(M2). 
-
-	Accounts
-		Information about the creation, care, and feeding of
-		Slashdot user accounts.
-		
-	Slashdot Meta
-		Information about Slashdot in general. 
-		
-	Tech
-		Information about the hardware and software that runs
-		Slashdot.
-		
-	Advertising
-		Information about the ads on Slashdot, and how you can
-		advertise here.
-		
-	Suggestions
-		Answers to common suggestions that have been made over the 
-		years.
-		
-
-
--->
 
 <H1>Slashdot FAQ</H1>
 
 <P>
-����FAQ�ϥ���å���ɥåȥ���ѥ�ǤϤʤ��ܲ�Slashdot��FAQ������������
-�ΤǤ����������äơ�����å���ɥåȥ���ѥ�Ȥϰۤʤ���ʬ�⤢��ޤ�����
-����ʤ�ˤϻ��ͤˤʤ�Ǥ��礦��
+このFAQはスラッシュドットジャパンではなく本家SlashdotのFAQを翻訳したも
+のです。したがって、スラッシュドットジャパンとは異なる部分もありますが、
+それなりには参考になるでしょう。
+また、スラッシュドット特有の語句や言い回しの意味を知りたければ、
+<A HREF="http://www.saiin.net/~silphire/slashdot/shaten/">斜典</A>が
+役に立つと思いますよ。
+<A HREF="http://slashdotjp.sourceforge.jp/">Slashdot Japan Wiki</A>は、
+最初は主に編集者用のメモ的スペースだったけども、いつのまにかタレコミガイドとか
+みんなが使えるコンテンツができてますよ。
 </P>
 
 <!-- FAQ Meta -->
-<H2><B><A HREF="faq-meta.shtml">�᥿FAQ</B></A></H2>
+<H2><B><A HREF="faq-meta.shtml">メタFAQ</B></A></H2>
 
 <UL>
-	<LI><A HREF="faq-meta.shtml#fm100"><B>����ʸ��ϲ��Ǥ���?</B></A><BR>
+	<LI><A HREF="faq-meta.shtml#fm100"><B>この文書は何ですか?</B></A><BR>
 	
-	<LI><A HREF="faq-meta.shtml#fm200"><B>�Τꤿ�����Ȥ����뤱�ɡ�
-	���� FAQ �˺ܤäƤޤ���ï��ʹ���Ф����Ǥ���?</B></A><BR>
+	<LI><A HREF="faq-meta.shtml#fm200"><B>FAQに書かれていない質問をしたいのですが、どうするべきですか?</B></A><BR>
 
-	<LI><A HREF="faq-meta.shtml#fm300"><B>���� FAQ ����Ǥ�Ԥ�ï��
-	����?</B></A><BR>
-	
-	<LI><A HREF="faq-meta.shtml#fm400"><B>���� FAQ ��ۤ��ξ��ǡ�
-	"TODO list" �Τ��Ȥ��񤫤�Ƥ��ޤ�����������Ǥ���?</B></A><BR>
+	<LI><A HREF="faq-meta.shtml#fm300"><B>この FAQ の責任者は誰ですか?</B></A><BR>
 	
 </UL>
 
 
 <!-- Editorial -->
-<H2><B><A HREF="editorial.shtml">�Խ�����ɮ��Ϣ</A></B></H2>
+<H2><B><A HREF="editorial.shtml">編集、執筆関連</A></B></H2>
 
 <UL>
 
-	<LI><A HREF="editorial.shtml#ed100"><B>����å���ɥåȤ˥��ȡ�
-	�꡼�򥿥쥳����ˡ��?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed100"><B>スラッシュドットにストーリーをタレコむ方法は?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed105"><B>���ȡ��꡼��ƿ̾�ǥ���
-	���ळ�ȤϤǤ��ޤ���?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed103"><B>プレスリリースはどこにタレコめばいいですか?</B></A><BR>
+
+	<LI><A HREF="editorial.shtml#ed105"><B>ストーリーを匿名でタレコむことはできますか?</B></A><BR>
 	
-	<LI><A HREF="editorial.shtml#ed150"><B>����å���ɥåȤ�ʹ��!
-	�ˤϤɤ�����Ф褤��?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed150"><B>スラッシュドットに聞け!にはどうすればよいの?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed200"><B>�ʤ��錄���Υ��ȡ��꡼
-	����Ƥ��Ƥ���ʤ���?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed200"><B>なぜわたしのストーリーを投稿してくれないの?</B></A><BR>
 	
-	<LI><A HREF="editorial.shtml#ed220"><B>�ʤ��錄���Υ��ȡ��꡼
-	�Ϥޤ����Ѥ�Ѳ��⤵��ʤ���?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed220"><B>なぜわたしのストーリーはまだ採用も却下もされないの?</B></A><BR>
 	
-	<LI><A HREF="editorial.shtml#ed230"><B>����ǥå����ˤ�ɽ����
-	���Τ˥ۡ���ڡ�����ɽ������ʤ����ȡ��꡼������ΤϤʤ�?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed230"><B>インデックスには表示されるのにホームページに表示されないストーリーがあるのはなぜ?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed240"><B>�錄���Υ��쥳�ߤ� "��
-	��" ���줿�Τˤʤ�ɽ������ʤ���?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed240"><B>わたしのタレコミは "採用" されたのになぜ表示されないの?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed250"><B>���ޤ˥���å���ɥå�
-	�����Ʊ�����ȡ��꡼���ܤäƤ뤳�Ȥ�����ޤ����ʤ�?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed250"><B>たまにスラッシュドットの中で同じストーリーが載ってることがあります。なぜ?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed300"><B>�⤦ 1 ��������˥��쥳
-	����ͥ��ʤΤ�!</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed300"><B>もう 1 か月も前にタレコんだネタなのに!</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed400"><B>�錄�������쥳����ͥ�
-	�ʤΤˡ��̤οͤ����쥳������ȤˤʤäƤ�!</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed400"><B>わたしがタレコんだネタなのに、別の人がタレコんだことになってる!</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed500"><B>�����񤯤ˤϤɤ�����
-	��?</B></A><BR> 
+	<LI><A HREF="editorial.shtml#ed500"><B>論説を書くにはどうすれば?</B></A><BR> 
 
-	<LI><A HREF="editorial.shtml#ed501"><B>��ɾ��񤯤ˤϤɤ�����
-	��?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed501"><B>書評を書くにはどうすれば?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed600"><B>����æ����ʸˡ�ߥ�����
-	���ʤΤϤʤ�?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed600"><B>誤字脱字や文法ミスだらけなのはなぜ?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed700"><B>���ǡ����ʥ��ȡ��꡼��
-	����Ƥ�����?
+	<LI><A HREF="editorial.shtml#ed700"><B>何で○○なストーリーなんか投稿したの?
 	</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed750"><B>����å���ɥåȤΥ��ȡ�
-	�꡼�Ϥɤ���äƥ�����äƤ���Τ�?</B></A><BR>
+	<LI><A HREF="editorial.shtml#ed750"><B>スラッシュドットのストーリーはどうやってウラを取っているのか?</B></A><BR>
 
-	<LI><A HREF="editorial.shtml#ed850"><B>����å���ɥåȤϥ���
-	�ꥫ�濴����Ǥ��͡��⤦����äȹ��Ū�ˤʤ����Ȥ����ͤ���?</B></A><BR> 
+	<LI><A HREF="editorial.shtml#ed850"><B>スラッシュドットはアメリカ中心主義ですね。もうちょっと国際的になろうという考えは?</B></A><BR> 
 
-	<LI><A HREF="editorial.shtml#ed860"><B>�ۤ��θ���Υߥ顼����
-	�Ȥ��äơ����줫�˵��������������Ƥ�? ���줾��Υ����Ȥ��̤�
-	������ܤ���Ȥ�?</B></A><BR> 
+	<LI><A HREF="editorial.shtml#ed860"><B>ほかの言語のミラーサイトを作って、だれかに記事を翻訳させては? それぞれのサイトに別の記事を載せるとか?</B></A><BR> 
 
-	<LI><A HREF="editorial.shtml#ed900"><B>"�����ĤΤ褦��..."</B></A>
+	<LI><A HREF="editorial.shtml#ed900"><B>"オムレツのような..."</B></A>
+
+	<LI><A HREF="editorial.shtml#ed1000"><B>スラッシュドットのセクションは何の為にあるの?</B></A>
 
 
 
@@ -149,387 +94,346 @@ This FAQ is divided into several sections, each contained in a separate file in 
 <!-- UI -->
 <H2><B><A HREF="UI.shtml">UI</A></B></H2>
 <UL>
-	<LI><A HREF="UI.shtml#ui100"><B>�������뤿��Υ���å���ܥå�
-	�����ߤ����Τ����ɡ�</B></A> 
+	<LI><A HREF="UI.shtml#ui100"><B>○○するためのスラッシュボックスが欲しいのだけど…</B></A> 
 
-	<LI><A HREF="UI.shtml#ui200"><B>���ȡ��꡼����ˤ��뾮���� [?]
-	�ϲ��Ǥ���?</B></A> 
+	<LI><A HREF="UI.shtml#ui200"><B>ストーリーの中にある小さな [?]は何ですか?</B></A> 
 	
-	<LI><A HREF="UI.shtml#ui300"><B>�Ť����ȡ��꡼�򸫤�ˤϤɤ���
-	��Ф褤�Ǥ���?</B></A>
+	<LI><A HREF="UI.shtml#ui300"><B>古いストーリーを見るにはどうすればよいですか?</B></A>
+	
+	<LI><A HREF="UI.shtml#ui400"><B>どうして私のメニューの中に他のユーザーのニックネームが表示されるのですか?</B></A>
 	
 </UL>
 
+<!-- Interviews -->
+<h2><strong><a href="/faq/interviews.shtml">Slashdotインタビュー</a></strong></h2>
+<ul>
+        <li><strong><a href="/faq/interviews.shtml#int1000">いくつまで質問できますか?</a></strong></li>
+        <li><strong><a href="/faq/interviews.shtml#int1100">私の質問が+5までモデレートされました。なのになぜ回答されないのですか?</a></strong></li>
+        <li><strong><a href="/faq/interviews.shtml#int1150">11個目の質問はモデレートで高評価を得たやつじゃないよ! どういう事!</a></strong></li>
+        <li><strong><a href="/faq/interviews.shtml#int1200">誰それに送った質問はひどすぎる。どういうつもりなんだ?!</a></strong></li>
+        <li><strong><a href="/faq/interviews.shtml#int1300">誰それの回答はひどすぎる。なんで彼はもっとマシな回答をしなかったんだい?</a></strong></li>
+        <li><strong><a href="/faq/interviews.shtml#int1400">インタビュー・ゲストを提案するにはどうすればいいのですか？</a></strong></li>
+</ul>
+
 <!-- Comments and Moderation -->
-<H2><B><A HREF="com-mod.shtml">�����Ȥȥ�ǥ졼�����</A></B></H2>
+<H2><B><A HREF="com-mod.shtml">コメントとモデレーション</A></B></H2>
 <UL>
 
-	<LI><A HREF="com-mod.shtml#cm100"><B>ʿó/����å�/�ͥ��ȡ���
-	�줾��Υ�����ɽ���ΰ㤤�ϲ�?</B></A> 
+	<LI><A HREF="com-mod.shtml#cm100"><B>平坦/スレッド/ネスト、それぞれのコメント表示の違いは何?</B></A> 
 
-	<LI><A HREF="com-mod.shtml#cm200"><B>�錄���Υ����ȤϤʤ���
-	�����줿�ΤǤ��礦? 
+	<LI><A HREF="com-mod.shtml#cm150"><B>私のコメントを削除したりしますか? </B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm200"><B>わたしのコメントはなぜ削除されたのでしょう? </B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm300"><B>わたしのコメントが表示されるのに時間がかかるのはなぜでしょう?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm400"><B>"First Post" コメントとは何ですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm500"><B>コメントの質が落ちてきているようですが、何か対策は?</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm510"><B>モデレーションのような制限は必要ですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm515"><B>荒らしや役立たずな情報のほとんどは "Anonymous Coward"(匿名の臆病者)から送られています。匿名の投稿を廃止しては?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm516"><B>このオープンな投稿ポリシーで問題が起こったことはないのですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm517"><B>「このページに投稿する事は出来ません」というメッセージを受け取っているのは何故?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm520"><B>モデレーションシステムはどうやって開発されたのですか?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm600"><B>モデレーションの仕組みを教えてください</B></A> 
+	
+	<LI><A HREF="com-mod.shtml#cm605"><B>エディタはモデレートするのですか?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm610"><B>しきい値とは何ですか?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm700"><B>カルマとは何ですか?</B></A> 
+	
+	<LI><A HREF="com-mod.shtml#cm703"><B>カルマの &quot;Good&quot; や &quot;Bad&quot; などは何を意味するのですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm706"><B>以前は数値だったカルマが言葉になったのが気にくわない!</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm710"><B>カルマの上限はありますか?
+	</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm720"><B>どんなに点数を稼いでもカルマが頭打ちというのは理不尽では?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm750"><B>Quickie や Slashback ストーリーではなぜカルマが増えないのですか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm800"><B>カルマは何のためにあるの?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm900"><B>カルマが自分で思っていた
+	値と違いますが? 
+	</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm950"><B>カルマはどこまで下がりますか? 
+	</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1000"><B>+1 のボーナスを使うたびにモデレーションの評価が低くなってカルマが減るのはなぜだ!</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1150"><B>カルマの上限に近づくと、投稿に見合うだけのカルマが得られない (カルマが不当に失われる) ではないか!</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1100"><B>今モデレータ アクセスが与えられたけど、何をすればいいの?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1200"><B>なぜわたしはもうモデレートできなくなったの?</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm1250"><B>モデレータ アクセスはなぜ 5 ポイントに制限されているの? 5 つのストーリーに対して無制限のアクセスを与えるほうがよいのでは?</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1300"><B>コメントが不当にモデレートされている!</B></A> 
+
+	<LI><A HREF="com-mod.shtml#cm1320"><B>レート(+1や-1)とモデレーションのオプション(オフトピック、おもしろい等)を分離しては? フレームのもとだけど質の高い投稿とかもあると思いますが。</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1400"><B>これって検閲?</B></A> 
+	
+	<LI><A HREF="com-mod.shtml#cm1450"><B>これまでに出入り禁止になった人はいますか? または、そういうことは今後あり得ますか?</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1500"><B>スコアが -2 とか 6 とかになってるコメントがある!</B></A>
+
+	<LI><A HREF="com-mod.shtml#cm1600"><B>良いコメントってどういうコメント? 悪いコメントは?</B></A>   
+
+	<LI><A HREF="com-mod.shtml#cm1700"><B>3 日間じゃモデレートできません!</B></A>  
+
+	<LI><A HREF="com-mod.shtml#cm1800"><B>自分がモデレートしたディスカッションに投稿しても、なぜポイントが戻らないのでしょう?</B></A>
+	
+	<LI><A HREF="com-mod.shtml#cm1900"><B>カルマを上げるにはどうすればよいですか?
 	</B></A> 
 
-	<LI><A HREF="com-mod.shtml#cm300"><B>�錄���Υ����Ȥ�ɽ����
-	���Τ˻��֤�������ΤϤʤ��Ǥ��礦?</B></A> 
-
-	<LI><A HREF="com-mod.shtml#cm400"><B>"First Post" �����ȤȤ�
-	���Ǥ���?</B></A>
-
-	<LI><A HREF="com-mod.shtml#cm500"><B>�����Ȥμ�������Ƥ���
-	����褦�Ǥ����������к���?</B></A>
+	<LI><A HREF="com-mod.shtml#cm1910"><B>ほんとうはそうでもないのに、役に立つ とか するどい洞察 に見えて、モデレーションで高く評価されてしまう投稿が多いと思います。作成者が自信たっぷりだと、ついポイントを与えてしまうのでは。本当に するどい洞察 なコメントが投稿されたときにはもう遅い。これはモデレーション システムで解決できないのですか?</B></A> 
 	
-	<LI><A HREF="com-mod.shtml#cm510"><B>��ǥ졼�����Τ褦����
-	�¤�ɬ�פǤ���?</B></A>
-
-	<LI><A HREF="com-mod.shtml#cm515"><B>�Ӥ餷����Ω�����ʾ����
-	�ۤȤ�ɤ� "Anonymous Coward"(ƿ̾�β��¼�)���������Ƥ��ޤ���
-	ƿ̾����Ƥ��ѻߤ��Ƥ�?</B></A>
-
-	<LI><A HREF="com-mod.shtml#cm516"><B>���Υ����ץ����ƥݥꥷ��
-	�����꤬�����ä����ȤϤʤ��ΤǤ���?</B></A>
-
-	<LI><A HREF="com-mod.shtml#cm520"><B>��ǥ졼����󥷥��ƥ��
-	�ɤ���äƳ�ȯ���줿�ΤǤ���?</B></A> 
-
-	<LI><A HREF="com-mod.shtml#cm600"><B>��ǥ졼�����λ��Ȥߤ�
-	�����Ƥ�������</B></A> 
+	<LI><A HREF="com-mod.shtml#cm2000"><B>荒らし防止のフィルタにはどんなものがありますか?</B></A>
 	
-	<LI><A HREF="com-mod.shtml#cm610"><B>�������ͤȤϲ��Ǥ���?</B></A> 
+	<LI><A HREF="com-mod.shtml#cm2050"><B>よそからコピーして貼り付けられたコメントはどうなりますか?</B></A>
 
-	<LI><A HREF="com-mod.shtml#cm700"><B>����ޤȤϲ��Ǥ���?</B></A> 
-	
-	<LI><A HREF="com-mod.shtml#cm710"><B>����ޤξ�¤Ϥ���ޤ���?
-	</B></A>
-	
-	<LI><A HREF="com-mod.shtml#cm720"><B>�ɤ�ʤ�������Ԥ��Ǥ⥫
-	��ޤ�Ƭ�Ǥ��Ȥ����Τ����ԿԤǤ�?</B></A>
+	<LI><A HREF="com-mod.shtml#cm2100"><B>なぜアーカイブされたストーリーを検索したりフィルタしたりできないのですか?</B></A>
 
-	<LI><A HREF="com-mod.shtml#cm750"><B>Quickie �� Slashback ���ȡ�
-	�꡼�ǤϤʤ�����ޤ������ʤ��ΤǤ���?</B></A>
+	<LI><A HREF="com-mod.shtml#cm2200"><B>これ &#xA0;<img src="http://images.slashdot.jp/neutral.gif" alt="" BORDER=0> は何ですか?</B></A>
 
-	<LI><A HREF="com-mod.shtml#cm800"><B>����ޤϲ��Τ���ˤ����?</B></A>
+	<LI><A HREF="com-mod.shtml#cm2300"><B>投稿モードとは何ですか?</B></A>
 
-	<LI><A HREF="com-mod.shtml#cm900"><B>����ޤ���ʬ�ǻפäƤ���
-	�ͤȰ㤤�ޤ���? 
-	</B></A>
+	<LI><A HREF="com-mod.shtml#cm2400"><B>投稿したコメントのスコアが自分のユーザページとコメントページで違っています</B></A>
 
-	<LI><A HREF="com-mod.shtml#cm950"><B>����ޤϤɤ��ޤǲ������
-	����? 
-	</B></A>
+	<LI><A HREF="com-mod.shtml#cm2500"><B>モデレーションドロップダウンボックスに表示される項目の意味は?</B></A>
 
-	<LI><A HREF="com-mod.shtml#cm1000"><B>+1 �Υܡ��ʥ���Ȥ�����
-	�˥�ǥ졼������ɾ�����㤯�ʤäƥ���ޤ�����ΤϤʤ���!</B></A>
+	<LI><A HREF="com-mod.shtml#cm2600"><B>ユーザの ID 番号の後ろにアスタリスク (*) が付いていることがありますが、これは何ですか?</B></A>
 
-	<LI><A HREF="com-mod.shtml#cm1100"><B>����ǥ졼�� ����������
-	Ϳ����줿���ɡ����򤹤�Ф�����?</B></A> 
-
-	<LI><A HREF="com-mod.shtml#cm1200"><B>�ʤ��錄���Ϥ⤦��ǥ졼
-	�ȤǤ��ʤ��ʤä���?</B></A>
-	
-	<LI><A HREF="com-mod.shtml#cm1250"><B>��ǥ졼�� ���������Ϥ�
-	�� 5 �ݥ���Ȥ����¤���Ƥ����? 5 �ĤΥ��ȡ��꡼���Ф���̵��
-	�¤Υ���������Ϳ����ۤ����褤�ΤǤ�?</B></A> 
-
-	<LI><A HREF="com-mod.shtml#cm1300"><B>�����Ȥ������˥�ǥ졼
-	�Ȥ���Ƥ���!</B></A> 
-
-	<LI><A HREF="com-mod.shtml#cm1320"><B>�졼��(+1��-1)�ȥ�ǥ졼
-	�����Υ��ץ����(���եȥԥå������⤷������)��ʬΥ���Ƥ�? ��
-	�졼��Τ�Ȥ����ɼ��ι⤤��ƤȤ��⤢��Ȼפ��ޤ�����</B></A>
-
-	<LI><A HREF="com-mod.shtml#cm1400"><B>����äƸ���?</B></A> 
-	
-	<LI><A HREF="com-mod.shtml#cm1450"><B>����ޤǤ˽�����ػߤˤʤ�
-	���ͤϤ��ޤ���? �ޤ��ϡ������������ȤϺ��夢�����ޤ���?</B></A>
-
-	<LI><A HREF="com-mod.shtml#cm1500"><B>�������� -2 �Ȥ� 6 �Ȥ�
-	�ˤʤäƤ륳���Ȥ�����!</B></A>
-
-	<LI><A HREF="com-mod.shtml#cm1600"><B>�ɤ������ȤäƤɤ�����
-	������? ���������Ȥ�?</B></A>   
-
-	<LI><A HREF="com-mod.shtml#cm1700"><B>3 ���֤����ǥ졼�ȤǤ�
-	�ޤ���!</B></A>  
-
-	<LI><A HREF="com-mod.shtml#cm1800"><B>��ʬ����ǥ졼�Ȥ����ǥ�
-	�����å�������Ƥ��Ƥ⡢�ʤ��ݥ���Ȥ����ʤ��ΤǤ��礦?</B></A>
-	
-	<LI><A HREF="com-mod.shtml#cm1900"><B>����ޤ�夲��ˤϤɤ���
-	��Ф褤�Ǥ���?
-	</B></A> 
-
-	<LI><A HREF="com-mod.shtml#cm1910"><B>�ۤ�Ȥ��Ϥ����Ǥ�ʤ���
-	�ˡ����Ω�� �Ȥ� ����ɤ�ƶ�� �˸����ơ���ǥ졼�����ǹ⤯
-	ɾ������Ƥ��ޤ���Ƥ�¿���Ȼפ��ޤ��������Ԥ��������äפ���ȡ�
-	�Ĥ��ݥ���Ȥ�Ϳ���Ƥ��ޤ��ΤǤϡ������� ����ɤ�ƶ�� �ʥ����
-	�Ȥ���Ƥ��줿�Ȥ��ˤϤ⤦�٤�������ϥ�ǥ졼����� �����ƥ�
-	�ǲ��Ǥ��ʤ��ΤǤ���?</B></A> 
-	
-	<LI><A HREF="com-mod.shtml#cm2000"><B>�Ӥ餷�ɻߤΥե��륿�ˤ�
-	�ɤ�ʤ�Τ�����ޤ���?</B></A>
-	
-	<LI><A HREF="com-mod.shtml#cm2100"><B>�ʤ����������֤��줿���ȡ�
-	�꡼�򸡺�������ե��륿������Ǥ��ʤ��ΤǤ���?</B></A>
+	<LI><A HREF="com-mod.shtml#cm2700"><B>大幅にモデレートされたコメントからはカルマボーナスが消えるのですか?</B></A>
 
 </UL>
 
 <!--M2-->
-<H2><B><A HREF="metamod.shtml">�᥿��ǥ졼�����</A></B></H2>
+<H2><B><A HREF="metamod.shtml">メタモデレーション</A></B></H2>
 
 <UL> 
 
-	<LI><A HREF="metamod.shtml#mm100"><B>"M1" �Ȥ� "M2" �Ϥɤ�����
-	��̣�Ǥ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm100"><B>"M1" とか "M2" はどういう意味ですか?</A></B>
 
-	<LI><A HREF="metamod.shtml#mm200"><B>�᥿��ǥ졼�����Ȥϲ�
-	�Ǥ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm200"><B>メタモデレーションとは何ですか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm300"><B>�᥿��ǥ졼����� ������
-	��Ϥʤ����줿�ΤǤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm300"><B>メタモデレーション システムはなぜ作られたのですか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm350"><B>ï�� M2 �Ǥ���ΤǤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm350"><B>誰が M2 できるのですか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm400"><B>�᥿��ǥ졼�Ȥλ�����
-	���Ƥ�������</A></B>
+	<LI><A HREF="metamod.shtml#mm400"><B>メタモデレートの仕方を教えてください</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm500"><B>M2 �ϤɤΤ��餤�����٤Ǥ�
-	���ޤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm500"><B>M2 はどのくらいの頻度でできますか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm600"><B>M2 �ϥ�ǥ졼���Υ���ޤ�
-	�ɤΤ褦�˱ƶ����ޤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm600"><B>M2 はモデレータのカルマにどのように影響しますか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm700"><B>��ǥ졼�����ϤɤΤ���
-	�������٤� M2 ���оݤˤʤ�ޤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm700"><B>モデレーションはどのくらいの頻度で M2 の対象になりますか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm800"><B>�ʤ�Ʊ�������Ȥ��ФƤ�
-	��ΤǤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm800"><B>なぜ同じコメントが出てくるのですか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm900"><B>�錄���� index.pl �ˤϤ�
-	�� M2 �ؤΥ�󥯤��ʤ��ΤǤ��礦��?</A></B>
+	<LI><A HREF="metamod.shtml#mm900"><B>わたしの index.pl にはなぜ M2 へのリンクがないのでしょうか?</A></B>
 	
-	<LI><A HREF="metamod.shtml#mm1000"><B>��ǥ졼���� "����ɤ�ƶ
-	��" ��ɾ�����Ƥ��뤬���錄���� "���Ω��"���Ȼפ���硢�ɤ� M2
-	����Ф褤�Ǥ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm1000"><B>モデレータが "するどい洞察" と評価しているが、わたしは "役に立つ"だと思う場合、どう M2すればよいですか?</A></B>
 
-	<LI><A HREF="metamod.shtml#mm1100"><B>M2 ���Ƥ��륹�ȡ��꡼��
-	��ƤǤ��ޤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm1100"><B>M2 しているストーリーに投稿できますか?</A></B>
 
-	<LI><A HREF="metamod.shtml#mm1200"><B>M2 �Ϥ錄���Υ���ޤ˱�
-	�����ޤ���?</A></B>
+	<LI><A HREF="metamod.shtml#mm1200"><B>M2 はわたしのカルマに影響しますか?</A></B>
 
 </UL>
 
 <!-- Accounts -->
-<H2><B><A HREF="accounts.shtml">���������</A></B></H2>
+<H2><B><A HREF="accounts.shtml">アカウント</A></B></H2>
 <UL>
 
-	<LI><B><A HREF="accounts.shtml#ac100">�˥å��͡�����ѹ��Ǥ���
-	����?</A></B> 
+	<LI><B><A HREF="accounts.shtml#ac050">なぜログインする必要があるのですか?</A></B> 
 
-	<LI><B><A HREF="accounts.shtml#ac105">�ѥ���ɤ��ѹ�����ˤ�
-	�ɤ�����Ф褤�Ǥ���?</A></B>
+	<LI><B><A HREF="accounts.shtml#ac100">ニックネームは変更できますか?</A></B> 
 
-	<LI><B><A HREF="accounts.shtml#ac200">��ʬ�Υ�������Ȥ�����
-	��ˤϤɤ�����Ф褤�Ǥ���?</A></B> 
+	<LI><B><A HREF="accounts.shtml#ac105">パスワードを変更するにはどうすればよいですか?</A></B>
 
-	<LI><B><A HREF="accounts.shtml#ac300">�ѥ���ɤ�˺�줿! (��
-	����)�ѥ���ɤ������Ƥ��ʤ�!</A></B> 
+	<LI><B><A HREF="accounts.shtml#ac200">自分のアカウントを削除するにはどうすればよいですか?</A></B> 
 
-	<LI><B><A HREF="accounts.shtml#ac400">��������Ǥ��ޤ���</A></B> 
+	<LI><B><A HREF="accounts.shtml#ac300">パスワードを忘れた! (または)パスワードが送られてこない!</A></B> 
+
+	<LI><B><A HREF="accounts.shtml#ac400">ログインできません</A></B> 
 	
-	<LI><B><A HREF="accounts.shtml#ac500">���å���������դ�������
-	��ޤ���!</A></B> 
+	<LI><B><A HREF="accounts.shtml#ac500">クッキーを受け付けたくありません!</A></B> 
 	
-	<LI><B><A HREF="accounts.shtml#ac600">����ID ���̿ͤ˸�������
-	����������Ȥ���Ƥ��Ƥ����ۤ����ޤ�</A></B>
+	<LI><B><A HREF="accounts.shtml#ac600">偽のID や別人に見せかけたアカウントで投稿している奴がいます</A></B>
 	
-	<LI><B><A HREF="accounts.shtml#ac700">�������������ȤˤʤäƤ�
-	�ޤ����Ȥ��褯����ΤǤ�����</A></B> 
+	<LI><B><A HREF="accounts.shtml#ac700">突然ログアウトになってしまうことがよくあるのですが…</A></B> 
+	
+	<LI><B><A HREF="accounts.shtml#ac800">スラッシュドットへのアクセスが禁止されることはありますか?</A></B> 
+	
+	<LI><B><A HREF="accounts.shtml#ac900">わたしの IP が禁止されているのはなぜですか?</A></B> 
+	
+	<LI><B><A HREF="accounts.shtml#ac1000">IP の禁止を解除してもらうにはどうすればよいですか?</A></B> 
+	
+	<LI><B><A HREF="accounts.shtml#ac1050">RSS ヘッドラインリーダにアクセスが禁止されたというメッセージが表示されています!</A></B> 
+	
+	<LI><B><A HREF="accounts.shtml#ac1100">別の人のユーザ名がわたしのユーザページのメニューに表示されているのはなぜですか?</A></B> 
+
+	<LI><B><A HREF="accounts.shtml#ac1200">ログインセッションとは何ですか?</A></B> 
 	
 </UL>
 
+<!-- Friends and Journals -->
+<h2><strong><a href="/faq/friends.shtml">トモダチと日記システム</a></strong></h2>
+<ul>
+                <li><strong><a href="/faq/friends.shtml#fj100">わたしの日記はどこにありますか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj200">日記を何に使えばいいでしょうか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj300">スラッシュドットは日記を検閲できる?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj400">わたしの日記を読めるのは誰ですか / ほかの人の日記を読むことはできますか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj500">ほかの人に日記を読ませないようにすることはできますか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj600">ほかの人の日記を見つけるには?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj700">自分のトモダチやテキはどこで見られますか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj800">ほかの人のトモダチやテキを見ることはできますか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj900">ファンやアンチって何?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj990">コメントのスコア補正とはどのような仕組みですか / http://slashdot.jp/my/comments は何をするところですか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj980">トモのトモやトモのテキって何ですか?</a></strong></li>
+                <li><strong><a href="/faq/friends.shtml#fj1000">トモやテキを追加または削除する方法は?</a></strong></li>
+</ul>
+
 <!-- Slashdot Meta -->
-<H2><B><A HREF="slashmeta.shtml">Slashdot�ˤĤ���</A></B></H2>
+<H2><B><A HREF="slashmeta.shtml">Slashdotについて</A></B></H2>
 
 <UL>
-	<LI><B><A HREF="slashmeta.shtml#sm100">����å���ɥåȤμ��
-	�Ԥ�ï�Ǥ���?</A></B> 
+	<LI><B><A HREF="slashmeta.shtml#sm100">スラッシュドットの主催者は誰ですか?</A></B> 
 	
-	<LI><B><A HREF="slashmeta.shtml#sm150">����å���ɥåȤäƤ�
-	��������̣?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm150">スラッシュドットってどういう意味?</A></B>
 	
-	<LI><B><A HREF="slashmeta.shtml#sm120">Rob �� Jeff �ϡ������
-	����ɥåȤ���Ѥ������Ȥ������Ƥ���?</A></B> 
+	<LI><B><A HREF="slashmeta.shtml#sm120">Rob と Jeff は、スラッシュドットを売却したことを後悔している?</A></B> 
 	
-	<LI><B><A HREF="slashmeta.shtml#sm121">��Ѥ��ơ�����ʲ�ҥ�
-	�䥸�ˤʤä���Ǥ���?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm121">売却して、退屈な会社オヤジになったんですか?</A></B>
 	
-	<LI><B><A HREF="slashmeta.shtml#sm122">���ä��饹��å���ɥ�
-	��PT���롼�����ʤ��ï���ͤ������?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm122">だったらスラッシュドットPTクルーザーなんて誰が考えたんだ?</A></B>
 
-	<LI><B><A HREF="slashmeta.shtml#sm200">����å���ɥåȤˡ���
-	�����ߤ�����
-	</A></B> 
+	<LI><B><A HREF="slashmeta.shtml#sm200">スラッシュドットに○○して欲しい。</A></B> 
 
-	<LI><B><A HREF="slashmeta.shtml#sm250">����å���ɥåȤ��ɼ�
-	������ʹ����ꡢ������äƤ�ۤ���¿���󤸤�ʤ�? ��ʬ�ǤϤɤ�
-	�פäƤ��? �⤷��������ʤ��Ȥ����ʤ顢�ʤ�����ʤ������οͤ�
-	�����פäƤ�Τ����������ߤ�����</A></B> 
+	<LI><B><A HREF="slashmeta.shtml#sm250">スラッシュドットの読者の声を聞くより、言い争ってるほうが多いんじゃない? 自分ではどう思ってるの? もしそうじゃないというなら、なぜこんなに大勢の人がそう思ってるのか説明して欲しい。</A></B> 
 
-	<LI><B><A HREF="slashmeta.shtml#sm260">����å���ɥå��ɼԤ�
-	��ˤϡ�����å���ɥåȤ����˷���ˤ�äȻ��ä������ȻפäƤ�
-	�ͤ�¿���Ǥ�������å���ɥåȤα��ĤˤĤ��Ƥ�äȥ᥿�ǥ�������
-	����󤹤뵡�����Ĳ�ǽ���Ϥ���ޤ���?</A></B> 
+	<LI><B><A HREF="slashmeta.shtml#sm260">スラッシュドット読者の中には、スラッシュドットの方針決定にもっと参加したいと思ってる人も多いです。スラッシュドットの運営についてもっとメタディスカッションする機会を持つ可能性はありますか?</A></B> 
 
-	<LI><B><A HREF="slashmeta.shtml#sm300">����å���ɥåȤΥȥ�
-	�ե��å��Ϥɤ줯�餤�Ǥ���?</A></B> 
+	<LI><B><A HREF="slashmeta.shtml#sm300">スラッシュドットのトラフィックはどれくらいですか?</A></B> 
 	
-	<LI><B><A HREF="slashmeta.shtml#sm330">�ʤ�����å���ɥåȤ�
-	����ʤ����������ΤǤ���?</A></B> 
+	<LI><B><A HREF="slashmeta.shtml#sm330">なぜスラッシュドットはこんなに成功したのですか?</A></B> 
 
-	<LI><B><A HREF="slashmeta.shtml#sm400">"CmdrTaco" �� "Hemos"
-	�Ȥ����˥å��͡���Ϥɤ�������̣?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm400">"CmdrTaco" と "Hemos"というニックネームはどういう意味?</A></B>
 
-	<LI><B><A HREF="slashmeta.shtml#sm500">���ǥ�ݡ������Ϥ��ʤ�
-	�����Υ˥å��͡����ͳ����Τꤿ����ΤǤ��礦?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm500">何でレポーターはあなたたちのニックネームの由来を知りたがるのでしょう?</A></B>
 	
-	<LI><B><A HREF="slashmeta.shtml#sm550">�����Ȥˤ褯�ФƤ���
-	"Free Speech/Free Beer" �Ȥϲ��Τ��ȤǤ���?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm550">コメントによく出てくる"Free Speech/Free Beer" とは何のことですか?</A></B>
 
-	<LI><B><A HREF="slashmeta.shtml#sm600">"����å���ɥåȸ���"
-	�äƲ��Ǥ���?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm600">"スラッシュドット効果"って何ですか?</A></B>
 	
-	<LI><B><A HREF="slashmeta.shtml#sm700">����ޤǤΥ���å���ɥ�
-	�� ���ȡ��꡼����ǰ������򤫤ä���Τ�?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm700">これまでのスラッシュドット ストーリーの中で一番面白かったものは?</A></B>
 	
-	<LI><B><A HREF="slashmeta.shtml#sm800">"Geeks in Space" ��³��
-	�Ϻ��ʤ��ΤǤ���?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm800">"Geeks in Space" の続きは作らないのですか?</A></B>
 	
-	<LI><B><A HREF="slashmeta.shtml#sm800">hidden sids�ˤĤ��ƤϤ�
-	���ͤ��Ƥ����?</A></B>
+	<LI><B><A HREF="slashmeta.shtml#sm900">hidden sidsについてはどう考えているの?</A></B>
+
+	<LI><B><A HREF="slashmeta.shtml#sm1000">CowboyNeal って誰/何?</A></B>
+
+	<LI><B><A HREF="slashmeta.shtml#sm1100">スラッシュドットではみんなが RIAA、MPAA、それにMicrosoft を嫌っていると思っていました。 なのになぜ CD や映画や Windows のゲームを派手に宣伝するのですか?</A></B>
 	
 </UL>
 
 <!-- Tech -->
-<H2><B><A HREF="tech.shtml">Tech</A></B></H2>
+<H2><B><A HREF="tech.shtml">技術</A></B></H2>
 
 <UL>
-	<LI><B><A HREF="tech.shtml#te050">What kind of hardware does Slashdot 
-	run on?</A></B>
+	<LI><B><A HREF="tech.shtml#te050">スラッシュドットはどんなハードウェアで運用されているのですか?</A></B>
 
-	<LI><B><A HREF="tech.shtml#te100">Why doesn't Slashdot display in browser
-	X? </A></B> 
+	<LI><B><A HREF="tech.shtml#te100">○○というブラウザでスラッシュドットが表示されないのはなぜ? </A></B> 
 
-	<LI><B><A HREF="tech.shtml#te200">Where/why do you use cookies? </A></B>
+	<LI><B><A HREF="tech.shtml#te200">Cookie をどこで何のために使っているのですか? </A></B>
 
-	<LI><B><A HREF="tech.shtml#te250">What kind of logging does Slashdot do 
-	with regard to its readers?</A></B>
+	<LI><B><A HREF="tech.shtml#te250">読者に関するどのようなログをとっていますか?</A></B>
 
-	<LI><B><A HREF="tech.shtml#te300">Can I have your poll scripts? </A></B>
+	<LI><B><A HREF="tech.shtml#te300">投票のスクリプトを手に入れることはできますか? </A></B>
 
-	<LI><B><A HREF="tech.shtml#te400">Why are you generating so many pages 
-	dynamically? </A></B>
+	<LI><B><A HREF="tech.shtml#te350">スラッシュドットのヘッドラインを取り込んでもかまいませんか? </A></B>
 
-	<LI><B><A HREF="tech.shtml#te500">What about the source code to this
-	site? </A></B>
+	<LI><B><A HREF="tech.shtml#te400">たくさんのページを動的に生成しているのはなぜですか? </A></B>
 
-	<LI><B><A HREF="tech.shtml#te600">If you were just starting to code 
-	Slashdot.org today, what would you code the site in PHP or mod_perl?</A></B>
+	<LI><B><A HREF="tech.shtml#te500">このサイトのソースコードについて教えてください</A></B>
+
+	<LI><B><A HREF="tech.shtml#te600">今日から Slashdot.org のコードを書き始めるとしたら、PHP と mod_perl のどちらを使いますか?</A></B>
 	
-	<LI><B><A HREF="tech.shtml#te700">Do you guys ever worry that some site 	
-	might steal Slashcode and try and outdo Slashdot?</A></B>
+	<LI><B><A HREF="tech.shtml#te700">どこかのサイトが Slashcode を盗んで、スラッシュドットよりうまくやるのではないかと心配ではないの?</A></B>
 	
-	<LI><B><A HREF="tech.shtml#te800">How did it feel when you opensourced 
-	slashcode, allowing people to tinker with your 'baby' as it were?  Are 
-	you still involved with the process as much, or is your time taken up by
-	reading email and such?</A></B>
+	<LI><B><A HREF="tech.shtml#te800">Slashcode をオープンソースにして、いわば「我が子」を他人が自由にいじれるようにしたときにどう感じましたか? 今でもコーディングにかかわっていますか、それともメールを読んだりとかそういったことに時間をとられているのですか?</A></B>
 	
-	<LI><B><A HREF="tech.shtml#te900">What's the biggest benefit to come out 
-	of the opening of Slash so far?  Better efficiency?  Tighter 
-	security?</A></B>
+	<LI><B><A HREF="tech.shtml#te900">Slash を公開したことによる最大のメリットは何ですか? 効率化ですか、それともセキュリティの強化ですか?</A></B>
 	
 
 </UL>
 
 <!-- Advertising -->
-<H2><B><A HREF="advertising.shtml">Advertising</A></B></H2>
+<H2><B><A HREF="advertising.shtml">広告</A></B></H2>
 <UL>
-	<LI><B><A HREF="advertising.shtml#ad100">Can I advertise on Slashdot?
-	</A></B>
+	<LI><B><A HREF="advertising.shtml#ad100">スラッシュドット上に広告を出すことができますか?</A></B>
 
-	<LI><B><A HREF="advertising.shtml#ad400">What is AdFu?</A></B> 
+	<LI><B><A HREF="advertising.shtml#ad400">AdFuって何ですか?</A></B> 
 
-	<LI><B><A HREF="advertising.shtml#ad500">Why aren't you using AdFu any 
-	more?</A></B>
+	<LI><B><A HREF="advertising.shtml#ad500">何故、今はもうAdFuを使っていないのですか?</A></B>
 
-	<LI><B><A HREF="advertising.shtml#ad600">A banner ad is screwing up my 
-	browser!</A></B>
+	<LI><B><A HREF="advertising.shtml#ad600">バナー広告は私のブラウザを台無しにしています!</A></B>
 </UL>
 
 <!-- Suggestions -->
-<H2><B><A HREF="suggestions.shtml">Suggestions</A></B></H2>
+<H2><B><A HREF="suggestions.shtml">提案</A></B></H2>
 <UL>
-	<LI><B><A HREF="suggestions.shtml#su100">How about an NNTP news gateway? 
-	</A></B>
+	<LI><B><A HREF="suggestions.shtml#su100">NNTP ニュースゲートウェイを実装したらどうでしょう?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su200">Have you considered rewriting
-	Slashdot in C? </A></B>
+	<LI><B><A HREF="suggestions.shtml#su200">スラッシュドットを C で書き直そうと考えたことは? </A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su300">Have you considered PHP?
-	</A></B>
+	<LI><B><A HREF="suggestions.shtml#su300">PHP の使用を検討したことは?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su400">How about a page for rejected or
-	pending story submissions? </A></B>
+	<LI><B><A HREF="suggestions.shtml#su400">保留中や却下されたタレコミのためのページを用意したらどうでしょう? </A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su500">How about giving us a reason for
-	rejecting submissions?</A></B> 
+	<LI><B><A HREF="suggestions.shtml#su500">タレコミが却下された理由を開示してはどうでしょう?</A></B> 
 
-	<LI><B><A HREF="suggestions.shtml#su600">How about allowing readers to
-	directly administer the submissions bin?</A></B>
+	<LI><B><A HREF="suggestions.shtml#su600">タレコミページを読者が直接管理できるようにしたらどうですか?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su700">How about an AvantGo channel, or
-	some other PDA interface?</A></B>
+	<LI><B><A HREF="suggestions.shtml#su700">AvantGo チャネルやその他の PDA インタフェースを使えるようにしませんか?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su800">How about a WAP
-	interface?</A></B>
+	<LI><B><A HREF="suggestions.shtml#su800">WAP インタフェースへの対応はどうでしょう?</A></B>
 	
-	<LI><B><A HREF="suggestions.shtml#su850">Getting the Slashdot headlines 
-	by 'finger @www.slashdot.org' would be nice, don't you think?</A></B>
+	<LI><B><A HREF="suggestions.shtml#su850">'finger @www.slashdot.org' でスラッシュドットのヘッドラインを取得できたら便利だと思いませんか?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su900">Slashdot should cache pages to
-	prevent the Slashdot Effect! </A></B>
+	<LI><B><A HREF="suggestions.shtml#su900">スラッシュドット効果を防ぐためにページをキャッシュすべきだ!</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su910">Is is possible to have META tags
-	that Slashdot looks for in a story link before allowing it to be 
-	submitted/posted? Many times a server can't handle the load of a
-	Slashdotting. So can the site have tags to prevent it from being added 
-	to a slashdot story?</A></B>
+	<LI><B><A HREF="suggestions.shtml#su910">ストーリーを掲載する前に、スラッシュドットからリンク先の META タグをチェックすることはできませんか? サーバがスラッシュドット効果の負荷に耐えきれないことがよくあります。 サイトでタグを指定して、スラッシュドットのストーリーからのリンクを拒否できるようにしたらどうでしょう?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su920">It seems that many moderators, 
-	because of the way they read comments, (higher thresholds, older 
-	comments first), only see comments that are posted with a bonus, or have
-	already been moderated up. Wouldn't it make more sense to require 
-	moderators to read at a threshold of 0 with newest comments 
-	first?</A></B>
+	<LI><B><A HREF="suggestions.shtml#su920">多くのモデレータが、よりしきい値の高い、より古いコメントを優先して読むせいで、ボーナス付きで投稿されたコメントや、すでに良い評価を受けているコメントしか見ていないように思えます。 最新のコメントを優先し、しきい値 0 で読むようにモデレータに義務付けたほうがよいのではありませんか?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su930"> Have you ever thought about 
-	hiding comment scores when people are moderating? It might help 
-	alleviate "Group Think."</A></B>
+	<LI><B><A HREF="suggestions.shtml#su930">モデレート中はコメントのスコアが表示されないようにしたらどうでしょう? "集団思考" の解消に役立つかもしれません</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su1000">I have a suggestion for 
-	improving moderation.</A></B> 
+	<LI><B><A HREF="suggestions.shtml#su1000">モデレーションを改善するための提案があります</A></B> 
 	
-	<LI><B><A HREF="suggestions.shtml#su1100">What about other moderation 
-	models such as those used by Kuro5hin, everything2, or
-	advogato.org?</A></B>
+	<LI><B><A HREF="suggestions.shtml#su1100">Kuro5hin、everything2、または advogato.org で使われているようなほかのモデレーション方式を採用してはどうでしょう?</A></B>
 
-	<LI><B><A HREF="suggestions.shtml#su1200">Will some of the subsections 	
-	spin off as sites in their own right? For example, it would be cool if 
-	the YRO section were to hit dead tree form in some way like soon. It's 
-	too important to remain outside the radars of 9-5ers in  Pleasantville. 
-	</A></B>	
+	<LI><B><A HREF="suggestions.shtml#su1200">一部のサブセクションが独立したサイトとしてスピンオフすることはありますか?</A></B>	
+
+	<LI><B><A HREF="suggestions.shtml#su1300">論文執筆のためにスラッシュドットに関する情報が必要です!</A></B>	
+
+	<LI><B><A HREF="suggestions.shtml#su1400">スラッシュドットのアイコンをわたしのサイトで自由に使ってかまいませんか?</A></B>	
+
+	<LI><B><A HREF="suggestions.shtml#su1500">スラッシュドットにバグを見つけました。誰に連絡すればよいですか?</A></B>	
+
 </UL>
 
 <!--#include virtual="/slashfoot.inc"-->

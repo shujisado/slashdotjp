@@ -1,25 +1,34 @@
-<HTML>
-<HEAD>
-        <TITLE>Slashdot FAQ (���ܸ���) - �᥿��ǥ졼�����</TITLE>
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - メタモデレーション</title>
+
 <!--#include virtual="/slashhead.inc"-->
 
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="com-mod.shtml">���Υ��������</A>
-		<TD><A HREF="accounts.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="com-mod.shtml">前のセクション</A>
+		<TD><A HREF="accounts.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 <HR><BR>
 
 
 <A NAME="mm100">
-<H2>"M1" �Ȥ� "M2" �Ϥɤ�������̣�Ǥ���?</H2>
+<H2>"M1" とか "M2" はどういう意味ですか?</H2>
 
-	<P>����ϥ���å���ɥå���ͭ��ά��ǡ�M1 �� "��ǥ졼�����"��
-	M2 �� "�᥿��ǥ졼�����" ���̣���ޤ����Ѳ����⥢��ǡ�
-	"M2ed" �ʤ� "�᥿��ǥ졼�Ȥ��줿"��"M1er" �ʤ� "��ǥ졼��"
-	���̣���ޤ���
+<P>これはスラッシュドット特有の略語で、M1 は "モデレーション"、
+M2 は "メタモデレーション" を意味します。変化形もアリで、
+"M2ed" なら "メタモデレートされた"、"M1er" なら "モデレータ"
+を意味します。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -30,14 +39,14 @@
 
 	
 <A NAME="mm200">
-<H2>�᥿��ǥ졼�����Ȥϲ��Ǥ���?</H2>
+<H2>メタモデレーションとは何ですか?</H2>
 
-	<P>��ǥ졼����󥷥��ƥ�������ܤˤ�������ʬ�ǡ�����ե�����
-	��ǥ졼����¸�ߤ��н褹�뤿��˹ͤ����ޤ���������å���ɥ�
-	�ȤΥ������� �桼���� "�᥿��ǥ졼��" �Ȥʤꡢ�����������
-	�� 10 ��Υ�������Ƥ� "ɾ����ɾ��" ���ޤ����Ĥޤꡢ�᥿���
-	�졼���ϡ���ǥ졼����ɾ�����Ф��ơ�"��ʿ"��"��ʿ�Ǥʤ�"��
-	"�ɤ���Ǥ�ʤ�" �Τ����줫��ɾ����Ϳ����櫓�Ǥ���
+<P>モデレーションシステムの二層目にあたる部分で、アンフェアな
+モデレータの存在に対処するために考えられました。スラッシュドットの
+ログイン ユーザが "メタモデレータ" となり、ランダムに選んだ
+10 件のコメント投稿の "評価を評価" します。つまり、メタモデレータは、
+モデレータの評価に対して、"公平"、"公平でない"、
+"どちらでもない" のいずれかの評価を与えるわけです。
 
 	<BR><BR>
 	<I><SMALL>
@@ -46,26 +55,23 @@
 	</SMALL></I>
 
 <A NAME="mm300">
-<H2>�᥿��ǥ졼����� �����ƥ�Ϥʤ����줿�ΤǤ���?</H2>
+<H2>メタモデレーションシステムはなぜ作られたのですか?</H2>
 
-	<P>����ϡ���ǥ졼����� �����ƥ� (M1) �������ȵ�ǽ���Ƥ���
-	�����ǧ���뤿��μ¸��Ȥ��ƻϤޤ�ޤ��������ޤǤϡ������ʥ��
-	�졼���� M1 ����ԥꥹ�Ȥ��鳰���Τ���Ω�äƤ��ޤ���
-	
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
-	Last Modified: 6/12/00 <BR>
-	</SMALL></I>
+<p>メタモデレーションは、モデレーションシステム (M1) がちゃんと機能して
+いるかを確認するための実験として始まりました。いまでは、悪質な
+モデレータを M1候補者リストから外し、優良なモデレータにはごほうびと
+してより贅沢なモデレータポイントを与えるのに役立っています。</p>
+<p><em><small>Answered by: <a href="mailto:loonxtall@hotmail.com">Loon</a>
+<br> Last Modified: 5/21/03</small></em></p>
 
 <A NAME="mm350">
-<H2>ï�� M2 �Ǥ���ΤǤ���?</H2>
+<H2>誰が M2 できるのですか?</H2>
 
-	<P>�᥿��ǥ졼���ˤʤ��Τϡ������ƥ������������Ȥ���ǡ�
-	�Ť���� 90% ��������äƤ���ͤǤ����Ĥޤꡢ��������Ȥ����
-	���Ƥ��顢�������������֤��� 2 ����餤�ФäƤ��顢�Ȥ�����
-	�Ȥˤʤ�ޤ������δ��֤ϡ����ʤ��θ�˥�������Ȥ��ɤΤ��餤��
-	���ԡ��ɤ������뤫�ˤ�ä��Ѥ��ޤ���
+<P>メタモデレータになれるのは、システムの全アカウントの中で、
+古い順に 92.5% 以内に入っている人です。つまり、アカウントを作成
+してから、だいたい数週間から 2 か月くらい経ってから、というこ
+とになります。この期間は、あなたの後にアカウントがどのくらいの
+スピードで増えるかによって変わります。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -74,12 +80,11 @@
 	</SMALL></I>
 
 <A NAME="mm400">
-<H2>�᥿��ǥ졼�Ȥλ����򶵤��Ƥ�������</H2>
+<H2>メタモデレートの仕方を教えてください</H2>
 
-	<P>�������󤷤Ƥ���᥿��ǥ졼������Ԥʤ����Ǥ�᥿��ǥ졼
-	�ȤǤ��ޤ����ᥤ�� �ڡ����ξ�ˤ��� "�᥿��ǥ졼�Ȥ��ޤ���"
-	�Ȥ�����󥯤򥯥�å����Ƥ���������M2 �ڡ����˰�ư��
-	�ޤ���
+<P>ログインしているメタモデレータ候補者ならだれでもメタモデレート
+できます。メイン ページの上にある "メタモデレートしますか"
+というリンクをクリックしてください。M2 ページに移動します。
 
 	<BR><BR>
 	<I><SMALL>
@@ -89,25 +94,23 @@
 
 	
 <A NAME="mm500">
-<H2>M2 �ϤɤΤ��餤�����٤ǤǤ��ޤ���?</H2>
+<H2>M2 はどのくらいの頻度でできますか?</H2>
 
-	<P>GMT ����ˤ��ơ�1 �� 1 ��Ǥ���<BR>
-	(���ա����ܻ��֤��ȸ���9������������Ϥ��ޤ�ޤ�)
+<P>1日に数回です。(M1とM2のバランスを保つために時々わずかにこれを調節する時もある)
 	
 	<BR><BR>
 	<I><SMALL>
-	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
-	Last Modified: 6/12/00 <BR>
+	Answered by: Jamie <BR>
+	Last Modified: 5/21/03 <BR>
 	</SMALL></I>
 	
 <A NAME="mm600">
-<H2>M2 �ϥ�ǥ졼���Υ���ޤˤɤΤ褦�˱ƶ����ޤ���?</H2>
+<H2>M2 はモデレータのカルマにどのように影響しますか?</H2>
 
-	<P>����Ϥ���äȤ�䤳������Ǥ��������Υ����व�ȡ���ǥ졼
-	���Υ���ޤȡ��ۤ��Τ����Ĥ����װ��˱����ơ��᥿��ǥ졼�����
-	�η�̤���ǥ졼���Υ���ޤ��ѹ����ʤ����Ȥ⤢��ޤ���...�ä�
-	���������ˤʤäƤޤ���͡��ɤ����Ƥ��Τꤿ���ä��饳���ɤ򸫤Ƥ�
-	��������
+<P>これはちょっとややこしいんですが、このランダムさと、モデレータの
+カルマと、ほかのいくつかの要因に応じて、メタモデレーションの結果が
+モデレータのカルマを変更しないこともあります。...って全然答えに
+なってませんね。どうしても知りたかったらコードを見てください。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -117,24 +120,20 @@
 
 
 <A NAME="mm700">
-<H2>��ǥ졼�����ϤɤΤ��餤�����٤� M2 ���оݤˤʤ�ޤ���?</H2>
+<H2>モデレーションはどのくらいの頻度で M2 の対象になりますか?</H2>
 
-	<P>��Ƥ��饹�ȡ��꡼�Υ��������֤ޤǤ� 14 ���֤ǡ��ʤ�٤���
-	�ˤ��оݤȤʤ�褦�ˤ��Ƥ��ޤ���
-	
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
-	Last Modified: 6/12/00 <BR>
-	</SMALL></I>
+<p>システムがいつもどおり順調に動いているときは  5 回です。
+めったにないことですが、通常より M1 が多かったり M2 が多かったりしたときは、
+一時的に3回や7回になることがあります。</p>
+<p><em><small>Answered by: <a href="mailto:jamie@slashdot.org">Jamie</a>
+<br> Last Modified: 5/21/03</small></em></p>
 
 <A NAME="mm800">
-<H2>�ʤ�Ʊ�������Ȥ��ФƤ���ΤǤ���?</H2>
+<H2>なぜ同じコメントが出てくるのですか?</H2>
 
-	<P>M2 ��ɾ���оݤϥ�ǥ졼�����Ǥ��äơ������ȤǤϤ���ޤ�
-	��Ʊ�������Ȥ�ʣ�����ǥ졼�Ȥ���Ƥ���С����줾���ä�
-	��ǥ졼������ɾ�����뤿��ˡ�ʣ����᥿��ǥ졼������оݤ�
-	�ʤ�ޤ���
+<P>M2 の評価対象はモデレーションであって、コメントではありません。
+同じコメントが複数回モデレートされていれば、それぞれ違った
+モデレーションを評価するために、複数回メタモデレーション対象になります。
 	
 	<BR><BR>
 	<I><SMALL>
@@ -144,27 +143,23 @@
 
 
 <A NAME="mm900">
-<H2>�錄���� index.pl �ˤϤʤ� M2 �ؤΥ�󥯤��ʤ��ΤǤ��礦��?</H2>
+<H2>わたしの index.pl にはなぜ M2 へのリンクがないのでしょうか?</H2>
 
-	<P>M2 ��󥯤�ɽ����˸������褦�ʥХ��� Slashcode �ˤ����
-	�����Τ�ޤ��󡣤��������������󤷤Ƥ��ʤ��桼���ˤ� M2 ���
-	��ɽ������ޤ���
-	�᥿��ǥ졼�Ȥ���ˤϡ��������󤷤�
-	<A  HREF="/metamod.pl">/metamod.pl</A>�˹ԤäƤ�����������
-	������Х���ǥå��� �ڡ����˥�󥯤������Ϥ��Ǥ���
-
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:loonxtall@hotmail.com">Loon</A> <BR>
-	Last Modified: 6/12/00 <BR>
-	</SMALL></I>
+<p>まず、M2 するにはログインしている必要があります。また、全体の仕組みを
+きちんと理解するために、サイトである程度の期間 (数か月) を費やす
+必要があります。<a href="#mm350">ここの説明を参照してください</a>。
+カルマは中立以上でなければなりません。
+また、<a href="//slashdot.jp/users.pl?op=edithome">モデレータ候補</a>
+チェックボックスをオフにしていると、M2 する意志がないものと見なされます。</p>
+<p><em><small>Answered by: <a href="mailto:jamie@slashdot.org">Jamie</a>
+<br> Last Modified: 5/21/03</small></em></p>
 
 <A NAME="mm1000"> 
-<H2>��ǥ졼���� "����ɤ�ƶ��" ��ɾ�����Ƥ��뤬���錄���� "���Ω��"���Ȼפ���硢�ɤ� M2 ����Ф褤�Ǥ���?</H2>
+<H2>モデレータが "するどい洞察" と評価しているが、わたしは "役に立つ"だと思う場合、どう M2 すればよいですか?</H2>
 	
-	<P>����ʤ˸�̩�ˤʤ�ɬ�פϤ���ޤ���"����ɤ�ƶ��" ��
-	"���Ω��" �ϡ������Ȥ�Ϳ����ƶ���Ʊ���Ǥ���ñ�ʤ�Ŀ�Ū
-	����ΰ㤤�Ǥ��Τǡ�"��ʿ" �ˤ��Ƽ��˿ʤ�Ǥ���������
+<P>そんなに厳密になる必要はありません。"するどい洞察" も
+"役に立つ" は、コメントに与える影響は同じです。単なる個人的
+見解の違いですので、"公平" にして次に進んでください。
 
 	<BR><BR>
 	<I><SMALL>
@@ -174,10 +169,10 @@
 
 
 <A NAME="mm1100">
-<H2>M2 ���Ƥ��륹�ȡ��꡼����ƤǤ��ޤ���?</H2>	
+<H2>M2 しているストーリーに投稿できますか?</H2>	
 
-	<P>�Ǥ��ޤ���<A HREF="com-mod.shtml#cm600">��Ƶ����� M1 ����
-	��Ŭ�Ѥ���ޤ���</A>.
+<P>できます。<A HREF="com-mod.shtml#cm600">投稿規制は M1 だけに
+適用されます。</A>.
 
 	<BR><BR>
 	<I><SMALL>
@@ -186,28 +181,25 @@
 	</SMALL></I>
 	
 <A NAME="mm1200">
-<H2>M2 �Ϥ錄���Υ���ޤ˱ƶ����ޤ���?</H2>
+<H2>M2 はわたしのカルマに影響しますか?</H2>
 
-	���뤫�⤷��ޤ��󡣥���ޤ��㤤���ϡ������⤯�ʤ뤫�⤷���
-	���󡣤������� +1 �ˤʤ�ۤɤǤϤ���ޤ���
-	<A HREF="com-mod.shtml#800">[��Ϣ����]</A>��+1 �ˤ�
-	��ˤϡ������Ȥ���Ƥ��ơ���ǥ졼�����ǹ⤯ɾ�������ɬ��
-	������ޤ���M2 �ǥ���ޤ��⤯�ʤ�Τϡ��ߤ�ʤ� M2 ���Ƥ�餤
-	��������Ǥ��äơ����줬���Ѥ����褦�ʤ��Ȥ����äƤϤ����ޤ�
-	�󤫤顣
+<p>するかもしれません。 カルマが比較的低い場合は、努力に応じて
+ある程度のカルマを得られる可能性があります。 
+ただし、<a href="com-mod.shtml#cm800">+1 のカルマボーナス</a>を
+獲得できるほどのカルマは得られません。 ボーナスを獲得するには、
+コメントを投稿し、モデレーションで高く評価される必要があります。
+M2 でカルマが高くなるのは、みんなに M2 してもらいたいからであって、
+それが悪用されるようなことがあってはいけませんから。</p>
+<p><em><small>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a>
+<br> Last Modified: 5/21/03</small></em></p>
 
-	<BR><BR>
-	<I><SMALL>
-	Answered by: <A HREF="mailto:malda@slashdot.org">CmdrTaco</A> <BR>
-	Last Modified: 6/12/00 <BR>
-	</SMALL></I> 
 
 <BR><HR>
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="com-mod.shtml">���Υ��������</A>
-		<TD><A HREF="accounts.shtml">���Υ��������</A>
-		<TD><A HREF="index.shtml">����ǥå���</A>
+		<TD><A HREF="com-mod.shtml">前のセクション</A>
+		<TD><A HREF="accounts.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 
