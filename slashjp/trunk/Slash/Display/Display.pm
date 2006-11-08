@@ -358,6 +358,7 @@ my $strip_mode = sub {
 	strip_plaintext		=> \&strip_plaintext,
 	strip_mode		=> [ $strip_mode, 1 ],
 	chopEntity		=> [ \&chopEntityFactory, 1],
+	encode_uri_safe		=> \&encode_uri_safe,
 	%FILTERS
 );
 
@@ -585,6 +586,15 @@ sub chopEntityFactory {
 		my $r = &chopEntity($s, $l || 80);
 		$r . ($s ne $r ? "..." : "");
 	};
+}
+
+sub encode_uri_safe {
+	# Do conservative escape.
+	# This will escape '?', '#', and many non-special chars,
+	# so mengle like query strings and fragments. Use carefully!
+	my $s = shift;
+	$s =~ s|([^0-9a-zA-Z/.,!=~_-]+)|join("%", '', (unpack("H*", $1) =~ m/../g))|eg;
+	$s;
 }
 
 1;
