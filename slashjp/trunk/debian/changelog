@@ -1,3 +1,9 @@
+slash (2.5.0.119-12) unstable; urgency=low
+
+  * add uri_encode_safe filter
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  8 Nov 2006 12:57:03 +0900
+
 slash (2.5.0.119-11) unstable; urgency=low
 
   * support dirskin in adminmail and counthits.

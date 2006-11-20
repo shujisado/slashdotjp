@@ -219,6 +219,10 @@ sub create {
 			prefix  => 'slash',
 			uri     => 'http://purl.org/rss/1.0/modules/slash/',
 		) if $item->{story};
+		$rss->add_module(
+			prefix => 'content',
+			uri    => 'http://purl.org/rss/1.0/modules/content/',
+		);
 
 	} elsif ($version >= 0.91) {
 		# fix mappings for 0.91
@@ -319,6 +323,14 @@ sub create {
 					if ($version >= 0.91) {
 						my $desc = $self->rss_item_description($item->{$key});
 						$encoded_item->{$key} = $desc if $desc;
+					}
+				} elsif ($key eq 'content:encoded' && $self->{rdfitem_content}) {
+					if ($version == 1) {
+						my $rdfitemdesc_html_bak = $self->{rdfitemdesc_html};
+						$self->{rdfitemdesc_html} = 1;
+						my $encoded = $self->rss_item_description($item->{$key});
+						$encoded_item->{content}->{encoded} = "<![CDATA[" . $self->encode($encoded) . "]]>";
+						$self->{rdfitemdesc_html} = $rdfitemdesc_html_bak;
 					}
 				} else {
 					my $data = $item->{$key};

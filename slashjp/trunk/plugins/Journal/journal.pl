@@ -244,6 +244,7 @@ sub displayRSS {
 			},
 			title		=> $article->[2],
 			description	=> strip_notags($article->[1]),
+			'content:encoded' =>  balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 }),
 			'link'		=> root2abs() . '/~' . fixparam($nickname) . "/journal/$article->[3]",
 		};
 	}
