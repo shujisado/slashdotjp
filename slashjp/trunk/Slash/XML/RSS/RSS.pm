@@ -162,6 +162,9 @@ sub create {
 	$self->{rdfitemdesc_html} = defined $param->{rdfitemdesc_html}
 		? $param->{rdfitemdesc_html}
 		: $constants->{rdfitemdesc_html};
+	$self->{rdfitem_content} = defined $param->{rdfitem_content}
+		? $param->{rdfitem_content}
+		: $constants->{rdfitem_content};
 
 	my $rss = XML::RSS->new(
 		version		=> $version,

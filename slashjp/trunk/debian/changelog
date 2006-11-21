@@ -1,6 +1,8 @@
 slash (2.5.0.119-12) unstable; urgency=low
 
   * add uri_encode_safe filter
+  * add content:encoded in RSS1.0 of journal
+    (enabled by rdfitem_content variable.)
 
  -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  8 Nov 2006 12:57:03 +0900
 
