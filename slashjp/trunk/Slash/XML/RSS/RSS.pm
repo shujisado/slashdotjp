@@ -332,7 +332,9 @@ sub create {
 						my $rdfitemdesc_html_bak = $self->{rdfitemdesc_html};
 						$self->{rdfitemdesc_html} = 1;
 						my $encoded = $self->rss_item_description($item->{$key});
-						$encoded_item->{content}->{encoded} = "<![CDATA[" . $self->encode($encoded) . "]]>";
+						# TODO: $self->encode() do NOT work in Unicode-mode.
+						# TODO: If it works properly, we don't need CDATA quote.
+						$encoded_item->{content}->{encoded} = "<![CDATA[${encoded}]]>";
 						$self->{rdfitemdesc_html} = $rdfitemdesc_html_bak;
 					}
 				} else {
