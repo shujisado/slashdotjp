@@ -159,7 +159,7 @@ case "$1" in
 		done
 		;;
 
-	restart)
+	restart|force-reload)
 		$0 stop;
 		echo -n "Sleeping 10 seconds to be clean: "; 
 		sleep 10;
