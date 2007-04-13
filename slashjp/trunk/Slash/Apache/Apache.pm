@@ -368,7 +368,7 @@ sub IndexHandler {
 
 		# $USER_MATCH defined above
 		if ($dbon && ($is_user || $has_daypass)) {
-			$r->uri( $uri . $gSkin->{index_handler} );
+			$r->uri($uri . $gSkin->{index_handler});
 			$r->filename("$basedir/$gSkin->{index_handler}");
 			# URI->filname conversion done, don't continue
 			$r->set_handlers(PerlTransHandler => undef);
