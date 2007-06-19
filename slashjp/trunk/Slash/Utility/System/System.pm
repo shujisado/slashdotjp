@@ -149,7 +149,7 @@ sub sendEmail {
 		To		=> $addr,
 		# put in vars ... ?
 		'Content-type'			=> qq|text/plain; charset="$b_code"|,
-		'Content-transfer-encoding'	=> '8bit',
+		'Content-transfer-encoding'	=> $constants->{mail_content_transfer_encoding} || '8bit',
 		'Message-Id'			=> messageID(),
 	);
 
@@ -229,7 +229,7 @@ sub bulkEmail {
 		ERRFILE	=> $errfile,
 		# put in vars ... ?
 		'Content-type'			=> qq|text/plain; charset="$b_code"|,
-		'Content-transfer-encoding'	=> '8bit',
+		'Content-transfer-encoding'	=> $constants->{mail_content_transfer_encoding} || '8bit',
 		'Message-Id'			=> messageID(),
 	);
 	my $return = $bulk->bulkmail;
