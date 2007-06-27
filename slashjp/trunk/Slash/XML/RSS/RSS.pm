@@ -234,7 +234,6 @@ sub create {
 		$channel{managingEditor} = delete $channel{publisher};
 		$channel{webMaster}      = delete $channel{creator};
 		$channel{copyright}      = delete $channel{rights};
-		delete $channel{description};
 
 	} else {  # 0.9
 		for (keys %channel) {
@@ -439,7 +438,7 @@ sub rss_story {
 		}
 	}
 
-	if ($version >= 0.91) {
+	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
 		$encoded_item->{description} = $desc if $desc;
 	}
