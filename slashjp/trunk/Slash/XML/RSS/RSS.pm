@@ -234,6 +234,7 @@ sub create {
 		$channel{managingEditor} = delete $channel{publisher};
 		$channel{webMaster}      = delete $channel{creator};
 		$channel{copyright}      = delete $channel{rights};
+		delete $channel{description};
 
 	} else {  # 0.9
 		for (keys %channel) {
