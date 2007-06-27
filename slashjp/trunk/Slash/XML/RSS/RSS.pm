@@ -323,7 +323,7 @@ sub create {
 
 			for my $key (keys %$item) {
 				if ($key eq 'description') {
-					if ($version >= 0.91) {
+					if ($version >= 1.0) {
 						my $desc = $self->rss_item_description($item->{$key});
 						$encoded_item->{$key} = $desc if $desc;
 					}

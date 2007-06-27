@@ -77,7 +77,7 @@ sub _do_rss {
 		}
 	}
 
-	my $ext = $version == 0.9 && $type eq 'rss' ? 'rdf' : $type;
+	my $ext = $version == 0.91 && $type eq 'rss' ? 'rdf' : $type;
 	my $filename = "$file.$ext";
 
 	my $rss = xmlDisplay($type, {
@@ -98,7 +98,7 @@ sub _do_rss {
 		if -d "$constants->{basedir}/privaterss/";
 }
 
-sub newrdf  { _do_rss(@_, '0.9') } # RSS 0.9
+sub newrdf  { _do_rss(@_, '0.91') } # RSS 0.91
 sub newrss  { _do_rss(@_, '1.0') } # RSS 1.0
 sub newatom { _do_rss(@_, '1.0', 'atom') } # Atom 1.0
 
