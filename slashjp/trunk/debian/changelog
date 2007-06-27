@@ -1,3 +1,10 @@
+slash (2.5.0.119-13) unstable; urgency=low
+
+  * task/open_backend.pl: change RSS version from 0.9 to 0.91
+  * remove description from RSS0.91
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 27 Jun 2007 17:28:19 +0900
+
 slash (2.5.0.119-12) unstable; urgency=low
 
   * add uri_encode_safe filter
