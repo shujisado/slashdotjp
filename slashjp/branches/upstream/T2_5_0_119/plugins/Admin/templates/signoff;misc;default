@@ -1,0 +1,27 @@
+__section__
+default
+__description__
+stoid = stoid of story signoff is for
+storylink = is this to be included in a listing of storylinks on index.pl (if so we'll put it inside a list item)
+checked = should this box be checked?
+__title__
+Signoff checkbox
+__page__
+misc
+__lang__
+en_US
+__name__
+signoff
+__template__
+[% IF constants.plugin.Ajax && constants.signoff_use %]
+[% checked = Slash.db.hasUserSignedStory(stoid, user.uid); %]
+[% IF storylink %]
+<li class="signoff">[% END %]
+[% PROCESS ajax_reskey_signoff reskey_label => 'signoff-reskey-' _ stoid, reskey_name => 'ajax_admin' %]
+<input type="checkbox" name="adminsignoff" value="[% stoid %]" onclick="admin_signoff(this);"[% IF checked; constants.markup_checked_attribute; END %]><span id="signoff_[% stoid %]"><b>Sign</b></span>
+[% IF storylink %]</li>[% END %]
+[% END %]
+__seclev__
+10000
+__version__
+$Id: signoff;misc;default,v 1.11 2006/03/29 22:46:39 pudge Exp $

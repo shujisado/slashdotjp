@@ -1,0 +1,39 @@
+__section__
+default
+__description__
+Text to display to users banned by IPID/SubnetID for hitting /palm.
+
+* ip = their (un-encoded) IP number
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+bannedtext_palm
+__template__
+<html>
+<head><title>[% constants.sitename %] says: Slow down your palm crawler</title>
+<meta name="palmcomputingplatform" content="true"><meta name="palmlauncherrevision" content="1.0"></head>
+<body>
+Your software that crawls [% constants.sitename %]'s Palm pages is too
+greedy and too fast. Be nice and tell your software to ease up on us.
+
+<p>This ban will be lifted in 72 hours. Please don't email us before then.
+
+<p>If you feel that this is unwarranted, feel free to include your IP address
+(<b>[% ip %]</b>) in the
+subject of an email to
+<a href="mailto:[% constants.adminmail_ban | strip_attribute %]">[% constants.adminmail_ban %]</a>,
+and we will examine why there is a ban. If you fail to include the IP
+address (again, <em>in the subject!</em>), then your message will be
+deleted and ignored. I mean come on, we're good, we're not psychic.
+</body>
+</html>
+
+__seclev__
+500
+__version__
+$Id: bannedtext_palm;misc;default,v 1.2 2005/07/27 22:54:46 pudge Exp $

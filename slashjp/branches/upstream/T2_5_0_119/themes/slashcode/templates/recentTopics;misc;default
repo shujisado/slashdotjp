@@ -1,0 +1,28 @@
+__section__
+default
+__description__
+HTML code for the icons for the last 5 stories posted
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+recentTopics
+__instructions__
+placeholder
+__template__
+	<a href="[% gSkin.rootdir %]/search.pl?tid=6"><img
+		src="[% constants.imagedir %]/topics/topicnews.gif"
+		width="34" height="44"
+		alt="News"></a>
+	<a href="[% gSkin.rootdir %]/search.pl?tid=8"><img
+		src="[% constants.imagedir %]/topics/topicslashdot.gif"
+		width="100" height="34"
+		alt="Slashdot"></a>
+__seclev__
+500
+__version__
+$Id: recentTopics;misc;default,v 1.6 2005/07/27 22:54:48 pudge Exp $

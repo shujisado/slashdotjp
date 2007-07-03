@@ -1,0 +1,23 @@
+__section__
+default
+__description__
+Display a link to a user.
+
+Either pass in a nickname or a uid. 
+Also will take the "bonus" flag which will print out the bonus for the user.
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+userLink
+__template__
+<a href="[% constants.real_rootdir %]/~[% nickname | strip_paramattr %]/" title="[% nickname |  strip_attribute %]">[% nickname | strip_literal %] ([% uid %])</a>
+[% IF !user.is_anon %][% PROCESS zoo_icons person=uid bonus=bonus %][% END %]
+__seclev__
+10000
+__version__
+$Id: userLink;misc;default,v 1.9 2006/01/23 20:42:59 pudge Exp $

@@ -1,0 +1,300 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2005 by Open Source Technology Group. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id: portald,v 1.47 2006/05/02 19:13:10 pudge Exp $
+
+###############################################################################
+# portald  - this is the "daemon" responsible for retrieving portal and site
+# block content
+###############################################################################
+
+=head1 Welcome to Portald
+
+portald is the script that sucks down headlines from assorted
+places on the internet, and puts them in the boxes for use on
+Slashdot.  Exciting?  Nope.
+
+=cut
+
+use strict;
+# this needs to be a global here so we can add to it from externally
+# called scripts (see portald-site)
+use vars qw(%savedBlocks);
+use File::Spec::Functions;
+use LWP::UserAgent;
+use HTTP::Request;
+use URI::Escape;
+use XML::RSS;
+
+use Slash;
+use Slash::Utility;
+use Slash::Display;
+
+my $virtual_user = $ARGV[0];
+createEnvironment($virtual_user);
+my $constants = getCurrentStatic();
+my $slashdb = getCurrentDB();
+setCurrentSkin(determineCurrentSkin());
+my $gSkin = getCurrentSkin();
+my $totalChangedStories = 1;
+
+my $br = $constants->{xhtml} ? '<br />' : '<br>';
+my $backupdb = getObject('Slash::DB', { db_type => 'reader' });
+
+################################################################################
+# really tired of deleting the thing if portald pukes ;)
+END {
+    doLogExit('portald');
+}
+
+################################################################################
+sub geturl {
+	my($url, $options) = @_;
+	my $ua = new LWP::UserAgent;
+	my $request = new HTTP::Request('GET', $url);
+	$ua->proxy(http => $constants->{http_proxy}) if $constants->{http_proxy};
+	my $timeout = 30;
+	$timeout = $options->{timeout} if $options->{timeout};
+	$ua->timeout($timeout);
+	my $result = $ua->request($request);
+
+	if ($result->is_success) {
+		return $result->content;
+	} else {
+		return "";
+	}
+}
+
+
+################################################################################
+
+sub getTop10Comments {
+	my $A =	$backupdb->getTop10Comments;
+
+	my $reasons = $slashdb->getReasons;
+
+	my $block = '<ul>';
+	foreach (@$A) {
+		my($sid, $title, $cid, $subj, $d, $nickname, $points, $reason) = @$_;
+		$block .= <<EOT;
+
+<li> <b><a href="$gSkin->{rootdir}/comments.pl?sid=$sid&amp;cid=$cid">$subj</a>
+	($points points, $reasons->{$reason}{name})
+	by $nickname</b>
+	on $d
+	<small>attached to
+	<a href="$gSkin->{rootdir}/article.pl?sid=$sid">$title</a></small></li>
+EOT
+	}
+	$block .= '</ul>';
+	setblock('top10comments', $block);
+
+}
+
+#################################################################
+sub getSlashdotPoll {
+	setblock('poll', pollbooth('_currentqid', 1));
+}
+
+
+#################################################################
+sub portaldLog {
+	doLog('portald', \@_);
+}
+
+=head2 Fortune
+
+The fortune command.
+
+=cut
+
+
+#################################################################
+sub getUptime {
+	my $x = `/usr/bin/uptime`;
+	$x = "<b>time:</b> $x";
+	$x =~ s/up/\n$br<b>uptime:<\/b>/g;
+	$x =~ s/load average:/\n<br><b>load average:<\/b>/;
+	my $ps = `/bin/ps aux | /usr/bin/wc -l`;
+	$ps--;
+	$x .= "$br<b>processes:</b> $ps$br";
+
+	my $stats = $x;
+
+#	my $tc = $constants->{totalComments};
+	my $th = $constants->{totalhits};
+
+#	$stats .= "<b>yesterday:</b> $yesterday<br>
+#		<b>today:</b> $today<br>
+#		<b>ever:</b> $th<br>";
+	$stats .= "<b>totalhits:</b> $th$br";
+
+	setblock('uptime', $stats);
+}
+
+
+#################################################################
+sub setblock {
+	my($bid, $block) = @_;
+	$savedBlocks{$bid} = $block;
+	portaldLog("updated $bid");
+}
+
+
+#################################################################
+sub getRDF {
+	#gets an RDF file, and formats it as a Slash block
+
+	my($bid, $url, $other) = @_;
+	my $rss = new XML::RSS;
+	my $template_name = $slashdb->getBlock($bid, 'rss_template');
+	my $items ||= $slashdb->getBlock($bid, 'items');
+	$items ||= $constants->{rss_max_items_incoming};
+	$template_name ||= $constants->{default_rss_template};
+
+	my $d;
+	# this only works for a very limited subset of RSS feeds,
+	# the section-only story ones, and it only works for
+	# where $section matches something getSkin() knows about
+	### this is incomplete -- pudge
+	if (0 && $url =~ m{^//([^/]+)/([^.+])\.(\w+)}) {
+		my($host, $section, $ext) = ($1, $2, $3);
+		my $skin = $slashdb->getSkin($section);
+		if ($skin) {
+			
+		}
+
+		# bah, never mind!
+		if (!$d) {
+			$url = "http:$url";
+			$d = geturl($url);
+		}
+	}
+
+	$d ||= geturl($url);
+	if (urlFromSite($url)) {
+		$d =~ s/(?:&(?:amp;)?|\?)from=rss//g;
+	}
+
+	if (!$d) {
+		portaldLog("failed to get $bid: $@");
+		return;
+	}
+	$d =~ s/&(?!#?[a-zA-Z0-9]+;)/&amp;/g;
+
+	eval { $rss->parse($d) };
+
+	if ($@) {
+		my $err = $@;
+		$err =~ s/\n/ /;
+		portaldLog("$bid did not parse properly:$err");
+		return;
+	} else {
+		my $str;
+		my $i = 0;
+		my $bd_regex = qr{\Q$gSkin->{basedomain}};
+		for my $item (@{$rss->{items}}) {
+			# hopefully this xmldecode() will break nothing
+			for (keys %{$item}) {
+				$item->{$_} = xmldecode($item->{$_});
+			}
+
+			# filter URL like the rest
+			my $link = fudgeurl($item->{link});
+			next unless $link;
+
+			# convert links to sections of our own site
+			# into a non-scheme-specific format ...
+			# unless host begins with "rss." (this could be a separate var ...)
+			my $uri = URI->new($link);
+			if ($uri->can('authority')) {
+				$uri->scheme(undef) if $uri->authority =~ /\b$bd_regex\Z/ && $uri->authority !~ /^rss\./;
+			}
+
+			$item->{link} = $uri->as_string or next;
+
+			# this is if you want a nice numbering 
+			# layout in your block <ol> works, but 
+			# is ugly
+			$item->{counter} = $i + 1;
+			$str .= slashDisplay($template_name, {
+				item	=> $item,
+			}, {
+				Nocomm	=> 1,
+				Return	=> 1,
+				Page	=> 'portald'
+			});
+			$slashdb->createRSS($bid, $item)
+				if $constants->{rss_store};
+
+			last if ++$i >= $items && $items > 0;
+		}
+
+		# If the template that displays the items (as
+		# determined by the rss_template field in the
+		# blocks table) seems to be putting <li> tags
+		# around the items, then it probably wants a
+		# <ul></ul> around the list.  This is a bit
+		# hacky but should help make strictly parsed
+		# versions of HTML work better.
+		$str = "<ul>\n$str\n</ul>" if $str && $str =~ /^\s*<li>/;
+
+		setblock($bid, "$str$other");
+		return 1;
+	}
+}
+
+#################################################################
+# wow, now it's time to actually do something
+doLogInit('portald');
+
+portaldLog("Launching Portald");
+
+$|++;
+
+my $p_site = catfile($constants->{datadir}, 'sbin', 'portald-site');
+if (-e $p_site) {
+	portaldLog("requiring $p_site");
+	require $p_site;
+}
+
+portaldLog("Updating Portal Box Thingees");
+
+# loop through all the RDF sites
+my $RDFlist = $backupdb->getSitesRDF();
+
+for (@{$RDFlist}) {
+	my($bid, $url, $rdf) = ($_->[0], $_->[1], $_->[2]);
+	getRDF($bid, $rdf);
+}
+
+$slashdb->setCurrentSectionPolls();
+
+getTop10Comments();
+getSlashdotPoll();
+getUptime();
+
+my $randbid = $slashdb->getBlock('rand','bid');
+if ($randbid) {
+    setblock("rand", $slashdb->randomBlock()); # NOT backupdb!
+}
+
+# from 'portald-site'
+getWhatsPlayingBox($slashdb) if $constants->{slashbox_whatsplaying}
+	&& defined &getWhatsPlayingBox;
+
+foreach (keys %savedBlocks) {
+	# NOT backupdb!
+	$slashdb->setBlock($_, { block => $savedBlocks{$_} });
+}
+
+# from 'portald-site'
+newSemiRandomBlock($slashdb) if defined &newSemiRandomBlock;
+
+portaldLog("Sucessfully Saved Portals");
+
+# Clean up
+doLogExit('portald');
+
+__END__

@@ -1,0 +1,87 @@
+__section__
+default
+__description__
+* min_id
+* min_id_ts
+* max_id
+* thresh_count, thresh_hps
+* data
+
+__title__
+admin interface recent template
+__page__
+admin
+__lang__
+en_US
+__name__
+recent_requests
+__template__
+[% PROCESS titlebar title="Recent Requests" %]
+<div class="generalbody">
+<table border=0 cellspacing="0" cellpadding="0">
+<form action="[% gSkin.rootdir %]/admin.pl?op=recent_requests" method="get">
+<input type="hidden" name="op" value="recent_requests">
+	<tr><td>Min ID</td><td><input type="text" name="min_id" value="[% min_id %]" size="15"></td></tr>
+	<tr><td>Max ID</td><td>[% max_id %]</td></tr>
+	<tr><td>Min ID Time</td><td>[% min_id_ts %]</td></tr>
+	<tr><td>Current&nbsp;Time&nbsp;</td><td>[% Slash.db.getTime %]</td></tr>
+	<tr><td>Hits&nbsp;Threshold&nbsp;</td><td><input type="text"
+		name="thresh_count" value="[% thresh_count | strip_attribute %]" size="8"></td></tr>
+	<tr><td>Hits/Sec&nbsp;Threshold&nbsp;</td><td><input type="text"
+		name="thresh_hps" value="[% thresh_hps | strip_attribute %]" size="8"></td></tr>
+	<tr><td>&nbsp;</td><td><input type="submit" name="none" value="Reload"></td></tr>
+	</table>
+	<br><b>Caution:</b> type in too small of a
+	<b>Min ID</b> and you can hang the (backup) DB for many seconds.
+	<b>Min ID</b> represents the position in the accesslog we start
+	looking; <b>Min ID Time</b> is the timestamp of that id.
+	If you blank the entry it will update to the current MAX(id)
+	value minus 10,000.
+	Each of the thresholds must be met for an IPID/Page pair to make
+	it onto the list below.
+	E.g., if thresh_count is 100 and the IPID only hit that Page 99
+	times, then no matter how quickly the clicks occurred, this will
+	not be listed.
+[% IF data.size %]
+	<p>This data took [% select_secs %] seconds to retrieve:
+	<br>
+	<table>
+		<tr>
+			<th>&nbsp;Count&nbsp;</th>
+			<th>&nbsp;Secs&nbsp;</th>
+			<th>&nbsp;Hits/Sec&nbsp;</th>
+			<th>&nbsp;Page&nbsp;</th>
+			<th>&nbsp;IPID&nbsp;</th>
+			<th>&nbsp;MIN(ts)&nbsp;</th>
+			<th>&nbsp;MAX(ts)&nbsp;</th>
+		</tr>
+		[% FOREACH row = data %]
+			<tr>
+				<td align="RIGHT">[% row.c %]&nbsp;</td>
+				<td align="RIGHT">&nbsp;[% row.secs %]&nbsp;</td>
+				<td align="RIGHT">&nbsp;[% row.hps %]&nbsp;</td>
+				<td align="LEFT">&nbsp;[% row.op %]&nbsp;</td>
+				<td>&nbsp;<a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% row.ipid | strip_attribute %]&amp;fieldname=ipid">[% row.ipid_vis %]</a>&nbsp;</td>
+				<td>&nbsp;[% row.mints.substr(5) %]&nbsp;</td>
+				<td>&nbsp;[% row.maxts.substr(5) %]&nbsp;</td>
+			</tr>
+			[% IF row.bannedts %]
+			<tr>
+				<td colspan="4">&nbsp;</td>
+				<td colspan="3">Banned:&nbsp;[% row.bannedts %]&nbsp;[% row.bannedreason %]</td>
+			</tr>
+			[% END %]
+		[% END %]
+	</table>
+[% ELSE %]
+	<p>No matches over threshold. Select took
+	[% select_secs %] seconds to run.
+[% END %]
+	
+</form>
+</div>
+
+__seclev__
+100
+__version__
+$Id: recent_requests;admin;default,v 1.9 2005/07/27 22:53:54 pudge Exp $

@@ -1,0 +1,71 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+mcd_stats
+__template__
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+
+	<tr>
+		<th>Server</th>
+		<th>Bytes</th>
+		<th>Sets</th>
+		<th>Gets, Hit</th>
+		<th>Gets, Miss</th>
+		<th>Gets, Hit %</th>
+		<th>Connections</th>
+		<th>Read</th>
+		<th>Written</th>
+		<th>Items</th>
+		<th>Alloc</th>
+		<th>Arena Size</th>
+		<th>Alloc %</th>
+	</tr>
+
+[% FOREACH server = stats.hosts.keys.sort %]
+	<tr>
+		<td align="left"> [% server %]</td>
+		<td align="right">[% stats.hosts.$server.misc.bytes.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.misc.cmd_set.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.misc.get_hits.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.misc.get_misses.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.misc.get_hit_percent %]</td>
+		<td align="right">[% stats.hosts.$server.misc.total_connections.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.misc.bytes_read.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.misc.bytes_written.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.misc.curr_items.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.malloc.total_alloc.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.malloc.arena_size.size2si %]</td>
+		<td align="right">[% stats.hosts.$server.malloc.total_alloc_percent %]</td>
+	</tr>
+[% END %]
+
+	<tr>
+		<td align="left"><b>Total</b></td>
+		<td align="right">[% stats.total.bytes.size2si %]</td>
+		<td align="right">[% stats.total.cmd_set.size2si %]</td>
+		<td align="right">[% stats.total.get_hits.size2si %]</td>
+		<td align="right">[% stats.total.get_misses.size2si %]</td>
+		<td align="right">[% stats.total.get_hit_percent %]</td>
+		<td align="right">[% stats.total.total_connections.size2si %]</td>
+		<td align="right">[% stats.total.bytes_read.size2si %]</td>
+		<td align="right">[% stats.total.bytes_written.size2si %]</td>
+		<td align="right">[% stats.total.curr_items.size2si %]</td>
+		<td align="right">[% stats.total.malloc_total_alloc.size2si %]</td>
+		<td align="right">[% stats.total.malloc_arena_size.size2si %]</td>
+		<td align="right">[% stats.total.malloc_total_alloc_percent %]</td>
+	</tr>
+
+</table>
+
+__seclev__
+500
+__version__
+$Id: mcd_stats;admin;default,v 1.2 2005/07/27 22:53:54 pudge Exp $

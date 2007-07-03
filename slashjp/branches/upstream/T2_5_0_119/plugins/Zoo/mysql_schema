@@ -1,0 +1,27 @@
+#
+# $Id: mysql_schema,v 1.12 2003/08/29 16:18:45 jamie Exp $
+#
+
+DROP TABLE IF EXISTS people;
+CREATE TABLE people (
+	id MEDIUMINT UNSIGNED NOT NULL auto_increment,
+	uid MEDIUMINT UNSIGNED NOT NULL,
+	person MEDIUMINT UNSIGNED NOT NULL,
+	type enum("friend","foe"),
+	perceive enum("fan","freak"),
+	fof MEDIUMINT UNSIGNED NOT NULL  DEFAULT 0, 
+	eof MEDIUMINT UNSIGNED NOT NULL  DEFAULT 0,
+	UNIQUE degree_of_separation (uid,person),
+	INDEX (person),
+	PRIMARY KEY (id)
+);
+
+ALTER TABLE users_info ADD COLUMN people_status ENUM ("ok","dirty") DEFAULT "ok" NOT NULL;
+ALTER TABLE users_info ADD INDEX people_status(people_status);
+
+# Commented out because target table is necessarily MyISAM,
+# and MySQL FOREIGN KEY does not work across the InnoDB-MyISAM
+# border as of this writing (July 2003).
+# ALTER TABLE people ADD FOREIGN KEY (uid) REFERENCES users(uid);
+# ALTER TABLE people ADD FOREIGN KEY (person) REFERENCES users(uid);
+

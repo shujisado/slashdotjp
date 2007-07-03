@@ -1,0 +1,64 @@
+__section__
+default
+__description__
+Text for telling users no more comments are being accepted, as the discussion has been archived.
+
+No specially passed variables.
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+printCommNoArchive
+__template__
+<a name="comments"></a>
+<div class="commentwrap">
+<div class="commentBox">
+	[% IF discussion.is_future %]
+		Posting will only be possible
+		[% constants.subscribe_future_name %]
+	[% ELSIF discussion.commentstatus == 'disabled' %]
+		New comment creation has been disabled on this discussion.
+	[% ELSE %]
+		[%- d_nickname = Slash.db.getUser(discussion.uid, 'nickname') -%]
+		[%- msg = BLOCK -%]
+This discussion was created by <a href="[% gSkin.rootdir %]/~[% d_nickname | strip_paramattr %]/">[% d_nickname %] ([% discussion.uid %])</a> as
+		[%- END -%]
+		[% IF discussion.commentstatus == 'friends_only' %]
+			[% type = "Friends only" %]
+			[% snark = "Offer them a bribe and maybe they will let you post." %]
+		[% ELSIF discussion.commentstatus == 'friends_fof_only' %]
+			[% type = "Friends and Friends of Friends only" %]
+			[% snark = "Offer them or one of their friends a bribe and maybe they will let you post." %]
+		[% ELSIF discussion.commentstatus == 'no_foe' %]
+			[% type = "no Foes" %]
+			[% snark = "They don't want you in their sandbox." %]
+		[% ELSIF discussion.commentstatus == 'no_foe_eof' %]
+			[% type = "no Foes and no Friends' foes" %]
+			[% snark = "They and their friends think you suck." %]
+		[% END %]
+
+		[% IF discussion.user_nopost %]
+			[% msg %] [% type %].  [% snark %]
+		[% ELSIF discussion.type == 'archived' %]
+			[% IF discussion.commentstatus == 'friends_only'
+			|| discussion.commentstatus == 'friends_fof_only'
+			|| discussion.commentstatus == 'no_foe'
+			|| discussion.commentstatus == 'no_foe_eof' %]
+				[% msg %] [% type %], but now has been archived.
+			[% ELSE %]
+				This discussion has been archived.
+			[% END %]
+			No new comments can be posted.
+		[% ELSE %]
+			[% msg %] [% type %].
+		[% END %]
+	[% END %]
+</div>
+</div>
+__seclev__
+10000
+__version__
+$Id: printCommNoArchive;misc;default,v 1.19 2006/01/23 20:42:59 pudge Exp $

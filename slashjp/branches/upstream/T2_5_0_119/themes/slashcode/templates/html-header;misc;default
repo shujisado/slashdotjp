@@ -1,0 +1,44 @@
+__section__
+default
+__description__
+Text that makes up the VERY top of a page (separate from "header" so we can dynamically add stuff between the two)
+
+* title = title for TITLE tag
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+html-header
+__template__
+[% UNLESS only_css %]
+[% DEFAULT title="$constants.sitename: $constants.slogan" %]
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+            "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="[% constants.content_type_webpage %]">
+[% IF meta_desc %]<meta name="description" content="[% meta_desc | strip_attribute %]">[% END %]
+<title>[% title | strip_notags %]</title>
+[% END %]
+[% css = Slash.db.getCSS() %]
+[%- FOREACH file = css -%]
+[% IF file.ie_cond %]<!--[if [% file.ie_cond %]]>[% END %]<link rel="[% file.rel %]" type="[% file.type %]" media="[% file.media %]" href="[% IF constants.css_use_imagedir; constants.imagedir; ELSE; gSkin.rootdir; END %]/[% file.file %]?[% constants.cvs_tag_currentcode %]"[% IF file.title %] title="[% file.title %]"[% END %]>[% IF file.ie_cond %]<![endif]-->[% END %]
+[% END -%]
+[%- IF user.discussion2 && user.discussion2 == "uofm" # temp hack %]
+<link rel="stylesheet" type="text/css" media="screen, projection" href="http://socialcomputingresearch.net/slashdot/slashdot/umich.css?[% constants.cvs_tag_currentcode %]">[% END %]
+[%- IF constants.plugin.Ajax %]
+	[%- IF !user.is_anon -%]
+<script src="[% constants.imagedir %]/prototype.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
+<script src="[% constants.imagedir %]/common.js?[% constants.cvs_tag_currentcode %]"    type="text/javascript"></script>
+	[%- IF user.is_admin %]
+<script src="[% constants.imagedir %]/admin.js?[% constants.cvs_tag_currentcode %]"     type="text/javascript"></script>
+	[% END %]
+	[% END %]
+[% END %]
+__seclev__
+10000
+__version__
+$Id: html-header;misc;default,v 1.22 2006/05/17 21:09:55 pudge Exp $

@@ -1,0 +1,200 @@
+__section__
+default
+__description__
+The main box for printing comments
+
+* comments = big ol' arrayref of comments
+* title = title of story
+* count = count of comments
+* sid = story ID
+* cid = base comment ID
+* pid = base parent ID
+* lvl = what nesting level we're at
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+printCommentsMain
+__template__
+[% discussion2 = user.discussion2 && (user.discussion2 == "slashdot" || user.discussion2 == "uofm") %]
+[% spilltext = "Spill at <b>${user.commentspill}</b>!";
+   fineprint = 'The following comments are owned by whoever posted them.  We are not responsible for them in any way.';
+   modpoints = BLOCK %]
+	| <b>[% user.points %]</b>
+	<a href="[% gSkin.rootdir %]/moderation.shtml">
+	moderator</a>
+	point[% user.points == 1 ? '' : 's' %] &nbsp; 
+[% END %]
+
+<a name="acomments"></a>
+<div class="commentwrap">
+[% IF user.is_admin || user.acl.discussion2_slashdot || user.is_subscriber || (!constants.subscribe && !user.is_anon) %]
+<div class="commentBox" style="font-size: 120%">
+	<form method="GET" action="[% gSkin.rootdir %]/comments.pl">
+	<div>
+	<input type="hidden" name="op" value="setDiscussion2">
+	<input type="hidden" name="sid" value="[% sid %]">
+	[% IF cid %]<input type="hidden" name="cid" value="[% cid %]">[% END %]
+	[% IF pid %]<input type="hidden" name="pid" value="[% pid %]">[% END %]
+	<input type="checkbox" name="discussion2_slashdot" value="1" onchange="this.form.submit();"[% constants.markup_checked_attribute IF user.discussion2 == 'slashdot' %]>
+	I am willing to help test <a href="http://slashdot.org/faq/com-mod.shtml#cm120">Slashdot's New Discussion System</a>.
+	<noscript><input type="submit"></noscript>
+	</div>
+	</form>
+</div>
+[% END; IF (user.acl.discussion2_uofm_signup && !user.acl.discussion2_uofm && (user.is_admin || !user.is_subscriber)) && constants.uofm_key && constants.uofm_iv && env.http_user_agent.search('Firefox/1\.5') %]
+<div class="commentBox" style="font-size: 120%">
+<a href="[% Slash.tempUofmLinkGenerate() %]">Want to test an experimental interface for comments?</a>
+</div>
+[% END %]
+
+<div class="commentBox">
+[% IF title %]
+	<a href="[% link | strip_urlattr %]">[% title %]</a>
+[% ELSE %]
+	[% Slash.linkComment({
+		sid	=> sid,
+		pid	=> pid,
+		subject	=> 'Top',
+		subject_only => 1,
+	}) %]
+[% END %]
+
+	|
+
+[% IF user.is_anon %]
+	<a href="[% gSkin.rootdir %]/users.pl">Log in/Create an Account</a>
+[% ELSE %]
+		<a href="[% gSkin.rootdir %]/my/comments">Preferences</a>
+[% END %]
+
+		| [% Slash.linkComment({
+			sid	=> sid,
+			pid	=> 0,
+			subject	=> 'Top',
+			subject_only => 1,
+		}) %]
+
+[% IF user.points; modpoints; END %]
+
+[% IF count %]
+	| <b>[% count %]</b> comments
+[% END %]
+
+[% IF lvl && user.mode == 'thread' %]
+	([% spilltext %]) | Index Only
+[% END %]
+
+[% IF form.startat %]
+		| Starting at #[% form.startat %]
+[% END %]
+
+		| <a href="[% gSkin.rootdir %]/search.pl?op=comments&amp;sid=[% sid %]">Search Discussion</a>
+	</div>
+	<div class="commentBoxForm" id="commentControlBox">
+		<form action="[% gSkin.rootdir %]/comments.pl">
+		<fieldset>
+		<legend>Display Options</legend>
+		[% UNLESS discussion2 %]
+		
+		Threshold: [%
+			Slash.selectThreshold(comments.0.totals);
+			IF user.mode != 'parents' && user.mode != 'child';
+			  Slash.selectMode(user.mode);
+			END;
+			Slash.selectSortcode(user.commentsort) %]
+		[% END %]
+
+	[% UNLESS user.is_anon %]
+		[% UNLESS discussion2 %]
+		Save: <input type="checkbox" name="savechanges" class="button">
+		[% END %]
+	[%- END %]
+		[% UNLESS discussion2 %]
+		<input type="submit" name="op" value="Change" class="button">
+		[% END %]
+
+		<input type="hidden" name="sid" value="[% sid %]">
+		[% IF cid %]<input type="hidden" name="cid" value="[% cid %]">[% END %]
+		[% IF pid %]<input type="hidden" name="pid" value="[% pid %]">[% END %]
+		[% IF form.startat %]<input type="hidden" name="startat" value="[% form.startat %]">[% END %]
+		[% UNLESS user.state.discussion_archived || user.state.discussion_future_nopost %]
+			<input type="submit" name="op" value="Reply" class="button">
+		[% END %]
+
+		</fieldset>
+		</form>
+	<div class="commentBox">
+		<small>
+		<b>The Fine Print:</b> [% fineprint %]
+		</small>
+	</div>
+	</div>
+	[% IF discussion2 %]
+		<div class="loki" id="gods">
+		<div class="generaltitle">
+			<div class="title">
+				<h3>
+				[% IF title %]
+					<a href="[% link | strip_urlattr %]" title="Back to Article - [% title | strip_attribute %]">[% count %]&nbsp;Comment[% count == 1 ? '' : 's' %]</a>
+				[% ELSE %] 
+					[% Slash.linkComment({
+						sid	=> sid,
+						pid	=> pid,
+						subject	=> 'Comments',
+						subject_only => 1,
+				}) %]
+				[% END %]
+	 	<span title="Close this window" onclick="document.getElementById('gods').className='loki';" class="close">x</span>
+				</h3>
+			</div>
+		</div>
+		<div id="commentControlBoxStatus" class="hide"><b>Loading ... Please wait.</b></div>
+		<div id="comment_full" style="background: #fff;"><span id="currentFull">0</span> Full</div>
+		<div class="comment_divider" style="background:#fff;">
+			<img src="[% constants.imagedir %]/arrow_up.gif" onclick="javascript:changeHT(1)">
+		</div>
+		<div class="comment_divider" style="background:#ccc;">
+			<img src="[% constants.imagedir %]/arrow_down.gif" onclick="javascript:changeHT(-1)">
+		</div>
+		<div id="comment_abbr" style="background: #ccc;"><span id="currentOneline">0</span> Abbreviated</div>
+		<div class="comment_divider" style="background:#ccc;">
+			<img src="[% constants.imagedir %]/arrow_up.gif" onclick="javascript:changeT(1)">
+		</div>
+		<div class="comment_divider" style="background:#aaa;">
+			<img src="[% constants.imagedir %]/arrow_down.gif" onclick="javascript:changeT(-1)">
+		</div>
+		<div id="comment_hidden" style="background: #aaa;"><span id="currentHidden">0</span> Hidden</div>
+		<div class="commentControlFooter">
+		[% IF cid || pid %]
+			[% Slash.linkComment({
+				sid	=> sid,
+				subject	=> 'Top',
+				subject_only => 1,
+			}) %]
+		[% ELSE %]
+			<a href="#topcomment">Top</a> 
+		[% END %]
+			|
+			[% Slash.linkComment({
+				sid => sid,
+				cid => cid,
+				op  => 'reply',
+				subject => 'Reply',
+				subject_only => 1
+				});
+			%]
+				
+		</div>
+	</div>
+	[% END %]
+</div>
+<a name="topcomment"></a>
+
+__seclev__
+10000
+__version__
+$Id: printCommentsMain;misc;default,v 1.46 2006/07/11 23:00:59 tvroom Exp $

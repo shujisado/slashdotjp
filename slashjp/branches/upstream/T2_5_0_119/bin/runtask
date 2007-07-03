@@ -1,0 +1,390 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2005 by Open Source Technology Group. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id: runtask,v 1.22 2006/01/23 16:42:28 jamiemccarthy Exp $
+
+use sigtrap;
+use strict;
+use Carp;
+use Getopt::Std;
+use File::Basename;
+use File::Path;
+use File::Spec::Functions;
+use FindBin '$Bin';
+use LWP::UserAgent;
+use HTTP::Request;
+use Time::Local;
+use Time::HiRes;
+use URI::Escape;
+use XML::Parser::Expat;
+use XML::RSS 0.95;
+
+use Slash;
+use Slash::Display;
+use Slash::Utility;
+
+use vars qw(
+	%opts %task $me $task_name $hard_verbosity
+	$virtual_user $constants $slashdb $user $dir $gSkin
+	$task_exit_flag
+);
+
+(my $VERSION) = ' $Revision: 1.22 $ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $SLASH_PREFIX = $Bin) =~ s|/[^/]+/?$||;
+$SLASH_PREFIX = "/usr/local/slash"
+	if !-e "$SLASH_PREFIX/slash.sites" || !-f _ || !-r _;
+
+usage('Options used incorrectly') unless (getopts('AhvlV:o:u:', \%opts));
+usage() if $opts{'h'};
+version() if $opts{'v'};
+if ($opts{'A'}) {
+	my $fh = gensym();
+	open($fh, "$SLASH_PREFIX/slash.sites") or die "can't open slash.sites, $!";
+	my @users;
+	while (<$fh>) {
+		next if /^#/; 
+		my($user) = split /:/;
+		push @users, $user;
+	}
+	for (@users) {
+		print "Running $_\n";
+		my $pid = fork();
+		if (!defined $pid) {
+			die "error: cannot fork : $!";
+		} elsif ($pid == 0) {
+			$opts{'u'} = $_;
+			main();
+		} else {
+			wait();
+		}
+	}
+} else {
+	main();
+}
+exit 0;
+
+############################################################
+
+sub slashdLog {
+	doLog('slashd', \@_, 1, 'runtask');
+}
+
+# A command to log an error to a DB table.  This is only for messages
+# that are important enough that the admins should see them (maybe in
+# the admin.pl backend, but definitely in email at the end of the day).
+
+sub slashdErrnote {
+	my($errnote, $moreinfo) = @_;
+	$slashdb->insertErrnoteLog($task_name || 'RUNTASK', $errnote, $moreinfo);
+}
+
+sub slashdLogDie {
+	my $err = join(" ", @_);
+	slashdLog($err);
+	die $err;
+}
+
+
+{ my($last_db_time_offset, $last_db_time_confirm) = (undef, undef);
+sub db_time {
+	my $my_time = time;
+	if (!$last_db_time_confirm
+		or $my_time < $last_db_time_confirm + 600) {
+		my $db_time = UnixDate(ParseDate($slashdb->getTime()), "%s");
+		$last_db_time_offset = $db_time - $my_time;
+		$last_db_time_confirm = $my_time;
+	}
+	return $my_time + $last_db_time_offset;
+} }
+
+{ my($last_level, $last_level_confirm) = (undef, undef);
+sub verbosity {
+	return $hard_verbosity if defined($hard_verbosity);
+	my $my_time = time;
+	if (!$last_level_confirm
+		or $my_time < $last_level_confirm + 30) {
+		$slashdb->getVar('runtask_verbosity', 'value') =~ /(\d+)/;
+		my $new_level = $1;
+		if ($new_level eq "") {
+			$slashdb->getVar('slashd_verbosity', 'value') =~ /(\d+)/;
+			$new_level = $1 || 2;
+		}
+		if (defined($last_level) and $last_level != $new_level) {
+			slashdLog("verbosity was $last_level, is $new_level");
+		}
+		$last_level = $new_level;
+		$last_level_confirm = $my_time;
+	}
+	return $last_level;
+} }
+
+############################################################
+
+sub slashdLogInit {
+	doLogInit('slashd', {
+		nopid => 1,
+		sname => 'runtask',
+	});
+	$SIG{USR1} = sub { $task_exit_flag = 1 };
+}
+
+sub slashdLogExit {
+	doLogExit('slashd', { nopid => 1, sname => 'runtask' });
+}
+
+sub get_task_subref {
+
+	# "require" all the task files -- each will put its info into
+	# $task{"filename.pl"}
+
+	if (!-e $dir or !-d _ or !-r _) {
+		slashdLogDie(<<EOT);
+could not process task files in $dir, not readable to $>
+EOT
+	}
+
+	# Go through the files and require them all.  Each file will
+	# store its data and code in %task and execute any necessary
+	# initialization.  We also do some rudimentary checks of whether
+	# an attacker with guest access on this system could be feeding
+	# us bad code (the better solution, of course, is not to let
+	# attackers have local guest access).
+
+	my $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE = 0;
+	if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
+		and (stat $dir)[2] & 002) {
+		slashdLogDie("you really don't want me to use task files",
+			"from a directory that's world-writable: $dir");
+	}
+	my $subref = '';
+	my @files =
+		sort
+		grep { -e $_ and -f _ and -r _ }
+		glob "$dir/[a-zA-Z0-9_-][a-zA-Z0-9_-]*.pl";
+ 	# { local $"=' '; print STDERR "F: @files\n"; }
+	for my $fullname (@files) {
+		if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
+			and (stat $fullname)[2] & 002) {
+			slashdLogDie("you really don't want me to use a task file",
+				"that's world-writable: $fullname");
+		}
+		my $file = basename($fullname);
+		next unless $file eq $task_name or $file eq "$task_name.pl";
+		$task_name = $file;
+		my $ok = 0;
+		eval { local $me = $file; $ok = require $fullname; };
+		if ($@) {
+			slashdLog("requiring '$fullname' raised exception: $@");
+			$ok = 0;
+		}
+		if ($!) {
+			slashdLog("requiring '$fullname' caused error: $!");
+			$ok = 0;
+		}
+		if (!$task{$file}{code} or ref $task{$file}{code} ne 'CODE') {
+			slashdLog("'$fullname' did not set code properly");
+			$ok = 0;
+		}
+		if ($ok) {
+			$subref = $task{$file}{code};
+			last ;
+		}
+	}
+	if (! $subref) {
+		print "No task '$task_name' found in $dir\n";
+		die "No task '$task_name' found in $dir\n";
+	}
+	return $subref;
+}
+
+sub parse_slash_sites {
+	my($wanted_virtual_user) = @_;
+	my $file = "$SLASH_PREFIX/slash.sites";
+	my $line;
+	my($virtual_user, $unix_user, $sitename);
+	my $fh = gensym();
+	open($fh, "< $file\0") or die "can't open $file, $!";
+	while (defined($line = <$fh>)) {
+		chomp $line;
+		($virtual_user, $unix_user, $sitename) = split /:/, $line;
+		if ($virtual_user eq $wanted_virtual_user) {
+			last;
+		}
+	}
+	if ($virtual_user ne $wanted_virtual_user) {
+		die "can't find virtual user '$wanted_virtual_user' in $file";
+	}
+	my($name, $passwd, $uid, $gid) = getpwnam($unix_user);
+	die "unix user '$unix_user' has no valid uid/gid" if !$uid or !$gid;
+	my($orig_euid, $orig_egid) = ( $>, $) );
+	$orig_egid =~ /^(\d+)/; $orig_egid = $1;
+	if ( $uid != $orig_euid or $gid != $orig_egid ) {
+		$) = "$gid $gid";
+		$> = $uid;
+	}
+	($orig_euid, $orig_egid) = ( $>, $) );
+	$orig_egid =~ /^(\d+)/; $orig_egid = $1;
+
+	# Mac OS X likes to have signed UIDs, so e.g. user
+	# nobody will get UID 4294967294 from the system,
+	# but $> will be -2.  fun fun fun!  but getpwuid(-2)
+	# will give us 4294967294, so let's get it that way. -- pudge
+	my($c_name, $c_pass, $c_uid, $c_gid) = getpwuid($uid);
+	if ( $uid != $c_uid || $gid != $c_gid ) {
+#	if ( $uid != $orig_euid or $gid != $orig_egid ) {
+		die "can't set uid/gid to $uid/$gid ($>/$))";
+	}
+	# If we made it this far, everything's cool
+	return $virtual_user;
+}
+
+sub list_tasks {
+	my @files =
+		sort
+		grep { -e $_ and -f _ and -r _ }
+		glob "$dir/[a-zA-Z0-9_-][a-zA-Z0-9_-]*.pl";
+ 	# { local $"=' '; print STDERR "F: @files\n"; }
+	for my $fullname (@files) {
+		my $file = basename($fullname);
+		$file =~ s/\.pl$//;
+		print "\t$file \n";
+	}
+}
+
+# To maintain subroutine level compatibility with slashd and hence, with our
+# tasks.
+sub init_cron {
+	sub null_dispatcher { die "null_dispatcher called, there's a bug" }
+	my $cron = Schedule::Cron->new(\&null_dispatcher);
+	return $cron;
+}
+
+sub main {
+	# Remember to doublecheck these match usage()!
+	$opts{'u'} ||= 'slash';
+
+	$task_name = $ARGV[0];
+	usage('No task specified') if (!$task_name && !$opts{'l'});
+
+	if ($opts{'l'}) {	
+		$virtual_user = $opts{'u'};
+		exit unless (DBIx::Password::checkVirtualUser($opts{'u'}));
+	} else {
+		$virtual_user = parse_slash_sites($opts{'u'});
+	}
+
+	if (defined($opts{V}) && $opts{V} =~ /^([0123])$/) {
+		$hard_verbosity = $opts{V};
+	} else {
+		$hard_verbosity = undef;
+	}
+
+	createEnvironment($virtual_user);
+	$constants = getCurrentStatic();
+	$slashdb = getCurrentDB();
+	$user = getCurrentUser();
+	setCurrentSkin(determineCurrentSkin());
+	$gSkin = getCurrentSkin();
+	$dir = "$constants->{datadir}/tasks";
+	$task_exit_flag = 0;
+
+	# List what tasks are available
+	if ($opts{'l'}) {
+		print "Listing Tasks \n";
+		list_tasks($constants);
+		exit;
+	}
+
+	$ENV{TZ} = 'GMT' if !$ENV{TZ} || $ENV{TZ} ne 'GMT';
+	slashdLogInit();
+
+	# Process task specific options, if any.
+	$constants->{task_options} = { };
+	if ($opts{'o'}) {
+		my($hash);
+		for (split /,/, $opts{o}) {
+			my($key, $val) = split /=/; $hash->{$key}=$val;
+		}
+		$constants->{task_options} = $hash;
+	}
+	$constants->{task_options_text} = join(",",
+		map { "$_=$constants->{task_options}{$_}" }
+		sort keys %{$constants->{task_options}}
+	);
+
+	my $task_name_nopl = $task_name;
+	$task_name_nopl =~ s/\.pl$//;
+	$slashdb->setSlashdStatus($task_name_nopl, {
+		-in_progress    => 'in_progress+1',
+	});
+
+	my $subref = get_task_subref();
+	slashdLog("$task_name begin"
+		. ($constants->{task_options_text} ? " $constants->{task_options_text}" : "")
+	) if verbosity() >= 2;
+
+	my $start_time = Time::HiRes::time;
+	# runtask doesn't fork, there wouldn't be much point
+	my $rc = $subref->($virtual_user, $constants, $slashdb, $user, {}, $gSkin);
+	if (verbosity() >= 2) {
+		my $duration = sprintf("%.2f", Time::HiRes::time - $start_time);
+		slashdLog("$task_name end: $rc (ran in ${duration}s)");
+	}
+	$slashdb->setSlashdStatus($task_name_nopl, {
+		-in_progress    => 'in_progress-1',
+	});
+
+	slashdLogExit();
+}
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] task_name
+
+This utility runs an individual slashd task from the command line;
+it's useful when you don't want to have to wait for its timespec to
+come around on slashd, when another task is occupying slashd's time,
+or just for testing purposes.  Output is sent to both slashd.log and
+the console.
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (must exist in /usr/local/slash/slash.sites)
+	-A	cycle though all of the sites installed
+
+	-l	List tasks for this virtual user
+
+	-V	Verbosity (overrides the vars {runtask,slashd}_verbosity)
+
+	-o	String of comma separated list of key=value pairs. Each 
+		task can define its own set of options, see task specific
+		documentation for more details.
+
+task_name	Name of the task in DATADIR/tasks to run
+		(usually /usr/local/slash/site/SITENAME/tasks/)
+
+EOT
+	exit;
+}
+
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2005 by Open Source Technology Group. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+__END__

@@ -1,0 +1,306 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2005 by Open Source Technology Group. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id: createTestMods,v 1.19 2005/03/11 19:58:48 pudge Exp $
+
+use strict;
+use File::Basename;
+use Getopt::Std;
+use Digest::MD5 'md5_hex';
+use Benchmark;
+use Slash;
+use Slash::Utility;
+
+use vars qw( $slashdb $constants );
+
+(my $VERSION) = ' $Revision: 1.19 $ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+
+my (%opts);
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hI:RrTu:U:v', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
+# Parallel syntax checking for R/U and r/I.
+for ([qw(R U)], [qw(r I)]) {
+	if (exists $opts{$_->[0]}) {
+		usage("Can't specify -$_->[1] when using -$_->[0]")
+			if exists $opts{$_->[1]};
+	} else {
+		usage("Must specify either -$_->[0], or -$_->[1]")
+			if ! exists $opts{$_->[1]};
+		usage('Invalid UID specified')
+			unless $_->[1] ne 'U' || $opts{$_->[1]} =~ /^\d+$/;
+	}
+}
+	
+$opts{'u'} ||= 'slash';
+$opts{num_mods} = $ARGV[0] || 10;
+usage('Invalid number of moderations') 
+	if $opts{num_mods} !~ /^\d+$/ || $opts{num_mods} < 0;
+
+createEnvironment($opts{u});
+setCurrentSkin(determineCurrentSkin());
+$slashdb = getCurrentDB();
+$constants = getCurrentStatic();
+
+# Story->Discussion lookup hash.
+print "Loading stories...\n";
+my $stories = $slashdb->sqlSelectAllHashref(
+	'sid',
+	'sid, discussion',
+	'stories'
+);
+
+# For choosing random discussions.
+print "Loading discussions...\n";
+my $discussions =
+	$slashdb->sqlSelectAll(
+		'sid, COUNT(*) AS c',
+		'comments',
+		'',
+		'GROUP BY sid'
+	);
+$discussions = [ map { $_ = $_->[0] } @$discussions ];
+
+my(%comments, %comment_data);
+
+# main program logic (in braces to offset nicely)
+{
+	print "Generating moderations...\n";
+	my $story_id = $opts{I} || '';
+	my $discussion_id;
+	if ($story_id =~ /^\d+$/) {
+		$discussion_id = $story_id || 0;
+	} elsif ($story_id) {
+		$discussion_id = $stories->{$story_id}{discussion} || 0;
+	} else {
+		$discussion_id = 0;
+	}
+
+	my $t0 = new Benchmark;
+	my $count = $opts{num_mods};
+	while ($count) {
+		my $did = (exists $opts{r}) ?
+			$discussions->[rand $#{$discussions} + 1] : 
+			$discussion_id;
+		if (!$did) {
+			print "Cannot create comments, no discussions found.\n";
+			exit 0;
+		}
+
+		if (!exists $comments{$did}) {
+			$comments{$did} = [
+				map { $_ = $_->[0] }
+				@{$slashdb->sqlSelectAll(
+					'cid', 'comments', "sid=$did"
+				)}
+			];
+
+			$comment_data{$did} = $slashdb->sqlSelectAllHashref(
+				'cid',
+				'sid, cid, uid, points',
+				'comments',
+				"sid=$did"
+			);
+		}
+		
+		# Determine the moderator.
+		my $uid = ($opts{R}) ? 
+				getRandomUserID($comment_data{$did}) :
+				$opts{U};
+
+		# Moderators will usually moderate in batches. For now, we 
+		# will use random batches up to a tenth of the specified 
+		# value.
+		#
+		# Here's the catch. Any random moderator picked, cannot be
+		# a comment creator, and vice versa!
+		my $batchsize = ($opts{num_mods} / 10) || 1;
+		my $batch = int(rand $batchsize) + 1;
+		$batch = $count if $batch > $count;
+		my @cidbatch = ();
+		while ($batch--) {
+			my @val = (-1, +1);
+
+			# CAREFUL!
+			$count--;
+			LOOP: while (@cidbatch < @{$comments{$did}}) {
+				my $rcid = $comments{$did}->[
+					rand $#{$comments{$did}} + 1
+				];
+				for (@cidbatch) {
+					next LOOP if $_ == $rcid;
+				}
+				push @cidbatch, $rcid;
+				#{local $"='|';print STDERR "C: [@cidbatch]\n"}
+				last;
+			}
+
+			my $cid = $cidbatch[-1];
+			my $comment = $slashdb->getComment($cid);
+
+			my($modval, $reason, $active);
+			my $reasons = $slashdb->getReasons();
+			$reason = (keys %$reasons)[rand(scalar(keys %$reasons)-1) + 1];
+			$modval = $reasons->{$reason}{val};
+			my $pointsneeded = $slashdb->getModPointsNeeded(
+				$comment_data{$did}{$cid}{points},
+				$comment_data{$did}{$cid}{points} + $reasons->{$reason}{val},
+				$reason);
+			my $user = { uid => $uid };
+			setRandomIPID($user);
+			$slashdb->createModeratorLog(
+				$comment,
+				$user,
+				$modval,
+				$reason,
+				($active = (rand(100) > 95) ? 0 : 1),
+				$pointsneeded,
+			);
+			die if $DBI::errstr;
+
+			printf <<EOT, $comment->{cid}, $comment->{uid}, $modval;
+M($count): Mod=$uid, discussion=$did, CID=%s, CUid=%s, R=$reason, V=%s, A=$active
+EOT
+
+		}
+	}
+	my $t1 = new Benchmark;
+	print "$opts{num_mods} moderations created in: ",
+		timestr(timediff($t1, $t0), 'noc'),"\n";
+}
+
+# subroutines
+
+# CLOSURE!
+# Yes. I am getting a little silly with these. But it's nice not having.
+# them clutter scope elsewhere, when they are only needed here.
+{
+my $depth = 0;
+my($min_uid, $max_uid);
+my(%exception_list);
+sub getRandomUserID {
+	my ($key,$val) = each %{$_[0]};
+	++$depth;
+	die "sorry, not enough activity on site to do a random mod" if $depth > 10;
+	if (!exists $exception_list{$val->{sid}}) {
+		LOOP:
+		for my $cid (keys %{$_[0]}) {
+			for (@{$exception_list{$val->{sid}}}) {
+				next LOOP if $_ == $_[0]->{$cid}{uid};
+			}
+			push @{$exception_list{$val->{sid}}},
+			     $_[0]->{$cid}{uid};
+		}
+		@{$exception_list{$val->{sid}}} =
+			sort {$a <=> $b} @{$exception_list{$val->{sid}}};
+
+#		{
+#			local $"=',';
+#		 	printf STDERR <<EOT;
+#E ($val->{sid}): @{$exception_list{$val->{sid}}}
+#EOT
+#
+#		}
+	}
+	$max_uid ||= $slashdb->countUsers({ max => 1});
+	$min_uid ||= $slashdb->sqlSelect('MIN(uid)', 'users');
+	my $ret = $slashdb->sqlSelect("uid", "users",
+		"uid BETWEEN $min_uid AND $max_uid", "ORDER BY RAND() LIMIT 1");
+	for (@{$exception_list{$val->{sid}}}) {
+		$ret = getRandomUserID(@_), last if $_ == $ret;
+	}
+	--$depth;
+	return $ret;
+} }
+
+# CLOSURE!
+{ 
+my(@subnets) = ();
+sub setRandomIPID {
+	my $user = shift;
+	my $seed = int(rand(65536));
+
+	if (!@subnets) {
+		# We now generate 10 random subnets which we will use for
+		# the rest of this execution.
+		srand(12345); 
+		while (@subnets < 10) {
+			my $subnet = sprintf "%d.%d.%d",
+				1+rand 254, 1+rand 254, 1+rand 254;
+			push @subnets, $subnet;
+		}
+	}
+
+	srand($user->{uid} + (time % 5));
+	my $uid10 = $user->{uid} % 10;
+	my $quad3;
+	my $fourth;
+	if ($uid10 < rand(10)) {
+		$quad3 = $subnets[$uid10];
+		if ($uid10 < rand(10)) {
+			$fourth = $uid10 + 1 + (int($user->{uid}/50) % 254);
+		} else {
+			$fourth = 1+int(rand(4))*int(rand(4))*int(rand(12));
+		}
+	} else {
+		$quad3 = $subnets[rand($#subnets + 1)];
+		$fourth = 1+int(rand(16))*int(rand(16));
+	}
+	$user->{subnetid} = md5_hex("$quad3.0");
+	$user->{ipid} = md5_hex("$quad3.$fourth");
+	srand($$ + time + $seed);
+}
+}
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] [#moderations]
+
+This utility creates test moderations for a given Slash site. This program is for
+testing purposes, only, particularly for those ambitious Slash users out there
+who want to try their hand at modifying the comment or moderation systems.
+
+This program is *not* designed to work for large sites, just small test sites
+that have been recently installed.
+
+DO NOT USE THIS ON A PRODUCTION SITE.
+
+You have been warned. :)
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+
+Identity options (specify one): 
+	-U	User to moderate as. Not for use with -R
+	-R	Moderate as random users. Not for use with -U
+
+	-r	Moderate over random stories. Not for use with -I
+	-I	Story ID to be moderated. Not for use with -r
+
+EOT
+	exit;
+}
+
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2005 by Open Source Technology Group. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+__END__

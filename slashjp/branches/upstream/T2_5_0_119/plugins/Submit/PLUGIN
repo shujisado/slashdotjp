@@ -1,0 +1,15 @@
+# $Id: PLUGIN,v 1.7 2006/01/12 01:35:46 jamiemccarthy Exp $
+description="Submission System"
+name=Submit
+htdoc=submit.pl
+mysql_dump=mysql_dump.sql
+template=templates/data;submit;default
+template=templates/displayForm;submit;default
+template=templates/formatSub;submit;default
+template=templates/mergeSub;submit;default
+template=templates/previewForm;submit;default
+template=templates/saveSub;submit;default
+template=templates/subEdAdmin;submit;default
+template=templates/subEdTable;submit;default
+template=templates/subEdUser;submit;default
+template=templates/yourPendingSubs;submit;default
