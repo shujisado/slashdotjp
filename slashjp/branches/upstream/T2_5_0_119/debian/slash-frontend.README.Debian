@@ -1,4 +1,0 @@
-README for slash-frontend
-
-If you don't run frontend and backend in semae server,
-you need to mount /var/lib/slash from backend via NFS.
