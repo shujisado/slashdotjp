@@ -10,7 +10,7 @@ __name__
 listMetamods
 __template__
 
-[% IF metamods.size > 0 %]
+[% IF constants.m2 && metamods.size > 0 %]
 	[%
 		bg_toggle = 0;
 		total_m2s = 0;
@@ -150,4 +150,4 @@ END %]
 __seclev__
 10000
 __version__
-$Id: listMetamods;users;default,v 1.7 2005/09/21 18:53:38 tvroom Exp $
+$Id: listMetamods;users;default,v 1.8 2006/09/03 15:41:30 jamiemccarthy Exp $

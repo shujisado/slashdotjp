@@ -16,6 +16,7 @@ __template__
 [% INCLUDE linkrel %]
 </head>
 <body>
+<div id="top_parent"></div>
 [% IF user.is_admin %]
 	<div id="adminmenu">
         	<small>
@@ -67,4 +68,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: header;misc;default,v 1.24 2006/04/12 06:26:14 pudge Exp $
+$Id: header;misc;default,v 1.25 2007/05/09 20:54:55 pudge Exp $

@@ -14,7 +14,7 @@ __template__
 [% name = name.0 %]
 <div id="[% name %]-outer" class="hpts-outer">
   <div class="hpts-title" id="[% name %]-title">[% title %]</div>
-  <div class="hpts-inner">
+  <div class="hpts-inner" id="[% name %]-inner">
 [% thisname = []; thisparent = []; thisseen = {};
    FOREACH leaf = loop;
      IF thisseen.${leaf.value};  # don't open again if seen again
@@ -94,4 +94,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: topic_popup_tree;admin;default,v 1.20 2005/09/23 20:55:33 tvroom Exp $
+$Id: topic_popup_tree;admin;default,v 1.21 2007/02/15 19:31:21 lancelot Exp $

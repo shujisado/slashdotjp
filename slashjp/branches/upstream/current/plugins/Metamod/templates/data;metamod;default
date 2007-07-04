@@ -26,6 +26,9 @@ __template__
 	[% returnme.data_constant = 1 %] 
 	Meta Moderation
 
+[% CASE 'metamods_performed' %]
+        <p>[% num %] MetaModeration(s) Completed.
+
 [% CASE 'no_moderation' %]
 	[% returnme.data_constant = 1 %] 
 	<p>The moderation system for [% constants.sitename %] is currently down.</p>
@@ -47,4 +50,4 @@ __template__
 __seclev__
 1000
 __version__
-$Id: data;metamod;default,v 1.13 2005/07/27 22:54:46 pudge Exp $
+$Id: data;metamod;default,v 1.2 2006/10/26 17:33:04 jamiemccarthy Exp $

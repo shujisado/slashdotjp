@@ -19,7 +19,7 @@ __template__
 [% ELSE %]
 	This message is to inform you that your [% constants.sitename %] subscription has run out.
 
-	You can renew your subscription at the following location: [% gSkin.rootdir %]/subscribe.pl
+	You can renew your subscription at [% absolutedir %]/subscribe.pl
 [% END %]
 __version__
-$Id: sub_out_msg;misc;default,v 1.1 2005/02/08 18:26:58 tvroom Exp $
+$Id: sub_out_msg;misc;default,v 1.2 2007/01/03 18:37:31 pudge Exp $

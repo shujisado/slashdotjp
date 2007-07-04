@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Anchor.pm,v 1.88 2005/12/06 00:25:00 jamiemccarthy Exp $
+# $Id: Anchor.pm,v 1.89 2007/06/27 00:12:14 jamiemccarthy Exp $
 
 package Slash::Utility::Anchor;
 
@@ -36,7 +36,7 @@ use Slash::Utility::Environment;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.88 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.89 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	http_send
 	header
@@ -196,8 +196,10 @@ sub header {
 	if ($options->{admin} && $user->{is_admin}) {
 		$user->{state}{adminheader} = 1;
 		$display = slashDisplay('header-admin', $data, { Return => $options->{Return}, Page => $options->{Page} });
+#use Data::Dumper; print STDERR "header('$data' '$skin_name') A display=$display options: " . Dumper($options);
 	} else {
 		$display = slashDisplay('header', $data, { Return => $options->{Return}, Page => $options->{Page} });
+#use Data::Dumper; print STDERR "header('$data' '$skin_name') B display=$display options: " . Dumper($options);
 	}
 
 	# I bet someday we end up with an SSI bug from this -Brian
@@ -747,4 +749,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Anchor.pm,v 1.88 2005/12/06 00:25:00 jamiemccarthy Exp $
+$Id: Anchor.pm,v 1.89 2007/06/27 00:12:14 jamiemccarthy Exp $

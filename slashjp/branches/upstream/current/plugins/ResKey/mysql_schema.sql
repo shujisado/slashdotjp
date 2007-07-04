@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.6 2006/02/03 23:43:46 pudge Exp $
+# $Id: mysql_schema.sql,v 1.7 2006/08/31 04:08:34 pudge Exp $
 #
 
 DROP TABLE IF EXISTS reskeys;
@@ -40,6 +40,7 @@ DROP TABLE IF EXISTS reskey_resources;
 CREATE TABLE reskey_resources (
     rkrid       SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name        VARCHAR(64),
+    static      ENUM('yes', 'no') DEFAULT 'no' NOT NULL,
     PRIMARY KEY (rkrid)
 ) TYPE=InnoDB;
 
@@ -63,3 +64,9 @@ CREATE TABLE reskey_vars (
     UNIQUE name_rkrid (name, rkrid)
 ) TYPE=InnoDB;
 
+DROP TABLE IF EXISTS reskey_hourlysalt;
+CREATE TABLE reskey_hourlysalt (
+    ts          DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL,
+    salt        VARCHAR(20) DEFAULT '' NOT NULL,
+    UNIQUE ts (ts)
+) TYPE=InnoDB;

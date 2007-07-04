@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.2 2005/10/05 02:25:54 pudge Exp $
+# $Id: PLUGIN,v 1.4 2006/08/31 15:50:50 pudge Exp $
 description="Resource Keys"
 name=ResKey
 mysql_dump=mysql_dump.sql

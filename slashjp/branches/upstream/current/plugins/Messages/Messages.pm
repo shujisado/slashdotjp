@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Messages.pm,v 1.38 2006/03/16 23:39:12 pudge Exp $
+# $Id: Messages.pm,v 1.40 2006/10/26 17:33:03 jamiemccarthy Exp $
 
 package Slash::Messages;
 
@@ -41,7 +41,7 @@ use Slash::Constants ':messages';
 use Slash::Display;
 use Slash::Utility;
 
-($VERSION) = ' $Revision: 1.38 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.40 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 #========================================================================
@@ -1087,8 +1087,10 @@ sub send_mod_msg {
 			$discussion->{realurl} = "/comments.pl?sid=$discussion->{id}";
 		}
 
+		my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
 		my $data  = {
 			template_name	=> $type,
+			template_page	=> 'comments',
 			subject		=> {
 				template_name => $type . '_subj'
 			},
@@ -1098,7 +1100,7 @@ sub send_mod_msg {
 				value	=> $val,
 				reason	=> $reason,
 			},
-			reasons		=> $slashdb->getReasons(),
+			reasons		=> $mod_reader->getReasons(),
 		};
 		$self->create($users->[0],
 			MSG_CODE_COMMENT_MODERATE, $data, 0, '', 'collective'
@@ -1117,4 +1119,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Messages.pm,v 1.38 2006/03/16 23:39:12 pudge Exp $
+$Id: Messages.pm,v 1.40 2006/10/26 17:33:03 jamiemccarthy Exp $

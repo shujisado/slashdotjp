@@ -52,17 +52,15 @@ __template__
 <table width="100%">
 	<tr>
 		<td valign="middle">
-		[% IF user.is_admin || user.acl.discussion2_uofm || user.acl.discussion2_slashdot || user.is_subscriber || !constants.subscribe %]
         	<p><b>Discussion Style</b><p>
 		<blockquote><div>
         	<input type="radio" name="discussion2" value="none"[% constants.markup_checked_attribute IF !user_edit.discussion2 || (user_edit.discussion2 && user_edit.discussion2 != "uofm" && user_edit.discussion2 != "slashdot") %]> Normal<br>
 		[% IF user.is_admin || user.acl.discussion2_uofm %]
         	<input type="radio" name="discussion2" value="uofm"[% constants.markup_checked_attribute IF user_edit.discussion2 == "uofm" %]> University of Michigan Testing<br>
-		[% END; IF user.is_admin || user.acl.discussion2_slashdot || user.is_subscriber || !constants.subscribe %]
+		[% END; IF !user.acl.discussion2_uofm || user.is_admin %]
         	<input type="radio" name="discussion2" value="slashdot"[% constants.markup_checked_attribute IF user_edit.discussion2 == "slashdot" %]> Slashdot's New Discussion System Testing<br>
 		[% END %]
 		</div></blockquote>
-		[% END %]
 
         	<p><b>Email Display</b>
 		(currently
@@ -124,6 +122,8 @@ __template__
 		    not just loop over the reasons already existing,
 		    like it did before?
 		 %]
+
+[% IF constants.m1 %]
 		<p><b><a name="reason_bonus">Reason Modifier</a></b> (assign a modifier to different moderation reasons)<br>
 		<table>
 			<tr>
@@ -159,6 +159,7 @@ __template__
 				<td>	[% reason_select.Redundant %]	</td>
 			</tr>
 		</table>
+[% END %]
 
 		<p><b>People Modifier</b> (assign a modifier to different people)<br>
 		<table>
@@ -276,8 +277,10 @@ __template__
 		</div></blockquote>
 		[% IF user.is_admin %]
 		<label>Show Moderations in User Comment Listing <input type="checkbox" name="mod_with_comm" [% s_mod_check %]></label>
-		<label>Show Metamoderation in User Moderation Listing <input type="checkbox" name="m2_with_mod" [% s_m2_check %]></label>
-		<label>Show Metamoderation in Comment Moderation Listing <input type="checkbox" name="m2_with_mod_on_comm" [% s_m2c_check %]></label>
+			[% IF constants.m2 %]
+				<label>Show Metamoderation in User Moderation Listing <input type="checkbox" name="m2_with_mod" [% s_m2_check %]></label>
+				<label>Show Metamoderation in Comment Moderation Listing <input type="checkbox" name="m2_with_mod_on_comm" [% s_m2c_check %]></label>
+			[% END %]
 		[% END %]
 		</td>
 	</tr>
@@ -291,4 +294,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: editComm;users;default,v 1.55 2006/05/03 17:03:03 pudge Exp $
+$Id: editComm;users;default,v 1.58 2006/10/26 17:33:09 jamiemccarthy Exp $

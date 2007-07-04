@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.12 2005/03/29 20:00:08 pudge Exp $
+# $Id: PLUGIN,v 1.13 2007/06/19 18:00:35 entweichen Exp $
 name=Messages
 description="Messaging system"
 mysql_schema=mysql_schema
@@ -38,3 +38,4 @@ template=templates/unmod_msg;comments;default
 template=templates/unmod_msg_subj;comments;default
 template=templates/zoo_msg;zoo;default
 template=templates/zoo_msg_subj;zoo;default
+template=templates/storynew;messages;default

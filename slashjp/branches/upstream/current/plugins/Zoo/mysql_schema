@@ -1,10 +1,10 @@
 #
-# $Id: mysql_schema,v 1.12 2003/08/29 16:18:45 jamie Exp $
+# $Id: mysql_schema,v 1.13 2006/11/10 16:09:22 jamiemccarthy Exp $
 #
 
 DROP TABLE IF EXISTS people;
 CREATE TABLE people (
-	id MEDIUMINT UNSIGNED NOT NULL auto_increment,
+	id INT UNSIGNED NOT NULL auto_increment,
 	uid MEDIUMINT UNSIGNED NOT NULL,
 	person MEDIUMINT UNSIGNED NOT NULL,
 	type enum("friend","foe"),

@@ -37,7 +37,7 @@ __template__
 	|
 
 [% IF user.is_anon %]
-		<a href="[% gSkin.rootdir %]/users.pl">Log in/Create an Account</a>
+		<a href="[% gSkin.rootdir %]/users.pl">Log In/Create an Account</a>
 [% ELSE %]
 		<a href="[% gSkin.rootdir %]/users.pl?op=editcomm">Preferences</a>
 [% END %]
@@ -75,4 +75,4 @@ We are not responsible for them in any way.
 __seclev__
 10000
 __version__
-$Id: printCommentsNone;misc;default,v 1.10 2005/10/25 18:41:17 tvroom Exp $
+$Id: printCommentsNone;misc;default,v 1.11 2007/05/09 20:57:04 pudge Exp $

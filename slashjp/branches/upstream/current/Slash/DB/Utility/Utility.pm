@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Utility.pm,v 1.70 2006/03/08 02:28:14 jamiemccarthy Exp $
+# $Id: Utility.pm,v 1.71 2006/11/29 18:03:22 jamiemccarthy Exp $
 
 package Slash::DB::Utility;
 
@@ -12,7 +12,7 @@ use DBIx::Password;
 use Time::HiRes;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.70 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.71 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: Bender, if this is some kind of scam, I don't get it.  You already
 # have my power of attorney.
@@ -830,7 +830,9 @@ sub sqlSelectAllKeyValue {
 #     "id BETWEEN $minid AND $maxid AND ts BETWEEN '2001-01-01 01:00:00' AND '2001-01-01 03:00:00'");
 
 sub sqlSelectNumericKeyAssumingMonotonic {
-	my($self, $table, $minmax, $keycol, $clause) = @_;
+	my($self, $table, $minmax, $keycol, $clause, $max_gap) = @_;
+	my $constants = getCurrentStatic();
+	$max_gap ||= ($constants->{db_auto_increment_increment} || 1)-1;
 	$self->_refCheck($clause);
 
 	# Set up $minmax appropriately.
@@ -880,10 +882,20 @@ sub sqlSelectNumericKeyAssumingMonotonic {
 			}
 		}
 		last if $answer;
-		# If we're not that close, narrow it down.
+		# If we're not that close, narrow it down.  To allow for gaps
+		# in the keycol, 
 		my $middle = int(($leftmost + $rightmost) / 2);
+		my $middle_clause;
+		if ($max_gap) {
+			my $middle_min = int($middle - $max_gap/2);
+			$middle_min = 0 if $middle_min < 0; # very unlikely! but just in case
+			my $middle_max = int($middle + $max_gap/2);
+			$middle_clause = "$keycol BETWEEN $middle_min AND $middle_max";
+		} else {
+			$middle_clause = "$keycol=$middle";
+		}
 		my $hit = $self->sqlSelect($keycol, $table,
-			"$keycol=$middle AND ($clause)");
+			"($middle_clause) AND ($clause)");
 		if ($hit) {
 			$rightmost = $middle;
 		} else {

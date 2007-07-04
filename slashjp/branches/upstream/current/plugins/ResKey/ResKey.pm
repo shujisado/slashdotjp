@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ResKey.pm,v 1.10 2006/02/17 23:34:29 pudge Exp $
+# $Id: ResKey.pm,v 1.13 2006/08/31 12:48:16 jamiemccarthy Exp $
 
 package Slash::ResKey;
 
@@ -48,7 +48,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
 our($AUTOLOAD);
-our($VERSION) = ' $Revision: 1.10 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our($VERSION) = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 our $DEBUG = 0;
 
@@ -83,6 +83,34 @@ sub key {
 }
 
 #========================================================================
+# For tasks/reskey_salt.pl
+sub update_salts {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+
+	# fill if empty!
+	if (!$constants->{reskey_static_salt}) {
+		$self->createVar(
+			'reskey_static_salt',
+			getAnonId(1, 20),
+			'sitewide salt for reskeys'
+		);
+	}
+
+	# delete old salts
+	my $timeframe = $constants->{reskey_timeframe} || 14400;
+	$self->sqlDelete('reskey_hourlysalt', "ts < DATE_SUB(NOW(), INTERVAL $timeframe SECOND)");
+
+	# create new ones, if they don't exist
+	for my $i (0 .. 48) {
+		$self->sqlInsert('reskey_hourlysalt', {
+			-ts	=> "DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00'), INTERVAL $i HOUR)",
+			salt	=> getAnonId(1, 20),
+		}, { ignore => 1 });
+	}
+}
+
+#========================================================================
 # For tasks/reskey_purge.pl
 sub purge_old {
 	my($self) = @_;
@@ -94,25 +122,28 @@ sub purge_old {
 	$count += $self->sqlDelete('reskeys', "create_ts < DATE_SUB(NOW(), INTERVAL $timeframe SECOND)");
 
 
+	my $uses     = $self->sqlSelectAll('rkrid, value', 'reskey_vars', 'name="duration_uses"');
+	my $max_uses = $self->sqlSelectAll('rkrid', 'reskey_vars', 'name="duration_max-uses"');
+	my %max_uses = map { $_->[0] => 1 } @$max_uses;
+	my %rkids    = map { $_->[0] => 1 } (@$uses, @$max_uses);
+	my $rkid_str = join ', ', keys %rkids;
+
+	# then, delete all used reskeys where duration_uses and
+	# duration_max-uses are not in use
+	$count += $self->sqlDelete('reskeys', "rkrid NOT IN ($rkid_str) AND is_alive = 'no'");
+
 	# next, purge all reskeys that are used and older than duration_uses
-	my $uses = $self->sqlSelectAll('rkrid, value', 'reskey_vars', 'name="duration_uses"');
+	# (minimum time between uses) where duration_max-uses (max uses per
+	# timeframe) not defined
 	for (@$uses) {
 		my($rkrid, $seconds) = @$_;
+		next if $max_uses{$rkrid};
 		$count += $self->sqlDelete('reskeys',
 			"rkrid = $rkrid AND is_alive = 'no' AND " .
 			"submit_ts IS NOT NULL AND " .
 			"submit_ts < DATE_SUB(NOW(), INTERVAL $seconds SECOND)"
 		);
 	}
-
-
-	# then, delete all used reskeys where duration_uses and
-	# duration_max-uses are not in use
-	my $max_uses = $self->sqlSelectAll('rkrid', 'reskey_vars', 'name="duration_max-uses"');
-	my %rkids = map { $_->[0] => 1 } (@$uses, @$max_uses);
-	my $rkid_str = join ', ', keys %rkids;
-	$count += $self->sqlDelete('reskeys', "rkrid NOT IN ($rkid_str) AND is_alive = 'no'");
-
 
 	# finally, delete orphaned reskey_failures entries
 	my $rkids = $self->sqlSelectAll('rkf.rkid',
@@ -139,7 +170,7 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: ResKey.pm,v 1.10 2006/02/17 23:34:29 pudge Exp $
+$Id: ResKey.pm,v 1.13 2006/08/31 12:48:16 jamiemccarthy Exp $
 
 
 =head1 TODO

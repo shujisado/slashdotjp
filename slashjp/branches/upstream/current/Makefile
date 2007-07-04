@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Makefile,v 1.30 2006/05/17 20:42:05 jamiemccarthy Exp $
+# $Id: Makefile,v 1.31 2007/03/02 01:10:51 scc Exp $
 
 ##
 ##  Makefile -- Current one for Slash
@@ -153,7 +153,7 @@ install: slash plugins tagboxes
 	# Now all the themes
 	$(CP) -r themes/* $(SLASH_PREFIX)/themes
 	
-	# Insure we use the proper Perl interpreter and prefix in all scripts that 
+	# Ensure we use the proper Perl interpreter and prefix in all scripts that 
 	# we install. Note the use of Perl as opposed to dirname(1) and basename(1)
 	# which may or may not exist on any given system.
 	(replacewith=$(REPLACEWITH); \

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Display.pm,v 1.114 2006/05/19 06:20:52 pudge Exp $
+# $Id: Display.pm,v 1.122 2007/04/18 23:26:55 cowboyneal Exp $
 
 package Slash::Utility::Display;
 
@@ -33,7 +33,7 @@ use Slash::Utility::Environment;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.114 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.122 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	cleanSlashTags
 	createMenu
@@ -62,7 +62,7 @@ use vars qw($VERSION @EXPORT);
 
 #========================================================================
 
-=head2 createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT, ORDERED, MULTIPLE])
+=head2 createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT, ORDERED, MULTIPLE, ONCHANGE])
 
 Creates a drop-down list in HTML.  List is sorted by default
 alphabetically according to list values.
@@ -75,7 +75,7 @@ alphabetically according to list values.
 
 =item LABEL
 
-The name for the HTML entity.
+The name/id for the HTML entity.
 
 =item DATA
 
@@ -128,6 +128,10 @@ Boolean: do <SELECT MULTIPLE...> instead of <SELECT...>
 
 Value for the C<onchange=""> attribute.
 
+=item ONCLICK
+
+Value for the C<onclick=""> attribute.
+
 =back
 
 =item Return value
@@ -155,6 +159,7 @@ sub createSelect {
 		($default, $return, $nsort, $ordered, $multiple, $onchange, $onclick) =
 			@{$default}{qw(default return nsort ordered multiple onchange onclick)};
 	}
+	$default = '' unless defined $default;
 
 	if (ref $hashref eq 'ARRAY') {
 ### Pudge: see above. -Jamie
@@ -617,33 +622,37 @@ The 'pollbooth' template block.
 # attention
 
 sub pollbooth {
-	my($qid, $no_table, $center) = @_;
-	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my($qid, $no_table, $center, $fromrss) = @_;
 	my $constants = getCurrentStatic();
+	return '' if !$constants->{plugin}{PollBooth};
+	my $pollbooth_reader = getObject('Slash::PollBooth', { db_type => 'reader' });
+	return '' if !$pollbooth_reader;
+
 	my $gSkin = getCurrentSkin();
 	# This special qid means to use the current (sitewide) poll.
 	if ($qid eq "_currentqid") {
-		$qid = $reader->getCurrentQidForSkid($gSkin->{skid});
+		$qid = $pollbooth_reader->getCurrentQidForSkid($gSkin->{skid});
 	}
 	
 	# If no qid (or no sitewide poll), short-circuit out.
 	return '' if !$qid;
 
-	my $poll = $reader->getPoll($qid);
+	my $poll = $pollbooth_reader->getPoll($qid);
 	return '' unless %$poll;
 
-	my $n_comments = $reader->countCommentsBySid(
+	my $n_comments = $pollbooth_reader->countCommentsBySid(
 		$poll->{pollq}{discussion});
-	my $poll_open = $reader->isPollOpen($qid);
+	my $poll_open = $pollbooth_reader->isPollOpen($qid);
 
 	return slashDisplay('pollbooth', {
 		question	=> $poll->{pollq}{question},
 		answers		=> $poll->{answers},
 		qid		=> $qid,
-		has_activated   => $reader->hasPollActivated($qid),
+		has_activated   => $pollbooth_reader->hasPollActivated($qid),
 		poll_open	=> $poll_open,
 		voters		=> $poll->{pollq}{voters},
 		comments	=> $n_comments,
+		fromrss		=> $fromrss,
 	}, 1);
 }
 
@@ -1072,8 +1081,9 @@ The 'linkComment' template block.
 =cut
 
 sub linkComment {
-	my($comment, $printcomment, $date) = @_;
+	my($linkdata, $printcomment, $date) = @_;
 	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 	return _hard_linkComment(@_) if $constants->{comments_hardcoded};
 
 	my $user = getCurrentUser();
@@ -1082,19 +1092,16 @@ sub linkComment {
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
 		reason nickname fakeemail homepage sig)) {
-		$comment->{$_} = undef unless exists $comment->{$_};
+		$linkdata->{$_} = undef unless exists $linkdata->{$_};
 	}
 
-	$comment->{pid} = $comment->{original_pid} || $comment->{pid};
+	$linkdata->{pid} = $linkdata->{original_pid} || $linkdata->{pid};
 
 	slashDisplay('linkComment', {
-		%$comment, # defaults
+		%$linkdata, # defaults
 		adminflag	=> $adminflag,
 		date		=> $date,
-			# $comment->{threshold}? Hmm. I'm not sure what it
-			# means for a comment to have a threshold. If it's 0,
-			# does the following line do the right thing? - Jamie
-		threshold	=> $comment->{threshold} || $user->{threshold},
+		threshold	=> defined($linkdata->{threshold}) ? $linkdata->{threshold} : $user->{threshold},
 		commentsort	=> $user->{commentsort},
 		mode		=> $user->{mode},
 		comment		=> $printcomment,
@@ -1235,7 +1242,7 @@ sub createMenu {
 			page            => 'menu',
 			ignore_errors   => 1
 		});
-		$menu = "users" unless $nm->{page} eq "menu";
+		$menu = "users" unless $nm->{page} && $nm->{page} eq "menu";
 		if (@$items) {
 			$menu_text .= slashDisplay($menu,
 				{ items =>	$items,
@@ -1307,42 +1314,37 @@ sub lockTest {
 ########################################################
 # this sucks, but it is here for now
 sub _hard_linkComment {
-	my($comment, $printcomment, $date) = @_;
+	my($linkdata, $printcomment, $date) = @_;
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 	my $gSkin = getCurrentSkin();
 
-	my $subject = $comment->{subject};
+	my $subject = $linkdata->{subject};
 
-	my $display = qq|<a href="$gSkin->{rootdir}/comments.pl?sid=$comment->{sid}|;
-	$display .= "&amp;op=$comment->{op}" if $comment->{op};
-# $comment->{threshold}? Hmm. I'm not sure what it
-# means for a comment to have a threshold. If it's 0,
-# does the following line do the right thing? - Jamie
-# You know, I think this is a bug that comes up every so often. But in
-# theory when you go to the comment link "threshhold" should follow
-# with you. -Brian
-	$display .= "&amp;threshold=" . ($comment->{threshold} || $user->{threshold});
+	my $display = qq|<a href="$gSkin->{rootdir}/comments.pl?sid=$linkdata->{sid}|;
+	$display .= "&amp;op=$linkdata->{op}" if $linkdata->{op};
+	$display .= "&amp;threshold=" . (defined($linkdata->{threshold}) ? $linkdata->{threshold} : $user->{threshold});
 	$display .= "&amp;commentsort=$user->{commentsort}";
 	$display .= "&amp;tid=$user->{state}{tid}"
 		if $constants->{tids_in_urls} && $user->{state}{tid};
 	$display .= "&amp;mode=$user->{mode}";
-	$display .= "&amp;startat=$comment->{startat}" if $comment->{startat};
+	$display .= "&amp;startat=$linkdata->{startat}" if $linkdata->{startat};
 
 	if ($printcomment) {
-		$display .= "&amp;cid=$comment->{cid}";
+		$display .= "&amp;cid=$linkdata->{cid}";
 	} else {
-		$display .= "&amp;pid=" . ($comment->{original_pid} || $comment->{pid});
-		$display .= "#$comment->{cid}" if $comment->{cid};
+		$display .= "&amp;pid=" . ($linkdata->{original_pid} || $linkdata->{pid});
+		$display .= "#$linkdata->{cid}" if $linkdata->{cid};
 	}
 
-	$display .= qq|" onclick="$comment->{onclick}| if $comment->{onclick};
+	$display .= qq|" onclick="$linkdata->{onclick}| if $linkdata->{onclick};
 	$display .= qq|">$subject</a>|;
-	if (!$comment->{subject_only}) {
-		$display .= qq| by $comment->{nickname}|;
-		$display .= qq| (Score:$comment->{points})|
-			if !$user->{noscores} && $comment->{points};
-		$display .= " " . timeCalc($comment->{date}) 
+	if (!$linkdata->{subject_only}) {
+		$display .= qq| by $linkdata->{nickname}|;
+		$display .= qq| (Score:$linkdata->{points})|
+			if !$user->{noscores} && $linkdata->{points};
+		$display .= " " . timeCalc($linkdata->{date}) 
 			if $date;
 	}
 	$display .= "\n";
@@ -1723,4 +1725,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Display.pm,v 1.114 2006/05/19 06:20:52 pudge Exp $
+$Id: Display.pm,v 1.122 2007/04/18 23:26:55 cowboyneal Exp $

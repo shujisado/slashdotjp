@@ -80,6 +80,24 @@ __template__
 	[% returnme.data_constant = 1 %]
 	Please enter a reasonable subject.
 
+[% CASE 'invalidurl' %]
+	[% returnme.data_constant = 1 %]
+	<div class="message error">
+	You've provided an incorrectly formatted url.  Make sure your url begins with a scheme (http:// or https://)
+	</div>
+
+[% CASE 'duplicateurl' %]
+	[% returnme.data_constant = 1 %]
+	<div class="message error">
+	The url you've attempted to submit has already been submitted.  A url if provided in the url field must be unique.
+	</div>
+	<p>Links to already submitted items on this url below:</p>
+	<ul>
+		[% FOREACH item = submitted_items %]
+			<li><a href="[% gSkin.rootdir %]/firehose.pl?op=view&amp;id=[% item.id %]">[% item.title | strip_literal %] ([% item.type | strip_literal %])</a></li>
+		[% END %]
+	</ul>
+
 [% CASE 'defaultsection' %]
 	[% returnme.data_constant = 1 %]
 	All Sections
@@ -105,4 +123,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: data;submit;default,v 1.14 2005/08/22 22:41:27 pudge Exp $
+$Id: data;submit;default,v 1.16 2007/06/05 22:31:21 pudge Exp $

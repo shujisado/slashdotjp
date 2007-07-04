@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.320 2006/04/26 16:58:06 pudge Exp $
+# $Id: users.pl,v 1.335 2007/06/19 19:51:31 tvroom Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -66,6 +66,14 @@ sub main {
 			checks		=> [],
 			tab_selected_1	=> 'me',
 			tab_selected_2	=> 'info',
+		},
+		userfirehose 	=> {
+			function	=> \&showFireHose,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> [],
+			tab_selected_1	=> 'me',
+			tab_selected_2	=> 'firehose'
 		},
 		usersubmissions	=>  {
 			function	=> \&showSubmissions,
@@ -400,7 +408,7 @@ sub main {
 	# needs to do some stuff before it calls header(), so for
 	# those three, don't bother.
 	my $header;
-	if ($op !~ /^(userinfo|display|saveuseradmin|admin)$/) {
+	if ($op !~ /^(userinfo|display|saveuseradmin|admin|userfirehose$)/) {
 		my $data = {
 			adminmenu => $ops->{$op}{adminmenu} || 'admin',
 			tab_selected => $ops->{$op}{tab_selected},
@@ -658,10 +666,10 @@ sub mailPasswd {
 	my $form = getCurrentForm();
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	if (! $uid) {
@@ -765,10 +773,10 @@ sub showSubmissions {
 	my($uid, $nickname);
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	if ($form->{uid} or $form->{nick}) {
@@ -815,10 +823,10 @@ sub showComments {
 	$nickname = $user_edit->{nickname};
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$user_edit->{uid} == $user->{uid} ? 'me' : 'otheruser',
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $user_edit->{uid} == $user->{uid} ? 'me' : 'otheruser',
 	});
 
 	my $min_comment = $form->{min_comment} || 0;
@@ -855,6 +863,7 @@ sub showComments {
 		}
 	}
 
+	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
 	slashDisplay('userCom', {
 		nick			=> $nickname,
 		useredit		=> $user_edit,
@@ -862,7 +871,7 @@ sub showComments {
 		commentstruct		=> $comments,
 		commentcount		=> $commentcount,
 		min_comment		=> $min_comment,
-		reasons			=> $reader->getReasons(),
+		reasons			=> $mod_reader->getReasons(),
 		karma_flag		=> 0,
 		admin_flag		=> $user->{is_admin},
 	});
@@ -870,6 +879,40 @@ sub showComments {
 
 sub noUser {
 	print getData("no_user");
+}
+
+sub showFireHose {
+	my($hr) = @_;
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+
+	my $uid = $form->{uid} || $user->{uid};
+	my $user_edit = $reader->getUser($uid);
+	
+	$user->{state}{firehose_page} = "user";
+	$user->{state}{firehose_user_uid} = $uid;
+
+	my $firehose = getObject("Slash::FireHose");
+	header(getMessage('userfirehose_header', { useredit => $user_edit })) or return;
+	print createMenu("users", {
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $user_edit->{uid} == $user->{uid} ? 'me' : 'otheruser',
+	});
+	
+	$form->{mode} = "full";
+	$form->{color} = "black";
+	$form->{orderby} = "createtime";
+	$form->{orderdidr} = "DESC";
+	$form->{skipmenu} = 1;
+	$form->{duration} = -1;
+	$form->{fhfilter} = "\"user:$user_edit->{nickname}\"";
+	$form->{pause} = 1;
+
+	my $fhbox = $firehose->listView({ fh_page => 'users.pl'});
+	slashDisplay("userFireHose", { firehosebox => $fhbox, uid => $uid, useredit => $user_edit });
 }
 
 #################################################################
@@ -905,9 +948,12 @@ sub showInfo {
 		&& (defined($form->{show_m2s}) || defined($form->{show_m1s}) || defined($form->{m2_listing})))
 	 {
 		my $update_hr = {};
-		$update_hr->{m2_with_mod} = $form->{show_m2s} if defined $form->{show_m2s};
-		$update_hr->{mod_with_comm} = $form->{show_m1s} if defined $form->{show_m1s};
-		$update_hr->{show_m2_listing} = $form->{m2_listing} if defined $form->{m2_listing};
+		$update_hr->{mod_with_comm} = $form->{show_m1s}
+			if defined $form->{show_m1s};
+		$update_hr->{m2_with_mod} =	($constants->{m2} ? $form->{show_m2s} : undef)
+			if defined $form->{show_m2s};
+		$update_hr->{show_m2_listing} =	($constants->{m2} ? $form->{m2_listing} : undef)
+			if defined $form->{m2_listing};
 		$slashdb->setUser($user->{uid}, $update_hr);
 	}
 
@@ -992,6 +1038,13 @@ sub showInfo {
 			$id ||= $1;
 			$requested_user->{ipid} = md5_hex($1);
 
+		} elsif ($id =~ /^(.*@.*\..*?)$/) {
+			# check for email addy, but make it by uid
+			$fieldkey = 'uid';
+			$id = $uid = $reader->getUserEmail($id);
+			$requested_user = $reader->getUser($uid);
+			$nick = $requested_user->{nickname};
+
 		} else {  # go by nickname, but make it by uid
 			$fieldkey = 'uid';
 			$id = $uid = $reader->getUserUID($id);
@@ -1032,10 +1085,10 @@ sub showInfo {
 	print getMessage('note', { note => $hr->{note} }) if defined $hr->{note};
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	my $comments_wanted = $user->{show_comments_num}
@@ -1167,6 +1220,7 @@ sub showInfo {
 
 		# This is cached.
 		my $discussion = $reader->getDiscussion($comment->{sid});
+#use Data::Dumper; if ($discussion && !$discussion->{dkid}) { print STDERR scalar(gmtime) . " users.pl discussion but no dkid: " . Dumper($discussion) }
 		if (!$discussion || !$discussion->{dkid}) {
 			# A comment with no accompanying discussion;
 			# basically we pretend it doesn't exist.
@@ -1228,8 +1282,9 @@ sub showInfo {
 
 	my $cid_list = [ keys %$cids_seen ];
 	my $cids_to_mods = {};
-	if ($admin_flag && $constants->{show_mods_with_comments}) {
-		my $comment_mods = $reader->getModeratorCommentLog("DESC",
+	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
+	if ($constants->{m1} && $admin_flag && $constants->{show_mods_with_comments}) {
+		my $comment_mods = $mod_reader->getModeratorCommentLog("DESC",
 			$constants->{mod_limit_with_comments}, "cidin", $cid_list);
 	
 		# Loop through mods and group them by the sid they're attached to
@@ -1265,7 +1320,7 @@ sub showInfo {
 			admin_block		=> $admin_block,
 			netid			=> $netid,
 			netid_vis		=> $netid_vis,
-			reasons			=> $reader->getReasons(),
+			reasons			=> $mod_reader->getReasons(),
 			subcount		=> $subcount,
 			submissions		=> $submissions,
 			hr_hours_back		=> $ipid_hoursback,
@@ -1302,12 +1357,15 @@ sub showInfo {
 	
 		my $submissions = $reader->getSubmissionsByUID($uid, $sub_limit, $sub_options);
 		my $metamods;
-		$metamods = $reader->getMetamodlogForUser($uid, 30) if $admin_flag;
+		if ($constants->{m2} && $admin_flag) {
+			my $metamod_reader = getObject('Slash::Metamod', { db_type => 'reader' });
+			$metamods = $metamod_reader->getMetamodlogForUser($uid, 30);
+		}
 
 		my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
 		my $tagshist = [];
 		if ($tags_reader && $user->{is_admin}) {
-			$tagshist = $tags_reader->getAllTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', limit => 20 });
+			$tagshist = $tags_reader->getAllTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', limit => 30, include_private => 1 });
 		}
 
 		slashDisplay('userInfo', {
@@ -1323,7 +1381,7 @@ sub showInfo {
 			karma_flag		=> $karma_flag,
 			admin_block		=> $admin_block,
 			admin_flag 		=> $admin_flag,
-			reasons			=> $reader->getReasons(),
+			reasons			=> $mod_reader->getReasons(),
 			lastjournal		=> $lastjournal,
 			hr_hours_back		=> $ipid_hoursback,
 			cids_to_mods		=> $cids_to_mods,
@@ -1433,10 +1491,10 @@ sub validateUser {
 	}
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	# Since we are here, if the minimum values for the comment trigger and
@@ -1513,17 +1571,17 @@ sub editTags {
 	return if $user->{is_anon}; # shouldn't be, but can't hurt to check
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
-	my $edit_user = $slashdb->getUser($user->{uid});
+	my $user_edit = $slashdb->getUser($user->{uid});
 	my $title = getTitle('editTags_title');
 
 	slashDisplay('editTags', {
-		user_edit	=> $user,
+		user_edit	=> $user_edit,
 		title		=> $title,
 		note		=> $note,
 	});
@@ -1540,7 +1598,6 @@ sub saveTags {
 
 	$slashdb->setUser($user->{uid}, {
 		tags_turnedoff =>	$form->{showtags} ? '' : 1 });
-	my $edit_user = $slashdb->getUser($user->{uid});
 	editTags({ note => getMessage('savetags_msg') });
 }
 
@@ -1846,10 +1903,10 @@ sub changePasswd {
 	my $constants = getCurrentStatic();
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	my $user_edit = {};
@@ -1916,10 +1973,10 @@ sub editUser {
 	my $note = $hr->{note} || '';
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	my $form = getCurrentForm();
@@ -1984,10 +2041,10 @@ sub editHome {
 	my $constants = getCurrentStatic();
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	my($formats, $title, $tzformat_select);
@@ -2062,10 +2119,10 @@ sub editComm {
 	my $fieldkey;
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	my $admin_flag = $user->{is_admin} ? 1 : 0;
@@ -2084,25 +2141,26 @@ sub editComm {
 		$fieldkey = 'uid';
 	}
 
-	my @reasons = ( );
-	my $reasons = $slashdb->getReasons();
-	for my $id (sort { $a <=> $b } keys %$reasons) {
-		push @reasons, $reasons->{$id}{name};
-	}
-
-	my %reason_select;
-
 	my $hi = $constants->{comment_maxscore} - $constants->{comment_minscore};
 	my $lo = -$hi;
 	my @range = map { $_ > 0 ? "+$_" : $_ } ($lo .. $hi);
 
-	# Reason modifiers
-	for my $reason_name (@reasons) {
-		my $key = "reason_alter_$reason_name";
-		$reason_select{$reason_name} = createSelect(
-			$key, \@range, 
-			$user_edit->{$key} || 0, 1, 1
-		);
+	my @reasons = ( );
+	my %reason_select = ( );
+	if ($constants->{m1}) {
+		my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
+		my $reasons = $mod_reader->getReasons();
+		for my $id (sort { $a <=> $b } keys %$reasons) {
+			push @reasons, $reasons->{$id}{name};
+		}
+		# Reason modifiers
+		for my $reason_name (@reasons) {
+			my $key = "reason_alter_$reason_name";
+			$reason_select{$reason_name} = createSelect(
+				$key, \@range, 
+				$user_edit->{$key} || 0, 1, 1
+			);
+		}
 	}
 
 	# Zoo relation modifiers
@@ -2326,7 +2384,12 @@ sub saveUserAdmin {
 	if ($user->{is_admin} && ($user_editfield_flag eq 'uid' ||
 		$user_editfield_flag eq 'nickname')) {
 
-		$user_edits_table->{seclev} = $form->{seclev};
+		# This admin user cannot assign a seclev higher than he/she
+		# already has.
+		my $seclev = $form->{seclev};
+		$seclev = $user->{seclev} if $seclev > $user->{seclev};
+		$user_edits_table->{seclev} = $seclev;
+
 		$user_edits_table->{section} = $form->{section};
 		$user_edits_table->{author} = $form->{author} ? 1 : 0 ;
 		$user_edits_table->{defaultpoints} = $form->{defaultpoints};
@@ -2356,7 +2419,7 @@ sub saveUserAdmin {
 	}
 
 	if (!$user_edit->{nonuid}) {
-		if ($form->{expired} eq 'on') {
+		if ($form->{expired} && $form->{expired} eq 'on') {
 #			$slashdb->setExpired($user_edit->{uid});
 
 		} else {
@@ -2562,9 +2625,11 @@ sub saveUser {
 		yahoo		=> $form->{yahoo},
 		jabber		=> $form->{jabber},
 		aim		=> $form->{aim},
+		aimdisplay	=> $form->{aimdisplay},
 		icq		=> $form->{icq},
 		playing		=> $form->{playing},
 	};
+
 	for (keys %extr) {
 		$user_edits_table->{$_} = $extr{$_} if defined $extr{$_};
 	}
@@ -2724,8 +2789,9 @@ sub saveComm {
 		mode            => 'thread'
 	};
 
+	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
 	my @reasons = ( );
-	my $reasons = $slashdb->getReasons();
+	my $reasons = $mod_reader->getReasons();
 	for my $id (sort { $a <=> $b } keys %$reasons) {
 		push @reasons, $reasons->{$id}{name};
 	}
@@ -3031,10 +3097,10 @@ sub editMiscOpts {
 	return if $user->{is_anon}; # shouldn't be, but can't hurt to check
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	my $edit_user = $slashdb->getUser($user->{uid});
@@ -3184,10 +3250,10 @@ sub displayForm {
 	my $suadmin_flag = $user->{seclev} >= 10000 ? 1 : 0;
 
 	print createMenu("users", {
-		style =>	'tabbed',
-		justify =>	'right',
-		color =>	'colored',
-		tab_selected =>	$hr->{tab_selected_1} || "",
+		style		=> 'tabbed',
+		justify		=> 'right',
+		color		=> 'colored',
+		tab_selected	=> $hr->{tab_selected_1} || "",
 	});
 
 	my $op = $hr->{op} || $form->{op} || 'displayform';
@@ -3307,7 +3373,9 @@ sub getUserAdmin {
 	my $srcid;
 	my $proxy_check = {};
 	my @accesshits;
-	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
+	my $user_editinfo_flag = (!$form->{op} || $form->{op} eq 'userinfo'
+		|| $form->{userinfo} || $form->{saveuseradmin}
+		) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
 	my $sectionref = $reader->getDescriptions('skins');
 	$sectionref->{''} = getData('all_sections');

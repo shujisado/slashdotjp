@@ -80,6 +80,10 @@ __template__
 	[% returnme.data_constant = 1 %]
 	The poll ID is missing.
 
+[% CASE 'no polls' %]
+	[% returnme.data_constant = 1 %]
+	Polls are currently disabled.
+
 [% CASE 'already voted' %]
 	[% returnme.data_constant = 1 %]
 	You've already voted.
@@ -89,4 +93,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: data;pollBooth;default,v 1.11 2005/11/08 19:11:25 pudge Exp $
+$Id: data;pollBooth;default,v 1.12 2006/08/31 13:39:58 jamiemccarthy Exp $

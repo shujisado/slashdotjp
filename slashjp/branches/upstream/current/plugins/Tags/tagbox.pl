@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tagbox.pl,v 1.10 2006/07/06 22:26:10 jamiemccarthy Exp $
+# $Id: tagbox.pl,v 1.13 2007/02/23 20:07:16 jamiemccarthy Exp $
 
 use strict;
 
@@ -38,6 +38,7 @@ $task{$me}{code} = sub {
 		sleep 5 while !$task_exit_flag;
 		return ;
 	}
+	tagboxLog('tagbox.pl starting');
 
 	my $max_activity_for_run = 10;
 	while (!$task_exit_flag) {
@@ -50,7 +51,10 @@ $task{$me}{code} = sub {
 		# If there was a great deal of feeder activity, there is
 		# likely to be more yet to do, and it may obsolete the
 		# results we'd get by calling run() right now.  
-		next if $activity_feeder > 10;
+		if ($activity_feeder > 10) {
+			tagboxLog("tagbox.pl re-updating feederlog, activity $activity_feeder");
+			next;
+		}
 
 		# Run tagboxes (based on tagboxlog_feeder)
 		my $activity_run = run_tagboxes_until(time() + 30);
@@ -60,12 +64,17 @@ $task{$me}{code} = sub {
 		# If nothing's going on, ease up more (not that it probably
 		# matters much, since if nothing's going on both of the
 		# above should be doing reasonably fast SELECTs).
-		sleep 20 if !$activity_feeder && !$activity_run;
+		if (!$activity_feeder && !$activity_run) {
+			tagboxLog('tagbox.pl sleeping 20');
+			sleep 20;
+		}
 		last if $task_exit_flag;
 
 	}
 
-	return sprintf("exiting after %d seconds", time - $start_time);
+	my $msg = sprintf("exiting after %d seconds", time - $start_time);
+	tagboxLog("tagbox.pl $msg");
+	return $msg;
 };
 
 sub update_feederlog {
@@ -106,10 +115,12 @@ sub update_feederlog {
 	}
 	# Get the tags data.
 	my $tags_ar = $tagsdb->sqlSelectAllHashrefArray(
-		'*', 'tags',
+		'*, UNIX_TIMESTAMP(created_at) AS created_at_ut',
+		'tags',
 		"tagid > $min_max_tagid $deactivated_tagids_clause",
 		'ORDER BY tagid');
 	my $max_tagid = @$tags_ar ? $tags_ar->[-1]{tagid} : undef;
+	$tagsdb->addCloutsToTagArrayref($tags_ar);
 
 	# If nothing changed, we're done.
 	return 0 if
@@ -136,16 +147,21 @@ sub update_feederlog {
 				grep { $_->{tagid} > $tagbox->{last_tagid_logged} }
 				@$tags_ar
 			];
-			$feeder_ar = undef;
-			$feeder_ar = $tagbox->{object}->
-				feed_newtags($tags_this_tagbox_ar)
-				if @$tags_this_tagbox_ar;
-			# XXX optimize by consolidating here: sum importances, max tagids
-			insert_feederlog($tagbox, $feeder_ar) if $feeder_ar;
-			# XXX The previous insert and this update should be wrapped
-			# in a transaction.
-			$tagboxdb->markTagboxLogged($tagbox->{tbid},
-				{ last_tagid_logged => $max_tagid });
+			# Mostly for responsiveness reasons, don't process
+			# more than 1000 feeder rows at a time.
+			$#$tags_this_tagbox_ar = 999 if $#$tags_this_tagbox_ar > 999;
+			if (@$tags_this_tagbox_ar) {
+				my $max_tagid_this = $tags_this_tagbox_ar->[-1]{tagid};
+				# Call the class's feed_newtags to determine importance etc.
+				$feeder_ar = undef;
+				$feeder_ar = $tagbox->{object}->feed_newtags($tags_this_tagbox_ar);
+				# XXX optimize by consolidating here: sum importances, max tagids
+				insert_feederlog($tagbox, $feeder_ar) if $feeder_ar;
+				# XXX The previous insert and this update should be wrapped
+				# in a transaction.
+				$tagboxdb->markTagboxLogged($tagbox->{tbid},
+					{ last_tagid_logged => $max_tagid_this });
+			}
 		}
 
 		### Newly deactivated tags
@@ -171,16 +187,21 @@ sub update_feederlog {
 			for my $tag_hr (@$deactivated_tags_this_tagbox_ar) {
 				$tag_hr->{tdid} = $deactivated_tagids_this_tagbox_hr->{ $tag_hr->{tagid} };
 			}
-			$feeder_ar = undef;
-			$feeder_ar = $tagbox->{object}->
-				feed_deactivatedtags($deactivated_tags_this_tagbox_ar)
-				if @$deactivated_tags_this_tagbox_ar;
-			# XXX optimize
-			insert_feederlog($tagbox, $feeder_ar) if $feeder_ar;
-			# XXX The previous insert and this update should be wrapped
-			# in a transaction.
-			$tagboxdb->markTagboxLogged($tagbox->{tbid},
-				{ last_tdid_logged => $max_tdid });
+			if (@$deactivated_tags_this_tagbox_ar) {
+				# Mostly for responsiveness reasons, don't process
+				# more than 1000 feeder rows at a time.
+				$#$deactivated_tags_this_tagbox_ar = 999 if $#$deactivated_tags_this_tagbox_ar > 999;
+				my $max_tdid_this = $deactivated_tags_this_tagbox_ar->[-1]{tdid};
+				# Call the class's feed_deactivatedtags to determine importance etc.
+				$feeder_ar = undef;
+				$feeder_ar = $tagbox->{object}->feed_deactivatedtags($deactivated_tags_this_tagbox_ar);
+				# XXX optimize
+				insert_feederlog($tagbox, $feeder_ar) if $feeder_ar;
+				# XXX The previous insert and this update should be wrapped
+				# in a transaction.
+				$tagboxdb->markTagboxLogged($tagbox->{tbid},
+					{ last_tdid_logged => $max_tdid_this });
+			}
 		}
 
 		### New changes to users
@@ -190,16 +211,21 @@ sub update_feederlog {
 				grep { $_->{tuid} > $tagbox->{last_tuid_logged} }
 				@$userchange_ar
 			];
-			$feeder_ar = undef;
-			$feeder_ar = $tagbox->{object}->
-				feed_userchanges($userchanges_this_tagbox_ar)
-				if @$userchanges_this_tagbox_ar;
-			# XXX optimize
-			insert_feederlog($tagbox, $feeder_ar) if $feeder_ar;
-			# XXX The previous insert and this update should be wrapped
-			# in a transaction.
-			$tagboxdb->markTagboxLogged($tagbox->{tbid},
-				{ last_tuid_logged => $max_tuid });
+			if (@$userchanges_this_tagbox_ar) {
+				# Mostly for responsiveness reasons, don't process
+				# more than 1000 feeder rows at a time.
+				$#$userchanges_this_tagbox_ar = 999 if $#$userchanges_this_tagbox_ar > 999;
+				my $max_tuid_this = $userchanges_this_tagbox_ar->[-1]{tuid};
+				# Call the class's feed_userchanges to determine importance etc.
+				$feeder_ar = undef;
+				$feeder_ar = $tagbox->{object}->feed_userchanges($userchanges_this_tagbox_ar);
+				# XXX optimize
+				insert_feederlog($tagbox, $feeder_ar) if $feeder_ar;
+				# XXX The previous insert and this update should be wrapped
+				# in a transaction.
+				$tagboxdb->markTagboxLogged($tagbox->{tbid},
+					{ last_tuid_logged => $max_tuid_this });
+			}
 		}
 
 	}
@@ -224,7 +250,7 @@ sub run_tagboxes_until {
 	my $activity = 0;
 	$tagboxes = $tagboxdb->getTagboxes();
 
-	while (time() < $run_until) {
+	while (time() < $run_until && !$task_exit_flag) {
 		my $affected_ar = $tagboxdb->getMostImportantTagboxAffectedIDs();
 		return $activity if !$affected_ar || !@$affected_ar;
 
@@ -234,7 +260,7 @@ sub run_tagboxes_until {
 #my $ad = Dumper($affected_hr); $ad =~ s/\s+/ /g; my $tb = Dumper($tagbox); $tb =~ s/\s+/ /g; print STDERR "r_t_u affected_hr: $ad tagbox: $tb\n";
 			$tagbox->{object}->run($affected_hr->{affected_id});
 			$tagboxdb->markTagboxRunComplete($affected_hr);
-			last if time() >= $run_until;
+			last if time() >= $run_until || $task_exit_flag;
 		}
 
 		sleep 1;

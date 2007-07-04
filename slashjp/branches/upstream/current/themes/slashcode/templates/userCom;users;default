@@ -11,7 +11,7 @@ Display user's info
 * nickmatch_flag = current user is same as viewed user
 * karma_flag = boolean for display karma
 * admin_flag = boolean for whether to display admin stuff
-* reasons = hashref from $slashdb->getReasons()
+* reasons = hashref from $moddb->getReasons()
 
 __title__
 
@@ -52,4 +52,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: userCom;users;default,v 1.13 2006/01/23 20:42:59 pudge Exp $
+$Id: userCom;users;default,v 1.14 2006/10/26 17:33:10 jamiemccarthy Exp $

@@ -37,7 +37,7 @@ __template__
 				[%- ELSIF field == 'subnetid' -%]
 				<input type="hidden" name="subnetid" value="[% useredit.subnetid | strip_attribute %]">
 				[%- ELSIF field == 'srcid' -%]
-				<input type="hidden" name="SRCID" value="[% useredit.srcid | strip_attribute %]">
+				<input type="hidden" name="srcid" value="[% useredit.srcid | strip_attribute %]">
 				[%- END -%]
 
 				<label>
@@ -295,4 +295,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: getUserAdmin;users;default,v 1.78 2006/04/05 19:57:20 jamiemccarthy Exp $
+$Id: getUserAdmin;users;default,v 1.79 2006/11/16 17:01:12 tvroom Exp $

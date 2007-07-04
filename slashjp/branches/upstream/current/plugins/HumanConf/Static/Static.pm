@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Static.pm,v 1.36 2006/01/06 19:53:54 jamiemccarthy Exp $
+# $Id: Static.pm,v 1.37 2006/11/10 16:53:54 jamiemccarthy Exp $
 
 package Slash::HumanConf::Static;
 
@@ -18,7 +18,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.36 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.37 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -172,10 +172,8 @@ sub deleteOldFromPool {
 		# Delete the rows of the ones whose files we deleted.
 		if (@row_ids_to_delete) {
 			my $hcpids_list = join(",", @row_ids_to_delete);
-			my $new_delrows = $self->sqlDelete(
-				"humanconf_pool",
-				"hcpid IN ($hcpids_list)"
-			);
+			my $new_delrows = $self->sqlDelete('humanconf_pool', "hcpid IN ($hcpids_list)");
+			$self->sqlDelete('humanconf', "hcpid IN ($hcpids_list)");
 			$successfully_deleted += $new_delrows;
 			$remaining_to_delete -= $new_delrows;
 			$delrows += $new_delrows;

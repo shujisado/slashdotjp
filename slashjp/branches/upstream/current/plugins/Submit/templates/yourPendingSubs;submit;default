@@ -25,7 +25,9 @@ and their status within the system:</p>
 
 [% IF submissions.size > 0 %]<ul>[% END %]
 [% summary = { };  %]
-[% cur_time = Slash.db.getTime() %] 
+[% cur_time = Slash.db.getTime() %]
+[% secs_back = -86400 * 2 %]
+[% cutoff_time = Slash.timeCalc(Slash.db.getTime(), "%Y-%m-%d %T", secs_back) %]
 [% FOREACH submission = submissions %]
 	[%	time    = submission.time
 		subj    = submission.subj
@@ -36,7 +38,19 @@ and their status within the system:</p>
 
 	<li>[% time %] [% subj %] ([% section %],[% topic %])
 	[% story_viewable = submission.del == 2 and submission.sid and submission.story_time.lt(cur_time) and submission.displaystatus!=-1 %]
-	[% SWITCH submission.del;
+	[% 
+	   submission_del = submission.del;
+	   IF constants.plugin.FireHose && submission_del == 0;
+	   	firehose = Slash.getObject("Slash::FireHose");
+		item = firehose.getFireHoseByTypeSrcid("submission", submission.subid);
+		IF item && item.id;
+			pop_level = firehose.getPopLevelForPopularity(item.popularity);
+			IF time.lt(cutoff_time) && pop_level >= 6;
+				submission_del = 1;
+			END;
+		END;
+	   END;
+	   SWITCH submission_del;
 		CASE 0; 
 			status="pending";
 		CASE 1;
@@ -67,4 +81,4 @@ don't take it personally.
 __seclev__
 10000
 __version__
-$Id: yourPendingSubs;submit;default,v 1.16 2005/11/02 21:31:07 pudge Exp $
+$Id: yourPendingSubs;submit;default,v 1.18 2007/04/05 21:46:20 pudge Exp $

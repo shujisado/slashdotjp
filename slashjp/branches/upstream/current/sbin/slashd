@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: slashd,v 1.63 2006/06/14 12:22:26 jamiemccarthy Exp $
+# $Id: slashd,v 1.65 2007/02/22 22:45:21 jamiemccarthy Exp $
 
 ############################################################
 #
@@ -89,6 +89,13 @@ sub slashdLog {
 		$args[0] = "[$pids{$$}{taskname}] $args[0]";
 	}
 	doLog('slashd', \@args);
+}
+
+# Tagboxes get the option to log to a separate file.
+
+sub tagboxLog {
+	my(@args) = @_;
+	doLog('tagbox', \@args);
 }
 
 # A command to log an error to a DB table.  This is only for messages

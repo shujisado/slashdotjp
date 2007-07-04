@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ResKey.pm,v 1.6 2005/12/23 00:03:45 jamiemccarthy Exp $
+# $Id: ResKey.pm,v 1.8 2006/09/03 22:02:45 jamiemccarthy Exp $
 
 package Slash::PollBooth::ResKey;
 
@@ -13,7 +13,7 @@ use Slash::Constants ':reskey';
 
 use base 'Slash::ResKey::Key';
 
-our($VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our($VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub doCheck {
 	my($self) = @_;
@@ -30,15 +30,10 @@ sub doCheck {
 
 	return(RESKEY_DEATH, ['no qid', {}, 'pollBooth']) unless $qid;
 
-	my $pollvoter_md5 = getPollVoterHash();
-	my $qid_quoted = $slashdb->sqlQuote($qid);
-
-	# Yes, qid/id/uid is a key in pollvoters.
-	my($voters) = $slashdb->sqlSelect('id', 'pollvoters',
-		"qid=$qid_quoted AND id='$pollvoter_md5' AND uid=$user->{uid}"
-	);
-
-	if ($voters) {
+	# Pudge: I assume it's OK to use a reader DB here...? - Jamie
+	my $pollbooth_reader = getObject('Slash::PollBooth', { db_type => 'reader' });
+	return(RESKEY_DEATH, ['no polls', {}, 'pollBooth']) unless $pollbooth_reader;
+	if ($pollbooth_reader->checkPollVoter($qid, $user->{uid})) {
 		return(RESKEY_DEATH, ['already voted', {}, 'pollBooth']);
 	}
 

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: RSS.pm,v 1.34 2006/02/23 21:12:43 pudge Exp $
+# $Id: RSS.pm,v 1.38 2007/04/18 23:28:31 cowboyneal Exp $
 
 package Slash::XML::RSS;
 
@@ -32,7 +32,7 @@ use XML::RSS;
 use base 'Slash::XML';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.34 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.38 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 #========================================================================
@@ -214,11 +214,15 @@ sub create {
 			$channel{syn}{$_} = delete $channel{$_};
 		}
 
-		my($item) = @{$param->{items}};
-		$rss->add_module(
-			prefix  => 'slash',
-			uri     => 'http://purl.org/rss/1.0/modules/slash/',
-		) if $item->{story};
+		for (@{$param->{items}}) {
+			if ($_->{story}) {
+				$rss->add_module(
+					prefix  => 'slash',
+					uri     => 'http://purl.org/rss/1.0/modules/slash/',
+				);
+				last;
+			}
+		}
 
 	} elsif ($version >= 0.91) {
 		# fix mappings for 0.91
@@ -389,11 +393,13 @@ sub rss_story {
 
 	my $topics = $reader->getTopics;
 	my $other_creator;
+	my $action;
 
 	$encoded_item->{title}  = $self->encode($story->{title})
 		if $story->{title};
 	if ($story->{sid}) {
 		my $edit = "admin.pl?op=edit&sid=$story->{sid}";
+		$action = "article.pl?sid=$story->{sid}\&from=rss";
 		if ($story->{primaryskid}) {
 			my $dir = url2abs(
 				$reader->getSkin($story->{primaryskid})->{rootdir},
@@ -401,9 +407,11 @@ sub rss_story {
 			);
 			$encoded_item->{'link'} = _tag_link("$dir/article.pl?sid=$story->{sid}");
 			$edit = "$dir/$edit";
+			$action = "$dir/$action";
 		} else {
 			$encoded_item->{'link'} = _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
 			$edit = "$channel->{'link'}$edit";
+			$action = "$channel->{'link'}$action";
 		}
 		$_ = $self->encode($_, 'link') for ($encoded_item->{'link'}, $edit);
 
@@ -423,7 +431,12 @@ sub rss_story {
 
 	if ($version >= 0.91) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
-		$encoded_item->{description} = $desc if $desc;
+		if ($desc) {
+			$encoded_item->{description} = $desc;
+			$encoded_item->{description} .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>" if $action;
+			# add poll if any
+			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+		}
 	}
 
 	if ($version >= 1.0) {
@@ -562,4 +575,4 @@ Slash(3), Slash::XML(3).
 
 =head1 VERSION
 
-$Id: RSS.pm,v 1.34 2006/02/23 21:12:43 pudge Exp $
+$Id: RSS.pm,v 1.38 2007/04/18 23:28:31 cowboyneal Exp $

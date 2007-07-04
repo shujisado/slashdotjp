@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.15 2006/03/22 00:21:57 pudge Exp $
+# $Id: mysql_dump.sql,v 1.18 2007/06/04 19:57:13 tvroom Exp $
 #
 
 ### NOTE: reserved reskey IDs:
@@ -33,17 +33,15 @@
 INSERT INTO vars VALUES ('reskey_srcid_masksize', 24, 'which srcid mask size to use for reskeys');
 INSERT INTO vars VALUES ('reskey_timeframe', 14400, 'Default timeframe base to use for max-uses (in seconds)');
 
-INSERT INTO reskey_resources VALUES (1, 'comments');
-INSERT INTO reskey_resources VALUES (2, 'zoo');
-INSERT INTO reskey_resources VALUES (3, 'journal');
-INSERT INTO reskey_resources VALUES (4, 'journal-soap');
-INSERT INTO reskey_resources VALUES (5, 'pollbooth');
-INSERT INTO reskey_resources VALUES (6, 'submit');
-INSERT INTO reskey_resources VALUES (7, 'journal-soap-get');
-INSERT INTO reskey_resources VALUES (8, 'bookmark');
-
-
-
+INSERT INTO reskey_resources VALUES (1, 'comments', 'no');
+INSERT INTO reskey_resources VALUES (2, 'zoo', 'no');
+INSERT INTO reskey_resources VALUES (3, 'journal', 'no');
+INSERT INTO reskey_resources VALUES (4, 'journal-soap', 'no');
+INSERT INTO reskey_resources VALUES (5, 'pollbooth', 'no');
+INSERT INTO reskey_resources VALUES (6, 'submit', 'no');
+INSERT INTO reskey_resources VALUES (7, 'journal-soap-get', 'no');
+INSERT INTO reskey_resources VALUES (8, 'bookmark', 'no');
+INSERT INTO reskey_resources VALUES (9, 'comments-moderation-ajax', 'yes');
 
 ##### comments
 ### checks
@@ -189,3 +187,24 @@ INSERT INTO reskey_vars VALUES (6, 'duration_max-failures',  10, 'how many failu
 INSERT INTO reskey_vars VALUES (6, 'duration_uses',         300, 'min duration (in seconds) between uses');
 INSERT INTO reskey_vars VALUES (6, 'duration_creation-use',  20, 'min duration (in seconds) between creation and use');
 
+
+
+##### comments-moderation-ajax
+### checks
+INSERT INTO reskey_resource_checks VALUES (NULL, 9, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 9, 'use', 'Slash::ResKey::Checks::Post',                151);
+INSERT INTO reskey_resource_checks VALUES (NULL, 9, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 9, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT INTO reskey_resource_checks VALUES (NULL, 9, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT INTO reskey_resource_checks VALUES (NULL, 9, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT INTO reskey_resource_checks VALUES (NULL, 9, 'use', 'Slash::ResKey::Checks::Moderate',            601);
+
+### vars
+INSERT INTO reskey_vars VALUES (9, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (9, 'acl_no', 'reskey_no_comments-moderation-ajax', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (9, 'user_seclev', 1, 'Minimum seclev to use resource');
+
+INSERT INTO reskey_resources VALUES (200, 'badge_vote_static', 'yes');
+INSERT INTO reskey_resource_checks VALUES (NULL, 200, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 200, 'use', 'Slash::ResKey::Checks::Post',                151);
+INSERT INTO reskey_vars VALUES (200, 'user_seclev', 1, 'Minimum seclev to use resource');

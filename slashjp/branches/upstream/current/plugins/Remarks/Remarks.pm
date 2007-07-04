@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Remarks.pm,v 1.9 2006/03/14 22:23:38 pudge Exp $
+# $Id: Remarks.pm,v 1.10 2006/07/18 23:08:55 pudge Exp $
 
 package Slash::Remarks;
 
@@ -34,7 +34,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.9 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.10 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ########################################################
 sub new {
@@ -80,6 +80,8 @@ sub createRemark {
 	my($self, $remark, $options) = @_;
 
 	my $remark_t = $self->truncateStringForCharColumn($remark, 'remarks', 'remark');
+	$remark_t =~ s/[^[:ascii:]]+//g;
+	$remark_t =~ s/[^[:print:]]+//g;
 
 	$self->sqlInsert('remarks', {
 		uid		=> $options->{uid}	|| getCurrentAnonymousCoward('uid'),
@@ -192,4 +194,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Remarks.pm,v 1.9 2006/03/14 22:23:38 pudge Exp $
+$Id: Remarks.pm,v 1.10 2006/07/18 23:08:55 pudge Exp $

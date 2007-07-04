@@ -25,9 +25,9 @@ __template__
 [% END %]
 
 
-Copyright 1997-2006 [% constants.sitepublisher %].  All rights reserved.
+Copyright 1997-2007 [% constants.sitepublisher %].  All rights reserved.
 
 __seclev__
 500
 __version__
-$Id: dailyheadlines;messages;default,v 1.12 2006/01/25 16:11:42 cowboyneal Exp $
+$Id: dailyheadlines;messages;default,v 1.13 2007/01/02 18:35:59 cowboyneal Exp $

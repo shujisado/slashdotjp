@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tagtimer,v 1.1 2006/01/27 13:14:46 jamiemccarthy Exp $
+# $Id: tagtimer,v 1.2 2006/09/20 00:56:23 jamiemccarthy Exp $
 
 use warnings;
 use strict;
@@ -24,7 +24,7 @@ use vars qw(
 	$tags		$tags_reader
 );
 
-($VERSION) = ' $Revision: 1.1 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 init();
 run();
@@ -59,7 +59,7 @@ sub init {
 }
 
 sub run {
-	my $stoids = $slashdb->sqlSelectColArrayref("stoid", "stories", q{time > DATE_SUB(NOW(), INTERVAL 1 YEAR) AND in_trash="no"}, "ORDER BY stoid DESC LIMIT 700");
+	my $stoids = $slashdb->sqlSelectColArrayref("stoid", "stories", q{time > DATE_SUB(NOW(), INTERVAL 1 YEAR) AND in_trash="no"}, "ORDER BY stoid DESC LIMIT 20");
 	my $uids = $slashdb->sqlSelectColArrayref('uid', 'users', 'seclev > 0', 'ORDER BY RAND() LIMIT 100');
 	my @words = ( ); srand(12345); for (1..1000) { push @words, getRandomWordFromDictFile("/etc/dictionaries-common/words", {min_chars => 3}) }
 	srand;

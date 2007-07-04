@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.33 2006/04/10 19:29:26 pudge Exp $
+# $Id: PLUGIN,v 1.36 2007/02/01 03:39:31 jamiemccarthy Exp $
 description="Admin Interface"
 name=Admin
 mysql_dump=dump
@@ -23,6 +23,7 @@ template=templates/adminLoginForm;admin;default
 template=templates/author_activity;misc;default
 template=templates/blockEdit;admin;default
 template=templates/colorEdit;admin;default
+template=templates/commentlog;admin;default
 template=templates/data;admin;default
 template=templates/editbuttons;admin;default
 template=templates/editFilter;admin;default
@@ -34,7 +35,9 @@ template=templates/listFilters;admin;default
 template=templates/listStories;admin;default
 template=templates/mcd_stats;admin;default
 template=templates/messages;admin;default
+template=templates/neverdisplay;misc;default
 template=templates/otherLinks;admin;default
+template=templates/peer_weights;admin;default
 template=templates/recent;admin;default
 template=templates/recent_requests;admin;default
 template=templates/recent_mods;admin;default

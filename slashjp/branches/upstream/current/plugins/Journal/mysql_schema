@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.15 2006/02/13 23:18:29 pudge Exp $
+# $Id: mysql_schema,v 1.16 2006/12/12 22:46:45 tvroom Exp $
 #
 
 DROP TABLE IF EXISTS journals;
@@ -11,7 +11,7 @@ CREATE TABLE journals (
 	posttype TINYINT DEFAULT '2' NOT NULL,
 	discussion MEDIUMINT  UNSIGNED,
 	tid SMALLINT UNSIGNED NOT NULL,
-	submit ENUM ("no","yes") DEFAULT "no",
+	promotetype ENUM ("publicize","publish", "post") NOT NULL DEFAULT "publish",
 	last_update timestamp NOT NULL,
 	PRIMARY KEY (id),
 	KEY uid_date_id (uid,date,id),

@@ -73,7 +73,8 @@ __template__
 				<input type="text" name="playing" value="[% useredit.playing | strip_attribute %]" size="40">
 			[%- END - %]
 			[% PROCESS formLabel value => 'AIM' %]
-			<input type="text" name="aim" value="[% useredit.aim | strip_attribute %]" size="40">
+			<input type="text" name="aim" value="[% useredit.aim | strip_attribute %]" size="40"><br>
+			<div class="notes">Do not make this AIM nick public <input type="checkbox" name="aimdisplay" value="1"[% IF useredit.aimdisplay %] checked="checked" [% END %]></div>
 			[% PROCESS formLabel value => 'ICQ UIN' %]
 			<input type="text" name="icq" value="[% useredit.icq | strip_attribute %]" size="40">
 			[% PROCESS formLabel value => 'Yahoo! ID' %]
@@ -109,4 +110,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: editUser;users;default,v 1.23 2006/01/23 20:42:59 pudge Exp $
+$Id: editUser;users;default,v 1.24 2007/05/09 18:32:39 entweichen Exp $

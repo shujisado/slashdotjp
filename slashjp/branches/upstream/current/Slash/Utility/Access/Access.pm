@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Access.pm,v 1.30 2006/03/20 22:57:41 pudge Exp $
+# $Id: Access.pm,v 1.34 2007/06/13 19:11:21 pudge Exp $
 
 package Slash::Utility::Access;
 
@@ -35,7 +35,7 @@ use Slash::Constants qw(:web :people :messages);
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.30 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.34 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	checkFormPost
 	formkeyError
@@ -525,7 +525,7 @@ sub compressOk {
 	# If no content (or I suppose the single char '0') is passed in,
 	# just report that it passes the test.  Hopefully the caller is
 	# performing other checks to make sure that boundary condition
-	# is addresses.
+	# is addressed.
 	return 1 if !$content;
 
 	my $slashdb   = getCurrentDB();
@@ -545,10 +545,10 @@ sub compressOk {
 	# larger the value the more difficult to accept a comment with lots
 	# of whitespace.  Values between 0.2 and 5 probably make sense.
 	my $slice_size = $constants->{comment_compress_slice} || 500;
-	my $nbsp_space = " " x (1 + int(11 * $wsfactor));
-	my $breaktag_space = " " x (1 + int(3 * $wsfactor));
-	my $spacerun_min = 1 + int(4 / $wsfactor);
-	my $spacerun_exp = 1 + 0.4 * $wsfactor;
+	my $nbsp_space = " " x (1 + int(1 * $wsfactor));
+	my $breaktag_space = " " x (1 + int(1 * $wsfactor));
+	my $spacerun_min = 1 + int(16 / $wsfactor);
+	my $spacerun_exp = 1 + 0.1 * $wsfactor;
 
 	my $orig_length = length($content);
 	my $slice_remainder = $orig_length % $slice_size;
@@ -795,9 +795,16 @@ sub isDiscussionOpen {
 				|| (
 					$discussion->{commentstatus} eq 'no_foe_eof'
 						&&
+					!$people->{FRIEND()}{$user->{uid}}
+						&&
 					$people->{EOF()}{$user->{uid}}
 				)
 			);
+		}
+	} elsif ($discussion->{commentstatus} eq 'logged_in') {
+		# user just has to be logged in, but A.C. posting still allowed
+		if ($user->{is_anon}) {
+			$discussion->{type} = 'archived';
 		}
 	}
 
@@ -818,4 +825,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Access.pm,v 1.30 2006/03/20 22:57:41 pudge Exp $
+$Id: Access.pm,v 1.34 2007/06/13 19:11:21 pudge Exp $

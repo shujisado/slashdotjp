@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: admin.pl,v 1.298 2006/06/28 22:23:08 tvroom Exp $
+# $Id: admin.pl,v 1.311 2007/04/05 19:46:52 jamiemccarthy Exp $
 
 use strict;
 use File::Temp 'tempfile';
@@ -86,6 +86,12 @@ sub main {
 			seclev		=> 10000,
 			adminmenu	=> 'config',
 			tab_selected	=> 'colors',
+		},
+		commentlog	=> {
+			function	=> \&commentLog,
+			seclev		=> 100,
+			adminmenu	=> 'security',
+			tab_selected	=> 'commentlog'
 		},
 		listfilters 	=> {
 			function 	=> \&listFilters, # listfilters
@@ -194,6 +200,12 @@ sub main {
 			seclev		=> 500,
 			adminmenu	=> 'info',
 			tab_selected	=> 'signoff'
+		},
+		peerweights 		=> {
+			function	=> \&displayPeerWeights,
+			seclev		=> 500,
+			adminmenu	=> 'info',
+			tab_selected	=> 'pw'
 		}
 	};
 
@@ -764,6 +776,13 @@ sub colorEdit {
 }
 
 ##################################################################
+sub commentLog {
+	my($form, $slashdb, $user, $constants) = @_;
+	my $commentlog = $slashdb->getRecentCommentLog();
+	slashDisplay("commentlog", { commentlog => $commentlog });
+}
+
+##################################################################
 sub colorSave {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -1114,6 +1133,26 @@ sub editStory {
 			'stoid', 1);
 	}
 
+	# handle any media files that were given
+	if ($form->{media_file}) {
+		my $upload = $form->{query_apache}->upload;
+		if ($upload) {
+			my $fh = $upload->fh;
+			mkpath("/tmp/upload", 0, 0777) unless -e "/tmp/upload";
+			$form->{media_file} =~ s|^.*?([^/:\\]+)$|$1|;
+			my $name = $form->{media_file};
+			my $ofh = gensym();
+			if (!open $ofh, ">/tmp/upload/$name\0") {
+			} else {
+				while (<$fh>) {
+					print $ofh $_;
+				}
+				close $ofh;
+				$slashdb->insertMediaFile($stoid, $name);
+			}
+		}
+	}
+
 	# Basically, we upload the bodytext if we realize a name has been passed in -Brian
 	if ($form->{bodytext_file}) {
 		my $upload = $form->{query_apache}->upload;
@@ -1132,7 +1171,7 @@ sub editStory {
 	my($extracolumn_flag) = (0, 0);
 	my($storyref, $story, $author, $storycontent, $locktest,
 		$extracolumns, $commentstatus_select, 
-		$subid, $description);
+		$subid, $fhid, $description);
 	my $extracolref = {};
 	my($fixquotes_check, $autonode_check, $fastforward_check) = ('','','');
 	my $page = 'index';
@@ -1153,6 +1192,7 @@ sub editStory {
 	# that determination.  Now that we have $newarticle, should
 	# we be using that instead? - Jamie
 	# if that tells us, then sure - pudge
+	
 	if ($form->{title}) {
 
 		my $storyskin = $gSkin;
@@ -1166,12 +1206,13 @@ sub editStory {
 		$storyref->{dept} =~ s/^-//;
 		$storyref->{dept} =~ s/-$//;
 
-		my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form);
+		my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form, $storyref->{sid});
 		$storyref->{related_sids_hr} = $related_sids_hr;
 		$storyref->{related_urls_hr} = $related_urls_hr;
 		$storyref->{related_cids_hr} = $related_cids_hr;
 		my($chosen_hr) = extractChosenFromForm($form);
 		$storyref->{topics_chosen} = $chosen_hr;
+
 		my $rendered_hr = $slashdb->renderTopics($chosen_hr);
 		$storyref->{topics_rendered} = $rendered_hr;
 		$storyref->{primaryskid} = $slashdb->getPrimarySkidFromRendered($rendered_hr);
@@ -1181,7 +1222,7 @@ sub editStory {
 		$extracolumns = $slashdb->getNexusExtrasForChosen($chosen_hr);
 
 		for my $field (qw( introtext bodytext )) {
-			local $Slash::Utility::Data::approveTag::admin = 1;
+			local $Slash::Utility::Data::approveTag::admin = 2;
 			$storyref->{$field} = $slashdb->autoUrl($form->{section}, $storyref->{$field});
 			$storyref->{$field} = cleanSlashTags($storyref->{$field});
 			$storyref->{$field} = strip_html($storyref->{$field});
@@ -1192,6 +1233,7 @@ sub editStory {
 
 		$form->{uid} ||= $user->{uid};
 		$subid = $form->{subid};
+		$fhid = $form->{fhid};
 		$sid = $form->{sid};
 
 		# not normally set here, so we force it to be safe
@@ -1365,6 +1407,7 @@ sub editStory {
 		lasttitle	=> $storyref->{title},
 		last_sid	=> $sid,
 		last_subid	=> '',
+		last_fhid	=> '',
 	});
 
 	# Run a spellcheck on introtext, bodytext, and title if they're set.
@@ -1420,7 +1463,6 @@ sub editStory {
 		my $files = $blobdb->getFilesForStory($sid);
 		$attached_files = slashDisplay('attached_files', { files => $files }, { Return => 1});
 	}
-
 	my $shown_in_desc = getDescForTopicsRendered($storyref->{topics_rendered},
 		$storyref->{primaryskid},
 		$display_check ? 1 : 0);
@@ -1462,6 +1504,7 @@ sub editStory {
 		tagbox_html		=> $tagbox_html,
 		sid			=> $sid,
 		subid			=> $subid,
+		fhid			=> $fhid,
 		authortext 		=> $authortext,
 		slashdtext		=> $slashdtext,
 		newarticle		=> $newarticle,
@@ -1487,7 +1530,8 @@ sub editStory {
 
 ##################################################################
 sub extractRelatedStoriesFromForm {
-	my($form) = @_;
+	my($form, $cur_sid) = @_;
+	$cur_sid ||= '';
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
@@ -1542,9 +1586,9 @@ sub extractRelatedStoriesFromForm {
 	}
 
 	# should probably filter and check that they're actually sids, etc...
-	my %related_sids = map { $_ => $slashdb->getStory($_) } grep { $_ } @$related;
-	my %related_cids = map { $_ => $slashdb->getComment($_) } grep {$_} @$related_cids;
-	
+	my %related_cids = map { $_ => $slashdb->getComment($_) } grep { $_ }			@$related_cids;
+	my %related_sids = map { $_ => $slashdb->getStory($_)   } grep { $_ && $_ ne $cur_sid }	@$related;
+
 	return(\%related_sids, \%related_urls, \%related_cids);
 }
 
@@ -1559,7 +1603,7 @@ sub extractChosenFromForm {
 	my $chosenc_hr = { };   # c is for child, in topic editor
 
 	if (defined $form->{topic_source} && $form->{topic_source} eq 'submission'
-		&& $form->{subid}) {
+		&& ($form->{subid} || $form->{fhid})) {
 		my @topics = ($form->{tid});
 		if ($form->{primaryskid}) {
 			my $nexus = $slashdb->getNexusFromSkid($form->{primaryskid});
@@ -1929,11 +1973,11 @@ sub updateStory {
 
 	$form->{dept} =~ s/ /-/g;
 
-	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid', 1)
-		unless $form->{aid};
+	my $story = $slashdb->getStory($form->{sid}, '', 1);
+	$form->{aid} = $story->{aid} unless $form->{aid};
 
 	my($chosen_hr) = extractChosenFromForm($form);
-	my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form);
+	my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form, $story->{sid});
 	my $related_sids = join ',', keys %$related_sids_hr;
 	my($topic) = $slashdb->getTopiclistFromChosen($chosen_hr);
 #use Data::Dumper; print STDERR "admin.pl updateStory chosen_hr: " . Dumper($chosen_hr) . "admin.pl updateStory form: " . Dumper($form);
@@ -1941,7 +1985,7 @@ sub updateStory {
 	my $time = findTheTime();
 
 	for my $field (qw( introtext bodytext )) {
-		local $Slash::Utility::Data::approveTag::admin = 1;
+		local $Slash::Utility::Data::approveTag::admin = 2;
 		$form->{$field} = cleanSlashTags($form->{$field});
 		$form->{$field} = strip_html($form->{$field});
 		$form->{$field} = slashizeLinks($form->{$field});
@@ -1956,7 +2000,7 @@ sub updateStory {
 
 	my $story_text = "$form->{title} $form->{introtext} $form->{bodytext}";
 	{
-		local $Slash::Utility::Data::approveTag::admin = 1;
+		local $Slash::Utility::Data::approveTag::admin = 2;
 		$story_text = parseSlashizedLinks($story_text);
 		$story_text = processSlashTags($story_text);
 	}
@@ -2008,9 +2052,18 @@ sub updateStory {
 		titlebar('100%', getTitle('story_update_failed'));
 		editStory(@_);
 	} else {
-		titlebar('100%', getTitle('updateStory-title'));
-		$slashdb->setRelatedStoriesForStory($form->{sid}, $related_sids_hr, $related_urls_hr, $related_cids_hr);
 		my $st = $slashdb->getStory($form->{sid});
+		my %warn_skids = map {$_ => 1 } split('\|', $constants->{admin_warn_primaryskid});
+		my $data = {};
+		if ($warn_skids{$st->{primaryskid}}) {
+			$data->{warn_skid} = $st->{primaryskid};
+			if ($constants->{plugin}{Remarks}) {
+				my $remarks = getObject("Slash::Remarks");
+				$remarks->createRemark("WARNING: $st->{sid} has a primaryskid of $st->{primaryskid}", { type => 'system' });
+			}
+		}
+		titlebar('100%', getTitle('updateStory-title', $data));
+		$slashdb->setRelatedStoriesForStory($form->{sid}, $related_sids_hr, $related_urls_hr, $related_cids_hr);
 		$slashdb->createSignoff($st->{stoid}, $user->{uid}, "updated");
 		# make sure you pass it the goods
 		listStories(@_);
@@ -2043,6 +2096,12 @@ sub displaySlashd {
 sub moderate {
 	my($form, $slashdb, $user, $constants) = @_;
 
+	my $moddb = getObject("Slash::$constants->{m1_pluginname}");
+	if (!$moddb) {
+		print getData('unknown_moderation_warning');
+		return ;
+	}
+
 	my $was_touched = {};
 	my($sid, $cid);
 
@@ -2055,7 +2114,7 @@ sub moderate {
 		if ($key =~ /^reason_(\d+)_(\d+)$/) {
 			($sid, $cid) = ($1, $2);
 			next if $form->{$key} eq "";
-			my $ret_val = $slashdb->moderateComment($sid, $cid, $form->{$key});			
+			my $ret_val = $moddb->moderateComment($sid, $cid, $form->{$key});			
 			# No points and not enough points shouldn't show up since the user
 			# is an admin but check just in case 
 			if ($ret_val < 0) {
@@ -2261,7 +2320,7 @@ sub saveStory {
 	my($related_sids_hr, $related_urls_hr) = extractRelatedStoriesFromForm($form);
 
 	for my $field (qw( introtext bodytext )) {
-		local $Slash::Utility::Data::approveTag::admin = 1;
+		local $Slash::Utility::Data::approveTag::admin = 2;
 		$form->{$field} = cleanSlashTags($form->{$field});
 		$form->{$field} = strip_html($form->{$field});
 		$form->{$field} = slashizeLinks($form->{$field});
@@ -2270,7 +2329,7 @@ sub saveStory {
 
 	my $story_text = "$form->{title} $form->{introtext} $form->{bodytext}";
 	{
-		local $Slash::Utility::Data::approveTag::admin = 1;
+		local $Slash::Utility::Data::approveTag::admin = 2;
 		$story_text = parseSlashizedLinks($story_text);
 		$story_text = processSlashTags($story_text);
 	}
@@ -2299,6 +2358,7 @@ sub saveStory {
 		introtext	=> $form->{introtext},
 		relatedtext	=> $form->{relatedtext},
 		subid		=> $form->{subid},
+		fhid		=> $form->{fhid},
 		commentstatus	=> $form->{commentstatus},
 		-rendered	=> 'NULL', # freshenup.pl will write this
 	};
@@ -2321,9 +2381,35 @@ sub saveStory {
 	if ($sid) {
 		$slashdb->setRelatedStoriesForStory($sid, $related_sids_hr, $related_urls_hr);
 		slashHook('admin_save_story_success', { story => $data });
-		titlebar('100%', getTitle('saveStory-title'));
 		my $st = $slashdb->getStory($data->{sid});
-		$slashdb->createSignoff($st->{stoid}, $user->{uid}, "saved");
+		my $stoid = $st->{stoid};
+		my %warn_skids = map {$_ => 1 } split('\|', $constants->{admin_warn_primaryskid});
+		my $data = {};
+		if ($warn_skids{$st->{primaryskid}}) {
+			$data->{warn_skid} = $st->{primaryskid};
+			if ($constants->{plugin}{Remarks}) {
+				my $remarks = getObject("Slash::Remarks");
+				$remarks->createRemark("WARNING: $st->{sid} has a primaryskid of $st->{primaryskid}", { type => 'system' });
+			}
+		}
+		titlebar('100%', getTitle('saveStory-title', $data) );
+		$slashdb->createSignoff($stoid, $user->{uid}, "saved");
+		if ($constants->{tags_admin_autoaddstorytopics} && $constants->{plugin}{Tags}) {
+			my $tree = $slashdb->getTopicTree();
+			my $tagsdb = getObject('Slash::Tags');
+			my %tt = ( ); # topic tagnames
+			for my $tid (keys %$chosen_hr) {
+				next unless $chosen_hr->{$tid} > 0;	# must have weight
+				next unless $tree->{$tid}{image};	# must have an image
+				my $kw = $tree->{$tid}{keyword};
+				next unless $tagsdb->tagnameSyntaxOK($kw); # must be a valid tagname
+				$tt{$kw} = 1;
+			}
+			for my $tagname (sort keys %tt) {
+				$tagsdb->createTag({ name => $tagname,
+					table => 'stories', id => $stoid });
+			}
+		}
 
 		listStories(@_);
 	} else {
@@ -2399,6 +2485,103 @@ sub displaySignoffStats {
 		author_info	=> $author_info,
 		stoids_for_days	=> \%stoids_for_days,
 		num_days	=> $num_days
+	});
+
+}
+
+sub displayPeerWeights {
+	my($form, $slashdb, $user, $constants) = @_;
+
+	my $countA = $slashdb->sqlCount('users_param', q{name='tagpeerval' AND value != '0'});
+	my $countB = $slashdb->sqlCount('users_param', q{name='tagpeerval2' AND value != '0'});
+
+	my $weightA_hr = $slashdb->sqlSelectAllKeyValue(
+		'uid, value+0 AS val',
+		'users_param',
+		q{name='tagpeerval'},
+		'ORDER BY val DESC LIMIT 40');
+	my $weightB_hr = $slashdb->sqlSelectAllKeyValue(
+		'uid, value+0 AS val',
+		'users_param',
+		q{name='tagpeerval2'},
+		'ORDER BY val DESC LIMIT 40');
+	my $ordA_hr = { };
+	my $ordB_hr = { };
+	my @uidsA = sort
+		{ $weightA_hr->{$b} <=> $weightA_hr->{$a} || $a cmp $b }
+		keys %$weightA_hr;
+	my @uidsB = sort
+		{ $weightB_hr->{$b} <=> $weightB_hr->{$a} || $a cmp $b }
+		keys %$weightB_hr;
+	my $i = 1;
+	for my $uid (@uidsA) {
+		$weightA_hr->{$uid} = sprintf("%0.4f", $weightA_hr->{$uid});
+		$ordA_hr->{$uid} = $i++;
+	}
+	$i = 1;
+	for my $uid (@uidsB) {
+		$weightB_hr->{$uid} = sprintf("%0.4f", $weightB_hr->{$uid});
+		$ordB_hr->{$uid} = $i++;
+	}
+
+	if ($countA > 200) {
+		$i = 40;
+		my $inc = ($countA-40) / 40;
+		for (1..40) {
+			$i += $inc;
+			my $i0 = int($i);
+			my($uid, $val) = $slashdb->sqlSelect(
+				'uid, value+0 AS val',
+				'users_param',
+				q{name='tagpeerval'},
+				"ORDER BY val DESC, uid LIMIT $i0, 1");
+			next unless $uid;
+			$weightA_hr->{$uid} = sprintf("%0.4f", $val);
+			$ordA_hr->{$uid} = $i0;
+			push @uidsA, $uid;
+		}
+	}
+
+	if ($countB > 200) {
+		$i = 40;
+		my $inc = ($countB-40) / 40;
+		for (1..40) {
+			$i += $inc;
+			my $i0 = int($i);
+			my($uid, $val) = $slashdb->sqlSelect(
+				'uid, value+0 AS val',
+				'users_param',
+				q{name='tagpeerval2'},
+				"ORDER BY val DESC, uid LIMIT $i0, 1");
+			next unless $uid;
+			$weightB_hr->{$uid} = sprintf("%0.4f", $val);
+			$ordB_hr->{$uid} = $i0;
+			push @uidsB, $uid;
+		}
+	}
+
+	my $uid_str = join(',', @uidsA, @uidsB);
+	my $nickname_hr = $slashdb->sqlSelectAllKeyValue(
+		'uid, nickname',
+		'users',
+		"uid IN ($uid_str)");
+
+#use Data::Dumper;
+#print STDERR "uidsA: " . Dumper(\@uidsA);
+#print STDERR "ordA: " . Dumper($ordA_hr);
+#print STDERR "weightA: " . Dumper($weightA_hr);
+#print STDERR "uidsB: " . Dumper(\@uidsB);
+#print STDERR "ordB: " . Dumper($ordB_hr);
+#print STDERR "weightB: " . Dumper($weightB_hr);
+#print STDERR "nickname: " . Dumper($nickname_hr);
+	slashDisplay("peer_weights", {
+		uidsA		=> \@uidsA,
+		ordA		=> $ordA_hr,
+		weightA		=> $weightA_hr,
+		uidsB		=> \@uidsB,
+		ordB		=> $ordB_hr,
+		weightB		=> $weightB_hr,
+		nickname	=> $nickname_hr,
 	});
 
 }

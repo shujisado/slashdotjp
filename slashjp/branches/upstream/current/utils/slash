@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: slash,v 1.22 2006/01/12 01:32:18 jamiemccarthy Exp $
+# $Id: slash,v 1.23 2006/08/29 19:57:28 jamiemccarthy Exp $
 
 # /etc/init.d/slash
 #
@@ -40,11 +40,15 @@ MYSUDO=`cat $DATADIR/mysudo 2>/dev/null`
 OS=`$WHICH_UNAME | $WHICH_AWK '{print $1}'`;
 
 if [ ! -f $SLASHSITE ] ; then
-	echo "[0;31mNOT[1;m Starting $PROGNAME:[0;31m No[1;m $SLASHSITE";
+	echo "NOT Starting $PROGNAME: No $SLASHSITE";
 	exit 0;
 fi
 
 GRAB_CONFIG=`$WHICH_CAT $SLASHSITE | $WHICH_CUT -d"#" -f1`;
+
+#
+# FUNCTIONS
+#
 
 start_slashd () {
 	# There are differing syntaxes of "su" between OSes
@@ -110,13 +114,12 @@ check_variable () {
 	echo "PID=`cat ${RUNNINGPID}`";
 }
 
-
-# OK now that we set thing above it just matter of calling them in the right
-# order. I broke thing up in to functions since I was tired of retyping the 
-# same things over and over.
+#
+# MAIN CODE
+#
 
 if [ -z "`echo $GRAB_CONFIG | $WHICH_GREP :`" ] ; then
-	echo "[0;31mNOT[1;m Starting/stopping $PROGNAME:[0;31m No[1;m sites in $SLASHSITE";
+	echo "NOT Starting/stopping $PROGNAME: No sites in $SLASHSITE";
 	exit 0;
 fi
 

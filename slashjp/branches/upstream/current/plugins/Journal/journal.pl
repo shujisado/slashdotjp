@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: journal.pl,v 1.136 2006/05/24 15:42:44 pudge Exp $
+# $Id: journal.pl,v 1.143 2007/04/05 21:44:36 pudge Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -13,7 +13,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.136 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.143 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
 	my $journal   = getObject('Slash::Journal');
@@ -543,6 +543,8 @@ sub displayArticle {
 sub doSaveArticle {
 	my($journal, $constants, $user, $form, $journal_reader, $gSkin, $rkey) = @_;
 
+	$form->{promotetype} ||= 'publish';
+
 	$form->{description} =~ s/[\r\n].*$//s;  # strip anything after newline
 	my $description = strip_notags($form->{description});
 
@@ -556,11 +558,9 @@ sub doSaveArticle {
 	}
 
 	return(getData('submit_must_enable_comments'), 1)
-		if $form->{submit} && !$form->{id} && (
-			!$form->{journal_discuss}
-				||
-			$form->{journal_discuss} eq 'disabled'
-		);
+		if !$form->{id} &&
+		   ($form->{promotetype} eq "publicize" || $form->{promotetype} eq "publish") &&
+		   (!$form->{journal_discuss} || $form->{journal_discuss} eq 'disabled');
 
 	unless ($rkey) {
 		my $reskey = getObject('Slash::ResKey');
@@ -574,7 +574,7 @@ sub doSaveArticle {
 	# don't allow submission if user can't submit stories
 	# note: this may not work properly with SOAP, but submissions
 	# not enabled with SOAP now anyway
-	if ($form->{submit}) {
+	if ($constants->{journal_create_submission} && $form->{promotetype} eq 'publicize') {
 		my $reskey = getObject('Slash::ResKey');
 		my $submit_rkey = $reskey->key('submit', { nostate => 1 });
 		unless ($submit_rkey->createuse) {
@@ -586,18 +586,17 @@ sub doSaveArticle {
 	if ($form->{id}) {
 		my %update;
 		my $article = $journal_reader->get($form->{id});
-		return(getData('submit_must_enable_comments'), 1) if (
-			$form->{submit} && !$article->{discussion} && (
-				!$form->{journal_discuss} || $form->{journal_discuss} eq 'disabled'
-			)
-		);
+		return(getData('submit_must_enable_comments'), 1)
+			if !$article->{discussion} &&
+			   ($form->{promotetype} eq "publicize" || $form->{promotetype} eq "publish") &&
+			   (!$form->{journal_discuss} || $form->{journal_discuss} eq 'disabled');
 
 		# note: comments_on is a special case where we are
 		# only turning on comments, not saving anything else
 		if ($constants->{journal_comments}
 			&& $form->{journal_discuss}
 			&& $form->{journal_discuss} ne 'disabled'
-			&& $article->{discussion}
+			&& !$article->{discussion}
 		) {
 			my $rootdir = $gSkin->{rootdir};
 			if ($form->{comments_on}) {
@@ -622,18 +621,19 @@ sub doSaveArticle {
 		}
 
 		unless ($form->{comments_on}) {
-			for (qw(article tid posttype submit)) {
+			for (qw(article tid posttype submit promotetype)) {
 				$update{$_} = $form->{$_} if defined $form->{$_};
 			}
 			$update{description} = $description;
 		}
 
 		$journal->set($form->{id}, \%update);
+		
 		slashHook('journal_save_success', { id => $form->{id} });
 
 	} else {
 		my $id = $journal->create($description,
-			$form->{article}, $form->{posttype}, $form->{tid}, $form->{submit});
+			$form->{article}, $form->{posttype}, $form->{tid}, $form->{promotetype});
 
 		unless ($id) {
 			return getData('create_failed');

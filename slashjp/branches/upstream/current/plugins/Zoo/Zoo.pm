@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Zoo.pm,v 1.51 2006/01/03 18:54:01 pudge Exp $
+# $Id: Zoo.pm,v 1.52 2006/11/10 16:09:22 jamiemccarthy Exp $
 
 package Slash::Zoo;
 
@@ -16,7 +16,7 @@ use vars qw($VERSION @EXPORT);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.51 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.52 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # "There ain't no justice" -Niven
 # We can try. 	-Brian
@@ -102,9 +102,13 @@ sub _set {
 #	$self->delete($uid, $person, $current_standing->{type})
 #		if ($current_standing && $current_standing->{type});
 
+	# Make sure $person actually exists.
+	return unless $self->sqlSelect('uid', 'users', "uid=$person");
+
 	# First we do the main person
 	# We insert to make sure a position exists for this relationship and then we update.
 	# If I ever removed freak/fan from the table this could be done as a replace.
+	# XXX This should be a transaction.
 	$self->sqlInsert('people', { uid => $uid,  person => $person }, { ignore => 1});
 	$self->sqlUpdate('people', { type => $type }, "uid = $uid AND person = $person");
 	my $people = $self->rebuildUser($uid);
@@ -117,6 +121,7 @@ sub _set {
 	my $s_const = $type eq 'foe' ? FREAK : FAN;
 	$self->sqlInsert('people', { uid => $person,  person => $uid }, { ignore => 1});
 	$self->sqlUpdate('people', { perceive => $s_type }, "uid = $person AND person = $uid");
+	# XXX transaction should end here I think
 
 	# Mark other users as dirty (needing to be changed) as 
 	# appropriate, but do it a few at a time with a short

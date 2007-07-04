@@ -18,6 +18,9 @@ __template__
 		[% IF form.subid %]
 			<input type="hidden" name="subid" value="[% form.subid | strip_attribute %]">
 		[% END %]
+		[% IF form.fhid %]
+			<input type="hidden" name="fhid" value="[% form.fhid | strip_attribute %]">
+		[% END %]
 		<div id="slashboxes">
 			[% IF constants.plugin.Events && Slash.getObject('Slash::Events') %]
 				[% PROCESS sidebox
@@ -235,6 +238,22 @@ __template__
 				[% PROCESS editbuttons %]
 
 				<label>
+					Upload an image/audio file for this story
+				</label>
+				<input type="file" name="media_file">
+
+				[% IF story_media_ref %]
+					<label>
+						Media Files associated with this story
+					</label>
+					<table border="0" class="data">
+					[% FOREACH mfile = story_media_ref %]
+					<tr><td>mfile.smid</td><td>mfile.name</td></tr>
+					[% END %]
+					</table>
+				[% END %]
+
+				<label>
 					Upload a file for bodytext
 				</label>
 				<input type="file" name="bodytext_file">
@@ -253,4 +272,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: editStory;admin;default,v 1.72 2006/06/28 22:24:50 tvroom Exp $
+$Id: editStory;admin;default,v 1.74 2007/03/01 15:06:36 cowboyneal Exp $

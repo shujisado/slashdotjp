@@ -1,6 +1,7 @@
-# $Id: PLUGIN,v 1.2 2003/08/29 15:21:07 jamie Exp $
+# $Id: PLUGIN,v 1.3 2006/08/17 19:11:03 jamiemccarthy Exp $
 name=Relocate
 description="redirect your href links"
+mysql_dump=mysql_dump
 mysql_schema=mysql_schema
 htdoc=relocate.pl
 template=templates/deadPage;relocate;default

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id: accesslog_artcom.pl,v 1.3 2005/11/23 15:28:26 jamiemccarthy Exp $
+# $Id: accesslog_artcom.pl,v 1.5 2006/10/26 18:02:33 jamiemccarthy Exp $
 # 
 # Transfer article and comments hits from accesslog into a new
 # table, accesslog_artcom, for fast processing by run_moderatord.
@@ -12,7 +12,7 @@ use Slash::DB;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Change this var to change how often the task runs.
 $minutes_run = 6;
@@ -26,12 +26,12 @@ $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	if (! $constants->{allow_moderation}) {
+	if (! $constants->{m1}) {
 		slashdLog("$me - moderation inactive") if verbosity() >= 2;
 		return ;
 	}
 
-	my $log_db = getObject('Slash::DB', { db_type => "log_slave" });
+	my $modlog_slave = getObject("Slash::$constants->{m1_pluginname}", { db_type => "log_slave" });
 
 	my $maxrows = $constants->{moderatord_maxrows} || 50000;
 	my $lastmaxid = $slashdb->getVar('moderatord_lastmaxid', 'value', 1);
@@ -50,12 +50,12 @@ $task{$me}{code} = sub {
 		}
 		$lastmaxid = 0;
 	}
-	my $newmaxid = $log_db->sqlSelect("MAX(id)", "accesslog") || $lastmaxid;
+	my $newmaxid = $modlog_slave->sqlSelect("MAX(id)", "accesslog") || $lastmaxid;
 	$lastmaxid = $newmaxid - $maxrows if $lastmaxid < $newmaxid - $maxrows;
 	my $youngest_eligible_uid = $slashdb->getYoungestEligibleModerator();
-	$log_db->fetchEligibleModerators_accesslog_insertnew($lastmaxid+1, $newmaxid,
+	$modlog_slave->fetchEligibleModerators_accesslog_insertnew($lastmaxid+1, $newmaxid,
 		$youngest_eligible_uid);
-	$log_db->fetchEligibleModerators_accesslog_deleteold();
+	$modlog_slave->fetchEligibleModerators_accesslog_deleteold();
 	$slashdb->setVar('moderatord_lastmaxid', $newmaxid);
 
 	return ;

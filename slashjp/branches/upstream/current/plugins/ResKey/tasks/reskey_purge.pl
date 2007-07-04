@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: reskey_purge.pl,v 1.3 2005/09/29 03:39:23 pudge Exp $
+# $Id: reskey_purge.pl,v 1.4 2006/08/31 15:50:50 pudge Exp $
 
 use strict;
 
@@ -19,6 +19,7 @@ $task{$me}{code} = sub {
 	if (my $reskey = getObject('Slash::ResKey')) {
 		my $count = $reskey->purge_old || 0;
 		slashdLog("Purged $count reskeys\n");
+		$reskey->update_salts;
 	}
 };
 

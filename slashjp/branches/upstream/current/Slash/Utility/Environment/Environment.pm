@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Environment.pm,v 1.198 2006/05/24 15:42:44 pudge Exp $
+# $Id: Environment.pm,v 1.210 2007/03/06 19:24:37 pudge Exp $
 
 package Slash::Utility::Environment;
 
@@ -33,7 +33,7 @@ use Socket qw( inet_aton inet_ntoa );
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.198 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.210 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 
 	dbAvailable
@@ -1631,7 +1631,7 @@ sub prepareUser {
 		# If the user is not a subscriber, they may still be
 		# _effectively_ a subscriber if they have a daypass.
 		my $daypass_db = getObject('Slash::Daypass', { db_type => 'reader' });
-		if ($daypass_db->userHasDaypass($user)) {
+		if ($daypass_db && $daypass_db->userHasDaypass($user)) {
 #			$user->{is_subscriber} = 1;
 			$user->{has_daypass} = 1;
 			$user->{state}{page_plummy} = 1;
@@ -1666,30 +1666,49 @@ print STDERR scalar(localtime) . " Env.pm $$ userHasDaypass uid=$user->{uid} cs=
 	}
 
 	if ($constants->{plugin}{Tags}) {
+		my $max_uid;
 		my $write = $constants->{tags_stories_allowwrite} || 0;
 		$user->{tags_canwrite_stories} = 0;
 		$user->{tags_canwrite_stories} = 1 if
 			!$user->{is_anon} && (
-				   $write >= 4
-				|| $write >= 3 && $user->{karma} >= 0
-				|| $write >= 2.5 && $user->{acl}{tags_stories_allowwrite}
+				   $write >= 2.5 && $user->{acl}{tags_stories_allowwrite}
 				|| $write >= 2 && $user->{is_subscriber}
 				|| $write >= 1 && $user->{is_admin}
 			);
+		if (!$user->{is_anon} && !$user->{tags_canwrite_stories}) {
+			$user->{tags_canwrite_stories} = 1 if
+				   $write >= 4
+				|| $write >= 3 && $user->{karma} >= 0;
+			if ($user->{tags_canwrite_stories} && $constants->{tags_userfrac_write} < 1) {
+				$max_uid = $slashdb->countUsers({ max => 1 });
+				if ($user->{uid} > $max_uid*$constants->{tags_userfrac_write}) {
+					$user->{tags_canwrite_stories} = 0;
+				}
+			}
+		}
 		my $read;
-		if ($user->{tags_canwrite_stories}) {
+		if ($user->{tags_canwrite_stories} || $constants->{tags_stories_allowread} >= 5) {
 			$user->{tags_canread_stories} = 1;
 		} else {
 			$read = $constants->{tags_stories_allowread} || 0;
 			$user->{tags_canread_stories} = 0;
 			$user->{tags_canread_stories} = 1 if
 				!$user->{is_anon} && (
-					   $read >= 4
-					|| $read >= 3 && $user->{karma} >= 0
-					|| $read >= 2.5 && $user->{acl}{tags_stories_allowread}
+					   $read >= 2.5 && $user->{acl}{tags_stories_allowread}
 					|| $read >= 2 && $user->{is_subscriber}
 					|| $read >= 1 && $user->{is_admin}
 				);
+		}
+		if (!$user->{is_anon} && !$user->{tags_canread_stories}) {
+			$user->{tags_canread_stories} = 1 if
+					   $read >= 4
+					|| $read >= 3 && $user->{karma} >= 0;
+			if ($user->{tags_canread_stories} && $constants->{tags_userfrac_read} < 1) {
+				$max_uid ||= $slashdb->countUsers({ max => 1 });
+				if ($user->{uid} > $max_uid*$constants->{tags_userfrac_read}) {
+					$user->{tags_canread_stories} = 0;
+				}
+			}
 		}
 	}
 
@@ -1808,6 +1827,7 @@ Hashref of cleaned-up data.
 	my %alphas = map {($_ => 1)} qw(
 		fieldname formkey commentstatus filter
 		hcanswer mode op section thisname type reskey
+		comments_control
 	),
 	# Survey
 	qw(
@@ -2475,11 +2495,27 @@ sub getOpAndDatFromStatusAndURI {
 		$uri = 'image';
 	} elsif ($uri =~ /\.png$/) {
 		$uri = 'image';
-	} elsif ($uri =~ /\.rss$/ || $uri =~ /\.xml$/ || $uri =~ /\.rdf$/ || $ENV{QUERY_STRING} =~ /\bcontent_type=rss\b/) {
+	} elsif ($uri =~ /\.(?:rss|xml|rdf|atom)$/ || $ENV{QUERY_STRING} =~ /\bcontent_type=(?:rss|xml|rdf|atom)\b/) {
 		$dat = $uri;
 		$uri = 'rss';
 	} elsif ($uri =~ /\.pl$/) {
 		$uri =~ s|^/(.*)\.pl$|$1|;
+		if ($uri eq "ajax") {
+			my $form = getCurrentForm();
+			if ($form && $form->{op}) {
+				my $user = getCurrentUser;
+				if ($user->{state}{ajax_accesslog_op}) {
+					$uri = $user->{state}{ajax_accesslog_op};
+				} else {
+					my $reader = getObject('Slash::DB', { db_type => 'reader' });
+					my $class = $reader->getClassForAjaxOp($form->{op});
+					$class =~s/^Slash:://g;
+					$class =~s/::/_/g;
+					$class =~ tr/A-Z/a-z/;
+					$uri = "ajax_$class" if $class;
+				}
+			}
+		}
 	# This is for me, I am getting tired of patching my local copy -Brian
 	} elsif ($uri =~ /\.tar\.gz$/) {
 		$uri =~ s|^/(.*)\.tar\.gz$|$1|;
@@ -2489,6 +2525,8 @@ sub getOpAndDatFromStatusAndURI {
 		$uri =~ s|^/(.*)\.dmg$|$1|;
 	} elsif ($uri =~ /\.css$/) {
 		$uri = 'css';
+	} elsif ($uri =~ /\.js$/) {
+		$uri = 'js';
 	} elsif ($uri =~ /\.shtml$/) {
 		$uri =~ s|^/(.*)\.shtml$|$1|;
 		$dat = $uri if $uri =~ $page;	
@@ -3108,7 +3146,7 @@ sub get_srcid_sql_in {
 	if ($type eq 'uid') {
 		return $srcid_q;
 	}
-	return "CONV($srcid_q, 16, 10)";
+	return "CAST(CONV($srcid_q, 16, 10) AS UNSIGNED)";
 }
 
 #========================================================================
@@ -3336,6 +3374,15 @@ sub getCurrentCache {
 #
 # pass in the regex that contains what a key SHOULD look like (e.g., '^\d+$'),
 # and optionally the original data as a hashref; assign result to variable
+#
+# I am not aware that this has ever been a problem, and I don't
+# know of any sites that use the debughash* vars.  Can we delete
+# this code? - Jamie 2006-08-27
+# 
+# It's been a problem before.  We don't use this regularly; you usually
+# set it only when you are having the problem.  I say we leave it in,
+# in case we need it again.  We have so many hashes like this, and so much
+# potential for misuse of them, I think we really should leave it in. -- pudge
 
 sub debugHash {
 	my($regex, $hash) = @_;
@@ -3383,4 +3430,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Environment.pm,v 1.198 2006/05/24 15:42:44 pudge Exp $
+$Id: Environment.pm,v 1.210 2007/03/06 19:24:37 pudge Exp $

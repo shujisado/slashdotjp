@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tagbox.pm,v 1.6 2006/06/15 00:36:59 jamiemccarthy Exp $
+# $Id: Tagbox.pm,v 1.8 2007/04/19 05:35:00 jamiemccarthy Exp $
 
 package Slash::Tagbox;
 
@@ -17,7 +17,7 @@ use base 'Slash::DB::MySQL';
 
 use Data::Dumper;
 
-($VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -243,10 +243,17 @@ sub getTagboxTags {
 #print STDERR "getTagboxTags($tbid, $affected_id, $extra_levels), type=$type\n";
 	my $hr_ar = [ ];
 	my $colname = ($type eq 'user') ? 'uid' : 'globjid';
+	my $max_time_clause = '';
+	if ($options->{max_time_noquote}) {
+		$max_time_clause = " AND created_at <= $options->{max_time_noquote}";
+	} elsif ($options->{max_time}) {
+		my $mtq = $self->sqlQuote($options->{max_time});
+		$max_time_clause = " AND created_at <= $mtq";
+	}
 	$hr_ar = $self->sqlSelectAllHashrefArray(
-		'*',
+		'*, UNIX_TIMESTAMP(created_at) AS created_at_ut',
 		'tags',
-		"$colname=$affected_id",
+		"$colname=$affected_id $max_time_clause",
 		'ORDER BY tagid');
 
 	# If extra_levels were requested, fetch them.  
@@ -258,9 +265,9 @@ sub getTagboxTags {
 		my $new_ids = join(',', sort { $a <=> $b } keys %new_ids);
 #print STDERR "hr_ar=" . scalar(@$hr_ar) . " with $colname=$affected_id\n";
 		$hr_ar = $self->sqlSelectAllHashrefArray(
-			'*',
+			'*, UNIX_TIMESTAMP(created_at) AS created_at_ut',
 			'tags',
-			"$new_colname IN ($new_ids)",
+			"$new_colname IN ($new_ids) $max_time_clause",
 			'ORDER BY tagid');
 #print STDERR "new_colname=$new_colname new_ids=" . scalar(keys %new_ids) . " (" . substr($new_ids, 0, 20) . ") hr_ar=" . scalar(@$hr_ar) . "\n";
 		$old_colname = $new_colname;

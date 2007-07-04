@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: createTestSubmissions,v 1.12 2005/12/21 19:40:26 jamiemccarthy Exp $
+# $Id: createTestSubmissions,v 1.13 2007/06/19 22:22:18 pudge Exp $
 
 # Based on jamie's createTestStories. Any bugs are probably HIS fault
 # but I'll take the heat for them, because he's a really cool guy.
@@ -28,7 +28,7 @@ use Benchmark;
 
 use vars qw( $slashdb $werder $constants $gSkin );
 
-(my $VERSION) = ' $Revision: 1.12 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts, %family_tree);
@@ -69,7 +69,7 @@ if (exists $opts{'U'}) {
 
 	my $user_name = $user->{nickname} if $opts{'U'};
 
-	$opts{'w'} =~ /(\d+)?\-(\d+)?/;
+	$opts{'w'} =~ /(\d+)?\-(\d+)?/ if $opts{'w'};
 	my($min_weight, $max_weight) = ($1, $2);
 	$min_weight ||= 0;
 	$max_weight ||= 99;
@@ -113,7 +113,7 @@ if (exists $opts{'U'}) {
 		my $weight = $min_weight + rand($max_weight - $min_weight);
 		my $comment;
 		$comment = typical_remark() if rand(1) > 0.87;
-		$comment =~ s/^ //;
+		$comment =~ s/^ // if $comment;
 
 		my $submission = {
 			name 		=> $name,

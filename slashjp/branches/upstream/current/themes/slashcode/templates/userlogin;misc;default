@@ -18,7 +18,7 @@ __template__
 [% IF !return_url; return_url = gSkin.rootdir _ '/'; END %]
 <form action="[% constants.real_rootdir %]/login.pl" method="post">
 <fieldset>
-	<legend>Log in</legend>
+	<legend>Log In</legend>
 	<label>
 		Nickname
 	</label>
@@ -47,4 +47,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: userlogin;misc;default,v 1.17 2005/10/19 23:28:06 lancelot Exp $
+$Id: userlogin;misc;default,v 1.18 2007/05/09 20:57:04 pudge Exp $

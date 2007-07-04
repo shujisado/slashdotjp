@@ -20,6 +20,7 @@ en_US
 __name__
 index
 __template__
+	[% PROCESS autocomplete %]
 	<a name="blocks"></a>
 	<div id="slashboxes">
 	[% UNLESS user.noboxes %]
@@ -36,4 +37,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: index;index;default,v 1.26 2005/07/27 22:54:48 pudge Exp $
+$Id: index;index;default,v 1.29 2006/11/06 21:16:17 scc Exp $

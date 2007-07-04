@@ -36,6 +36,9 @@ __template__
 	[% useredit.md5id_vis %] - [% constants.sitename %] md5ID
 	[%- END -%]
 
+[% CASE 'userfirehose_header' %]
+	[% useredit.nickname | strip_notags %]'s Firehose 
+
 [% CASE 'userclose' %]
 	you are now logged out.
 
@@ -195,4 +198,4 @@ please contact the site administrator immediately.
 __seclev__
 10000
 __version__
-$Id: messages;users;default,v 1.38 2006/03/08 17:36:07 jamiemccarthy Exp $
+$Id: messages;users;default,v 1.40 2007/06/19 22:25:17 pudge Exp $

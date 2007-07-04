@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: createTestMods,v 1.19 2005/03/11 19:58:48 pudge Exp $
+# $Id: createTestMods,v 1.23 2006/11/01 18:19:42 jamiemccarthy Exp $
 
 use strict;
 use File::Basename;
@@ -14,7 +14,7 @@ use Slash::Utility;
 
 use vars qw( $slashdb $constants );
 
-(my $VERSION) = ' $Revision: 1.19 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.23 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts);
@@ -142,16 +142,21 @@ my(%comments, %comment_data);
 			my $comment = $slashdb->getComment($cid);
 
 			my($modval, $reason, $active);
-			my $reasons = $slashdb->getReasons();
-			$reason = (keys %$reasons)[rand(scalar(keys %$reasons)-1) + 1];
-			$modval = $reasons->{$reason}{val};
+			my $moddb = getObject("Slash::$constants->{m1_pluginname}");
+			my $reasons = $moddb->getReasons();
+			$modval = 0;
+			while ($modval == 0) {
+				# Need a moderation that actually bumps a score up or down.
+				$reason = (keys %$reasons)[rand(scalar(keys %$reasons)-1) + 1];
+				$modval = $reasons->{$reason}{val};
+			}
 			my $pointsneeded = $slashdb->getModPointsNeeded(
 				$comment_data{$did}{$cid}{points},
 				$comment_data{$did}{$cid}{points} + $reasons->{$reason}{val},
 				$reason);
 			my $user = { uid => $uid };
 			setRandomIPID($user);
-			$slashdb->createModeratorLog(
+			$moddb->createModeratorLog(
 				$comment,
 				$user,
 				$modval,

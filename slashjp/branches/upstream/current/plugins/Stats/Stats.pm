@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Stats.pm,v 1.179 2005/12/21 20:51:49 jamiemccarthy Exp $
+# $Id: Stats.pm,v 1.185 2007/01/30 22:18:29 tvroom Exp $
 
 package Slash::Stats;
 
@@ -22,7 +22,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.179 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.185 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user, $options) = @_;
@@ -83,9 +83,8 @@ sub new {
 			}
 		}
 
-		# Why not just truncate? If we did we would never pick up schema changes -Brian
-		# Create "accesslog_temp" and "accesslog_temp_errors" from the
-		# schema of "accesslog".
+		# Recreating these tables each night ensures they adapt
+		# to schema changes on the original accesslog.
 
 		# First, drop them (if they exist).
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp");
@@ -93,9 +92,9 @@ sub new {
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp_subscriber");
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp_other");
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp_rss");
+
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp_host_addr");
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_build_unique_uid");
-
 		$self->sqlDo("CREATE TABLE accesslog_temp_host_addr (host_addr char(32) UNIQUE NOT NULL, anon ENUM('no','yes') NOT NULL DEFAULT 'yes', PRIMARY KEY (host_addr, anon)) TYPE = InnoDB");
 		$self->sqlDo("CREATE TABLE accesslog_build_unique_uid ( uid MEDIUMINT UNSIGNED NOT NULL, PRIMARY KEY (uid)) TYPE = InnoDB");
 
@@ -127,6 +126,7 @@ sub new {
 		my $maxid = $self->sqlSelectNumericKeyAssumingMonotonic(
 			'accesslog', 'max', 'id',
 			"ts $self->{_day_max_clause}");
+		$maxid ||= $minid+1;
 		return undef unless $self->_do_insert_select(
 			"accesslog_temp",
 			"*",
@@ -142,6 +142,8 @@ sub new {
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX skid_op (skid,op)");
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX op_uid_skid (op, uid, skid)");
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX referer (referer(4))");
+		# XXX there should be a way to check whether the source accesslog table
+		# already had this index, and if so, to leave it off.
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX ts (ts)");
 		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX ts (ts)");
 		$self->sqlDo("ALTER TABLE accesslog_temp_subscriber ADD INDEX ts (ts)");
@@ -308,6 +310,11 @@ sub getAdminsClearpass {
 sub countModeratorLog {
 	my($self, $options) = @_;
 
+	my $constants = getCurrentStatic();
+	return 0 unless $constants->{m1};
+	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
+	return 0 unless $mod_reader;
+
 	my @clauses = ( );
 
 	my $day = $self->{_day};
@@ -318,20 +325,25 @@ sub countModeratorLog {
 	push @clauses, "active=1" if $options->{active_only};
 
 	if ($options->{m2able_only}) {
-		my $reasons = $self->getReasons();
+		my $reasons = $mod_reader->getReasons();
 		my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 		my $reasons_m2able = join(",", @reasons_m2able);
 		push @clauses, "reason IN ($reasons_m2able)" if $reasons_m2able;
 	}
 
 	my $where = join(" AND ", @clauses) || "";
-	my $count = $self->sqlCount("moderatorlog", $where);
+	my $count = $mod_reader->sqlCount("moderatorlog", $where);
 	return $count;
 }
 
 ########################################################
 sub countMetamodLog {
 	my($self, $options) = @_;
+
+	my $constants = getCurrentStatic();
+	return 0 unless $constants->{m2};
+	my $metamod_reader = getObject('Slash::Metamod', { db_type => 'reader' });
+	return 0 unless $metamod_reader;
 
 	my @clauses = ( );
 
@@ -347,7 +359,7 @@ sub countMetamodLog {
 	}
 
 	my $where = join(" AND ", @clauses) || "";
-	my $count = $self->sqlCount("metamodlog", $where);
+	my $count = $metamod_reader->sqlCount("metamodlog", $where);
 	return $count;
 }
 
@@ -374,59 +386,23 @@ sub countUnmetamoddedMods {
 ########################################################
 sub getOldestUnm2dMod {
 	my($self) = @_;
-	my $reasons = $self->getReasons();
+	my $constants = getCurrentStatic();
+	return 0 unless $constants->{m1};
+	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
+	return 0 unless $mod_reader;
+	my $reasons = $mod_reader->getReasons();
 	my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 	my $reasons_m2able = join(",", @reasons_m2able);
 	my @clauses = ("active=1", "m2status=0");
 	push @clauses, "reason IN ($reasons_m2able)" if $reasons_m2able;
 	my $where = join(" AND ", @clauses) || "";
 
-	my($oldest) = $self->sqlSelect(
+	my($oldest) = $mod_reader->sqlSelect(
 		"UNIX_TIMESTAMP(MIN(ts))",
 		"moderatorlog",
 		$where
 	);
 	return $oldest || 0;
-}
-
-########################################################
-# Note, we have to use $slashdb here instead of $self.
-sub getSlaveDBLagCount {
-	my($self) = @_;
-	my $constants = getCurrentStatic();
-	my $slashdb = getCurrentDB();
-	my $bdu = $constants->{backup_db_user};
-	# If there *is* no backup DB, it's not lagged.
-	return 0 if !$bdu || $bdu eq getCurrentVirtualUser();
-
-	my $backupdb = getObject('Slash::DB', $bdu);
-	# If there is supposed to be a backup DB but we can't contact it,
-	# return a large number that is sufficiently noticeable that it
-	# should alert people that something is wrong.
-	return 2**30 if !$backupdb;
-
-	# Get the actual lag count.  Assume that each file is 2**30
-	# (a billion) bytes (should this be a var?).  Yes, the same
-	# data is called "File" vs. "Log_File", "Position" vs. "Pos",
-	# depending on whether it's on the master or slave side.
-	# And on the slave side, for MySQL 4.x, I *think* I want
-	# Master_Log_File and Read_Master_Log_Pos but other possible
-	# candidates are Relay_Master_Log_File and Exec_master_log_pos
-	# respectively.
-	my $master = ($slashdb->sqlShowMasterStatus())->[0];
-	my $slave  = ($backupdb->sqlShowSlaveStatus())->[0];
-	my $master_filename = $master->{File};
-	my $slave_filename  = $slave ->{Log_File} || $slave->{Master_Log_File};
-	my($master_file_num) = $master_filename =~ /\.(\d+)$/;
-	my($slave_file_num)  = $slave_filename  =~ /\.(\d+)$/;
-	my $master_pos = $master->{Position};
-	my $slave_pos  = $slave->{Pos} || $slave->{Read_Master_Log_Pos};
-
-	my $count = 2**30 * ($master_file_num - $slave_file_num)
-		+ $master_pos - $slave_pos;
-	$count = 0 if $count < 0;
-	$count = 2**30 if $count > 2**30;
-	return $count;
 }
 
 ########################################################
@@ -489,14 +465,18 @@ sub getModM2Ratios {
 	# are "X" for fully-M2'd mods, "_" for un-m2able mods, and
 	# for mods which have been partially M2'd, the digit showing
 	# the number of M2's applied to them so far.
-	my $reasons = $self->getReasons();
+	my $constants = getCurrentStatic();
+	return 0 unless $constants->{m1};
+	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
+	return 0 unless $mod_reader;
+	my $reasons = $mod_reader->getReasons();
 	my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 	my $reasons_m2able = join(",", @reasons_m2able);
 	my $m2able_char_clause = $reasons_m2able
 		? "IF(reason IN ($reasons_m2able), m2count, '_')"
 		: "'X'";
 
-	my $hr = $self->sqlSelectAllHashref(
+	my $hr = $mod_reader->sqlSelectAllHashref(
 		[qw( day val )],
 		"SUBSTRING(ts, 1, 10) AS day,
 		 IF(m2status=0,
@@ -531,7 +511,11 @@ sub getReverseMods {
 	my $limit =    12  ;	$limit = $options->{limit} if defined $options->{limit};
 	my $min_tokens = -50; # fudge factor: only users who are likely to mod soon
 
-	my $reasons = $self->getReasons();
+	my $constants = getCurrentStatic();
+	return [ ] unless $constants->{m1};
+	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
+	return [ ] unless $mod_reader;
+	my $reasons = $mod_reader->getReasons();
 	my @reasons_m2able = grep { $reasons->{$_}{m2able} } keys %$reasons;
 	my $reasons_m2able = join(",", @reasons_m2able);
 	my $m2able_score_clause = $reasons_m2able
@@ -814,6 +798,7 @@ sub getCommentsByDistinctUIDPosters {
 ########################################################
 sub getAdminModsInfo {
 	my($self) = @_;
+	my $constants = getCurrentStatic();
 
 	# First get the list of admins.
 	my $admin_uids_ar = $self->sqlSelectColArrayref(
@@ -824,7 +809,7 @@ sub getAdminModsInfo {
 		"users",
 		"uid IN ($admin_uids_str)");
 
-	# First get the count of upmods and downmods performed by each admin.
+	# Get the count of upmods and downmods performed by each admin.
 	my $m1_uid_val_hr = $self->sqlSelectAllHashref(
 		[qw( uid val )],
 		"uid, val, COUNT(*) AS count",
@@ -839,8 +824,49 @@ sub getAdminModsInfo {
 		}
 	}
 
+	# For comparison, get the same stats for all users on the site and
+	# add them in as a phony admin user that sorts itself alphabetically
+	# last.  Hack, hack.
+	my($total_nick, $total_uid) = ("~Day Total", 0);
+	my $m1_val_hr = $self->sqlSelectAllHashref(
+		"val",
+		"val, COUNT(*) AS count",
+		"moderatorlog",
+		"ts $self->{_day_between_clause}",
+		"GROUP BY val"
+	);
+	$m1_uid_val_hr->{$total_uid} = {
+		uid =>	$total_uid,
+		  1 =>	{ nickname => $total_nick, count => $m1_val_hr-> {1}{count} },
+		 -1 =>	{ nickname => $total_nick, count => $m1_val_hr->{-1}{count} },
+	};
+
+	# Build a hashref with one key for each admin user, and subkeys
+	# that give data we will want for stats.
+	my $hr = { };
+	my @m1_keys = sort keys %$m1_uid_val_hr;
+	for my $uid (@m1_keys) {
+		my $nickname = $m1_uid_val_hr->{$uid} {1}{nickname}
+			|| $m1_uid_val_hr->{$uid}{-1}{nickname}
+			|| "";
+		next unless $nickname;
+		my $nup   = $m1_uid_val_hr->{$uid} {1}{count} || 0;
+		my $ndown = $m1_uid_val_hr->{$uid}{-1}{count} || 0;
+		# Add the m1 data for this admin.
+		$hr->{$nickname}{uid} = $uid;
+		$hr->{$nickname}{m1_up} = $nup;
+		$hr->{$nickname}{m1_down} = $ndown;
+	}
+
+	# If metamod is not enabled on this site, we're done:  just
+	# return the moderation data.
+	if (!$constants->{m2}) {
+		return $hr;
+	}
+
 	# Now get a count of fair/unfair counts for each admin.
-	my $m2_uid_val_hr = $self->sqlSelectAllHashref(
+	my $m2_uid_val_hr = { };
+	$m2_uid_val_hr = $self->sqlSelectAllHashref(
 		[qw( uid val )],
 		"moderatorlog.uid AS uid, metamodlog.val AS val, COUNT(*) AS count",
 		"moderatorlog, metamodlog",
@@ -901,19 +927,6 @@ sub getAdminModsInfo {
 	# For comparison, get the same stats for all users on the site and
 	# add them in as a phony admin user that sorts itself alphabetically
 	# last.  Hack, hack.
-	my($total_nick, $total_uid) = ("~Day Total", 0);
-	my $m1_val_hr = $self->sqlSelectAllHashref(
-		"val",
-		"val, COUNT(*) AS count",
-		"moderatorlog",
-		"ts $self->{_day_between_clause}",
-		"GROUP BY val"
-	);
-	$m1_uid_val_hr->{$total_uid} = {
-		uid =>	$total_uid,
-		  1 =>	{ nickname => $total_nick, count => $m1_val_hr-> {1}{count} },
-		 -1 =>	{ nickname => $total_nick, count => $m1_val_hr->{-1}{count} },
-	};
 	my $m2_val_hr = $self->sqlSelectAllHashref(
 		"val",
 		"val, COUNT(*) AS count",
@@ -927,35 +940,9 @@ sub getAdminModsInfo {
 		 -1 =>	{ nickname => $total_nick, count => $m2_val_hr->{-1}{count} },
 	};
 
-	# Build a hashref with one key for each admin user, and subkeys
-	# that give data we will want for stats.
-	my($nup, $ndown, $nfair, $nunfair, $percent);
-	my @m1_keys = sort keys %$m1_uid_val_hr;
 	my @m2_keys = sort keys %$m2_uid_val_hr;
 	my %all_keys = map { $_ => 1 } @m1_keys, @m2_keys;
 	my @all_keys = sort keys %all_keys;
-	my $hr = { };
-	for my $uid (@m1_keys) {
-		my $nickname = $m1_uid_val_hr->{$uid} {1}{nickname}
-			|| $m1_uid_val_hr->{$uid}{-1}{nickname}
-			|| "";
-		next unless $nickname;
-		$nup   = $m1_uid_val_hr->{$uid} {1}{count} || 0;
-		$ndown = $m1_uid_val_hr->{$uid}{-1}{count} || 0;
-		$percent = ($nup+$ndown > 0)
-			? $nup*100/($nup+$ndown)
-			: 0;
-		# Add the m1 data for this admin.
-		$hr->{$nickname}{uid} = $uid;
-		$hr->{$nickname}{m1_up} = $nup;
-		$hr->{$nickname}{m1_down} = $ndown;
-		# If this admin had m1 activity today but no m2 activity,
-		# blank out that field.
-		if (!exists($m2_uid_val_hr->{$uid})) {
-			# $hr->{$nickname}{m2_fair} = 0;
-			# $hr->{$nickname}{m2_unfair} = 0;
-		}
-	}
 	for my $uid (@all_keys) {
 		my $nickname =
 			   $m2_uid_val_hr->{$uid} {1}{nickname}
@@ -964,19 +951,13 @@ sub getAdminModsInfo {
 			|| $m2_uid_val_mo_hr->{$uid}{-1}{nickname}
 			|| "";
 		next unless $nickname;
-		$nfair   = $m2_uid_val_hr->{$uid} {1}{count} || 0;
-		$nunfair = $m2_uid_val_hr->{$uid}{-1}{count} || 0;
-		$percent = ($nfair+$nunfair > 0)
-			? $nunfair*100/($nfair+$nunfair)
-			: 0;
+		my $nfair   = $m2_uid_val_hr->{$uid} {1}{count} || 0;
+		my $nunfair = $m2_uid_val_hr->{$uid}{-1}{count} || 0;
 		# Add the m2 data for this admin.
 		$hr->{$nickname}{uid} = $uid;
 		# Also calculate overall-month percentage.
 		my $nfair_mo   = $m2_uid_val_mo_hr->{$uid} {1}{count} || 0;
 		my $nunfair_mo = $m2_uid_val_mo_hr->{$uid}{-1}{count} || 0;
-		$percent = ($nfair_mo+$nunfair_mo > 0)
-			? $nunfair_mo*100/($nfair_mo+$nunfair_mo)
-			: 0;
 		# Set another few data points.
 		$hr->{$nickname}{m2_fair} = $nfair;
 		$hr->{$nickname}{m2_unfair} = $nunfair;
@@ -2054,6 +2035,57 @@ sub _do_insert_select {
 	return $self;
 }
 
+sub getTagnameidForTagnames {
+	my($self, $tags) = @_;
+	$tags ||= [];
+	my $tagobj = getObject("Slash::Tags");
+	return [] unless @$tags > 0;
+	my @tagnameids;
+	foreach (@$tags) {
+		push @tagnameids, $tagobj->getTagnameidFromNameIfExists($_);
+	}
+	return \@tagnameids;
+}
+
+sub getTagCountForDay {
+	my($self, $day, $tags, $distinct_uids) = @_;
+	$tags ||= [];
+	my @tag_ids;
+	my @where;
+	if(@$tags >= 1) {
+		my $tagnameids = $self->getTagnameidForTagnames($tags);
+		push @where, 'tagnameid in ('. (join ',', @$tagnameids) . ')';
+	}
+	push @where, "created_at between '$day 00:00:00' AND '$day 23:59:59'";
+	my $where = join ' AND ', @where;
+	if ($distinct_uids) {
+		return $self->sqlSelect("COUNT(DISTINCT uid)", "tags", $where);
+	} else {
+		return $self->sqlCount("tags", $where);
+	}
+}
+
+sub numFireHoseObjectsForDay {
+	my($self, $day) = @_;
+	return $self->sqlCount("firehose", "createtime between '$day 00:00:00' AND '$day 23:59:59'");
+}
+
+sub numFireHoseObjectsForDayByType {
+	my($self, $day) = @_;
+	return $self->sqlSelectAllHashrefArray("COUNT(*) as cnt, type", "firehose", "createtime between '$day 00:00:00' AND '$day 23:59:59'", "group by type");
+}
+
+sub numTagsForDayByType {
+	my($self, $day) = @_;
+	return $self->sqlSelectAllHashrefArray(
+		"COUNT(*) as cnt, maintable as type", 
+		"tags, globjs, globj_types", 
+		"created_at BETWEEN '$day 00:00:00' AND '$day 23:59:59' AND tags.globjid=globjs.globjid AND globjs.gtid=globj_types.gtid", 
+		"GROUP by maintable"
+	);
+
+}
+
 ########################################################
 sub DESTROY {
 	my($self) = @_;
@@ -2072,4 +2104,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Stats.pm,v 1.179 2005/12/21 20:51:49 jamiemccarthy Exp $
+$Id: Stats.pm,v 1.185 2007/01/30 22:18:29 tvroom Exp $

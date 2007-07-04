@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Test.pm,v 1.20 2005/12/22 20:12:51 pudge Exp $
+# $Id: Test.pm,v 1.21 2007/03/13 22:31:13 pudge Exp $
 
 package Slash::Test;
 
@@ -100,7 +100,7 @@ use strict;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.20 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.21 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT = (
 	@Slash::EXPORT,
 	@Slash::Constants::EXPORT_OK,
@@ -164,7 +164,7 @@ sub slashTest {
 	my($VirtualUser, $noerr) = @_;
 
 	die 'No virtual user' unless defined $VirtualUser and $VirtualUser ne '';
-	push @ARGV, 'virtual_user=' . $VirtualUser;
+	unshift @ARGV, 'virtual_user=' . $VirtualUser;
 	eval { createEnvironment() };
 	die $@ if $@ && !$noerr;
 
@@ -286,4 +286,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Test.pm,v 1.20 2005/12/22 20:12:51 pudge Exp $
+$Id: Test.pm,v 1.21 2007/03/13 22:31:13 pudge Exp $

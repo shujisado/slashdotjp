@@ -2,17 +2,19 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.27 2006/04/26 16:58:06 pudge Exp $
+# $Id: ajax.pl,v 1.44 2007/05/29 20:12:53 tvroom Exp $
 
 use strict;
 use warnings;
+
+use Data::JavaScript::Anon;
 
 use Slash 2.003;	# require Slash 2.3.x
 use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.27 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.44 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -24,36 +26,58 @@ sub main {
 
 	my $ops = getOps();
 	my $op = $form->{op};
+	print STDERR "AJAX1 $op\n";
 
 	if (!$ops->{$op}) {
 		errorLog("No Ajax op '$op' found");
 		$op = 'default';
 	}
+	
+	print STDERR "AJAX2 $op\n";
 
 	$op = 'default' unless $ops->{$op}{function} || (
 		$ops->{$op}{class} && $ops->{$op}{subroutine}
 	);
+	print STDERR "AJAX3 $op\n";
 
 #$Slash::ResKey::DEBUG = 2;
 
 	$ops->{$op}{function} ||= loadCoderef($ops->{$op}{class}, $ops->{$op}{subroutine});
 	$op = 'default' unless $ops->{$op}{function};
+	
+	print STDERR "AJAX4 $op\n";
 
 	$form->{op} = $op;  # save for others to use
 
 	my $reskey_name = $ops->{$op}{reskey_name} || 'ajax_base';
 	$ops->{$op}{reskey_type} ||= 'use';
+	
+	print STDERR "AJAX5 $op\n";
 
 	if ($reskey_name ne 'NA') {
 		my $reskey = getObject('Slash::ResKey');
 		my $rkey = $reskey->key($reskey_name);
-print STDERR scalar(localtime) . " ajax.pl main no rkey for '$reskey_name'\n" if !$rkey;
+		if (!$rkey) {
+			print STDERR scalar(localtime) . " ajax.pl main no rkey for op='$op' name='$reskey_name'\n";
+			return;
+		}
 		if ($ops->{$op}{reskey_type} eq 'createuse') {
-			return unless $rkey && $rkey->createuse;
+			$rkey->createuse;
 		} else {
-			return unless $rkey && $rkey->use;
+			$rkey->use;
+		}
+		if (!$rkey->success) {
+			if ($form->{msgdiv}) {
+				header_ajax({ content_type => 'application/json' });
+				(my $msgdiv = $form->{msgdiv}) =~ s/[^\w-]+//g;
+				print Data::JavaScript::Anon->anon_dump({
+					html	=> { $msgdiv => $rkey->errstr },
+				});
+			}
+			return;
 		}
 	}
+	print STDERR "AJAX6 $op\n";
 
 	my $options = {};
 	my $retval = $ops->{$op}{function}->(
@@ -73,7 +97,6 @@ sub getSectionPrefsHTML {
 	my($slashdb, $constants, $user, $form) = @_;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
-	sleep 3;
 	my %story023_default = (
 		author	=> { },
 		nexus	=> { },
@@ -233,6 +256,9 @@ sub setSectionNexusPrefs() {
 	return getData('set_section_prefs_success_msg');
 }
 
+###################
+# comments
+
 sub readRest {
 	my($slashdb, $constants, $user, $form) = @_;
 	my $cid = $form->{cid} or return;
@@ -244,11 +270,107 @@ sub readRest {
 	my $texts   = $slashdb->getCommentTextCached(
 		{ $cid => $comment },
 		[ $cid ],
-		{ cid => $cid }
+		{ cid => $cid, full => 1 }
 	) or return;
 
 	return $texts->{$cid} || '';
 }
+
+sub fetchComments {
+	my($slashdb, $constants, $user, $form, $options) = @_;
+
+	my $cids = [ grep /^\d+$/, split /,/, $form->{cids} ];
+	my $id   = $form->{discussion_id} || 0;
+	my $cid  = $form->{cid} || 0; # root id
+
+	$user->{state}{ajax_accesslog_op} = "ajax_comments_fetch";
+
+	# XXX error?
+	return unless @$cids && $id;
+
+	my $discussion = $slashdb->getDiscussion($id);
+	if ($discussion->{type} eq 'archived') {
+		$user->{state}{discussion_archived} = 1;
+	}
+
+	my($comments) = Slash::selectComments(
+		$discussion,
+		$cid,
+		{
+			commentsort	=> 0,
+			threshold	=> -1
+		}
+	);
+
+	# XXX error?
+	return unless $comments && keys %$comments;
+
+	my %pieces = split /[,;]/, $form->{pieces};
+	my %abbrev = split /[,;]/, $form->{abbreviated};
+	my(@hidden_cids, @pieces_cids, @abbrev_cids);
+	for my $cid (@$cids) {
+		if (exists $pieces{$cid}) {
+			push @pieces_cids, $cid;
+			if (exists $abbrev{$cid}) {
+				push @abbrev_cids, $cid;
+			}
+		} else {
+			push @hidden_cids, $cid;
+		}
+	}
+
+	my $comment_text = $slashdb->getCommentTextCached(
+		$comments, [@hidden_cids, @abbrev_cids], { full => 1 },
+	);
+
+	for my $cid (keys %$comment_text) {
+		$comments->{$cid}{comment} = $comment_text->{$cid};
+	}
+
+	my %html;
+	for my $cid (@hidden_cids) {
+		$html{'comment_' . $cid} = Slash::dispComment($comments->{$cid}, {
+			class		=> 'oneline',
+			noshow_show	=> 1
+		});
+	}
+	for my $cid (@pieces_cids) {
+		@html{'comment_otherdetails_' . $cid, 'comment_sub_' . $cid} =
+			Slash::dispComment($comments->{$cid}, {
+				class		=> 'full',
+				show_pieces	=> 1
+			});
+	}
+
+	my %html_append_substr;
+	for my $cid (@abbrev_cids) {
+		#@html{'comment_body_' . $cid} = $comments->{$cid}{comment};
+		@html_append_substr{'comment_body_' . $cid} = substr($comments->{$cid}{comment}, $abbrev{$cid});
+	}
+#use Data::Dumper; print STDERR Dumper \@hidden_cids, \@pieces_cids, \@abbrev_cids, \%pieces, \%abbrev, \%html, \%html_append_substr, $form;
+
+	$options->{content_type} = 'application/json';
+	return Data::JavaScript::Anon->anon_dump({
+		html			=> \%html,
+		html_append_substr	=> \%html_append_substr
+	});
+}
+
+sub updateD2prefs {
+	my($slashdb, $constants, $user, $form) = @_;
+	my %save;
+	for my $pref (qw(threshold highlightthresh)) {
+		$save{"d2_$pref"} = $form->{$pref} if defined $form->{$pref};
+	}
+	for my $pref (qw(comments_control)) {
+		$save{$pref} = $form->{$pref} if defined $form->{$pref};
+	}
+
+	$slashdb->setUser($user->{uid}, \%save);
+}
+
+# comments
+###################
 
 
 ##################################################################
@@ -285,6 +407,16 @@ sub getOps {
 		comments_read_rest	=> {
 			function	=> \&readRest,
 			reskey_name	=> 'ajax_base',
+			reskey_type	=> 'createuse',
+		},
+		comments_fetch		=> {
+			function	=> \&fetchComments,
+			reskey_name	=> 'ajax_user_static',
+			reskey_type	=> 'createuse',
+		},
+		comments_set_prefs	=> {
+			function	=> \&updateD2prefs,
+			reskey_name	=> 'ajax_user_static',
 			reskey_type	=> 'createuse',
 		},
 		getSectionPrefsHTML => {

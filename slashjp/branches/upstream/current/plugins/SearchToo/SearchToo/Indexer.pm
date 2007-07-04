@@ -9,9 +9,9 @@ use Slash::Utility;
 use Slash::DB::Utility;
 use vars qw($VERSION);
 use base 'Slash::SearchToo';
-use base 'Slash::SearchToo::Classic';
+require Slash::SearchToo::Classic;
 
-($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.12 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: I did it!  And it's all thanks to the books at my local library.
 
@@ -22,18 +22,22 @@ use base 'Slash::SearchToo::Classic';
 # fields that will be combined into the content field,
 # for indexing and tokenization; first field is main one to excerpt
 our %content = (
-	comments	=> [qw(comment subject)],
-	stories		=> [qw(introtext bodytext title)],
+#	comments	=> [qw(comment subject)],
+#	stories		=> [qw(introtext bodytext title)],
+	firehose	=> [qw(introtext bodytext title section topics name toptags)],
 );
 
 # additional fields that will be indexed and tokenized
 our %text = (
-	comments	=> [ qw(tids) ],
-	stories		=> [ qw(tids) ],
+#	comments	=> [ qw(tids) ],
+#	stories		=> [ qw(tids) ],
+	firehose	=> [ qw(note dayssince1970) ],
 );
 
+# will be indexed, not tokenized
 our %primary = (
-	comments	=> 'cid',
+#	comments	=> 'cid',
+	firehose	=> 'id',
 );
 
 # turn into hashes
@@ -52,7 +56,7 @@ sub new {
 	return unless $plugin->{'SearchToo'};
 
 	my $handled;
-	{ no strict;
+	{ no strict 'refs';
 		$handled = ${$class . '::handled'};
 	}
 
@@ -77,7 +81,7 @@ sub findRecords {
 	my($self, $type, $query, $opts) = @_;
 
 	# let Classic handle for now
-	return Slash::SearchToo::Classic::findRecords(@_) unless $self->_handled($type);
+	return Slash::SearchToo::Classic::findRecords(@_) unless $self->handled($type);
 
 slashProfInit();
 slashProf('findRecords setup');
@@ -90,7 +94,7 @@ slashProf('findRecords setup');
 
 	### set up common query terms
 	my $terms = {
-		query	=> $query->{query},
+		query	=> delete $query->{query},
 	};
 
 
@@ -99,14 +103,20 @@ slashProf('findRecords setup');
 	$sopts->{total}   = 0;
 	$sopts->{matches} = 0;
 	$sopts->{start}   = $opts->{records_start} || 0;
-	$sopts->{max}     = $opts->{records_max}   || $constants->{search_default_display};
+	$sopts->{max}     = defined $opts->{records_max} && length $opts->{records_max}
+		? $opts->{records_max}
+		: $constants->{search_default_display};
 
 	# sort can be an arrayref, but stick with one for now
 	## no way to sort by date yet
+	# 0: none, 1: date, 2: relevance, 3: handle by caller
 	$sopts->{sort} = ref $opts->{sort} ? $opts->{sort}[0] : $opts->{sort};
-	$sopts->{sort} = ($opts->{sort} eq 'date'	|| $opts->{sort} eq 1) ? 1 :
-			($opts->{sort} eq 'relevance'	|| $opts->{sort} eq 2) ? 2 :
-			0;
+	$sopts->{sort} = ($opts->{sort} && $opts->{sort} eq 'date'	|| $opts->{sort} eq 1) ? 1 :
+			 ($opts->{sort} && $opts->{sort} eq 'relevance'	|| $opts->{sort} eq 2) ? 2 :
+			 ($opts->{sort} && $opts->{sort} eq 'caller'	|| $opts->{sort} eq 3) ? 3 :
+			 $opts->{sort} || 0;
+	# 1: asc, 0: none specified, -1: desc
+	$sopts->{sortdir} = $opts->{sortdir} || 0;
 
 	### dispatch to different queries
 	if ($type eq 'comments') {
@@ -117,12 +127,21 @@ slashProf('findRecords setup');
 			sid		=> $query->{sid},
 			points_min	=> $query->{points_min},
 		);
+	} else {
+		%$terms = (%$terms, %$query);
 	}
 
 slashProf('_findRecords', 'findRecords setup');
 	$self->_findRecords($results, $records, $sopts, $terms, $opts);
 slashProf('getRecords', '_findRecords');
-	$self->getRecords($type => $records);
+	$self->getRecords($type => $records, {
+		alldata		=> 1,
+		sort		=> $sopts->{sort},
+		sortdir		=> $sopts->{sortdir},
+		limit		=> $sopts->{max} || $sopts->{matches},
+		offset		=> $sopts->{start},
+		carryover	=> $opts->{carryover}
+	});
 slashProf('prepResults', 'getRecords');
 	$self->prepResults($results, $records, $sopts);
 slashProf('', 'getRecords');
@@ -138,14 +157,15 @@ slashProfEnd();
 sub addRecords {
 	my($self, $type, $data, $opts) = @_;
 
-	return unless $self->_handled($type);
+	return unless $self->handled($type);
+	return unless $data;
 
 slashProfInit();
 slashProf('addRecords setup');
 
 	$data = [ $data ] unless ref $data eq 'ARRAY';
 
-	my @documents;
+	my(@documents, @delete);
 
 slashProf('prepare records', 'addRecords setup');
 
@@ -164,35 +184,58 @@ slashProf('prepare records', 'addRecords setup');
 				comment			=> $record->{comment},
 				subject			=> $record->{subject},
 				sid			=> $record->{discussion_id},
+
 				primaryskid		=> $processed->{section},
 				tids			=> join(' ', @{$processed->{topic}}),
 			);
+
+		} elsif ($type eq 'firehose') {
+			%document = (
+				id			=> $record->{id},
+
+				date			=> $processed->{date},
+				dayssince1970		=> $processed->{dayssince1970},
+
+				introtext		=> $record->{introtext},
+				bodytext		=> $record->{bodytext},
+				title			=> $record->{title},
+
+				type			=> $record->{type},
+				category		=> $record->{category} || 'none',
+				note			=> $record->{note},
+				popularity		=> $record->{popularity},
+				activity		=> $record->{activity},
+				editorpop		=> $record->{editorpop},
+				accepted		=> $record->{accepted},
+				rejected		=> $record->{rejected},
+				public			=> $record->{public},
+				toptags			=> $record->{toptags},
+
+				primaryskid		=> $processed->{section},
+				tids			=> join(' ', @{$processed->{topic}}),
+				section			=> $processed->{section_name},
+				topics			=> join(' ', @{$processed->{topic_names}}),
+				name			=> $processed->{uid_name},
+			);
 		}
 
-		push @documents, \%document;
+		if (keys %document) {
+			# only bother if modifying
+			if ($record->{status} eq 'changed' || $record->{status} eq 'deleted') {
+				push @delete, $document{ $self->_primary };
+			}
+
+			push @documents, \%document;
+		}
 	}
 
-	# so we can index outside the main dir
-	if ($opts->{dir}) {
-		$self->_dir($opts->{dir});
-	}
-
-	# only bother if not adding, i.e., if modifying; if adding we
-	# assume it is new
-	unless ($opts->{add}) {
-		$self->deleteRecords($type => [ map $_->{ $self->{_fields}{primary}{$type} }, @documents ]);
-	}
+	$self->deleteRecords($type => \@delete) if @delete;
 
 slashProf('add docs', 'prepare records');
 
-	my $count = $self->_addRecords($type, \@documents, $opts);
+	my $count = $self->_addRecords($type, \@documents, $opts) if @documents;
 
 slashProf('', 'add docs');
-
-	# clear it out when we're done
-	if ($opts->{dir}) {
-		$self->_dir('');
-	}
 
 slashProfEnd();
 
@@ -203,7 +246,7 @@ slashProfEnd();
 sub prepRecord {
 	my($self, $type, $data, $opts) = @_;
 
-	return unless $self->_handled($type);
+	return unless $self->handled($type);
 
 	# default to writer
 	my $db = $opts->{db} || getCurrentDB();
@@ -235,7 +278,7 @@ sub prepRecord {
 sub getRecords {
 	my($self, $type, $data, $opts) = @_;
 
-	return unless $self->_handled($type);
+	return unless $self->handled($type);
 
 	# default to ... search?  reader?
 	my $db = $opts->{db} || getObject('Slash::DB', { type => 'reader' });
@@ -262,15 +305,55 @@ sub getRecords {
 				)};
 			}
 		}
+	} elsif ($type eq 'firehose') {
+		my @newdata;
+		my $fh_sort = $opts->{sort};
+
+		my $firehose = getObject('Slash::FireHose', { db_type => 'reader' }) or return;
+		my($items) = $firehose->getFireHoseEssentials({
+			ids		=> [ map { $_->{id} } @$data ],
+			fetch_text	=> 1,
+			no_search	=> 1,
+			nolimit		=> !$fh_sort,
+			carryover	=> $opts->{carryover},
+			limit		=> $opts->{limit},
+			offset		=> $opts->{offset}
+		});
+
+		my %data_h = map { $_->{id} => $_ } @$data;
+
+		for my $item (@$items) {
+			my($datum) = $data_h{ $item->{id} };
+			if ($opts->{alldata}) {
+				@{$datum}{keys %$item} = values %$item;
+			} else {
+				@{$datum}{qw(
+					introtext bodytext title category note
+					globjid uid primaryskid tid type date
+					popularity activity editorpop
+					accepted rejected public toptags
+				)} = @{$item}{qw(
+					introtext bodytext title category note
+					globjid uid primaryskid tid type createtime
+					popularity activity editorpop
+					accepted rejected public toptags
+				)};
+			}
+			# inherit sort order from FireHose, which
+			# defaults to date ordering
+			push @newdata, $datum if $fh_sort;
+		}
+		if ($fh_sort) {
+			@{$data} = @newdata;
+		}
 	}
 }
 
 #################################################################
-# handle delete too?
 sub storeRecords {
 	my($self, $type, $data, $opts) = @_;
-return;
-	return unless $self->_handled($type);
+
+	return unless $self->handled($type);
 
 	my $slashdb = getCurrentDB();
 
@@ -278,13 +361,19 @@ return;
 
 	my $count = 0;
 	for my $record (@$data) {
-		next unless $record;
+		next unless defined $record;
+		unless (ref $record) {
+			next unless length $record;
+			$record = { id => $record };
+		}
+		next unless keys %$record;
 
 		# deal with multiple instances of same type => id
 		$count++ if $slashdb->sqlInsert('search_index_dump', {
+			-iid	=> 'NULL',
+			id	=> $record->{id},
 			type	=> $type,
-			id	=> $record,
-			status	=> $opts->{add} ? 'new' : 'changed',
+			status	=> $opts->{changed} ? 'changed' : $opts->{deleted} ? 'deleted' : 'new'
 		});
 	}
 
@@ -292,48 +381,135 @@ return;
 }
 
 #################################################################
-# move prepared index data to live
-sub moveLive {
-	my($self, $type, $dir) = @_;
+sub getStoredRecords {
+	my($self) = @_;
 
-	return unless $self->can('_dir') && ($dir || $self->can('_backup_dir'));
+	my $slashdb = getCurrentDB();
+	my $records = $slashdb->sqlSelectAllHashrefArray('iid, id, type, status', 'search_index_dump');
 
-	my $backup_dir = $self->_backup_dir($type, $dir);
-	$dir = $self->_dir($type, '');
+	my $return = {};
+	for my $record (@$records) {
+		if ($self->handled($record->{type})) {
+			push @{$return->{ $record->{type} }}, $record;
+		}
+	}
 
-	my @time = localtime;
-	my $now = sprintf "-%04d%02d%02d-%02d%02d%02d", $time[5]+1900, $time[4]+1, $time[3], $time[2], $time[1], $time[0];
-	$dir =~ s|/+$||; # just in case
-	my $olddir = $dir . $now;
-	my $tmpdir = $dir . '-tmp';
-
-	# copy staging to temp dir
-	_moveFind($backup_dir, $tmpdir);
-	# move live to backup
-	rename($dir, $olddir);
-	# move temp to live
-	rename($tmpdir, $dir);
-
-	# kick old?
+	return $return;
 }
 
 #################################################################
-sub _moveFind {
-	my($olddir, $newdir);
+sub deleteStoredRecords {
+	my($self, $iids) = @_;
+
+	my $slashdb = getCurrentDB();
+
+	return if !$iids;
+	$iids = [ $iids ] unless ref $iids eq 'ARRAY';
+	return if !@$iids;
+	my $iid_str = join ',', map { $slashdb->sqlQuote($_) } @$iids;
+
+	my $count = $slashdb->sqlDelete('search_index_dump', "iid IN ($iid_str)");
+	return $count;
+}
+
+#################################################################
+# move prepared index data to live
+# basic procedure:
+# * copy live index to backup
+# * modify backup
+# * make backup -> live
+# rinse, lather, repeat
+sub moveLive {
+	my($self) = @_;
+
+	# fix permissions ... KS makes it 0600 by default
+	my $dir = $self->_dir;
 	find(sub {
-		my($old) = $File::Find::name;
-		my $new = s/^\Q$olddir/$newdir/;
-		if (-d $old) {
-			eval {
-				mkpath($new, 0, 0775);
-			};
-			if ($@) {
-				warn "Can't create path $new: $@";
+		chmod 0644, $File::Find::name if -f $File::Find::name;
+	}, $dir);
+
+	my $slashdb = getCurrentDB();
+	my $num = $slashdb->getVar('search_too_index_num', 'value', 1) || 0;
+
+	# make backup dir -> live dir
+	$slashdb->setVar('search_too_index_num', ($num == 1 ? 0 : 1));
+}
+
+sub copyBackup {
+	my($self) = @_;
+
+	my $slashdb = getCurrentDB();
+	my $num = $slashdb->getVar('search_too_index_num', 'value', 1) || 0;
+	my $bnum = $num == 1 ? 0 : 1;
+
+	my $dir = $self->_dir;
+	my $dh;
+	if (!opendir($dh, $dir)) {
+		warn "Can't open dir '$dir': $!\n";
+		return;
+	}
+
+	my @to_copy = grep { /^(.+)_$num$/ } readdir $dh;
+	closedir $dh;
+
+	for my $item (@to_copy) {
+		$item =~ /^(.+)_$num$/;
+		my $type = $1;
+		my $live = catdir($dir, $item);
+		my $back = catdir($dir, $type . "_$bnum");
+
+#		rmtree($back) if -d $back;
+		mkpath($back) unless -d $back;
+		find(sub {
+			my($backf) = $File::Find::name;
+			(my $livef = $backf) =~ s/^\Q$back/$live/;
+
+			if (! -e $livef) {
+				if (-d $backf) {
+					eval {
+						rmtree($backf);
+					};
+					if ($@) {
+						warn "Can't remove path '$backf': $@";
+					}
+				} elsif (-f _) {
+					unlink $backf or warn "Can't remove file '$backf': $!";
+				}
 			}
-		} elsif (-f _) {
-			copy($old, $new) or warn "Can't copy file $new: $!";
-		}
-	}, $olddir);
+		}, $back);
+
+
+		find(sub {
+			my($livef) = $File::Find::name;
+			(my $backf = $livef) =~ s/^\Q$live/$back/;
+
+			if (-d $livef) {
+				eval {
+					mkpath($backf, 0, 0775) unless -d $backf;
+				};
+				if ($@) {
+					warn "Can't create path $backf: $@";
+				}
+			} elsif (-f _) {
+				my $copy = 0;
+				my @stat = stat(_);
+				if (-f $backf) {
+					my @nstat = stat($backf);
+					# size, time
+					if ($stat[7] != $nstat[7] || $stat[9] != $nstat[9]) {
+						$copy = 1;
+					}
+				} else {
+					$copy = 1;
+				}
+
+				if ($copy) {
+					copy($livef, $backf) or warn "Can't copy file $backf: $!";
+					utime($stat[9], $stat[9], $backf);
+				}
+			}
+		}, $live);
+	}
 }
 
 #################################################################
@@ -363,7 +539,7 @@ sub _primary {
 }
 
 #################################################################
-sub _handled {
+sub handled {
 	my($self, $type) = @_;
 	$type = $self->_type($type);
 	return $type =~ $self->{_handled};
@@ -372,7 +548,7 @@ sub _handled {
 #################################################################
 sub _type {
 	my($self, $type) = @_;
-	$self->{_type} = $type if defined $type;
+	$self->{_type} = lc $type if defined $type;
 	return $self->{_type};
 }
 
@@ -387,19 +563,33 @@ sub _class {
 
 #################################################################
 sub _dir {
-	my($self, $type, $dir) = @_;
-	$self->{_dir} = $dir if defined $dir;
-	$self->{_dir} ||= catdir(getCurrentStatic('datadir'), 'search_index');
+	my($self, $type, $dir, $backup) = @_;
 
-	return catdir($self->{_dir}, $self->_class, $self->_type($type));
+	$dir ||= catdir(getCurrentStatic('datadir'), 'search_index');
+
+	my $class = $self->_class;
+	if (!$type) {
+		return $dir =~ /\Q$class\E$/
+			? $dir
+			: catdir($dir, $class);
+	}
+
+	my $slashdb = getCurrentDB();
+	my $num = $slashdb->getVar('search_too_index_num', 'value', 1) || 0;
+	if ($backup || $self->{_backup}) { # only works with two dirs for now ...
+		$num = $num == 1 ? 0 : 1;
+	}
+
+	my $foodir = catdir($class, $self->_type($type) . "_$num");
+	return $dir =~ /\Q$foodir\E$/
+		? $dir
+		: catdir($dir, $foodir);
 }
 
 #################################################################
-sub _backup_dir {
-	my($self, $type, $dir) = @_;
-	my $backup_dir = $dir || catdir(getCurrentStatic('datadir', 'search_index_tmp'));
-
-	return $self->_dir($type, $backup_dir);
+sub backup {
+	my($self, $on) = @_;
+	$self->{_backup} = $on;
 }
 
 1;

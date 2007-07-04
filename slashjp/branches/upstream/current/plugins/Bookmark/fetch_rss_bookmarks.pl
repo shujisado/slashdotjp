@@ -2,18 +2,18 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: fetch_rss_bookmarks.pl,v 1.2 2006/04/19 16:17:31 tvroom Exp $
+# $Id: fetch_rss_bookmarks.pl,v 1.10 2007/03/02 02:41:49 pudge Exp $
 
 use strict;
 use Slash;
 use Slash::XML;
-use Slash::Constants ':slashd';
+use Slash::Constants qw(:slashd :strip);
 use XML::RSS;
 use LWP::UserAgent;
 
 use vars qw( %task $me );
 
-$task{$me}{timespec} = '12 * * * *';
+$task{$me}{timespec} = '12,32,52 * * * *';
 $task{$me}{timespec_panic_1} = ''; # not that important
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
@@ -23,26 +23,32 @@ $task{$me}{code} = sub {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $bookmark_reader = getObject('Slash::Bookmark', { db_type => 'reader' });
 
-	my $feeds = $bookmark_reader->getBookmarkFeeds();
+	my $feeds = $bookmark_reader->getBookmarkFeeds({ rand_order => 1 });
+	my $max_adds_per_run = 10;
+	my $adds = 0;
 
 	foreach my $feed (@$feeds) {
+		slashdLog("Feed: $feed->{feed}");
+		last if $adds >= $max_adds_per_run;
 		my $content = geturl($feed->{feed});
 		eval { $rss->parse($content); };
 		if ($@) {
 			slashdLog("error parsing feed from $feed->{feed}");
 		} else {
 			for my $item (@{$rss->{items}}) {
+				last if $adds >= $max_adds_per_run;
 				for (keys %{$item}) {
 					$item->{$_} = xmldecode($item->{$_});
 				}
 				
-				my $title = $item->{title};
+				my $title = strip_notags($item->{title});
 				my $link = fudgeurl($item->{link});
+				my $text = strip_mode($item->{description}, HTML);
 				my $taglist = $feed->{tags};
 				
 				my $data = {
 					url		=> $link,
-					initialtitle	=> $title
+					initialtitle	=> $title,
 				};
 				
 				my $url_id = $slashdb->getUrlCreate($data);
@@ -58,13 +64,21 @@ $task{$me}{code} = sub {
 				my $user_bookmark = $bookmark->getUserBookmarkByUrlId($feed->{uid}, $url_id);
 				if (!$user_bookmark) {
 					$bookmark_data->{"-createdtime"} = 'NOW()';
-					slashdLog("creating bookmark");
+					slashdLog("creating feed bookmark $url_id");
 					slashdLog("$url_id $link $title");
+					slashdLog("after creating bookmark");
 					$bookmark_id= $bookmark->createBookmark($bookmark_data);
+					if ($constants->{plugin}{FireHose}) {
+						my $firehose = getObject("Slash::FireHose");
+						my $the_bookmark = $bookmark->getBookmark($bookmark_id);
+						$firehose->createUpdateItemFromBookmark($bookmark_id, { type => "feed", introtext => $text });
+					}
 					
 					my $tags = getObject('Slash::Tags');
 					slashdLog("$taglist $url_id");
 					$tags->setTagsForGlobj($url_id, "urls", $taglist, { uid => $feed->{uid}});
+					$adds++;
+					sleep 10;
 				}
 			}
 		}

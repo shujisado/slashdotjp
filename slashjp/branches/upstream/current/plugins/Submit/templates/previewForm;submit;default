@@ -130,7 +130,7 @@ __template__
                 <td>[% subnote.submatch %]</td>
                 <td>[% subnote.subnote %]</td>
                 <td>[% subnote.time %]</td>
-                <td>[% subnote.uid %]</td>
+                <td>[% auname = Slash.db.getUser(subnote.uid, 'nickname'); auname %]</td>
         </tr>
 [% END # FOREACH %]
         <tr>
@@ -140,7 +140,7 @@ __template__
                       [% IF form.nowrapper %]<input type="hidden" name="nowrapper" value="1">[% END %]
                       [% IF form.fromconsole %]<input type="hidden" name="fromconsole" value="1">[% END %]
                       <input type="hidden" name="op" value="viewsub">
-                      <input type="hidden" name="subid" value="[& subid %]">
+                      <input type="hidden" name="subid" value="[% subid %]">
                       <input type="submit" value="Remember">
               </td>
 
@@ -219,4 +219,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: previewForm;submit;default,v 1.67 2006/07/05 20:55:06 pudge Exp $
+$Id: previewForm;submit;default,v 1.69 2006/08/07 14:46:19 cowboyneal Exp $

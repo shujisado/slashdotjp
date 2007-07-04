@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Journal.pm,v 1.59 2006/03/01 20:33:51 tvroom Exp $
+# $Id: Journal.pm,v 1.66 2006/12/12 22:47:46 tvroom Exp $
 
 package Slash::Journal;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.59 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.66 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -45,12 +45,13 @@ sub set {
 	%j1 = %$values;
 
 	# verify we're allowed to do this at some point, ie can't unset if it's already set
-	if (defined $j1{submit} && $constants->{journal_allow_journal2submit} ) {
-		my $cur_submit = $self->get($id, "submit");
-		unless ($cur_submit eq "yes") {
-			my $submit = "yes";
-			$submit = "no" if $j1{submit} eq "no" || !$j1{submit};
-			$j1{submit} = $submit;
+	if (defined $j1{promotetype} && $constants->{journal_allow_journal2submit} ) {
+		my $cur_promotetype = $self->get($id, "promotetype");
+		if ($cur_promotetype eq "publish" && $j1{promotetype} eq "post") {
+			$j1{promotetype} = "publish";
+		}
+		if ($cur_promotetype eq "publicize") {
+			$j1{promotetype} = "publicize";
 		}
 	}
 
@@ -59,6 +60,13 @@ sub set {
 
 	$self->sqlUpdate('journals', \%j1, "id=$id") if keys %j1;
 	$self->sqlUpdate('journals_text', \%j2, "id=$id") if $j2{article};
+	if ($constants->{plugin}{FireHose}) {
+		my $journal_item = $self->get($id);
+		my $firehose = getObject("Slash::FireHose");
+		if ($journal_item->{promotetype} eq "publicize" || $journal_item->{promotetype} eq "publish") {
+			$firehose->createUpdateItemFromJournal($id);
+		}
+	}
 }
 
 sub getsByUid {
@@ -172,13 +180,13 @@ sub listFriends {
 }
 
 sub create {
-	my($self, $description, $article, $posttype, $tid, $submit) = @_;
+	my($self, $description, $article, $posttype, $tid, $promotetype) = @_;
 
 	return unless $description;
 	return unless $article;
 	return unless $tid;
 
-	$submit = $submit ? "yes" : "no";
+	my $constants = getCurrentStatic();
 
 	my $uid = getCurrentUser('uid');
 	$self->sqlInsert("journals", {
@@ -187,7 +195,7 @@ sub create {
 		tid		=> $tid,
 		-date		=> 'now()',
 		posttype	=> $posttype,
-		submit		=> $submit,
+		promotetype	=> $promotetype
 	});
 
 	my($id) = $self->getLastInsertId({ table => 'journals', prime => 'id' });
@@ -201,6 +209,15 @@ sub create {
 	my($date) = $self->sqlSelect('date', 'journals', "id=$id");
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { journal_last_entry_date => $date });
+	if ($constants->{plugin}{FireHose}) {
+		my $firehose = getObject("Slash::FireHose");
+		my $journal = getObject("Slash::Journal");
+		my $j = $journal->get($id);
+		if ($j->{promotetype} eq "publicize" || $j->{promotetype} eq "publish") {
+			$firehose->createItemFromJournal($id);
+		}
+	}
+
 
 	return $id;
 }
@@ -224,7 +241,7 @@ sub remove {
 		my $slashdb = getCurrentDB();
 		# if has been submitted as story or submission, don't
 		# delete the discussion
-		if ($journal->{submit} eq 'yes') {
+		if ($journal->{promotetype} eq 'publicize' || $journal->{promotetype} eq "publish") {
 			my $kind = $self->getDiscussion($journal->{discussion}, 'kind');
 			my $kinds = $self->getDescriptions('discussion_kinds');
 			# set to disabled only if the journal has not been
@@ -446,7 +463,12 @@ sub createSubmissionFromJournal {
 		journal_id 	=> $src_journal->{id},
 		discussion 	=> $src_journal->{discussion},
 		by		=> $options->{submission_param}{by}     || $journal_user->{nickname},
-		by_url 		=> $options->{submission_param}{by_url} || $journal_user->{homepage} || $journal_user->{fakeemail}
+		# $fakeemail can be undef, but setSubmission can't set a param to NULL
+		# (schema forbids, and setSubmission is too dumb not to try). so the
+		# empty string is a last resort. the better fix would be to fix
+		# setSubmission and/or _genericSet to handle undef values for params
+		# the way setStory does, by deleting the param row if any.
+		by_url 		=> $options->{submission_param}{by_url} || $journal_user->{homepage} || $fakeemail || '',
 	};
 
 	my $sub_param = $options->{submission_param} || {};
@@ -566,7 +588,7 @@ sub promoteJournal {
 	return 0 unless $constants->{journal_allow_journal2submit};
 	return 0 unless $data && $data->{id};
 	my $src_journal = $journal->get($data->{id});
-	if ($src_journal->{submit} eq "yes") {
+	if ($src_journal->{promotetype} eq "publicize") {
 		my $transferred = $journal->hasJournalTransferred($data->{id});
 		if ($user->{acl}{journal_to_story}) {
 			unless ($transferred) {
@@ -576,7 +598,9 @@ sub promoteJournal {
 			}
 		} else {
 			unless ($transferred) {
-				$journal->createSubmissionFromJournal($src_journal);
+				if ($constants->{journal_create_submission}) {
+					$journal->createSubmissionFromJournal($src_journal);
+				}
 			} else {
 				# Apply edit?
 			}

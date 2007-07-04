@@ -195,9 +195,22 @@ Possible Subscriber Comment Crawlers
 
 Count  Nickname
 [% crawling_subscribers %]
-
 [% END %]
+
+[% IF firehose_report %]
+Firehose Report
+------------------------------------
+[% firehose_report %]
+[% END %]
+
+[% IF tags_report %]
+Tags Report
+------------------------------------
+[% tags_report %]
+[% END %]
+
+
 __seclev__
 100
 __version__
-$Id: display;adminmail;default,v 1.82 2005/01/18 18:34:25 tvroom Exp $
+$Id: display;adminmail;default,v 1.84 2007/03/02 02:42:45 pudge Exp $

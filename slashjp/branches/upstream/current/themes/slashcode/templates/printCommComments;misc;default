@@ -40,14 +40,15 @@ __template__
 	[%- END %]
 	<script type="text/javascript">
 <!--
-	$('commentControlBoxStatus').className = '';
+	window.onscroll = d2act;
+	boxStatus(1);
 [% Slash.jsSelectComments(Slash.db, constants, user, { sid => sid, cid => cid }) %]
 //-->
 	</script>
 [% END %]
 
 [% IF cid %]
-	<ul id="commentlisting" class="[% user.mode %]"[% IF discussion2 %] onmouseover="floatButtons();"[% END %]>
+	<ul id="commentlisting" class="[% user.mode %]">
 	[% Slash.dispComment(comment) %]
 	<div class="comment_footer">
 	[% IF previous %]
@@ -70,7 +71,18 @@ __template__
 		[% Slash.linkComment(next, 1) %]&gt;&gt;
 	[% END %]
 	</div>
-	[% Slash.moderatorCommentLog('cid', cid, { show_m2s => (form.show_m2s.defined ? form.show_m2s : user.m2_with_comm_mod), need_m2_form => !moderate_form, need_m2_button => 1, title=>" " }); %]
+	[% m1_classname = "Slash::" _ constants.m1_pluginname;
+	   moddb = Slash.getObject(m1_classname);
+	   IF moddb;
+		   moddb.dispModCommentLog('cid', cid, {
+			show_m2s =>	  constants.m2 ? (form.show_m2s.defined
+							? form.show_m2s : user.m2_with_comm_mod)
+						: 0,
+			need_m2_form =>	  constants.m2 ? !moderate_form : 0,
+			need_m2_button => constants.m2,
+			title => " " });
+	   END;
+	%]
 [% END %]
 
 	[% lcp %]
@@ -78,7 +90,7 @@ __template__
 	[% END %]
 	[% thread = Slash.displayThread(sid, pid, lvl, comments) %]
 	[% IF thread %]
-		[% UNLESS cid %]<ul id="commentlisting"[% IF discussion2 %] onmouseover="floatButtons();"[% END %]>[% END %]
+		[% UNLESS cid %]<ul id="commentlisting">[% END %]
 			[% thread %]
 			<li id="roothiddens" class="hide"></li>
 		[% UNLESS cid %]</ul>[% END %]
@@ -115,7 +127,13 @@ __template__
 		currents['oneline']  = [% user.state.comments.totals.oneline || 0 %];
 		// currents_total = [% (user.state.comments.totals.hidden || 0 ) + (user.state.comments.totals.full || 0) + (user.state.comments.totals.oneline || 0)  %];
 
-		finishLoading();
+		abbrev_comments      = {};
+		noshow_comments      = [[% user.state.comments.noshow.join(',') %]];
+		pieces_comments      = [[% user.state.comments.pieces.join(',') %]];
+		init_hiddens         = [[% user.state.comments.hiddens.join(',') %]];
+
+		[% IF user.discussion2 == "slashdot" %]d2act();
+		[% END -%]finishLoading();
 //-->
 	</script>
 [% END %]
@@ -123,4 +141,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: printCommComments;misc;default,v 1.44 2006/06/20 20:17:18 pudge Exp $
+$Id: printCommComments;misc;default,v 1.54 2007/01/31 20:37:35 pudge Exp $

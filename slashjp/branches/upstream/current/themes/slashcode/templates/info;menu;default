@@ -27,10 +27,11 @@ __template__
 	{ link = "$gSkin.rootdir/admin.pl?op=mcd_stats",	label = "Memcached",		sel_label = "mcdstats" },
 	{ link = "$gSkin.rootdir/admin.pl?op=recent",	label = "Security",		sel_label = "security" },
 	{ link = "$gSkin.rootdir/admin.pl?op=topics",	label = "Config",		sel_label = "config" },
+	{ link = "$gSkin.rootdir/admin.pl?op=peerweights",	label = "PeerWeights",		sel_label = "peerweights" },
 ];
 PROCESS tabbedmenu tabs=tabs color=color selected=page lightfontcolor=lightfontcolor || ""; %]
 
 __seclev__
 10000
 __version__
-$Id: info;menu;default,v 1.19 2004/07/01 18:05:23 jamiemccarthy Exp $
+$Id: info;menu;default,v 1.20 2007/03/13 21:31:39 jamiemccarthy Exp $

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: console.pl,v 1.1 2006/02/21 21:53:20 tvroom Exp $
+# $Id: console.pl,v 1.4 2007/05/21 13:02:27 jamiemccarthy Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.1 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -35,7 +35,7 @@ sub main {
 	);
 
 	my $op = $form->{op};
-	if (!$op || !exists $ops{$op} || !$ops{$op}[ALLOWED]) {
+	if (!$op || !exists $ops{$op}) {
 		$op = 'default';
 	}
 
@@ -53,10 +53,15 @@ sub display {
 	my $remarkstext = $remarks->displayRemarksTable({ max => 10, print_whole => 1 });
 
 	my $admindb 	= getObject('Slash::Admin');
-	my $storyadmin 	= $admindb->showStoryAdminBox("", { updater => 1 });
-	my $slashdbox 	= $admindb->showSlashdBox({ updater => 1});
-	my $perfbox	= $admindb->showPerformanceBox({ updater => 1});
-	my $authorbox	= $admindb->showAuthorActivityBox({updater => 1});
+	my $storyadmin 	= $admindb->showStoryAdminBox("");
+	my $slashdbox 	= $admindb->showSlashdBox();
+	my $perfbox	= $admindb->showPerformanceBox();
+	my $authorbox	= $admindb->showAuthorActivityBox();
+	my $firehosebox = "";
+	if ($constants->{plugin}{FireHose}) {
+		my $firehose = getObject("Slash::FireHose");
+		$firehosebox = $firehose->listView({ fh_page => 'console.pl'});
+	}
 
 
 	slashDisplay('display', {
@@ -64,7 +69,8 @@ sub display {
 		storyadmin 	=> $storyadmin,
 		slashdbox 	=> $slashdbox,
 		perfbox		=> $perfbox,
-		authorbox	=> $authorbox
+		authorbox	=> $authorbox,
+		firehosebox	=> $firehosebox
 	});
 
 }

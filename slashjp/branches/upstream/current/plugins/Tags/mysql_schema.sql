@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.10 2006/06/01 22:10:30 jamiemccarthy Exp $
+# $Id: mysql_schema.sql,v 1.14 2007/04/11 05:35:24 jamiemccarthy Exp $
 #
 
 DROP TABLE IF EXISTS tags;
@@ -10,6 +10,7 @@ CREATE TABLE tags (
 	uid		mediumint UNSIGNED NOT NULL,
 	created_at	datetime NOT NULL,
 	inactivated	datetime DEFAULT NULL,
+	private		enum('yes', 'no') NOT NULL DEFAULT 'no',
 	PRIMARY KEY tagid (tagid),
 	KEY tagnameid (tagnameid),
 	KEY globjid_tagnameid (globjid, tagnameid),
@@ -108,4 +109,41 @@ CREATE TABLE tags_userchange (
 	PRIMARY KEY tuid (tuid),
 	KEY uid (uid)
 ) TYPE=InnoDB;
+
+CREATE TABLE tags_peerweight (
+	uid		mediumint UNSIGNED NOT NULL DEFAULT '0',
+	gen		smallint UNSIGNED NOT NULL DEFAULT '0',
+	weight		float NOT NULL DEFAULT '0',
+	PRIMARY KEY (uid),
+	KEY gen_uid (gen, uid)
+) TYPE=InnoDB;
+
+CREATE TABLE tagnames_similar (
+	tsid		int UNSIGNED NOT NULL AUTO_INCREMENT,
+	type		smallint UNSIGNED NOT NULL DEFAULT '0',
+	src_tnid	int UNSIGNED NOT NULL DEFAULT '0',
+	dest_tnid	int UNSIGNED NOT NULL DEFAULT '0',
+	simil		float NOT NULL DEFAULT '0',
+	PRIMARY KEY (tsid),
+	UNIQUE type_src_dest (type, src_tnid, dest_tnid)
+) TYPE=InnoDB;
+
+CREATE TABLE tags_udc (
+	hourtime	datetime NOT NULL,
+	udc		float NOT NULL DEFAULT '0',
+	PRIMARY KEY (hourtime)
+) TYPE=InnoDB;
+
+CREATE TABLE tags_hourofday (
+	hour		tinyint UNSIGNED NOT NULL DEFAULT '0',
+	proportion	float NOT NULL DEFAULT '0',
+	PRIMARY KEY (hour)
+) TYPE=InnoDB;
+
+CREATE TABLE tags_dayofweek (
+	day		tinyint UNSIGNED NOT NULL DEFAULT '0',
+	proportion	float NOT NULL DEFAULT '0',
+	PRIMARY KEY (day)
+) TYPE=InnoDB;
+
 
