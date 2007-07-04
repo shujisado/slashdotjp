@@ -1,0 +1,7 @@
+# $Id: PLUGIN,v 1.4 2006/03/08 20:36:53 tvroom Exp $
+name=Remarks
+description="Remarks"
+htdocs=remarks.pl
+template=templates/data;remarks;default
+template=templates/display;remarks;default
+template=templates/config_remarks;misc;default

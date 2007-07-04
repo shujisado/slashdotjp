@@ -1,0 +1,22 @@
+__section__
+default
+__description__
+Message sent when user opts-out of the story emailing feature.
+__title__
+Opt-Out Confirmation Email Text
+__page__
+email
+__lang__
+en_US
+__name__
+optout_confirm
+__seclev__
+5000
+__template__
+An opt-out of [% constants.sitename %]'s story emailing feature
+has been requested for this email address. If indeed you do wish
+to opt out, then no further action on your part is necessary. 
+If this request has been made in error, please send an email 
+to [% constants.adminmail %].
+__version__
+$Id: optout_confirm;email;default,v 1.4 2003/08/12 21:35:38 pudge Exp $

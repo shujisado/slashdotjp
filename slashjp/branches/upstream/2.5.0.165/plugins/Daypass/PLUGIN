@@ -1,0 +1,9 @@
+# $Id: PLUGIN,v 1.1 2005/02/03 05:33:45 jamiemccarthy Exp $
+name=Daypass
+description="Daypass"
+htdoc=daypass.pl
+mysql_dump=mysql_dump.sql
+mysql_schema=mysql_schema.sql
+template=templates/data;daypass;default
+template=templates/main;daypass;default
+

@@ -1,0 +1,46 @@
+__section__
+default
+__description__
+Displays people.
+
+* people = arrayref of people (nickname, uid, last entry time, last entry description, last entry id)
+__title__
+
+__page__
+zoo
+__lang__
+en_US
+__name__
+plainlist
+__template__
+<table width="100%" border="0" cellpadding="2" cellspacing="0">
+    <tr><th align="left">User</th>
+	<th align="left" colspan="2">User's...</th>
+	<th align="left">&nbsp;&nbsp;Last Journal</th></tr>
+[% FOREACH somebody = people %]
+    <tr>
+	<td valign="top">
+		<a href="[% gSkin.rootdir %]/~[% somebody.1 | strip_paramattr %]/">[% somebody.1 %] ([% somebody.0 %])</a>[% PROCESS zoo_icons person=somebody.0 implied="" %]&nbsp;&nbsp;
+	</td>
+	<td valign="top">
+		<a href="[% gSkin.rootdir %]/~[% somebody.1 | strip_paramattr %]/friends/">friends</a>&nbsp;
+	</td>
+	<td valign="top">
+		<a href="[% gSkin.rootdir %]/~[% somebody.1 | strip_paramattr %]/fans/">fans</a>&nbsp;
+	</td>
+	<td valign="top">
+	[% IF somebody.2 %]
+		&nbsp;&nbsp;<a href="[% gSkin.rootdir %]/~[% somebody.1 | strip_paramattr %]/journal/">[% Slash.timeCalc(somebody.2) %]</a>
+	[% ELSE %]
+		&nbsp;&nbsp;
+	[% END %]
+	</td>
+</tr>
+[% END %]
+</table>
+	</div>
+</div>
+__seclev__
+100
+__version__
+$Id: plainlist;zoo;default,v 1.18 2006/01/23 20:42:59 pudge Exp $

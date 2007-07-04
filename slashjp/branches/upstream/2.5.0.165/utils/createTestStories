@@ -1,0 +1,411 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2005 by Open Source Technology Group. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id: createTestStories,v 1.36 2006/05/17 15:15:58 jamiemccarthy Exp $
+# Based on Cliff's createTestComments, bugs are probably his fault :)
+
+BEGIN {
+	{
+		require Silly::Werder;
+		Silly::Werder->import;
+	}
+	die "Installation of Silly::Werder is required for this util, sorry!\n"
+		if $@;
+}
+
+use strict;
+use File::Basename;
+use Getopt::Std;
+use Data::Dumper;
+use Date::Manip qw( UnixDate ParseDateString );
+use Slash;
+use Slash::Utility;
+use Benchmark;
+use Slash::Relocate;
+
+use vars qw( $slashdb $werder $constants );
+
+(my $VERSION) = ' $Revision: 1.36 $ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+
+my (%opts, %family_tree);
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hvu:t:', \%opts);
+usage() if $opts{'h'};
+version() if $opts{'v'};
+$opts{'u'} ||= 'slash';
+$opts{'t'} ||= 0;
+$opts{num_stories} = $ARGV[0] || 10;
+usage('Invalid number of stories') 
+	if $opts{num_stories} !~ /^\d+$/ || $opts{num_stories} < 0;
+
+createEnvironment($opts{u});
+setCurrentSkin(determineCurrentSkin());
+$slashdb = getCurrentDB();
+$werder = new Silly::Werder;
+$werder->set_syllables_num(2, 6);
+$constants = getCurrentStatic();
+
+# main program logic (in braces to offset nicely)
+{
+ 
+	# Determine user list size (for -R)
+	my $max_uid = $slashdb->countUsers({ max => 1});
+	my $min_uid = $slashdb->sqlSelect("MIN(uid)", "users");
+
+	my $rootdir = getCurrentSkin('rootdir');
+ 
+	my $t0 = new Benchmark;
+	my $count = $opts{num_stories};
+	while ($count) {
+		# Let's have a little fun with this...
+		my $title = make_werds(1 + rand 8);
+		$title =~ s/\W+$// if rand(1) < 0.9;
+		$title =~ s/<[^>]+>//g;
+		$title =~ s/\b(\w)/\U$1/g if rand(1) < 0.4;
+		my $introtext = make_werds(20 + rand 40 + rand 50, 0.3);
+		$introtext .= typical_remark() if rand(1) < 0.05;
+		$introtext = slashizeLinks($introtext);
+		$introtext = balanceTags($introtext);
+		my $bodytext = '';
+		if (rand(1) < 0.1) {
+			$bodytext = make_werds(20 + (rand 30) * (rand 50), 0.1);
+			$bodytext =~ s{([.?!] )}{
+				$1 . ((rand(1) < 0.2) ? "<P>" : "")
+			}xge;
+		}
+		$bodytext = slashizeLinks($bodytext);
+		$bodytext = balanceTags($bodytext);
+		my $dept = lc make_werds(2+rand 6);
+		$dept =~ s/<[^>]+>//g;
+		$dept =~ s/\s+/-/g;
+		$dept =~ s/\W+$// if rand(1) < 0.9;
+		my $author = getRandomAuthorID();
+		my $submitter = getRandomUserID($min_uid, $max_uid);
+		my $time = UnixDate(ParseDateString(
+			"epoch ".get_time($opts{t})),
+			"%Y-%m-%d %H-%M-%S");
+
+		my @topics = getRandomTopicList();
+
+		my $topics = { };
+		%$topics = map { $_ => 20 } @topics;
+
+		# If this story will display in multiple nexuses, we might
+		# want to manually remove it from one, just for fun.
+		my $nexuses = $slashdb->getNexuslistFromChosen($topics);
+		if (@$nexuses >= 2 && rand(1) < 0.2) {
+			my $n = $nexuses->[ rand(@$nexuses) ];
+			$topics->{$n} = 0;
+		}
+
+		if (rand(1) < 0.80) {
+			promote_to_mainpage($topics);
+		}
+
+		my $commentstatus = rand(1) < .95 ? "enabled" : "disabled";
+		
+		my $story = {
+			subid		=> '',
+			uid		=> $author,
+			dept		=> $dept,
+			'time'		=> $time,
+			title		=> $title,
+			topics_chosen	=> $topics,
+			submitter	=> $submitter,
+			introtext	=> $introtext,
+			bodytext	=> $bodytext,
+			rendered	=> undef,
+			commentstatus   => $commentstatus
+		};
+
+		# Small chance of ND'ing this story.
+		$story->{neverdisplay} = 1 if rand(1) < 0.1;
+
+		my $sid = $slashdb->createStory($story);
+		my $reloDB = getObject("Slash::Relocate");
+		if ($reloDB && $sid) {
+			$slashdb->setStory($sid, { 
+				introtext => $reloDB->href2SlashTag($introtext, $sid),
+				bodytext => $reloDB->href2SlashTag($bodytext, $sid),
+			});
+		}
+		if ($sid) {
+			print "($count) Story created: $sid $time $title\n";
+		} else {
+			warn "($count) Story could not be created";
+		}
+		$count--;
+	}
+	my $t1 = new Benchmark;
+	print "$opts{num_stories} stories created in: ",
+		timestr(timediff($t1, $t0), 'noc'),"\n";
+}
+
+# subroutines
+
+sub promote_to_mainpage {
+	my($topics_hr) = @_;
+	my @topics = keys %$topics_hr;
+	# Pick several topics to be mainpage-worthy.
+	my %m_tid = map { $_ => rand(1) < 0.5 ? (rand(1) < 0.3 ? 40 : 30) : 10 }
+		@topics;
+	# Need at least one.
+	my $rand_key = $topics[rand(@topics)];
+	$m_tid{$rand_key} = 30;
+	# elevate those to the mainpage
+	foreach (@topics) {
+		$topics_hr->{$_} = $m_tid{$_};
+	}
+	# Did it work?  If not, add mainpage manually.
+	my $mainpage_nexus = $constants->{mainpage_nexus_tid};
+	my $rendered_hr = $slashdb->renderTopics($topics_hr);
+	if (!$rendered_hr->{$mainpage_nexus}) {
+		$topics_hr->{$mainpage_nexus} = 30;
+	}
+}
+
+
+sub get_time {
+	my($direction) = @_;
+	my($min, $max);
+	my $now = time;
+	if (!$direction) {
+		$min = $now - 86400*1;
+		$max = $now + 86400*5;
+	} elsif ($direction < 0) {
+		$min = $now + 86400*$direction;
+		$max = $now;
+	} else {
+		$min = $now;
+		$max = $now + 86400*$direction;
+	}
+	my $t = int(rand($max-$min)) + $min;
+	return int($t/60) * 60;
+}
+
+sub getRandomAuthorID {
+	# Yes, inefficient.  I do not care.
+	my $rand_uid = 1;
+	my $n_tries = 100;
+	my $uids = $slashdb->sqlSelectAll("uid", "users", "seclev >= 100");
+	my @uids = map { $_->[0] } @$uids;
+	my $ok = 0;
+	while (!$ok) {
+		die "can't get random author! '@uids'" if --$n_tries<0;
+		$rand_uid = $uids[ rand @uids ];
+		$ok = 1;
+		$ok = 0 if $rand_uid == $constants->{anonymous_coward_uid};
+	}
+	return $rand_uid;
+}
+
+sub getRandomTopicID {
+	# Yes, inefficient.  I do not care.
+	my $tids = $slashdb->sqlSelectAll("tid", "topics", "tid < 10000");
+	my @tids = map { $_->[0] } @$tids;
+	my $rand_tid = @tids[ rand @tids ];
+	return $rand_tid;
+}
+
+sub getRandomTopicList {
+	my @topics = ( );
+	my $r = rand(1);
+	my $min_num = 1;
+	   if ($r < 0.1) {	$min_num = 3	}
+	elsif ($r < 0.5) {	$min_num = 2	}
+	for (1..$min_num) { push @topics, getRandomTopicID(); }
+
+	# First try to get into a section with weight 10.
+	my $in_skin = topiclistInSkin(10, @topics);
+	my $n_tries = 0;
+	while (!$in_skin && $n_tries < 10) {
+		++$n_tries;
+		$topics[ rand(@topics) ] = getRandomTopicID();
+		$in_skin = topiclistInSkin(10, @topics);
+	}
+
+	# No?  OK, try adding more topics.
+	$n_tries = 0;
+	while (!$in_skin && $n_tries < 10) {
+		++$n_tries;
+		my $new_tid = getRandomTopicID();
+		if (@topics <= 5 && rand(1) < 0.5) {
+			push @topics, $new_tid;
+		} else {
+			$topics[ rand(@topics) ] = $new_tid;
+		}
+		$in_skin = topiclistInSkin(10, @topics);
+	}
+
+	my %topics = ( map { ($_, 1) } @topics );
+	@topics = keys %topics;
+	return @topics;
+}
+
+sub topiclistInSkin {
+	my($weight, @topics) = @_;
+	my $chosen_hr = { map { ( $_, $weight ) } @topics };
+	my $rendered_hr = $slashdb->renderTopics($chosen_hr);
+	my $skid = $slashdb->getPrimarySkidFromRendered($rendered_hr);
+	return $skid ? 1 : 0;
+}
+
+sub getRandomUserID {
+	my($min_uid, $max_uid) = @_;
+	my $rand_uid = $slashdb->sqlSelect("uid", "users",
+		"uid BETWEEN $min_uid AND $max_uid", "ORDER BY RAND() LIMIT 1");
+	return $rand_uid;
+}
+
+sub make_werds {
+	my($werds, $link_prob) = @_;
+	$werds = int($werds);
+	$link_prob ||= 0;
+	if ($werds > 40) {
+		$werder->set_werds_num(5,20);
+	} elsif ($werds > 20) {
+		$werder->set_werds_num(3,10);
+	} else {
+		$werder->set_werds_num($werds, $werds);
+	}
+	my @links = qw(
+		http://slashdot.org/		http://www.brunching.com/
+		http://www.newsforge.com	http://ostg.com
+		http://whitehouse.gov		http://www.whitehouse.gov/
+		http://us.imdb.com/		http://www.kernel.org
+		http://ic.ac.uk			http://cr.yp.to/
+		http://www.verizonreallyreallyreallysucks.com/
+		ftp://ftp.kernel.org/		ftp://ftp.gnu.org/gnu/Licenses/COPYING-2.0
+		news:news.admin.net-abuse.email gopher://ccat.sas.upenn.edu:3333/11/Fiction/
+		http://List-Etiquette.com/about/
+		http://slashdot.org/features/99/03/31/0137221.shtml
+		http://www.nap.edu/readingroom/books/newpath/chap2.html
+		http://www.forthnet.gr/forthnet/isoc/short.history.of.internet
+		http://www.freenix.fr/unix/linux/HOWTO/French-HOWTO.html
+		http://www.linux.org.mx/	http://www.linux.net.mx/linux.php
+		http://www.linux.org.uk/diary/	http://hepwww.ph.qmw.ac.uk/HEPpc/
+		http://www.w3.org		http://peipa.essex.ac.uk/tp-linux/
+		http://www.crosswinds.net/~tvquotes/futurama/2.html
+		http://www.google.com/search?q=cache:h58W7o4qU-w:www.space.com/sciencefiction/tv/futurama_gore_000516_wg.html+Futurama+Fry&amp;hl=en
+		http://dmoz.org/Regional/Europe/United_Kingdom/Wales/Isle_of_Anglesey/Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch/
+		www.google.com			bad_link b.a.d l.i.n.k . .. ... ....
+		mailto:jamie@slashdot.org	mailto:pater@slashdot.org
+	);
+	push @links, 'http://directory.google.com/Top/Arts/Literature/Authors/C/Carroll,_Lewis/Works/Hunting_of_the_Snark,_The/';
+	my $comment;
+	my $cur_werds = 0;
+	my $tag = "";
+	my $quote = q{};
+	while ($cur_werds < $werds) {
+		my $new_werds = '';
+		if (int(rand(6))==0 or $werds < $cur_werds * 1.1) {
+			if (int(rand(2))) {
+				$new_werds = $werder->question;
+			} else {
+				$new_werds = $werder->exclaimation; # Dave, you spelled this word wrong
+			}
+		} else {
+			$new_werds = $werder->sentence;
+		}
+		if ($link_prob && rand(1) < $link_prob) {
+			my @new_werds = split / /, $new_werds;
+			if ($#new_werds > 2) {
+				my $a_href = q{<a href="} . $links[rand @links] . q{">} . (rand(1)<0.1?" ":"");
+				my $close_a = (rand(1)<0.1?" ":"") . "</a>";
+				my $insert_start = int(rand($#new_werds-2));
+				my $insert_end = $insert_start + int(rand(4))+1;
+				$insert_end = $#new_werds - 1 if $insert_end > $#new_werds - 1;
+				$new_werds = join(" ",
+					@new_werds[0..$insert_start-1],
+					$a_href . $new_werds[$insert_start],
+					@new_werds[$insert_start+1..$insert_end-1],
+					$new_werds[$insert_end] . $close_a,
+					@new_werds[$insert_end+1..$#new_werds]
+				);
+			}
+		}
+		if ($cur_werds and !$tag and rand > $cur_werds/$werds+0.3) {
+			if (rand(1) < 0.95) { $tag = "i" }
+			else { $tag = "b" }
+			if (rand(1) < 0.50) { $quote = int(rand(3)) ? q{'} : q{"} };
+			$new_werds = "<$tag>$quote$new_werds";
+		}
+		if ($tag and rand(1) < 0.5) {
+			$new_werds = "$new_werds$quote</$tag>";
+			$tag = ""; $quote = q{};
+		}
+		$comment .= " $new_werds";
+		$comment =~ s{\s+}{ }g;
+		$cur_werds = $comment =~ tr/ / /;
+	}
+	$comment .= "</$tag>" if $tag;
+	$comment =~ s{</(\w+)>\s+<\1>}{ }g;
+	$comment =~ s/^\s*(.+)\s*$/$1/;
+	$comment =~ s/^\s+//; $comment =~ s/\s+$//;
+	$comment;
+}
+
+sub typical_remark {
+	my @t = (
+		"What do you think?",
+		"This totally sucks.",
+		"That's too bad.",
+		"This sucks. Hope they change their mind.",
+		"<b>Sweet!</b>",
+		"Ahahahaha!",
+		"What a relief.",
+		"I'm so sick of people submitting this.",
+		"OK, now we've posted it, you can stop submitting!!",
+		"This is just dumb.",
+		"This is so lame.",
+		"Click for more.",
+		"Some people just don't get it.",
+		"Why don't they just go open-source?",
+		"That's free as in beer.",
+		"That's free as in speech.",
+		"Dude, just apt-get.",
+		"I wouldn't know, I use Debian.",
+		"Someone make a .deb of this.",
+		"<b>Update at 14:59 by <a href=\"me\@privacy.net\">J</a></b>: Sorry, I got this completely wrong. My bad.",
+		"<b>Update at 18:57 by <a href=\"me\@privacy.net\">H</a></b>: Yes, we posted this last month - sorry.",
+	);
+	return " " . $t[rand @t];
+}
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] [#stories]
+
+This utility creates test stories for a given Slash site. This program is for
+testing purposes, only, particularly for those ambitious Slash users out there
+who want to try their hand at modifying the comment or moderation systems.
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+
+EOT
+	exit;
+}
+
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2005 by Open Source Technology Group. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+__END__

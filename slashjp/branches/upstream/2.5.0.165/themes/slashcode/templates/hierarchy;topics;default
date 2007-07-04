@@ -1,0 +1,54 @@
+__section__
+default
+__description__
+List all the current topics
+
+* title = passed to titlebar
+* width = passed to titlebar
+* topic_tree =  tree of topics
+* nexuses = array of ids which are nexuses
+__title__
+
+__page__
+topics
+__lang__
+en_US
+__name__
+hierarchy
+__template__
+[% PROCESS titlebar title="Hierarchy of Topics" %]
+<br>
+<ul>
+[% FOREACH nexus = nexuses %]
+	[% PROCESS topic_children tree = topic_tree tid = nexus depth = 0 %]
+[% END %]
+</ul>
+
+[% BLOCK topic_children %]
+	[% 
+	topic = tree.$tid;
+	match_term = "^" _ constants.topiclist_ignore_prefix IF constants.topiclist_ignore_prefix;
+	%]
+	
+	[% UNLESS match_term && topic.keyword.match(match_term) %]
+		<li>
+		[% IF user.is_admin %]
+			<a href="[% gSkin.rootdir %]/admin.pl?op=topics&amp;nexttid=[% tree.$tid.tid %]">[% IF tree.$tid.nexus; '<b>'; END %][% tree.$tid.textname %][% IF tree.$tid.nexus; '</b>'; END %]</a>
+		[% ELSE %]
+			<a href="[% gSkin.rootdir %]/search.pl?tid=[% tree.$tid.tid %]">[% IF tree.$tid.nexus; '<b>'; END %][% tree.$tid.textname %][% IF tree.$tid.nexus; '</b>'; END %]</a>
+		[% END %]
+		</li>
+	
+		[% IF tree.$tid.children && tree.$tid.children.size > 0 %]
+			<ul>
+			[% FOREACH child_id = tree.$tid.children %]
+				[% PROCESS topic_children tree = tree tid = child_id depth = depth + 1 %]
+			[% END %]
+			</ul>
+		[% END %]
+	[% END %]
+[% END %]
+__seclev__
+10000
+__version__
+$Id: hierarchy;topics;default,v 1.9 2005/12/08 03:43:42 tvroom Exp $

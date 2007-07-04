@@ -1,0 +1,28 @@
+#
+# $Id: mysql_dump,v 1.11 2005/02/08 18:30:10 tvroom Exp $
+#
+
+INSERT INTO menus (menu, label, sel_label, value, seclev, showanon, menuorder) VALUES ('users','Subscription','subscription','/subscribe.pl',1,0,30);
+INSERT INTO vars (name, value, description) VALUES ('paypal', 1, 'Use Paypal for subscriptions?');
+INSERT INTO vars (name, value, description) VALUES ('paypal_amount', '5.00', 'How much a subscription costs, in U.S. dollars with 2 decimal places');
+INSERT INTO vars (name, value, description) VALUES ('paypal_business', 'yourname@example.com', 'Email of Paypal business acct');
+INSERT INTO vars (name, value, description) VALUES ('paypal_cancel_return', 'http://www.example.com/', 'URL to go to if payment is cancelled before being made');
+INSERT INTO vars (name, value, description) VALUES ('paypal_image_src', 'http://images.paypal.com/images/x-click-but02.gif', 'URL of button image to click on');
+INSERT INTO vars (name, value, description) VALUES ('paypal_no_shipping', '1', '0=Shipping address reqd (more secure), 1=No shipping address reqd (more convenient)');
+INSERT INTO vars (name, value, description) VALUES ('paypal_num_pages', '1000', 'How many pages your paypal_amount buys');
+INSERT INTO vars (name, value, description) VALUES ('paypal_return', 'http://www.example.com/subscribe.pl?op=pause', 'URL for successful payment completion');
+INSERT INTO vars (name, value, description) VALUES ('subscribe', 1, 'Subscriptions enabled?');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_admin_seclev', 1000, 'Min seclev to do subscription admin stuff');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_debug', 0, 'Debug plugins/Subscribe?');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_defpages', 'index article', 'Space-separated list of default pages (script names)');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_email', 'admin@example.com', 'Email address for subscription-related issues');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_future_name','in <B>The Mysterious Future!</B>','Name of the future that subscribers can see stories in');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_future_secs','0','Seconds worth of stories that subscribers can see into The Mysterious Future');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_future_post','0','Can subscribers post to stories in The Mysterious Future?');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_future_plug','0','If subscribe_future_secs > 0, do non-subscribers get to know when a MystFu story is present even though they cannot see it?');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_hits_btmd', 10, 'Hits Bought Today Max Default, the default maximum number of hits that a user will be allowed to buy in one day, 0 for no (default) maximum');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_hits_only', 1, '0=All users get users_hits updated, 1=Only subscribed users');
+INSERT INTO vars (name, value, description) VALUES ('subscribe_secretword', 'changemenow', 'Secret word to buy pages with');
+
+INSERT INTO message_codes (code, type, seclev, modes, send, subscribe) VALUES (15, 'Subscription Running Low', 1, '', 'now', 1);
+INSERT INTO message_codes (code, type, seclev, modes, send, subscribe) VALUES (16, 'Subscription Expired', 1, '', 'now', 1);

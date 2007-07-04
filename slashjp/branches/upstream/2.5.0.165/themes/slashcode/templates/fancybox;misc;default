@@ -1,0 +1,37 @@
+__section__
+default
+__description__
+Creates a nice box with title and contents
+
+* width = width of box (default is 200)
+* contents = contents of box
+* title = title of box
+* center = boolean for centering box
+* mainwidth = (not used here)
+* insidewidth = (not used here)
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+fancybox
+__template__
+
+<div class="block">
+	<div class="title">
+		<h3>
+			[% title %]
+		</h3>	
+	</div>
+	<div class="content">
+		[% contents %]
+	</div>
+</div>
+
+__seclev__
+10000
+__version__
+$Id: fancybox;misc;default,v 1.10 2006/02/21 21:48:35 tvroom Exp $

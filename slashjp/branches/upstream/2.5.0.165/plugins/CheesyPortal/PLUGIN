@@ -1,0 +1,7 @@
+# $Id: PLUGIN,v 1.5 2003/08/29 15:21:07 jamie Exp $
+name=CheesyPortal
+htdoc=cheesyportal.pl
+task=tasks/p2f_cheesy.pl
+description=CheesyPortal is a script to get an overall look at portal boxes
+template=templates/data;cheesyportal;default
+template=templates/main;cheesyportal;default

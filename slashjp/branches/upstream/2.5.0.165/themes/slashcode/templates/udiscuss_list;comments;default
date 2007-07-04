@@ -1,0 +1,42 @@
+__section__
+default
+__description__
+This template controls how the Discussion List is printed. For default
+Slash, this list is printed when comments.pl executed with no
+arguments.
+
+* discussions = arrayref of arrayrefs of discussions (sid = 0, title=1, url=2)
+* suppress_create = if it has value then the create is not displayed even if the user has enough of a seclev
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+udiscuss_list
+__template__
+[% PROCESS titlebar title=title width='100%' %]
+<multicol cols=2>
+[% FOR discussion = discussions %]
+	[% nickname = Slash.db.getUser(discussion.uid, 'nickname') %]
+	<li><a href="[% gSkin.rootdir %]/comments.pl?sid=[% discussion.id %]">[%
+IF discussion.title.defined %][% discussion.title %][% ELSE %]untitled[% END %]</a>
+	created by <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname %]</a> on [% Slash.timeCalc(discussion.ts) %]
+[% END %]
+</multicol>
+<p>
+[% PROCESS pagination label=label %]
+
+<p>
+
+[% IF user.seclev >= constants.discussion_create_seclev && !suppress_create;
+    # PROCESS discreate topic=constants.discussion_default_topic label=label; 
+    PROCESS edit_comment indextype='udiscuss' newdiscussion=1 topic=constants.discussion_default_topic label=label; 
+END %]
+
+
+__seclev__
+100
+__version__
+$Id: udiscuss_list;comments;default,v 1.12 2006/01/23 20:42:59 pudge Exp $
