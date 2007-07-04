@@ -1,0 +1,115 @@
+__section__
+default
+__description__
+Prints the bar above each story, containing the actual title of the story.
+
+* uid = uid passed in of "other user" we're looking at, if any
+* tab_selected = label of selected tab
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+user_titlebar
+__template__
+[% uid = uid || user.uid %]
+
+[% IF user.uid == uid && !user.is_anon;
+	thisnickname = user.nickname | strip_literal;
+	title = title || "$thisnickname (This is you!)";
+	url_nick = user.nickname | strip_paramattr;
+	PROCESS titlebar title=title;
+ELSE;
+	thisnickname = useredit.nickname | strip_literal;
+	url_nick = useredit.nickname | strip_paramattr;
+	zi = PROCESS zoo_icons person=uid implied="";
+	title = title ||
+		"<a href=\"$gSkin.rootdir/~$url_nick/\">$thisnickname ($uid)</a> $zi";
+	PROCESS titlebar title=title;
+END %]
+
+[% tabs = [ ];
+IF user.uid == uid;
+	tabs = [
+		{ link = "/~$url_nick/",	label = "Info",		sel_label = "info" },
+	];
+	IF constants.plugin.Journal; tabs.push(
+		{ link = "/~$url_nick/journal/",label = "Journal",	sel_label = "journal" },
+	); END;
+	IF constants.plugin.Messages; tabs.push(
+		{ link = "/my/inbox/",		label = "Messages",	sel_label = "messages" },
+	); END;
+	IF constants.plugin.Zoo; tabs.push(
+		{ link = "/my/friends/",	label = "Friends",	sel_label = "friends" },
+	); tabs.push(
+		{ link = "/my/fans/",		label = "Fans",		sel_label = "fans" },
+	); tabs.push(
+		{ link = "/my/foes/",		label = "Foes",		sel_label = "foes" },
+	); tabs.push(
+		{ link = "/my/freaks/",		label = "Freaks",	sel_label = "freaks" },
+	); END;
+	IF constants.plugin.Tags; tabs.push(
+		{ link = "/my/tags/",		label = "Tags",		sel_label = "tags" },
+	); END;
+	IF constants.plugin.Bookmark; tabs.push(
+		{ link = "/my/bookmarks/",	label = "Bookmarks",	sel_label = "bookmarks" },
+	); END;
+ELSIF user.is_anon;
+	tabs = [
+		{ link = "/~$url_nick/",	label = "Info",		sel_label = "info" },
+	];
+	IF constants.plugin.Journal; tabs.push(
+		{ link = "/~$url_nick/journal/",label = "Journal",	sel_label = "journal" },
+	); END;
+	IF constants.plugin.Zoo; tabs.push(
+		{ link = "/~$url_nick/friends/",label = "Friends",	sel_label = "friends" },
+	); tabs.push(
+		{ link = "/~$url_nick/fans/",	label = "Fans",		sel_label = "fans" },
+	); tabs.push(
+		{ link = "/~$url_nick/foes/",	label = "Foes",		sel_label = "foes" },
+	); tabs.push(
+		{ link = "/~$url_nick/freaks/",	label = "Freaks",	sel_label = "freaks" },
+	); END;
+	IF constants.plugin.Tags; tabs.push(
+		{ link = "/~$url_nick/tags/",	label = "Tags",		sel_label = "tags" },
+	); END;
+	IF constants.plugin.Bookmark; tabs.push(
+		{ link = "/~$url_nick/bookmarks/",	label = "Bookmarks",	sel_label = "bookmarks" },
+	); END;
+ELSE;
+	tabs = [
+		{ link = "/~$url_nick/",	label = "Info",		sel_label = "info" },
+	];
+	IF constants.plugin.Zoo; tabs.push(
+		{ link = "/zoo.pl?op=check&amp;uid=$uid", label = "Relation", sel_label = "relation" },
+	); END;
+	IF constants.plugin.Journal; tabs.push(
+		{ link = "/~$url_nick/journal/",label = "Journal",	sel_label = "journal" },
+	); END;
+	IF constants.plugin.Zoo; tabs.push(
+		{ link = "/~$url_nick/friends/",label = "Friends",	sel_label = "friends" },
+	); tabs.push(
+		{ link = "/~$url_nick/fans/",	label = "Fans",		sel_label = "fans" },
+	); tabs.push(
+		{ link = "/~$url_nick/foes/",	label = "Foes",		sel_label = "foes" },
+	); tabs.push(
+		{ link = "/~$url_nick/freaks/",	label = "Freaks",	sel_label = "freaks" },
+	); END;
+	IF constants.plugin.Tags; tabs.push(
+		{ link = "/~$url_nick/tags/",	label = "Tags",		sel_label = "tags" },
+	); END;
+	IF constants.plugin.Bookmark; tabs.push(
+		{ link = "/~$url_nick/bookmarks/", label = "Bookmarks",	sel_label = "bookmarks" },
+	); END;
+END %]
+<div id="usermenu">
+[% PROCESS tabbedmenu tabs=tabs color='white' justify='left' tab_selected=tab_selected %]
+</div>
+
+__seclev__
+10000
+__version__
+$Id: user_titlebar;misc;default,v 1.19 2006/03/29 23:02:13 pudge Exp $

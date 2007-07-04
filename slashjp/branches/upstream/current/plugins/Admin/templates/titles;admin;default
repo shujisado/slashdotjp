@@ -1,0 +1,104 @@
+__section__
+default
+__description__
+A template with logic to return the varioustitle in admin.pl, used
+by the subroutine getTitles in admin.pl
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+titles
+__template__
+[% SWITCH value %]
+
+[% CASE 'adminLogin-title' %]
+back<i>Slash</i> Log In
+
+[% CASE 'adminLogout-title' %]
+back<i>Slash</i> Buh Bye
+
+[% CASE 'listFilters-title' %]
+List of comment filters
+
+[% CASE 'editFilter-title' %]
+Edit Comment Filter
+
+[% CASE 'listStories-title' %]
+Story List
+
+[% CASE 'blockEdit-title' %]
+Site Block Editor [% IF bid %]([% bid %])[% END %]
+
+[% CASE 'colorEdit-title' %]
+Site Color Editor
+
+[% CASE 'listTopics-title' %]
+Topic Lister
+
+[% CASE 'editTopic-title' %]
+Topics Editor [% IF tname %]([% tname %])[% END %]
+
+[% CASE 'updateFilter-new-title' %]
+New filter# [% filter_id %].
+
+[% CASE 'updateFilter-saved-title' %]
+Filter# [% form.filter_id %] saved.
+
+[% CASE 'updateFilter-deleted-title' %]
+<b>Deleted filter# [% form.filter_id %]!</b>
+
+[% CASE 'updateStory-title' %]
+Article [% form.sid %] Saved
+
+[% CASE 'saveStory-title' %]
+Inserted [% form.sid %] [% form.title %]
+
+[% CASE 'story_update_failed' %]
+Updating [% form.sid %] '[% form.title %]' failed. Best two out of three?
+
+[% CASE 'story_creation_failed' %]
+Failed creating "[% form.title %]". Please try again, the more you play, the more you pay
+
+[% CASE 'blockEdit-title' %]
+Site Block Editor
+
+[% CASE 'colorEdit-title' %]
+Site Color Editor
+
+[% CASE 'topicEd-new-title' %]
+new topic
+
+[% CASE 'rmStory-title' %]
+[% sid %] will be deleted in a minute or two. If you didn't mean to delete it,
+<a href="[% gSkin.rootdir %]/admin.pl?op=edit&amp;sid=[% sid %]">click here quick!</a>
+
+[% CASE 'listFilters-title' %]
+List of comment filters
+
+[% CASE 'updateFilter-new-title' %]
+New filter# [% filter_id %] .
+
+[% CASE 'updateFilter-update-title' %]
+Filter# [% form.filter_id %] saved.
+
+[% CASE 'updateFilter-delete-title' %]
+<b>Deleted filter# [% form.filter_id %]!</b>
+
+[% CASE 'templateEdit-title' %]
+Site Template Editor
+
+[% CASE 'varEdit-title' %]
+Variable Editor
+
+[% CASE 'aclEdit-title' %]
+ACL Editor
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: titles;admin;default,v 1.12 2006/01/03 21:12:34 jamiemccarthy Exp $

@@ -1,0 +1,112 @@
+__section__
+default
+__description__
+Edit user info
+
+* useredit = hashref of user info
+* author_flag = user is author
+* author_select = popup of authors
+* title = passed to titlebar
+* editkey = stuff for editing public key
+* maillist = popup for mailing list
+* admin_block = stuff for editing other users/authors
+
+__title__
+
+__page__
+users
+__lang__
+en_US
+__name__
+editUser
+__template__
+[% orig_title = title %]
+<div id="slashboxes">
+[% UNLESS user.lowbandwidth %]
+[% PROCESS userboxes %]
+[% END %]
+</div>
+[% title = orig_title %]
+<div id="users-blocks">
+	[% PROCESS prefs_titlebar tab_selected='user' %]
+		<div class="generalbody">
+		[% IF note %]
+			<div class="notes">
+				[% note %]
+			</div>
+		[% END %]
+		[% IF constants.offer_insecure_login_link %]
+			You can automatically log in by clicking <a href="[% gSkin.rootdir %]/index.pl?op=userlogin&amp;logtoken=[% useredit.logtoken | strip_paramattr %]">This Link</a> and Bookmarking the resulting page. This is totally insecure, but very convenient.
+		[% END %]
+
+		[% IF admin_flag %]
+			[% admin_block %]
+		[% END %]
+
+		<form action="[% env.script_name %]" method="post">
+			<fieldset>
+			<legend>User Info</legend>
+			[% PROCESS formkey_tag %]
+
+			[%# realname isn't really used for anything, but we do store it %]
+			[% PROCESS formLabel value => 'Real Name'  %]
+			<input type="text" name="realname" value="[% useredit.realname | strip_attribute %]" size="40">
+			<input type="hidden" name="formname" value="edituser">
+			<input type="hidden" name="uid" value="[% useredit.uid %]">
+			<input type="hidden" name="name" value="[% useredit.nickname | strip_attribute %]">
+			[% PROCESS formLabel value => 'Email Address' %]
+			<input type="text" name="realemail" value="[% useredit.realemail | strip_attribute %]" size="40">
+			<div class="notes">
+				Required but never displayed publicly, unless you specify so in your comment preferences. This is where your passwd is mailed.  If you change this address, a notification will be sent, and you will need to follow the enclosed instructions to re-register.
+			</div>
+
+			[% PROCESS formLabel value => 'Homepage' %]
+			<input type="text" name="homepage" value="[% useredit.homepage | strip_attribute %]" size="40">
+			<div class="notes">
+         		       You must enter a fully qualified URL.
+		        </div>
+			[%- IF admin_flag && constants.slashbox_whatsplaying -%]
+				[% PROCESS formLabel value => 'What I\'m Playing For' %]
+				<div class="notes">
+					A pipe ("|") separated list of games you're currently enthralled with. This'll be used for the "What We're Playing" Slashbox.
+				</div>
+				<input type="text" name="playing" value="[% useredit.playing | strip_attribute %]" size="40">
+			[%- END - %]
+			[% PROCESS formLabel value => 'AIM' %]
+			<input type="text" name="aim" value="[% useredit.aim | strip_attribute %]" size="40">
+			[% PROCESS formLabel value => 'ICQ UIN' %]
+			<input type="text" name="icq" value="[% useredit.icq | strip_attribute %]" size="40">
+			[% PROCESS formLabel value => 'Yahoo! ID' %]
+			<input type="text" name="yahoo" value="[% useredit.yahoo | strip_attribute %]" size="40">
+			[% PROCESS formLabel value => 'Jabber' %]
+			<input type="text" name="jabber" value="[% useredit.jabber | strip_attribute %]" size="40">
+			[% PROCESS formLabel value => 'Public Calendar' %]
+			<input type="text" name="calendar_url" value="[% useredit.calendar_url | strip_attribute %]" size="40">
+			<div class="notes">
+				You must enter a fully qualified URL, for an iCal calendar.
+			</div>
+
+			[% PROCESS formLabel value => 'Sig' %]
+			<textarea name="sig" rows="2" cols="30">[% useredit.sig | strip_literal %]</textarea>
+			<div class="notes">
+				Appended to the end of comments you post. 120 chars.
+			</div>
+			[% PROCESS formLabel value => 'Bio' %]
+			<textarea name="bio" rows="5" cols="30" wrap="virtual">[% useredit.bio | strip_literal %]</textarea>
+			<div class="notes">
+				This information is publicly displayed on your user page.  255 chars.
+			</div>
+
+			[% editkey %]
+			<br>
+			<input type="hidden" name="op" value="saveuser" class="button">
+			<input type="submit" value="Save User" class="button">
+			</fieldset>
+		</form>
+
+	</div>
+</div>
+__seclev__
+500
+__version__
+$Id: editUser;users;default,v 1.23 2006/01/23 20:42:59 pudge Exp $

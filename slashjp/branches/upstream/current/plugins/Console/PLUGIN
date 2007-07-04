@@ -1,0 +1,5 @@
+# $Id: PLUGIN,v 1.1 2006/02/21 21:53:20 tvroom Exp $
+name=Console
+description="Console"
+htdocs=console.pl
+template=templates/display;console;default

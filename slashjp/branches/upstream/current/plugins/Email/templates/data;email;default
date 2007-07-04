@@ -1,0 +1,72 @@
+__section__
+default
+__description__
+Template snippets used for Slash::Email
+
+	* parameters vary
+__title__
+Data template for Slash::Email
+__page__
+email
+__lang__
+en_US
+__name__
+data
+__seclev__
+5000
+__template__
+[% SWITCH value;
+
+CASE 'header';
+	returnme.data_constant = 1;
+	"Email Story to a Friend";
+
+CASE 'readonly';
+	returnme.data_constant = 1;
+	"You are not allowed to post to this page.   Email $constants.adminmail_ban,
+including your user name/ID and IP address, for more information.";
+
+CASE 'not_logged_in';
+	returnme.data_constant = 1;
+	"You must be logged in to use this feature.  Please log in to continue.";
+
+CASE 'invalid_email';
+	returnme.data_constant = 1;
+	"I'm sorry. The email address that you have entered is invalid.";
+
+CASE 'optout_email';
+	returnme.data_constant = 1;
+	"I'm sorry. The email address that you have entered has opted out of this service.";
+
+CASE 'optout_added';
+	email = form.email | strip_attribute;
+	"Address <tt>$email</tt> added to opt-out list.<br>";
+
+CASE 'optout_removed';
+	email = form.email | strip_attribute;
+	"Address <tt>$email</tt> removed from opt-out list.<br>";
+
+CASE 'mail_result';
+	UNLESS rc -%]
+[% storylinks = Slash.linkStory({ link => "the story", sid => form.sid }) %]
+Story mailed successfully.  Return to
+<a href="[% storylinks.0 | strip_attribute %]"[% IF storylinks.2 %] TITLE="[% storylinks.2 | strip_attribute %]"[% END %]>[% storylinks.1 | strip_html %]</a>
+or to <a href="[% gSkin.rootdir %]/">the home page</a>.
+	[%- ELSE;
+"An error occured while attempting to mail the story.  Please check that
+the email address is valid.  If you believe this error is due to a
+bug, please send email to $constants.adminmail";
+	END;
+
+CASE 'formkeyError';
+	linkop = 'email_send' ? 'email_form' : 'optout_form'; -%]
+	<p>Please return back to the <a href="[% gSkin.rootdir
+	-%]/email.pl?op=[% linkop %]">originating form</a> and try again.
+	<!-- op=[% operation %], check=[% check %] -->
+	[%
+
+END  # SWITCH / CASE
+
+-%]
+__version__
+$Id: data;email;default,v 1.9 2005/07/27 22:53:54 pudge Exp $

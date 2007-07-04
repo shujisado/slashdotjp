@@ -1,0 +1,256 @@
+__section__
+default
+__description__
+
+Added to storyref, introtext_wordcount and bodytext_wordcount. These
+fields are inserted by admin.pl before this template is displayed.
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+editStory
+__template__
+<div id="content" class="admin">
+	<form action="[% gSkin.rootdir %]/admin.pl" method="post" enctype="multipart/form-data" name="slashstoryform" id="slashstoryform" onsubmit="return false;">
+		[% IF form.subid %]
+			<input type="hidden" name="subid" value="[% form.subid | strip_attribute %]">
+		[% END %]
+		<div id="slashboxes">
+			[% IF constants.plugin.Events && Slash.getObject('Slash::Events') %]
+				[% PROCESS sidebox
+					title = "Set an Event for this Story"
+					contents = "<a href=\"$gSkin.rootdir/eventsadmin.pl?op=edit&amp;sid=$sid\">Make Event</a>"
+				%]
+			[% END %]
+			[% IF signofftext; signofftext; END %]
+			[% IF attached_files %]
+				[% PROCESS sidebox
+					title = "Attached Files"
+					contents = attached_files
+				%]
+			[% END %]
+				
+			[% PROCESS sidebox
+				title = "Related Links"
+				contents = storyref.relatedtext
+			%]
+			<input type="hidden" name="relatedtext" value="[% relatedtext | strip_attribute %]">
+	
+			[% authortext %]
+			[% slashdtext %]
+		</div>
+		<div id="articles">
+			<fieldset>
+				<legend>
+					Story Preview	
+				</legend>
+				[% storycontent %]
+				[% tagbox_html %]
+			</fieldset>
+				<div class="note">
+					Check words below before submitting or previewing to mark words as common and not for use in determining similar stories.
+				</div>
+				<!-- need to set this up a bit better -->
+				<table border="0" cellpadding="3" cellspacing="0" class="data" id="simstories">
+				<tr class="data_head">
+					<td colspan="3"><b>Similar & Related Stories</b></td><td>Related</td><td>Ignore</td>
+				</tr>
+				[% seen_related %]
+				[% dispclass = { "1" => "story_sec", "0" => "story_main" , "-1" => "story_nd" } %]	
+				[% FOREACH story = similar_stories %]
+				<tr class="[% dispclass.${story.displaystatus} %]">
+					<td>[% story.weight %]</td>
+					<td><a href="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">[% story.title %]</a></td>
+					<td>[% Slash.timeCalc(story.time) %]</td>
+					<td><input type="checkbox" name="related_story" value="[% story.sid | strip_attribute %]"[% IF storyref.related_sids_hr.${story.sid}; constants.markup_checked_attribute; END %]></td>
+					<td>
+						[% FOREACH word = story.words %]
+							[%- word -%][% UNLESS words_seen.$word %]<input type="checkbox" name="set_common_word" value="[% word %]">[%- END -%]
+							[% words_seen.$word = 1; %]
+						[% END %]
+					</td>
+					[% seen_related.${story.sid} = 1 %]
+				</tr>
+				[% END %]
+				
+
+				
+		[% FOREACH rel_sid = storyref.related_sids_hr.keys %]
+			[% IF seen_related.$rel_sid; NEXT; END; %]
+			[% story = storyref.related_sids_hr.$rel_sid %]
+			[% dispstatus = -1;
+			   IF Slash.db.checkStoryViewable(story.stoid, constants.mainpage_nexus_tid);
+			   	dispstatus = 0;
+			   ELSIF Slash.db.checkStoryViewable(story.stoid, ""); 
+			   	dispstatus = 1;
+			   END;
+			%]
+			<tr class="[% dispclass.$dispstatus %]">
+			<td>[% story.weight %]</td>
+			<td><a href="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
+			[% story.title %]</a></td>
+			<td>[% Slash.timeCalc(story.time) %]</td>
+			<td><input type="checkbox" name="related_story" value="[% story.sid | strip_attribute %]"[% IF storyref.related_sids_hr.${story.sid}; constants.markup_checked_attribute; END %]></td>
+			<td>
+				[% FOREACH word = story.words %]
+					[%- word -%][% UNLESS words_seen.$word %]<INPUT TYPE="checkbox" name="set_common_word" value="[% word %]">[%- END -%]
+					[% words_seen.$word = 1; %]
+				[% END %]
+			</td>
+			[% seen_related.${story.sid} = 1 %]
+			</tr>
+		
+		[% END %]
+		[% IF storyref.related_cids_hr.keys.size > 0 %]<tr class="data_hl1"><td colspan="5">[% PROCESS horiz_rule %]</td></tr>[% END %]
+		[% FOREACH cid = storyref.related_cids_hr.keys %]
+			<tr class="data_hl1">
+			<td></td>
+			<td><a href="[% gSkin.rootdir %]"/comments.pl?sid=[% storyref.related_cids_hr.$cid.sid %]&amp;cid=[% cid %]">[% storyref.related_cids_hr.$cid.subject %]</a></td>
+			<td></td>
+			<td><input type="checkbox" name="related_comment" value="[% cid | strip_attribute %]" [% constants.markup_checked_attribute %]></td>
+			<td></td>
+			</tr>
+		[% END %]
+		[% IF storyref.related_urls_hr.keys.size > 0 %]<tr class="data_hl1"><td colspan="5">[% PROCESS horiz_rule %]</td></tr>[% END %]
+		[% FOREACH rel_url = storyref.related_urls_hr.keys %]
+		<tr class="data_hl1">
+			<td colspan="1"></td>
+			<td>Offsite: <a href="[% rel_url %]">[% storyref.related_urls_hr.$rel_url %]</a></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		[% END %]
+	<tr class="data_hl1"><td colspan="5"><textarea rows="2" wrap="off" name="add_related">[% add_related_text | strip_literal %]</textarea></td>
+	</tr>
+	<tr><td colspan="5"> include sid or title URL one per line!</td></tr>
+</table>
+
+
+			<div class="adminstoryform">
+			<fieldset id="st-display">
+				<legend>
+					Story Options
+				</legend>
+		
+				[% PROCESS editbuttons %]&nbsp;[% IF constants.plugin.Ajax %][% PROCESS signoff checked=user_signoff %][% END %]
+
+				[% IF storyref.sid %]
+					<input type="hidden" name="sid" value="[% storyref.sid %]">
+				[% END %]
+				<input type="hidden" name="submitter" value="[% storyref.submitter | strip_attribute %]">
+				<input type="checkbox" name="display" [% display_check %]><b>Display</b>
+				[% PROCESS formLabel value => "Topics" %]
+				[% IF topic_select %]
+					[% topic_select %]
+				[% END %]
+				[% shown_in_desc %]
+				[% PROCESS formLabel value => "Title" %]
+				<input type="text" name="title" value="[% storyref.title | strip_attribute %]" size="50">
+				<div class="notes">[% ispell_comments.title %]</div>
+
+				[% IF constants.use_dept %]
+					[% PROCESS formLabel value => "Dept" %]
+					<input type="text" name="dept" value="[% storyref.dept | strip_attribute %]" size="50">
+				[% END %]
+
+				[% PROCESS formLabel value="Author" %]
+				[% author_select %]
+
+				[% FOR extra = extras %]
+					<label>
+						[% extra.0 %]
+					</label>
+					[% IF extra.2 == 'text' %]
+						<input type="text" name="[% extra.1 %]" value="[% storyref.${extra.1} | strip_attribute %]" size="50">
+					[% ELSIF extra.2 == 'textarea' %]
+						<textarea wrap="virtual" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]" name="[% extra.1 %]">[% storyref.${extra.1} | strip_literal %]</textarea>
+					[% ELSIF extra.2 == 'list' %]
+						[% Slash.createSelect(extra.1, Slash.db.getDescriptions('genericstring',extra.1), storyref.${extra.1}, 1, 1) %]	
+					[% END %]
+				[% END %]
+
+				[% locktest %]
+
+				[% commentstatus_select %]
+				<input type="text" name="time" value="[% storyref.time %]" size="19">
+				<br>
+				[% IF constants.plugin.PollBooth %]
+					<label class="checkbox">
+						Poll ID:  [% storyref.qid %]
+					</label>
+					[% IF storyref.qid %] 
+						<label class="checkbox">
+							<a href="[% gSkin.rootdir %]/pollBooth.pl?sid=[% storyref.sid | strip_paramattr %]&amp;qid=[% storyref.qid %]&amp;op=edit">Related Poll</a>
+						</label>
+						<label class="checkbox">
+							<a href="[% gSkin.rootdir %]/pollBooth.pl?sid=[% storyref.sid | strip_paramattr %]&amp;qid=[% storyref.qid %]&amp;op=detach">Detach Related Poll</a>
+						</label>
+						<label class="checkbox">
+							<a href="[% gSkin.rootdir %]/pollBooth.pl?sid=[% storyref.sid | strip_paramattr %]&amp;op=linkstory">Link Story to Different Poll</a>
+						</label>
+					[% ELSE %]
+						<label class="checkbox">
+							<a href="[% gSkin.rootdir %]/pollBooth.pl?sid=[% storyref.sid | strip_paramattr %]&amp;qid=[% storyref.qid %]&amp;op=preview&amp;question=[% storyref.title | strip_paramattr %]&amp;polltype=story&amp;date=[% storyref.time | strip_paramattr %]&amp;section=[% storyref.section | strip_paramattr %]&amp;topic=[% storyref.tid | strip_paramattr %]">Create Poll</a>
+						</label>
+						<label class="checkbox">
+							<a href="[% gSkin.rootdir %]/pollBooth.pl?sid=[% storyref.sid | strip_paramattr %]&amp;op=linkstory">Link Story to Existing Poll</a>
+						</label>	
+					[% END %]
+					<br>
+				[% END %]
+
+				<label class="checkbox">
+					<input type="checkbox" name="fixquotes" [% fixquotes_check %]>fixquotes
+				</label>
+				<label class="checkbox">
+					<input type="checkbox" name="autonode" [% autonode_check %]>autonode
+				</label>
+
+				[% IF sid %]
+					<label class="checkbox">
+						<input type="checkbox" name="fastforward" [% fastforward_check %]>fastforward
+					</label>
+						[% IF constants.plugin.Blob && constants.story_files %]
+							<label class="checkbox">
+								<a href="[% constants.real_rootdir %]/fileadmin.pl?op=editBySid&amp;sid=[% sid %]">Attach File</a>
+							</label>
+						[% END %]
+				[% END %]
+				[% IF subid %]
+					<label class="checkbox">
+						<a href="[% gSkin.rootdir %]/submit.pl?op=viewsub&amp;subid=[% subid %]">submission</a>
+					</label>
+				[% END %]
+
+				<label>
+					Intro Copy[% IF storyref.introtext_wordcount %] <em>([% storyref.introtext_wordcount %] word[% IF storyref.introtext_wordcount != 1; "s"; END %])</em>[% END %]
+				</label>
+				<textarea wrap="virtual" name="introtext" cols="[% user.textarea_cols || constants.textarea_cols %]" rows="10">[% storyref.introtext | strip_literal %]</textarea>
+				<div class="notes">[% ispell_comments.introtext %]</div>
+
+				[% PROCESS editbuttons %]
+
+				<label>
+					Upload a file for bodytext
+				</label>
+				<input type="file" name="bodytext_file">
+				<label>
+					Extended Copy[% IF storyref.bodytext_wordcount %] <em>([% storyref.bodytext_wordcount %] word[% IF storyref.bodytext_wordcount != 1; "s"; END %])</em>[% END %]
+				</label>
+				<textarea name="bodytext" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]" wrap="virtual">[% storyref.bodytext | strip_literal %]</textarea>
+				<div class="notes">[% ispell_comments.bodytext %]</div>
+				[% PROCESS editbuttons %]
+			</fieldset>
+			</div>
+		</div>
+	</form>
+</div>
+
+__seclev__
+10000
+__version__
+$Id: editStory;admin;default,v 1.72 2006/06/28 22:24:50 tvroom Exp $

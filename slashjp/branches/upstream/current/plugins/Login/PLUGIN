@@ -1,0 +1,9 @@
+# $Id: PLUGIN,v 1.1 2004/05/01 07:00:32 pudge Exp $
+name=Login
+description="Login system for users"
+htdoc=login.pl
+template=templates/changePasswd;login;default
+template=templates/data;login;default
+template=templates/loginForm;login;default
+template=templates/newUserForm;login;default
+template=templates/sendPasswdForm;login;default

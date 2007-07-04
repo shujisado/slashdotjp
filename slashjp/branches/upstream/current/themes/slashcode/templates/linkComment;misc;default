@@ -1,0 +1,45 @@
+__section__
+default
+__description__
+Create a link to a comment
+
+* date = date of comment
+* commentsort = user's comment sorting pref
+* mode = user's mode pref
+* comment = make link to only one comment, not whole story (i.e., include cid= in link)
+
+Also included are all the individual elements of the comment and its poster: sid, cid, pid, date, subject, uid, points, lastmod, reason, nickname, fakeemail, homepage, sig
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+linkComment
+__template__
+<a href="[% gSkin.rootdir %]/comments.pl?sid=[% sid %]&amp;op=[% op %]&amp;threshold=[% threshold %]&amp;commentsort=[% commentsort %]&amp;mode=[% mode %][% IF startat %]&amp;startat=[% startat %][% END %][% IF user.state.tid %]&amp;tid=[% user.state.tid %][% END %][% IF comment %]&amp;cid=[% cid %][% ELSE %]&amp;pid=[% pid %][% IF cid %]#[% cid %][% END %][% END %]"[% IF onclick %] onclick="[% onclick %]"[% END %]>[% subject %]</a>
+
+[% IF !subject_only %]
+	[% IF nickname %]
+		[% # XXX why admin-only link to nickname? %]
+		[% IF adminflag %]
+			by <a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;fieldname=nickname&amp;userfield=[% nickname %]">[% nickname %]</a>
+		[% ELSE %]
+			by [% nickname %]
+		[% END %]
+	[% END %]
+
+	[% IF !user.noscores && points.defined %]
+		(Score:[% points %])
+	[% END %]
+
+	[% IF date %]
+		[% Slash.timeCalc(time) %]
+	[% END %]
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: linkComment;misc;default,v 1.14 2006/05/13 23:46:06 pudge Exp $

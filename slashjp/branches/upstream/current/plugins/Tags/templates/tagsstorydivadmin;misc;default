@@ -1,0 +1,29 @@
+__section__
+default
+__description__
+sidenc = this story's sid, encoded
+tags_admin_str = string emitted for admin feedback
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+tagsstorydivadmin
+__template__
+
+[% IF user.is_admin %]
+
+[% PROCESS ajax_reskey_tag reskey_label => 'admin_commands-reskey-' _ sidenc, reskey_name => 'ajax_admin' %]
+<input type="text" id="tags_admin_commands-[% sidenc %]" name="tags_admin_commands-[% sidenc %]" value="" size=50 maxlength=60 onkeyup="handleEnter(event, adminTagsCommands, '[% sidenc %]')">
+<input type="button" value="Admin" onclick="adminTagsCommands('[% sidenc %]','stories')" class="button"> <span id="taghist-[% sidenc %]"><a href="javascript:tagsHistory('[% sidenc %]','stories')">[History]</a></span>
+
+<div>[% tags_admin_str %]</div>
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: tagsstorydivadmin;misc;default,v 1.9 2006/04/19 18:34:59 jamiemccarthy Exp $

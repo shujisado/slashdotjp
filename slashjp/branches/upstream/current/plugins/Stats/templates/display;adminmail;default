@@ -1,0 +1,203 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+adminmail
+__lang__
+en_US
+__name__
+display
+__template__
+[% # if changing this top part, try to change the report template too, or at least %]
+[% # notify pudge so he can change it                                              %]
+
+[% constants.sitename %] Stats for [% day %]
+
+[% gSkin.absolutedir_secure %]/stats.pl?op=report&report=main&stats_days=7
+
+                   UIDs      IPIDs      Pages 
+        total:        -          -   [% total %] ([% total_bytes %])
+ static total:        -          -   [% total_static %]
+gstatic total:        -          -   [% grand_total_static %]
+  grand total: [% users %]   [% unique %]   [% grand_total %] ([% grand_total_bytes %])
+ secure total:        -          -   [% total_secure %]
+[% IF constants.subscribe %]sbscrbr total:        -          -   [% total_subscriber %]
+[% END %]
+        posts: [% distinct_comment_posters_uids %]   [% IPIDS %]
+[% IF comments_page > 0 -%]
+     comments: [% comments_uids %]   [% comments_ipids %]   [% comments_page %] ([% comments_bytes %])
+[% END -%]
+[% IF index_page > 0 -%]
+        index: [% index_uids %]   [% index_ipids %]   [% index_page %]
+[% END -%]
+[% IF page_page > 0 -%]
+         page: [% page_uids %]   [% page_ipids %]   [% page_page %]
+[% END -%]
+[% IF article_page > 0 -%]
+     articles: [% article_uids %]   [% article_ipids %]   [% article_page %] ([% article_bytes %])
+[% END -%]
+[% IF search_page > 0 -%]
+       search: [% search_uids %]   [% search_ipids %]   [% search_page %] ([% search_bytes %])
+[% END -%]
+[% IF journal_page > 0 -%]
+     journals: [% journal_uids %]   [% journal_ipids %]   [% journal_page %] ([% journal_bytes %])
+[% END -%]
+[% IF users_page > 0 -%]
+        users: [% users_uids %]   [% users_ipids %]   [% users_page %] ([% users_bytes %])
+[% END -%]
+[% IF palm_page > 0 -%]
+         palm: [% palm_uids %]   [% palm_ipids %]   [% palm_page %] ([% palm_bytes %])
+[% END -%]
+[% IF rss_ipids > 0 -%]
+          rss: [% rss_uids %]   [% rss_ipids %]   [% rss_page %] ([% rss_bytes %])
+[% END -%]
+[% IF other_page > 0 -%]
+        other: [% other_uids %]   [% other_ipids %]   [% other_page %] ([% other_bytes %])
+[% END -%]
+[%- FOREACH pagetype = extra_pagetypes -%]
+[% pt_uids = pagetype _ "_uids"; pt_ipids = pagetype _ "_ipids" ; pt_page = pagetype _ "_page" ; pt_bytes = pagetype _ "_bytes"; pt_label = pagetype _ "_label"; -%]
+[% IF $pt_page > 0 -%]
+     [% $pt_label %]: [% $pt_uids %]   [% $pt_ipids %]   [% $pt_page %] ([% $pt_bytes %])
+[% END -%]
+[% END %]
+
+     formkeys: [% formkeys %] rows total
+     comments: [% comments %] posted yesterday
+  submissions: [% submissions %] submissions 
+ sub/comments: [% sub_comments %]% of the submissions came from comment posters from this day
+
+                          
+
+[% IF error_count > 0 -%]
+       errors: [% error_count %] pages logged 5xx errors
+[% END -%]
+[% IF not_found > 0 -%]
+    not found: [% not_found %] pages sent with status 404 (not found)
+[% END -%]
+[% IF status_202 > 0 -%]
+   status 202: [% status_202 %] pages sent with status 202 (rejected RSS)
+[% END -%]
+
+   total hits: [% total_hits %]
+
+[% admin_clearpass_warning %]
+[% bad_password_warning %]
+[% backup_lag %]
+
+------------------------
+                            Yesterday   | 2 days ago | 3 days ago
+    Avg Hits Per Article:   [% avg_hits_per_story.0 %]|[% avg_hits_per_story.1 %]|[% avg_hits_per_story.2 %]
+Avg Comments Per Article:   [% avg_comments_per_story.0 %]|[% avg_comments_per_story.1 %]|[% avg_comments_per_story.2 %]
+
+[% rand_users_yest.size %] random users created yesterday:
+[% FOREACH ru = rand_users_yest %][% ru.nickname %] ([% ru.uid %]) <[% ru.realemail %]>
+[% END %]
+
+Recent top [% top_recent_domains.size %] email domains over last [% top_recent_domains_daysback %] days ([% top_recent_domains_newaccounts %] accounts):
+[% FOREACH trd = top_recent_domains; trd.c; "  "; trd.initdomain; " "; top_recent_domains_newnicks.$trd.initdomain %]
+[% END %]
+
+[% IF top_relocated_urls %]
+Top Relocated URLS
+[% FOREACH tru = top_relocated_urls; tru.count; "  "; tru.stats_type; "  "; tru.url; "\n"; END %]
+[% END %]
+
+Pages From RSS By Section
+------------------------------------------------
+Section		         Pages     UIDS    IPIDS
+[% FOREACH section = skins -%]
+[%- rss_skin_name = section.skin_name FILTER format('%20s') -%]
+[%  rss_skin_name %]  [% section.page_from_rss %] [% section.uid_from_rss %] [% section.ipid_from_rss %]
+[% END %]
+
+[% FOREACH section = skins -%]
+[% IF section.pages < 1 ; NEXT ; END %]
+For [% section.skin_name %]
+                  Pages      IPs   Bandwidth    Users
+        total: [% section.pages %] [% section.ipids %] [% section.bytes %] [% section.site_users %]
+[% IF section.index.pages > 0 -%]
+        index: [% section.index.pages %] [% section.index.ipids %] [% section.index.bytes %] [% section.index.users %]
+[% END -%]
+[% IF section.page.pages > 0 -%]
+         page: [% section.page.pages %] [% section.page.ipids %] [% section.page.bytes %] [% section.page.users %]
+[% END -%]
+[% IF section.comments.pages > 0 -%]
+     comments: [% section.comments.pages %] [% section.comments.ipids %] [% section.comments.bytes %] [% section.comments.users %]
+[% END -%]
+[% IF section.article.pages > 0 -%]
+     articles: [% section.article.pages %] [% section.article.ipids %] [% section.article.bytes %] [% section.article.users %]
+[% END -%]
+[% IF section.search.pages > 0 -%]
+       search: [% section.search.pages %] [% section.search.ipids %] [% section.search.bytes %] [% section.search.users %]
+[% END -%]
+[% IF section.palm.pages > 0 -%]
+         palm: [% section.palm.pages %] [% section.palm.ipids %] [% section.palm.bytes %] [% section.palm.users %]
+[% END -%]
+[% IF section.rss.pages > 0 -%]
+          rss: [% section.rss.pages %] [% section.rss.ipids %] [% section.rss.bytes %] [% section.rss.users %]
+[% END -%]
+[% IF section.other.pages > 0 -%]
+        other: [% section.other.pages %] [% section.other.ipids %] [% section.other.bytes %] [% section.other.users %]
+[% END -%]
+[%- FOREACH pagetype = extra_pagetypes -%]
+[% IF section.${pagetype}.pages > 0 -%]
+     [% section.${pagetype}.label %]: [% section.${pagetype}.pages %] [% section.${pagetype}.ipids %] [% section.${pagetype}.bytes %] [% section.${pagetype}.users %]
+[% END -%]
+[% END %]
+[% END -%]
+
+-----------------------
+
+[% FOREACH item = lazy -%]
+[% item %]
+[% END %]
+
+[% IF top_referers.size %]
+-----------------------      
+
+Top referers:
+[% FOREACH referer = top_referers -%]
+[% referer.1 %]  [% referer.0 %]
+[% END %]
+[% END %]
+
+[% IF errors.size -%]
+-----------------------      
+Error count by Page:
+Page           Status              Count
+[% FOREACH error = errors -%]
+[% error.op %] [% error.status %]  [% error.count %]
+[% END -%]
+[% END -%]
+
+-----------------------      
+
+[% tailslash %]
+
+-----------------------
+
+[% FOR groupid = sfnet.keys.nsort;
+        "SF.net group $groupid:\n";
+        FOR issue = sfnet.$groupid.keys.sort;
+                "\t$issue: ";
+                sfnet.$groupid.$issue.open;
+                " open; ";
+                sfnet.$groupid.$issue.total;
+                " total\n";
+        END;
+END %]
+[% IF crawling_subscribers %]
+---------------------------------
+Possible Subscriber Comment Crawlers
+
+Count  Nickname
+[% crawling_subscribers %]
+
+[% END %]
+__seclev__
+100
+__version__
+$Id: display;adminmail;default,v 1.82 2005/01/18 18:34:25 tvroom Exp $

@@ -1,0 +1,50 @@
+__section__
+default
+__description__
+The block that has the login fields for the user
+
+* return_url = specific URL to return to after log-in (default is rootdir/)
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+userlogin
+__template__
+
+[%# we log in via main ("real") rootdir, return to current rootdir %]
+[% IF !return_url; return_url = gSkin.rootdir _ '/'; END %]
+<form action="[% constants.real_rootdir %]/login.pl" method="post">
+<fieldset>
+	<legend>Log in</legend>
+	<label>
+		Nickname
+	</label>
+	<input type="text" name="unickname" size="20" value="">
+	<label>
+		Password
+	</label>
+	<input type="hidden" name="returnto" value="[% return_url | strip_urlattr %]">
+	<input type="hidden" name="op" value="userlogin">
+	<input type="password" name="upasswd" size="20">
+	<label class="checkbox">
+		<input type="checkbox" name="login_temp" value="yes">
+		Public Terminal
+	</label>
+	<input type="submit" name="userlogin" value="Log in" class="button">
+	</fieldset>
+</form>
+<p>
+	[ <b>
+		<a href="[% constants.real_rootdir %]/login.pl?op=newuserform">
+			Create a new account
+		</a>
+	</b> ]
+</p>
+
+__seclev__
+10000
+__version__
+$Id: userlogin;misc;default,v 1.17 2005/10/19 23:28:06 lancelot Exp $

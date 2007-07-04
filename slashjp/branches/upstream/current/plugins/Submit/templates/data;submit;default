@@ -1,0 +1,108 @@
+__section__
+default
+__description__
+Repository for random data elements.
+
+* value = the name of the data element to retrieve
+
+Each data element may have any number of other variables.
+__title__
+
+__page__
+submit
+__lang__
+en_US
+__name__
+data
+__template__
+[% SWITCH value %]
+
+[% CASE 'header' %]
+	[% IF tbtitle %]
+		[% tbtitle %]: [% constants.sitename %] Submission
+	[% ELSE %]
+		[% constants.sitename %] Submissions
+	[% END %]
+
+[% CASE 'updatehead' %]
+	[% IF subids.size > 0 %]
+		Deleting [% subids.size -%]
+		[%- IF subids.size == 1 %] submission [%
+		ELSE -%] submissions [% END -%]
+		[%- IF subids.size <= 3 %]( [% subids.join(', ') %] )[% END %]
+	[% END %]
+
+[% CASE 'mergehead' %]
+	[% IF subids.size > 0 %]
+		Deleting [% subids.size -%]
+		[%- IF subids.size == 1 %] submission [%
+		ELSE -%] submissions [% END -%]
+		[%- IF subids.size <= 3 %]( [% subids.join(', ') %] )[% END %]
+		- Submissions Merged
+	[% ELSE %]
+		No Submissions
+	[% END %]
+
+[% CASE 'previewhead' %]
+	[% returnme.data_constant = 1 %]
+	[% constants.sitename %] Submission Preview
+
+[% CASE 'defaulthead' %]
+	[% returnme.data_constant = 1 %]
+	[% constants.sitename %] Submissions
+
+[% CASE 'maxallowed' %]
+	[% returnme.data_constant = 1 %]
+	<p><b>Warning! you've exceeded max allowed submissions for the day : 
+	[% constants.max_submissions_allowed %]</b></p>
+
+[% CASE 'max_submissionsize_title' %]
+	[% returnme.data_constant = 1 %]
+	<b>Submission too large!</b>
+
+[% CASE 'max_submissionsize_err' %]
+	<p><b>Warning! You submission has exceeded the max allowable size 
+	that can be inserted into the system: [% size %] bytes.</b></p>
+	<p>If you try to save your submission as it is, it could be truncated</p>
+
+[% CASE 'error' %]
+	[% returnme.data_constant = 1 %]
+	Error
+
+[% CASE 'filtererror' %]
+	<p>Lameness filter: <b>[% err_message %]</b></p>
+
+[% CASE 'compresserror' %]
+	[% returnme.data_constant = 1 %]
+	<b>compression has detected something wrong with your submission</b>
+
+[% CASE 'badsubject' %]
+	[% returnme.data_constant = 1 %]
+	Please enter a reasonable subject.
+
+[% CASE 'defaultsection' %]
+	[% returnme.data_constant = 1 %]
+	All Sections
+
+[% CASE 'defaultskin' %]
+	[% returnme.data_constant = 1 %]
+	All
+
+[% CASE 'defaultnote' %]
+	[% returnme.data_constant = 1 %]
+	None
+
+[% CASE 'submit_body_open' %]
+	[% returnme.data_constant = 1 %]
+	<div class="generalbody">
+
+[% CASE 'submit_body_close' %]
+	[% returnme.data_constant = 1 %]
+	</div>
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: data;submit;default,v 1.14 2005/08/22 22:41:27 pudge Exp $

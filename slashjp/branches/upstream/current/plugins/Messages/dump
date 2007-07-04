@@ -1,0 +1,46 @@
+#
+# $Id: dump,v 1.26 2005/03/28 23:21:35 pudge Exp $
+#
+
+INSERT INTO code_param (type, code, name) VALUES ('deliverymodes', -1, 'No Messages');
+INSERT INTO code_param (type, code, name) VALUES ('deliverymodes', 0, 'E-mail');
+INSERT INTO code_param (type, code, name) VALUES ('deliverymodes', 1, 'Web');
+
+# modes is comma-separated list of allowed delivery modes ('' is "all")
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (-2, 'Registration Mail', 1, '0');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (-1, 'Unknown Message', 1, '0');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (0, 'Daily Newsletter', 1, '0');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (1, 'Daily Headlines', 1, '0');
+INSERT INTO message_codes (code, type, seclev, modes, send) VALUES (2, 'Metamoderation Results', 1, '', 'collective');
+INSERT INTO message_codes (code, type, seclev, modes, send) VALUES (3, 'Comment Moderation', 1, '', 'collective');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (4, 'Comment Reply', 1, '');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (5, 'Journal Entry by Friend', 1, '');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (6, 'New Submission', 100, '0');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (7, 'Journal Reply', 1, '');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (8, 'New Comment', 1000000, '');
+#INSERT INTO message_codes (code, type, seclev, modes) VALUES (9, 'Interuser Messages', 1, '');
+INSERT INTO message_codes (code, type, seclev, modes, acl) VALUES (10, 'Daily Site Stats', 100, 0, 'stats');
+INSERT INTO message_codes (code, type, seclev, modes) VALUES (11, 'Email Story', 1, '0');
+INSERT INTO message_codes (code, type, seclev, modes, send, subscribe) VALUES (12, 'Relationship Change', 1, '', 'collective', 1);
+INSERT INTO message_codes (code, type, seclev, modes, send, subscribe) VALUES (13, 'Bad login attempt warnings', 1, 1, 'now', 0);
+INSERT INTO message_codes (code, type, seclev, modes, acl) VALUES (14, 'Daily Moderation Stats', 100, 0, 'stats');
+INSERT INTO message_codes (code, type, seclev) VALUES (18, 'Invalid HTML Input', 100);
+
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('messages','Inbox','[% gSkin.rootdir %]/my/inbox',1,13);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('messages','Message Preferences','[% gSkin.rootdir %]/my/messages',1,2);
+
+INSERT INTO vars (name, value, description) VALUES ('message_process_count','100','Number of messages to process at each delivery interval');
+INSERT INTO vars (name, value, description) VALUES ('message_send_expire','7','Number of days to hold message in delivery queue');
+INSERT INTO vars (name, value, description) VALUES ('message_web_expire','14','Number of days to keep message on web site');
+INSERT INTO vars (name, value, description) VALUES ('message_web_maxtotal','25','Number of total messages to keep on web site, per user');
+INSERT INTO vars (name, value, description) VALUES ('commentnew_msg', '0', 'Allow sending of a message on every posted comment (dangerous)');
+
+# IUM
+#INSERT INTO vars (name, value, description) VALUES ('messages_send_minkarma','1','Minimum karma to send a message');
+#INSERT INTO vars (name, value, description) VALUES ('messages_send_createdelay','1','Days of account existence before messages may be sent');
+#INSERT INTO vars (name, value, description) VALUES ('messages_send_maxsize','4096','maximum bytes of sent messages');
+#INSERT INTO vars (name, value, description) VALUES ('message_web_maxtotal','50','maximum messages in inbox (oldest deleted)');
+#INSERT INTO vars (name, value, description) VALUES ('max_messagesend_allowed','5','maximum number of messages sent per timeframe allowed');
+
+INSERT INTO vars (name, value, description) VALUES ('message_threshold','1','Default threshold for a comment to trigger a message');
+INSERT INTO vars (name, value, description) VALUES ('message_last_deferred','','The last date that deferred messages were sent');

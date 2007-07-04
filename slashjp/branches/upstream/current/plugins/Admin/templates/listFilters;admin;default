@@ -1,0 +1,79 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+listFilters
+__template__
+[% PROCESS titlebar width='100%' %]
+
+<form action="[% env.script_name %]" method="post">
+<input type="hidden" name="op" value="listfilters">
+<table>
+	<tr>
+		<td>Select form</td><td>[% form_select %]</td>
+	</tr>
+	<tr>
+		<td>List Filters</td><td><input type="submit" name="listfilters" value="List"></td>
+	</tr>
+</form>
+<form action="[% env.script_name %]" method="post">
+<input type="hidden" name="op" value="editfilter">
+	<tr>
+		<td>Create a new Filter</td><td><input type="submit" name="newfilter" value="Create"></td>
+	</tr>
+</table>
+
+[% IF filter_ref && form.formname %]
+
+<table border="0">
+	<tr>
+		<td colspan="9">&nbsp;</td>
+	</tr>
+	<tr>
+		<td><b> Filter id <b></td>
+		<td><b> Form <b></td>
+		<td><b> Regex <b></td>
+		<td><b> Modifier <b></td>
+		<td><b> Field <b></td>
+		<td><b> Ratio <b></td>
+		<td><b> Minimum match <b></td>
+		<td><b> Minimum length <b></td>
+		<td><b> Error message <b></td>
+	</tr>
+
+	[% FOREACH i = filter_ref %]
+	<tr>
+		<td>[<a href="[% env.script_name %]?op=editfilter&amp;filter_id=[% i.0 %]">[% i.0 %]</a>]</td>
+		<td>[% i.1 %]</td>
+		<td> [% i.2 %] </td>
+		<td> [% i.3 %] </td>
+		<td> [% i.4 %] </td>
+		<td> [% i.5 %] </td>
+		<td> [% i.6 %] </td>
+		<td> [% i.7 %] </td>
+		<td> [% i.8 %] </td>
+	</tr>
+	[% END %]
+
+</table>
+<table>
+	<tr>
+		<td><input type="submit" name="newfilter" value="Create a new filter"></td>
+	</tr>
+</table>
+
+[% END %]
+
+</form>
+
+__seclev__
+500
+__version__
+$Id: listFilters;admin;default,v 1.6 2005/07/27 22:53:54 pudge Exp $

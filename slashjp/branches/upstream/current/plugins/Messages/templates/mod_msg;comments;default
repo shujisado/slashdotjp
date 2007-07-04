@@ -1,0 +1,49 @@
+__section__
+default
+__description__
+* reasons = hashref from $slashdb->getReasons()
+* moderation = hashref describing moderation
+
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+mod_msg
+__template__
+[% 
+	cur_score = comment.points + comment.tweak;
+	cur_score = Slash.constrain_score(cur_score);
+%]
+[% IF msg.mode == 1 %]
+
+<p>
+<b><a href="[% gSkin.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]"
+>[% comment.subject %]</a></b>, posted to
+<b><a href="[% gSkin.rootdir %][% discussion.realurl %]">[% discussion.title %]</a></b>, has been moderated
+<b>[% reasons.${moderation.reason}.name %] ([% moderation.value %])</b>.
+</p>
+
+<p>
+It is currently scored <b>[% reasons.${comment.reason}.name %] ([% cur_score %])</b>.
+</p>
+
+[% ELSE %]
+
+A user has moderated your comment "[% reasons.${moderation.reason}.name %]" ([% moderation.value %]).
+    [% comment.subject | decode_entities %]
+    [% absolutedir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]
+
+Attached to:
+    [% discussion.title | decode_entities %]
+    [% absolutedir %][% discussion.realurl %]
+    
+It is currently scored [% reasons.${comment.reason}.name %] ([% cur_score %]).
+[% END %]
+
+__seclev__
+500
+__version__
+$Id: mod_msg;comments;default,v 1.11 2005/07/27 22:54:11 pudge Exp $

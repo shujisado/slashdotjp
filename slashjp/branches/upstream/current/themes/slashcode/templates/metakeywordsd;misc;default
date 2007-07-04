@@ -1,0 +1,26 @@
+__section__
+default
+__description__
+Placeholder for the metakeywords that get written by the task
+refresh_section_metakeywords.pl.
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+metakeywordsd
+__instructions__
+placeholder
+__seclev__
+10000
+__template__
+[% SWITCH user.currentSection %]
+[% CASE 'index' %]
+Main page
+[% CASE DEFAULT %]
+[% user.currentSection %] section page
+[% END %]
+__version__
+$Id: metakeywordsd;misc;default,v 1.1 2003/11/18 16:46:44 jamie Exp $

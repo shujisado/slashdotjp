@@ -1,0 +1,103 @@
+__section__
+default
+__description__
+Template which describes the layout of the article display (and included comments if preferred).
+
+* poll = pollbooth block
+* section = section hashref
+* section_block = section block hashref
+* show_poll = boolean for showing poll or not
+* story = story data structure
+* stories = links to next/prev stories
+
+__title__
+
+__page__
+article
+__lang__
+en_US
+__name__
+display
+__template__
+<div id="slashboxes">
+[% UNLESS user.lowbandwidth %]
+[% PROCESS userboxes hits = story.hits stoid = story.stoid; %]
+[%
+IF show_poll;
+	PROCESS sidebox
+		title		= 'Article Poll'
+		contents	= poll
+		name		= "poll";
+END
+%]
+[%
+IF story.relatedtext;
+	PROCESS sidebox
+		title		= 'Related Links'
+		contents	= story.relatedtext
+		name		= "related";
+ END;
+%]
+[%
+IF section_block.block;
+	PROCESS sidebox
+		title		= section.title
+		contents	= section_block.block
+		name		= section.title;
+END %]
+[% END %]
+</div>
+<a name="main-articles"></a>
+<div id="articles">
+[% Slash.displayStory(story.sid, 'Full', { is_future => story.is_future, topiclist => Slash.db.getTopiclistForStory(story.sid) }) %]
+
+<div class="prev-next">
+[% IF constants.use_prev_next_link %]
+[% n = BLOCK; PROCESS nextStory s=stories.next; END %]
+[% p = BLOCK; PROCESS nextStory s=stories.prev; END %]
+[% IF p %] <br>&laquo;&nbsp; [% p %][% END %]
+[% IF n %] [% IF p %] | [% ELSE %]<br>[% END %][% n %] &nbsp;&raquo; [% END; END %]
+
+[% IF constants.use_prev_next_link_section %]
+[% n = BLOCK; PROCESS nextStory s=stories.s_next; END %]
+[% p = BLOCK; PROCESS nextStory s=stories.s_prev; END %]
+[% IF p %] <br>Section: laquo;&nbsp; [% p %][% END %]
+[% IF n %] [% IF p %] | [% ELSE %]<br>[% END %][% n %] &nbsp;&raquo; [% END; END %]
+
+[% IF constants.use_prev_next_link_series %]
+[% n = BLOCK; PROCESS nextStory s=stories.t_next; END %]
+[% p = BLOCK; PROCESS nextStory s=stories.t_prev; END %]
+[% IF p %] <br>Series: laquo;&nbsp; [% p %][% END %]
+[% IF n %] [% IF p %] | [% ELSE %]<br>[% END %][% n %] &nbsp;&raquo; [% END; END %]
+</div>
+
+
+[% BLOCK nextStory;
+	IF !s;
+		RETURN;
+	ELSIF s.title == story.title;
+		RETURN;
+	ELSE;
+		ls = {
+			link	=> s.title,
+			sid	=> s.sid,
+			tid	=> s.tid,
+			section	=> s.section
+		};
+		storylinks = Slash.linkStory(ls) -%]
+<a href="[% storylinks.0 | strip_attribute %]"[% IF storylinks.2 %] title="[% storylinks.2 | strip_attribute %]"[% END %]>[% storylinks.1 | strip_html %]</a>
+	[%- END;
+END %]
+[% relatedtext = Slash.displayRelatedStories(story.stoid) %]
+
+[% IF relatedtext %]
+	<p></p>
+	[% PROCESS titlebar title="Related Stories" %]
+	[% relatedtext %]
+[% END %]
+
+</div>
+__seclev__
+1000
+__version__
+$Id: display;article;default,v 1.31 2006/02/28 20:20:46 tvroom Exp $

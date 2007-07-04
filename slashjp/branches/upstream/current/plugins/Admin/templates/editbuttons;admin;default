@@ -1,0 +1,30 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+editbuttons
+__template__
+[% IF newarticle %]
+<input type="button" name="op" value="save"    onclick="st_submit(this)" class="button">
+[% END %]
+
+<input type="button" name="op" value="preview" onclick="st_submit(this)" class="button">
+
+[% IF ! newarticle %]
+<input type="button" name="op" value="update"  onclick="st_submit(this)" class="button">
+[%- IF user.seclev >= 10000 %]
+<input type="button" name="op" value="delete"  onclick="st_submit(this)" class="button">
+[%- END -%]
+[% END %]
+
+__seclev__
+500
+__version__
+$Id: editbuttons;admin;default,v 1.13 2005/07/27 22:53:54 pudge Exp $
