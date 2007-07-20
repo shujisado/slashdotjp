@@ -1,0 +1,14 @@
+usr/share/slash/bin/backup-blocks	usr/bin/slash-backup-blocks
+usr/share/slash/bin/bitchslap		usr/bin/slash-bitchslap
+usr/share/slash/bin/chkuser		usr/bin/slash-chkuser
+usr/share/slash/bin/mechmonkey		usr/bin/slash-mechmonkey
+usr/share/slash/bin/modslap		usr/bin/slash-modslap
+usr/share/slash/bin/reload_armor	usr/bin/slash-reload_armor
+usr/share/slash/bin/slashmon		usr/bin/slash-slashmon
+usr/share/slash/bin/symlink-tool	usr/bin/slash-symlink-tool
+usr/share/slash/bin/template-check	usr/bin/slash-template-check
+usr/share/slash/bin/template-tool	usr/bin/slash-template-tool
+usr/bin/slash-command-wrapper		usr/bin/slash-runtask
+usr/bin/slash-command-wrapper		usr/bin/slash-install-slashsite
+usr/bin/slash-command-wrapper		usr/bin/slash-install-theme
+usr/bin/slash-command-wrapper		usr/bin/slash-install-plugin
