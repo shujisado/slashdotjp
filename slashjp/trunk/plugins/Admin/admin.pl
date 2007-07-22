@@ -1513,7 +1513,7 @@ sub extractRelatedStoriesFromForm {
 # but in theory, should use regexSid() ...
 #	my $regexsid = regexSid();
 
-	my $match = qr{/article\.pl\?[^'"<>\s]*sid=(\d\d\/\d\d\/\d\d\/\d+)};
+	my $match = qr{(\d\d\/\d\d\/\d\d\/\d{6,})};
 	my $match_cid = qr{/comments\.pl\?[^'"<>\s]*cid=(\d+)};
 
 	if ($form->{add_related}) {
