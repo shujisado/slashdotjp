@@ -311,10 +311,9 @@ sub sqlConnect{
 # Perl has lost the flag somewhere
 sub sqlDo{
 	my($self, $sql) = @_;
-	$sql = decode_utf8( $sql ) unless $sql =~ /INSERT\s+INTO\s+accesslog_admin|UPDATE\s+users_info\s+SET\s+people\s+=/;
-	$self->SUPER::sqlDo( $sql );
+	$self->SUPER::sqlDo(decode_utf8($sql));
 }
-  
+
 ########################################################
 # Yes, this is ugly, and we can ditch it in about 6 months
 # Turn off autocommit here
@@ -2168,7 +2167,7 @@ sub createAccessLogAdmin {
 		skid		=> $skid,
 		bytes		=> $r->bytes_sent,
 		op		=> $op,
-		form		=> $form_freeze ? $self->truncateStringForCharColumn($form_freeze, 'accesslog_admin', 'form') : '',
+		-form		=> $form_freeze ? "0x" . unpack("H*", $self->truncateStringForCharColumn($form_freeze, 'accesslog_admin', 'form')) : '',
 		-ts		=> 'NOW()',
 		query_string	=> $ENV{QUERY_STRING} ? $self->truncateStringForCharColumn($ENV{QUERY_STRING}, 'accesslog_admin', 'query_string') : '0',
 		user_agent	=> $ENV{HTTP_USER_AGENT} ? $self->truncateStringForCharColumn($ENV{HTTP_USER_AGENT}, 'accesslog_admin', 'user_agent') : 'undefined',
@@ -11837,7 +11836,10 @@ sub setUser {
 		$hashref->{newpasswd} = '';
 		$hashref->{passwd} = encryptPassword($hashref->{passwd});
 	}
-	$hashref->{people} = freeze($hashref->{people}) if $hashref->{people};
+	if ($hashref->{people}) {
+		$hashref->{"-people"} = "0x" . unpack("H*", freeze($hashref->{people}));
+		delete($hashref->{people});
+	}
 	if (exists $hashref->{slashboxes}) {
 		my @slashboxes = grep /^[\w-]+$/, split /,/, $hashref->{slashboxes};
 		$hashref->{slashboxes} = join ",", @slashboxes;

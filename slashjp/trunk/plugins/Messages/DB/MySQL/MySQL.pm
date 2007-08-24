@@ -195,7 +195,7 @@ sub _create {
 		fuser	=> $fuser,
 		altto	=> $altto || '',
 		code	=> $code,
-		message	=> $frozen,
+		'-message' => "0x" . unpack("H*", $frozen),
 		'send'	=> $send || 'now',
 	});
 

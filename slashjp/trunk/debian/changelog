@@ -1,3 +1,9 @@
+slash (2.5.0.119-16) unstable; urgency=low
+
+  * Hex encoding was applied for all binary columns.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 23 Jul 2007 13:59:15 +0900
+
 slash (2.5.0.119-15) unstable; urgency=low
 
   * admin.pl: fix regex to pick up related stories and comments, again.
