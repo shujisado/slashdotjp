@@ -757,7 +757,7 @@ INSERT INTO vars (name, value, description) VALUES ('comments_anon_speed_limit_m
 INSERT INTO vars (name, value, description) VALUES ('comments_wsfactor','1.0','Whitespace factor');
 INSERT INTO vars (name, value, description) VALUES ('commentstatus','0','default comment code');
 INSERT INTO vars (name, value, description) VALUES ('common_story_words', 'about above across after again against almost along already also although always among another anyone arise around aside asked available away became because become becomes been before began behind being better between both brought called came can\'t cannot certain certainly come could days didn\'t different does done down during each either else enough especially even ever every fact find following form found from further gave gets give given gives giving going gone hardly have having here himself however http important into it\'s itself just keep kept knew know known largely later least like look made mainly make many maybe might more most mostly much must nearly neither never next none noted nothing obtain obtained often once only other others ought over overall owing particularly past people perhaps please possible present probably quite rather read ready really right said same saying says seem seems seen several shall should show showed shown shows similar similarly since some something sometime sometimes somewhat soon such sure take taken tell than that that\'s their theirs them themselves then there therefore these they thing things think this those though through throughout thus time together told took toward turn under unless until upon used using usually various very want well were what what when where whether which while whole whom whose wide widely will will with within without would year years your', 'Words which are considered too common to be used in detecting "similar" stories');
-INSERT INTO vars (name, value, description) VALUES ('content_type_webpage','text/html; charset=iso-8859-1','The Content-Type header for webpages');
+INSERT INTO vars (name, value, description) VALUES ('content_type_webpage','text/html; charset=UTF-8','The Content-Type header for webpages');
 INSERT INTO vars (name, value, description) VALUES ('cookiedomain','','Domain for cookie to be active (normally leave blank)');
 INSERT INTO vars (name, value, description) VALUES ('cookiepath','/','Path on server for cookie to be active');
 INSERT INTO vars (name, value, description) VALUES ('cookiesecure','1','Set the secure flag in cookies if SSL is on?');
@@ -812,7 +812,7 @@ INSERT INTO vars (name, value, description) VALUES ('discussions_speed_limit','3
 INSERT INTO vars (name, value, description) VALUES ('do_expiry','1','Flag which controls whether we expire users.');
 INSERT INTO vars (name, value, description) VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated');
 INSERT INTO vars (name, value, description) VALUES ('draconian_charrefs','0','Enable strictest-possible rules for disallowing HTML entities/character references?');
-INSERT INTO vars (name, value, description) VALUES ('draconian_charset','1','Convert high-bit characters to character references, which are then filtered by approveCharrefs or encode_html_amp (works only with Latin-1 for now)');
+INSERT INTO vars (name, value, description) VALUES ('draconian_charset','0','Convert high-bit characters to character references, which are then filtered by approveCharrefs or encode_html_amp (works only with Latin-1 for now)');
 INSERT INTO vars (name, value, description) VALUES ('draconian_charset_convert','0','Convert some of high-bit chars to ASCII representations instead (see draconian_charset)');
 INSERT INTO vars (name, value, description) VALUES ('email_domains_invalid', 'example.com', 'space separated list of domains that are not valid for email addresses');
 INSERT INTO vars (name, value, description) VALUES ('enable_index_topic','','set this to the value in string param for index topic \(something like "topic_4"\)');
@@ -998,7 +998,7 @@ INSERT INTO vars (name, value, description) VALUES ('panic','0','0:Normal, 1:No 
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');
 INSERT INTO vars (name, value, description) VALUES ('poll_fwdfor','1','Loose proxy management for voting?');
-INSERT INTO vars (name, value, description) VALUES ('rdfencoding','ISO-8859-1','Site encoding');
+INSERT INTO vars (name, value, description) VALUES ('rdfencoding','UTF-8','Site encoding');
 INSERT INTO vars (name, value, description) VALUES ('rdfimg','http://www.example.com/images/topics/topicslash.gif','site icon to be used by RSS subscribers');
 INSERT INTO vars (name, value, description) VALUES ('rdfitemdesc','0','1 == include introtext in item description; 0 == don\'t.  Any other number is substr() of introtext to use');
 INSERT INTO vars (name, value, description) VALUES ('rdfitemdesc_html','0','1 == include HTML in item description; 0 == strip HTML (plain text only)');
@@ -1085,6 +1085,7 @@ INSERT INTO vars (name, value, description) VALUES ('totalComments','0','Total n
 INSERT INTO vars (name, value, description) VALUES ('totalhits','0','Total number of hits the site has had thus far');
 INSERT INTO vars (name, value, description) VALUES ('url_checker_user_agent', '', 'user Agent to use for url checking task, empty string results in lwp user agent being used');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
+INSERT INTO vars (name, value, description) VALUES ('use_dept_space2dash','1','replace whitespace to dash at \"dept.\" field');
 INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link','1','Boolean where to use next/prev links for articles');
 INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_series','0','Boolean where to use next/prev links for articles in a series (topic)');
 INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_section','0','Boolean where to use next/prev links for articles in a section');
