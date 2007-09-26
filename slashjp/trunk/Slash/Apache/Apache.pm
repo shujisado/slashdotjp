@@ -451,6 +451,7 @@ sub IndexHandler {
 	}
 
 	# .pl in section dirs are served by scripts in basedir
+	# for enabling login session
 	if( $uri =~ m|^.+/(\w+\.pl)$| ){
 		my $basedir = $constants->{basedir};
 		$r->filename("$basedir/$1");
