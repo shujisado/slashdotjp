@@ -1455,17 +1455,7 @@ sub processCustomTags {
 				$codestr =~ s{<a href="[^"]+" rel="url2html-$$">(.+?)</a>}{$1}g;
 				my $code = strip_code($codestr);
 				my $newstr = "<blockquote>$code</blockquote>";
-				# TODO: This 1-line fix for bug of perl in Debian sarge!?
-				# substr($str, $pos, $len) returns wrong string sometime.
-				# I tested both 5.8.4-8sarge3 and 5.8.4-8sarge4,
-				# In a test case, returned value have length=122.
-				# 5.8.4-8sarge3 works porperly when using substr as left value!
-				# However, 5.8.4-8sarge4 was broken in any case.
-				#
-				# I cannot find a way to reproduce surely, just stop to
-				# use 3rd argument, temporarily...
-				#substr($str, $pos, $len) = $newstr;
-				$str = substr($str, 0, $pos).$newstr.substr($str,$pos+$len);
+				substr($str, $pos, $len) = $newstr;
 				pos($str) = $pos + length($newstr);
 			}
 		}
@@ -2091,6 +2081,8 @@ The escaped data.
 $allowed .= '#';
 sub fixurl {
 	my($url) = @_;
+	no utf8;
+	Encode::is_utf8($url) and $url = Encode::encode_utf8($url);
 	$url =~ s/([^$allowed])/$URI::Escape::escapes{$1}/og;
 	$url =~ s/%(?![a-fA-F0-9]{2})/%25/g;
 	return $url;
@@ -2293,7 +2285,7 @@ sub chopEntity {
 	if ($constants->{tweak_japanese}) {
 		require Jcode;
 		$text = [Jcode->new(Encode::encode_utf8($text), 'utf8')->jfold($length, '')]->[0];
-		$text = Encode::decode('euc-jp', $text);
+		$text = Encode::decode('utf-8', $text);
 	} else {
 		$text = substr($text, 0, $length);
 	}
@@ -3068,7 +3060,8 @@ sub _slashlink_to_link {
 		# This is the main reason for doing slashlinks at all!
 		if ($ssi) {
 			$url .= qq{$skin_root/};
-			$url .= qq{$skin_name/$attr{sid}.shtml};
+			$url .= qq{$skin_name/} unless ($skin_root =~ /\/${skin_name}$/);
+			$url .= qq{$attr{sid}.shtml};
 			$url .= qq{?tid=$attr{tid}} if $attr{tid};
 			$url .= qq{#$frag} if $frag;
 		} else {
