@@ -311,7 +311,8 @@ sub sqlConnect{
 # Perl has lost the flag somewhere
 sub sqlDo{
 	my($self, $sql) = @_;
-	$self->SUPER::sqlDo(decode_utf8($sql));
+	Encode::is_utf8($sql) or $sql = decode_utf8($sql);
+	$self->SUPER::sqlDo($sql);
 }
 
 ########################################################
