@@ -1,6 +1,7 @@
 slash (2.5.0.119-16) unstable; urgency=low
 
   * Hex encoding was applied for all binary columns.
+  * Some fix and merge from otp for etch.
 
  -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 23 Jul 2007 13:59:15 +0900
 
