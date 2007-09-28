@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: slash-common
 Architecture: any
-Depends: perl, perl-modules, libcompress-zlib-perl, libxml-parser-perl, libdbix-password-perl (>= 1.8-5), libnet-perl, libtimedate-perl, libapache-dbilogger-perl, libhtml-parser-perl, libhtml-format-perl, libxml-rss-perl, libimage-size-perl, libemail-valid-perl, libtemplate-perl, libmail-sendmail-perl, libsoap-lite-perl, liblingua-stem-perl, libhtml-template-perl, libmime-types-perl, libparallel-useragent-perl, libhtml-popuptreeselect-perl, libnet-ldap-perl, libjcode-pm-perl, libhtml-calendarmonth-perl, libgd-gd2-perl, libgd-text-perl, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
+Depends: libcompress-zlib-perl, libxml-parser-perl, libdbix-password-perl (>= 1.8-5), libnet-perl, libtimedate-perl, libapache-dbilogger-perl, libhtml-parser-perl, libhtml-format-perl, libxml-rss-perl, libimage-size-perl, libemail-valid-perl, libtemplate-perl, libmail-sendmail-perl, libsoap-lite-perl, liblingua-stem-perl, libhtml-template-perl, libmime-types-perl, libparallel-useragent-perl, libhtml-popuptreeselect-perl, libnet-ldap-perl, libjcode-pm-perl, libhtml-calendarmonth-perl, libgd-gd2-perl, libgd-text-perl, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
 Description: The code that runs Slashdot - common files
  Slash -- Slashdot Like Automated Storytelling Homepage -- is an architecture
  to put together web sites.  It comes with functionality for posting articles,
@@ -16,7 +16,7 @@ Description: The code that runs Slashdot - common files
 
 Package: slash-backend
 Architecture: any
-Depends: slash-common, adduser, mysql-server-5.0 | mysql-server-4.1, slash-common, libschedule-cron-perl, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
+Depends: slash-common, adduser, mysql-server-5.0 | mysql-server-4.1, libschedule-cron-perl, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
 Description: The code that runs Slashdot - Backend server
  Slash -- Slashdot Like Automated Storytelling Homepage -- is an architecture
  to put together web sites.  It comes with functionality for posting articles,
