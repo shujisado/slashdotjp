@@ -216,6 +216,10 @@ sub _get_web {
 	$prime    = $self->{_web_prime1};
 	$self->sqlUpdate($table, { readed => 1 }, "$prime=$id_db");
 
+	# force to set UTF8 flag because these fields are 'blob'.
+	$data->{'subject'} = Encode::decode_utf8($data->{'subject'}) unless (Encode::is_utf8($data->{'subject'}));
+	$data->{'message'} = Encode::decode_utf8($data->{'message'}) unless (Encode::is_utf8($data->{'message'}));
+
 	return $data;
 }
 
@@ -230,6 +234,11 @@ sub _get_web_by_uid {
 	my $data = $self->sqlSelectAllHashrefArray(
 		$cols, $table, "$prime=$id_db", $other
 	);
+
+	# force to set UTF8 flag because these fields are 'blob'.
+	map { $_->{'subject'} = Encode::decode_utf8($_->{'subject'}) unless (Encode::is_utf8($_->{'subject'})); } @$data;
+	map { $_->{'message'} = Encode::decode_utf8($_->{'message'}) unless (Encode::is_utf8($_->{'message'})); } @$data;
+
 	return $data;
 }
 
