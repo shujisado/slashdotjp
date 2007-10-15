@@ -1162,9 +1162,11 @@ sub editStory {
 		$storyref->{commentstatus} = $form->{commentstatus};
 
 		$storyref->{uid} ||= $user->{uid};
-		$storyref->{dept} =~ s/[-\s]+/-/g;
-		$storyref->{dept} =~ s/^-//;
-		$storyref->{dept} =~ s/-$//;
+		if ($constants->{use_dept_space2dash}){
+			$storyref->{dept} =~ s/[-\s]+/-/g;
+			$storyref->{dept} =~ s/^-//;
+			$storyref->{dept} =~ s/-$//;
+		}
 
 		my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form);
 		$storyref->{related_sids_hr} = $related_sids_hr;
@@ -1345,7 +1347,7 @@ sub editStory {
 	$authors->{$storyref->{uid}} = $slashdb->getUser($storyref->{uid}, 'nickname') if $storyref->{uid} && !defined($authors->{$storyref->{uid}});
 	my $author_select = createSelect('uid', $authors, $storyref->{uid}, 1);
 
-	$storyref->{dept} =~ s/ /-/gi;
+	$storyref->{dept} =~ s/ /-/gi if $constants->{use_dept_space2dash};
 
 	$locktest = lockTest($storyref->{title});
 
@@ -1927,7 +1929,7 @@ sub updateStory {
 	my $tid_ref;
 	my $default_set = 0;
 
-	$form->{dept} =~ s/ /-/g;
+	$form->{dept} =~ s/ /-/g if $constants->{use_dept_space2dash};
 
 	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid', 1)
 		unless $form->{aid};
@@ -2254,7 +2256,7 @@ sub saveStory {
 	my $tid_ref;
 	my $default_set = 0;
 
-	$form->{dept} =~ s/ /-/g;
+	$form->{dept} =~ s/ /-/g if $constants->{use_dept_space2dash};
 
 	my($chosen_hr) = extractChosenFromForm($form);
 	my($tids) = $slashdb->getTopiclistFromChosen($chosen_hr);

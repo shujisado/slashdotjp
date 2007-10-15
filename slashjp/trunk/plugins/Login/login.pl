@@ -11,6 +11,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::XML;
 use Slash::LDAPDB;
+
 use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
