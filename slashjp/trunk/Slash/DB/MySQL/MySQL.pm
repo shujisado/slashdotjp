@@ -13645,7 +13645,7 @@ sub setRelatedStoriesForStory {
 	}
 
 	my $i = 1;
-	foreach my $rel (sort keys %$rel_sid_hr) {
+	foreach my $rel (reverse sort keys %$rel_sid_hr) {
 		my $rel_stoid = $self->getStoidFromSidOrStoid($rel);
 		$self->sqlInsert("related_stories", {
 			stoid		=> $stoid,
