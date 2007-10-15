@@ -1,0 +1,87 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+stats
+__lang__
+en_US
+__name__
+graph
+__template__
+[% FILTER null;
+# pie graph not implemented yet
+IF form.type == 'pie';
+   USE my_graph = GD.Graph.pie(600, 400);
+
+ELSE;  # default to lines
+   IF form.type.search('^area');
+      USE my_graph = GD.Graph.area(600, 400);
+   ELSE;
+      USE my_graph = GD.Graph.lines(600, 400);
+   END;
+
+   PROCESS calculate;
+
+   x_label_skip = days.size / 10;
+   x_label_skip = x_label_skip.int;
+
+   gtitle = form.title || "$period Report for $constants.sitename";
+
+   my_graph.set(
+      title               => gtitle,
+
+      x_label_position    => 0.5,
+
+      zero_axis           => 1,
+
+      x_labels_vertical   => 1,
+      x_label_skip        => x_label_skip,
+
+      line_type_scale     => 10,
+      line_width          => 2,
+      line_types          => [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                               2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                               3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                               4, 4, 4, 4, 4, 4, 4  4, 4, 4
+                             ],
+
+      dclrs               => [ 'lred',    'lgreen', 'lblue',   'lyellow',
+                               'lpurple', 'cyan',   'lorange', 'pink',
+                               'gray',   'black'
+                             ],
+
+      transparent         => 0,
+#      show_values         => plotdata
+   );
+
+   IF (!hasneg);
+   	my_graph.set(y_min_value => 0);
+   END;
+
+
+   IF (!haspos && hasneg);
+   	my_graph.set(y_max_value => 0);
+   END;
+
+   IF (form.type == 'areapercentage' || (form.type == 'areastacked' && !form.showtotal));
+   	my_graph.set(cumulate => 1);
+   END;
+
+   IF (form.type == 'areapercentage');
+   	my_graph.set(y_min_value => 0);
+   	my_graph.set(y_max_value => 100);
+   END;
+
+   set_legend(my_graph, alltypes);
+   returnimage = my_graph.plot(alldata).png;
+
+END;
+END;
+returnimage -%]
+__seclev__
+1000
+__version__
+$Id: graph;stats;default,v 1.10 2003/05/23 14:15:07 pudge Exp $

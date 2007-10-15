@@ -1,0 +1,20 @@
+__section__
+default
+__description__
+Block of text for incluzion in header.
+
+No specially passed variables.
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+organisation
+__template__
+You should update your organisation template and put some links here linking back to your site.
+__seclev__
+500
+__version__
+$Id: organisation;misc;default,v 1.6 2003/03/04 19:07:59 pudge Exp $

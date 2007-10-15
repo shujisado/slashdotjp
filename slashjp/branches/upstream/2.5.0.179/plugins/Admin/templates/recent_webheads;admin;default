@@ -1,0 +1,64 @@
+__section__
+default
+__description__
+* data - hashref of hashrefs of hashrefs
+* webheads - list of all webheads in order
+
+__title__
+admin interface recent template
+__page__
+admin
+__lang__
+en_US
+__name__
+recent_webheads
+__template__
+[% PROCESS titlebar title="Recent Webhead Data" %]
+<div class="generalbody">
+<table cellspacing="2" border="0">
+
+<tr>
+<th>&nbsp;</th>
+<th rowspan="2" valign="BOTTOM">total<br>hits</th>
+[% FOREACH wh = webheads %]
+	<th colspan=2>[% wh %]</th>
+[% END %]
+</tr>
+
+<tr>
+<th>minute</th>
+[% FOREACH wh = webheads %]
+	<th>time</th><th>hits</th>
+[% END %]
+</tr>
+
+[% FOREACH min = data.keys.sort %]
+
+	<tr>
+	<td align="right">
+		[% min %]
+	</td>
+	<td align="right">
+		[% total_hits = 0;
+		   FOREACH wh = webheads;
+			total_hits = total_hits + data.$min.$wh.c;
+		   END %]
+		   [% total_hits %]
+	</td>
+
+	[% FOREACH wh = webheads;
+	   time = data.$min.$wh.dur || '-';
+	   hits = data.$min.$wh.c || '-' %]
+		<td align="right">[% time %]</td>
+		<td align="right">[% hits %]</td>
+	[% END %]
+	</tr>
+
+[% END %]
+
+</table>
+</div>
+__seclev__
+100
+__version__
+$Id: recent_webheads;admin;default,v 1.3 2005/09/16 14:50:09 lancelot Exp $

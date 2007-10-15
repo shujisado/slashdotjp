@@ -1,0 +1,49 @@
+__section__
+default
+__description__
+Print links to pages for additional comments
+
+* sid = sid
+* pid = pid
+* cid = cid
+* total = total comments
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+linkCommentPages
+__template__
+[% UNLESS (total < user.commentlimit) || (user.commentlimit < 1) %]
+	[% pages = total / user.commentlimit %]
+	<div class="linkCommentPage">
+	[% FOREACH p = [0 .. pages] %]
+		[% start = user.commentlimit * p %]
+		[% IF p != 0 %] | [% END %]
+		[% IF start == form.startat || (!form.startat && p == 0) %]
+			<b>([% p + 1 %])</b>
+		[% ELSE %]
+			[% Slash.linkComment({
+				sid	=> sid,
+				pid	=> pid,
+				cid	=> cid,
+				subject	=> (p + 1),
+				subject_only => 1,
+				startat	=> (start ? start : 0),
+			}) %]
+		[% END %]
+	[% END %]
+
+	[% IF user.breaking %]
+		([% constants.sitename %] Overload: CommentLimit [% user.commentlimit %])
+	[% END %]
+	</div>
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: linkCommentPages;misc;default,v 1.9 2005/08/17 18:00:34 tvroom Exp $

@@ -1,0 +1,83 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2005 by Open Source Technology Group. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id: topics.pl,v 1.35 2005/11/26 16:41:51 jamiemccarthy Exp $
+
+use strict;
+use Slash;
+use Slash::Display;
+use Slash::Utility;
+
+#################################################################
+sub main {
+	my $form    = getCurrentForm();
+	my $user    = getCurrentUser();
+
+	my $hierarchy_op = $form->{op} && $form->{op} eq 'hierarchy';
+	my $data = $hierarchy_op
+		? { admin => 1, adminmenu => 'info', tab_selected => 'hierarchy' }
+		: { };
+	header(getData('head'), $form->{section}, $data) or return;
+
+	print createMenu('topics');
+
+	if ($hierarchy_op) {
+		hierarchy();
+	} else {
+		listTopics();
+	}
+
+	footer();
+}
+
+#################################################################
+sub hierarchy {
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+	my $topic_tree = $slashdb->getTopicTree();
+	
+	my @nexuses;
+
+	foreach my $tid (sort {$topic_tree->{$a}{textname} cmp $topic_tree->{$b}{textname}} keys %$topic_tree) {
+		push @nexuses, $tid if $topic_tree->{$tid}{nexus};
+	}
+
+	slashDisplay('hierarchy', {
+		topic_tree	=> $topic_tree,
+		nexuses		=> \@nexuses
+	});
+}
+
+#################################################################
+sub listTopics {
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
+	my $topics = $reader->getTopics;
+	
+	if ($form->{section}) {
+		my %new_topics;
+		my $ids = $reader->getDescriptions('topics_section', $form->{section});
+		for (keys %$topics) {
+			$new_topics{$_} = $topics->{$_} if $ids->{$_};
+		}
+		$topics = \%new_topics;
+	}
+
+	slashDisplay('listTopics', {
+		title		=> 'Current Topic Categories',
+		width		=> '90%',
+		topic_admin	=> getCurrentUser('seclev') >= 500,
+		topics		=> [ values %$topics ],
+	});
+
+}
+
+#################################################################
+createEnvironment();
+main();
+
+1;

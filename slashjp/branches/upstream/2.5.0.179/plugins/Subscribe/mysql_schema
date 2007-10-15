@@ -1,0 +1,30 @@
+#
+# $Id: mysql_schema,v 1.15 2005/01/18 16:39:36 tvroom Exp $
+#
+
+ALTER TABLE users_hits ADD COLUMN hits_bought INT DEFAULT 0 NOT NULL AFTER hits, ADD COLUMN hits_bought_today SMALLINT UNSIGNED DEFAULT 0 NOT NULL AFTER hits_bought, ADD COLUMN hits_paidfor INT DEFAULT 0 NOT NULL AFTER hits_bought_today;
+
+DROP TABLE IF EXISTS subscribe_payments;
+CREATE TABLE subscribe_payments (
+	spid		MEDIUMINT UNSIGNED AUTO_INCREMENT NOT NULL,
+	uid		MEDIUMINT UNSIGNED NOT NULL,
+	email		VARCHAR(255) NOT NULL,
+	ts		TIMESTAMP,
+	payment_gross	DECIMAL(10,2) NOT NULL,
+	payment_net	DECIMAL(10,2) NOT NULL,
+	pages		MEDIUMINT UNSIGNED NOT NULL,
+	transaction_id	VARCHAR(255) NOT NULL,
+	method		VARCHAR(6),
+	memo		VARCHAR(255) NOT NULL,
+	data		BLOB,
+	payment_type	VARCHAR(10),
+	puid		MEDIUMINT UNSIGNED,
+	PRIMARY KEY(spid),
+	KEY(uid),
+	KEY(ts),
+	UNIQUE(transaction_id),
+	KEY(puid)
+) TYPE = InnoDB;
+
+ALTER TABLE comments ADD COLUMN subscriber_bonus ENUM("no", "yes") NOT NULL DEFAULT "no" AFTER karma_bonus;
+
