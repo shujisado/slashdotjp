@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: bookmark.pl,v 1.20 2007/06/12 21:18:46 jamiemccarthy Exp $
+# $Id: bookmark.pl,v 1.21 2007/07/12 14:18:05 tvroom Exp $
 
 use strict;
 use Slash;
@@ -81,7 +81,7 @@ sub saveBookmark {
 	my $rkey = $reskey->key('bookmark');
 	my $bookmarkoptions;
 
-	$bookmarkoptions->{errors}{invalidurl}    = !validUrl($form->{url});
+	$bookmarkoptions->{errors}{invalidurl}    = 1 if !validUrl($form->{url});
 	$bookmarkoptions->{errors}{missingfields} = 1 if !$form->{url} || !$form->{title} || !$form->{tags};
 	
 	if (!$bookmarkoptions->{errors}) {

@@ -15,7 +15,7 @@ __template__
 	[% authorbox %]
 	[% storyadmin %]
 	[% perfbox %]
-	[% Slash.sidebox("Firehose Usage", Slash.db.getBlock("firehose_usage", "block"), "firehose_usage", 1) %]
+	[% Slash.sidebox("Firehose Usage", ' ', "firehose_usage", 1) %]
 	[% slashdbox %]
 </div>
 <div id="console">
@@ -42,9 +42,12 @@ __template__
 	<script type="text/javascript">
 		console_updating = 1;
 		console_update([% IF constants.plugin.FireHose %]1[% ELSE %]0[% END %]);
+		[% IF constants.plugin.FireHose %]
+		firehose_usage();
+		[% END %]
 	</script>
 </div>
 __seclev__
 10000
 __version__
-$Id: display;console;default,v 1.8 2007/02/28 15:37:06 tvroom Exp $
+$Id: display;console;default,v 1.11 2007/09/06 16:04:21 tvroom Exp $

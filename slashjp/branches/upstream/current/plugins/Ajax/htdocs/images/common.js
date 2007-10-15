@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.122 2007/06/25 15:49:46 tvroom Exp $
+// $Id: common.js,v 1.145 2007/10/11 22:14:06 pudge Exp $
 
 var fh_play = 0;
 var fh_is_timed_out = 0;
@@ -25,6 +25,9 @@ var fh_colors = Array(0);
 var vendor_popup_timerids = Array(0);
 var vendor_popup_id = 0;
 var fh_slider_init_set = 0;
+
+// eventually add site specific constants like this to a separate .js
+var sitename = "Slashdot";
 
 function createPopup(xy, titlebar, name, contents, message, onmouseout) {
 	var body = document.getElementsByTagName("body")[0]; 
@@ -78,17 +81,17 @@ function closePopup(id, refresh) {
 }
 
 function handleEnter(ev, func, arg) {
-        if (!ev) {
-                ev = window.event;
-        }
-        var code = ev.which || ev.keyCode;
-        if (code == 13) { // return/enter
+	if (!ev) {
+		ev = window.event;
+	}
+	var code = ev.which || ev.keyCode;
+	if (code == 13) { // return/enter
 		func(arg);
-                ev.returnValue = true;
-                return true;
-        }
-        ev.returnValue = false;
-        return false;
+		ev.returnValue = true;
+		return true;
+	}
+	ev.returnValue = false;
+	return false;
 }
 
 
@@ -152,7 +155,7 @@ function toggleIntro(id, toggleid) {
 
 function tagsToggleStoryDiv(id, is_admin, type) {
 	var bodyid = 'toggletags-body-' + id;
-        var tagsbody = $(bodyid);
+	var tagsbody = $(bodyid);
 	if (tagsbody.className == 'tagshide') {
 		tagsShowBody(id, is_admin, '', type);
 	} else {
@@ -163,22 +166,22 @@ function tagsToggleStoryDiv(id, is_admin, type) {
 function tagsHideBody(id) {
 	// Make the body of the tagbox vanish
 	var tagsbodyid = 'toggletags-body-' + id;
-        var tagsbody = $(tagsbodyid);
+	var tagsbody = $(tagsbodyid);
 	tagsbody.className = "tagshide"
 
 	// Make the title of the tagbox change back to regular
 	var titleid = 'tagbox-title-' + id;
-        var title = $(titleid);
+	var title = $(titleid);
 	title.className = "tagtitleclosed";
 
 	// Make the tagbox change back to regular.
 	var tagboxid = 'tagbox-' + id;
-        var tagbox = $(tagboxid);
+	var tagbox = $(tagboxid);
 	tagbox.className = "tags";
 
 	// Toggle the button back.
 	var tagsbuttonid = 'toggletags-button-' + id;
-        var tagsbutton = $(tagsbuttonid);
+	var tagsbutton = $(tagsbuttonid);
 	tagsbutton.innerHTML = "[+]";
 }
 
@@ -197,22 +200,22 @@ function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
 	
 	// Toggle the button to show the click was received
 	var tagsbuttonid = 'toggletags-button-' + id;
-        var tagsbutton = $(tagsbuttonid);
+	var tagsbutton = $(tagsbuttonid);
 	tagsbutton.innerHTML = "[-]";
 
 	// Make the tagbox change to the slashbox class
 	var tagboxid = 'tagbox-' + id;
-        var tagbox = $(tagboxid);
+	var tagbox = $(tagboxid);
 	tagbox.className = "tags";
 
 	// Make the title of the tagbox change to white-on-green
 	var titleid = 'tagbox-title-' + id;
-        var title = $(titleid);
+	var title = $(titleid);
 	title.className = "tagtitleopen";
 
 	// Make the body of the tagbox visible
 	var tagsbodyid = 'toggletags-body-' + id;
-        var tagsbody = $(tagsbodyid);
+	var tagsbody = $(tagsbodyid);
 	
 	tagsbody.className = "tagbody";
 	
@@ -290,46 +293,54 @@ function tagsOpenAndEnter(id, tagname, is_admin, type) {
 }
 
 function completer_renameMenu( s, params ) {
-  if ( s )
-    params._sourceEl.innerHTML = s;
+	if ( s )
+		params._sourceEl.innerHTML = s;
 }
 
 function completer_setTag( s, params ) {
-  createTag(s, params._id, params._type);
-  var tagField = document.getElementById('newtags-'+params._id);
-  if ( tagField ) {
-    var s = tagField.value.slice(-1);
-    if ( s.length && s != " " )
-      tagField.value += " ";
-    tagField.value += s;
-  }
+	createTag(s, params._id, params._type);
+	var tagField = document.getElementById('newtags-'+params._id);
+	if ( tagField ) {
+		var s = tagField.value.slice(-1);
+		if ( s.length && s != " " )
+			tagField.value += " ";
+		tagField.value += s;
+	}
 }
 
 function completer_handleNeverDisplay( s, params ) {
-  if ( s == "neverdisplay" )
-    admin_neverdisplay("", "firehose", params._id);
+	if ( s == "neverdisplay" )
+		admin_neverdisplay("", "firehose", params._id);
 }
 
 function completer_save_tab(s, params) {
 	firehose_save_tab(params._id);
 }
 
-function attachCompleter( obj, id, is_admin, type, tagDomain, customize ) {
-  if ( navigator.vendor !== undefined ) {
-    var vendor = navigator.vendor.toLowerCase();
-    if ( vendor.indexOf("apple") != -1
-         || vendor.indexOf("kde") != -1 )
-      return false;
-  }
+function clickCompleter( obj, id, is_admin, type, tagDomain, customize ) {
+	return attachCompleter(obj, id, is_admin, type, tagDomain, customize);
+}
 
-  if ( customize === undefined )
-    customize = new Object();
+function focusCompleter( obj, id, is_admin, type, tagDomain, customize ) {
+	if ( navigator.vendor !== undefined ) {
+		var vendor = navigator.vendor.toLowerCase();
+		if ( vendor.indexOf("apple") != -1
+				|| vendor.indexOf("kde") != -1 )
+			return false;
+	}
+
+	return attachCompleter(obj, id, is_admin, type, tagDomain, customize);
+}
+
+function attachCompleter( obj, id, is_admin, type, tagDomain, customize ) {
+	if ( customize === undefined )
+		customize = new Object();
 	customize._id = id;
 	customize._is_admin = is_admin;
 	customize._type = type;
 	if ( tagDomain != 0 && customize.queryOnAttach === undefined )
-	  customize.queryOnAttach = true;
-  
+		customize.queryOnAttach = true;
+	
 	if ( !YAHOO.slashdot.gCompleterWidget )
 		YAHOO.slashdot.gCompleterWidget = new YAHOO.slashdot.AutoCompleteWidget();
 
@@ -349,6 +360,9 @@ function createTag(tag, id, type) {
 	params['name'] = tag;
 	params['id'] = id;
 	params['type'] = type;
+	if (tag == "hold" && fh_is_admin) {
+		firehose_collapse_entry(id);
+	}
 	ajax_update(params, '');
 }
 
@@ -424,6 +438,7 @@ function toggle_firehose_body(id, is_admin) {
 	params['id'] = id;
 	var fhbody = $('fhbody-'+id);
 	var fh = $('firehose-'+id);
+	var usertype = fh_is_admin ? " adminmode" : " usermode";
 	if (fhbody.className == "empty") {
 		var handlers = {
 			onComplete: function() { 
@@ -437,19 +452,19 @@ function toggle_firehose_body(id, is_admin) {
 			ajax_update(params, 'fhbody-'+id);
 		}
 		fhbody.className = "body";
-		fh.className = "article";
+		fh.className = "article" + usertype;
 		if (is_admin)
 			tagsShowBody(id, is_admin, '', "firehose");
 	} else if (fhbody.className == "body") {
 		fhbody.className = "hide";
-		fh.className = "briefarticle";
-		if (is_admin)
-			tagsHideBody(id);
+		fh.className = "briefarticle" + usertype;
+		/*if (is_admin)
+			tagsHideBody(id);*/
 	} else if (fhbody.className == "hide") {
 		fhbody.className = "body";
-		fh.className = "article";
-		if (is_admin)
-			tagsShowBody(id, is_admin, '', "firehose");
+		fh.className = "article" + usertype;
+		/*if (is_admin)
+			tagsShowBody(id, is_admin, '', "firehose"); */
 	}
 }
 
@@ -487,7 +502,7 @@ function firehose_set_options(name, value) {
 		params[name] = value;
 	}
 
-	if (name == "nodates" || name == "nobylines" || name == "nothumbs" || name == "nocolors" || name == "mixedmode" ) {
+	if (name == "nodates" || name == "nobylines" || name == "nothumbs" || name == "nocolors" || name == "mixedmode" || name == "nocommentcnt") {
 		value = value == true ? 1 : 0;
 		params[name] = value;
 		params['setfield'] = 1;
@@ -516,6 +531,7 @@ function firehose_set_options(name, value) {
 				params['fhfilter'] = theForm.elements[i].value;
 			}
 		}
+		page = 0;
 	}
 	if (name != "color") {
 	for (i=0; i< pairs.length; i++) {
@@ -541,7 +557,7 @@ function firehose_set_options(name, value) {
 			// set page
 			page = 0;
 			var attributes = { 
-				 opacity: { from: 1, to: 0 }
+				opacity: { from: 1, to: 0 }
 			};
 			var myAnim = new YAHOO.util.Anim("firehoselist", attributes); 
 			myAnim.duration = 1;
@@ -555,13 +571,30 @@ function firehose_set_options(name, value) {
 	}
 	}
 
-	if (name == "color" || name == "tab" || name == "pause" || name == "startdate" || name == "duration" ) { 
-		params[name] = [value];
+	if (name == "color" || name == "tab" || name == "pause" || name == "startdate" || name == "duration" || name == "issue" || name == "pagesize") { 
+		params[name] = value;
 		if (name == "startdate") {
 			firehose_startdate = value;
 		}
 		if (name == "duration")  {
 			firehose_duration = value;
+		}
+		if (name == "issue") {
+			firehose_issue = value;
+			firehose_startdate = value;
+			duration = 1;
+			page = 0;
+			var issuedate = firehose_issue.substr(5,2) + "/" + firehose_issue.substr(8,2) + "/" + firehose_issue.substr(10,2);
+
+			if ($('fhcalendar')) {
+				$('fhcalendar')._widget.setDate(issuedate, "day");
+			}
+			if ($('fhcalendar_pag')) {
+				$('fhcalendar_pag')._widget.setDate(issuedate, "day");
+			}
+		}
+		if (name == "pagesize") {
+			page = 0;
 		}
 	}
 
@@ -600,6 +633,14 @@ function firehose_up_down(id, dir) {
 	params['dir'] = dir;
 	var updown = $('updown-' + id);
 	ajax_update(params, '', handlers);
+	if (updown) {
+		if (dir == "+") {
+			updown.className = "votedup";	
+		} else if (dir == "-") {
+			updown.className = "voteddown";	
+		}
+	}
+
 	if (dir == "-" && fh_is_admin) {
 		firehose_collapse_entry(id);
 	}
@@ -617,6 +658,100 @@ function firehose_remove_tab(tabid) {
 	ajax_update(params, '', handlers);
 
 }
+
+var nodmenu = null;
+var nixmenu = null;
+
+function get_nod_menu() {
+	if ( !nodmenu )
+		nodmenu = document.getElementById('nodmenu');
+	return nodmenu;
+}
+
+function get_nix_menu() {
+	if ( !nixmenu )
+		nixmenu = document.getElementById('nixmenu');
+	return nixmenu;
+}
+
+
+
+var g_elem_for_pending_showmenu = null;
+var g_menu_for_pending_showmenu = null;
+var g_id_for_pending_showmenu = null;
+var g_pending_showmenu = null;
+var g_pending_hidemenu = null;
+
+var g_nodnix_item_id = null;
+
+function nodnix_tag( tag, up_down ) {
+	createTag(tag, g_nodnix_item_id, "firehose");
+	if ( up_down !== undefined )
+		firehose_up_down(g_nodnix_item_id, up_down);
+}
+
+function hide_nod_menu() {
+	get_nod_menu().style.display = 'none';
+}
+
+function hide_nix_menu() {
+	get_nix_menu().style.display = 'none';
+}
+
+function hide_nodnix_menu( delay ) {
+	if ( delay == undefined || !delay ) {
+		hide_nod_menu();
+		hide_nix_menu();
+	} else {
+		if ( g_pending_hidemenu )
+			clearTimeout(g_pending_hidemenu);
+		g_pending_hidemenu = setTimeout("hide_nodnix_menu()", delay);
+	}
+}
+
+function dont_hide_nodnix_menu() {
+	clearTimeout(g_pending_hidemenu);
+	g_pending_hidemenu = null;
+}
+
+
+
+function show_nodnix_menu(elem, id, menu, show_delay, hide_delay) {
+	if ( show_delay == undefined || !show_delay ) {
+		var pos = YAHOO.util.Dom.getXY(elem);
+		menu.style.display = 'block';
+		YAHOO.util.Dom.setXY(menu, pos);
+		g_nodnix_item_id = id;
+	} else {
+		g_elem_for_pending_showmenu = elem;
+		g_menu_for_pending_showmenu = menu;
+		g_id_for_pending_showmenu = id;
+		if ( g_pending_showmenu )
+			clearTimeout(g_pending_showmenu);
+		g_pending_showmenu = setTimeout("show_nodnix_menu(g_elem_for_pending_showmenu, g_id_for_pending_showmenu, g_menu_for_pending_showmenu)", show_delay);
+	}
+
+	if ( hide_delay != undefined && hide_delay != 0 ) {
+		hide_nodnix_menu(hide_delay);
+	}
+}
+
+function dont_show_nodnix_menu() {
+	clearTimeout(g_pending_showmenu);
+	g_pending_showmenu = null;
+}
+
+function show_nod_menu(elem, id, show_delay, hide_delay) {
+	hide_nix_menu();
+	show_nodnix_menu(elem, id, get_nod_menu(), show_delay, hide_delay);
+}
+
+function show_nix_menu(elem, id, show_delay, hide_delay) {
+	hide_nod_menu();
+	show_nodnix_menu(elem, id, get_nix_menu(), show_delay, hide_delay);
+}
+
+
 // firehose functions end
 
 // helper functions
@@ -679,7 +814,7 @@ function json_update(response) {
 		}
 	}
 
- 	if (response.html) {
+	if (response.html) {
 		for (el in response.html) {
 			if ($(el))
 				$(el).innerHTML = response.html[el];
@@ -748,8 +883,8 @@ function firehose_handle_update() {
 			}
 
 			var attributes = { 
-				 opacity: { from: 0, to: 1 },
-				 height: { from: 0, to: toheight }
+				opacity: { from: 0, to: 1 },
+				height: { from: 0, to: toheight }
 			};
 			var myAnim = new YAHOO.util.Anim(fh, attributes); 
 			myAnim.duration = 0.7;
@@ -780,8 +915,8 @@ function firehose_handle_update() {
 				// Don't delete admin looking at this in expanded view
 			} else {
 				var attributes = { 
-					 height: { to: 0 },
-					 opacity: { to: 0}
+					height: { to: 0 },
+					opacity: { to: 0}
 				};
 				var myAnim = new YAHOO.util.Anim(fh, attributes); 
 				myAnim.duration = 0.4;
@@ -844,9 +979,9 @@ function firehose_reorder() {
 				}
 			}
 			if (console_updating) {
-				document.title = "Console (" + item_count + ")";
+				document.title = sitename + " - Console (" + item_count + ")";
 			} else {
-				document.title = "Firehose (" + item_count + ")";
+				document.title = sitename + " - Firehose (" + item_count + ")";
 			}
 		}
 	}
@@ -989,7 +1124,7 @@ function firehose_play() {
 	if ($('message_area'))
 		$('message_area').innerHTML = "";
 	if ($('pauseorplay'))
-		$('pauseorplay').innerHTML = "Updating";
+		$('pauseorplay').innerHTML = "Updated";
 	var pause = $('pause');
 	
 	var play_div = $('play');
@@ -1031,14 +1166,14 @@ function firehose_remove_entry(id) {
 	var fh = $('firehose-' + id);
 	if (fh) {
 		var attributes = { 
-			 height: { to: 0 },
-			 opacity: { to: 0 }
+			height: { to: 0 },
+			opacity: { to: 0 }
 		};
 		var myAnim = new YAHOO.util.Anim(fh, attributes); 
 		myAnim.duration = 0.5;
 		myAnim.onComplete.subscribe(function() {
-		    var el = this.getEl();
-		        el.parentNode.removeChild(el);
+			var el = this.getEl();
+			el.parentNode.removeChild(el);
 		});
 		myAnim.animate();
 	}
@@ -1059,7 +1194,7 @@ function firehose_calendar_init( widget ) {
 function firehose_slider_init() {
 	fh_colorslider = YAHOO.widget.Slider.getHorizSlider("colorsliderbg", "colorsliderthumb", 0, 105, fh_ticksize);
 	fh_colorslider.setValue(fh_ticksize * fh_colors_hash[fh_color] , 1);
-        fh_colorslider.subscribe("slideEnd", firehose_slider_end);
+	fh_colorslider.subscribe("slideEnd", firehose_slider_end);
 }	
 
 function firehose_slider_set_color(color) {
@@ -1072,8 +1207,8 @@ function firehose_slider_end(offsetFromStart) {
 	var newVal = fh_colorslider.getValue();
 	var color = fh_colors[ newVal / fh_ticksize ];
 	$('fh_slider_img').title = "Firehose filtered to " + color;
-	if(fh_slider_init_set) {
-	 	firehose_set_options("color", color)
+	if (fh_slider_init_set) {
+		firehose_set_options("color", color)
 	}
 	fh_slider_init_set = 1;
 }
@@ -1108,28 +1243,28 @@ function vendorStoryPopup() {
 }
 
 function pausePopVendorStory2(id) {
-        vendor_popup_id=id;
-        closePopup('vendorStory-26-popup');
-        vendor_popup_timerids[id] = setTimeout("vendorStoryPopup2()", 500);
+	vendor_popup_id=id;
+	closePopup('vendorStory-26-popup');
+	vendor_popup_timerids[id] = setTimeout("vendorStoryPopup2()", 500);
 }
 
 function vendorStoryPopup2() {
-        id = vendor_popup_id;
-        var title = "<a href='//intel.vendors.slashdot.org' onclick=\"javascript:urchinTracker('/vendor_intel-popup/intel_popup_title');\">Intel's Opinion Center</a>";
-        var buttons = createPopupButtons("<a href=\"javascript:closePopup('vendorStory-" + id + "-popup')\">[X]</a>");
-        title = title + buttons;
-        var closepopup = function (e) {
-        if (!e) var e = window.event;
-        var relTarg = e.relatedTarget || e.toElement;
-        if (relTarg && relTarg.id == "vendorStory-26-popup") {
-                closePopup("vendorStory-26-popup");
-        }
-        };
-        createPopup(getXYForId('sponsorlinks2', 0, 0), title, "vendorStory-" + id, "Loading", "", closepopup );
-        var params = [];
-        params['op'] = 'getTopVendorStory';
-        params['skid'] = id;
-        ajax_update(params, "vendorStory-" + id + "-contents");
+	id = vendor_popup_id;
+	var title = "<a href='//intel.vendors.slashdot.org' onclick=\"javascript:urchinTracker('/vendor_intel-popup/intel_popup_title');\">Intel's Opinion Center</a>";
+	var buttons = createPopupButtons("<a href=\"javascript:closePopup('vendorStory-" + id + "-popup')\">[X]</a>");
+	title = title + buttons;
+	var closepopup = function (e) {
+		if (!e) var e = window.event;
+		var relTarg = e.relatedTarget || e.toElement;
+		if (relTarg && relTarg.id == "vendorStory-26-popup") {
+			closePopup("vendorStory-26-popup");
+		}
+	};
+	createPopup(getXYForId('sponsorlinks2', 0, 0), title, "vendorStory-" + id, "Loading", "", closepopup );
+	var params = [];
+	params['op'] = 'getTopVendorStory';
+	params['skid'] = id;
+	ajax_update(params, "vendorStory-" + id + "-contents");
 }
 
 function logToDiv(id, message) {
@@ -1226,4 +1361,76 @@ function check_logged_in() {
 		return 0;
 	}
 	return 1;
+}
+
+var modal_cover = 0;
+var modal_box   = 0;
+var modal_inst  = 0;
+
+function init_modal_divs() {
+	modal_cover = $('modal_cover');
+	modal_box   = $('modal_box');
+}
+
+function install_modal() {
+	if (modal_inst)
+		return;
+
+	if (!modal_cover || !modal_box)
+		init_modal_divs();
+
+	if (!modal_cover || !modal_box)
+		return;
+
+	modal_cover.parentNode.removeChild(modal_cover);
+	modal_box.parentNode.removeChild(modal_box);
+
+	var modal_parent = $('top_parent');
+	modal_parent.parentNode.insertBefore(modal_cover, modal_parent);
+	modal_parent.parentNode.insertBefore(modal_box, modal_parent);
+	modal_inst = 1;
+}
+
+function show_modal_box() {
+	if (!modal_inst)
+		install_modal();
+
+	if (modal_cover && modal_box) {
+		modal_cover.style.display = '';
+		modal_box.style.display = '';
+	}
+
+	return;
+}
+
+function hide_modal_box() {
+	if (!modal_inst)
+		install_modal();
+
+	if (modal_cover && modal_box) {
+		modal_box.style.display = 'none';
+		modal_cover.style.display = 'none';
+	}
+
+	return;
+}
+
+function getModalPrefs(section) {
+	var params = [];
+	params['op'] = 'getModalPrefs';
+	params['section'] = section;
+	params['reskey'] = reskey_static;
+	var handlers = {onComplete:show_modal_box};
+	ajax_update(params, 'modal_box_content', handlers);
+
+	return;
+}
+
+function saveModalPrefs() {
+	var params = [];
+	params['op'] = 'saveModalPrefs';
+	params['data'] = Form.serialize(document.forms['modal_prefs']);
+	params['reskey'] = reskey_static;
+	var handlers = {onComplete:hide_modal_box};
+	ajax_update(params, '', handlers);
 }

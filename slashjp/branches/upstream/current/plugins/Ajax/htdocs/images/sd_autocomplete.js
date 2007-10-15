@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: sd_autocomplete.js,v 1.39 2007/05/03 16:27:18 scc Exp $
+// $Id: sd_autocomplete.js,v 1.41 2007/09/28 21:21:20 scc Exp $
 
 YAHOO.namespace("slashdot");
 
@@ -239,6 +239,7 @@ YAHOO.slashdot.topicTags = ["keyword",
 "google",
 "it",
 "politics",
+"military",
 "worms",
 "databases",
 "hardhack",
@@ -397,11 +398,19 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._show = function( obj, callbackParam
         this._completer.textboxBlurEvent.subscribe(this._onTextboxBlurEvent, this);
 
         YAHOO.util.Event.addListener(this._textField(), "keyup", this._onTextboxKeyUp, this, true);
+
+        this._pending_hide = setTimeout("YAHOO.slashdot.gCompleterWidget._hide()", 15000);
       }
   }
 
 YAHOO.slashdot.AutoCompleteWidget.prototype._hide = function()
   {
+    if ( this._pending_hide )
+      {
+        clearTimeout(this._pending_hide);
+        this._pending_hide = null;
+      }
+
     YAHOO.util.Dom.addClass(this._widget, "hidden");
     YAHOO.util.Dom.addClass(this._spareInput, "hidden");
     if ( this._sourceEl )
@@ -492,8 +501,13 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._onTextboxKeyUp = function( e, me )
         case 27: // esc
         // any other keys?...
           me._hide();
-        break;
-	case 13:
-	  me._completer.unmatchedItemSelectEvent.fire(me._completer, me, me._completer._sCurQuery);
+          break;
+        case 13:
+          me._completer.unmatchedItemSelectEvent.fire(me._completer, me, me._completer._sCurQuery);
+          break;
+        default:
+          if ( me._pending_hide )
+            clearTimeout(me._pending_hide);
+          me._pending_hide = setTimeout("YAHOO.slashdot.gCompleterWidget._hide()", 15000);
       }
   }

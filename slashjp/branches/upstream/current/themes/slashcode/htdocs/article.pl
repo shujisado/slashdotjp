@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: article.pl,v 1.77 2006/09/03 17:40:20 jamiemccarthy Exp $
+# $Id: article.pl,v 1.80 2007/10/10 20:45:07 jamiemccarthy Exp $
 
 use strict;
 use Slash;
@@ -15,15 +15,6 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
-
-	# XXX If this is being called from freshenup to write an .shtml file
-	# for a story being archived, or for one older than say 30 days,
-	# and if a var shows the AC needs a datecode different from normal
-	# for such calls, set $user->{dfid} to a new special value that
-	# includes the year, call setCurrentDate($user), then re-call
-	# the last two lines from createEnvironment() after prepareUser():
-	# createCurrentUser($user);
-	# createCurrentAnonymousCoward($user);
 
 	my $story;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
@@ -239,6 +230,13 @@ sub main {
 			$message = getData('no_such_sid');
 		}
 		print $message;
+	}
+
+	my $plugins = $slashdb->getDescriptions('plugins');
+	if (!$user->{is_anon} && $plugins->{Tags} && $story) {
+		my $tagsdb = getObject('Slash::Tags');
+		$tagsdb->markViewed($user->{uid},
+			$reader->getGlobjidCreate('stories', $story->{stoid}));
 	}
 
 	footer();

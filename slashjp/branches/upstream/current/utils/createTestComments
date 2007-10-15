@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: createTestComments,v 1.29 2006/01/04 19:59:28 jamiemccarthy Exp $
+# $Id: createTestComments,v 1.30 2007/07/10 00:47:17 jamiemccarthy Exp $
 
 BEGIN {
 	{
@@ -23,7 +23,7 @@ use Benchmark;
 
 use vars qw( $slashdb $werder $constants $junk );
 
-(my $VERSION) = ' $Revision: 1.29 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.30 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts, %family_tree, %deep_tree);
@@ -200,7 +200,7 @@ sub getRandomStoid {
 	my $sectional = rand(1) < 0.3 ? 1 : 0;
 	my $nexus_ar;
 	if ($sectional) {
-		$nexus_ar = $slashdb->getNexusChildrenTids($constants->{mainpage_nexus_tid});
+		$nexus_ar = [ $slashdb->getNexusTids() ];
 	} else {
 		$nexus_ar = [ $constants->{mainpage_nexus_tid} ];
 	}

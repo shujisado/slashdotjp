@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Utility.pm,v 1.71 2006/11/29 18:03:22 jamiemccarthy Exp $
+# $Id: Utility.pm,v 1.73 2007/10/09 18:57:08 jamiemccarthy Exp $
 
 package Slash::DB::Utility;
 
@@ -12,7 +12,7 @@ use DBIx::Password;
 use Time::HiRes;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.71 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.73 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: Bender, if this is some kind of scam, I don't get it.  You already
 # have my power of attorney.
@@ -23,7 +23,6 @@ my $query_ref_regex = qr{(HASH|ARRAY|SCALAR|GLOB|CODE|LVALUE|IO|REF)\(0x[0-9a-f]
 ########################################################
 # Generic methods for libraries.
 ########################################################
-#Class variable that stores the database handle
 sub new {
 	my($class, $user, @args) = @_;
 	my $self = {};
@@ -50,6 +49,13 @@ sub new {
 	$self->{_querylog} = { };
 
 	return $self;
+}
+
+# Subclasses may implement their own methods of determining whether
+# their class is "installed" or not.  For example, plugins may want
+# to check $constants->{plugin}{Foo}.
+sub isInstalled {
+	return 1;
 }
 
 ##################################################################
@@ -225,6 +231,11 @@ sub sqlConnect {
 
 	return 0 unless dbAvailable();
 
+	# ping() isn't currently implemented so it is unnecessary;
+	# if it actually did run a query on the DB to determine
+	# whether the connection were active, calling it here
+	# would be a mistake.  I think we want to check
+	# dbh->{Active} instead. XXX -Jamie
 	if (!(defined $self->{_dbh}) || !$self->{_dbh}->ping) {
 	#if (!(defined $self->{_dbh}) || !$self->{_dbh}->can("ping") || !$self->{_dbh}->ping) {
 # Ok, new connection, lets create it

@@ -1,4 +1,4 @@
-// $Id: admin.js,v 1.37 2007/01/02 16:21:30 tvroom Exp $
+// $Id: admin.js,v 1.40 2007/08/13 18:30:19 tvroom Exp $
 
 function um_ajax(the_behaviors, the_events) {
 	var params =[];
@@ -50,7 +50,9 @@ function admin_neverdisplay(stoid, type, fhid) {
 function adminTagsCommands(id, type) {
 	var toggletags_message_id = 'toggletags-message-' + id;
 	var toggletags_message_el = $(toggletags_message_id);
-	toggletags_message_el.innerHTML = 'Executing commands...';
+	if (toggletags_message_el) {
+		toggletags_message_el.innerHTML = 'Executing commands...';
+	}
 
 	var params = [];
 	type = type || "stories";
@@ -58,6 +60,8 @@ function adminTagsCommands(id, type) {
 	if (type == "stories") {
 		params['sidenc'] = id;
 	} else if (type == "urls") {
+		params['id'] = id;
+	} else if (type == "firehose") {
 		params['id'] = id;
 	}
 	params['type'] = type;
@@ -196,6 +200,14 @@ function console_update(use_fh_interval, require_fh_timeout) {
 	setTimeout("console_update(" + use_fh_interval + "," + fh_is_timed_out +")", interval);
 }
 
+function firehose_usage() {
+	var params = [];
+	params['op'] = 'firehose_usage'
+	var interval = 300000;
+	ajax_update(params, 'firehose_usage-content');
+	setTimeout("firehose_usage()", interval);
+}
+
 function make_spelling_correction(misspelled_word, form_element) {
 	var selected_key   = "select_" + form_element + '_' + misspelled_word;
 	var selected_index = document.forms.slashstoryform.elements[selected_key].selectedIndex;
@@ -283,6 +295,7 @@ function firehose_get_and_post(id) {
 	var params=[];
 	params['id']  = id;
 	params['op'] = 'firehose_get_form';
+	firehose_collapse_entry(id);
 	var handlers = {
 		onComplete: function() { $('postform-'+id).submit();}
 	};

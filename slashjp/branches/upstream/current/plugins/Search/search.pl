@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: search.pl,v 1.99 2006/12/14 00:06:23 pudge Exp $
+# $Id: search.pl,v 1.100 2007/07/10 00:43:51 jamiemccarthy Exp $
 
 use strict;
 use Slash;
@@ -54,9 +54,6 @@ sub main {
 
 	# switch search mode to poll if in polls skin and other
 	# search type isn't specified
-# I've caught gSkin being {} here, on a test box.  Not sure if that's a
-# bug or just a misconfiguration of mine. - Jamie 2005-11-26
-use Data::Dumper; print STDERR "search.pl gSkin: " . Dumper($gSkin) if !$gSkin->{name};
 	if ($gSkin->{name} eq 'polls' && !$form->{op}) {
 		$form->{op} = 'polls';
 		$form->{section} = '';
@@ -106,6 +103,12 @@ use Data::Dumper; print STDERR "search.pl gSkin: " . Dumper($gSkin) if !$gSkin->
 
 	writeLog($form->{query})
 		if $form->{op} =~ /^(?:comments|stories|users|polls|journals|submissions|rss)$/;
+
+	my $plugins = $slashdb->getDescriptions('plugins');
+	if ($form->{query} && $plugins->{Tags}) {
+		my $tagsdb = getObject('Slash::Tags');
+		$tagsdb->logSearch($form->{query});
+	}
 }
 
 

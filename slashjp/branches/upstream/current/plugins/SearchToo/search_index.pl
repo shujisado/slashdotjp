@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: search_index.pl,v 1.7 2007/06/27 03:52:56 pudge Exp $
+# $Id: search_index.pl,v 1.9 2007/09/14 21:52:28 pudge Exp $
 
 use strict;
 
@@ -18,9 +18,14 @@ $task{$me}{code} = sub {
 
 	my $searchtoo = getObject('Slash::SearchToo');
 
+	my $backup_start_time = time;
 	slashdLog("Backing up index");
 	$searchtoo->copyBackup;
 	$searchtoo->backup(1);
+	my $backup_duration = time - $backup_start_time;
+	if ($backup_duration > 60) {
+		slashdErrnote("backup process took $backup_duration seconds; file cleanup may be required");
+	}
 
 	slashdLog("Fetching records to index");
 	my $records = $searchtoo->getStoredRecords;

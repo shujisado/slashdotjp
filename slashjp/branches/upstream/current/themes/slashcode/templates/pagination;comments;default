@@ -2,6 +2,8 @@ __section__
 default
 __description__
 
+NO LONGER USED
+
 __title__
 
 __page__
@@ -26,4 +28,4 @@ __template__
 __seclev__
 100
 __version__
-$Id: pagination;comments;default,v 1.6 2005/07/27 22:54:48 pudge Exp $
+$Id: pagination;comments;default,v 1.7 2007/10/04 19:41:22 pudge Exp $

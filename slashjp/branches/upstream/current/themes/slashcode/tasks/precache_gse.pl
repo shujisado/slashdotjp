@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: precache_gse.pl,v 1.13 2006/03/08 04:55:10 jamiemccarthy Exp $
+# $Id: precache_gse.pl,v 1.14 2007/08/18 02:19:13 jamiemccarthy Exp $
 
 # Calls getStoriesEssentials, on each DB that might perform
 # its SQL, a few seconds before the top of each minute, so
@@ -17,7 +17,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.14 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = "0-59 * * * *";
 $task{$me}{fork} = SLASHD_NOWAIT;
@@ -61,7 +61,7 @@ $task{$me}{code} = sub {
 	my $mp_tid = $constants->{mainpage_nexus_tid};
 	my $default_maxstories = getCurrentAnonymousCoward("maxstories");
 
-	my $tids = $slashdb->getStorypickableNexusChildren($mp_tid);
+	my $tids = $slashdb->getMainpageDisplayableNexuses();
 	push @$tids, $mp_tid;
 	my @gse_1min = (
 		{ fake_secs_ahead =>  45,

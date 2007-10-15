@@ -1,8 +1,9 @@
-# $Id: PLUGIN,v 1.7 2006/01/12 01:35:46 jamiemccarthy Exp $
+# $Id: PLUGIN,v 1.8 2007/08/03 20:24:04 jamiemccarthy Exp $
 description="Submission System"
 name=Submit
 htdoc=submit.pl
 mysql_dump=mysql_dump.sql
+mysql_schema=mysql_schema.sql
 template=templates/data;submit;default
 template=templates/displayForm;submit;default
 template=templates/formatSub;submit;default

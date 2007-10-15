@@ -22,13 +22,13 @@ __template__
 	IF form.pause.defined;
 		paused = form.pause;
 	ELSE;
-		paused = user.firehose_paused;
+		paused = user.firehose_pause;
 	END;
 %]
 	<span id="play"[% IF !paused %] class="hide"[% END %]><a href="javascript:firehose_play()" title="Currently paused">Play</a></span>
 	<span id="pause" [% IF paused %] class="hide"[% END %]><a href="javascript:firehose_pause()" title="Currently playing">Pause</a></span>
 
-	[% IF options.orderby == "popularity" || options.orderby == "editorpop" %]
+	[% IF options.orderby == "popularity" || options.orderby == "editorpop" || options.orderby == "popularity2" %]
 	<span id="popularity"><a href="[% gSkin.rootdir %]/firehose.pl?orderby=createtime" title="Toggle sort popularity/time - Currently popularity" onclick="firehose_set_options('orderby','createtime'); return false;">Popularity</a></span>
 	[% ELSE %]
 	<span id="time"><a href="[% gSkin.rootdir %]/firehose.pl?orderby=popularity" title="Toggle sort popularity/time - Currently Time" onclick="firehose_set_options('orderby','popularity'); return false;">Time</a></span>
@@ -49,4 +49,4 @@ __template__
 [% END %]
 
 __version__
-$Id: firehose_options;misc;default,v 1.3 2007/02/16 19:45:24 tvroom Exp $
+$Id: firehose_options;misc;default,v 1.5 2007/08/15 03:08:50 tvroom Exp $

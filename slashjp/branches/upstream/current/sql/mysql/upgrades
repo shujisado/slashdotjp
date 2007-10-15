@@ -10,7 +10,7 @@
 #      after X started at the same time that X was tagged.
 
 #
-# $Id: upgrades,v 1.1207 2007/06/29 02:40:16 pudge Exp $
+# $Id: upgrades,v 1.1255 2007/10/11 22:17:00 pudge Exp $
 #
 
 # BEGIN tf23's additions 
@@ -4597,8 +4597,6 @@ INSERT INTO vars (name, value, description) VALUES ('firehose_admindownclout', '
 # 2007-06-13
 UPDATE vars SET value = 'T_2_5_0_163' WHERE name = 'cvs_tag_currentcode';
 
-# PUDGE LAST UPDATED HERE
-
 # Turn on New Story Posted message option (for admin testing).
 INSERT INTO message_codes VALUES (20, 'New Story Posted', 100, 0, 0, 'now', '', 4);
 
@@ -4627,6 +4625,285 @@ UPDATE vars SET name='tagbox_fhpopularity2_maxudcmult' WHERE name='tagbox_fhpopu
 # 2007-06-26
 UPDATE vars SET value = 'T_2_5_0_165' WHERE name = 'cvs_tag_currentcode';
 
+DELETE FROM reskey_vars WHERE rkrid = 100 AND name = 'duration_uses';
+
+CREATE TABLE tags_searched (
+	tseid           int UNSIGNED NOT NULL AUTO_INCREMENT,
+	tagnameid       int UNSIGNED NOT NULL,
+	searched_at     datetime NOT NULL,
+	uid             mediumint UNSIGNED DEFAULT NULL,
+	PRIMARY KEY (tseid),
+	KEY (tagnameid),
+	KEY (searched_at)
+) TYPE=InnoDB;
+
+# For plugins/Firehose
+INSERT INTO vars (name, value, description) VALUES ('yoogli_oai_search', '', 'Use Yoogli OAI search');
+INSERT INTO vars (name, value, description) VALUES ('yoogli_oai_query_base', '', 'URL of the Yoogli OAI gateway');
+INSERT INTO vars (name, value, description) VALUES ('yoogli_oai_result_count', '', 'Number of requested OAI results');
+INSERT INTO vars (name, value, description) VALUES ('smalldevices_ua_regex', 'iPhone', 'regex of user agents for small devices');
+
+# 2007-07-11
+UPDATE vars SET value = 'T_2_5_0_166' WHERE name = 'cvs_tag_currentcode';
+
+# For tagboxes/FHPopularity2
+INSERT IGNORE INTO vars (name, value, description) VALUES ('tagbox_fhpopularity2_gracetime', '1200', 'Number of initial seconds of a firehose item life let it float higher in the hose');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('tagbox_fhpopularity2_gracemult', '3', 'Multiplier factor for a firehose item during the grace period');
+
+# 2007-07-17
+UPDATE vars SET value = 'T_2_5_0_167' WHERE name = 'cvs_tag_currentcode';
+
+INSERT INTO vars (name, value, description) VALUES ('tags_viewed_tagname', 'viewed', 'Tagname to assign to stories and other items a user has viewed');
+
+INSERT INTO vars (name, value, description) VALUES ('login_nontemp_days', '365', 'Days before a nontemp login expires');
+
+# For plugins/FireHose
+INSERT INTO vars (name, value, description) VALUES ('firehose_add_related', '0', 'Automatically add link to firehose discussion as related to linked story');
+
+INSERT INTO discussion_kinds (dkid, name) VALUES (6, 'submission');
+INSERT INTO discussion_kinds (dkid, name) VALUES (7, 'feed');
+
+# For plugins/Messages
+UPDATE message_deliverymodes SET name = 'AIM' WHERE code = 2;
+INSERT INTO message_deliverymodes (code, name, bitvalue) VALUES (3, 'Mobile', 8);
+UPDATE message_codes SET delivery_bvalue = 12 WHERE type = 'New Story Posted';
+
+# For tagboxes/FHPopularity2
+INSERT IGNORE INTO vars (name, value, description) VALUES ('tagbox_fhpopularity2_gracevotes', '4', 'Max number of votes for which the grace period will apply');
+
+# For plugins/Tags
+CREATE TABLE globjs_viewed (
+    gvid        int UNSIGNED NOT NULL AUTO_INCREMENT,
+    globjid     int UNSIGNED NOT NULL,
+    uid         mediumint UNSIGNED NOT NULL,
+    viewed_at   datetime NOT NULL,
+    PRIMARY KEY (gvid),
+    UNIQUE globjid_uid (globjid, uid)
+) TYPE=InnoDB;
+
+# For plugins/FireHose
+SELECT @v := tagnameid FROM vars, tagnames WHERE vars.name='tags_viewed_tagname' AND tagnames.tagname=IF(value, value, 'viewed');
+INSERT IGNORE INTO globjs_viewed SELECT NULL, globjid, uid, created_at FROM tags WHERE tagnameid=@v AND private='yes' ORDER BY tagid;
+DELETE FROM tags WHERE tagnameid=@v AND private='yes';
+
+# 2007-07-31
+UPDATE vars SET value = 'T_2_5_0_168' WHERE name = 'cvs_tag_currentcode';
+
+# For plugins/Messages
+UPDATE message_codes SET delivery_bvalue = 15 WHERE type = 'Comment Reply';
+
+# 2007-08-08
+UPDATE vars SET value = 'T_2_5_0_169' WHERE name = 'cvs_tag_currentcode';
+
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 0, 'All');
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 1, 'Tiny');
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 5, 'Medium');
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 9, 'Large');
+
+INSERT INTO code_param VALUES (NULL, 'd2_comment_limits', 1, 5);
+INSERT INTO code_param VALUES (NULL, 'd2_comment_limits', 5, 25);
+INSERT INTO code_param VALUES (NULL, 'd2_comment_limits', 9, 50);
+
+# 2007-08-15
+UPDATE vars SET value = 'T_2_5_0_170' WHERE name = 'cvs_tag_currentcode';
+
+INSERT INTO code_param VALUES (NULL, 'd2_comment_order', 0, 'Score');
+INSERT INTO code_param VALUES (NULL, 'd2_comment_order', 1, 'Date');
+
+INSERT INTO vars (name, value, description) VALUES ('mainpage_displayable_nexuses', '', 'List of nexuses that can appear on the mainpage depending on settings; if empty, getStorypickableNexusChildren is used instead');
+
+# 2007-08-22
+UPDATE vars SET value = 'T_2_5_0_171' WHERE name = 'cvs_tag_currentcode';
+
+# reskey updates
+INSERT INTO reskey_resources VALUES (10, 'misc', 'no');
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'use', 'Slash::ResKey::Checks::Post',                151);
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'all', 'Slash::ResKey::Checks::AL2::NoSubmit',       551);
+INSERT INTO reskey_resource_checks VALUES (NULL, 10, 'all', 'Slash::ResKey::Checks::Duration',            601);
+INSERT INTO reskey_vars VALUES (10, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (10, 'acl_no', 'reskey_no_misc', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (10, 'duration_max-failures',  10, 'how many failures per reskey');
+
+# 2007-08-28
+UPDATE vars SET value = 'T_2_5_0_172' WHERE name = 'cvs_tag_currentcode';
+
+ALTER TABLE firehose MODIFY type ENUM("submission","journal","bookmark","feed","story","vendor","misc") default 'submission';
+
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AL','Alabama');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AK','Alaska');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AS','American Samoa');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AZ','Arizona');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AR','Arkansas');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','CA','California');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','CO','Colorado');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','CT','Connecticut');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','DE','Delaware');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','DC','District of Columbia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','FM','Federated States of Micronesia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','FL','Florida');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','GA','Georgia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','GU','Guam');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','HI','Hawaii');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','ID','Idaho');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','IL','Illinois');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','IN','Indiana');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','IA','Iowa');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','KS','Kansas');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','KY','Kentucky');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','LA','Louisiana');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','ME','Maine');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MH','Marshall Islands');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MD','Maryland');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MA','Massachusetts');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MI','Michigan');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MN','Minnesota');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MS','Mississippi');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MO','Missouri');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MT','Montana');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NE','Nebraska');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NV','Nevada');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NH','New Hampshire');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NJ','New Jersey');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NM','New Mexico');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NY','New York');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NC','North Carolina');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','ND','North Dakota');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MP','Northern Mariana Islands');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','OH','Ohio');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','OK','Oklahoma');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','OR','Oregon');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','PW','Palau');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','PA','Pennsylvania');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','PR','Puerto Rico');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','RI','Rhode Island');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','SC','South Carolina');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','SD','South Dakota');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','TN','Tennessee');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','TX','Texas');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','UT','Utah');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','VT','Vermont');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','VI','Virgin Islands');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','VA','Virginia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WA','Washington');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WV','West Virginia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WI','Wisconsin');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WY','Wyoming');
+
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','AB','Alberta');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','BC','British Columbia');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','MB','Manitoba');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NB','New Brunswick');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NL','Newfoundland and Labrador');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NT','Northwest Territories');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NS','Nova Scotia');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NU','Nunavut');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','ON','Ontario');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','PE','Prince Edward Island');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','QC','Quebec');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','SK','Saskatchewan');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','YT','Yukon');
+
+# 2007-09-05
+UPDATE vars SET value = 'T_2_5_0_173' WHERE name = 'cvs_tag_currentcode';
+
+# 2007-09-13
+UPDATE vars SET value = 'T_2_5_0_174' WHERE name = 'cvs_tag_currentcode';
+
+INSERT INTO ajax_ops VALUES (NULL, 'page_save_user_boxes', 'Slash::Page', 'ajaxSaveUserBoxes', 'ajax_user_static', 'use');
+
+# 2007-09-17
+UPDATE vars SET value = 'T_2_5_0_175' WHERE name = 'cvs_tag_currentcode';
+
+# If this emits an error that the key does not exist, that's OK.
+# (It will not harm anything to run.)
+ALTER TABLE users_param DROP INDEX uid;
+# Check your table definition;  if its param_id is already int, this
+# ALTER is unnecessary (but will not harm anything except taking time).
+ALTER TABLE users_param MODIFY param_id int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+CREATE TABLE users_clout (
+        clout_id        int UNSIGNED NOT NULL AUTO_INCREMENT,
+        uid             mediumint UNSIGNED NOT NULL,
+        clid            smallint UNSIGNED NOT NULL,
+        clout           float UNSIGNED DEFAULT NULL,
+        PRIMARY KEY (clout_id),
+        UNIQUE uid_clid (uid, clid),
+        INDEX clid (clid)
+) TYPE=InnoDB;
+CREATE TABLE clout_types (
+        clid            smallint UNSIGNED NOT NULL AUTO_INCREMENT,
+        name            varchar(16) NOT NULL,
+        class           varchar(255) NOT NULL,
+        PRIMARY KEY (clid),
+        UNIQUE name (name)
+) TYPE=InnoDB;
+
+# For plugins/Tags
+DELETE FROM vars WHERE name IN ('tags_usecloutfield', 'tags_usecloutfield_default', 'tags_usecloutfield_mult');
+UPDATE vars SET description='Multiply the users_clout field by this' where name='tags_usecloutfield_mult';
+ALTER TABLE tagboxes ADD COLUMN clid smallint UNSIGNED NOT NULL AFTER affected_type;
+UPDATE tagboxes SET clid=1 WHERE name IN ('TagCountUser', 'Top');
+UPDATE tagboxes SET clid=2 WHERE name IN ('FHActivity', 'FHEditorPop', 'FHPopularity', 'FHPopularity2', 'FireHoseScores', 'FirstMover');
+UPDATE tagboxes SET clid=3 WHERE name IN ('CommentScoreReason');
+DROP TABLE IF EXISTS tags_peerweight;
+CREATE TABLE tags_peerclout (
+        tpcid           int UNSIGNED NOT NULL AUTO_INCREMENT,
+        uid             mediumint UNSIGNED NOT NULL DEFAULT '0',
+        clid            smallint UNSIGNED NOT NULL,
+        gen             smallint UNSIGNED NOT NULL DEFAULT '0',
+        clout           float UNSIGNED NOT NULL DEFAULT '0',
+        PRIMARY KEY (tpcid),
+        UNIQUE uid_clid (uid, clid),
+        KEY clid_gen_uid (clid, gen, uid)
+) TYPE=InnoDB;
+
+# For plugins/FireHose
+INSERT IGNORE INTO vars (name,value,description) SELECT CONCAT('tagbox_firehosescores_', SUBSTRING(name, 22)), value, description FROM vars WHERE name like 'tagbox_fhpopularity2_%';
+DELETE FROM vars WHERE name='firehose_userpop_col';
+UPDATE firehose SET popularity=popularity2;
+ALTER TABLE firehose DROP COLUMN popularity2;
+INSERT INTO clout_types (clid, name, class) VALUES (1, 'describe', 'Slash::Clout::Describe');
+INSERT INTO clout_types (clid, name, class) VALUES (2, 'vote',     'Slash::Clout::Vote');
+INSERT INTO clout_types (clid, name, class) VALUES (3, 'moderate', 'Slash::Clout::Moderate');
+INSERT INTO users_clout (clout_id, uid, clid, clout) SELECT NULL, uid, 1, value+0 FROM users_param WHERE name='tagpeerval';
+INSERT INTO users_clout (clout_id, uid, clid, clout) SELECT NULL, uid, 2, value+0 FROM users_param WHERE name='tagpeerval2';
+DELETE FROM users_param WHERE name IN ('tagpeerval', 'tagpeerval2');
+
+# 2007-09-26
+UPDATE vars SET value = 'T_2_5_0_176' WHERE name = 'cvs_tag_currentcode';
+
+# PUDGE LAST UPDATED HERE
+
+# For plugins/Tags
+UPDATE tagboxes SET clid=2 WHERE name='FirstMover';
+
+# 2007-10-04
+UPDATE vars SET value = 'T_2_5_0_177' WHERE name = 'cvs_tag_currentcode';
+
 # SLASHCODE/USEPERL LAST UPDATED HERE
 
+# 2007-10-05
+UPDATE vars SET value = 'T_2_5_0_178' WHERE name = 'cvs_tag_currentcode';
+
 # SLASHDOT LAST UPDATED HERE
+
+# For modal preferences
+INSERT INTO vars (name, value, description) VALUES ('modal_prefs_active', 1, 'Toggles modal preferences on/off');
+
+# For plugins/HumanConf
+ALTER TABLE humanconf_pool CHANGE filename filename_img VARCHAR(63) NOT NULL, ADD COLUMN filename_mp3 VARCHAR(63) DEFAULT NULL AFTER filename_img, CHANGE html html VARCHAR(255) NOT NULL;
+INSERT INTO vars (name, value, description) VALUES ('hc_cepstral', '0', 'Use Cepstral audio to spell words for the vision-impaired?');
+INSERT INTO vars (name, value, description) VALUES ('hc_cepstral_mp3encoder', '', 'Name of your system\'s preferred mp3 encoder');
+INSERT INTO vars (name, value, description) VALUES ('hc_cepstral_voices', 'William', 'Space-sep list of Cepstral voicesto use, if hc_cepstral is set');
+
+ALTER TABLE dateformats MODIFY format VARCHAR(64) DEFAULT NULL;
+UPDATE dateformats SET format='%A %B %d, @%I:%M%p IF_OLD %A %B %d %Y, @%I:%M%p' where format='%A %B %d, @%I:%M%p';
+
+# 2007-10-11
+UPDATE vars SET value = 'T_2_5_0_179' WHERE name = 'cvs_tag_currentcode';
+

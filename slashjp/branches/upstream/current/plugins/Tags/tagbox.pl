@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tagbox.pl,v 1.13 2007/02/23 20:07:16 jamiemccarthy Exp $
+# $Id: tagbox.pl,v 1.16 2007/09/26 21:25:51 jamiemccarthy Exp $
 
 use strict;
 
@@ -40,11 +40,12 @@ $task{$me}{code} = sub {
 	}
 	tagboxLog('tagbox.pl starting');
 
+	my $exclude_behind = 0;
 	my $max_activity_for_run = 10;
 	while (!$task_exit_flag) {
 
 		# Insert into tagboxlog_feeder
-		my $activity_feeder = update_feederlog();
+		my $activity_feeder = update_feederlog($exclude_behind);
 		sleep 2;
 		last if $task_exit_flag;
 
@@ -65,11 +66,12 @@ $task{$me}{code} = sub {
 		# matters much, since if nothing's going on both of the
 		# above should be doing reasonably fast SELECTs).
 		if (!$activity_feeder && !$activity_run) {
-			tagboxLog('tagbox.pl sleeping 20');
-			sleep 20;
+			tagboxLog('tagbox.pl sleeping 10');
+			sleep 10;
 		}
 		last if $task_exit_flag;
 
+		$exclude_behind = ! $exclude_behind;
 	}
 
 	my $msg = sprintf("exiting after %d seconds", time - $start_time);
@@ -78,7 +80,37 @@ $task{$me}{code} = sub {
 };
 
 sub update_feederlog {
+	my($exclude_behind) = @_;
+
 	$tagboxes = $tagboxdb->getTagboxes();
+
+	# These are kind of arbitrary constants.
+	my $max_rows_per_tagbox = 1000;
+	my $max_rows_total = $max_rows_per_tagbox * 5;
+
+	# If this is called with $exclude_behind set, ignore tagboxes
+	# which are too far behind other tagboxes.  For this purpose,
+	# only last_tagid_logged is examined, since the other two are
+	# expired and don't generally hold much data.
+	my $max_max_tagid = 0;
+	if ($exclude_behind) {
+		for my $tagbox (@$tagboxes) {
+			$max_max_tagid = $tagbox->{last_tagid_logged} if $tagbox->{last_tagid_logged} > $max_max_tagid;
+		}
+	}
+	if ($exclude_behind && $max_max_tagid > $max_rows_total*2) {
+		my %exclude = ( );
+		for my $tagbox (@$tagboxes) {
+			if ($tagbox->{last_tagid_logged} < $max_max_tagid - $max_rows_total*2) {
+				$exclude{ $tagbox->{tbid} } = 1;
+			}
+		}
+		if (%exclude) {
+			$tagboxes = [ grep { !$exclude{ $_->{tbid} } } @$tagboxes ];
+		}
+	}
+
+	return 0 unless @$tagboxes;
 
 	# In preparation for doing each tagbox's processing, figure out
 	# which data we need to select from the three source tables
@@ -97,13 +129,13 @@ sub update_feederlog {
 	my $userchange_ar = $tagsdb->sqlSelectAllHashrefArray(
 		'*', 'tags_userchange',
 		"tuid > $min_max_tuid",
-		'ORDER BY tuid');
+		"ORDER BY tuid ASC LIMIT $max_rows_total");
 	my $max_tuid = @$userchange_ar ? $userchange_ar->[-1]{tuid} : undef;
 	# Get the deactivated tags data.
 	my $deactivated_ar = $tagsdb->sqlSelectAllHashrefArray(
 		'*', 'tags_deactivated',
 		"tdid > $min_max_tdid",
-		'ORDER BY tdid');
+		"ORDER BY tdid ASC LIMIT $max_rows_total");
 	my $max_tdid = @$deactivated_ar ? $deactivated_ar->[-1]{tdid} : undef;
 	# If there were any deactivated tags, add those to the list of
 	# tags to get.
@@ -118,9 +150,8 @@ sub update_feederlog {
 		'*, UNIX_TIMESTAMP(created_at) AS created_at_ut',
 		'tags',
 		"tagid > $min_max_tagid $deactivated_tagids_clause",
-		'ORDER BY tagid');
+		"ORDER BY tagid ASC LIMIT $max_rows_total");
 	my $max_tagid = @$tags_ar ? $tags_ar->[-1]{tagid} : undef;
-	$tagsdb->addCloutsToTagArrayref($tags_ar);
 
 	# If nothing changed, we're done.
 	return 0 if
@@ -137,19 +168,25 @@ sub update_feederlog {
 	# data the tagbox returns into the tagboxlog_feeder table and
 	# then mark that tagbox as being logged up to that point.
 
+	my $clout_types = $tagsdb->getCloutTypes();
 	for my $tagbox (@$tagboxes) {
+
+		my @tags_copy = @$tags_ar;
+		my $clout_type = $clout_types->{ $tagbox->{clid} };
+		$tagsdb->addCloutsToTagArrayref(\@tags_copy, $clout_type);
 
 		my $feeder_ar;
 
 		#### Newly created tags
-		if (@$tags_ar) {
+		if (@tags_copy) {
 			my $tags_this_tagbox_ar = [
 				grep { $_->{tagid} > $tagbox->{last_tagid_logged} }
-				@$tags_ar
+				@tags_copy
 			];
 			# Mostly for responsiveness reasons, don't process
 			# more than 1000 feeder rows at a time.
-			$#$tags_this_tagbox_ar = 999 if $#$tags_this_tagbox_ar > 999;
+			$#$tags_this_tagbox_ar = $max_rows_per_tagbox-1
+					if $#$tags_this_tagbox_ar > $max_rows_per_tagbox-1;
 			if (@$tags_this_tagbox_ar) {
 				my $max_tagid_this = $tags_this_tagbox_ar->[-1]{tagid};
 				# Call the class's feed_newtags to determine importance etc.
@@ -179,7 +216,7 @@ sub update_feederlog {
 			# were deactivated since the last time this tagbox logged.
 			my $deactivated_tags_this_tagbox_ar = [
 				grep { exists $deactivated_tagids_this_tagbox_hr->{ $_->{tagid} } }
-				@$tags_ar
+				@tags_copy
 			];
 			# Add the tdid field to each tag in that list (the tagbox's
 			# feed_deactivatedtags() method will want to pass it along
@@ -190,7 +227,8 @@ sub update_feederlog {
 			if (@$deactivated_tags_this_tagbox_ar) {
 				# Mostly for responsiveness reasons, don't process
 				# more than 1000 feeder rows at a time.
-				$#$deactivated_tags_this_tagbox_ar = 999 if $#$deactivated_tags_this_tagbox_ar > 999;
+				$#$deactivated_tags_this_tagbox_ar = $max_rows_per_tagbox-1
+					if $#$deactivated_tags_this_tagbox_ar > $max_rows_per_tagbox-1;
 				my $max_tdid_this = $deactivated_tags_this_tagbox_ar->[-1]{tdid};
 				# Call the class's feed_deactivatedtags to determine importance etc.
 				$feeder_ar = undef;
@@ -214,7 +252,8 @@ sub update_feederlog {
 			if (@$userchanges_this_tagbox_ar) {
 				# Mostly for responsiveness reasons, don't process
 				# more than 1000 feeder rows at a time.
-				$#$userchanges_this_tagbox_ar = 999 if $#$userchanges_this_tagbox_ar > 999;
+				$#$userchanges_this_tagbox_ar = $max_rows_per_tagbox-1
+					if $#$userchanges_this_tagbox_ar > $max_rows_per_tagbox-1;
 				my $max_tuid_this = $userchanges_this_tagbox_ar->[-1]{tuid};
 				# Call the class's feed_userchanges to determine importance etc.
 				$feeder_ar = undef;

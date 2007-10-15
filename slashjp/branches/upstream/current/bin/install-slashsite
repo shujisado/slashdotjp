@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: install-slashsite,v 1.48 2006/08/29 19:43:13 jamiemccarthy Exp $
+# $Id: install-slashsite,v 1.49 2007/08/30 20:54:21 jamiemccarthy Exp $
 
 # This is the uber install script.
 # -Brian (brian@tangent.org)
@@ -20,7 +20,7 @@ use Slash;
 use Slash::DB;
 use Slash::Install;
 
-(my $VERSION) = ' $Revision: 1.48 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.49 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 (my $SLASH_PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
@@ -603,7 +603,7 @@ $include
     <Perl>
         # if you need to debug, temporarily turn this on
         # \$Apache::Registry::Debug = 4;
-        my \@pls     = qw(index comments article users journal search);
+        my \@pls     = qw(index comments article users journal search ajax firehose);
         my \$vhost   = '$host_noport';
         my \$docroot = '$prefix_site/$sitename/htdocs';
         my \$r       = Apache::RegistryLoader->new;

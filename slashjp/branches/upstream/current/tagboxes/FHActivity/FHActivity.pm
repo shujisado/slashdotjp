@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHActivity.pm,v 1.4 2007/02/22 22:45:21 jamiemccarthy Exp $
+# $Id: FHActivity.pm,v 1.5 2007/09/26 21:25:51 jamiemccarthy Exp $
 
 package Slash::Tagbox::FHActivity;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -149,7 +149,7 @@ sub run {
 
 	# Add up unique users who have tagged this globjid.
 	my $tags_ar = $tagboxdb->getTagboxTags($self->{tbid}, $affected_id, 0);
-	$tagsdb->addCloutsToTagArrayref($tags_ar);
+	$tagsdb->addCloutsToTagArrayref($tags_ar, 'vote');
 	my %user_clout = ( map { ($_->{uid}, $_->{user_clout}) } @$tags_ar );
 	for my $uid (keys %user_clout) {
 		$activity += $user_clout{$uid};

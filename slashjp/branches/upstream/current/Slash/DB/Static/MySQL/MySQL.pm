@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.257 2007/06/21 02:35:33 pudge Exp $
+# $Id: MySQL.pm,v 1.259 2007/08/01 17:31:12 jamiemccarthy Exp $
 
 package Slash::DB::Static::MySQL;
 
@@ -20,7 +20,7 @@ use URI ();
 use vars qw($VERSION);
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.257 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.259 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
@@ -222,8 +222,8 @@ sub getArchiveList {
 	return 0 unless $days_to_archive;
 
 	my $mp_tid = getCurrentStatic('mainpage_nexus_tid');
-	my $nexuses = $self->getNexusChildrenTids($mp_tid);
-	my $nexus_clause = join ',', @$nexuses, $mp_tid;
+	my @nexuses = $self->getNexusTids();
+	my $nexus_clause = join ',', @nexuses, $mp_tid;
 	
 	# Close associated story so that final archival .shtml is written
 	# to disk. This is accomplished by the archive.pl task.

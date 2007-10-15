@@ -54,13 +54,25 @@ __template__
 		<td valign="middle">
         	<p><b>Discussion Style</b><p>
 		<blockquote><div>
-        	<input type="radio" name="discussion2" value="none"[% constants.markup_checked_attribute IF !user_edit.discussion2 || (user_edit.discussion2 && user_edit.discussion2 != "uofm" && user_edit.discussion2 != "slashdot") %]> Normal<br>
+        	<input type="radio" name="discussion2" value="none"[% constants.markup_checked_attribute IF !user_edit.discussion2 || (user_edit.discussion2 && user_edit.discussion2 != "uofm" && user_edit.discussion2 != "slashdot") %]> Slashdot Classic Discussion System<br>
 		[% IF user.is_admin || user.acl.discussion2_uofm %]
         	<input type="radio" name="discussion2" value="uofm"[% constants.markup_checked_attribute IF user_edit.discussion2 == "uofm" %]> University of Michigan Testing<br>
-		[% END; IF !user.acl.discussion2_uofm || user.is_admin %]
-        	<input type="radio" name="discussion2" value="slashdot"[% constants.markup_checked_attribute IF user_edit.discussion2 == "slashdot" %]> Slashdot's New Discussion System Testing<br>
 		[% END %]
+        	<input type="radio" name="discussion2" value="slashdot"[% constants.markup_checked_attribute IF user_edit.discussion2 == "slashdot" %]> Slashdot Interactive Discussion System (a.k.a. D2)<br>
 		</div></blockquote>
+
+		[% IF user_edit.discussion2 && user_edit.discussion2 == "slashdot" %]
+		<blockquote><div>
+		How Many Comments
+		[% comment_q = Slash.db.getDescriptions('d2_comment_q');
+		   comment_q_def = user_edit.d2_comment_q || 0;
+		   Slash.createSelect('d2_comment_q', comment_q, comment_q_def, 1) %]<br>
+		Comment Retrieval Order
+		[% comment_order = Slash.db.getDescriptions('d2_comment_order');
+		   comment_order_def = user_edit.d2_comment_order || 0;
+		   Slash.createSelect('d2_comment_order', comment_order, comment_order_def, 1) %]
+		</div></blockquote>
+		[% END %]
 
         	<p><b>Email Display</b>
 		(currently
@@ -294,4 +306,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: editComm;users;default,v 1.58 2006/10/26 17:33:09 jamiemccarthy Exp $
+$Id: editComm;users;default,v 1.64 2007/10/11 08:35:53 pudge Exp $

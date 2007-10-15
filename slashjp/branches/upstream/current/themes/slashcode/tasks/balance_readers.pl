@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: balance_readers.pl,v 1.15 2006/01/12 21:31:22 jamiemccarthy Exp $
+# $Id: balance_readers.pl,v 1.16 2007/08/29 15:58:58 jamiemccarthy Exp $
 
 # For now this just gathers data.  The actual reweighting will come
 # later. - Jamie 2004/11/10
@@ -131,6 +131,21 @@ sub check_readers {
 		}
 
 		# Get the processlist for this virtual user.
+		# This requires Process_priv for the mysql user, which
+		# may not have been granted at install time (it wasn't
+		# in the docs until August 2007).  If you are seeing
+		# isalive='no' in your dbs table, was_running='no' in
+		# your dbs_reader status table, and "STOPPED!" even
+		# when you know your slave is running, you need a
+		# GRANT PROCESS ON yourdb.* TO 'user'@'machine'
+		# IDENTIFIED BY '(passwd)'.
+		# XXX This code needs to be updated anyway to use the
+		# simpler "Seconds_Behind_Master" from "SHOW SLAVE STATUS"
+		# where available.  I'm not sure what version that field
+		# was added (between 4.0.12 and 5.0.26 is all I know) but
+		# at some point the simpler algorithm should be added and
+		# this kludgy algorithm either removed or used as a backup
+		# for older versions.
 		my $sth = $db->{_dbh}->prepare("SHOW FULL PROCESSLIST");
 		$sth->execute();
 #		my $n_sleeping = 0;

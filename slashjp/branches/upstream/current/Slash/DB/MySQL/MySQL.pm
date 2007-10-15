@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.969 2007/06/19 22:24:52 pudge Exp $
+# $Id: MySQL.pm,v 1.984 2007/10/09 18:57:09 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.969 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.984 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -224,20 +224,56 @@ my %descriptions = (
 	'bytelimit_sub'
 		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='bytelimit' OR type='bytelimit_sub'") },
 
-	countries => sub {
-		$_[0]->sqlSelectMany(
-			'code,CONCAT(code," (",name,")") as name',
-			'string_param',
-			'type="iso_countries"',
-			'ORDER BY name'
-		);
-	},
+	'countries'
+		=> sub { $_[0]->sqlSelectMany(
+				'code,CONCAT(code," (",name,")") as name',
+				'string_param',
+				'type="iso_countries"',
+				'ORDER BY name'
+			);
+		},
+
+	'us_states'
+		=> sub { $_[0]->sqlSelectMany(
+				'code,CONCAT(code," (",name,")") as name',
+				'string_param',
+				'type="us_states"',
+				'ORDER BY name'
+			);
+		},
+
+	'ca_provinces'
+		=> sub { $_[0]->sqlSelectMany(
+				'code,CONCAT(code," (",name,")") as name',
+				'string_param',
+				'type="ca_provinces"',
+				'ORDER BY name'
+			);
+		},
+
+	'states_and_provinces'
+		=> sub { $_[0]->sqlSelectMany(
+				'code,CONCAT(code," (",name,")") as name',
+				'string_param',
+				'type="ca_provinces" OR type="us_states"',
+				'ORDER BY name'
+			);
+		},
 
 	'forums'
 		=> sub { $_[0]->sqlSelectMany('subsections.id, subsections.title', 'section_subsections, subsections', "section_subsections.subsection=subsections.id AND section_subsections.section='forums'") },
 
 	'discussion_kinds'
 		=> sub { $_[0]->sqlSelectMany('dkid, name', 'discussion_kinds') },
+
+	'd2_comment_q'
+		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='d2_comment_q'") },
+
+	'd2_comment_limits'
+		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='d2_comment_limits'") },
+
+	'd2_comment_order'
+		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='d2_comment_order'") },
 
 );
 
@@ -265,6 +301,7 @@ sub _whereFormkey {
 # XXX I don't think this method is used anywhere.  Also, I'm
 # really sure these "Notes" are about five years out of date.
 # Can we delete this code? - Jamie, August 2006
+# (It's used in Slash::DB::Utility::new)
 
 ########################################################
 # Notes:
@@ -911,7 +948,11 @@ sub getNexusChildrenTids {
 			# nexuses as grandchildren that must be
 			# walked through on the next pass.
 			for my $gchild (keys %{$tree->{$child}{child}}) {
-				# XXXSECTIONTOPICS skip if min_weight < 0?
+				# skip if the min_weight from this parent to
+				# this child is negative (indicating the
+				# child topic _forbids_ the parent topic)
+				next if $tree->{$child}{child}{$gchild} < 0;
+				# only add nexus topics
 				next unless $tree->{$gchild}{nexus};
 				$grandchildren{$gchild} = 1;
 			}
@@ -1800,7 +1841,7 @@ sub _logtoken_delete_memcached {
 
 # yes, $special should probably not be a numeral .... -- pudge
 sub getLogToken {
-	my($self, $uid, $new, $special) = @_;
+	my($self, $uid, $new, $special, $bump_public) = @_;
 
 	my $user = getCurrentUser();
 	my $uid_q = $self->sqlQuote($uid);
@@ -1843,11 +1884,18 @@ sub getLogToken {
 	}
 #print STDERR scalar(gmtime) . " $$ getLogToken value '$value'\n";
 
-	# bump expiration for temp logins
+	# always bump expiration for temp logins
 	if ($value && $temp_str eq 'yes') {
 		my $minutes = getCurrentStatic('login_temp_minutes') || 10;
 		$self->updateLogTokenExpires($uid, $temp_str, $public_str, $locationid, $value, $minutes*60);
-#print STDERR scalar(gmtime) . " $$ getLogToken called updateLogTokenExpires\n";
+#print STDERR scalar(gmtime) . " $$ getLogToken called updateLogTokenExpires for temp, uid=$uid value=$value\n";
+	}
+
+	# bump expiration for public (aka RSS) logins if the caller requested it
+	if ($value && $public_str eq 'yes' && $bump_public) {
+		my $days = getCurrentStatic('login_nontemp_days') || 365;
+		$self->updateLogTokenExpires($uid, $temp_str, $public_str, $locationid, $value, $days*86400);
+#print STDERR scalar(gmtime) . " $$ getLogToken called updateLogTokenExpires for public, uid=$uid value=$value\n";
 	}
 
 	# if $new, then create a new value if none exists
@@ -1872,7 +1920,9 @@ sub setLogToken {
 	my $logtoken = createLogToken();
 	my($locationid, $temp_str, $public_str) = $self->_getLogTokenCookieLocation($uid);
 
-	my($interval, $seconds) = ('1 YEAR', 365 * 86400);
+	my $constants = getCurrentStatic();
+	my $nontemp_days = $constants->{login_nontemp_days} || 365;
+	my($interval, $seconds) = ("$nontemp_days DAY", $nontemp_days * 86400);
 	if ($temp_str eq 'yes') {
 		my $minutes = getCurrentStatic('login_temp_minutes') || 1;
 		($interval, $seconds) = ("$minutes MINUTE", $minutes * 60);
@@ -4944,11 +4994,12 @@ sub _get_where_and_valuelist_al2 {
 		@values = values %$srcids;
 	} elsif (ref($srcids) eq 'ARRAY') {
 		@values = @$srcids;
-	} else {
-		use Data::Dumper;
-		warn "logic error: arg to _get_where_and_valuelist_al2 was: " . Dumper($srcids);
-		# We will return an appropriate error value below.
 	}
+#	else {
+#		use Data::Dumper;
+#		warn "logic error: arg to _get_where_and_valuelist_al2 was: " . Dumper($srcids);
+#		# We will return an appropriate error value below.
+#	}
 
 	# A srcid type that get_srcid_sql_in() does not accept is the
 	# raw IP number.  Eliminate those.
@@ -6070,14 +6121,16 @@ sub getCommentTextCached {
 		|| $user->{maxcommentsize} != $constants->{default_maxcommentsize};
 
 	# loop here, pull what cids we can
-	my($mcd_debug, $mcdkey, $mcdkey_abbrev, $mcdkeylen);
+	my($mcd_debug, $mcdkey, $mcdkey_abbrev, $mcdkey_full, $mcdkeylen);
 	if ($mcd) {
 		# MemCached key prefix "ctp" means "comment_text, parsed".
+		# "f" is same thing but *full* comment, not chopped.
 		# "a" means "abbreviated" (keep same len as mcdkey)
 		# Prepend our site key prefix to try to avoid collisions
 		# with other sites that may be using the same servers.
 		$mcdkey_abbrev = "$self->{_mcd_keyprefix}:cta:";
 		$mcdkey        = "$self->{_mcd_keyprefix}:ctp:";
+		$mcdkey_full   = "$self->{_mcd_keyprefix}:ctf:";
 		$mcdkeylen = length($mcdkey);
 		if ($constants->{memcached_debug}) {
 			$mcd_debug = { start_time => Time::HiRes::time };
@@ -6092,11 +6145,12 @@ sub getCommentTextCached {
 		}
 		my @keys_try =
 			map {
-				$abbreviate_ok && $comments->{$_}{class} eq 'oneline'
+				$abbreviate_ok && $comments->{$_}{class} eq 'oneline' && !($opt->{cid} && $_ == $opt->{cid})
 					? $mcdkey_abbrev . $_
-					: $mcdkey . $_
+					: $possible_chop && !($opt->{cid} && $_ == $opt->{cid})
+						? $mcdkey . $_
+						: $mcdkey_full . $_
 			}
-			grep { !($opt->{cid} && $_ == $opt->{cid}) }
 			@$cids_needed_ar;
 		$comment_text = $mcd->get_multi(@keys_try);
 		my @old_keys = keys %$comment_text;
@@ -6299,7 +6353,7 @@ sub getCommentTextCached {
 			}
 		}
 
-		if ($mcd && !($opt->{cid} && $opt->{cid} == $cid)) {
+		if ($mcd) {
 			my $exptime = $constants->{memcached_exptime_comtext};
 			$exptime = 86400 if !defined($exptime);
 			my $append = '';
@@ -6307,6 +6361,8 @@ sub getCommentTextCached {
 			if (defined $comments->{$cid}{abbreviated}) {
 				$append = $comments->{$cid}{abbreviated} . ':';
 				$mcdkey_cid = $mcdkey_abbrev . $cid;
+			} elsif (!$possible_chop) {
+				$mcdkey_cid = $mcdkey_full . $cid;
 			}
 			my $retval = $mcd->set($mcdkey_cid, $append . $comment_text->{$cid}, $exptime);
 			if ($mcd && $constants->{memcached_debug} && $constants->{memcached_debug} > 1) {
@@ -6453,8 +6509,8 @@ sub getStoriesBySubmitter {
 
 	my $id_q = $self->sqlQuote($id);
 	my $mp_tid = getCurrentStatic('mainpage_nexus_tid');
-	my $nexuses = $self->getNexusChildrenTids($mp_tid);
-	my $nexus_clause = join ',', @$nexuses, $mp_tid;
+	my @nexuses = $self->getNexusTids();
+	my $nexus_clause = join ',', @nexuses, $mp_tid;
 
 	$limit = 'LIMIT ' . $limit if $limit;
 	my $answer = $self->sqlSelectAllHashrefArray(
@@ -6475,8 +6531,8 @@ sub countStoriesBySubmitter {
 
 	my $id_q = $self->sqlQuote($id);
 	my $mp_tid = getCurrentStatic('mainpage_nexus_tid');
-	my $nexuses = $self->getNexusChildrenTids($mp_tid);
-	my $nexus_clause = join ',', @$nexuses, $mp_tid;
+	my @nexuses = $self->getNexusTids();
+	my $nexus_clause = join ',', @nexuses, $mp_tid;
 
 	my($count) = $self->sqlSelect('count(*)',
 		'stories, story_topics_rendered',
@@ -6723,7 +6779,8 @@ sub getStoriesEssentials {
 	# Nope, memcached is not going to help us.  Keep going.
 
 	# Now, if sectioncollapse is set, expand the tid to include all of
-	# its nexus children.
+	# its nexus children.  (Note that $tid may have included duplicate
+	# values;  after this function call, it no longer will.)
 	$tid = $self->_gse_sectioncollapse($tid, $tid_x) if $sectioncollapse;
 
 	# Figure out whether min_stoid is usable.
@@ -7009,7 +7066,11 @@ sub _gse_canonicalize {
 sub _gse_sectioncollapse {
 	my($self, $opt_ar, $tid_x_ar) = @_;
 	my %nexuses = map { ($_, 1) } @$opt_ar;
-	for my $tid (@$opt_ar) {
+	for my $tid (keys %nexuses) {
+		# XXX Should optimize this by writing a version of
+		# getNexusChildrenTids() which takes multiple inputs
+		# and chases them all down together.  Not a huge
+		# deal since sectioncollapse is probably going away.
 		for my $new (@{ $self->getNexusChildrenTids($tid) }) {
 			$nexuses{$new} = 1;
 		}
@@ -7481,7 +7542,7 @@ sub createStory {
 			}
 		}
 
-		$story->{body_length} = length($story->{bodytext});
+		$story->{body_length} = defined($story->{bodytext}) ? length($story->{bodytext}) : 0;
 		$story->{word_count} = countWords($story->{introtext}) + countWords($story->{bodytext});
 		$story->{primaryskid} = $primaryskid;
 		$story->{tid} = $tids->[0];
@@ -8585,6 +8646,7 @@ sub getRecentComments {
 # automatically converting them to stoids.
 sub getStoidFromSidOrStoid {
 	my($self, $id) = @_;
+	return undef unless $id;
 	return $id if $id =~ /^\d+$/;
 	return $self->getStoidFromSid($id);
 }
@@ -8600,6 +8662,7 @@ sub getStoidFromSidOrStoid {
 # will it actually put any load on the DB.
 sub getStoidFromSid {
 	my($self, $sid) = @_;
+	return undef if !$sid;
 	return undef if $sid !~ regexSid();
 	if (my $stoid = $self->{_sid_conversion_cache}{$sid}) {
 		return $stoid;
@@ -8607,7 +8670,9 @@ sub getStoidFromSid {
 	my($mcd, $mcdkey);
 	if ($mcd = $self->getMCD()) {
 		$mcdkey = "$self->{_mcd_keyprefix}:sid:";
-		if (my $answer = $mcd->get("$mcdkey$sid")) {
+		my $answer = $mcd->get("$mcdkey$sid");
+		if (defined $answer) {
+			$answer = undef if $answer eq '0';
 			$self->{_sid_conversion_cache}{$sid} = $answer;
 			return $answer;
 		}
@@ -8616,7 +8681,7 @@ sub getStoidFromSid {
 	my $stoid = $self->sqlSelect("stoid", "stories", "sid=$sid_q");
 	$self->{_sid_conversion_cache}{$sid} = $stoid;
 	my $exptime = 86400;
-	$mcd->set("$mcdkey$sid", $stoid, $exptime) if $mcd;
+	$mcd->set("$mcdkey$sid", $stoid || 0, $exptime) if $mcd;
 	return $stoid;
 }
 
@@ -10639,7 +10704,11 @@ sub getUser {
 		if (defined($mcdanswer) || $used_shortcut) {
 			print STDERR scalar(gmtime) . " $$ mcd getUser '$mcdkey$uid' elapsed=$elapsed cache HIT" . ($used_shortcut ? " shortcut" : "") . "\n";;
 		} else {
-			print STDERR scalar(gmtime) . " $$ mcd getUser '$mcdkey$uid' elapsed=$elapsed cache MISS can '$gtd->{can_use_mcd}' rawmcdanswer: " . Dumper($rawmcdanswer);
+			# Just to prevent "uninitialized" warnings on debug print
+			$val ||= '';
+			$gtd->{all} ||= '';
+			$gtd->{can_use_mcd} ||= '';
+			print STDERR scalar(gmtime) . " $$ mcd getUser '$mcdkey$uid' elapsed=$elapsed cache MISS can '$gtd->{can_use_mcd}' val '$val' gtd-all='$gtd->{all}' gtd-cum='$gtd->{can_use_mcd}' rawmcdanswer: " . Dumper($rawmcdanswer);
 		}
 	}
 
@@ -10677,7 +10746,8 @@ sub _getUser_do_selects {
 
 	# Now get the params and the ACLs.  In the special case
 	# where we are being asked to get "all" params (not an
-	# arrayref of specific params), we also get the ACLs too.
+	# arrayref of specific params), we also get the ACLs
+	# and clouts too.
 	my $param_ar = [ ];
 	if ($params eq "all") {
 		# ...we could rewrite this to use sqlSelectAllKeyValue,
@@ -10695,6 +10765,14 @@ sub _getUser_do_selects {
 			"uid = $uid_q");
 		for my $acl (@$acl_ar) {
 			$answer->{acl}{$acl} = 1;
+		}
+		my $clout_types = $self->getCloutTypes();
+		my $clout_hr = $self->sqlSelectAllKeyValue(
+			'clid, clout',
+			'users_clout',
+			"uid = $uid_q");
+		for my $clid (keys %$clout_hr) {
+			$answer->{clout}{ $clout_types->{$clid} } = $clout_hr->{$clid};
 		}
 		if ($mcddebug > 1) {
 			print STDERR scalar(gmtime) . " $$ mcd gU_ds got all " . scalar(@$acl_ar) . " acls\n";
@@ -10935,6 +11013,9 @@ sub _getUser_get_table_data {
 			}
 			if (grep { $_ ne 'users_hits' } @$tables_needed) {
 				$can_use_mcd = 1;
+			}
+			if ($mcddebug > 1) {
+				print STDERR scalar(gmtime) . " $$ mcd _getU_gtd need_db='$need_db' can_use_mcd='$can_use_mcd' tables_needed='@$tables_needed' gtdcachekey='$gtdcachekey'\n";
 			}
 		}
 
@@ -11673,6 +11754,15 @@ sub getRandomSpamArmor {
 }
 
 ########################################################
+sub getMainpageDisplayableNexuses {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+	my $nexus_list = $constants->{mainpage_displayable_nexuses} || '';
+	return [ split /\s*,\s*/, $nexus_list ] if $nexus_list;
+	return $self->getStorypickableNexusChildren(0, 1);
+}
+
+########################################################
 sub getStorypickableNexusChildren {
 	my($self, $tid, $include_tid) = @_;
 	my $constants = getCurrentStatic();
@@ -12064,6 +12154,56 @@ sub _addGlobjEssentials_comments {
 	}
 }
 
+# Returns a hashref in which the keys are either numeric clid's OR
+# the names of clout types, and the values are the opposite.  So if
+# the clid_types table is the row (1, 'vote', 'Slash::Foo'),
+# then this method will return the hashref: { vote => '1',
+# '1' => 'vote' }.
+# XXX is the 'name' column really necessary or can I just have all
+# the code refer to the class name?
+
+sub getCloutTypes {
+	my($self) = @_;
+
+	my $constants = getCurrentStatic();
+	my $table_cache		= "_clouttypes_cache";
+	my $table_cache_time	= "_clouttypes_cache_time";
+	_genericCacheRefresh($self, 'clouttypes', $constants->{block_expire});
+	return $self->{$table_cache} if $self->{$table_cache_time};
+
+	# Cache needs to be built, so build it.
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $hr = $reader->sqlSelectAllKeyValue('clid, name', 'clout_types');
+	my @clids = keys %$hr;
+	for my $clid (@clids) { $hr->{$hr->{$clid}} = $clid }
+
+	$self->{$table_cache} = $hr;
+	$self->{$table_cache_time} = time;
+	return $hr;
+}
+
+# If the clid_types table is the row (1, 'vote', 'Slash::Clout::Vote'),
+# then this method will return the hashref: { 1 =>
+# { name => 'vote' }, { class => 'Slash::Clout::Vote' }, { clid => 1 } }
+
+sub getCloutInfo {
+	my($self) = @_;
+
+	my $constants = getCurrentStatic();
+	my $table_cache		= "_cloutclass_cache";
+	my $table_cache_time	= "_cloutclass_cache_time";
+	_genericCacheRefresh($self, 'cloutclass', $constants->{block_expire});
+	return $self->{$table_cache} if $self->{$table_cache_time};
+
+	# Cache needs to be built, so build it.
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $hr = $reader->sqlSelectAllHashref('clid', '*', 'clout_types');
+
+	$self->{$table_cache} = $hr;
+	$self->{$table_cache_time} = time;
+	return $hr;
+}
+
 sub getActiveAdminCount {
 	my($self) = @_;
 	my $admin_timeout = getCurrentStatic('admin_timeout');
@@ -12087,7 +12227,8 @@ sub getRelatedStoriesForStoid {
 }
 
 sub setRelatedStoriesForStory {
-	my($self, $sid_or_stoid, $rel_sid_hr, $rel_url_hr, $rel_cid_hr) = @_;
+	my($self, $sid_or_stoid, $rel_sid_hr, $rel_url_hr, $rel_cid_hr, $rel_fh_hr) = @_;
+	my $constants = getCurrentStatic();
 	my $stoid = $self->getStoidFromSidOrStoid($sid_or_stoid);
 	my $stoid_q = $self->sqlQuote($stoid);
 	my $story = $self->getStory($stoid);
@@ -12167,6 +12308,18 @@ sub setRelatedStoriesForStory {
 			ordernum => $i,
 		});
 		$i++;
+	}
+
+	if ($constants->{firehose_add_related}) {
+		foreach my $rel_fh (keys %$rel_fh_hr) {
+			$self->sqlInsert("related_stories", {
+				stoid 		=> $stoid,
+				fhid 		=> $rel_fh,
+				title		=> "Firehose: $rel_fh_hr->{$rel_fh}->{title}",
+				ordernum 	=> $i
+			});
+			$i++;
+		}
 	}
 	
 	foreach my $rel_url (keys %$rel_url_hr) {

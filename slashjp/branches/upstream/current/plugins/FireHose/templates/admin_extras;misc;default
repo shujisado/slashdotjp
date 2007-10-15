@@ -40,7 +40,7 @@ __template__
         </tr>
 </table>
 </form>
-[% IF similar_stories.size > 0 %]
+[% IF similar_stories.size > 0 or yoogli_similar_stories %]
 	<table border="0" cellpadding="2" cellspacing="0" class="data">
 		<tr class="data_head"><td><b>Similar Stories</b></td></tr>
 		[% FOREACH story = similar_stories %]
@@ -55,7 +55,7 @@ __template__
 			<td align="RIGHT" valign="TOP">[% story.weight %]</td>
 			<td valign="TOP"><a href="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
 			[% story.title %]</a></td>
-			<td valign="TOP">[% Slash.timeCalc(story.time) %]</td>
+			<td valign="TOP">[% Slash.timeCalc(story.time, "%Y-%m-%d") %]</td>
 			<td valign="TOP">
 			[% FOREACH word = story.words %]
 				[%- word -%][% UNLESS words_seen.$word %]<input type="checkbox" name="set_common_word" value="[% word %]">[%- END -%]
@@ -64,7 +64,17 @@ __template__
 			</td>
 			</tr>
 		[% END %]
+                [% FOREACH story = yoogli_similar_stories.keys.sort %]
+                        <tr>
+                        <td>&nbsp;</td>
+                        <td>Y=[% yoogli_similar_stories.$story.relevance.substr(0, 4) %]</td>
+                        <td valign="TOP"><a href="[% yoogli_similar_stories.$story.url %]" title="[% yoogli_similar_stories.$story.title %]">
+                        [% yoogli_similar_stories.$story.title.substr(0, 35) %]...</a></td>
+                        <td valign="TOP">[% Slash.timeCalc(yoogli_similar_stories.$story.date, "%Y-%m-%d") %]</td>
+                        <td>&nbsp;</td>
+                        </tr>
+                [% END %]
 	</table>
 [% END %]
 __version__
-$Id: admin_extras;misc;default,v 1.7 2006/12/07 15:45:53 lancelot Exp $
+$Id: admin_extras;misc;default,v 1.11 2007/08/07 21:00:22 tvroom Exp $

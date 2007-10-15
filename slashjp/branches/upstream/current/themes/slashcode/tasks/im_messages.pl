@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: im_messages.pl,v 1.18 2007/06/28 20:20:09 entweichen Exp $
+# $Id: im_messages.pl,v 1.19 2007/07/31 13:47:08 entweichen Exp $
 
 use strict;
 
@@ -33,12 +33,11 @@ $task{$me}{code} = sub {
 		return;
 	}
 
-	# Pull out IM message info, system message info, and admins.
-	my $code_in_str = join ',', map { "'$_'" } getMessageCodesByType('IM');
-	my $im_mode = getMessageDeliveryByName("IM");
+	# Pull out AIM message info, system message info, and admins.
+	my $code_in_str = join ',', map { "'$_'" } getMessageCodesByType('AIM');
+	my $im_mode = getMessageDeliveryByName("AIM");
 	my $messages_obj = getObject("Slash::Messages");
 	my $sysmessage_code = $messages_obj->getDescription("messagecodes", "System Messages");
-	my $sysmessage_ops = $messages_obj->getMessageCode($sysmessage_code);
 	my $admins = $slashdb->getAdmins();
 	my $sidprefix = "$constants->{absolutedir_secure}/article.pl?sid=";
 
@@ -68,7 +67,7 @@ $task{$me}{code} = sub {
 		}
 
 		my %messages;
-		# Pull out all IM compatible messages < 10 minutes old. Cache the message text.
+		# Pull out all AIM compatible messages < 10 minutes old. Cache the message text.
 		$messages{'message_drop'} = $slashdb->sqlSelectAllHashref(
 			"id", "id, user, code", "message_drop",
 			"(code IN ($code_in_str)) and
@@ -149,7 +148,7 @@ sub getMessageCodesByType {
 		$slashdb->sqlSelectAllHashref("code", "code, delivery_bvalue", "message_codes", "delivery_bvalue >= $code");
 	foreach my $delivery_code (keys %$delivery_codes) {
 		push(@message_codes, $delivery_codes->{$delivery_code}{"code"})
-			if ($delivery_codes->{$delivery_code}{"delivery_bvalue"} & $code);
+			if (int($delivery_codes->{$delivery_code}{"delivery_bvalue"}) & int($code));
 	}
 
 	return(@message_codes);

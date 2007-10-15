@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.20 2007/02/06 19:46:32 tvroom Exp $
+# $Id: mysql_dump.sql,v 1.23 2007/09/26 19:39:13 pudge Exp $
 #
 
 INSERT INTO reskey_resources VALUES (100, 'ajax_base', 'no');
@@ -25,7 +25,6 @@ INSERT INTO reskey_resource_checks VALUES (NULL, 100, 'all', 'Slash::ResKey::Che
 INSERT INTO reskey_vars VALUES (100, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
 INSERT INTO reskey_vars VALUES (100, 'acl_no', 'reskey_no_ajax', 'If this ACL present, can\'t use resource');
 INSERT INTO reskey_vars VALUES (100, 'duration_max-failures', 1, 'how many failures per reskey');
-INSERT INTO reskey_vars VALUES (100, 'duration_uses', 10, 'min duration (in seconds) between uses');
 
 
 ##### ajax_admin
@@ -168,3 +167,17 @@ INSERT INTO ajax_ops VALUES (NULL, 'admin_learnword', 'Slash::Admin', 'admin_lea
 
 INSERT INTO ajax_ops VALUES (NULL, 'admin_neverdisplay', 'Slash::Admin', 'ajax_neverdisplay', 'ajax_admin_static', 'use');
 INSERT INTO ajax_ops VALUES (NULL, 'getTopVendorStory', 'Slash::SlashdotJournal', 'ajaxShowVendorStory', 'ajax_user', 'createuse');
+
+INSERT INTO ajax_ops VALUES (NULL, 'page_save_user_boxes', 'Slash::Page', 'ajaxSaveUserBoxes', 'ajax_user_static', 'use');
+
+
+##### d2 stuff
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 0, 'All');
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 1, 'Tiny');
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 5, 'Medium');
+INSERT INTO code_param VALUES (NULL, 'd2_comment_q', 9, 'Large');
+
+INSERT INTO code_param VALUES (NULL, 'd2_comment_limits', 1, 5);
+INSERT INTO code_param VALUES (NULL, 'd2_comment_limits', 5, 25);
+INSERT INTO code_param VALUES (NULL, 'd2_comment_limits', 9, 50);
+

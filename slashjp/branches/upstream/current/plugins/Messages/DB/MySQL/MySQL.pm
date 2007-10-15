@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.34 2007/02/22 05:14:53 entweichen Exp $
+# $Id: MySQL.pm,v 1.35 2007/08/08 16:57:57 jamiemccarthy Exp $
 
 package Slash::Messages::DB::MySQL;
 
@@ -31,7 +31,7 @@ use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.34 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.35 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 my %descriptions = (
 	'deliverymodes'
@@ -452,6 +452,12 @@ sub _getMailingUsers {
 		sectioncollapse
 		daily_mail_special seclev
 	)];
+	# XXX While normally I'm all in favor of using object-specific
+	# get and set methods, here getUser() may be the wrong approach.
+	# We may have tens of thousands of users in @$users and it will
+	# be a significant optimization of resources both for slashd and
+	# for the database to grab just the above fields all at once.
+	# -Jamie 2007-08-08
 	$users     = { map { $_ => $self->getUser($_, $fields) } @$users };
 	return $users;
 }

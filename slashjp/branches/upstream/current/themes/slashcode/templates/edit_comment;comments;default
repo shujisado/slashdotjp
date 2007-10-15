@@ -201,14 +201,14 @@ IF do_br %]<br>[% END %]
 	[% IF !user.is_anon || (user.is_anon && preview) %]
 	<input type="submit" name="op" value="Submit" class="button">
 	[% END %]
-	[% IF form.pid && user.discussion2 && user.discussion2 == "slashdot" %]
+	[% IF form.pid && Slash.discussion2() == "slashdot" %]
 	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
 	<script type="text/javascript">
 <!--
 	comment_body_reply[[% form.pid %]] = '[% pid_reply %]';
+	document.write('<input type="button" name="quotereply" id="quotereply" value="Quote" class="button" onclick="quoteReply([% form.pid %])">');
 //-->
 	</script>
-	<input type="button" name="quotereply" id="quotereply" value="Quote" class="button" onclick="quoteReply([% form.pid %])">
 	[% END %]
 
 </p>
@@ -247,4 +247,4 @@ IF do_br %]<br>[% END %]
 __seclev__
 1000
 __version__
-$Id: edit_comment;comments;default,v 1.48 2007/06/15 03:48:23 pudge Exp $
+$Id: edit_comment;comments;default,v 1.50 2007/10/04 19:41:22 pudge Exp $

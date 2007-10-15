@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.68 2007/06/27 00:16:36 jamiemccarthy Exp $
+# $Id: Tags.pm,v 1.84 2007/10/09 20:04:42 jamiemccarthy Exp $
 
 package Slash::Tags;
 
@@ -11,12 +11,13 @@ use Slash;
 use Slash::Display;
 use Slash::Utility;
 use Slash::DB::Utility;
+use Slash::Clout;
 use Apache::Cookie;
 use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.68 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.84 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -113,6 +114,9 @@ sub createTag {
 	my $tag = $self->_setuptag($hr);
 	return 0 if !$tag;
 
+	# Anonymous users cannot tag.
+	return 0 if isAnon($tag->{uid});
+
 	# I'm not sure why a duplicate or opposite tag would ever be "OK"
 	# in the tags table, but for now let's keep our options open in
 	# case there's some reason we'd want "raw" tag inserting ability.
@@ -140,6 +144,8 @@ sub createTag {
 		# Because of the uid_globjid_tagnameid_inactivated index,
 		# this should, I believe, not even touch table data,
 		# so it should be very fast.
+		# XXX Might want to make it faster by doing this
+		# select before the insert above, esp. with tagViewed().
 		my $count = $self->sqlCount('tags',
 			"uid		= $tag->{uid}
 			 AND globjid	= $tag->{globjid}
@@ -227,7 +233,7 @@ sub ajaxCreateTag {
 	my $priv_tagnames = $tags->getPrivateTagnames();
 	$hr->{private} = 1 if $priv_tagnames->{lc($form->{name})};
 
-        $tags->createTag($hr);
+	$tags->createTag($hr);
 	return 0;
 }
 
@@ -542,20 +548,21 @@ sub getTagsByGlobjid {
 # to 1.  "Rounded" means round to 3 decimal places.
 
 sub addRoundedCloutsToTagArrayref {
-	my($self, $ar, $options) = @_;
-	$self->addCloutsToTagArrayref($ar, $options);
+	my($self, $ar, $clout_type) = @_;
+	$self->addCloutsToTagArrayref($ar, $clout_type);
 	for my $tag_hr (@$ar) {
-		$tag_hr->{tag_clout}     = sprintf("%.3g", $tag_hr->{tag_clout});
-		$tag_hr->{tagname_clout} = sprintf("%.3g", $tag_hr->{tagname_clout});
-		$tag_hr->{user_clout}    = sprintf("%.3g", $tag_hr->{user_clout});
-		$tag_hr->{total_clout}   = sprintf("%.3g", $tag_hr->{total_clout});
+		$tag_hr->{tag_clout}     = sprintf("%.3f", $tag_hr->{tag_clout});
+		$tag_hr->{tagname_clout} = sprintf("%.3f", $tag_hr->{tagname_clout});
+		$tag_hr->{user_clout}    = sprintf("%.3f", $tag_hr->{user_clout});
+		$tag_hr->{total_clout}   = sprintf("%.3f", $tag_hr->{total_clout});
 	}
 }
 
 sub addCloutsToTagArrayref {
-	my($self, $ar, $options) = @_;
+	my($self, $ar, $clout_type) = @_;
 
-	return if !$ar || !@$ar;
+if (!$clout_type) { use Carp; Carp::cluck("no clout_type for addCloutsToTagArrayref"); }
+	return if !$ar || !@$ar || !$clout_type;
 	my $constants = getCurrentStatic();
 
 	# Pull values from tag params named 'tag_clout'
@@ -573,50 +580,44 @@ sub addCloutsToTagArrayref {
 		'tagnameid, value', 'tagname_params',
 		"tagnameid IN ($tagnameids_in_str) AND name='tag_clout'");
 
-	# Pull values from users_param
+	# Pull values from users_clout
 	my %uid = map { ($_->{uid}, 1) } @$ar;
 	my @uids = sort { $a <=> $b } keys %uid;
 	my $uids_in_str = join(',', @uids);
-	my $uid_info_hr;
-	my $clout_field = $options->{cloutfield} || $constants->{tags_usecloutfield} || '';
-	if ($clout_field) {
-		$uid_info_hr = $self->sqlSelectAllHashref(
-			'uid',
-			'users.uid AS uid, seclev, karma, tag_clout, users_param.value AS paramclout',
-			"users,
-			 users_info LEFT JOIN users_param
-				ON (users_info.uid=users_param.uid AND users_param.name='$clout_field')",
-			"users.uid=users_info.uid AND users.uid IN ($uids_in_str)");
-	} else {
-		$uid_info_hr = $self->sqlSelectAllHashref(
-			'uid',
-			'users.uid AS uid, seclev, karma, tag_clout',
-			'users, users_info',
-			"users.uid=users_info.uid AND users.uid IN ($uids_in_str)");
-	}
+	my $clid = $self->getCloutTypes()->{$clout_type};
+if (!$clid) { use Carp; Carp::cluck("no clid for addCloutsToTagArrayref '$clout_type'"); }
+	my $clout_info = $self->getCloutInfo()->{$clid};
+if (!$clout_info) { use Carp; Carp::cluck("getCloutInfo returned false for clid=$clid") }
+	my $uid_info_hr = $self->sqlSelectAllHashref(
+		'uid',
+		'users.uid AS uid, seclev, karma, tag_clout,
+			UNIX_TIMESTAMP(created_at) AS created_at_ut,
+		 clout',
+		"users,
+		 users_info LEFT JOIN users_clout
+			ON (users_info.uid=users_clout.uid AND clid=$clid)",
+		"users.uid=users_info.uid AND users.uid IN ($uids_in_str)");
 #print STDERR "uids_in_str='$uids_in_str'\n";
 
 	my $uid_clout_hr = { };
 	for my $uid (keys %$uid_info_hr) {
-		if (defined $uid_info_hr->{$uid}{paramclout}) {
-			$uid_clout_hr->{$uid} = $uid_info_hr->{$uid}{paramclout}
-				* $constants->{tags_usecloutfield_mult};
+		if (defined $uid_info_hr->{$uid}{clout}) {
+			$uid_clout_hr->{$uid} = $uid_info_hr->{$uid}{clout};
 		} else {
-			if ((!$options->{cloutfield} || $options->{cloutfield} eq $constants->{tags_usecloutfield})
-				&& length $constants->{tags_usecloutfield_default}) {
-				# There's a default clout for users who don't have
-				# the param field in question.  Use it.
-				$uid_clout_hr->{$uid} = $constants->{tags_usecloutfield_default}+0;
-			} else {
-				# There's no default value.  Use the old formula.
-				# (XXX These hardcoded numbers really should be
-				# parameterized, but I'm not sure how long
-				# this formula is going to stick around...)
-				$uid_clout_hr->{$uid} = $uid_info_hr->{$uid}{karma} >= -3
-					? log($uid_info_hr->{$uid}{karma}+10) : 0;
-				$uid_clout_hr->{$uid} += 5 if $uid_info_hr->{$uid}{seclev} > 1;
-				$uid_clout_hr->{$uid} *= $uid_info_hr->{$uid}{tag_clout};
-			}
+			# There's a default clout for users who don't have
+			# the clout type in question.  Use it.
+			my %user_stub = %{ $uid_info_hr->{$uid} };
+#			my $user_stub = {
+#				uid		=> $uid,
+#				seclev		=> $uid_info_hr->{$uid}{seclev},
+#				karma		=> $uid_info_hr->{$uid}{karma},
+#				tag_clout	=> $uid_info_hr->{$uid}{tag_clout},
+#				created_at_ut	=> $uid_info_hr->{$uid}{created_at_ut},
+#			}
+			# XXX this stub is good enough for now but we may
+			# need the whole actual getUser() user at some
+			# future time
+			$uid_clout_hr->{$uid} = $clout_info->{class}->getUserClout(\%user_stub);
 		}
 	}
 
@@ -762,7 +763,7 @@ sub getUidsUsingTagname {
 }
 
 sub getAllObjectsTagname {
-	my($self, $name, $options) = @_;
+	my($self, $name, $clout_type, $options) = @_;
 #	my $mcd = undef;
 #	my $mcdkey = undef;
 #	if (!$options->{include_private}) {
@@ -782,7 +783,7 @@ sub getAllObjectsTagname {
 		"tagnameid=$id AND inactivated IS NULL $private_clause",
 		'ORDER BY tagid');
 	$self->addGlobjEssentialsToHashrefArray($hr_ar);
-	$self->addCloutsToTagArrayref($hr_ar, $options);
+	$self->addCloutsToTagArrayref($hr_ar, $clout_type);
 #	if ($mcd) {
 #		my $constants = getCurrentStatic();
 #		my $secs = $constants->{memcached_exptime_tags_brief} || 300;
@@ -818,7 +819,7 @@ sub getExampleTagsForStory {
 	my $constants = getCurrentStatic();
 	my $cur_time = $slashdb->getTime();
 	my @examples = split / /,
-		       $constants->{tags_stories_examples};
+		$constants->{tags_stories_examples};
 	my $chosen_ar = $self->getTopiclistForStory($story->{stoid});
 	$#$chosen_ar = 3 if $#$chosen_ar > 3; # XXX should be a var
 	my $tree = $self->getTopicTree();
@@ -972,11 +973,24 @@ sub setTagsForGlobj {
 
 	my $uid = $options->{uid} || $user->{uid};
 	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+	# Don't include private tags in the list of old tags that we may delete.
 	my $old_tags_ar = $tags_reader->getTagsByNameAndIdArrayref($table, $id, { uid => $uid });
 	my %old_tagnames = ( map { ($_->{tagname}, 1) } @$old_tags_ar );
 
 	# Create any tag specified but only if it does not already exist.
-	my @create_tagnames = grep { !$old_tagnames{$_} } sort keys %new_tagnames;
+	my @create_tagnames	= grep { !$old_tagnames{$_} } sort keys %new_tagnames;
+
+	# Deactivate any tags previously specified that were deleted from
+	# the tagbox.
+	my @deactivate_tagnames	= grep { !$new_tagnames{$_} } sort keys %old_tagnames;
+	for my $tagname (@deactivate_tagnames) {
+		$tags->deactivateTag({
+			uid =>		$uid,
+			name =>		$tagname,
+			table =>	$table,
+			id =>		$id
+		});
+	}
 
 	my @created_tagnames = ( );
 	for my $tagname (@create_tagnames) {
@@ -991,12 +1005,11 @@ sub setTagsForGlobj {
 				private =>	$private
 			});
 	}
-#print STDERR scalar(localtime) . " setTagsForGlobj $table : $id  3 old='@$old_tags_ar' created='@created_tagnames'\n";
 
 	my $now_tags_ar = $tags->getTagsByNameAndIdArrayref($table, $id,
-		{ uid => $uid, include_private => 1 });
+		{ uid => $uid }); # don't list private tags
 	my $newtagspreloadtext = join ' ', sort map { $_->{tagname} } @$now_tags_ar;
-
+	return $newtagspreloadtext;
 }
 
 sub ajaxCreateForUrl {
@@ -1071,7 +1084,7 @@ sub ajaxProcessAdminTags {
 #print STDERR "ajaxProcessAdminTags\n";
 	my $commands = $form->{commands};
 	my $type = $form->{type} || "stories";
-	my($id, $table, $sid, $sidenc);
+	my($id, $table, $sid, $sidenc, $itemid);
 	if ($type eq "stories") {
 		$sidenc = $form->{sidenc};
 		$sid = $sidenc; $sid =~ tr{:}{/};
@@ -1082,7 +1095,7 @@ sub ajaxProcessAdminTags {
 		$id = $form->{id};
 	} elsif ($type eq "firehose") {
 		if ($constants->{plugin}{FireHose}) {
-			my $itemid = $form->{id};
+			$itemid = $form->{id};
 			my $firehose = getObject("Slash::FireHose");
 			my $item = $firehose->getFireHose($itemid);
 			my $tags = getObject("Slash::Tags");
@@ -1096,26 +1109,15 @@ sub ajaxProcessAdminTags {
 		grep { $tags->adminPseudotagnameSyntaxOK($_) }
 		split /[\s,]+/,
 		($commands || '');
-use Data::Dumper; print STDERR scalar(localtime) . " ajaxProcessAdminTags table=$table id=$id sid=$sid commands='$commands' commands='@commands' tags='$tags' form: " . Dumper($form);
+#use Data::Dumper; print STDERR scalar(localtime) . " ajaxProcessAdminTags table=$table id=$id sid=$sid commands='$commands' commands='@commands' tags='$tags' form: " . Dumper($form);
 	if (!$id || !$table || !@commands) {
 		# Error, but we really have no way to return it...
 		# return getData('tags_none_given', {}, 'tags');
 	}
 
-	my @tagnameids_affected = ( );
+	@commands = $tags->normalizeAndOppositeAdminCommands(@commands);
 	for my $c (@commands) {
-		my $tagnameid = $tags->processAdminCommand($c, $id, $table);
-		push @tagnameids_affected, $tagnameid if $tagnameid;
-	}
-	if (@tagnameids_affected) {
-		my $affected_str = join(',', @tagnameids_affected);
-		my $reset_lastscanned = $tags->sqlSelect(
-			'MIN(tagid)',
-			'tags',
-			"tagnameid IN ($affected_str)");
-		# XXX this part isn't gonna work since tagboxes
-		$tags->setLastscanned($reset_lastscanned);
-#print STDERR scalar(localtime) . " ajaxProcessAdminTags reset to " . ($reset_lastscanned-1) . " for '$affected_str'\n";
+		$tags->processAdminCommand($c, $id, $table);
 	}
 
 	my $tags_admin_str = "Performed commands: '@commands'.";
@@ -1131,10 +1133,33 @@ use Data::Dumper; print STDERR scalar(localtime) . " ajaxProcessAdminTags table=
 		}, { Return => 1 });
 	} elsif ($type eq "firehose") {
 		return slashDisplay('tagsfirehosedivadmin', {
-			id 		=>	$id,
+			id 		=>	$itemid,
 			tags_admin_str  =>	$tags_admin_str,
 		}, { Return => 1 });
 	}
+}
+
+{
+my %_adcmd_prefix = ( );
+sub normalizeAndOppositeAdminCommands {
+	my($self, @commands) = @_;
+	if (!%_adcmd_prefix) {
+		$_adcmd_prefix{0} = '_';
+		for my $i (1..5) { $_adcmd_prefix{$i} = '#' x $i }
+	}
+	my %count = ( );
+	for my $c (@commands) {
+		my($type, $tagname) = $self->getTypeAndTagnameFromAdminCommand($c);
+		next unless $type;
+		my $count = $type =~ tr/#/#/;
+		$count{$tagname} ||= 0;
+		$count{$tagname} = $count if $count{$tagname} < $count;
+		my $opp = $self->getOppositeTagname($tagname);
+		$count{$opp} ||= 0;
+	}
+	my @new = ( map { $_adcmd_prefix{$count{$_}} . $_ } sort keys %count );
+	return @new;
+}
 }
 
 sub ajaxTagHistory {
@@ -1153,6 +1178,12 @@ sub ajaxTagHistory {
 		my $itemid = $form->{id};
 		my $firehose = getObject("Slash::FireHose");
 		my $item = $firehose->getFireHose($itemid);
+		if (!$item || !$item->{globjid}) {
+			use Data::Dumper;
+			my($i_d, $f_d) = (Dumper($item), Dumper($form));
+			$i_d =~ s/\s+/ /g; $f_d =~ s/\s+/ /g;
+			warn "ajaxTagHistory blank item or globjid: $i_d $f_d";
+		}
 		$globjid = $item->{globjid};
 		my $tags = getObject("Slash::Tags");
 		($table, $id) = $tags->getGlobjTarget($globjid);
@@ -1166,23 +1197,28 @@ sub ajaxTagHistory {
 		$tags_ar = $tags_reader->getTagsByNameAndIdArrayref($table, $id,
 			{ include_inactive => 1, include_private => 1 });
 	}
-	$tags_reader->addRoundedCloutsToTagArrayref($tags_ar, { cloutfield => 'tagpeerval' });
 
 	my $summ = { };
-	# XXX right now hard-code the tag summary to FHPopularity tagbox.
-	# If we start using another tagbox, we'll have to change this too.
+
+	# Don't list 'viewed' tags, just count them.
+	my $viewed_tagname = $constants->{tags_viewed_tagname} || 'viewed';
+	$summ->{n_viewed} = scalar grep { $_->{tagname} eq $viewed_tagname } @$tags_ar;
+	$tags_ar = [ grep { $_->{tagname} ne $viewed_tagname } @$tags_ar ];
+
+	$tags_reader->addRoundedCloutsToTagArrayref($tags_ar, 'describe');
+
 	my $tagboxdb = getObject('Slash::Tagbox');
 	if (@$tags_ar && $globjid && $tagboxdb) {
-		my $fhp = getObject('Slash::Tagbox::FHPopularity');
-		if ($fhp) {
+		my $fhs = getObject('Slash::Tagbox::FireHoseScores');
+		if ($fhs) {
 			my $authors = $slashdb->getAuthors();
 			my $starting_score =
-				$fhp->run($globjid, { return_only => 1, starting_only => 1 });
+				$fhs->run($globjid, { return_only => 1, starting_only => 1 });
 			$summ->{up_pop}   = sprintf("%+0.2f",
-				$fhp->run($globjid, { return_only => 1, upvote_only => 1 })
+				$fhs->run($globjid, { return_only => 1, upvote_only => 1 })
 				- $starting_score );
 			$summ->{down_pop} = sprintf("%0.2f",
-				$fhp->run($globjid, { return_only => 1, downvote_only => 1 })
+				$fhs->run($globjid, { return_only => 1, downvote_only => 1 })
 				- $starting_score );
 			my $upvoteid   = $tags_reader->getTagnameidCreate($constants->{tags_upvote_tagname}   || 'nod');
 			my $downvoteid = $tags_reader->getTagnameidCreate($constants->{tags_downvote_tagname} || 'nix');
@@ -1204,7 +1240,7 @@ sub ajaxListTagnames {
 	my $prefix = '';
 	$prefix = lc($1) if $form->{prefix} =~ /([A-Za-z0-9]{1,20})/;
 	my $len = length($prefix);
-	my $notize = $form->{prefix} =~ /^!/ ? '!' : '';
+	my $notize = $form->{prefix} =~ /^([-!])/ ? $1 : '';
 
 	my $tnhr = $tags_reader->listTagnamesByPrefix($prefix);
 
@@ -1435,7 +1471,7 @@ sub listTagnamesAll {
 }
 
 sub listTagnamesActive {
-	my($self, $options) = @_;
+	my($self, $clout_type, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $max_num =         $options->{max_num}         || 100;
 	my $seconds =         $options->{seconds}         || (3600*6);
@@ -1450,11 +1486,10 @@ sub listTagnamesActive {
 	my $private_clause = $include_private ? '' : " AND private='no'";
 	my $ar = $self->sqlSelectAllHashrefArray(
 		"tagnames.tagname AS tagname,
-		 UNIX_TIMESTAMP($next_minute_q) - UNIX_TIMESTAMP(tags.created_at) AS secsago,
-		 karma,
-		 IF(tagname_params.value IS NULL, 1, tagname_params.value) AS tnp_clout,
-		 IF(tag_params.value     IS NULL, 1, tag_params.value)     AS tp_clout,
-		 users_info.tag_clout AS user_clout",
+		 tags.tagid AS tagid,
+		 tags.tagnameid AS tagnameid,
+		 users_info.uid AS uid,
+		 UNIX_TIMESTAMP($next_minute_q) - UNIX_TIMESTAMP(tags.created_at) AS secsago",
 		"users_info,
 		 tags LEFT JOIN tag_params
 		 	ON (tags.tagid=tag_params.tagid AND tag_params.name='tag_clout'),
@@ -1463,12 +1498,15 @@ sub listTagnamesActive {
 		"tagnames.tagnameid=tags.tagnameid
 		 AND tags.uid=users_info.uid
 		 AND inactivated IS NULL $private_clause
-		 AND tags.created_at >= DATE_SUB($next_minute_q, INTERVAL $seconds SECOND)");
+		 AND tags.created_at >= DATE_SUB($next_minute_q, INTERVAL $seconds SECOND)
+		 AND users_info.tag_clout > 0
+		 AND IF(tag_params.value     IS NULL, 1, tag_params.value)     > 0
+		 AND IF(tagname_params.value IS NULL, 1, tagname_params.value) > 0");
 	return [ ] unless $ar && @$ar;
+	$self->addCloutsToTagArrayref($ar, $clout_type);
 
 	# Sum up the clout for each tagname, and the median time it
 	# was seen within the interval in question.
-	# Very crude weighting algorithm that will change.
 	my %tagname_count = ( );
 	my %tagname_clout = ( );
 	my %tagname_sumsqrtsecsago = ( );
@@ -1478,10 +1516,8 @@ sub listTagnamesActive {
 		$tagname_count{$tagname} ||= 0;
 		$tagname_count{$tagname}++;
 		# Add to its clout.
-		my $user_clout = $hr->{user_clout} * ($hr->{karma} >= -3 ? log($hr->{karma}+10) : 0);
-		my $clout = $user_clout * $hr->{tp_clout} * $hr->{tnp_clout};
 		$tagname_clout{$tagname} ||= 0;
-		$tagname_clout{$tagname} += $clout;
+		$tagname_clout{$tagname} += $hr->{total_clout};
 		# Adjust up its last seen time.
 		$tagname_sumsqrtsecsago{$tagname} ||= 0;
 		my $secsago = $hr->{secsago};
@@ -1615,6 +1651,32 @@ sub getPrivateTagnames {
 	}
 	my %private_tagnames = map {lc($_) => 1} @private_tags;
 	return \%private_tagnames;
+}
+
+sub logSearch {
+	my($self, $query, $options) = @_;
+	$query =~ s/[^A-Z0-9'. :\/_]/ /gi; # see Search.pm _cleanQuery()
+	my @poss_tagnames = split / /, $query;
+	my $uid = $options->{uid} || getCurrentUser('uid');
+	for my $tagname (@poss_tagnames) {
+		my $tagnameid = $self->getTagnameidFromNameIfExists($tagname);
+		next unless $tagnameid;
+		$self->sqlInsert('tags_searched', {
+			tagnameid =>	$tagnameid,
+			-searched_at =>	'NOW()',
+			uid =>		$uid,
+		}, { delayed => 1 });
+	}
+}
+
+sub markViewed {
+	my($self, $uid, $globjid) = @_;
+	return 0 if isAnon($uid) || !$globjid;
+	$self->sqlInsert('globjs_viewed', {
+		uid        => $uid,
+		globjid    => $globjid,
+		-viewed_at => 'NOW()',
+	}, { ignore => 1, delayed => 1 });
 }
 
 #################################################################

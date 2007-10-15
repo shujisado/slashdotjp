@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tags.pl,v 1.9 2007/06/27 00:16:36 jamiemccarthy Exp $
+# $Id: tags.pl,v 1.10 2007/09/26 21:25:51 jamiemccarthy Exp $
 
 use strict;
 use Slash;
@@ -35,11 +35,11 @@ sub main {
 				: 'active';
 
 		if ($type eq 'all') {
-			$index_hr->{tagnames} = $tags_reader->listTagnamesAll();
+			$index_hr->{tagnames} = $tags_reader->listTagnamesAll('describe');
 		} elsif ($type eq 'active') {
-			$index_hr->{tagnames} = $tags_reader->listTagnamesActive();
+			$index_hr->{tagnames} = $tags_reader->listTagnamesActive('describe');
 		} else { # recent
-			$index_hr->{tagnames} = $tags_reader->listTagnamesRecent();
+			$index_hr->{tagnames} = $tags_reader->listTagnamesRecent('describe');
 		}
 
 		$title = getData('head1');
@@ -61,7 +61,7 @@ sub main {
 			@objects = @$value;
 #print STDERR "tags.pl got '$mcdkey$tagname' as " . scalar(@objects) . " objects\n";
 		} else {
-			my $objects = $tags_reader->getAllObjectsTagname($tagname, { cloutfield => 'tagpeerval' });
+			my $objects = $tags_reader->getAllObjectsTagname($tagname, 'describe');
 			my %globjids = ( map { ( $_->{globjid}, 1 ) } @$objects );
 			my $mintc = defined($constants->{tags_list_mintc}) ? $constants->{tags_list_mintc} : 4;
 			for my $globjid (keys %globjids) {

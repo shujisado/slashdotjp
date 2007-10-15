@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHPopularity.pm,v 1.15 2007/04/25 18:25:16 jamiemccarthy Exp $
+# $Id: FHPopularity.pm,v 1.17 2007/09/26 21:25:51 jamiemccarthy Exp $
 
 package Slash::Tagbox::FHPopularity;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.15 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.17 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -153,9 +153,25 @@ sub run {
 			: 7; # nonfeed
 	} elsif ($type eq "stories") {
 		my $story = $self->getStory($target_id);
-		$color_level = $story->{story_topics_rendered}{$constants->{mainpage_nexus_tid}}
-			? 1  # mainpage
-			: 2; # sectional
+		my $str_hr = $story->{story_topics_rendered};
+		$color_level = 3;
+		for my $nexus_tid (keys %$str_hr) {
+			my $this_color_level = 999;
+			my $param = $self->getTopicParam($nexus_tid, 'colorlevel') || undef;
+			if (defined $param) {
+				# Stories in this nexus get this specific color level.
+				$this_color_level = $param;
+			} else {
+				# Stories in any nexus without a colorlevel specifically
+				# defined in topic_param get a color level of 2.
+				$this_color_level = 2;
+			}
+			# Stories on the mainpage get a color level of 1.
+			$this_color_level = 1 if $nexus_tid == $constants->{mainpage_nexus_tid};
+			# This firehose entry gets the minimum color level of
+			# all its nexuses.
+			$color_level = $this_color_level if $this_color_level < $color_level;
+		}
 	}
 	$popularity = $firehose->getEntryPopularityForColorLevel($color_level) + $extra_pop;
 
@@ -163,7 +179,7 @@ sub run {
 	my $upvoteid   = $tagsdb->getTagnameidCreate($constants->{tags_upvote_tagname}   || 'nod');
 	my $downvoteid = $tagsdb->getTagnameidCreate($constants->{tags_downvote_tagname} || 'nix');
 	my $tags_ar = $tagboxdb->getTagboxTags($self->{tbid}, $affected_id, 0, $options);
-	$tagsdb->addCloutsToTagArrayref($tags_ar);
+	$tagsdb->addCloutsToTagArrayref($tags_ar, 'vote');
 	for my $tag_hr (@$tags_ar) {
 		next if $options->{starting_only};
 		my $sign = 0;

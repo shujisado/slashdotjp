@@ -15,7 +15,7 @@ __seclev__
 __template__
 [% IF env.script_name == "/firehose.pl" || form.ssi %]
 <script type="text/javascript">
-  YAHOO.slashdot.App = function()
+  YAHOO.slashdot.SlashBoxApp = function()
     {
       return {
           init: function()
@@ -40,10 +40,14 @@ __template__
             }
         };
     } ();
+
+YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 </script>
+[% ua = env.HTTP_USER_AGENT %]
+
 <div id="slashboxes">
 [% UNLESS user.noboxes %]
-  [% IF slashboxes && !form.smalldevices;
+  [% IF slashboxes && !(form.smalldevices || form.gadget || (constants.smalldevices_ua_regex && ua.match(constants.smalldevices_ua_regex)));
     slashboxes %]
   [% END %]
 [% END %]
@@ -57,71 +61,50 @@ __template__
 </div>
 [% END %]
 <div id="messagearea"></div>
-[% login_inner_block = BLOCK %]
-[% this_fhfilter = form.fhfilter | fixparam;
-   PROCESS userlogin
+[% login_block = BLOCK;
+   this_fhfilter = form.fhfilter | fixparam;
+   PROCESS userlogin_cover
 	return_url = gSkin.rootdir _ '/firehose.pl?section=' _ form.section _
-		     '&color=' _ form.color _
-		     '&mode=' _ form.mode _
-		     '&duration=' _ form.duration _
-		     '&fhfilter=' _ this_fhfilter _
-		     '&skipmenu=' _ form.skipmenu _
-		     '&skippop=' _ form.skippop _
-		     '&no_saved=1';
-END; login_block = BLOCK %]
-<div id="login_cover" style="display:none" onclick="hide_login_box()"></div>
-<div id="login_box" style="display:none">
-[% PROCESS titlebar
-	title => "Please Log In to Continue" _
-		'<a href="javascript:hide_login_box()"><img id="login_box_close" src="' _
-		gSkin.imagedir _ '/images/sic_close.png"></a>'
-%]
-<div id="login_box_content">
-[% login_inner_block %]
-</div></div>
-<script type="text/javascript">logged_in = 0</script>
-[% END # login_block %]
-
-[% IF form.skipmenu || options.skipmenu %]
-[% login_block %]
-[% ELSE %]
+		'&color=' _ form.color _
+		'&mode=' _ form.mode _
+		'&duration=' _ form.duration _
+		'&fhfilter=' _ this_fhfilter _
+		'&skipmenu=' _ form.skipmenu _
+		'&skippop=' _ form.skippop _
+		'&no_saved=1';
+   END; # login_block
+   IF form.skipmenu || options.skipmenu;
+	IF user.is_anon; login_block; END;
+   ELSE;
+     PROCESS nodnix_menus %]
 <div class="firemenu">
 [% theupdatetime = Slash.timeCalc(Slash.db.getTime(), "%H:%M"); %]
 [% refresh_text = "";
    IF !user.is_anon;
-   	refresh_text = '<span style="font-size:60%">(Last Refreshed <span id="local_last_update_time">' _ theupdatetime _ '</span><span id="gmt_update_time"></span> Currently <span id="pauseorplay">Paused</span>)</span><span id="busy" class="hide"><img src="' _ constants.imagedir _ '/spinner.gif" alt="*"></span>';
+   	refresh_text = '<span style="font-size:60%">(<span id="pauseorplay">Paused</span> <span id="local_last_update_time">' _ theupdatetime _ '</span><span id="gmt_update_time"></span>)</span><span id="busy" class="hide"><img src="' _ constants.imagedir _ '/spinner.gif" alt="*"></span>';
    END;
 %]
-[% PROCESS titlebar title="$constants.sitename Firehose Beta $refresh_text" %]
+[% PROCESS titlebar title="$constants.sitename Firehose $refresh_text" %]
 [% PROCESS autocomplete %]
 <div class="submenu">
 <div id="message_area">
 </div>
 	[% IF !user.is_anon %]
 		[% PROCESS firehose_tabs tabs = options.tabs options = options %]
-		<div class="advpref" align="right"><a href="#" id="fh_adv_pref_toggle" onclick="firehose_toggle_advpref(); return false">Prefs</a> 
-		</div>
+                <div class="advpref" align="right"><a href="#" id="fh_adv_pref_toggle" onclick="firehose_toggle_advpref(); return false" title="Firehose preferences"></a></div>
 		[% PROCESS adv_pref_firehose options = options %]
 	[% END %]
-	[% IF user.is_anon %]
-		[% login_block %]
-		<div id="fhlogin">
-		[% login_inner_block %]
-		</div>
-	[% ELSE %]
-	<form action="[% gSkin.rootdir %]/firehose.pl" method="get" name="firehoseform">
-		<fieldset>
-			<legend>Firehose</legend>
-			<label><input type="text" class="slashdot-tag-completer" name="fhfilter" value="[% options.fhfilter | strip_attribute %]" size="24" autocomplete="off" onfocus="attachCompleter(this,'[% id %]','[% user.is_admin && !user.firehose_usermode %]','firehose-filter', 0)" id="firehose-filter"></label>
-<div id="colorsliderbg">
-	<div id="colorsliderthumb"><img src="[% constants.imagedir %]/slidethumb.png" alt="Filter firehose to" id="fh_slider_img" title="Filter firehose to"></div>
-</div>
-
-			<input type="submit" value="Filter" onclick="firehose_set_options('fhfilter'); return false;">
+        [% IF user.is_anon %]
+                [% login_block %]
+<div class="subdue" onclick="show_login_box()">
+        [% END %]
+        <form action="[% gSkin.rootdir %]/firehose.pl" method="get" name="firehoseform">
+                <fieldset>
+                        <legend>Firehose</legend>
   [% startdate = "";
      start_mode = "";
      IF options.duration == 7 && !options.startdate;
-     	start_mode = "latest";
+        start_mode = "latest";
      ELSIF options.duration == 1 && options.startdate;
          start_mode = "day";
      ELSIF options.duration == -1 && !options.startdate;
@@ -129,26 +112,35 @@ END; login_block = BLOCK %]
      END;
 
      IF options.startdate;
-     	 startdate = options.startdate.substr(5, 2) _ '/' _ options.startdate.substr(8,2) _ '/' _ options.startdate.substr(0, 4);
+         startdate = options.startdate.substr(5, 2) _ '/' _ options.startdate.substr(8,2) _ '/' _ options.startdate.substr(0, 4);
      END;
   %]
-  			[% PROCESS datewidget id='fhcalendar' init='firehose_calendar_init' date=startdate start_mode = start_mode %]
-		</fieldset>
-	</form>
-	[% END %]
+                        [% PROCESS datewidget id='fhcalendar' init='firehose_calendar_init' date=startdate start_mode = start_mode %]
+<label><input type="text" class="slashdot-tag-completer" name="fhfilter" value="[% options.fhfilter | strip_attribute %]" size="24" autocomplete="off" onfocus="focusCompleter(this,'[% id %]','[% user.is_admin && !user.firehose_usermode %]','firehose-filter', 0)" id="firehose-filter"></label>
+<div id="colorsliderbg">
+        <div id="colorsliderthumb"><img src="[% constants.imagedir %]/slidethumb.png" alt="Filter firehose to" id="fh_slider_img" title="Filter firehose to"></div>
+</div>
+                        <input type="submit" value="Filter" onclick="firehose_set_options('fhfilter'); return false;">
+                </fieldset>
+        </form>
+
+[% IF user.is_anon %]
+</div>
+[% END %]
 [% IF !user.is_anon %]
 [% PROCESS firehose_options %]
 [% END %]
 </div>
 </div>
 [% IF !user.is_admin || (user.is_admin && user.firehose_usermode ) %]
-<p>
+<p style="padding: 1em 1em 0 1em">
 The Slashdot Firehose is a collaborative system designed to allow
-users to assist our editors in the story selection process. Try
-tagging and voting on the entries below, and by using the 'feedback'
-menu by each entry. The hose can contain submissions, RSS Feeds,
-bookmarks, journal entries and Slashdot stories. Please send your
-feedback to hose@cmdrtaco.net but be forgiving of beta code!
+users to assist our editors in the story selection process.  The hose
+contains submissions, RSS Feeds, journals and Slashdot stories, each
+color-coded along the color spectrum to indicate popularity.  Red is
+hot, violet is not.   Try tagging and voting on the entries below, and
+by using the 'feedback' menus.  Please send comments to hose at
+cmdrtaco dot net but be forgiving of beta code!
 </p>
 [% END %]
 [% END # form.skipmenu %]
@@ -191,7 +183,7 @@ feedback to hose@cmdrtaco.net but be forgiving of beta code!
 [% IF refresh_options && refresh_options.maxtime %]
 	var maxtime = '[% refresh_options.maxtime %]';
 	var insert_new_at = '[% refresh_options.insert_new_at %]';
-	[% UNLESS user.firehose_paused || !user.firehose_paused.defined %]
+	[% IF !options.pause %]
 		firehose_play();
 	[% END %]
 
@@ -204,4 +196,4 @@ firehose_slider_init();
 </script>
 
 __version__
-$Id: list;firehose;default,v 1.86 2007/06/26 21:12:10 tvroom Exp $
+$Id: list;firehose;default,v 1.103 2007/10/11 22:14:06 pudge Exp $

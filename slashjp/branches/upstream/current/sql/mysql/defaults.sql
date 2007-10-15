@@ -3,7 +3,7 @@
 #--------------------------------------------------------
 # Server version	3.23.26-beta-log
 #
-# $Id: defaults.sql,v 1.350 2007/06/27 03:53:16 pudge Exp $
+# $Id: defaults.sql,v 1.371 2007/10/11 22:17:00 pudge Exp $
 #
 
 #
@@ -42,6 +42,9 @@ INSERT INTO al2_types VALUES (10, 8, 'nopostanon', 'No Comment Post Anon');
 #
 
 
+INSERT INTO clout_types (clid, name, class) VALUES (1, 'describe', 'Slash::Clout::Describe');
+INSERT INTO clout_types (clid, name, class) VALUES (2, 'vote',     'Slash::Clout::Vote');
+INSERT INTO clout_types (clid, name, class) VALUES (3, 'moderate', 'Slash::Clout::Moderate');
 
 #
 # Dumping data for table 'code_param'
@@ -156,7 +159,7 @@ INSERT INTO css_type (ctid, name, ordernum) VALUES (7,'handheld',7);
 # Dumping data for table 'dateformats'
 #
 
-INSERT INTO dateformats (id, format, description) VALUES (0,'%A %B %d, @%I:%M%p','Sunday March 21, @10:00AM');
+INSERT INTO dateformats (id, format, description) VALUES (0,'%A %B %d, @%I:%M%p IF_OLD %A %B %d %Y, @%I:%M%p','Sunday March 21, @10:00AM');
 INSERT INTO dateformats (id, format, description) VALUES (1,'%A %B %d, @%H:%M','Sunday March 21, @23:00');
 INSERT INTO dateformats (id, format, description) VALUES (2,'%k:%M %d %B %Y','23:00 21 March 1999');
 INSERT INTO dateformats (id, format, description) VALUES (3,'%k:%M %A %d %B %Y','23:00 Sunday 21 March 1999');
@@ -189,7 +192,11 @@ INSERT INTO dateformats (id, format, description) VALUES (17,'%Y.%m.%d %k:%M','1
 
 INSERT INTO discussion_kinds (dkid, name) VALUES (1, 'story');
 INSERT INTO discussion_kinds (dkid, name) VALUES (2, 'user_created');
-
+INSERT INTO discussion_kinds (dkid, name) VALUES (3, 'journal');
+INSERT INTO discussion_kinds (dkid, name) VALUES (4, 'journal-story');
+INSERT INTO discussion_kinds (dkid, name) VALUES (5, 'poll');
+INSERT INTO discussion_kinds (dkid, name) VALUES (6, 'submission');
+INSERT INTO discussion_kinds (dkid, name) VALUES (7, 'feed');
 
 #
 # Dumping data for table 'dst'
@@ -294,6 +301,81 @@ INSERT INTO string_param (type, code, name) VALUES ('submission-notes','','Uncla
 INSERT INTO string_param (type, code, name) VALUES ('submission-notes','Hold','Hold');
 INSERT INTO string_param (type, code, name) VALUES ('submission-notes','Quick','Quick');
 INSERT INTO string_param (type, code, name) VALUES ('submission-notes','Back','Back');
+
+
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AL','Alabama');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AK','Alaska');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AS','American Samoa');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AZ','Arizona');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','AR','Arkansas');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','CA','California');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','CO','Colorado');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','CT','Connecticut');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','DE','Delaware');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','DC','District of Columbia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','FM','Federated States of Micronesia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','FL','Florida');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','GA','Georgia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','GU','Guam');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','HI','Hawaii');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','ID','Idaho');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','IL','Illinois');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','IN','Indiana');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','IA','Iowa');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','KS','Kansas');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','KY','Kentucky');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','LA','Louisiana');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','ME','Maine');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MH','Marshall Islands');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MD','Maryland');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MA','Massachusetts');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MI','Michigan');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MN','Minnesota');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MS','Mississippi');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MO','Missouri');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MT','Montana');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NE','Nebraska');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NV','Nevada');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NH','New Hampshire');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NJ','New Jersey');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NM','New Mexico');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NY','New York');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','NC','North Carolina');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','ND','North Dakota');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','MP','Northern Mariana Islands');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','OH','Ohio');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','OK','Oklahoma');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','OR','Oregon');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','PW','Palau');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','PA','Pennsylvania');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','PR','Puerto Rico');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','RI','Rhode Island');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','SC','South Carolina');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','SD','South Dakota');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','TN','Tennessee');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','TX','Texas');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','UT','Utah');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','VT','Vermont');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','VI','Virgin Islands');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','VA','Virginia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WA','Washington');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WV','West Virginia');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WI','Wisconsin');
+INSERT INTO string_param (type, code, name) VALUES ('us_states','WY','Wyoming');
+
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','AB','Alberta');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','BC','British Columbia');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','MB','Manitoba');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NB','New Brunswick');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NL','Newfoundland and Labrador');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NT','Northwest Territories');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NS','Nova Scotia');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','NU','Nunavut');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','ON','Ontario');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','PE','Prince Edward Island');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','QC','Quebec');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','SK','Saskatchewan');
+INSERT INTO string_param (type, code, name) VALUES ('ca_provinces','YT','Yukon');
 
 -- ISO Country Names and Abbreviations (ISO 3166)
 -- http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html
@@ -747,7 +829,7 @@ INSERT INTO vars (name, value, description) VALUES ('cur_performance_stat_ops', 
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_lastid', '0', 'accesslogid to start searching at');
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_weeks', '8', 'number of weeks back to compare current stats to');
 INSERT INTO vars (name, value, description) VALUES ('currentqid',1,'The Current Question on the homepage pollbooth');
-INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode','T_2_5_0_165','The current cvs tag that the code was updated to - this does not affect site behavior but may be useful for your records');
+INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode','T_2_5_0_179','The current cvs tag that the code was updated to - this does not affect site behavior but may be useful for your records');
 INSERT INTO vars (name, value, description) VALUES ('datadir','/usr/local/slash/www.example.com','What is the root of the install for Slash');
 INSERT INTO vars (name, value, description) VALUES ('db_auto_increment_increment','1','If your master DB uses auto_increment_increment, i.e. multiple master replication, echo its value into this var');
 INSERT INTO vars (name, value, description) VALUES ('dbsparklines_disp','0','Display dbsparklines in the currentAdminUsers box?');
@@ -863,12 +945,14 @@ INSERT INTO vars (name, value, description) VALUES ('lenient_formkeys','0','0 - 
 INSERT INTO vars (name, value, description) VALUES ('log_admin','1','This turns on/off entries to the accesslog. If you are a small site and want a true number for your stats turn this off.');
 INSERT INTO vars (name, value, description) VALUES ('log_db_user','','The virtual user of the database that the code should write accesslog to. If you don\'t know what this is for, you should leave it blank.');
 INSERT INTO vars (name, value, description) VALUES ('logdir','/usr/local/slash/www.example.com/logs','Where should the logs be found?');
+INSERT INTO vars (name, value, description) VALUES ('login_nontemp_days', '365', 'Days before a nontemp login expires');
 INSERT INTO vars (name, value, description) VALUES ('login_speed_limit', '20', 'How fast a user can create users, etc.');
 INSERT INTO vars (name, value, description) VALUES ('login_temp_minutes', '10', 'Minutes before a temporary login expires');
 INSERT INTO vars (name, value, description) VALUES ('mailfrom','admin@example.com','All mail addressed from the site looks like it is coming from here');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_hours','48','Mailing a password only allowed mailpass_max_num times per account per this many hours');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_num','2','Mailing a password only allowed this many times per account per mainpass_max_hours hours');
 INSERT INTO vars (name, value, description) VALUES ('mainfontface','verdana,helvetica,arial','Fonts');
+INSERT INTO vars (name, value, description) VALUES ('mainpage_displayable_nexuses', '', 'List of nexuses that can appear on the mainpage depending on settings; if empty, getStorypickableNexusChildren is used instead');
 INSERT INTO vars (name, value, description) VALUES ('mainpage_skid','1','ID of the skin considered "mainpage", the front page, what used to be meant by "always display"');
 INSERT INTO vars (name, value, description) VALUES ('mainpage_nexus_tid','1','Topic ID of the nexus considered "mainpage", the front page, what used to be meant by "always display" -- this should be determinable from mainpage_skid but for now it is a separate var');
 INSERT INTO vars (name, value, description) VALUES ('markup_checked_attribute',' CHECKED','The checked attribute that is used on the "input" HTML element, CHECKED for HTML 3.2 and checked="checked" for HTML 4.0 and beyond. Must include leading space!');
@@ -972,6 +1056,7 @@ INSERT INTO vars (name, value, description) VALUES ('slashd_errnote_lastrun','',
 INSERT INTO vars (name, value, description) VALUES ('slashd_verbosity','2','How much information slashd (and runtask) should write to slashd.log: 0-3, 3 can be a lot');
 INSERT INTO vars (name, value, description) VALUES ('slashdir','/usr/local/slash','Directory where Slash was installed');
 INSERT INTO vars (name, value, description) VALUES ('slogan','Slash Site','Slogan of the site');
+INSERT INTO vars (name, value, description) VALUES ('smalldevices_ua_regex', 'iPhone', 'regex of user agents for small devices');
 INSERT INTO vars (name, value, description) VALUES ('smtp_server','localhost','The mailserver for the site');
 INSERT INTO vars (name, value, description) VALUES ('stats_reports','admin@example.com','Who to send daily stats reports to');
 INSERT INTO vars (name, value, description) VALUES ('stats_sfnet_groupids','4421','List of sf.net group IDs to keep stats on');

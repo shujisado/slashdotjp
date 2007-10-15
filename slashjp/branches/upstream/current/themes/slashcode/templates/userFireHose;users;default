@@ -43,9 +43,8 @@ __template__
 	[% firehosebox %]
 	</div>
 </div>
-</div>
 
 __seclev__
 500
 __version__
-$Id: userFireHose;users;default,v 1.1 2007/06/15 04:27:59 tvroom Exp $
+$Id: userFireHose;users;default,v 1.2 2007/08/01 18:20:09 lancelot Exp $

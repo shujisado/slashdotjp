@@ -21,13 +21,12 @@ __template__
 		IF parts.1 == 5; action1 = ", action1:completer_handleNeverDisplay"; END;
 		%]
 		[% IF !tags_seen.${parts.0} %]
-			<span class="tagname">[%- IF is_menu -%]<span class="tagmenu"><a onClick="attachCompleter(this, '[% id %]','[% user.is_admin && !user.firehose_usermode %]','firehose', [% parts.1 %], {action0:completer_renameMenu[% action1 %]})">[%- ELSIF is_link -%]<a href="/tags/[% parts.0 | strip_html %]">[%- END -%][%- parts.0 | strip_html -%][%- IF is_menu || is_link %]</a>[% END -%][%- IF is_menu %]</span>[% END -%]</span>[% IF !loop.last() %], 
+			<span class="tagname">[%- IF is_menu -%]<span class="tagmenu"><a onClick="clickCompleter(this, '[% id %]','[% user.is_admin && !user.firehose_usermode %]','firehose', [% parts.1 %], {action0:completer_renameMenu[% action1 %]})">[%- ELSIF is_link -%]<a href="/tags/[% parts.0 | strip_html %]">[%- END -%][%- parts.0 | strip_html -%][%- IF is_menu || is_link %]</a>[% END -%][%- IF is_menu %]</span>[% END -%]</span>[% IF !loop.last %], 
 			[% END -%]
-		[% END %]
-
-		[% tags_seen.${parts.0} = 1 %]
-	[%- END %]
-	[% IF item.type == "story" %][% IF user.is_admin %][% PROCESS signoff stoid=item.srcid fhid = item.id %][% END %][% END %]
+		[%- END -%]
+		[%- tags_seen.${parts.0} = 1 -%]
+	[%- END -%]
+	[%- IF item.type == "story" -%][% IF user.is_admin %][% PROCESS signoff stoid=item.srcid fhid = item.id %][% END %][% END %]
 	[% IF item.type == "feed" && user.is_admin %]
 		[% feed_user = Slash.db.getUser(item.uid, "nickname"); %]
 		[% feed_user | strip_literal %]
@@ -36,4 +35,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: firehose_tags_top;misc;default,v 1.20 2007/04/04 19:11:50 tvroom Exp $
+$Id: firehose_tags_top;misc;default,v 1.22 2007/08/22 20:26:14 scc Exp $

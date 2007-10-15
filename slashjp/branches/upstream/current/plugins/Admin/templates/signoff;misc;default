@@ -17,11 +17,11 @@ __template__
 [% signed = Slash.db.hasUserSignedStory(stoid, user.uid); %]
 [% IF storylink %]
 <li class="signoff">[% END %]
+, <span id="signoff_[% stoid %]" onclick="admin_signoff([% stoid %][% IF fhid; ",'firehose',"; fhid; END %])">[% UNLESS signed %]unsigned[% END %]</span>
 [% PROCESS ajax_reskey_signoff reskey_label => 'signoff-reskey-' _ stoid, reskey_name => 'ajax_admin' %]
-<span id="signoff_[% stoid %]" onclick="admin_signoff([% stoid %][% IF fhid; ",'firehose',"; fhid; END %])">[% UNLESS signed %]unsigned[% END %]</span>
 [% IF storylink %]</li>[% END %]
 [% END %]
 __seclev__
 10000
 __version__
-$Id: signoff;misc;default,v 1.13 2006/12/05 23:12:01 tvroom Exp $
+$Id: signoff;misc;default,v 1.15 2007/07/30 18:46:15 tvroom Exp $

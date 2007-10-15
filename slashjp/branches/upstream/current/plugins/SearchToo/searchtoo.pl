@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: searchtoo.pl,v 1.9 2005/08/25 20:10:42 pudge Exp $
+# $Id: searchtoo.pl,v 1.10 2007/07/10 00:43:51 jamiemccarthy Exp $
 
 use strict;
 use Slash;
@@ -142,6 +142,12 @@ sub main {
 
 	my $keys = join '|', keys %$ops;
 	writeLog($form->{query}) if $form->{op} =~ /^(?:$keys)$/;
+
+	my $plugins = $reader->getDescriptions('plugins');
+	if ($form->{query} && $plugins->{Tags}) {
+		my $tagsdb = getObject('Slash::Tags');
+		$tagsdb->logSearch($form->{query});
+	}
 }
 
 #################################################################

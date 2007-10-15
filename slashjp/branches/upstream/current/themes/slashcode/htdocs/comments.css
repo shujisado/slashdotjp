@@ -213,7 +213,7 @@ html > body .commentwrap table {
 #d2act div.block div.title h4 {text-align: left;}
 #d2act .close {position: absolute; top: .2em; right: .2em; color: #ccc; text-decoration: none; font-family: sans-serif; border: 1px solid #bbb; border-bottom: 1px solid #444; border-right: 1px solid #555; padding: 0 .3em;}
 #d2act .close:hover {position: absolute; top: .2em; right: .2em; color: #eee; text-decoration: none; font-family: sans-serif; border: 1px solid #444; border-bottom: 1px solid #aaa; border-right: 1px solid #ccc; padding: 0 .3em;}
-#d2act .commentControlFooter {border-bottom: 1px solid #444; border-top: 1px solid #ccc; text-align: right; padding: 3px; background: #666; color: #fff; }
+#d2act .commentControlFooter {border-bottom: 1px solid #444; border-top: 1px solid #ccc; text-align: right; padding: 3px; background: #666; color: #fff; font-size: 11px; }
 #d2act .commentControlFooter a {  color: #fff; text-decoration: none; }
 .loki { display: inline; }
 .comment_divider,
@@ -294,6 +294,13 @@ div.ccw-panel, #ccw-control,
 #ccw-hide-bar-tab { top: 4px; }
 .horizontal #ccw-abbr-bar-tab { top: 0.5em; left: -5px; }
 .horizontal #ccw-hide-bar-tab { top: 0.5em; left: 4px; }
+
+.ccw-upzone, .ccw-downzone { display: none; height: 12px; width: 100%; }
+.horizontal .ccw-upzone, .horizontal .ccw-downzone { width: 12px; height: 100%; }
+.ccw-upzone { top: -12px; }
+.ccw-downzone { top: 4px; }
+.horizontal .ccw-upzone { left: -12px; top: 0; }
+.horizontal .ccw-downzone { left: 4px; top: 0; }
 
 #ccw-body { z-index: 1; }
 

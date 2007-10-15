@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: comments.pl,v 1.265 2007/06/15 03:48:17 pudge Exp $
+# $Id: comments.pl,v 1.266 2007/08/23 18:06:40 pudge Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -31,11 +31,6 @@ sub main {
 		# there will only be a discussions creation form if 
 		# the user is anon, or if there's an sid, therefore, we don't want 
 		# a formkey if it's not a form 
-		dynamic_display	=> {
-			function		=> \&dynamicDisplay,
-			seclev			=> 1,
-			checks			=> [],
-		},
 		display		=> { 
 			function		=> \&displayComments,
 			seclev			=> 0,
@@ -201,7 +196,7 @@ sub main {
 
 	my $header_emitted = 0;
 	my $title = $discussion ? $discussion->{'title'} : 'Comments';
-	if ($op ne 'submit' && $op ne 'dynamic_display') {
+	if ($op ne 'submit') {
 		header($title, $section) or return;
 		$header_emitted = 1;
 	}
@@ -359,13 +354,7 @@ sub main {
 
 	writeLog($form->{sid});
 
-	footer() unless $op eq 'dynamic_display';
-}
-
-
-sub dynamicDisplay {
-	my($form, $slashdb, $user, $constants) = @_;
-	print jsSelectComments($slashdb, $constants, $user, $form);
+	footer();
 }
 
 

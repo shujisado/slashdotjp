@@ -1,15 +1,19 @@
-// $Id: comments.js,v 1.79 2007/03/22 02:34:34 pudge Exp $
+// $Id: comments.js,v 1.93 2007/10/11 22:14:06 pudge Exp $
 
 var comments;
 var root_comments;
 var noshow_comments;
 var pieces_comments;
+var placeholder_comments = [];
+var placeholder_no_update = {};
 var abbrev_comments = {};
 var init_hiddens = [];
 var fetch_comments = [];
 var fetch_comments_pieces = {};
 var update_comments = {};
 var root_comments_hash = {};
+var last_updated_comments = [];
+var more_comments_num;
 var behaviors = {
 	'default': { ancestors: 'none', parent: 'none', children: 'none', descendants: 'none', siblings: 'none', sameauthor: 'none' }, 
 	'focus': { ancestors: 'none', parent: 'none', children: 'prehidden', descendants: 'prehidden', siblings: 'none', sameauthor: 'none' }, 
@@ -37,13 +41,17 @@ var user_highlightthresh_orig = -9;
 var loaded = 0;
 var shift_down = 0;
 var alt_down = 0;
+var d2_seen = '';
 
 var agt = navigator.userAgent.toLowerCase();
 var is_firefox = (agt.indexOf("firefox") != -1);
 
+/********************/
 /* thread functions */
+/********************/
 function updateComment(cid, mode) {
 	var existingdiv = fetchEl('comment_' + cid);
+	var placeholder = 0;
 	if (existingdiv && mode != displaymode[cid]) {
 		var doshort = 0;
 		if (viewmodevalue[mode] >= viewmodevalue[displaymode[cid]]) {
@@ -51,6 +59,8 @@ function updateComment(cid, mode) {
 			if (!cl) {
 				fetch_comments.push(cid);
 				doshort = 1;
+				if (comments[cid]['points'] == -2) // -2 is special case for placeholder-hiddens
+					placeholder = 1;
 			} else if (viewmodevalue[mode] >= viewmodevalue['full']) {
 				var cd = fetchEl('comment_otherdetails_' + cid);
 				if (!cd.innerHTML) {
@@ -65,7 +75,10 @@ function updateComment(cid, mode) {
 		existingdiv.className = mode;
 	}
 
-	currents[displaymode[cid]]--;
+	if (placeholder)
+		placeholder_comments.push(cid);
+	else
+		currents[displaymode[cid]]--;
 	currents[mode]++;
 	displaymode[cid] = mode;
 
@@ -225,19 +238,10 @@ function changeThreshold(threshold) {
 	user_highlightthresh = Math.min(Math.max(t_delta, -1), 6);
 	user_threshold = threshold_num;
 
-	if ($('currentHT'))
-		$('currentHT').innerHTML = user_highlightthresh;
-
-	if ($('currentT'))
-		$('currentT').innerHTML = user_threshold;
-
-	if ($('threshold'))
-		$('threshold').value = threshold;
-
 	for (var root = 0; root < root_comments.length; root++) {
 		updateCommentTree(root_comments[root], threshold);
 	}
-	finishCommentUpdates();
+	finishCommentUpdates(1);
 
 	savePrefs();
 
@@ -245,7 +249,9 @@ function changeThreshold(threshold) {
 }
 
 
+/*******************************/
 /* thread kid/hidden functions */
+/*******************************/
 function kidHiddens(cid, kidhiddens) {
 	var hiddens_cid = fetchEl('hiddens_' + cid);
 	if (! hiddens_cid) // race condition, probably: new comment added in between rendering, and JS data structure
@@ -259,7 +265,10 @@ function kidHiddens(cid, kidhiddens) {
 	// may not be changed yet, that's OK
 	if (futuredisplaymode[cid] == 'hidden') {
 		hiddens_cid.className = 'hide';
-		return kidhiddens + 1;
+		if (comments[cid]['points'] == -2) // -2 is special case for placeholder-hiddens
+			return kidhiddens;
+		else
+			return kidhiddens + 1;
 	} else if (kidhiddens) {
 		var kidstring = '<a href="javascript:revealKids(' + cid + ')">' + kidhiddens;
 		if (kidhiddens == 1) {
@@ -271,7 +280,7 @@ function kidHiddens(cid, kidhiddens) {
 		hiddens_cid.className = 'show';
 	} else {
 		hiddens_cid.className = 'hide';
-	} 
+	}
 
 	return 0;
 }
@@ -287,6 +296,10 @@ function revealKids(cid) {
 		for (var kiddie = 0; kiddie < comment['kids'].length; kiddie++) {
 			var kid = comment['kids'][kiddie];
 			setDefaultDisplayMode(kid);
+			if (comments[kid]['points'] == -2) { // -2 is special case for placeholder-hiddens
+				revealKids(kid);
+				continue;
+			}
 			if (displaymode[kid] == 'hidden') {
 				futuredisplaymode[kid] = 'oneline';
 				updateDisplayMode(kid, futuredisplaymode[kid], 1);
@@ -363,8 +376,84 @@ function setShortSubject(cid, mode, cl) {
 	}
 }
 
+// XXX this CANNOT be called without then adjusting the fetchEl stuff for
+// Firefox (see ajaxFetchComments) ... we may make that into a separate
+// call later, as it has to be properly called AFTER addComment calls are
+// all done -- pudge
+function addComment(cid, comment, html) {
+	if (!loaded || !cid || !comment)
+		return false;
 
+
+	if (comments[cid]) {
+		var tmpkids = comments[cid]['kids'];
+		for (var i = 0; i < comment['kids'].length; i++) {
+			tmpkids.push(comment['kids'][i]);
+		}
+		comments[cid] = comment;
+		comments[cid]['kids'] = tmpkids;
+	} else {
+		comments[cid] = comment;
+	}
+	var pid = comment['pid'];
+
+	if ($('tree_' + cid)) {
+		if (pid) {
+			var parent = comments[pid];
+			var seen = 0;
+			for (var i = 0; i < parent['kids'].length; i++) {
+				if (parent['kids'][i] == cid)
+					seen = 1;
+			}
+			if (!seen)
+				parent['kids'].push(cid);
+		} else {
+			var seen = 0;
+			for (var i = 0; i < root_comments.length; i++) {
+				if (root_comments[i] == cid)
+					seen = 1;
+			}
+			if (!seen) {
+				root_comments.push(cid);
+				root_comments_hash[cid] = 1;
+			}
+		}
+
+		return true;
+	}
+
+	html = html || dummyComment(cid);
+
+	if (pid) {
+		var tree = $('tree_' + pid);
+		if (tree) {
+			setDefaultDisplayMode(pid);
+			var parent = comments[pid];
+			parent['kids'].push(cid);
+
+			// XXX: not QUITE right, but works for now ...
+			// ideally this would stick in a previous </ul>
+			// rather than adding a new one -- pudge
+			tree.innerHTML = tree.innerHTML + '<ul>' + html + '</ul>';
+		}
+
+	} else {
+		var commlist = $('commentlisting');
+		if (commlist) {
+			root_comments.push(cid);
+			root_comments_hash[cid] = 1;
+
+			commlist.innerHTML = commlist.innerHTML.replace(/(<li id="roothiddens" class="hide".*?>)/i, html + "$1");
+		}
+	}
+
+	return true;
+}
+
+
+/****************************/
 /* thread utility functions */
+/****************************/
 function refreshDisplayModes(cid) {
 	if (cid > 0) {
 		updateDisplayMode(cid, 'full', 1);
@@ -491,6 +580,8 @@ function getSliderTotals(thresh, hthresh) {
 }
 
 function determineMode(cid, thresh, hthresh) {
+	if (!thresh)
+		thresh  = user_threshold;
 	if (!hthresh)
 		hthresh = user_highlightthresh;
 
@@ -502,17 +593,20 @@ function determineMode(cid, thresh, hthresh) {
 		return 'full';
 }
 
-function finishCommentUpdates() {
+function finishCommentUpdates(thresh) {
 	for (var cid in update_comments) {
+		setDefaultDisplayMode(cid);
 		updateComment(cid, update_comments[cid]);
 	}
 
-	ajaxFetchComments(fetch_comments);
+	ajaxFetchComments(fetch_comments, 0, thresh);
 
 	updateTotals();
 	update_comments = {};
 	fetch_comments = [];
 	fetch_comments_pieces = {};
+	placeholder_comments = [];
+	placeholder_no_update = {};
 }
 
 // not currently used
@@ -533,23 +627,41 @@ function refreshCommentDisplays() {
 	return void(0);
 }
 
+/*******************/
 /* misc. functions */
+/*******************/
 function toHash(thisobject) {
 	return thisobject.map(function (pair) {
 		return pair.map(encodeURIComponent).join(',');
 	}).join(';');
 }
 
-function ajaxFetchComments(cids) {
+function ajaxFetchComments(cids, option, thresh) {
 	if (cids && !cids.length)
 		return;
 
+	if (option)
+		thresh = 1;
+
 	var params = [];
-	params['op']            = 'comments_fetch';
-	params['cids']          = (cids || noshow_comments);
-	params['cid']           = root_comment;
-	params['discussion_id'] = discussion_id;
-	params['reskey']        = reskey_static;
+	params['op']              = 'comments_fetch';
+	if (cids) {
+		params['cids']    = cids;
+	} else {
+		cids              = [];
+		if (option && d2_seen)
+			params['d2_seen']  = d2_seen;
+		else
+			params['cids']    = noshow_comments;
+	}
+	if (thresh) {
+		params['threshold']       = user_threshold;
+		params['highlightthresh'] = user_highlightthresh;
+	}
+
+	params['cid']             = root_comment;
+	params['discussion_id']   = discussion_id;
+//	params['reskey']          = reskey_static;
 
 	var abbrev = {};
 	for (var i = 0; i < cids.length; i++) {
@@ -562,11 +674,60 @@ function ajaxFetchComments(cids) {
 	params['pieces'] = $H(cids ? fetch_comments_pieces : pieces_comments);
 	params['pieces'] = toHash(params['pieces']);
 
+	if (placeholder_comments.length) {
+		params['placeholders'] = placeholder_comments;
+		params['d2_seen_ex']   = d2_seen;
+	}
+
 	var handlers = {
 		onComplete: function (transport) {
 			var response = eval_response(transport);
+
+			if (!response) {
+				boxStatus(0);
+				return;
+			}
+
+			var update = response.update_data;
+			if (update && update.new_cids_order) {
+				var root;
+				var pids = {};
+				for (var i = 0; i < update.new_cids_order.length; i++) {
+					var this_cid = update.new_cids_order[i];
+					cids.push(this_cid);
+					addComment(this_cid, update.new_cids_data[i]);
+					if (!comments[this_cid]['pid']) {
+						root = 1;
+					} else {
+						pids[comments[this_cid]['pid']] = 1;
+					}
+				}
+
+				// for some reason the modification done in addComment
+				// invalidates the linkage fetchEl() uses to get
+				// an element, so we need to refetch them
+				if (is_firefox) {
+					// this is the worst ... not sure what else to do
+					if (root) {
+						var commlist = fetchEl('commentlisting');
+						loadAllElements('span', commlist);
+						loadAllElements('div', commlist);
+						loadAllElements('li', commlist);
+						loadAllElements('a', commlist);
+					} else {
+						for (var pid in pids) {
+							var tree = fetchEl('tree_' + pid);
+							loadAllElements('span', commlist);
+							loadAllElements('div', commlist);
+							loadAllElements('li', commlist);
+							loadAllElements('a', commlist);
+						}
+					}
+				}
+			}
+
 			json_update(response);
-			updateHiddens(cids);
+
 			for (var i = 0; i < cids.length; i++) {
 				// this is needed for Firefox
 				// better way to do automatically?
@@ -579,6 +740,49 @@ function ajaxFetchComments(cids) {
 				}
 				setShortSubject(cids[i]);
 			}
+
+			if (update && update.new_cids_order) {
+				for (var i = 0; i < last_updated_comments.length; i++) {
+					var this_cid = last_updated_comments[i];
+					var this_id  = $('tree_' + this_cid);
+					if (this_id)
+						this_id.className = this_id.className.replace('newcomment', '');
+				}
+				last_updated_comments = [];
+					
+				for (var i = 0; i < update.new_cids_order.length; i++) {
+					var this_cid = update.new_cids_order[i];
+					if (placeholder_no_update[this_cid])
+						continue;
+					var mode = determineMode(this_cid);
+					updateDisplayMode(this_cid, mode, 1);
+					currents[displaymode[this_cid]]++;
+					updateComment(this_cid, mode);
+
+					var this_id  = $('tree_' + this_cid);
+					this_id.className = this_id.className + ' newcomment';
+					last_updated_comments.push(this_cid);
+				}
+				// later we may need to find a known point and scroll
+				// to it, but for now we don't want to do this -- pudge
+				//if (!commentIsInWindow(update.new_cids_order[0])) {
+				//	scrollWindowTo(update.new_cids_order[0]);
+				//}
+			}
+
+			if (update && update.new_thresh_totals) {
+				for (var thresh in update.new_thresh_totals) {
+					for (var hthresh in update.new_thresh_totals[thresh]) {
+						for (var mode in update.new_thresh_totals[thresh][hthresh]) {
+							thresh_totals[thresh][hthresh][mode] += update.new_thresh_totals[thresh][hthresh][mode];
+						}
+					}
+				}
+				$('titlecountnum').innerHTML = thresh_totals[6][6][1]; // total
+				updateTotals();
+			}
+
+			updateHiddens(cids);
 			boxStatus(0);
 		}
 	};
@@ -614,14 +818,14 @@ function ajaxFetchComments(cids) {
 		noshow_comments = [];
 		pieces_comments = [];
 	}
-
-	return false;
 }
 
 function savePrefs() {
-	if ((user_threshold_orig != user_threshold)
+	if (!user_is_anon
+		&&
+	    ((user_threshold_orig != user_threshold)
 		||
-	    (user_highlightthresh_orig != user_highlightthresh)
+	    (user_highlightthresh_orig != user_highlightthresh))
 	) {
 		var params = [];
 		params['op'] = 'comments_set_prefs';
@@ -646,6 +850,7 @@ function readRest(cid) {
 	params['op']  = 'comments_read_rest';
 	params['cid'] = cid;
 	params['sid'] = discussion_id;
+//	params['reskey'] = reskey_static;
 
 	var handlers = {
 		onComplete: function() {
@@ -664,6 +869,9 @@ function readRest(cid) {
 }
 
 function doModerate(el) {
+	if (user_is_anon)
+		return false;
+
 	var matches = el.name.match(/_(\d+)$/);
 	var cid = matches[1];
 
@@ -717,9 +925,13 @@ function quoteReply(pid) {
 	$('postercomment').value = this_reply + $('postercomment').value;
 }
 
+/*********************/
 /* utility functions */
-function loadAllElements(tagname) {
-	var elements = document.getElementsByTagName(tagname);
+/*********************/
+function loadAllElements(tagname, parent) {
+	if (!parent)
+		parent = document;
+	var elements = parent.getElementsByTagName(tagname);
 
 	for (var i = 0; i < elements.length; i++) {
 		var e = elements[i];
@@ -735,14 +947,6 @@ function loadNamedElement(name) {
 }
 
 function fetchEl(str) {
-/* 	if (!loaded || !is_firefox) { */
-/* 		return $(str); */
-/*  */
-/* 	if (commentelements[str]) { */
-/* 		commentelements[str] = loadNamedElement(str); */
-/* 		return commentelements[str]; */
-/* 	} */
-
 	return loaded
 		? (is_firefox ? commentelements[str] : $(str))
 		: $(str);
@@ -773,6 +977,8 @@ function finishLoading() {
 	//window.onbeforeunload = function () { savePrefs() };
 	//window.onunload = function () { savePrefs() };
 
+	if (more_comments_num)
+		updateMoreNum(more_comments_num);
 	updateTotals();
 	enableControls();
 
@@ -790,7 +996,9 @@ function cloneObject(what) {
 }
 
 
+/****************/
 /* UI functions */
+/****************/
 function resetModifiers () {
 	shift_down = 0;
 	alt_down   = 0;
@@ -831,6 +1039,10 @@ function boxStatus(bool) {
 
 function enableControls() {
 	boxStatus(0);
+	var morelink = $('more_comments_num_a');
+	if (morelink)
+		morelink.className = 'show';
+
 	d2act();
 	loaded = 1;
 }
@@ -898,12 +1110,13 @@ function toggleDisplayOptions() {
 	d2act();
 	gods.style.display = 'block';
 
-
-	var params = [];
-	params['comments_control'] = newMode;
-	params['op'] = 'comments_set_prefs';
-	params['reskey'] = reskey_static;
-	ajax_update(params);
+	if (!user_is_anon) {
+		var params = [];
+		params['comments_control'] = newMode;
+		params['op'] = 'comments_set_prefs';
+		params['reskey'] = reskey_static;
+		ajax_update(params);
+	}
 
 	return false;
 }
@@ -915,6 +1128,33 @@ function updateTotals() {
 	$('currentOneline').innerHTML = currents['oneline'];
 }
 
+function updateMoreNum(num) { // should be an integer, or empty string
+	if (num == 0)
+		num = '';
+
+	var num_a;
+	if (!num)
+		num_a = 'Check for more';
+	else {
+		if (num == 1)
+			num_a = 'Retrieve the 1 remaining comment';
+		else
+			num_a = 'Retrieve more of the ' + num + ' remaining comments';
+	}
+
+	var a = $('more_comments_num_a');
+	var b = $('more_comments_num_b');
+	var c = $('more_comments_num_c');
+
+	if (a)
+		a.innerHTML = num_a;
+	if (b)
+		b.innerHTML = num;
+	if (c)
+		c.innerHTML = num;
+}
+
+
 function scrollWindowTo(cid) {
 	var comment_y = getOffsetTop(fetchEl('comment_' + cid));
 	if ($('d2out').className == 'horizontal')
@@ -923,6 +1163,8 @@ function scrollWindowTo(cid) {
 }
 
 function getOffsetLeft (el) {
+	if (!el)
+		return false;
 	var ol = el.offsetLeft;
 	while ((el = el.offsetParent) != null)
 		ol += el.offsetLeft;
@@ -930,6 +1172,8 @@ function getOffsetLeft (el) {
 }
 
 function getOffsetTop (el) {
+	if (!el)
+		return false;
 	var ot = el.offsetTop;
 	while((el = el.offsetParent) != null)
 		ot += el.offsetTop;
@@ -1101,6 +1345,12 @@ YAHOO.slashdot.ThresholdWidget.prototype.setTHT = function( T, HT ) {
 
 YAHOO.slashdot.ThresholdWidget.prototype.getTHT = function() {
 	return this.displayedTs.slice().reverse();
+}
+
+YAHOO.slashdot.ThresholdWidget.prototype.stepTHT = function( threshold, step ) {
+	var ts = this.displayedTs.slice();
+	ts[threshold] += step;
+	this._setTs(pinToRange(this.constraintRange, ts));
 }
 
 YAHOO.slashdot.ThresholdWidget.prototype.setCounts = function( counts ) {
@@ -1288,3 +1538,25 @@ YAHOO.slashdot.ThresholdBar.prototype.alignElWithMouse = function( el, iPageX, i
 	this.cachePosition(oCoord.x, oCoord.y);
 	this.autoScroll(oCoord.x, oCoord.y, el.offsetHeight, el.offsetWidth);
 }
+
+
+
+
+
+
+function dummyComment(cid) {
+	var html = '<li id="tree_--CID--" class="comment">\
+<div id="comment_status_--CID--" class="commentstatus"></div>\
+<div id="comment_--CID--" class="hidden">\
+</div>\
+\
+<div id="replyto_--CID--"></div>\
+\
+<ul id="group_--CID--">\
+	<li id="hiddens_--CID--" class="hide"></li>\
+</ul>\
+</li>';
+
+	return(html.replace(/\-\-CID\-\-/g, cid));
+}
+

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: console.pl,v 1.4 2007/05/21 13:02:27 jamiemccarthy Exp $
+# $Id: console.pl,v 1.5 2007/08/13 18:27:44 tvroom Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -60,6 +60,7 @@ sub display {
 	my $firehosebox = "";
 	if ($constants->{plugin}{FireHose}) {
 		my $firehose = getObject("Slash::FireHose");
+		$user->{state}{firehose_page} = "console";
 		$firehosebox = $firehose->listView({ fh_page => 'console.pl'});
 	}
 

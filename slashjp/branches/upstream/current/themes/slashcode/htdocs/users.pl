@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.335 2007/06/19 19:51:31 tvroom Exp $
+# $Id: users.pl,v 1.339 2007/08/23 20:28:04 pudge Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -1789,6 +1789,8 @@ sub tildeEd {
 	my @nexustid_order = sort {($b == $constants->{mainpage_nexus_tid}) <=> ($a == $constants->{mainpage_nexus_tid}) || 
 				    lc $nexus_hr->{$a} cmp lc $nexus_hr->{$b} } keys %$nexus_hr;
 
+	my $mp_disp_nexuses = $reader->getMainpageDisplayableNexuses();
+	my %mp_disp_nexus = ( map { ($_, 1) } @$mp_disp_nexuses );
 	for my $tid (@nexustid_order) {
 		     if ($prefs{story_never_nexus}{$tid}) {
 			$story023_default{nexus}{$tid} = 0;
@@ -1803,7 +1805,12 @@ sub tildeEd {
 		} elsif ($prefs{story_brief_best_nexus}) {
 			$story023_default{nexus}{$tid} = 1;
 		} else {
-			if ($constants->{brief_sectional_mainpage}) {
+			# If brief_sectional_mainpage is set, then all
+			# nexuses in getMainpageDisplayableNexuses are,
+			# by default, shown as brief on the mainpage.
+			if ($constants->{brief_sectional_mainpage}
+				&& $mp_disp_nexus{$tid}
+			) {
 				$story023_default{nexus}{$tid} = 4;
 			} else {
 				$story023_default{nexus}{$tid} = 2;
@@ -2628,6 +2635,7 @@ sub saveUser {
 		aimdisplay	=> $form->{aimdisplay},
 		icq		=> $form->{icq},
 		playing		=> $form->{playing},
+                mobile_text_address => $form->{mobile_text_address},
 	};
 
 	for (keys %extr) {
@@ -2737,6 +2745,8 @@ sub saveComm {
 
 	my $user_edits_table = {
 		discussion2		=> $form->{discussion2} || undef,
+		d2_comment_q		=> $form->{d2_comment_q} || undef,
+		d2_comment_order	=> $form->{d2_comment_order} || undef,
 		clsmall			=> $form->{clsmall},
 		clsmall_bonus		=> ($clsmall_bonus || undef),
 		clbig			=> $form->{clbig},

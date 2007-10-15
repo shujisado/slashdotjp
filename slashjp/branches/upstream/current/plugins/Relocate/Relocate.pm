@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Relocate.pm,v 1.12 2005/04/22 21:36:59 pudge Exp $
+# $Id: Relocate.pm,v 1.13 2007/10/09 18:57:09 jamiemccarthy Exp $
 
 package Slash::Relocate;
 
@@ -15,13 +15,12 @@ use Digest::MD5 'md5_hex';
 use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 
-($VERSION) = ' $Revision: 1.12 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
 
-	my $plugin = getCurrentStatic('plugin');
-	return unless $plugin->{'Relocate'};
+	return unless $class->isInstalled();
 
 	my $self = bless({}, $class);
 	$self->{virtual_user} = $user;
@@ -30,6 +29,11 @@ sub new {
 	$self->{'_prime'} = "id";
 
 	return $self;
+}
+
+sub isInstalled {
+	my $constants = getCurrentStatic();
+	return $constants->{plugin}{Relocate} || 0;
 }
 
 sub create {

@@ -27,6 +27,7 @@ __template__
 [% IF title_type %]
 <div class="[% title_type %]"[% IF title_type_id %] id="[% title_type_id %]"[% END %]>
 [% END %]
+[% IF options.nothumbs || options.nocolors %]<div class="[% IF options.nothumbs %]novote [% END %][% IF options.nocolors %]nocolors[% END %]">[% END %]
 <div class="generaltitle" [% IF id %]id="[% id %]"[% END %]>
 	<div class="title">
 		<h3 [% IF h3id %]id="[% h3id %]"[% END %]>
@@ -37,6 +38,7 @@ __template__
 		</h3>
 	</div>
 </div>
+[% IF options.nothumbs || options.nocolors %]</div>[% END %]
 [% IF title_type %]
 </div>
 [% END %]
@@ -45,4 +47,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: titlebar;misc;default,v 1.16 2006/12/19 23:19:05 tvroom Exp $
+$Id: titlebar;misc;default,v 1.17 2007/07/31 19:47:24 lancelot Exp $

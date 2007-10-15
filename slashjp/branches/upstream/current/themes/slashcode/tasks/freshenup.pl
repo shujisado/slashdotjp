@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: freshenup.pl,v 1.75 2007/05/29 20:09:06 tvroom Exp $
+# $Id: freshenup.pl,v 1.81 2007/10/09 20:44:48 jamiemccarthy Exp $
 
 use File::Path;
 use File::Temp;
@@ -18,6 +18,7 @@ my $total_freshens = 0;
 $task{$me}{timespec} = '0-59 * * * *';
 $task{$me}{timespec_panic_1} = '1-59/10 * * * *';
 $task{$me}{timespec_panic_2} = '';
+$task{$me}{resource_locks} = getCurrentStatic('cepstral_audio') ? { cepstral => 1 } : { };
 $task{$me}{on_startup} = 1;
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
@@ -408,8 +409,8 @@ $task{$me}{code} = sub {
 		});
 
 		if ($constants->{plugin}{FireHose}) {
-			gen_firehose_static($virtual_user, "index_firehose.shtml", $gSkin->{name}, "", {  skipmenu => 1, skippop => 1, fhfilter=> "story", duration => "7", mode => 'mixed', color => "black"  }); 
-			gen_firehose_static($virtual_user, "firehose.shtml", $gSkin->{name}, "", { duration => "7", mode => 'fulltitle', color => "blue"  }); 
+			gen_firehose_static($virtual_user, "index_firehose.shtml", $gSkin->{name}, "", {  skipmenu => 1, skippop => 1, fhfilter=> "story", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => 1  }); 
+			gen_firehose_static($virtual_user, "firehose.shtml", $gSkin->{name}, "", { duration => "7", mode => 'fulltile', mixedmode => '1', setfield => '1', color => "blue", nodates => '1'  }); 
 		}
 		$slashdb->markSkinClean($mp_skid);
 		delete $dirty_skins{$mp_skid};
@@ -438,8 +439,8 @@ $task{$me}{code} = sub {
 					handle_err =>	0
 			});
 			if ($constants->{plugin}{FireHose}) {
-				gen_firehose_static($virtual_user, "index_firehose.shtml", $skin->{name}, $skinname, { skipmenu => 1, skippop => 1, fhfilter=> "'story $skin->{name}'", duration => "7", mode => 'mixed', color => "black"  }); 
-				gen_firehose_static($virtual_user, "firehose.shtml", $skin->{name}, $skinname, { duration => "7", mode => 'fulltitle', color => "blue", fhfilter => "'$skin->{name}'" }); 
+				gen_firehose_static($virtual_user, "index_firehose.shtml", $skin->{name}, $skinname, { skipmenu => 1, skippop => 1, fhfilter=> "'story $skin->{name}'", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => "1"  }); 
+				gen_firehose_static($virtual_user, "firehose.shtml", $skin->{name}, $skinname, { duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "blue", nodates => '1', fhfilter => "'$skin->{name}'" }); 
 			}
 
 			$slashdb->markSkinClean($key);

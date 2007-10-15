@@ -26,7 +26,7 @@ __template__
    ELSE;
    	horiz = 1 IF constants.comments_control_horizontal;
    END %]
-[% discussion2 = user.discussion2 && (user.discussion2 == "slashdot" || user.discussion2 == "uofm") %]
+[% discussion2 = Slash.discussion2() %]
 [% spilltext = "Spill at <b>${user.commentspill}</b>!";
    fineprint = 'The following comments are owned by whoever posted them.  We are not responsible for them in any way.';
    modpoints = BLOCK %]
@@ -53,9 +53,10 @@ __template__
 	<input type="hidden" name="sid" value="[% sid %]">
 	[% IF cid %]<input type="hidden" name="cid" value="[% cid %]">[% END %]
 	[% IF pid %]<input type="hidden" name="pid" value="[% pid %]">[% END %]
-	<input type="checkbox" name="discussion2_slashdot" value="1" onchange="this.form.submit();"[% constants.markup_checked_attribute IF user.discussion2 == 'slashdot' %]>
+	<input type="checkbox" name="discussion2_slashdot" value="1" onchange="this.form.submit();"[% constants.markup_checked_attribute IF discussion2 == 'slashdot' %]>
 	I am willing to help test <a href="http://slashdot.org/faq/com-mod.shtml#cm120">Slashdot's New Discussion System</a>.
 	<noscript><input type="submit"></noscript>
+
 	</div>
 	</form>
 </div>
@@ -148,6 +149,13 @@ __template__
 		<small>
 		<b>The Fine Print:</b> [% fineprint %]
 		</small>
+[% IF !user.state.no_d2 %]<noscript><br><small>Without JavaScript enabled, you might want to use [% Slash.linkComment({
+	sid	=> sid,
+	pid	=> pid,
+	subject	=> 'the classic discussion system',
+	subject_only => 1,
+	no_d2   => 1
+}) %] instead.  If you <a href="[% gSkin.rootdir %]/login.pl">login</a>, you can remember this preference.</small></noscript>[% END %]
 	</div>
 	</div>
 	[% IF discussion2 %]
@@ -159,7 +167,7 @@ __template__
 				<h4>
 				[% IF title %]
 					<span class="h-inline"><a href="[% link | strip_urlattr %]" title="Back to Article - [% title | strip_attribute %]">[% title %]</a></span>
-					<span class="titlecount"><a href="[% link | strip_urlattr %]#topcomment" title="Back to Top Comment - [% title | strip_attribute %]">[% count %]&nbsp;Comment[% count == 1 ? '' : 's' %]</a></span>
+					<span class="titlecount"><a href="[% link | strip_urlattr %]#topcomment" title="Back to Top Comment - [% title | strip_attribute %]"><span id="titlecountnum">[% count %]</span>&nbsp;Comment[% count == 1 ? '' : 's' %]</a></span>
 				[% ELSE %] 
 					[% Slash.linkComment({
 						sid	=> sid,
@@ -168,15 +176,21 @@ __template__
 						subject_only => 1,
 				}) %]
 				[% END %]
-		<div class="ccw-header-links">
-    [% IF user.is_admin && user.d2prefs_debug %]
+		<span class="ccw-header-links">
+    [% IF discussion2 && !cid && !pid %]
+        <a href="javascript:ajaxFetchComments(0,1)"><span id="more_comments_num_b"></span> More</a> | 
+    [% END; IF user.is_admin && user.d2prefs_debug %]
         <a href="javascript:showPrefs('reading')">Prefs</a>
-    [% ELSIF !user.is_anon %]
-        <a href="[% gSkin.rootdir %]/my/comments">Prefs</a>
+    [% ELSIF user.is_anon;
+   	PROCESS userlogin_cover
+   		return_url = gSkin.rootdir _ '/comments.pl?sid=' _ sid %]
+        <a href="[% gSkin.rootdir %]/login.pl" onclick="show_login_box(); return false">Login</a>
+    [% ELSE %]
+        <a href="[% gSkin.rootdir %]/my/comments"[% IF constants.modal_prefs_active %] onclick="getModalPrefs('d2'); return false"[% END %]>Prefs</a>
     [% END %]
+
 		[% UNLESS user.state.discussion_archived || user.state.discussion_future_nopost %]
-		  [% IF !user.is_anon %] | [% END %]
-			[% Slash.linkComment({
+			| [% Slash.linkComment({
 				sid => sid,
 				cid => cid,
 				op  => 'reply',
@@ -185,7 +199,7 @@ __template__
 				});
 			%]
     [% END %]
-		</div>
+		</span>
 		<span title="Toggle window location" onclick="toggleDisplayOptions()" class="close">/</span>
 				</h4>
 			</div>
@@ -211,18 +225,18 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
             <div id="ccw-full-panel" class="ccw-panel">
               <div class="ccw-panel-border"></div>
               <div id="ccw-full-count-pos" class="ccw-core-pos ccw-count-pos">
-                <span id="ccw-full-count-text" class="ccw-count-text"><span id="currentFull"></span><spad id="ccw-full-phrase"> Full</span></span>
+                <span id="ccw-full-count-text" class="ccw-count-text"><span id="currentFull"></span><span id="ccw-full-phrase"> Full</span></span>
               </div>
             </div>
             <div id="ccw-abbr-panel" class="ccw-panel">
               <div class="ccw-panel-border"></div>
               <div id="ccw-abbr-count-pos" class="ccw-core-pos ccw-count-pos">
-                <span id="ccw-abbr-count-text" class="ccw-count-text"><span id="currentOneline"></span><spad id="ccw-abbr-phrase"> Abbreviated</span></span>
+                <span id="ccw-abbr-count-text" class="ccw-count-text"><span id="currentOneline"></span><span id="ccw-abbr-phrase"> Abbreviated</span></span>
               </div>
             </div>
             <div id="ccw-hide-panel" class="ccw-panel">
               <div id="ccw-hide-count-pos" class="ccw-core-pos ccw-count-pos">
-                <span id="ccw-hide-count-text" class="ccw-count-text"><span id="currentHidden"></span><spad id="ccw-hide-phrase"> Hidden</span></span>
+                <span id="ccw-hide-count-text" class="ccw-count-text"><span id="currentHidden"></span><span id="ccw-hide-phrase"> Hidden</span></span>
               </div>
             </div>
           </div>
@@ -230,10 +244,18 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
           <div id="ccw-control" class="ccw-core">
             <div id="ccw-centering-rail" class="ccw-core">
               <div id="ccw-hide-bar-pos" class="ccw-core-pos">
-                <div id="ccw-hide-bar" class="ccw-bar"><div id="ccw-hide-bar-tab" class="ccw-bar-tab"></div></div>
+                <div id="ccw-hide-bar" class="ccw-bar">
+                  <div id="ccw-hide-bar-tab" class="ccw-bar-tab"></div>
+                  <div id="ccw-hide-bar-upzone" class="ccw-upzone" onclick="gCommentControlWidget.stepTHT(HIDE_BAR, +1)"></div>
+                  <div id="ccw-hide-bar-downzone" class="ccw-downzone" onclick="gCommentControlWidget.stepTHT(HIDE_BAR, -1)"></div>
+                </div>
               </div>
               <div id="ccw-abbr-bar-pos" class="ccw-core-pos">
-                <div id="ccw-abbr-bar" class="ccw-bar"><div id="ccw-abbr-bar-tab" class="ccw-bar-tab"></div></div>
+                <div id="ccw-abbr-bar" class="ccw-bar">
+                  <div id="ccw-abbr-bar-tab" class="ccw-bar-tab"></div>
+                  <div id="ccw-abbr-bar-upzone" class="ccw-upzone" onclick="gCommentControlWidget.stepTHT(ABBR_BAR, +1)"></div>
+                  <div id="ccw-abbr-bar-downzone" class="ccw-downzone" onclick="gCommentControlWidget.stepTHT(ABBR_BAR, -1)"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -241,14 +263,19 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
       </div>
 		</div>
 		<div class="commentControlFooter">
-    [% IF user.is_admin && user.d2prefs_debug %]
+    [% IF discussion2 && !cid && !pid %]
+        <a href="javascript:ajaxFetchComments(0,1)"><span id="more_comments_num_c"></span> More</a> | 
+    [% END; IF user.is_admin && user.d2prefs_debug %]
         <a href="javascript:showPrefs('reading')">Prefs</a>
-    [% ELSIF !user.is_anon %]
-        <a href="[% gSkin.rootdir %]/my/comments">Prefs</a>
+    [% ELSIF user.is_anon;
+   	PROCESS userlogin_cover
+   		return_url = gSkin.rootdir _ '/comments.pl?sid=' _ sid %]
+        <a href="[% gSkin.rootdir %]/login.pl" onclick="show_login_box(); return false">Login</a>
+    [% ELSE %]
+        <a href="[% gSkin.rootdir %]/my/comments"[% IF constants.modal_prefs_active %] onclick="getModalPrefs('d2'); return false"[% END %]>Prefs</a>
     [% END %]
 		[% UNLESS user.state.discussion_archived || user.state.discussion_future_nopost %]
-		  [% IF !user.is_anon %] | [% END %]
-			[% Slash.linkComment({
+			| [% Slash.linkComment({
 				sid => sid,
 				cid => cid,
 				op  => 'reply',
@@ -266,7 +293,15 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 </div>
 <a name="topcomment"></a>
 
+<div id="modal_cover" style="display:none" onclick="hide_modal_box()"></div>
+<div id="modal_box" style="display:none">
+        <div class="generaltitle" >
+                <div class="title"><h3>Modify Your Preferences <a href="javascript:hide_modal_box()"><img src="[% gSkin.imagedir %]/images/sic_close.png" alt="Close"></a></h3></div>
+        </div>
+        <div id="modal_box_content">Content here</div>
+</div>
+
 __seclev__
 10000
 __version__
-$Id: printCommentsMain;misc;default,v 1.78 2007/05/09 20:57:04 pudge Exp $
+$Id: printCommentsMain;misc;default,v 1.92 2007/10/11 22:14:06 pudge Exp $

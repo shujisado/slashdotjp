@@ -23,22 +23,27 @@ __template__
 </p>
 
 [% ELSE %]
-
+[%
+messages = Slash.getObject('Slash::Messages');
+mobile_code = messages.getMessageDeliveryByName("Mobile");
+code = msg.code;
+pref = msg.user.prefs.$code;
+%]
 [% reply.nickname %] has posted a comment in reply to your comment.
-    [% reply.subject | decode_entities %]
-    [% absolutedir %]/comments.pl?sid=[% reply.sid %]&cid=[% reply.cid %]
-
+  [% reply.subject | decode_entities %]
+  [% absolutedir %]/comments.pl?sid=[% reply.sid %]&cid=[% reply.cid %]
+[% IF pref != mobile_code %]
 Replied to:
-    [% parent.subject | decode_entities %]
-    [% absolutedir %]/comments.pl?sid=[% parent.sid %]&cid=[% parent.cid %]
+  [% parent.subject | decode_entities %]
+  [% absolutedir %]/comments.pl?sid=[% parent.sid %]&cid=[% parent.cid %]
 
 Attached to:
     [% discussion.title | decode_entities %]
     [% Slash.url2abs(discussion.url, absolutedir) %]
-
+[% END %]
 [% END %]
 
 __seclev__
 500
 __version__
-$Id: reply_msg;comments;default,v 1.10 2005/07/27 22:54:11 pudge Exp $
+$Id: reply_msg;comments;default,v 1.11 2007/08/07 19:12:51 entweichen Exp $

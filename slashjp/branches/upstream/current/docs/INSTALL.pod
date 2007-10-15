@@ -104,7 +104,7 @@ L<http:E<sol>E<sol>slashcode.cvs.sourceforge.netE<sol>*checkout*E<sol>slashcodeE
 
 The version of this file that you are currently reading is:
 
-$Id: INSTALL.pod,v 1.61 2007/02/06 22:47:34 jamiemccarthy Exp $
+$Id: INSTALL.pod,v 1.63 2007/09/26 21:20:30 jamiemccarthy Exp $
 
 If there are more recent versions of this file, you can find a list of
 those changes at:
@@ -161,10 +161,8 @@ lock, create, drop, index and alter.  For example, if your whole site
 server, and you wanted to use the mysql username 'slash', you might:
 
 	GRANT SELECT, INSERT, UPDATE, DELETE, LOCK TABLES, CREATE, DROP,
-	INDEX, ALTER ON slash.* TO 'slash'@'localhost' IDENTIFIED BY
-	(quoted password);
-
-(XXX is Create_temp_table_priv required? don't think so)
+	INDEX, ALTER, PROCESS ON slash.* TO 'slash'@'localhost'
+	IDENTIFIED BY (quoted password);
 
 In this case, 'slash' would also be the name of your MySQL user as
 described in L<"Types of Users"> below.  You'll have to give your MySQL
@@ -230,6 +228,8 @@ instead of bash, which apparently breaks the above step (because dash's
 into it, but for now apparently (temporarily) linking /bin/sh to /bin/bash
 during this step is a workaround.
 L<https:E<sol>E<sol>launchpad.netE<sol>ubuntuE<sol>+spec/dash-as-bin-sh>
+(Update: this appears to no longer be a problem, but if you encounter
+problems on Ubuntu, check where your /bin/sh points.)
 
 =item 4.
 
@@ -1747,5 +1747,5 @@ send out any notices.  You can subscribe here:
 
 =head1 VERSION
 
-$Id: INSTALL.pod,v 1.61 2007/02/06 22:47:34 jamiemccarthy Exp $
+$Id: INSTALL.pod,v 1.63 2007/09/26 21:20:30 jamiemccarthy Exp $
 

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Messages.pm,v 1.40 2006/10/26 17:33:03 jamiemccarthy Exp $
+# $Id: Messages.pm,v 1.42 2007/08/01 06:57:15 pudge Exp $
 
 package Slash::Messages;
 
@@ -41,7 +41,7 @@ use Slash::Constants ':messages';
 use Slash::Display;
 use Slash::Utility;
 
-($VERSION) = ' $Revision: 1.40 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.42 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 #========================================================================
@@ -367,6 +367,7 @@ sub getMode {
 	my($self, $msg) = @_;
 	my $code = $msg->{code};
 	my $mode = $msg->{user}{prefs}{$code};
+        $mode = MSG_MODE_EMAIL if $msg->{user}{prefs}{$code} == $self->getMessageDeliveryByName("Mobile");
 
 	my $coderef = $self->getMessageCode($code) or return MSG_MODE_NOCODE;
 
@@ -455,8 +456,14 @@ sub send {
 			return 0;
 		}
 
-		$addr    = $msg->{altto} || $msg->{user}{realemail};
-		unless (emailValid($addr)) {
+                # Email and Mobile messages are both Email modes, but use different recipients.
+                if ($msg->{user}{prefs}{$msg->{code}} == $self->getMessageDeliveryByName("Mobile")) {
+                        $addr = $msg->{user}{mobile_text_address};
+                } else {
+                        $addr = $msg->{altto} || $msg->{user}{realemail};
+                }
+		
+                unless (emailValid($addr)) {
 			messagedLog(getData("send mail error", {
 				addr	=> $addr,
 				uid	=> $msg->{user}{uid},
@@ -1108,6 +1115,16 @@ sub send_mod_msg {
 	}
 }
 
+sub getMessageDeliveryByName {
+        my($self, $name) = @_;
+
+        my $slashdb = getCurrentDB();
+        my $name_q = $slashdb->sqlQuote($name);
+        my $code = $slashdb->sqlSelect("code", "message_deliverymodes", "name = $name_q");
+
+        return($code);
+}
+
 1;
 
 __END__
@@ -1119,4 +1136,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Messages.pm,v 1.40 2006/10/26 17:33:03 jamiemccarthy Exp $
+$Id: Messages.pm,v 1.42 2007/08/01 06:57:15 pudge Exp $

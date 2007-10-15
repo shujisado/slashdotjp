@@ -86,6 +86,8 @@ __template__
 			<div class="notes">
 				You must enter a fully qualified URL, for an iCal calendar.
 			</div>
+                        [% PROCESS formLabel value => 'Mobile Text Address' %]
+                        <input type="text" name="mobile_text_address" value="[% useredit.mobile_text_address | strip_attribute %]" size="40">
 
 			[% PROCESS formLabel value => 'Sig' %]
 			<textarea name="sig" rows="2" cols="30">[% useredit.sig | strip_literal %]</textarea>
@@ -110,4 +112,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: editUser;users;default,v 1.24 2007/05/09 18:32:39 entweichen Exp $
+$Id: editUser;users;default,v 1.25 2007/07/31 13:52:56 entweichen Exp $

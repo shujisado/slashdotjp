@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Display.pm,v 1.122 2007/04/18 23:26:55 cowboyneal Exp $
+# $Id: Display.pm,v 1.123 2007/10/04 19:41:22 pudge Exp $
 
 package Slash::Utility::Display;
 
@@ -33,7 +33,7 @@ use Slash::Utility::Environment;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.122 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.123 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	cleanSlashTags
 	createMenu
@@ -1325,11 +1325,12 @@ sub _hard_linkComment {
 	my $display = qq|<a href="$gSkin->{rootdir}/comments.pl?sid=$linkdata->{sid}|;
 	$display .= "&amp;op=$linkdata->{op}" if $linkdata->{op};
 	$display .= "&amp;threshold=" . (defined($linkdata->{threshold}) ? $linkdata->{threshold} : $user->{threshold});
-	$display .= "&amp;commentsort=$user->{commentsort}";
+	$display .= "&amp;commentsort=$user->{commentsort}" if defined $user->{commentsort};
+	$display .= "&amp;mode=$user->{mode}" if defined $user->{mode};
+	$display .= "&amp;no_d2=1" if $user->{state}{no_d2} || $linkdata->{no_d2};
+	$display .= "&amp;startat=$linkdata->{startat}" if $linkdata->{startat};
 	$display .= "&amp;tid=$user->{state}{tid}"
 		if $constants->{tids_in_urls} && $user->{state}{tid};
-	$display .= "&amp;mode=$user->{mode}";
-	$display .= "&amp;startat=$linkdata->{startat}" if $linkdata->{startat};
 
 	if ($printcomment) {
 		$display .= "&amp;cid=$linkdata->{cid}";
@@ -1347,7 +1348,7 @@ sub _hard_linkComment {
 		$display .= " " . timeCalc($linkdata->{date}) 
 			if $date;
 	}
-	$display .= "\n";
+	#$display .= "\n";
 
 	return $display;
 }
@@ -1725,4 +1726,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Display.pm,v 1.122 2007/04/18 23:26:55 cowboyneal Exp $
+$Id: Display.pm,v 1.123 2007/10/04 19:41:22 pudge Exp $

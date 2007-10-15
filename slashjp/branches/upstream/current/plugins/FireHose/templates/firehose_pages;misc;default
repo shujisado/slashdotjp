@@ -21,6 +21,9 @@ __template__
 		extra_uid = user.state.firehose_user_uid;
 		page_extras = "&amp;op=userfirehose&amp;uid=$extra_uid";
 	END;
+	IF form.index;
+		page_extras = page_extras _ "&amp;index=1";
+	END;
 %]
 
 [% IF !contentsonly %]<span class="firehose_paginate" id="firehose_pages">[% END;
@@ -34,6 +37,7 @@ __template__
      END;
 
      num_page_display = constants.firehose_num_page_display || 10;
+     IF options.smalldevices; num_page_display = 4; END;
      start_page_num = 1;
      end_page_num = page_max;
 
@@ -53,6 +57,8 @@ __template__
          END;
        END;
      END;
+
+     IF end_page_num > 1;
      FOR i_page IN [ start_page_num .. end_page_num ] %]
 <a href="[% gSkin.rootdir %]/[% fh_page %]?page=[% (i_page - 1) %][% param_str %][% page_extras %]" [% IF i_page == page_cur %]class="fh_cur_page"[% END %]>[%
        IF i_page == start_page_num %]<b>&lsaquo;</b> [% END;
@@ -60,10 +66,12 @@ __template__
          ELSE; i_page; END;
        IF i_page == end_page_num %] <b>&rsaquo;</b>[% END %]</a>
 [%   END;
+     END;
+
    END;
 
    IF !contentsonly %]</span>[% END %]
 __seclev__
 10000
 __version__
-$Id: firehose_pages;misc;default,v 1.10 2007/06/26 20:05:19 tvroom Exp $
+$Id: firehose_pages;misc;default,v 1.14 2007/09/04 20:53:21 tvroom Exp $

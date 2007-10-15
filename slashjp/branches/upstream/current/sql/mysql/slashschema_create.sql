@@ -4,7 +4,7 @@
 #--------------------------------------------------------
 # Server version	3.23.26-beta
 #
-# $Id: slashschema_create.sql,v 1.248 2007/06/27 03:53:16 pudge Exp $
+# $Id: slashschema_create.sql,v 1.250 2007/10/10 20:45:08 jamiemccarthy Exp $
 #
 
 #
@@ -227,6 +227,18 @@ CREATE TABLE classes (
 ) TYPE=InnoDB;
 
 #
+# Table structure for table 'clout_types'
+#
+
+CREATE TABLE clout_types (
+	clid		smallint UNSIGNED NOT NULL AUTO_INCREMENT,
+	name		varchar(16) NOT NULL,
+	class		varchar(255) NOT NULL,
+	PRIMARY KEY (clid),
+	UNIQUE name (name)
+) TYPE=InnoDB;
+
+#
 # Table structure for table 'code_param'
 #
 
@@ -384,7 +396,7 @@ CREATE TABLE css (
 DROP TABLE IF EXISTS dateformats;
 CREATE TABLE dateformats (
 	id tinyint UNSIGNED DEFAULT '0' NOT NULL,
-	format varchar(32),
+	format varchar(64),
 	description varchar(64),
 	PRIMARY KEY (id)
 ) TYPE=InnoDB;
@@ -1287,6 +1299,19 @@ CREATE TABLE users_acl (
 	PRIMARY KEY (id)
 ) TYPE=InnoDB;
 
+#
+# Table structure for table 'users_clout'
+#
+
+CREATE TABLE users_clout (
+	clout_id	int UNSIGNED NOT NULL AUTO_INCREMENT,
+	uid		mediumint UNSIGNED NOT NULL,
+	clid		smallint UNSIGNED NOT NULL,
+	clout		float UNSIGNED DEFAULT NULL,
+	PRIMARY KEY (clout_id),
+	UNIQUE uid_clid (uid, clid),
+	INDEX clid (clid)
+) TYPE=InnoDB;
 
 #
 # Table structure for table 'users_comments'
@@ -1413,13 +1438,13 @@ CREATE TABLE users_logtokens (
 
 DROP TABLE IF EXISTS users_param;
 CREATE TABLE users_param (
-	param_id mediumint UNSIGNED NOT NULL auto_increment,
+	param_id int UNSIGNED NOT NULL auto_increment,
 	uid mediumint UNSIGNED NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
 	value text NOT NULL,
+	PRIMARY KEY (param_id),
 	UNIQUE uid_key (uid,name),
-	KEY (uid),
-	PRIMARY KEY (param_id)
+	KEY name (name)
 ) TYPE=InnoDB;
 
 #

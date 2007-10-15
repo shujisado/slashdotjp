@@ -14,6 +14,13 @@ __seclev__
 10000
 __template__
 [% 
+    firehose = Slash.getObject("Slash::FireHose");
+    pop_val = firehose.getPopLevelForPopularity(item.userpop);
+    nofollow = 1;
+    IF pop_val <= 4;
+    	nofollow = 0;
+    END;
+
     mode = mode || "fulltitle";
     divwrapper = 1;
     storylinkwrapper = 1;
@@ -63,13 +70,13 @@ END %]
 [% END %]
 	[% PROCESS formatHoseTitle the_user = the_user item = item url = url adminmode=adminmode options = options %]
 	[% title_type = item.type == "story" ? "story" : "firehose" %]
-	[% PROCESS titlebar h3id="title-" _ item.id id="" future = future title_type = title_type title_type_id = "ttype-" _ item.id %]
+	[% PROCESS titlebar h3id="title-" _ item.id id="" future = future title_type = title_type title_type_id = "ttype-" _ item.id options = options %]
 [% END %]
 	[% IF bodywrapper;
 		Slash.getData('byline', { adminmode => adminmode, item => item, the_user => the_user }, 'firehose');
 	%]
 
-	<div class="[% IF bodycontent && mode == "fulltitle" %]hide[% ELSIF bodycontent %]body[% ELSE %]empty[% END %]" id="fhbody-[% item.id %]"  [% IF !topic.image %]style="min-height: 100% !important; "[% END %]>
+	<div class="[% IF bodycontent && mode == "fulltitle" %]hide[% ELSIF bodycontent %]body[% ELSE %]empty[% END %]" id="fhbody-[% item.id %]"  [% IF !topic.image %]style="min-height: auto !important; "[% END %]>
 	[% END %]
 		[% IF item.tid %]
 		<div class="topic">
@@ -103,7 +110,7 @@ END %]
 			[% END %]
 [% IF full %]
 		[% IF (future || item.type=="story") %]<div class="whitewash">[% END %]
-		[% PROCESS tagsfirehosedivtagbox id = item.id  tags_top = tags_top vote = vote options = options %]
+		[% PROCESS tagsfirehosedivtagbox id = item.id  tags_top = tags_top vote = vote options = options item = item %]
 		[% IF (future || item.type=="story") %]</div>[% END %]
 [% IF divwrapper; IF storylinkwrapper %]
 <div class="storylinks">
@@ -113,10 +120,10 @@ END %]
 			[% IF item.type == "story" %]
 				[% the_skin = Slash.db.getSkin(item.primaryskid) %]
 				[% 
-				readmore_link = "Read more";
+				readmore_link = "Read More";
 				
 				IF item.body_length;
-					readmore_link = "Read $item.body_length more bytes...";
+					readmore_link = "Read $item.body_length More Bytes...";
 				END;
 
 				Slash.linkStory({
@@ -128,15 +135,19 @@ END %]
 				 %]
 			[% ELSIF item.type == "journal" %]
 				<a href="[% gSkin.rootdir %]/~[% the_user.nickname %]/journal/[% item.srcid %]/">Read More</a>
-			[% ELSIF item.type == "submission" %]
-				<a href="[% gSkin.rootdir %]/firehose.pl?op=view&amp;id=[% item.id %]">Read More &amp; Discuss</a>
+			[% ELSIF item.discussion %]
+				<a href="[% gSkin.rootdir %]/firehose.pl?op=view&amp;id=[% item.id %]">Read More</a>
+			[% ELSE %]
+				Nothing More
 			[% END %]
 				</b>
 			</li>
 			[% IF item.discussion;
 			   disc = Slash.db.getDiscussion(item.discussion); %]
-			<li class="comments">
-				<a href="[% gSkin.rootdir %]/comments.pl?sid=[% item.discussion %]">[% disc.commentcount %]</a> comment[% IF disc.commentcount != 1 %]s[% END %]
+			<li class="comments[% IF !disc.commentcount || options.nocommentcnt %] nocomment[% END %]">
+				[% skin = gSkin %]
+				[% IF item.type == "story"; skin = Slash.db.getSkin(item.primaryskid); END %]
+				<a href="[% skin.rootdir %]/comments.pl?sid=[% item.discussion %]">[% disc.commentcount %]</a> <span>comment[% IF disc.commentcount != 1 %]s[% END %]</span>
 			</li>
 			[% END %]
 		</ul>
@@ -147,4 +158,4 @@ END %]
 [% END %]
 [% END %]
 __version__
-$Id: dispFireHose;firehose;default,v 1.49 2007/06/26 20:05:19 tvroom Exp $
+$Id: dispFireHose;firehose;default,v 1.62 2007/09/04 20:53:21 tvroom Exp $

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.44 2007/05/29 20:12:53 tvroom Exp $
+# $Id: ajax.pl,v 1.56 2007/10/09 23:03:34 pudge Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.44 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.56 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -25,34 +25,34 @@ sub main {
 	my $gSkin     = getCurrentSkin();
 
 	my $ops = getOps();
-	my $op = $form->{op};
-	print STDERR "AJAX1 $op\n";
+	my $op = $form->{op} || '';
+#	print STDERR "AJAX1 $$: $user->{uid}, $op\n";
 
 	if (!$ops->{$op}) {
 		errorLog("No Ajax op '$op' found");
 		$op = 'default';
 	}
 	
-	print STDERR "AJAX2 $op\n";
+#	print STDERR "AJAX2 $$: $user->{uid}, $op\n";
 
 	$op = 'default' unless $ops->{$op}{function} || (
 		$ops->{$op}{class} && $ops->{$op}{subroutine}
 	);
-	print STDERR "AJAX3 $op\n";
+#	print STDERR "AJAX3 $$: $user->{uid}, $op\n";
 
 #$Slash::ResKey::DEBUG = 2;
 
 	$ops->{$op}{function} ||= loadCoderef($ops->{$op}{class}, $ops->{$op}{subroutine});
 	$op = 'default' unless $ops->{$op}{function};
 	
-	print STDERR "AJAX4 $op\n";
+#	print STDERR "AJAX4 $$: $user->{uid}, $op\n";
 
 	$form->{op} = $op;  # save for others to use
 
 	my $reskey_name = $ops->{$op}{reskey_name} || 'ajax_base';
 	$ops->{$op}{reskey_type} ||= 'use';
 	
-	print STDERR "AJAX5 $op\n";
+#	print STDERR "AJAX5 $$: $user->{uid}, $op\n";
 
 	if ($reskey_name ne 'NA') {
 		my $reskey = getObject('Slash::ResKey');
@@ -74,15 +74,21 @@ sub main {
 					html	=> { $msgdiv => $rkey->errstr },
 				});
 			}
+			printf STDERR "AJAXE %d: UID:%d, op:%s: %s (%s:%s:%s:%s:%s:%s:%s)\n",
+				$$, $user->{uid}, $op, $rkey->errstr, $rkey->reskey,
+				$rkey->type, $rkey->resname, $rkey->rkrid, $rkey->code, $rkey->static,
+				$user->{srcids}{ 24 };
 			return;
 		}
 	}
-	print STDERR "AJAX6 $op\n";
+#	print STDERR "AJAX6 $$: $user->{uid}, $op\n";
 
 	my $options = {};
 	my $retval = $ops->{$op}{function}->(
 		$slashdb, $constants, $user, $form, $options
 	);
+
+#	print STDERR "AJAX7 $$: $user->{uid}, $op ($retval)\n";
 
 	if ($retval) {
 		header_ajax($options);
@@ -119,7 +125,7 @@ sub getSectionPrefsHTML {
 	}
 
 	my $topic_tree = $reader->getTopicTree();
-	my $nexus_tids_ar = $reader->getStorypickableNexusChildren($constants->{mainpage_nexus_tid});
+	my $nexus_tids_ar = $reader->getMainpageDisplayableNexuses();
 	my $nexus_hr = { };
 	my $skins = $reader->getSkins();
 
@@ -178,9 +184,10 @@ sub getSectionPrefsHTML {
 }
 
 sub setSectionNexusPrefs() {
-	my ($slashdb, $constants, $user, $form) = @_;
-	
-	my $nexus_tids_ar = $slashdb->getStorypickableNexusChildren($constants->{mainpage_nexus_tid}, 1);
+	my($slashdb, $constants, $user, $form) = @_;
+
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $nexus_tids_ar = $reader->getMainpageDisplayableNexuses();
 
 	my @story_always_nexus 		= split ",", $user->{story_always_nexus} || "";
 	my @story_full_brief_nexus 	= split ",", $user->{story_full_brief_nexus} || "";
@@ -264,13 +271,15 @@ sub readRest {
 	my $cid = $form->{cid} or return;
 	my $sid = $form->{sid} or return;
 
+	$user->{state}{ajax_accesslog_op} = 'comments_read_rest';
+
 	my $comment = $slashdb->getComment($cid) or return;
 	return unless $comment->{sid} == $sid;
 
 	my $texts   = $slashdb->getCommentTextCached(
 		{ $cid => $comment },
 		[ $cid ],
-		{ cid => $cid, full => 1 }
+		{ full => 1 }
 	) or return;
 
 	return $texts->{$cid} || '';
@@ -279,42 +288,150 @@ sub readRest {
 sub fetchComments {
 	my($slashdb, $constants, $user, $form, $options) = @_;
 
-	my $cids = [ grep /^\d+$/, split /,/, $form->{cids} ];
-	my $id   = $form->{discussion_id} || 0;
-	my $cid  = $form->{cid} || 0; # root id
+	my $cids         = [ grep /^\d+$/, split /,/, ($form->{cids} || '') ];
+	my $id           = $form->{discussion_id} || 0;
+	my $cid          = $form->{cid} || 0; # root id
+	my $d2_seen      = $form->{d2_seen};
+	my $placeholders = $form->{placeholders};
+	my @placeholders;
 
 	$user->{state}{ajax_accesslog_op} = "ajax_comments_fetch";
-
+#use Data::Dumper; print STDERR Dumper [ $cids, $id, $cid, $d2_seen ];
 	# XXX error?
-	return unless @$cids && $id;
+	return unless $id && (@$cids || $d2_seen);
 
 	my $discussion = $slashdb->getDiscussion($id);
 	if ($discussion->{type} eq 'archived') {
 		$user->{state}{discussion_archived} = 1;
 	}
+	$user->{mode} = 'thread';
+	$user->{reparent} = 0;
+	$user->{state}{max_depth} = $constants->{max_depth} + 3;
+
+	my %select_options = (
+		commentsort  => 0,
+		threshold    => -1,
+		no_d2        => 1
+	);
+
+	my %seen;
+	if ($d2_seen || $form->{d2_seen_ex}) {
+		my $lastcid = 0;
+		for my $cid (split /,/, $d2_seen || $form->{d2_seen_ex}) {
+			$cid = $lastcid ? $lastcid + $cid : $cid;
+			$seen{$cid} = 1;
+			$lastcid = $cid;
+		}
+		if ($d2_seen) {
+			$select_options{existing} = \%seen if keys %seen;
+			delete $select_options{no_d2};
+		}
+	}
 
 	my($comments) = Slash::selectComments(
 		$discussion,
 		$cid,
-		{
-			commentsort	=> 0,
-			threshold	=> -1
-		}
+		\%select_options,
 	);
 
 	# XXX error?
 	return unless $comments && keys %$comments;
 
-	my %pieces = split /[,;]/, $form->{pieces};
-	my %abbrev = split /[,;]/, $form->{abbreviated};
-	my(@hidden_cids, @pieces_cids, @abbrev_cids);
+	my $d2_seen_0 = $comments->{0}{d2_seen} || '';
+	#delete $comments->{0}; # non-comment data
+
+	my %data;
+	if ($d2_seen || $placeholders) {
+		my $special_cids;
+		if ($d2_seen) {
+			$special_cids = $cids = [ sort { $a <=> $b } grep { $_ && !$seen{$_} } keys %$comments ];
+		} elsif ($placeholders) {
+			@placeholders = split /[,;]/, $placeholders;
+			$special_cids = [ sort { $a <=> $b } @placeholders ];
+			if ($form->{d2_seen_ex}) {
+				my @seen;
+				my $lastcid = 0;
+				my %check = (%seen, map { $_ => 1 } @placeholders);
+				for my $cid (sort { $a <=> $b } keys(%check)) {
+					push @seen, $lastcid ? $cid - $lastcid : $cid;
+					$lastcid = $cid;
+				}
+				$d2_seen_0 = join ',', @seen;
+			}
+		}
+
+		if (@$special_cids) {
+			my @cid_data = map {{
+				uid    => $comments->{$_}{uid},
+				pid    => $comments->{$_}{pid},
+				points => $comments->{$_}{points},
+				kids   => []
+			}} @$special_cids;
+
+			$data{new_cids_order} = [ @$special_cids ];
+			$data{new_cids_data}  = \@cid_data;
+
+			my %cid_map = map { ($_ => 1) } @$special_cids;
+			$data{new_thresh_totals} = commentCountThreshold(
+				{ map { ($_ => $comments->{$_}) } grep { $_ && $cid_map{$_} } keys %$comments },
+				0,
+				{ map { ($_ => 1) } grep { !$comments->{$_}{pid} } @$special_cids }
+			);
+		}
+#use Data::Dumper; print STDERR Dumper \$comments, \%data;
+	}
+
+	# pieces_cids are comments that were oneline and need the extra display stuff for full
+	# abbrev_cids are comments that were oneline/abbreviated and need to be non-abbrev
+	# hidden_cids are comments that were hidden (noshow) and need to be displayed (full or oneline)
+
+	my %pieces = split /[,;]/, $form->{pieces}      || '';
+	my %abbrev = split /[,;]/, $form->{abbreviated} || '';
+	my(@hidden_cids, @pieces_cids, @abbrev_cids, %get_pieces_cids, %keep_hidden);
+	my(%html, %html_append_substr);
+
+	# prune out hiddens we don't need, if threshold is sent (which means
+	# we are not asking for a specific targetted comment(s) to highlight,
+	# but just adjusting for a threshold or getting new comments
+	if (defined($form->{threshold}) && defined($form->{highlightthresh})) {
+		for (my $i = 0; $i < @$cids; $i++) {
+			my $class = 'oneline';
+			my $cid = $cids->[$i];
+			my $comment = $comments->{$cid};
+			if ($comment->{dummy}) {
+				$class = 'hidden';
+				$keep_hidden{$cid} = 1;
+			} else {
+				# for now we only readjust for children of ROOT (pid==0);
+				# if we make this work for threads, we will need to know
+				# the pid of the page, and adjust this accordingly
+				my($T, $HT) = commentThresholds($comment, !$comment->{pid}, $user);
+				if ($T < $form->{threshold}) {
+					if ($user->{is_anon} || ($user->{uid} != $comment->{uid})) {
+						$class = 'hidden';
+						$keep_hidden{$cid} = 1;
+					}
+				}
+				$class = 'full' if $HT >= $form->{highlightthresh}
+					&& $class ne 'hidden';
+			}
+			$comment->{class} = $class;
+
+			if ($class eq 'oneline') {
+				$get_pieces_cids{$cid} = 1;
+			}
+		}
+	} else {
+		$comments->{$_}{class} = 'full' for @$cids;
+	}
+
 	for my $cid (@$cids) {
 		if (exists $pieces{$cid}) {
 			push @pieces_cids, $cid;
 			if (exists $abbrev{$cid}) {
 				push @abbrev_cids, $cid;
 			}
-		} else {
+		} elsif (!$keep_hidden{$cid}) {
 			push @hidden_cids, $cid;
 		}
 	}
@@ -327,33 +444,48 @@ sub fetchComments {
 		$comments->{$cid}{comment} = $comment_text->{$cid};
 	}
 
-	my %html;
+	# for dispComment
+	$form->{mode} = 'archive';
+
 	for my $cid (@hidden_cids) {
 		$html{'comment_' . $cid} = Slash::dispComment($comments->{$cid}, {
-			class		=> 'oneline',
-			noshow_show	=> 1
+			noshow_show => 1,
+			pieces      => $get_pieces_cids{$cid}
 		});
 	}
+
 	for my $cid (@pieces_cids) {
 		@html{'comment_otherdetails_' . $cid, 'comment_sub_' . $cid} =
 			Slash::dispComment($comments->{$cid}, {
-				class		=> 'full',
-				show_pieces	=> 1
+				show_pieces => 1
 			});
 	}
 
-	my %html_append_substr;
 	for my $cid (@abbrev_cids) {
-		#@html{'comment_body_' . $cid} = $comments->{$cid}{comment};
 		@html_append_substr{'comment_body_' . $cid} = substr($comments->{$cid}{comment}, $abbrev{$cid});
 	}
-#use Data::Dumper; print STDERR Dumper \@hidden_cids, \@pieces_cids, \@abbrev_cids, \%pieces, \%abbrev, \%html, \%html_append_substr, $form;
+
+# XXX update noshow_comments, pieces_comments -- pudge
+#use Data::Dumper; print STDERR Dumper \@hidden_cids, \@pieces_cids, \@abbrev_cids, \%get_pieces_cids, \%keep_hidden, \%pieces, \%abbrev, \%html, \%html_append_substr, $form, \%data;
 
 	$options->{content_type} = 'application/json';
-	return Data::JavaScript::Anon->anon_dump({
-		html			=> \%html,
-		html_append_substr	=> \%html_append_substr
-	});
+	my %to_dump = (
+		update_data        => \%data,
+		html               => \%html,
+		html_append_substr => \%html_append_substr
+	);
+	if ($d2_seen_0) {
+		my $total = $slashdb->countCommentsBySid($id);
+		$total -= $d2_seen_0 =~ tr/,//; # total
+		$total--; # off by one
+		$to_dump{eval_first} ||= '';
+		$to_dump{eval_first} .= "d2_seen = '$d2_seen_0'; updateMoreNum($total);";
+	}
+	if ($placeholders) {
+		$to_dump{eval_first} ||= '';
+		$to_dump{eval_first} .= "placeholder_no_update = " . Data::JavaScript::Anon->anon_dump({ map { $_ => 1 } @placeholders }) . ';';
+	}
+	return Data::JavaScript::Anon->anon_dump(\%to_dump);
 }
 
 sub updateD2prefs {
@@ -367,6 +499,37 @@ sub updateD2prefs {
 	}
 
 	$slashdb->setUser($user->{uid}, \%save);
+}
+
+sub getModalPrefs {
+        my($slashdb, $constants, $user, $form) = @_;
+
+        return slashDisplay('prefs_' . $form->{'section'},
+                {
+                user => $user,
+                },
+                { Return => 1 }
+        );
+}
+
+sub saveModalPrefs {
+        my($slashdb, $constants, $user, $form) = @_;
+
+        # Ajax returns our form as key=value, so trick URI into decoding for us.
+        use URI;
+        my $url = URI->new('//e.a/?' . $form->{'data'});
+        my %params = $url->query_form;
+
+        # Specific to D2 for the time being
+        my $user_edits_table = {
+                d2_comment_q     => $params{'d2_comment_q'}     || undef,
+                d2_comment_order => $params{'d2_comment_order'} || undef,
+                emaildisplay     => $params{'emaildisplay'}     || undef,
+                nosigs           => ($params{'nosigs'}          ? 1 : 0),
+                no_spell         => ($params{'no_spell'}        ? 1 : 0),
+        };
+
+        $slashdb->setUser($params{uid}, $user_edits_table);
 }
 
 # comments
@@ -404,41 +567,51 @@ sub getOps {
 	);
 
 	my %mainops = (
-		comments_read_rest	=> {
-			function	=> \&readRest,
-			reskey_name	=> 'ajax_base',
-			reskey_type	=> 'createuse',
+		comments_read_rest      => {
+			function        => \&readRest,
+			reskey_name     => 'ajax_base',
+			reskey_type     => 'createuse',
 		},
-		comments_fetch		=> {
-			function	=> \&fetchComments,
-			reskey_name	=> 'ajax_user_static',
-			reskey_type	=> 'createuse',
+		comments_fetch          => {
+			function        => \&fetchComments,
+			reskey_name     => 'ajax_base',
+			reskey_type     => 'createuse',
 		},
-		comments_set_prefs	=> {
-			function	=> \&updateD2prefs,
-			reskey_name	=> 'ajax_user_static',
-			reskey_type	=> 'createuse',
+		comments_set_prefs      => {
+			function        => \&updateD2prefs,
+			reskey_name     => 'ajax_user_static',
+			reskey_type     => 'createuse',
 		},
-		getSectionPrefsHTML => {
-			function	=> \&getSectionPrefsHTML,
-			reskey_name	=> 'ajax_user',
-			reskey_type	=> 'createuse',
+		getSectionPrefsHTML     => {
+			function        => \&getSectionPrefsHTML,
+			reskey_name     => 'ajax_user',
+			reskey_type     => 'createuse',
 		},
-		setSectionNexusPrefs => {
-			function	=> \&setSectionNexusPrefs,
-			reskey_name	=> 'ajax_user',
-			reskey_type	=> 'createuse',
+		setSectionNexusPrefs    => {
+			function        => \&setSectionNexusPrefs,
+			reskey_name     => 'ajax_user',
+			reskey_type     => 'createuse',
 		},
-#		tagsGetUserStory => {
-#			function	=> \&tagsGetUserStory,
-#			reskey_type	=> 'createuse',
+#		tagsGetUserStory        => {
+#			function        => \&tagsGetUserStory,
+#			reskey_type     => 'createuse',
 #		},
-#		tagsCreateForStory => {
-#			function	=> \&tagsCreateForStory,
-#			reskey_type	=> 'createuse',
+#		tagsCreateForStory      => {
+#			function        => \&tagsCreateForStory,
+#			reskey_type     => 'createuse',
 #		},
+                getModalPrefs           => {
+                        function        => \&getModalPrefs,
+                        reskey_name     => 'ajax_user_static',
+                        reskey_type     => 'createuse',
+                },
+                saveModalPrefs          => {
+                        function        => \&saveModalPrefs,
+                        reskey_name     => 'ajax_user_static',
+                        reskey_type     => 'createuse',
+                },
 		default	=> {
-			function	=> \&default,		
+			function        => \&default,		
 		},
 	);
 

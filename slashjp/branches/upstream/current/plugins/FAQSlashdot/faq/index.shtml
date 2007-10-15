@@ -4,7 +4,7 @@
 <head>
         <title>Slashdot FAQ - Index</title>
 <!--
-$VERSION = sprintf "%d.%03d", q$Id: index.shtml,v 1.30 2007/04/18 22:15:40 scuttlemonkey Exp $ =~ /(\d+)/g
+$VERSION = sprintf "%d.%03d", q$Id: index.shtml,v 1.33 2007/10/04 16:42:37 scc Exp $ =~ /(\d+)/g
 -->
 <!--#include virtual="/slashcssbase.inc"-->
 <!--#include virtual="/slashhead-gen-full.inc"-->
@@ -19,7 +19,7 @@ $VERSION = sprintf "%d.%03d", q$Id: index.shtml,v 1.30 2007/04/18 22:15:40 scutt
         <h2><strong><a href="/faq/editorial.shtml">Editorial</a></strong></h2>
         <ul>
                 <li><strong><a href="/faq/editorial.shtml#ed100">How do I submit stories to Slashdot?</a></strong></li>
-                <li><strong><a href="/faq/editorial.shtml#ed101">How do I add a "Slashdot It" link to my own page?</a></strong></li>
+                <li><strong><a href="/faq/editorial.shtml#ed101">How do I add a badge or "Slashdot It" link to my own page?</a></strong></li>
                 <li><a href="/faq/editorial.shtml#ed102">Where do I submit corrections or updates to previous stories?</a></li>
                 <li><strong><a href="/faq/editorial.shtml#ed103">Where do I submit Press Releases?</a></strong></li>
                 <li><strong><a href="/faq/editorial.shtml#ed104">Can I email you a Story Submission?</a></strong></li>
@@ -256,6 +256,19 @@ $VERSION = sprintf "%d.%03d", q$Id: index.shtml,v 1.30 2007/04/18 22:15:40 scutt
                 <li><strong><a href="/faq/tags.shtml#tags300">What are Slashdot Bookmarks?</a></strong></li>
                 <li><strong><a href="/faq/tags.shtml#tags310">How do I save a Slashdot Bookmark?</a></strong></li>
                 <li><strong><a href="/faq/tags.shtml#tags320">How do I share my Bookmarks?</a></strong></li>
+	</ul><!-- Firehose -->
+        <h2><strong><a href="/faq/firehose.shtml">Firehose</a></strong></h2>
+        <ul>
+                <li><strong><a href="/faq/firehose.shtml#fh100">What is the Slashdot Firehose?</a></strong></li>
+                <li><strong><a href="/faq/firehose.shtml#fh200">Why does the Firehose have articles in it?</a></strong></li>
+                <li><strong><a href="/faq/firehose.shtml#fh300">What do the colors mean?</a></strong></li>
+                <li><strong><a href="/faq/firehose.shtml#fh400">How does the calendar widget work?</a></strong></li>
+                <li><strong><a href="/faq/firehose.shtml#fh500">What can I do with the Firehose tabs?</a></strong></li>
+                <li><strong><a href="/faq/firehose.shtml#fh600">What browsers are supported?</a></strong></li>
+                <li><strong><a href="/faq/firehose.shtml#fh700">Why didn't you post a submission that made it to red?</a></strong></li>
+                <li><strong><a href="/faq/firehose.shtml#fh800">Doesn't this make you just like...</a></strong></li>
 	</ul>
+	</ul><!-- Badges -->
+        <h2><strong><a href="/faq/badges.shtml">Badges How-To</a></strong></h2>
 
 <!--#include virtual="/slashfoot.inc"-->

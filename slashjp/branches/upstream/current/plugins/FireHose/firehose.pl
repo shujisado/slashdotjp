@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: firehose.pl,v 1.32 2007/06/19 22:24:22 pudge Exp $
+# $Id: firehose.pl,v 1.44 2007/09/13 18:44:11 pudge Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.32 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.44 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -27,9 +27,9 @@ sub main {
 	my $anonval = $constants->{firehose_anonval_param} || "";
 
 	my %ops = (
-		list		=> [1,  \&list, 0, $anonval],
-		view		=> [1, 	\&view, 1,  ""],
-		default		=> [1,	\&list, 0,  $anonval],
+		list		=> [1,  \&list, 1, $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1 }],
+		view		=> [1, 	\&view, 0,  ""],
+		default		=> [1,	\&list, 1,  $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1 }],
 		edit		=> [1,	\&edit, 100,  ""],
 		rss		=> [1,  \&rss, 1, ""]
 	);
@@ -45,14 +45,37 @@ sub main {
 
 	if (!$op || !exists $ops{$op} || !$ops{$op}[ALLOWED] || $user->{seclev} < $ops{$op}[MINSECLEV] ) {
 		$op = 'default';
-		if ($user->{seclev} < 1 && $ops{$op}[3] && $ops{$op}[3] ne $form->{anonval}) {
-			redirect("$gSkin->{rootdir}/login.pl");
+	}
+
+	# If default or list op and not logged in force them to be using allowed params or math anonval param
+	if (($op eq 'default' || $op eq 'list') && $user->{seclev} <1) {
+
+		my $redirect = 0;
+		if ($ops{$op}[4] && ref($ops{$op}[4]) eq "HASH") {
+			$redirect = 0;
+			my $count;
+			foreach (keys %$form) {
+				$redirect = 1 if !$ops{$op}[4]{$_}; 
+				$count++ if $ops{$op}[4]{$_} && $ops{$op}[4]{$_} > 0;
+			}
+			# Redirect if there are no operative non/system ops  
+			$redirect = 1 if $count == 0;
+		} 
+		if ($redirect && ($ops{$op}[3] && $ops{$op}[3] eq $form->{anonval})) {
+			$redirect = 0;
+		} 
+		if ($redirect) {
+			redirect("$gSkin->{rootdir}/firehose.shtml");
 			return;
 		}
 	}
 
 	if ($op ne "rss") {
-		header('Firehose', '') or return;
+		my $title = "$constants->{sitename} - Firehose";
+		if ($form->{index}) {
+			$title = "$constants->{sitename} - $constants->{slogan}";
+		}
+		header($title, '') or return;
 	}
 
 	$ops{$op}[FUNCTION]->($slashdb, $constants, $user, $form, $gSkin);
@@ -75,18 +98,23 @@ sub view {
 	my $firehose_reader = getObject("Slash::FireHose", { db_type => 'reader' });
 	my $options = $firehose->getAndSetOptions();
 	my $item = $firehose_reader->getFireHose($form->{id});
+    	my $vote = '';
+	if ($item) {
+		$vote = $firehose->getUserFireHoseVotesForGlobjs($user->{uid}, [$item->{globjid}])->{$item->{globjid}};
+	}
 	if ($item && $item->{id} && ($item->{public} eq "yes" || $user->{is_admin}) ) {
 		if ($user->{is_admin}) {
 			$firehose->setFireHoseSession($item->{id});
 		}
 		my $tags_top = $firehose_reader->getFireHoseTagsTop($item);
-		my $discussion = $item->{type} eq 'submission' && $item->{discussion};
+		my $discussion = $item->{type} =~ /^submission|misc$/ && $item->{discussion};
 
 		my $firehosetext = $firehose_reader->dispFireHose($item, {
 			mode			=> 'full',
 			tags_top		=> $tags_top,
 			options			=> $options,
-			nostorylinkwrapper	=> $discussion ? 1 : 0
+			nostorylinkwrapper	=> $discussion ? 1 : 0,
+			vote			=> $vote
 		});
 
 		slashDisplay("view", {
@@ -95,6 +123,12 @@ sub view {
 
 		if ($discussion) {
 			printComments( $firehose_reader->getDiscussion($discussion) );
+		}
+
+		my $plugins = $slashdb->getDescriptions('plugins');
+		if (!$user->{is_anon} && $plugins->{Tags}) {
+			my $tagsdb = getObject('Slash::Tags');
+			$tagsdb->markViewed($user->{uid}, $item->{globjid});
 		}
 	} else {
 		print getData('notavailable');

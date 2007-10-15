@@ -7,6 +7,9 @@ arguments.
 
 * discussions = arrayref of arrayrefs of discussions (sid = 0, title=1, url=2)
 * suppress_create = if it has value then the create is not displayed even if the user has enough of a seclev
+
+NO LONGER USED
+
 __title__
 
 __page__
@@ -39,4 +42,4 @@ END %]
 __seclev__
 100
 __version__
-$Id: udiscuss_list;comments;default,v 1.12 2006/01/23 20:42:59 pudge Exp $
+$Id: udiscuss_list;comments;default,v 1.13 2007/10/04 19:41:22 pudge Exp $

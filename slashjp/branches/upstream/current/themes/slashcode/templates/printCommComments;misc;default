@@ -33,7 +33,7 @@ __template__
 [% END %]
 
 [% IF discussion2 %]
-	[% IF user.discussion2 == "slashdot" %]
+	[% IF discussion2 == "slashdot" %]
 	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
 	[%- ELSE %]
 	<script src="http://socialcomputingresearch.net/slashdot/js/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
@@ -89,9 +89,9 @@ __template__
 	[% IF lvl %]
 	[% END %]
 	[% thread = Slash.displayThread(sid, pid, lvl, comments) %]
-	[% IF thread %]
+	[% IF thread || discussion2 %]
 		[% UNLESS cid %]<ul id="commentlisting">[% END %]
-			[% thread %]
+			[% thread || '' %]
 			<li id="roothiddens" class="hide"></li>
 		[% UNLESS cid %]</ul>[% END %]
 	[% END %]
@@ -99,6 +99,10 @@ __template__
 	[% IF lvl %]
 	[% END %]
 	[% lcp %]
+
+[% IF discussion2 && !cid %]
+<div class="prev-next"><a href="javascript:ajaxFetchComments(0,1)"><span id="more_comments_num_a" class="hide">Check for more</span></a></div>
+[% END %]
 
 [% IF moderate_form %]
 	[% IF moderate_button %]
@@ -132,7 +136,7 @@ __template__
 		pieces_comments      = [[% user.state.comments.pieces.join(',') %]];
 		init_hiddens         = [[% user.state.comments.hiddens.join(',') %]];
 
-		[% IF user.discussion2 == "slashdot" %]d2act();
+		[% IF discussion2 == "slashdot" %]d2act();
 		[% END -%]finishLoading();
 //-->
 	</script>
@@ -141,4 +145,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: printCommComments;misc;default,v 1.54 2007/01/31 20:37:35 pudge Exp $
+$Id: printCommComments;misc;default,v 1.61 2007/10/04 19:41:22 pudge Exp $

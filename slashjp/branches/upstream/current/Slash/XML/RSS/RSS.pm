@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: RSS.pm,v 1.38 2007/04/18 23:28:31 cowboyneal Exp $
+# $Id: RSS.pm,v 1.39 2007/10/04 19:38:34 pudge Exp $
 
 package Slash::XML::RSS;
 
@@ -32,7 +32,7 @@ use XML::RSS;
 use base 'Slash::XML';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.38 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.39 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 #========================================================================
@@ -399,7 +399,7 @@ sub rss_story {
 		if $story->{title};
 	if ($story->{sid}) {
 		my $edit = "admin.pl?op=edit&sid=$story->{sid}";
-		$action = "article.pl?sid=$story->{sid}\&from=rss";
+		$action = "article.pl?sid=$story->{sid}&from=rss";
 		if ($story->{primaryskid}) {
 			my $dir = url2abs(
 				$reader->getSkin($story->{primaryskid})->{rootdir},
@@ -413,7 +413,7 @@ sub rss_story {
 			$edit = "$channel->{'link'}$edit";
 			$action = "$channel->{'link'}$action";
 		}
-		$_ = $self->encode($_, 'link') for ($encoded_item->{'link'}, $edit);
+		$_ = $self->encode($_, 'link') for ($encoded_item->{'link'}, $edit, $action);
 
 		if (getCurrentUser('is_admin')) {
 			$story->{introtext} .= qq[\n\n<p><a href="$edit">[ Edit ]</a></p>];
@@ -575,4 +575,4 @@ Slash(3), Slash::XML(3).
 
 =head1 VERSION
 
-$Id: RSS.pm,v 1.38 2007/04/18 23:28:31 cowboyneal Exp $
+$Id: RSS.pm,v 1.39 2007/10/04 19:38:34 pudge Exp $

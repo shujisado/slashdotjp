@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Data.pm,v 1.207 2007/06/22 20:26:32 jamiemccarthy Exp $
+# $Id: Data.pm,v 1.208 2007/10/10 20:45:07 jamiemccarthy Exp $
 
 package Slash::Utility::Data;
 
@@ -61,7 +61,7 @@ BEGIN {
 	$HTML::Tagset::linkElements{slash} = ['src', 'href'];
 }
 
-($VERSION) = ' $Revision: 1.207 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.208 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	addDomainTags
 	createStoryTopicData
@@ -654,7 +654,7 @@ The 'atonish' and 'aton' template blocks.
 
 sub timeCalc {
 	# raw mysql date of story
-	my($date, $format, $off_set) = @_;
+	my($date, $format, $off_set, $options) = @_;
 	my $user = getCurrentUser();
 	my(@dateformats, $err);
 
@@ -675,12 +675,26 @@ sub timeCalc {
 	# so it's not a performance hit
 	my $lang = getCurrentStatic('datelang');
 
+	# If no format passed in, default to the current user's.
+	$format ||= $user->{'format'};
+
+	if ($format =~ /\bIF_OLD\b/) {
+		# Split $format into its new half and old half.
+		my($format_new, $format_old) = $format =~ /^(.+?)\s*\bIF_OLD\b\s*(.+)$/;
+		warn "format cannot be parsed: '$format'" if !defined($format_new);
+		# Reassign whichever half we want back to $format.
+		$format = $date < time() - 180*86400
+			|| ($options && $options->{is_old})
+			? $format_old
+			: $format_new;
+	}
+
 	# convert the raw date to pretty formatted date
 	if ($lang && $lang ne 'English') {
 		my $datelang = Date::Language->new($lang);
-		$date = $datelang->time2str($format || $user->{'format'}, $date);
+		$date = $datelang->time2str($format, $date);
 	} else {
-		$date = time2str($format || $user->{'format'}, $date);
+		$date = time2str($format, $date);
 	}
 
 	# return the new pretty date
@@ -4353,4 +4367,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Data.pm,v 1.207 2007/06/22 20:26:32 jamiemccarthy Exp $
+$Id: Data.pm,v 1.208 2007/10/10 20:45:07 jamiemccarthy Exp $

@@ -2,12 +2,15 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: admin.pl,v 1.311 2007/04/05 19:46:52 jamiemccarthy Exp $
+# $Id: admin.pl,v 1.319 2007/10/07 14:09:15 jamiemccarthy Exp $
 
 use strict;
 use File::Temp 'tempfile';
 use Image::Size;
 use Time::HiRes;
+use LWP::UserAgent;
+use URI::URL;
+use XML::Simple;
 
 use Slash;
 use Slash::Display;
@@ -1206,7 +1209,7 @@ sub editStory {
 		$storyref->{dept} =~ s/^-//;
 		$storyref->{dept} =~ s/-$//;
 
-		my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form, $storyref->{sid});
+		my($related_sids_hr, $related_urls_hr, $related_cids_hr, $related_firehose_hr) = extractRelatedStoriesFromForm($form, $storyref->{sid});
 		$storyref->{related_sids_hr} = $related_sids_hr;
 		$storyref->{related_urls_hr} = $related_urls_hr;
 		$storyref->{related_cids_hr} = $related_cids_hr;
@@ -1451,6 +1454,33 @@ sub editStory {
 		}
 	}
 
+	my $yoogli_similar_stories = {};
+	if ($constants->{yoogli_oai_search}) {
+		my $query = $constants->{yoogli_oai_query_base} .= '?verb=GetRecord&metadataPrefix=oai_dc&rescount=';
+		$query .= $constants->{yoogli_oai_result_count} . '&identifier=' . URI::URL->new($storyref->{introtext});
+
+		my $ua = new LWP::UserAgent;
+		$ua->timeout($constants->{yoogli_oai_result_count} + 2);
+		my $req = new HTTP::Request GET => $query;
+		my $res = $ua->request($req);
+		if ($res->is_success) {
+			my $xml = new XML::Simple;
+			my $content = eval { $xml->XMLin($res->content) };
+			unless ($@) {
+				my $sid_regex = regexSid();
+				foreach my $metadata (@{$content->{'GetRecord'}{'record'}}) {
+                                        next if $metadata->{'metadata'}{'title'} eq $storyref->{title};
+					my $key = $metadata->{'header'}{'identifier'};
+					my($sid) = $metadata->{'metadata'}{'identifier'} =~ $sid_regex;
+					$yoogli_similar_stories->{$key}{'date'}  = $reader->getStory($sid, 'time');
+					$yoogli_similar_stories->{$key}{'url'}   = $metadata->{'metadata'}{'identifier'};
+					$yoogli_similar_stories->{$key}{'title'} = $metadata->{'metadata'}{'title'};
+					$yoogli_similar_stories->{$key}{'relevance'} = $metadata->{'metadata'}{'relevance'};
+					$yoogli_similar_stories->{$key}{'sid'} = $sid;
+				}
+			}
+		}
+	}
 
 	my $admindb = getObject('Slash::Admin');
 	my $authortext = $admindb->showStoryAdminBox($storyref);
@@ -1524,6 +1554,7 @@ sub editStory {
 		signofftext		=> $signofftext,
 		user_signoff		=> $user_signoff,
 		add_related_text	=> $add_related_text,
+		yoogli_similar_stories  => $yoogli_similar_stories,
 	});
 }
 
@@ -1588,8 +1619,17 @@ sub extractRelatedStoriesFromForm {
 	# should probably filter and check that they're actually sids, etc...
 	my %related_cids = map { $_ => $slashdb->getComment($_) } grep { $_ }			@$related_cids;
 	my %related_sids = map { $_ => $slashdb->getStory($_)   } grep { $_ && $_ ne $cur_sid }	@$related;
+	my %related_firehose;
+	if ($constants->{plugin}{FireHose} && $constants->{firehose_add_related}) {
+		my $firehose = getObject("Slash::FireHose");
+		my $story = $slashdb->getStory($cur_sid);
+		my $fhid = $story && $story->{fhid} ? $story->{fhid} : $form->{fhid};
+		if ($fhid) {
+			%related_firehose = ( $fhid => $firehose->getFireHose($fhid) );
+		}
 
-	return(\%related_sids, \%related_urls, \%related_cids);
+	}
+	return(\%related_sids, \%related_urls, \%related_cids, \%related_firehose);
 }
 
 
@@ -1614,7 +1654,6 @@ sub extractChosenFromForm {
 				$tid == $constants->{mainpage_nexus_tid}
 				? 30
 				: $constants->{topic_popup_defaultweight} || 10;
-			my $chosen_topic = $slashdb->getTopic($tid);
 		}
 	} else {
 		my(%chosen);
@@ -1977,7 +2016,7 @@ sub updateStory {
 	$form->{aid} = $story->{aid} unless $form->{aid};
 
 	my($chosen_hr) = extractChosenFromForm($form);
-	my($related_sids_hr, $related_urls_hr, $related_cids_hr) = extractRelatedStoriesFromForm($form, $story->{sid});
+	my($related_sids_hr, $related_urls_hr, $related_cids_hr, $related_firehose_hr) = extractRelatedStoriesFromForm($form, $story->{sid});
 	my $related_sids = join ',', keys %$related_sids_hr;
 	my($topic) = $slashdb->getTopiclistFromChosen($chosen_hr);
 #use Data::Dumper; print STDERR "admin.pl updateStory chosen_hr: " . Dumper($chosen_hr) . "admin.pl updateStory form: " . Dumper($form);
@@ -2063,7 +2102,8 @@ sub updateStory {
 			}
 		}
 		titlebar('100%', getTitle('updateStory-title', $data));
-		$slashdb->setRelatedStoriesForStory($form->{sid}, $related_sids_hr, $related_urls_hr, $related_cids_hr);
+
+		$slashdb->setRelatedStoriesForStory($form->{sid}, $related_sids_hr, $related_urls_hr, $related_cids_hr, $related_firehose_hr);
 		$slashdb->createSignoff($st->{stoid}, $user->{uid}, "updated");
 		# make sure you pass it the goods
 		listStories(@_);
@@ -2317,7 +2357,7 @@ sub saveStory {
 
 	my($chosen_hr) = extractChosenFromForm($form);
 	my($tids) = $slashdb->getTopiclistFromChosen($chosen_hr);
-	my($related_sids_hr, $related_urls_hr) = extractRelatedStoriesFromForm($form);
+	my($related_sids_hr, $related_urls_hr, $related_cids_hr, $related_firehose_hr) = extractRelatedStoriesFromForm($form);
 
 	for my $field (qw( introtext bodytext )) {
 		local $Slash::Utility::Data::approveTag::admin = 2;
@@ -2379,7 +2419,7 @@ sub saveStory {
 	my $sid = $slashdb->createStory($data);
 
 	if ($sid) {
-		$slashdb->setRelatedStoriesForStory($sid, $related_sids_hr, $related_urls_hr);
+		$slashdb->setRelatedStoriesForStory($sid, $related_sids_hr, $related_urls_hr, $related_cids_hr, $related_firehose_hr);
 		slashHook('admin_save_story_success', { story => $data });
 		my $st = $slashdb->getStory($data->{sid});
 		my $stoid = $st->{stoid};

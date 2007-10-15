@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tagdataview.pl,v 1.2 2007/06/12 21:50:59 jamiemccarthy Exp $
+# $Id: tagdataview.pl,v 1.3 2007/09/26 21:25:50 jamiemccarthy Exp $
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ use Slash::XML;
 use GD::Graph::lines;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -166,17 +166,16 @@ sub fhpopgraph {
 
 	my $y_max = 0;
 
-	my $userpop_col = $constants->{firehose_userpop_col};
 	my $g_hr = $tdv->sqlSelectAllHashref(
 		[qw( globjid secsin )],
-		"firehose.globjid, secsin, userpop, firehose.$userpop_col",
+		'firehose.globjid, secsin, userpop, firehose.popularity',
 		'firehose, firehose_history',
 		"firehose.globjid=firehose_history.globjid
 		 AND createtime BETWEEN '$start_sql' AND '$end_sql'
 		 AND secsin <= '$duration'");
 	my %globjids = ( map { ($_, 1) } keys %$g_hr );
 	my @globjids = sort { $a <=> $b } keys %globjids;
-	my %finalpop = ( map { ($_, $g_hr->{$_}{0}{$userpop_col}) } @globjids );
+	my %finalpop = ( map { ($_, $g_hr->{$_}{0}{popularity}) } @globjids );
 
 	my $min_incr = 5;
 	my $keep_repeats = 6;
@@ -203,7 +202,7 @@ sub fhpopgraph {
 			}
 			$last_v = $v;
 		}
-		if ($repeats > $keep_repeats && $last_v == $g_hr->{$globjid}{0}{$userpop_col}) {
+		if ($repeats > $keep_repeats && $last_v == $g_hr->{$globjid}{0}{popularity}) {
 			my $n_undef = $repeats - $keep_repeats;
 			for my $j (-$n_undef .. -1) {
 				$globjid_pop_ar->[$j] = undef;
@@ -247,7 +246,7 @@ sub fhpopgraph {
 	my $y_ceil = $form_y_ceil || (int($y_max/40)+1) * 40;
 	$graph->set(
 		x_label =>		'Hours after creation',
-		y_label =>		$userpop_col,
+		y_label =>		'popularity',
 		title =>		"$n_items firehose globjs created $start_sql to $end_sql",
 		x_min_value =>		0,
 		x_label_skip =>		int(30 / $min_incr),

@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.19 2007/06/19 19:47:24 tvroom Exp $
+# $Id: mysql_schema.sql,v 1.22 2007/09/04 07:16:37 pudge Exp $
 #
 DROP TABLE IF EXISTS firehose;
 CREATE TABLE firehose (
@@ -7,9 +7,10 @@ CREATE TABLE firehose (
 	uid mediumint(8) unsigned NOT NULL default '0',
 	globjid int unsigned NOT NULL default '0',
 	discussion mediumint UNSIGNED NOT NULL default '0',
-	type ENUM("submission","journal","bookmark","feed", "story") default 'submission',
+	type ENUM("submission","journal","bookmark","feed","story","vendor","misc") default 'submission',
 	createtime datetime NOT NULL default '0000-00-00 00:00:00',
 	popularity float NOT NULL default '0',
+	popularity2 float NOT NULL default '0',
 	editorpop float NOT NULL default '0',
 	activity float NOT NULL default '0',
 	accepted enum('no','yes') default 'no',
@@ -37,8 +38,16 @@ CREATE TABLE firehose (
 	PRIMARY KEY (id),
 	UNIQUE globjid (globjid),
 	KEY createtime (createtime),
-	KEY popularity (popularity)
-) TYPE=InnoDB; 
+	KEY popularity (popularity),
+	KEY popularity2 (popularity2)
+) TYPE=InnoDB;
+
+# The table giving an Object's Generally Accepted Story Publication Time
+CREATE TABLE firehose_ogaspt (
+	globjid		int(10) unsigned NOT NULL default '0',
+	pubtime		datetime NOT NULL default '0000-00-00 00:00:00',
+	PRIMARY KEY	(globjid)
+) TYPE=InnoDB;
 
 DROP TABLE IF EXISTS firehose_text;
 CREATE TABLE firehose_text(

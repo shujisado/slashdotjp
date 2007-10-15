@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.14 2007/04/11 05:35:24 jamiemccarthy Exp $
+# $Id: mysql_schema.sql,v 1.17 2007/09/26 21:25:51 jamiemccarthy Exp $
 #
 
 DROP TABLE IF EXISTS tags;
@@ -61,6 +61,7 @@ CREATE TABLE tagboxes (
 	tbid			smallint UNSIGNED NOT NULL AUTO_INCREMENT,
 	name			VARCHAR(32) DEFAULT '' NOT NULL,
 	affected_type		ENUM('user', 'globj') NOT NULL,
+	clid			smallint UNSIGNED NOT NULL,
 	weight			FLOAT UNSIGNED DEFAULT 1.0 NOT NULL,
 	last_run_completed	datetime,
 	last_tagid_logged	int UNSIGNED NOT NULL,
@@ -111,11 +112,14 @@ CREATE TABLE tags_userchange (
 ) TYPE=InnoDB;
 
 CREATE TABLE tags_peerweight (
+	tpwid		int UNSIGNED NOT NULL AUTO_INCREMENT,
 	uid		mediumint UNSIGNED NOT NULL DEFAULT '0',
+	clid		smallint UNSIGNED NOT NULL,
 	gen		smallint UNSIGNED NOT NULL DEFAULT '0',
 	weight		float NOT NULL DEFAULT '0',
-	PRIMARY KEY (uid),
-	KEY gen_uid (gen, uid)
+	PRIMARY KEY (tpwid),
+	UNIQUE uid_clid (uid, clid),
+	KEY clid_gen_uid (clid, gen, uid)
 ) TYPE=InnoDB;
 
 CREATE TABLE tagnames_similar (
@@ -144,6 +148,25 @@ CREATE TABLE tags_dayofweek (
 	day		tinyint UNSIGNED NOT NULL DEFAULT '0',
 	proportion	float NOT NULL DEFAULT '0',
 	PRIMARY KEY (day)
+) TYPE=InnoDB;
+
+CREATE TABLE tags_searched (
+	tseid		int UNSIGNED NOT NULL AUTO_INCREMENT,
+	tagnameid	int UNSIGNED NOT NULL,
+	searched_at	datetime NOT NULL,
+	uid		mediumint UNSIGNED DEFAULT NULL,
+	PRIMARY KEY (tseid),
+	KEY (tagnameid),
+	KEY (searched_at)
+) TYPE=InnoDB;
+
+CREATE TABLE globjs_viewed (
+	gvid		int UNSIGNED NOT NULL AUTO_INCREMENT,
+	globjid		int UNSIGNED NOT NULL,
+	uid		mediumint UNSIGNED NOT NULL,
+	viewed_at	datetime NOT NULL,
+	PRIMARY KEY (gvid),
+	UNIQUE globjid_uid (globjid, uid)
 ) TYPE=InnoDB;
 
 

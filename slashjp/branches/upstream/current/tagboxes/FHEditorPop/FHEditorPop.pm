@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHEditorPop.pm,v 1.15 2007/06/28 15:12:50 jamiemccarthy Exp $
+# $Id: FHEditorPop.pm,v 1.18 2007/09/26 21:25:51 jamiemccarthy Exp $
 
 # This goes by seclev right now but perhaps should define "editor"
 # to be more about author than admin seclev.  In which case the
@@ -32,7 +32,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.15 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.18 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -164,9 +164,25 @@ sub run {
 			: 7; # nonfeed
 	} elsif ($type eq "stories") {
 		my $story = $self->getStory($target_id);
-		$color_level = $story->{story_topics_rendered}{$constants->{mainpage_nexus_tid}}
-			? 1  # mainpage
-			: 2; # sectional
+		my $str_hr = $story->{story_topics_rendered};
+		$color_level = 3;
+		for my $nexus_tid (keys %$str_hr) {
+			my $this_color_level = 999;
+			my $param = $self->getTopicParam($nexus_tid, 'colorlevel') || undef;
+			if (defined $param) {
+				# Stories in this nexus get this specific color level.
+				$this_color_level = $param;
+			} else {
+				# Stories in any nexus without a colorlevel specifically
+				# defined in topic_param get a color level of 2.
+				$this_color_level = 2;
+			}
+			# Stories on the mainpage get a color level of 1.
+			$this_color_level = 1 if $nexus_tid == $constants->{mainpage_nexus_tid};
+			# This firehose entry gets the minimum color level of 
+			# all its nexuses.
+			$color_level = $this_color_level if $this_color_level < $color_level;
+		}
 	}
 	$popularity = $firehose->getEntryPopularityForColorLevel($color_level) + $extra_pop;
 
@@ -175,7 +191,7 @@ sub run {
 	my $downvoteid = $tagsdb->getTagnameidCreate($constants->{tags_downvote_tagname} || 'nix');
 	my $admins = $self->getAdmins();
 	my $tags_ar = $tagboxdb->getTagboxTags($self->{tbid}, $affected_id, 0, $options);
-	$tagsdb->addCloutsToTagArrayref($tags_ar);
+	$tagsdb->addCloutsToTagArrayref($tags_ar, 'vote');
 	my $udc_cache = { };
 	for my $tag_hr (@$tags_ar) {
 		next if $options->{starting_only};
@@ -249,8 +265,8 @@ sub get_udc_mult {
 	my $udc_mult = $constants->{tagbox_fheditorpop_udcbasis}/$udc;
 	my $max_mult = $constants->{tagbox_fhpopularity2_maxudcmult} || 5;
 	$udc_mult = $max_mult if $udc_mult > $max_mult;
-	main::tagboxLog(sprintf("get_udc_mult %0.3f time %d p %.3f c %.3f n %.3f th %.3f pw %.3f cw %.3f nw %.3f udc %.3f\n",
-		$udc_mult, $time, $prevudc, $curudc, $nextudc, $thru_frac, $prevweight, $curweight, $nextweight, $udc));
+#	main::tagboxLog(sprintf("get_udc_mult %0.3f time %d p %.3f c %.3f n %.3f th %.3f pw %.3f cw %.3f nw %.3f udc %.3f\n",
+#		$udc_mult, $time, $prevudc, $curudc, $nextudc, $thru_frac, $prevweight, $curweight, $nextweight, $udc));
 	$udc_mult_cache->{$time} = $udc_mult;
 	return $udc_mult;
 }

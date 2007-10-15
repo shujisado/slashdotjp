@@ -15,16 +15,18 @@ __template__
 
 [% CASE 'nomorechances' %]
 	[% returnme.data_constant = 1 %]
-	<b>Sorry, you failed to prove your humanity. To try again,
-	you have to start over.</b>
+	<b>Our system is set up to block scripted spam, and it
+	isn't smart enough to realize you're actually a human.
+	To prevent spam, we now have to make you start over.
+	Sorry about this.</b>
 
 [% CASE 'imgalttext' %]
 	[% returnme.data_constant = 1 %]
-	[% "verification text - if you are visually impaired, please email us at "
+	[% "verification text - if you can't read this, please email us at "
 		_ constants.adminmail | strip_attribute %]
 
 [% END %]
 __seclev__
 500
 __version__
-$Id: data;humanconf;default,v 1.6 2006/03/21 18:42:27 jamiemccarthy Exp $
+$Id: data;humanconf;default,v 1.7 2007/10/09 20:44:48 jamiemccarthy Exp $
