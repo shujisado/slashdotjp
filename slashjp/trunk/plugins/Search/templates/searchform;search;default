@@ -22,9 +22,9 @@ __template__
 
 <form action="[% gSkin.rootdir %]/search.pl" method="get">
 <fieldset>
-	<legend>Search [% form.query %]</legend>
+	<legend>Search [% form.query | strip_attribute %]</legend>
 	<input type="hidden" name="tid" value="[% form.tid %]">
-	<input type="text" size="40" name="query" value="[% form.query %]">
+	<input type="text" size="40" name="query" value="[% form.query | strip_attribute %]">
 	[% IF authors %]
 		[% Slash.createSelect("author", authors, form.author, 1, 0, 1) %]
 	[% END %]
@@ -58,7 +58,7 @@ __template__
 
 	[% IF threshhold %]
 		Threshold [% threshold_select %]
-		<input type="hidden" name="sid" value="[% form.sid %]">
+		<input type="hidden" name="sid" value="[% form.sid | strip_attribute %]">
 	[% END %]
 	</div>
 	</fieldset>
@@ -94,7 +94,7 @@ __template__
    IF thisparent %]
 :: <a href="[% gSkin.rootdir %]/search.pl?tid=[% thisparent %]">[% topics.$thisparent.textname %]</a>
 [% END; END; IF form.tid %]
-:: <a href="[% gSkin.rootdir %]/search.pl?tid=[% form.tid %]">[% topics.${form.tid}.textname %]</a>
+:: <a href="[% gSkin.rootdir %]/search.pl?tid=[% form.tid | strip_attribute %]">[% topics.${form.tid}.textname %]</a>
 [% END; IF listnames.size %]
 Topics
 [% END %]

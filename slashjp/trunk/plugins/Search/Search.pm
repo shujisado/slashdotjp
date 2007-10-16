@@ -38,9 +38,10 @@ sub findComments {
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
+	my $query = $self->_fixupQuerySql($form->{query});
 	my $constants = getCurrentStatic();
 	my $columns;
+	$columns .= "SQL_CALC_FOUND_ROWS ";
 	$columns .= "primaryskid, url, discussions.uid AS author_uid, discussions.title AS title, ";
 	$columns .= "pid, subject, ts, date, comments.uid AS uid, cid, ";
 	$columns .= "discussions.id AS did, dkid, discussions.sid";
@@ -91,6 +92,7 @@ sub findComments {
 
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $search = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	my $desc = $reader->getDescriptions('discussion_kinds');
 	foreach my $c (@$search) {
@@ -111,10 +113,10 @@ sub findUsers {
 	# userSearch REALLY doesn't need to be ordered by keyword since you
 	# only care if the substring is found.
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
+	my $query = $self->_fixupQuerySql($form->{query});
 	my $constants = getCurrentStatic();
 
-	my $columns = 'fakeemail,nickname,users.uid as uid,journal_last_entry_date ';
+	my $columns = 'SQL_CALC_FOUND_ROWS fakeemail,nickname,users.uid as uid,journal_last_entry_date ';
 	$columns .= ", TRUNCATE( " . $self->_score('nickname', $form->{query}, $constants->{search_method}) . ", 1) as score "
 		if $form->{query};
 
@@ -138,6 +140,7 @@ sub findUsers {
 
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $users = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $users;
 }
@@ -150,9 +153,10 @@ sub findStory {
 	my $constants = getCurrentStatic();
 
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
+	my $query = $self->_fixupQuerySql($form->{query});
 	my $columns;
-	$columns .= "title, stories.stoid AS stoid, sid, "; 
+	$columns .= "SQL_CALC_FOUND_ROWS ";
+	$columns .= "title, stories.stoid AS stoid, sid, dept, ";
 	$columns .= "time, commentcount, stories.primaryskid AS skid, ";
 	$columns .= "introtext ";
 	if ($form->{query}) {
@@ -196,7 +200,7 @@ sub findStory {
 			map  { $reader->sqlQuote($_) }
 			grep { $_ != $gSkin->{skid}  } # allow searching on THIS skid
 			@{$constants->{search_ignore_skids}};
-		$where .= " AND primaryskid NOT IN ($skid_list) ";
+		$where .= " AND primaryskid NOT IN ($skid_list) " if ($skid_list);
 	}
 
 	my $skin = $reader->getSkin($form->{section} || $gSkin->{skid});
@@ -269,6 +273,7 @@ sub findStory {
 	
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other);
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	# Don't return just one topic id in tid, also return an arrayref
 	# in tids, with all topic ids in the preferred order.
@@ -305,8 +310,9 @@ sub findJournalEntry {
 	my $constants = getCurrentStatic();
 
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
+	my $query = $self->_fixupQuerySql($form->{query});
 	my $columns;
+	$columns .= "SQL_CALC_FOUND_ROWS ";
 	$columns .= "users.nickname as nickname, journals.description as description, ";
 	$columns .= "journals.id as id, date, users.uid as uid, article";
 	$columns .= ", TRUNCATE((( " . $self->_score('description', $form->{query}, $constants->{search_method}) . " + " .  $self->_score('article', $form->{query}, $constants->{search_method}) .") / 2), 1) as score "
@@ -334,6 +340,7 @@ sub findJournalEntry {
 	
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $stories;
 }
@@ -345,8 +352,8 @@ sub findPollQuestion {
 	my $constants = getCurrentStatic();
 
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
-	my $columns = "*";
+	my $query = $self->_fixupQuerySql($form->{query});
+	my $columns = "SQL_CALC_FOUND_ROWS *";
 	$columns .= ", TRUNCATE( " . $self->_score('question', $form->{query}, $constants->{search_method}) . ", 1) as score "
 		if $form->{query};
 	my $tables = "pollquestions";
@@ -377,6 +384,7 @@ sub findPollQuestion {
 
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other);
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $stories;
 }
@@ -389,8 +397,8 @@ sub findSubmission {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
-	my $columns = "*";
+	my $query = $self->_fixupQuerySql($form->{query});
+	my $columns = "SQL_CALC_FOUND_ROWS *";
 	$columns .= ", TRUNCATE( " . $self->_score('subj,story', $form->{query}, $constants->{search_method}) . ", 1) as score "
 		if $form->{query};
 	my $tables = "submissions";
@@ -421,6 +429,7 @@ sub findSubmission {
 
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $stories;
 }
@@ -432,8 +441,8 @@ sub findRSS {
 	my $constants = getCurrentStatic();
 
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
-	my $columns = "title, link, description, created";
+	my $query = $self->_fixupQuerySql($form->{query});
+	my $columns = "SQL_CALC_FOUND_ROWS title, link, description, created";
 	$columns .= ", TRUNCATE( " . $self->_score('title,description', $form->{query}, $constants->{search_method}) . ", 1) as score "
 		if $form->{query};
 	my $tables = "rss_raw";
@@ -455,6 +464,7 @@ sub findRSS {
 	
 	$other .= " LIMIT $start, $limit" if $limit;
 	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $stories;
 }
@@ -463,11 +473,11 @@ sub findRSS {
 sub findDiscussion {
 	my($self, $form, $start, $limit, $sort) = @_;
 	$form->{query} = $self->_cleanQuery($form->{query});
-	my $query = $self->sqlQuote($form->{query});
+	my $query = $self->_fixupQuerySql($form->{query});
 	my $constants = getCurrentStatic();
 	$start ||= 0;
 
-	my $columns = "*";
+	my $columns = "SQL_CALC_FOUND_ROWS *";
 	$columns .= ", TRUNCATE( " . $self->_score('title', $form->{query}, $constants->{search_method}) . ", 1) as score "
 		if $form->{query};
 	my $tables = "discussions";
@@ -509,6 +519,7 @@ sub findDiscussion {
 	$other .= " LIMIT $start, $limit" if $limit;
 #	print STDERR "select $columns from $tables where $where $other\n";
 	my $stories = $self->sqlSelectAllHashrefArray($columns, $tables, $where, $other );
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $stories;
 }
@@ -557,7 +568,7 @@ sub _score {
 		}
 		return "($method($col, $terms))";
 	} else {
-		$query = $self->sqlQuote($query);
+		$query = $self->_fixupQuerySql($query);
 		return "\n(MATCH ($col) AGAINST ($query))\n";
 	}
 }
@@ -567,17 +578,25 @@ sub _cleanQuery {
 	my ($self, $query) = @_;
 	# This next line could be removed -Brian
 	# get rid of bad characters
-	$query =~ s/[^A-Z0-9'. :\/_]/ /gi;
+	#$query =~ s/[^A-Z0-9'. :\/_]/ /gi;
+        $query =~ s/[\x00-\x20\x27\x60\x7f]+/ /gi;
 
 	# This should be configurable -Brian
 	# truncate query length
-	if (length($query) > 40) {
-		$query = substr($query, 0, 40);
+	if (length($query) > 200) {
+		$query = substr($query, 0, 200);
 	}
 
 	return $query;
 }
 
+sub _fixupQuerySql {
+        my ($self, $query) = @_;
+        if (substr($query, 0, 1) ne '*') {
+                $query = "*D+ ${query}";
+        }
+        return $self->sqlQuote($query) . ' IN BOOLEAN MODE';
+}
 
 #################################################################
 sub DESTROY {

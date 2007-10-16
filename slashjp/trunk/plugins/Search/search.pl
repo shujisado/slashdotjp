@@ -81,7 +81,7 @@ use Data::Dumper; print STDERR "search.pl gSkin: " . Dumper($gSkin) if !$gSkin->
 		$form->{op} = 'stories' if !exists($ops_rss{$form->{op}});
 		$ops_rss{$form->{op}}->($form, $constants, $slashdb, $searchDB, $gSkin);
 	} else {
-		my $text = strip_notags($form->{query});
+		my $text = strip_attribute($form->{query});
 		my $header_title   = getData('search_header_title',   { text => $text });
 		my $titlebar_title = getData('search_titlebar_title', { text => $text });
 		header($header_title) or return;
@@ -171,6 +171,7 @@ sub commentSearch {
 
 	my $start = $form->{start} || 0;
 	my $comments = $searchDB->findComments($form, $start, $constants->{search_default_display} + 1, $form->{sort});
+	my $totalhits = $searchDB->sqlSelect('@totalhits');
 
 	my $formats = $slashdb->getDescriptions('threshcodes');
 	my $threshold_select = createSelect(
@@ -186,6 +187,7 @@ sub commentSearch {
 		'sort'		 => _sort(),
 		threshhold 	 => 1,
 		threshold_select => $threshold_select,
+		totalhits        => $totalhits,
 	});
 
 	if ($comments && @$comments) {
@@ -216,6 +218,7 @@ sub commentSearch {
 			forward		=> $forward,
 			args		=> _buildargs($form),
 			start		=> $start,
+			totalhits	=> $totalhits,
 		});
 	} else {
 		print getData('nocomments');
@@ -228,10 +231,12 @@ sub userSearch {
 
 	my $start = $form->{start} || 0;
 	my $users = $searchDB->findUsers($form, $start, $constants->{search_default_display} + 1, $form->{sort}, $form->{journal_only});
+	my $totalhits = $searchDB->sqlSelect('@totalhits');
 	slashDisplay('searchform', {
 		op		=> $form->{op},
 		'sort'		=> _sort(),
 		journal_option	=> 1,
+		totalhits       => $totalhits,
 	});
 
 	if ($users && @$users) {
@@ -261,6 +266,7 @@ sub userSearch {
 			back		=> $back,
 			forward		=> $forward,
 			args		=> _buildargs($form),
+			totalhits	=> $totalhits,
 		});
 	} else {
 		print getData('nousers');
@@ -273,6 +279,7 @@ sub storySearch {
 
 	my $start = $form->{start} || 0;
 	my $stories = $searchDB->findStory($form, $start, $constants->{search_default_display} + 1, $form->{sort});
+	my $totalhits = $searchDB->sqlSelect('@totalhits');
 
 	my $topic_ref = $form->{tid} ? $slashdb->getTopic($form->{tid}) : { };
 	slashDisplay('searchform', {
@@ -282,6 +289,7 @@ sub storySearch {
 		op		=> $form->{op},
 		authors		=> _authors(),
 		'sort'		=> _sort(),
+		totalhits       => $totalhits,
 	});
 
 	if ($stories && @$stories) {
@@ -316,6 +324,7 @@ sub storySearch {
 			forward		=> $forward,
 			args		=> _buildargs($form),
 			start		=> $start,
+			totalhits	=> $totalhits,
 		});
 	} else {
 		print getData('nostories');
@@ -328,6 +337,7 @@ sub pollSearch {
 
 	my $start = $form->{start} || 0;
 	my $polls = $searchDB->findPollQuestion($form, $start, $constants->{search_default_display} + 1, $form->{sort});
+	my $totalhits = $searchDB->sqlSelect('@totalhits');
 	my $topic_ref = $form->{tid} ? $slashdb->getTopic($form->{tid}) : { };
 	slashDisplay('searchform', {
 		op		=> $form->{op},
@@ -335,6 +345,7 @@ sub pollSearch {
 #		sections	=> 1, # _skins(),
 		tref		=> $topic_ref,
 		'sort'		=> _sort(),
+		totalhits       => $totalhits,
 	});
 
 	if ($polls && @$polls) {
@@ -365,6 +376,7 @@ sub pollSearch {
 			forward		=> $forward,
 			args		=> _buildargs($form),
 			start		=> $start,
+			totalhits	=> $totalhits,
 		});
 	} else {
 		print getData('nopolls');
@@ -522,9 +534,11 @@ sub journalSearch {
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findJournalEntry($form, $start, $constants->{search_default_display} + 1, $form->{sort});
+	my $totalhits = $searchDB->sqlSelect('@totalhits');
 	slashDisplay('searchform', {
 		op		=> $form->{op},
 		'sort'		=> _sort(),
+		totalhits       => $totalhits,
 	});
 
 	# check for extra articles ... we request one more than we need
@@ -559,6 +573,7 @@ sub journalSearch {
 			forward		=> $forward,
 			args		=> _buildargs($form),
 			start		=> $start,
+			totalhits	=> $totalhits,
 		});
 	} else {
 		print getData('nojournals');
@@ -603,6 +618,7 @@ sub submissionSearch {
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findSubmission($form, $start, $constants->{search_default_display} + 1, $form->{sort});
+	my $totalhits = $searchDB->sqlSelect('@totalhits');
 	my $topic_ref = $form->{tid} ? $slashdb->getTopic($form->{tid}) : { };
 	slashDisplay('searchform', {
 		op		=> $form->{op},
@@ -611,6 +627,7 @@ sub submissionSearch {
 		submission_notes => $slashdb->getDescriptions('submission-notes'),
 		tref		=> $topic_ref,
 		'sort'		=> _sort(),
+		totalhits       => $totalhits,
 	});
 
 	# check for extra articles ... we request one more than we need
@@ -645,6 +662,7 @@ sub submissionSearch {
 			forward		=> $forward,
 			args		=> _buildargs($form),
 			start		=> $start,
+			totalhits	=> $totalhits,
 		});
 	} else {
 		print getData('nosubmissions');
