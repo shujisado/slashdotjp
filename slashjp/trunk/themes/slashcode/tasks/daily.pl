@@ -16,7 +16,7 @@ use vars qw( %task $me );
 # GMT if you installed everything correctly.  So 2:00 AM GMT is a good
 # sort of midnightish time for the Western Hemisphere.  Adjust for
 # your audience and admins.
-$task{$me}{timespec} = '2 0 * * *';
+$task{$me}{timespec} = '5 0 * * *'; # 9:05 AM JST
 $task{$me}{timespec_panic_2} = ''; # if major panic, dailyStuff can wait
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
@@ -117,7 +117,15 @@ sub daily_generateDailyMail {
 		my $asciitext = $story{introtext};
 		$asciitext .= "\n\n" . $story{bodytext}
 			if $constants->{newsletter_body};
-		($story{asciitext}, @ref) = html2text($asciitext, 74);
+		if ($constants->{tweak_japanese}) {
+			require Jcode;
+			@ref = ();
+			$story{asciitext} = strip_notags($asciitext);
+			$story{asciitext} =~ tr/\n//;
+			$story{asciitext} = Encode::decode('utf-8', join("\n", Jcode->new(Encode::encode('utf-8', $story{asciitext}), 'utf8')->jfold(74)));
+		} else {
+			($story{asciitext}, @ref) = html2text($asciitext, 74);
+		}
 
 		$story{refs} = \@ref;
 		push @$stories, \%story;
