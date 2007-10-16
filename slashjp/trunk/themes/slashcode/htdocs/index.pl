@@ -780,7 +780,7 @@ sub displayStories {
 			}
 	
 			if ($user->{seclev} >= 100) {
-				push @links, [ "$gSkin->{absolutedir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit'), '', 'edit' ];
+				push @links, [ "$gSkin->{rootdir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit'), '', 'edit' ];
 				if ($constants->{plugin}{Ajax}) {
 					my $signoff =  slashDisplay("signoff", { stoid => $story->{stoid}, storylink => 1 }, { Return => 1 } ); 
 					push @links, $signoff;
