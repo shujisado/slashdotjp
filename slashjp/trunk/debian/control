@@ -1,9 +1,10 @@
 Source: slash
 Section: web
 Priority: extra
-Maintainer: Tatsuki Sugiura <sugi@nemui.org>
+Maintainer: OSDN Japan <admin@osdn.jp>
 Build-Depends: debhelper (>= 5), cdbs, libperl-dev (>= 5.8.8), apache-dev, libapache-mod-perl, libcompress-zlib-perl, libdbix-password-perl, libsoap-lite-perl
 Standards-Version: 3.7.2
+Uploaders: Taku YASUI <tach@osdn.jp>, Tatsuki SUGIURA <sugi@osdn.jp>, Tatsuki SUGIURA <sugi@nemui.org>
 
 Package: slash-common
 Architecture: any
