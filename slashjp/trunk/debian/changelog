@@ -1,3 +1,78 @@
+slash (2.5.0.119-otp-13) unstable; urgency=low
+
+  * Merged from OTP
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 16 Oct 2007 13:12:18 +0900
+
+slash (2.5.0.119-otp-12) unstable; urgency=low
+
+  * Add: hide stories of specfied tid at admin story list
+    - use constant "admin_hide_tids" like "17,24,32" ...
+
+ -- Taku YASUI <tach@debian.or.jp>  Wed,  3 Oct 2007 09:49:09 +0900
+
+slash (2.5.0.119-otp-11) unstable; urgency=low
+
+  * add dependency (libgd-gd2-perl libgd-text-perl) for humanconf plugin.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 15 Aug 2007 17:31:56 +0900
+
+slash (2.5.0.119-otp-10) unstable; urgency=low
+
+  * Blob.pm: revert to upsatrem for increase max_allowed_packet.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 27 Jul 2007 15:23:46 +0900
+
+slash (2.5.0.119-otp-9) unstable; urgency=low
+
+  [ Taku YASUI ]
+  * Fix: sql syntax error when "$skid_list" is empty
+
+  [ Tatsuki Sugiura ]
+  * Blob.pm: fix calculation of packet length when entering chunked mode
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 27 Jul 2007 14:02:42 +0900
+
+slash (2.5.0.119-otp-8) unstable; urgency=low
+
+  [ Tatsuki Sugiura ]
+  * search plugin: check total hits
+  * search plugin: fetch dept column
+
+  [ Taku YASUI ]
+  * Change debian/changelog time
+  * Make to get "Content-Transfer-Encoding" value from vars
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 19 Jun 2007 20:01:40 +0900
+
+slash (2.5.0.119-otp-5) unstable; urgency=low
+
+  * Search plugin: senna full query support
+  * Search plugin: add '*D+' pragma in default
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 25 May 2007 05:23:46 +0000
+
+slash (2.5.0.119-otp-4) unstable; urgency=low
+
+  * plugin/Search/Search.pm: search query was forced IN BOOLEAN MODE
+  * Utility::Data.pm: encode URL each single byte
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 25 May 2007 14:08:12 +0900
+
+slash (2.5.0.119-otp-3) unstable; urgency=low
+
+  * change query string filter to enable japanese search.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu, 24 May 2007 14:18:47 +0900
+
+slash (2.5.0.119-otp-2) unstable; urgency=low
+
+  * Fix for binary data mangle: escape blob column as hex
+    before sending to SQL server.
+  * reverse order of related stories.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 09 May 2007 18:37:56 +0900
+
 slash (2.5.0.119-16) unstable; urgency=low
 
   * Hex encoding was applied for all binary columns.
