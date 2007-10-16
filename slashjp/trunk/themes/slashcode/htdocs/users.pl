@@ -2759,6 +2759,7 @@ sub saveHome {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
+	my $gSkin = getCurrentSkin();
 	my($uid, $error);
 
 	if ($user->{is_admin}) {
@@ -2927,7 +2928,7 @@ sub saveHome {
 
 		slashboxes	=> checkList($slashboxes, 1024),
 
-		maxstories	=> (($form->{maxstories} > 0 && $form->{maxstories} <= 90) ? $form->{maxstories} : 30),
+		maxstories	=> (($form->{maxstories} > 0 && $form->{maxstories} <= 90) ? $form->{maxstories} : ($gSkin->{artcount_max} || 30)),
 		noboxes		=> ($form->{useslashboxes} ? 0 : 1),
 		lowbandwidth	=> ($form->{lowbandwidth} ? 1 : 0),
 		simpledesign	=> ($form->{simpledesign} ? 1 : 0),
@@ -2981,8 +2982,8 @@ sub saveHome {
 		getOtherUserParams($user_edits_table);
 		if ($form->{restore_defaults}) {
 			setToDefaults($user_edits_table, {}, {
-				maxstories	=> 30,
-				tzcode		=> "EST",
+				maxstories	=> $gSkin->{artcount_max} || 30,
+				tzcode		=> "JST",
 				# XXX shouldn't this reset ALL the defaults,
 				# not just these two?
 			});
