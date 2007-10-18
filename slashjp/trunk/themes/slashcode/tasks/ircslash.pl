@@ -150,7 +150,13 @@ sub jabberinit {
 	my $tls =	$constants->{jabberslash_tls}
 				|| 0;
 
-	$jabber = new Net::Jabber::Client;
+	$jabber = new Net::Jabber::Client (
+#		debuglevel	=> 2,
+#		debugfile	=> 'stdout',
+#		debugtime	=> 1,
+	);
+#	$jabber->{DEBUG}{HANDLE} = \*STDOUT;
+
 	$jabber->SetCallBacks(
 		onauth		=> \&j_on_auth,
 		message		=> \&j_on_msg,
@@ -340,6 +346,7 @@ my %cmds = (
 	lcr		=> \&cmd_lcr,
 	lcrset		=> \&cmd_lcrset,
 	re		=> \&cmd_re,
+	d		=> \&cmd_roll,
 );
 sub handle_cmd {
 	my($service, $cmd, $event) = @_;
@@ -481,6 +488,16 @@ sub cmd_re {
 	my($service, $info) = @_;
 	send_msg(getIRCData('re', {
 		nickname	=> $info->{text} || $info->{event}{nick},
+	}), { $service => 1 });
+}
+
+sub cmd_roll {
+	my($service, $info) = @_;
+	my($n) = $info->{text} =~ /(\d+)/;
+	$n ||= 100;
+	send_msg(getIRCData('roll', {
+		num       => int(rand $n)+1,
+		nickname  => $info->{event}{nick},
 	}), { $service => 1 });
 }
 
@@ -889,13 +906,13 @@ sub possible_check_dbs {
 				chomp $response;
 				my @responses = split /\n/, $response;
 				my $prefix = getIRCData('dbalert_prefix');
-				if ($prefix && $prefix =~ /\S/) {
-					send_msg($prefix);
-				}
-				for my $r (@responses) {
-					sleep 1;
-					send_msg($r);
-				}
+#				if ($prefix && $prefix =~ /\S/) {
+#					send_msg($prefix);
+#				}
+#				for my $r (@responses) {
+#					sleep 1;
+#					send_msg($r);
+#				}
 			}
 		}
 	}

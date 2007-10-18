@@ -460,8 +460,8 @@ sub displayForm {
 
 	my %keys_to_check = ( story => 1, subj => 1 );
 	if ($error_message && $error_message ne '') {
-		titlebar('100%', getData('filtererror', { err_message => $error_message}));
-		print getData('filtererror', { err_message => $error_message });
+		titlebar('100%', "Error");
+		print $error_message;
 	} else {
 		my $message = "";
 		for (keys %$form) {
@@ -527,6 +527,9 @@ sub displayForm {
 	}
 
 	my $fixedstory = fixStory($form->{story}, { sub_type => $form->{sub_type} });
+	# don't let preview screen be used to pump up pagerank, if anyone
+	# would waste their time doing so -- pudge
+	$fixedstory = noFollow($fixedstory);
 
 	slashDisplay('displayForm', {
 		fixedstory	=> $fixedstory,
@@ -550,22 +553,14 @@ sub saveSub {
 
 	my $reskey = getObject('Slash::ResKey');
 	my $rkey = $reskey->key('submit');
-	unless ($rkey->use) {
-		my $error_message = $rkey->errstr;
-		if ($rkey->death) {
-			print $error_message;
-		} else {
-			displayForm($form->{name}, $form->{email}, $form->{skin}, '', '', $error_message);
-		}
-		return 0;
-	}		
+	my $url_id;
 
 	$form->{name} ||= '';
 
 	if (length($form->{subj}) < 2) {
 		titlebar('100%', getData('error'));
 		my $error_message = getData('badsubject');
-		displayForm($form->{name}, $form->{email}, $form->{skin}, '', '', $error_message);
+		displayForm($form->{name}, $form->{email}, $form->{skin}, '', $error_message);
 		return(0);
 	}
 
@@ -575,7 +570,7 @@ sub saveSub {
 		next unless $keys_to_check{$_};
 		# run through filters
 		if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
-			displayForm($form->{name}, $form->{email}, $form->{skin}, '', '', $message);
+			displayForm($form->{name}, $form->{email}, $form->{skin}, '', $message);
 			return(0);
 		}
 		# run through compress test
@@ -585,6 +580,40 @@ sub saveSub {
 			return(0);
 		}
 	}
+
+	if ($form->{url}) {
+	
+		if (!validUrl($form->{url})) {
+			displayForm($form->{name}, $form->{email}, $form->{skin}, '', getData("invalidurl"));
+			return(0);
+		} else {
+			my $url_data = {
+				url		=> fudgeurl($form->{url}),
+				initialtitle	=> strip_notags($form->{subj})
+			};
+
+			$url_id = $slashdb->getUrlCreate($url_data);
+			my $url_id_q = $slashdb->sqlQuote($url_id);
+			if ($constants->{plugin}{FireHose}) {
+				my $firehose = getObject("Slash::FireHose");
+				if (!$firehose->allowSubmitForUrl($url_id)) {
+					my $submitted_items = $firehose->getFireHoseItemsByUrl($url_id);
+					displayForm($form->{name}, $form->{email}, $form->{skin}, '', getData("duplicateurl", { submitted_items => $submitted_items } ));
+					return(0);
+				}
+			}
+		}
+	}
+	
+	unless ($rkey->use) {
+		my $error_message = $rkey->errstr;
+		if ($rkey->death) {
+			print $error_message;
+		} else {
+			displayForm($form->{name}, $form->{email}, $form->{skin}, '', $error_message);
+		}
+		return 0;
+	}		
 
 	$form->{story} = fixStory($form->{story}, { sub_type => $form->{sub_type} });
 
@@ -601,6 +630,8 @@ sub saveSub {
 		tid		=> $form->{tid},
 		primaryskid	=> $form->{primaryskid}
 	};
+	$submission->{url_id} = $url_id if $url_id;
+
 	my @topics = ();
 	my $nexus = $slashdb->getNexusFromSkid($form->{primaryskid} || $constants->{mainpage_skid});
 
@@ -628,8 +659,7 @@ sub saveSub {
 	my $messagesub = { %$submission };
 	$messagesub->{subid} = $slashdb->createSubmission($submission);
 
-	if ($form->{url_id}) {
-		my $url_id = $form->{url_id};
+	if ($url_id) {
 		my $globjid = $slashdb->getGlobjidCreate("submissions", $messagesub->{subid});
 		$slashdb->addUrlForGlobj($url_id, $globjid);
 	}
@@ -693,6 +723,13 @@ sub fixStory {
 	unless (getCurrentStatic('submit_keep_p')) {
 		$str =~ s|</p>||g;
 		$str =~ s|<p(?: /)?>|<br><br>|g;
+	}
+
+	# smart conversion of em dashes to real ones
+	# leave if - has nonwhitespace on either side, otherwise, convert
+	unless (getCurrentStatic('submit_keep_dashes')) {
+		$str =~ s/(\s+-+\s+)/ &mdash; /g;
+		$str =~ s/(\s*--+\s*)/ &mdash; /g;
 	}
 
 	$str = balanceTags($str, { deep_nesting => 1 });

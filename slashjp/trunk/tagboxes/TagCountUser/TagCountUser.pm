@@ -40,9 +40,8 @@ sub new {
 	my $plugin = getCurrentStatic('plugin');
 	return undef if !$plugin->{Tags};
 	my($tagbox_name) = $class =~ /(\w+)$/;
-	# (this code is for once Install.pm actually installs tagboxes and getSlashConf loads this constant)
-	# my $tagbox = getCurrentStatic('tagbox');
-	# return undef if !$tagbox->{$tagbox_name};
+	my $tagbox = getCurrentStatic('tagbox');
+	return undef if !$tagbox->{$tagbox_name};
 
 	# Note that getTagboxes() would call back to this new() function
 	# if the tagbox objects have not yet been created -- but the
@@ -60,39 +59,51 @@ sub new {
 
 sub feed_newtags {
 	my($self, $tags_ar) = @_;
-if (scalar(@$tags_ar) < 9) {
-print STDERR "Slash::Tagbox::TagCountUser->feed_newtags called for tags '" . join(' ', map { $_->{tagid} } @$tags_ar) . "'\n";
-} else {
-print STDERR "Slash::Tagbox::TagCountUser->feed_newtags called for " . scalar(@$tags_ar) . " tags " . $tags_ar->[0]{tagid} . " ... " . $tags_ar->[-1]{tagid} . "\n";
-}
+	if (scalar(@$tags_ar) < 9) {
+		main::tagboxLog("TagCountUser->feed_newtags called for tags '" . join(' ', map { $_->{tagid} } @$tags_ar) . "'");
+	} else {
+		main::tagboxLog("TagCountUser->feed_newtags called for " . scalar(@$tags_ar) . " tags " . $tags_ar->[0]{tagid} . " ... " . $tags_ar->[-1]{tagid});
+	}
 	my $ret_ar = [ ];
 	for my $tag_hr (@$tags_ar) {
-		push @$ret_ar, {
-			tagid =>	$tag_hr->{tagid},
-			affected_id =>	$tag_hr->{uid},
-			importance =>	1,
+                # affected_id and importance work the same whether this is
+		# "really" newtags or deactivatedtags.
+		my $days_old = (time - $tag_hr->{created_at_ut}) / 86400;
+		my $importance =  $days_old <  1	? 1
+				: $days_old < 14	? 1.1**-$days_old
+				: 1.1**-14;
+		my $ret_hr = {
+			affected_id =>  $tag_hr->{uid},
+			importance =>   $importance,
 		};
+		# We identify this little chunk of importance by either
+		# tagid or tdid depending on whether the source data had
+		# the tdid field (which tells us whether feed_newtags was
+		# "really" called via feed_deactivatedtags).
+		if ($tag_hr->{tdid})    { $ret_hr->{tdid}  = $tag_hr->{tdid}  }
+		else                    { $ret_hr->{tagid} = $tag_hr->{tagid} }
+		push @$ret_ar, $ret_hr;
 	}
 	return $ret_ar;
 }
 
 sub feed_deactivatedtags {
 	my($self, $tags_ar) = @_;
-if (scalar(@$tags_ar) < 9) {
-print STDERR "Slash::Tagbox::TagCountUser->feed_deactivatedtags called for tags '" . join(' ', map { $_->{tdid} } @$tags_ar) . "'\n";
-} else {
-print STDERR "Slash::Tagbox::TagCountUser->feed_deactivatedtags called for " . scalar(@$tags_ar) . " tags " . $tags_ar->[0]{tdid} . " ... " . $tags_ar->[-1]{tdid} . "\n";
-}
+	if (scalar(@$tags_ar) < 9) {
+		main::tagboxLog("TagCountUser->feed_deactivatedtags called for tags '" . join(' ', map { $_->{tdid} } @$tags_ar) . "'");
+	} else {
+		main::tagboxLog("TagCountUser->feed_deactivatedtags called for " . scalar(@$tags_ar) . " tags " . $tags_ar->[0]{tdid} . " ... " . $tags_ar->[-1]{tdid});
+	}
 	return $self->feed_newtags($tags_ar);
 }
 
 sub feed_userchanges {
 	my($self, $users_ar) = @_;
-if (scalar(@$users_ar) < 9) {
-print STDERR "Slash::Tagbox::TagCountUser->feed_userchanges called for changes '" . join(' ', map { $_->{tuid} } @$users_ar) . "'\n";
-} else {
-print STDERR "Slash::Tagbox::TagCountUser->feed_userchanges called for " . scalar(@$users_ar) . " changes " . $users_ar->[0]{tuid} . " ... " . $users_ar->[-1]{tuid} . "\n";
-}
+	if (scalar(@$users_ar) < 9) {
+		main::tagboxLog("TagCountUser->feed_userchanges called for changes '" . join(' ', map { $_->{tuid} } @$users_ar) . "'");
+	} else {
+		main::tagboxLog("TagCountUser->feed_userchanges called for " . scalar(@$users_ar) . " changes " . $users_ar->[0]{tuid} . " ... " . $users_ar->[-1]{tuid});
+	}
 	return [ ];
 }
 
@@ -100,7 +111,7 @@ sub run {
 	my($self, $affected_id) = @_;
 	my $tagboxdb = getObject('Slash::Tagbox');
 	my $user_tags_ar = $tagboxdb->getTagboxTags($self->{tbid}, $affected_id, 0);
-print STDERR "Slash::Tagbox::TagCountUser->run called for $affected_id, ar count " . scalar(@$user_tags_ar) . "\n";
+	main::tagboxLog("TagCountUser->run called for $affected_id, ar count " . scalar(@$user_tags_ar));
 	my $count = grep { !defined $_->{inactivated} } @$user_tags_ar;
 	$self->setUser($affected_id, { tag_count => $count });
 }

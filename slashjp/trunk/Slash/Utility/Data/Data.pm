@@ -101,6 +101,7 @@ BEGIN {
 	nick2matchname
 	noFollow
 	regexSid
+	revertQuote
 	root2abs
 	roundrand
 	set_rootdir
@@ -126,6 +127,7 @@ BEGIN {
 	xmldecode
 	xmlencode
 	xmlencode_plain
+	validUrl
 	vislenify
 );
 
@@ -135,7 +137,8 @@ BEGIN {
 # @EXPORT_OK = qw(
 # 	approveTag
 # 	breakHtml
-# 	processCustomTags
+# 	processCustomTagsPre
+#	processCustomTagsPost
 # 	stripByMode
 # );
 
@@ -146,9 +149,11 @@ sub nickFix {
 	return '' if !$nick;
 	my $constants = getCurrentStatic();
 	my $nc = $constants->{nick_chars} || join('', 'a' .. 'z');
+	my $nr = $constants->{nick_regex} || '^[a-z]$';
 	$nick =~ s/\s+/ /g;
 	$nick =~ s/[^$nc]+//g;
 	$nick = substr($nick, 0, $constants->{nick_maxlen});
+	return '' if $nick !~ $nr;
 	return $nick;
 }
 
@@ -434,7 +439,7 @@ sub urlFromSite {
 	}
 
 	my @site_domain = split m/\./, $gSkin->{basedomain};
-	my $site_domain = join '.', @site_domain[-2, -1];
+	my $site_domain = @site_domain >= 2 ? join '.', @site_domain[-2, -1] : '';
 	$site_domain =~ s/:.+$//;	# strip port, if available
 
 	my @host = split m/\./, ($clean->can('host') ? $clean->host : '');
@@ -650,7 +655,7 @@ The 'atonish' and 'aton' template blocks.
 
 sub timeCalc {
 	# raw mysql date of story
-	my($date, $format, $off_set) = @_;
+	my($date, $format, $off_set, $options) = @_;
 	my $user = getCurrentUser();
 	my(@dateformats, $err);
 
@@ -671,12 +676,26 @@ sub timeCalc {
 	# so it's not a performance hit
 	my $lang = getCurrentStatic('datelang');
 
+	# If no format passed in, default to the current user's.
+	$format ||= $user->{'format'};
+
+	if ($format =~ /\bIF_OLD\b/) {
+		# Split $format into its new half and old half.
+		my($format_new, $format_old) = $format =~ /^(.+?)\s*\bIF_OLD\b\s*(.+)$/;
+		warn "format cannot be parsed: '$format'" if !defined($format_new);
+		# Reassign whichever half we want back to $format.
+		$format = $date < time() - 180*86400
+			|| ($options && $options->{is_old})
+			? $format_old
+			: $format_new;
+	}
+
 	# convert the raw date to pretty formatted date
 	if ($lang && $lang ne 'English') {
 		my $datelang = Date::Language->new($lang);
-		$date = $datelang->time2str($format || $user->{'format'}, $date);
+		$date = $datelang->time2str($format, $date);
 	} else {
-		$date = time2str($format || $user->{'format'}, $date);
+		$date = time2str($format, $date);
 	}
 
 	# return the new pretty date
@@ -1082,8 +1101,10 @@ my %actions = (
 	breakHtml_ifwhitefix => sub {
 			${$_[0]} = breakHtml(${$_[0]})
 				unless $action_data{no_white_fix};	},
-	processCustomTags => sub {
-			${$_[0]} = processCustomTags(${$_[0]});		},
+	processCustomTagsPre => sub {
+			${$_[0]} = processCustomTagsPre(${$_[0]});	},
+	processCustomTagsPost => sub {
+			${$_[0]} = processCustomTagsPost(${$_[0]});	},
 	approveTags => sub {
 			${$_[0]} =~ s/<(.*?)>/approveTag($1)/sge;	},
 	url2html => sub {
@@ -1156,7 +1177,6 @@ my %mode_actions = (
 			encode_html_amp
 			encode_html_ltgt
 			breakHtml_ifwhitefix
-			processCustomTags
 			remove_trailing_lts
 			approveTags
 			space_between_tags
@@ -1172,9 +1192,10 @@ my %mode_actions = (
 			newline_to_local
 			trailing_whitespace
 			encode_high_bits
-			processCustomTags
+			processCustomTagsPre
 			remove_trailing_lts
 			approveTags
+			processCustomTagsPost
 			space_between_tags
 			encode_html_ltgt_stray
 			encode_html_amp_ifnotent
@@ -1186,9 +1207,10 @@ my %mode_actions = (
 			newline_to_local
 			trailing_whitespace
 			encode_high_bits
-			processCustomTags
+			processCustomTagsPre
 			remove_trailing_lts
 			approveTags
+			processCustomTagsPost
 			space_between_tags
 			encode_html_ltgt_stray
 			encode_html_amp_ifnotent
@@ -1222,8 +1244,10 @@ sub stripByMode {
 	$action_data{no_white_fix} = $no_white_fix || 0;
 
 	my @actions = @{$mode_actions{$fmode}};
+#my $c = 0; print STDERR "stripByMode:start:$c:[{ $str }]\n";
 	for my $action (@actions) {
 		$actions{$action}->(\$str, $fmode);
+#$c++; print STDERR "stripByMode:$action:$c:[{ $str }]\n";
 	}
 	return $str;
 }
@@ -1378,10 +1402,12 @@ sub stripBadHtml {
 
 #========================================================================
 
-=head2 processCustomTags(STRING)
+=head2 processCustomTagsPre(STRING)
 
-Private function.  It does processing of special custom tags
-(so far, just ECODE).
+=head2 processCustomTagsPost(STRING)
+
+Private function.  It does processing of special custom tags (in Pre, ECODE;
+in Post, QUOTE).
 
 =over 4
 
@@ -1401,14 +1427,14 @@ Processed string.
 
 =item Dependencies
 
-It is meant to be used before C<stripBadHtml> is called, only
-from regular posting modes, HTML and PLAINTEXT.
+Pre is meant to be used before C<approveTag> is called; Post after.
+Both are called only from regular posting modes, HTML and PLAINTEXT.
 
 =back
 
 =cut
 
-sub processCustomTags {
+sub processCustomTagsPre {
 	my($str) = @_;
 	my $constants = getCurrentStatic();
 
@@ -1454,15 +1480,87 @@ sub processCustomTags {
 				# -- pudge
 				$codestr =~ s{<a href="[^"]+" rel="url2html-$$">(.+?)</a>}{$1}g;
 				my $code = strip_code($codestr);
-				my $newstr = "<blockquote>$code</blockquote>";
+				my $newstr = "<p><blockquote>$code</blockquote></p>";
 				substr($str, $pos, $len) = $newstr;
 				pos($str) = $pos + length($newstr);
 			}
 		}
 	}
+	return $str;
+}
+
+sub processCustomTagsPost {
+	my($str) = @_;
+	my $constants = getCurrentStatic();
+
+	# QUOTE must be in approvedtags
+	if (grep /^quote$/i, @{$constants->{approvedtags}}) {
+		my $quote   = 'quote';
+		my $open    = qr[\n* <\s*  $quote \s*> \n*]xsio;
+		my $close   = qr[\n* <\s* /$quote \s*> \n*]xsio;
+
+		$str =~ s/$open/<p><div class="quote">/g;
+		$str =~ s/$close/<\/div><\/p>/g;
+	}
+
+	# just fix the whitespace for blockquote to something that looks
+	# universally good
+	if (grep /^blockquote$/i, @{$constants->{approvedtags}}) {
+		my $quote   = 'blockquote';
+		my $open    = qr[\s* <\s*  $quote \s*> \n*]xsio;
+		my $close   = qr[\s* <\s* /$quote \s*> \n*]xsio;
+
+		$str =~ s/(?<!<p>)$open/<p><$quote>/g;
+	}
 
 	return $str;
 }
+
+# revert div class="quote" back to <quote>, handles nesting
+sub revertQuote {
+	my($str) = @_;
+
+	my $bail = 0;
+	while ($str =~ m|((<p>)?<div class="quote">)(.+)$|sig) {
+		my($found, $p, $rest) = ($1, $2, $3);
+		my $pos = pos($str) - (length($found) + length($rest));
+		substr($str, $pos, length($found)) = '<quote>';
+		pos($str) = $pos + length('<quote>');
+
+		my $c = 0;
+		$bail = 1;
+		while ($str =~ m|(<(/?)div.*?>(</p>)?)|sig) {
+			my($found, $end, $p2) = ($1, $2, $3);
+			if ($end && !$c) {
+				$bail = 0;  # if we don't get here, something is wrong
+				my $len = length($found);
+				# + 4 is for the </p>
+				my $pl = $p && $p2 ? 4 : 0;
+				substr($str, pos($str) - $len, $len + $pl) = '</quote>';
+				pos($str) = 0;
+				last;
+			} elsif ($end) {
+				$c--;
+			} else {
+				$c++;
+			}
+		}
+
+		if ($bail) {
+			use Data::Dumper;
+			warn "Stuck in endless loop: " . Dumper({
+				found	=> $found,
+				p	=> $p,
+				rest	=> $rest,
+				'pos'	=> $pos,
+				str	=> $str,
+			});
+			last;
+		}
+	}
+	return($str);
+}
+
 
 #========================================================================
 
@@ -1501,7 +1599,8 @@ The text.
 
 sub breakHtml {
 	my($text, $mwl) = @_;
-	return $text if $Slash::Utility::Data::approveTag::admin;
+	return $text if $Slash::Utility::Data::approveTag::admin
+		     && $Slash::Utility::Data::approveTag::admin > 1;
 
 	my $constants = getCurrentStatic();
 	$mwl = $mwl || $constants->{breakhtml_wordlength} || 50;
@@ -2195,7 +2294,11 @@ sub fudgeurl {
 			# then make sure the host and port are legit, and
 			# zap the port if it's the default port.
 			my $host = $uri->host;
-			$host =~ tr/A-Za-z0-9.-//cd; # per RFC 1035
+			# Re the below line, see RFC 1035 and maybe 2396.
+			# Underscore is not recommended and Slash has
+			# disallowed it for some time, but allowing it
+			# is really the right thing to do.
+			$host =~ tr/A-Za-z0-9._-//cd;
 			$uri->host($host);
 			if ($uri->can('authority') && $uri->authority) {
 				# We don't allow anything in the authority except
@@ -2481,7 +2584,7 @@ The 'approvedtags' entry in the vars table.
 	# change the code for them.  in theory we could generalize it more,
 	# using vars for all this, but that is a low priority.
 	my %known_tags	= map { ( lc, 1 ) } qw(
-		b i p br a ol ul li dl dt dd em strong tt blockquote div ecode
+		b i p br a ol ul li dl dt dd em strong tt blockquote div ecode quote
 		img hr big small sub sup span
 		q dfn code samp kbd var cite address ins del
 		h1 h2 h3 h4 h5 h6
@@ -2489,13 +2592,13 @@ The 'approvedtags' entry in the vars table.
 	# NB: ECODE is excluded because it is handled elsewhere.
 
 	# tags that are indented, so we can make sure indentation level is not too great
-	my %is_nesting  = map { ( lc, 1 ) } qw(ol ul dl blockquote);
+	my %is_nesting  = map { ( lc, 1 ) } qw(ol ul dl blockquote quote);
 
 	# or sub-super level
 	my %is_suscript = map { ( lc, 1 ) } qw(sub sup);
 
 	# block elements cannot be inside certain other elements; this defines which are which
-	my %is_block    = map { ( lc, 1 ) } qw(p ol ul li dl dt dd blockquote div hr address h1 h2 h3 h4 h5 h6);
+	my %is_block    = map { ( lc, 1 ) } qw(p ol ul li dl dt dd blockquote quote div hr address h1 h2 h3 h4 h5 h6);
 	my %no_block    = map { ( lc, 1 ) } qw(b i strong em tt q dfn code samp kbd var cite address ins del big small span p sub sup a h1 h2 h3 h4 h5 h6);
 
 	# when a style tag is cut off prematurely because of a newly introduced block
@@ -2816,7 +2919,7 @@ print STDERR "_validateLists logic error, no entry for list '$list'\n" if !$insi
 		my $in    = '';
 
 		# the secondary loop finds either a tag, or text between tags
-		while ($content =~ m!\s*([^<]+|<(.+?)>)!sig) {
+		while ($content =~ m!\s*([^<]+|<([^\s>]+).*?>)!sig) {
 			my($whole, $tag) = ($1, $2);
 			next if $whole !~ /\S/;
 			# we only care here if this is one that can be inside a list
@@ -3008,6 +3111,7 @@ The parsed HTML.
 
 sub parseSlashizedLinks {
 	my($html, $options) = @_;
+	$html = '' if !defined($html);
 	$options = '' if !defined($options);
 	$html =~ s{
 		<a[ ]href="__SLASHLINK__"
@@ -4253,6 +4357,24 @@ sub createStoryTopicData {
 	}
 
 	return \%tid_ref;
+}
+
+# check whether url is correctly formatted and has a scheme that is allowed for bookmarks and submissions
+sub validUrl {
+	my($url) = @_;
+	my $constants = getCurrentStatic();
+	my $fudgedurl = fudgeurl($url);
+	
+	my @allowed_schemes = split(/\|/, $constants->{bookmark_allowed_schemes} || "http|https");
+	my %allowed_schemes = map { $_ => 1 } @allowed_schemes;
+
+	my $scheme;
+	
+	if ($fudgedurl) {
+		my $uri = new URI $fudgedurl;
+		$scheme = $uri->scheme if $uri && $uri->can("scheme");
+	}		
+	return ($fudgedurl && $scheme && $allowed_schemes{$scheme});
 }
 
 

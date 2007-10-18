@@ -237,6 +237,29 @@ sub ajax_signoff {
 	return "Signed";
 }
 
+sub ajax_neverdisplay {
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	return unless $user->{is_admin};
+	
+	my $stoid = $form->{stoid};
+	my $uid   = $user->{uid};
+	my $fhid = $form->{fhid};
+
+	if ($fhid && !$stoid) {
+		my $firehose = getObject("Slash::FireHose");
+		my $item = $firehose->getFireHose($fhid);
+		$stoid = $item->{srcid} if $item && $item->{type} eq "story";
+	}
+	
+	return unless $stoid =~/^\d+$/;
+
+	$slashdb->setStory($stoid, { neverdisplay => 1 });
+	return "neverdisplay";
+
+}
+
 ##################################################################
 sub getStorySignoffs {
 	my($self, $stoid) = @_;
@@ -490,13 +513,14 @@ sub showAuthorActivityBox {
 	my $now = timeCalc($self->getTime(), "%s", 0);
 
 	foreach my $admin (@$cur_admin) {
-		my ($nickname, $time, $title, $subid, $sid, $uid) = @$admin;
+		my ($nickname, $time, $title, $subid, $sid, $uid, $fhid) = @$admin;
 		push @activity, {
 			nickname => $nickname,
 			title	=> $title,
 			subid	=> $subid,
 			sid	=> $sid,
 			uid	=> $uid,
+			fhid	=> $fhid,
 			'time'	=> $time,
 			verb	=> "reviewing"
 		};

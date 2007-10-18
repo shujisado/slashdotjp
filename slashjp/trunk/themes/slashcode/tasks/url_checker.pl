@@ -9,6 +9,7 @@
 #
 use Slash::Constants ':slashd';
 use LWP::UserAgent;
+use Encode 'encode_utf8';
 use HTML::HeadParser;
 
 use strict;
@@ -55,11 +56,17 @@ $task{$me}{code} = sub {
 			#slashdLog("success on $url->{url}");	
 			my $content =  $response->content;
 			my $hp = HTML::HeadParser->new;
-			$hp->parse($content);
+			{
+				local $SIG{__WARN__} = sub {
+					warn @_ unless $_[0] =~
+					/Parsing of undecoded UTF-8 will give garbage when decoding entities/
+				};
+				$hp->parse(encode_utf8($content));
+			}
 			my $validatedtitle = $hp->header('Title');
 			if (defined $validatedtitle) {
 				#slashdLog("vt $validatedtitle");	
-				$url_update->{validatedtitle} = $validatedtitle;
+				$url_update->{validatedtitle} = strip_notags($validatedtitle);
 				$url_update->{"-last_success"} = "NOW()";
 				$url_update->{is_success} = 1;
 				$url_update->{"-believed_fresh_until"} = "DATE_ADD(NOW(), INTERVAL 2 DAY)";

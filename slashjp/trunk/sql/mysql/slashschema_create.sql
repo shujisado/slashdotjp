@@ -227,6 +227,18 @@ CREATE TABLE classes (
 ) TYPE=InnoDB;
 
 #
+# Table structure for table 'clout_types'
+#
+
+CREATE TABLE clout_types (
+	clid		smallint UNSIGNED NOT NULL AUTO_INCREMENT,
+	name		varchar(16) NOT NULL,
+	class		varchar(255) NOT NULL,
+	PRIMARY KEY (clid),
+	UNIQUE name (name)
+) TYPE=InnoDB;
+
+#
 # Table structure for table 'code_param'
 #
 
@@ -259,13 +271,14 @@ CREATE TABLE commentmodes (
 DROP TABLE IF EXISTS comments;
 CREATE TABLE comments (
 	sid mediumint UNSIGNED NOT NULL,
-	cid mediumint UNSIGNED NOT NULL auto_increment,
-	pid mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	cid int UNSIGNED NOT NULL auto_increment,
+	pid int UNSIGNED DEFAULT '0' NOT NULL,
 	date datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	last_update TIMESTAMP NOT NULL,
 	ipid char(32) DEFAULT '' NOT NULL,
 	subnetid char(32) DEFAULT '' NOT NULL,
 	subject varchar(50) NOT NULL,
+	subject_orig ENUM('no', 'yes') DEFAULT 'yes' NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
 	points tinyint DEFAULT '0' NOT NULL,
 	pointsorig tinyint DEFAULT '0' NOT NULL,
@@ -279,6 +292,7 @@ CREATE TABLE comments (
 	karma_abs smallint UNSIGNED DEFAULT '0' NOT NULL,
 	tweak_orig TINYINT NOT NULL DEFAULT 0,
 	tweak TINYINT NOT NULL DEFAULT 0,
+        badge_id tinyint NOT NULL DEFAULT 0,
 	PRIMARY KEY (cid),
 	KEY display (sid,points,uid),
 	KEY byname (uid,points),
@@ -291,12 +305,28 @@ CREATE TABLE comments (
 ) TYPE=InnoDB;
 
 #
+# Table structure for table 'comment_log'
+#
+
+DROP TABLE IF EXISTS comment_log;
+
+CREATE TABLE comment_log (
+	id int UNSIGNED NOT NULL auto_increment,
+	cid int UNSIGNED NOT NULL,
+	logtext varchar(255) DEFAULT '' NOT NULL,
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+	INDEX ts (ts),
+	PRIMARY KEY (id)
+) TYPE=InnoDB;
+
+
+#
 # Table structure for table 'comment_text'
 #
 
 DROP TABLE IF EXISTS comment_text;
 CREATE TABLE comment_text (
-	cid mediumint UNSIGNED NOT NULL,
+	cid int UNSIGNED NOT NULL,
 	comment text NOT NULL,
 	PRIMARY KEY (cid)
 ) TYPE=InnoDB;
@@ -366,7 +396,7 @@ CREATE TABLE css (
 DROP TABLE IF EXISTS dateformats;
 CREATE TABLE dateformats (
 	id tinyint UNSIGNED DEFAULT '0' NOT NULL,
-	format varchar(32),
+	format varchar(64),
 	description varchar(64),
 	PRIMARY KEY (id)
 ) TYPE=InnoDB;
@@ -438,7 +468,7 @@ CREATE TABLE discussions (
 	primaryskid SMALLINT UNSIGNED,
 	last_update timestamp NOT NULL,
 	approved tinyint UNSIGNED DEFAULT 0 NOT NULL,
-	commentstatus ENUM('disabled','enabled','friends_only','friends_fof_only','no_foe','no_foe_eof') DEFAULT 'enabled' NOT NULL, /* Default is that we allow anyone to write */
+	commentstatus ENUM('disabled','enabled','friends_only','friends_fof_only','no_foe','no_foe_eof','logged_in') DEFAULT 'enabled' NOT NULL, /* Default is that we allow anyone to write */
 	archivable ENUM("no","yes") DEFAULT "yes" NOT NULL,
 	KEY (stoid),
 	KEY (sid),
@@ -522,6 +552,17 @@ CREATE TABLE globjs (
 ) TYPE=InnoDB;
 
 #
+# Table structure for table 'globj_adminnotes'
+#
+
+DROP TABLE IF EXISTS globj_adminnotes;
+CREATE TABLE globj_adminnotes (
+	globjid		int UNSIGNED NOT NULL AUTO_INCREMENT,
+	adminnote	varchar(255) NOT NULL DEFAULT '',
+	PRIMARY KEY (globjid)
+) TYPE=InnoDB;
+
+#
 # Table structure for table 'globj_types'
 #
 
@@ -545,8 +586,6 @@ CREATE TABLE globj_urls (
 	PRIMARY KEY (id),
 	UNIQUE globjid_url_id (globjid, url_id)
 ) TYPE=InnoDB;
-
-
 
 #
 # Table structure for table 'hooks'
@@ -582,23 +621,6 @@ CREATE TABLE menus (
 ) TYPE=InnoDB;
 
 #
-# Table structure for table 'metamodlog'
-#
-
-DROP TABLE IF EXISTS metamodlog;
-CREATE TABLE metamodlog (
-	id int UNSIGNED NOT NULL AUTO_INCREMENT,
-	mmid int UNSIGNED DEFAULT '0' NOT NULL,
-	uid mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	val tinyint  DEFAULT '0' NOT NULL,
-	ts datetime,
-	active tinyint DEFAULT '1' NOT NULL,
-	INDEX byuser (uid),
-	INDEX mmid (mmid),
-	PRIMARY KEY (id)
-) TYPE=InnoDB;
-
-#
 # Table structure for table 'misc_user_opts'
 #
 
@@ -613,57 +635,6 @@ CREATE TABLE misc_user_opts (
 	long_desc text,
 	opts_html text,
 	PRIMARY KEY (name)
-) TYPE=InnoDB;
-
-#
-# Table structure for table 'moderatorlog'
-#
-
-DROP TABLE IF EXISTS moderatorlog;
-CREATE TABLE moderatorlog (
-	id int UNSIGNED NOT NULL auto_increment,
-	ipid char(32) DEFAULT '' NOT NULL,
-	subnetid char(32) DEFAULT '' NOT NULL,
-	uid mediumint UNSIGNED NOT NULL,
-	val tinyint DEFAULT '0' NOT NULL,
-	sid mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
-	cid mediumint UNSIGNED NOT NULL,
-	cuid mediumint UNSIGNED NOT NULL,
-	reason tinyint UNSIGNED DEFAULT '0',
-	active tinyint DEFAULT '1' NOT NULL,
-	spent tinyint DEFAULT '1' NOT NULL,
-	m2count mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2needed mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2status tinyint DEFAULT '0' NOT NULL,
-	points_orig tinyint DEFAULT NULL,
-	PRIMARY KEY (id),
-	KEY sid (sid,cid),
-	KEY sid_2 (sid,uid,cid),
-	KEY cid (cid),
-	KEY ipid (ipid),
-	KEY subnetid (subnetid),
-	KEY uid (uid),
-	KEY cuid (cuid),
-	KEY m2stat_act (m2status,active),
-	KEY ts_uid_sid (ts,uid,sid)
-) TYPE=InnoDB;
-
-#
-# Table structure for table 'modreasons'
-#
-
-DROP TABLE IF EXISTS modreasons;
-CREATE TABLE modreasons (
-	id tinyint UNSIGNED NOT NULL,
-	name char(32) DEFAULT '' NOT NULL,
-	m2able tinyint DEFAULT '1' NOT NULL,
-	listable tinyint DEFAULT '1' NOT NULL,
-	val tinyint DEFAULT '0' NOT NULL,
-	karma tinyint DEFAULT '0' NOT NULL,
-	fairfrac float DEFAULT '0.5' NOT NULL,
-	unfairname varchar(32) DEFAULT '' NOT NULL,
-	PRIMARY KEY (id)
 ) TYPE=InnoDB;
 
 #
@@ -760,8 +731,9 @@ CREATE TABLE related_stories (
 	rel_sid varchar(16) NOT NULL default '',
 	title varchar(255) default '',
 	url varchar(255) default '',
-	cid mediumint(8) unsigned NOT NULL default '0',
+	cid int(8) unsigned NOT NULL default '0',
 	ordernum smallint unsigned NOT NULL default '0',
+	fhid mediumint(8) unsigned NOT NULL default '0',
 	PRIMARY KEY (id),
 	KEY stoid (stoid)
 ) TYPE=InnoDB;
@@ -834,6 +806,7 @@ CREATE TABLE sessions (
 	lasttitle varchar(50),
 	last_subid mediumint UNSIGNED,
 	last_sid varchar(16),
+	last_fhid mediumint UNSIGNED,
 	UNIQUE (uid),
 	PRIMARY KEY (session)
 ) TYPE=InnoDB;
@@ -1280,7 +1253,8 @@ CREATE TABLE urls (
 	tags_top VARCHAR(255) DEFAULT '' NOT NULL,
 	popularity float DEFAULT '0' NOT NULL,
 	PRIMARY KEY (url_id),
-	UNIQUE url_digest (url_digest)
+	UNIQUE url_digest (url_digest),
+	anon_bookmarks MEDIUMINT UNSIGNED DEFAULT 0 NOT NULL
 );
 
 #
@@ -1325,6 +1299,19 @@ CREATE TABLE users_acl (
 	PRIMARY KEY (id)
 ) TYPE=InnoDB;
 
+#
+# Table structure for table 'users_clout'
+#
+
+CREATE TABLE users_clout (
+	clout_id	int UNSIGNED NOT NULL AUTO_INCREMENT,
+	uid		mediumint UNSIGNED NOT NULL,
+	clid		smallint UNSIGNED NOT NULL,
+	clout		float UNSIGNED DEFAULT NULL,
+	PRIMARY KEY (clout_id),
+	UNIQUE uid_clid (uid, clid),
+	INDEX clid (clid)
+) TYPE=InnoDB;
 
 #
 # Table structure for table 'users_comments'
@@ -1400,27 +1387,10 @@ CREATE TABLE users_info (
 	bio text NOT NULL,
 	tokens mediumint DEFAULT '0' NOT NULL,
 	lastgranted datetime DEFAULT '1970-01-01 00:00' NOT NULL,
-	m2info varchar(64) DEFAULT '' NOT NULL,
 	karma mediumint DEFAULT '0' NOT NULL,
 	maillist tinyint DEFAULT '0' NOT NULL,
 	totalcomments mediumint UNSIGNED DEFAULT '0',
-	lastmm datetime DEFAULT '1970-01-01 00:00' NOT NULL,
-	mods_saved varchar(120) DEFAULT '' NOT NULL,
 	lastaccess date DEFAULT '1970-01-01' NOT NULL,
-	m2fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	up_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	down_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	up_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	down_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2fairvotes mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2voted_up_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2voted_down_fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2unfairvotes mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2voted_up_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2voted_down_unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2voted_lonedissent mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	m2voted_majority mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	upmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	downmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	stirred mediumint UNSIGNED DEFAULT '0' NOT NULL,
@@ -1468,13 +1438,13 @@ CREATE TABLE users_logtokens (
 
 DROP TABLE IF EXISTS users_param;
 CREATE TABLE users_param (
-	param_id mediumint UNSIGNED NOT NULL auto_increment,
+	param_id int UNSIGNED NOT NULL auto_increment,
 	uid mediumint UNSIGNED NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
 	value text NOT NULL,
+	PRIMARY KEY (param_id),
 	UNIQUE uid_key (uid,name),
-	KEY (uid),
-	PRIMARY KEY (param_id)
+	KEY name (name)
 ) TYPE=InnoDB;
 
 #
@@ -1509,7 +1479,6 @@ CREATE TABLE vars (
 #ALTER TABLE backup_blocks ADD FOREIGN KEY (bid) REFERENCES blocks(bid);
 #ALTER TABLE comment_text ADD FOREIGN KEY (cid) REFERENCES comments(cid);
 #ALTER TABLE discussions ADD FOREIGN KEY (topic) REFERENCES topics(tid);
-#ALTER TABLE metamodlog ADD FOREIGN KEY (mmid) REFERENCES moderatorlog(id);
 # This doesn't work, since discussion may be 0.
 #ALTER TABLE pollquestions ADD FOREIGN KEY (discussion) REFERENCES discussions(id);
 # This doesn't work, since in the install pollquestions is populated before users, alphabetically
@@ -1542,7 +1511,6 @@ CREATE TABLE vars (
 #ALTER TABLE discussions ADD FOREIGN KEY (stoid) REFERENCES stories(stoid);
 #ALTER TABLE discussions ADD FOREIGN KEY (uid) REFERENCES users(uid);
 #ALTER TABLE formkeys ADD FOREIGN KEY (uid) REFERENCES users(uid);
-#ALTER TABLE metamodlog ADD FOREIGN KEY (uid) REFERENCES users(uid);
 #ALTER TABLE pollanswers ADD FOREIGN KEY (qid) REFERENCES pollquestions(qid);
 #ALTER TABLE pollvoters ADD FOREIGN KEY (uid) REFERENCES users(uid);
 #ALTER TABLE pollvoters ADD FOREIGN KEY (qid) REFERENCES pollquestions(qid);

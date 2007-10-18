@@ -25,6 +25,10 @@ sub new {
 	bless($self, $class);
 	$self->{virtual_user} = $user;
 	$self->sqlConnect;
+	# XXX Anyone know why this is called directly?  We use $self->{slashdb}
+	# at a number of places below and I can't figure out why we don't just
+	# use getCurrentDB(). -- jamie
+	# beats me! -- pudge
 	$self->{slashdb} = Slash::DB->new($user);
 
 	return $self;
@@ -368,7 +372,11 @@ sub _install {
 		}
 	}
 
+	##############################
+
 	my($sql, @sql, @create);
+
+	# First, apply the schema.
 
 	my $mldhr = {	# "mungeline data hashref"
 		hostname	=> $self->getValue("basedomain"),
@@ -386,6 +394,34 @@ sub _install {
 		}
 	}
 
+	for my $statement (@sql) {
+		next unless $statement;
+		$statement =~ s/;\s*$//;
+		my $rows = $self->sqlDo($statement);
+		if (!$rows && $statement !~ /^INSERT\s+IGNORE\b/i) {
+			print "=== ($type $hash->{name}) Failed on: $statement:\n";
+		}
+	}
+	@sql = ();
+
+	# Second, install any required plugins.  This comes before the dump in
+	# case the theme's dump file writes to any tables/columns that were
+	# added by a plugin.
+
+	if ($hash->{plugin}) {
+		my @k = sort {
+				$hash->{plugin}{$a}{installorder} <=> $hash->{plugin}{$b}{installorder}
+				||
+				$a cmp $b
+			}
+			keys %{$hash->{plugin}};
+		for my $plugin_name (@k) {
+			$self->installPlugin($plugin_name, 0, $symlink);
+		}
+	}
+
+	# Third, apply the dump.
+
 	if ($hash->{"${driver}_dump"}) {
 		my $dump_file = "$hash->{dir}/" . $hash->{"${driver}_dump"};
 		my $fh = gensym;
@@ -402,20 +438,12 @@ sub _install {
 		$statement =~ s/;\s*$//;
 		my $rows = $self->sqlDo($statement);
 		if (!$rows && $statement !~ /^INSERT\s+IGNORE\b/i) {
-			print "=== ($hash->{name}) Failed on :$statement:\n";
+			print "=== ($type $hash->{name}) Failed on: $statement:\n";
 		}
 	}
 	@sql = ();
 
-	if ($hash->{plugin}) {
-		for (sort {
-			$hash->{plugin}{$a}{installorder} <=> $hash->{plugin}{$b}{installorder}
-			||
-			$a cmp $b
-		} keys %{$hash->{plugin}}) {
-			$self->installPlugin($_, 0, $symlink);
-		}
-	}
+	##############################
 
 	if ($type eq "theme") {
 		my(%templates, @no_templates);
@@ -475,7 +503,7 @@ sub _install {
 		next unless $_;
 		s/;$//;
 		unless ($self->sqlDo($_)) {
-			print "=== ($hash->{name}) Failed on :$_:\n";
+			print "=== ($type $hash->{name}) Failed on: $_:\n";
 		}
 	}
 	@sql = ();
@@ -627,6 +655,14 @@ sub _getList {
 				plugin | requiresplugin
 			)s?$/x) {
 				$hash{$dir}{$1}{$val} = 1;
+			} elsif ($key =~ /^(
+				glob
+			)s?$/x) {
+				my($globkey, $globdest) = split(/:/, $val, 2);
+				$globkey = lc $globkey;
+				$hash{$dir}{$1}{$globkey} = $globdest;
+			} elsif (exists $hash{$dir}{'glob'}{$key}) {
+				push @{$hash{$dir}{$key}}, $val;
 			} else {
 				$hash{$dir}{$key} = $val;
 			}

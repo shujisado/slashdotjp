@@ -143,7 +143,7 @@ END %]
 	[% END %]
 	
 		[% PROCESS formLabel value => 'Comment' %]
-		<textarea wrap="virtual" name="postercomment" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]">[% form.postercomment | strip_literal %]</textarea>
+		<textarea wrap="virtual" name="postercomment" id="postercomment" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]">[% form.postercomment | strip_literal %]</textarea>
 		[% PROCESS formNote note => 'Use the Preview Button! Check those URLs!' %]
 		<br>
 		[% IF user.is_anon %]
@@ -166,7 +166,7 @@ IF !user.is_anon && user.is_subscriber %]
 		<input type="hidden" name="nosubscriberbonus_present" value="1">
 		<input type="checkbox" name="nosubscriberbonus"[% IF form.nosubscriberbonus; constants.markup_checked_attribute ; END %]> No Subscriber Bonus
 [% do_br = 1; END;
-IF constants.allow_anonymous && user.karma > -1 && !user.is_anon && discussion.commentstatus == 'enabled'  %]
+IF constants.allow_anonymous && user.karma > -1 && !user.is_anon && (discussion.commentstatus == 'enabled' || discussion.commentstatus == 'logged_in')  %]
 		<input type="hidden" name="postanon_present" value="1">
 		<input type="checkbox" name="postanon"[% IF form.postanon; constants.markup_checked_attribute ; END %]> Post Anonymously
 [% do_br = 1; END;
@@ -201,6 +201,16 @@ IF do_br %]<br>[% END %]
 	[% IF !user.is_anon || (user.is_anon && preview) %]
 	<input type="submit" name="op" value="Submit" class="button">
 	[% END %]
+	[% IF form.pid && Slash.discussion2() == "slashdot" %]
+	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
+	<script type="text/javascript">
+<!--
+	comment_body_reply[[% form.pid %]] = '[% pid_reply %]';
+	document.write('<input type="button" name="quotereply" id="quotereply" value="Quote" class="button" onclick="quoteReply([% form.pid %])">');
+//-->
+	</script>
+	[% END %]
+
 </p>
 [% END %]
 			<div class="notes">

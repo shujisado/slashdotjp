@@ -23,7 +23,6 @@ my $query_ref_regex = qr{(HASH|ARRAY|SCALAR|GLOB|CODE|LVALUE|IO|REF)\(0x[0-9a-f]
 ########################################################
 # Generic methods for libraries.
 ########################################################
-#Class variable that stores the database handle
 sub new {
 	my($class, $user, @args) = @_;
 	my $self = {};
@@ -50,6 +49,13 @@ sub new {
 	$self->{_querylog} = { };
 
 	return $self;
+}
+
+# Subclasses may implement their own methods of determining whether
+# their class is "installed" or not.  For example, plugins may want
+# to check $constants->{plugin}{Foo}.
+sub isInstalled {
+	return 1;
 }
 
 ##################################################################
@@ -225,6 +231,11 @@ sub sqlConnect {
 
 	return 0 unless dbAvailable();
 
+	# ping() isn't currently implemented so it is unnecessary;
+	# if it actually did run a query on the DB to determine
+	# whether the connection were active, calling it here
+	# would be a mistake.  I think we want to check
+	# dbh->{Active} instead. XXX -Jamie
 	if (!(defined $self->{_dbh}) || !$self->{_dbh}->ping) {
 	#if (!(defined $self->{_dbh}) || !$self->{_dbh}->can("ping") || !$self->{_dbh}->ping) {
 # Ok, new connection, lets create it
@@ -830,7 +841,9 @@ sub sqlSelectAllKeyValue {
 #     "id BETWEEN $minid AND $maxid AND ts BETWEEN '2001-01-01 01:00:00' AND '2001-01-01 03:00:00'");
 
 sub sqlSelectNumericKeyAssumingMonotonic {
-	my($self, $table, $minmax, $keycol, $clause) = @_;
+	my($self, $table, $minmax, $keycol, $clause, $max_gap) = @_;
+	my $constants = getCurrentStatic();
+	$max_gap ||= ($constants->{db_auto_increment_increment} || 1)-1;
 	$self->_refCheck($clause);
 
 	# Set up $minmax appropriately.
@@ -880,10 +893,20 @@ sub sqlSelectNumericKeyAssumingMonotonic {
 			}
 		}
 		last if $answer;
-		# If we're not that close, narrow it down.
+		# If we're not that close, narrow it down.  To allow for gaps
+		# in the keycol, 
 		my $middle = int(($leftmost + $rightmost) / 2);
+		my $middle_clause;
+		if ($max_gap) {
+			my $middle_min = int($middle - $max_gap/2);
+			$middle_min = 0 if $middle_min < 0; # very unlikely! but just in case
+			my $middle_max = int($middle + $max_gap/2);
+			$middle_clause = "$keycol BETWEEN $middle_min AND $middle_max";
+		} else {
+			$middle_clause = "$keycol=$middle";
+		}
 		my $hit = $self->sqlSelect($keycol, $table,
-			"$keycol=$middle AND ($clause)");
+			"($middle_clause) AND ($clause)");
 		if ($hit) {
 			$rightmost = $middle;
 		} else {

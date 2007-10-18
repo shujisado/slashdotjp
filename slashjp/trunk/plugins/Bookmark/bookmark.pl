@@ -21,17 +21,20 @@ sub main {
 	my $postflag = $user->{state}{post};
 
 	my %ops = (
-		bookmark 	=> [!$user->{is_anon}, \&bookmark, 0, 1 ],
+		bookmark 	=> [!$user->{is_anon}, \&bookmark, 1, 0 ],
 		save		=> [!$user->{is_anon}, \&saveBookmark, 1, 1 ],
 		showbookmarks	=> [1, \&showBookmarks, 0, 0 ],
+		anon_bookmark	=> [1, \&anonBookmark, 0, 0 ]
 	);
 	
 
 	$ops{default} = $ops{bookmark};
 	my $op = lc($form->{op} || 'default');
 	$op = 'default' if !$ops{$op} || !$ops{$op}[ALLOWED];
-	$op = 'default' if $ops{$op}[2] && !$postflag;
-	redirect("/login.pl") if $user->{seclev} < $ops{$op}[3];
+	$op = 'default' if $ops{$op}[3] && !$postflag;
+	if ($user->{seclev} < $ops{$op}[MINSECLEV]) {
+		$op = 'anon_bookmark';
+	}
 
 	header("$constants->{sitename} Bookmarks") if $op ne "save";
 	$ops{$op}[FUNCTION]->($constants, $slashdb, $user, $form);
@@ -76,23 +79,10 @@ sub saveBookmark {
 
 	my $reskey = getObject('Slash::ResKey');
 	my $rkey = $reskey->key('bookmark');
-
-	my @allowed_schemes = split(/\|/,$constants->{bookmark_allowed_schemes});
-	my %allowed_schemes = map { $_ => 1 } @allowed_schemes;
-
-	my $fudgedurl = fudgeurl($form->{url});
 	my $bookmarkoptions;
 
-	my $scheme;
-	if ($fudgedurl) {
-		my $uri = new URI $fudgedurl;
-		$scheme = $uri->scheme if $uri && $uri->can("scheme");
-	}		
-	
-	$bookmarkoptions->{errors}{invalidurl}    = 1 if (!$fudgedurl && $form->{url}) || ($form->{url} && !$scheme) || ($scheme && !$allowed_schemes{$scheme});
+	$bookmarkoptions->{errors}{invalidurl}    = 1 if !validUrl($form->{url});
 	$bookmarkoptions->{errors}{missingfields} = 1 if !$form->{url} || !$form->{title} || !$form->{tags};
-	$bookmarkoptions->{errors}{noscheme}      = 1 if ($form->{url} && !$scheme);
-	$bookmarkoptions->{errors}{badscheme}     = 1 if ($form->{url} && $scheme && !$allowed_schemes{$scheme});
 	
 	if (!$bookmarkoptions->{errors}) {
 		unless ($rkey->use) {
@@ -107,9 +97,10 @@ sub saveBookmark {
 		return;
 	}
 
+	my $fudgedurl = fudgeurl($form->{url});
 	my $data = {
 		url		=> $fudgedurl,
-		initialtitle	=> $form->{title}
+		initialtitle	=> strip_notags($form->{title})
 	};
 
 	my $url_id = $slashdb->getUrlCreate($data);
@@ -118,7 +109,7 @@ sub saveBookmark {
 	my $bookmark_data = {
 		url_id 		=> $url_id,
 		uid    		=> $user->{uid},
-		title		=> strip_attribute($form->{title}),
+		title		=> strip_notags($form->{title}),
 	};
 
 	my $bookmark_id;
@@ -129,6 +120,14 @@ sub saveBookmark {
 	} else {
 		$bookmark_data->{"-createdtime"} = 'NOW()';
 		$bookmark_id= $bookmark->createBookmark($bookmark_data);
+		if ($constants->{plugin}{FireHose}) {
+			my $firehose = getObject("Slash::FireHose");
+			my $the_bookmark = $bookmark->getBookmark($bookmark_id);
+			$firehose->createUpdateItemFromBookmark($bookmark_id, {
+				type		=> "bookmark",
+			});
+		}
+					
 	}
 
 	my $tags = getObject('Slash::Tags');
@@ -141,7 +140,7 @@ sub saveBookmark {
 	if ($form->{redirect} eq "journal") {
 		redirect("/journal.pl?op=edit&description=$strip_title&article=$strip_url&url_id=$url_id");
 	} elsif ($form->{redirect} eq "submit") {
-		redirect("/submit.pl?subj=$strip_title&story=$strip_url&url_id=$url_id");
+		redirect("/submit.pl?subj=$strip_title&story=$strip_url&url_id=$url_id&url=$strip_url");
 	} else {
 		redirect($form->{url});
 	}
@@ -174,6 +173,43 @@ sub showBookmarks {
 		type		=> $type,
 		bookmarks	=> $bookmarks,
 	});
+}
+
+sub anonBookmark {
+	my($constants, $slashdb, $user, $form) = @_;
+	my $bookmark = getObject("Slash::Bookmark");
+	my $fudgedurl = fudgeurl($form->{url});
+	my $errors;
+	if ($fudgedurl) {
+		my $url_id = $slashdb->getUrlIfExists($fudgedurl);
+		if ($url_id) {
+			$slashdb->setUrl($url_id, { -anon_bookmarks => 'anon_bookmarks + 1' } );
+		} else {
+			my $data = {
+				initialtitle	=> strip_notags($form->{title}),
+				url		=> $fudgedurl,
+				anon_bookmarks	=> 1,
+			};
+			my @allowed_schemes = split(/\|/,$constants->{bookmark_allowed_schemes});
+			my %allowed_schemes = map { $_ => 1 } @allowed_schemes;
+
+
+			my $scheme;
+			if ($fudgedurl) {
+				my $uri = new URI $fudgedurl;
+				$scheme = $uri->scheme if $uri && $uri->can("scheme");
+			}		
+	
+			if ($scheme && $allowed_schemes{$scheme}) {
+				$slashdb->getUrlCreate($data);
+			}
+		}
+
+	}
+	slashDisplay('anon_bookmark', {
+		fudgedurl => $fudgedurl,
+	});
+	
 }
 
 createEnvironment();

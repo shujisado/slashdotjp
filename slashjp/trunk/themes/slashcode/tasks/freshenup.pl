@@ -18,6 +18,7 @@ my $total_freshens = 0;
 $task{$me}{timespec} = '0-59 * * * *';
 $task{$me}{timespec_panic_1} = '1-59/10 * * * *';
 $task{$me}{timespec_panic_2} = '';
+$task{$me}{resource_locks} = getCurrentStatic('cepstral_audio') ? { cepstral => 1 } : { };
 $task{$me}{on_startup} = 1;
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
@@ -260,6 +261,14 @@ $task{$me}{code} = sub {
 		# tell it where it will be.
 		my($cchp_file, $cchp_param) = _make_cchp_file();
 
+		# update a story's audio version, if using cepstral audio.
+		if ($constants->{cepstral_audio}) {
+			# fork a new script to render the audio, and
+			# it will update the story_param table with the correct
+			# pointers to the file
+			system("$constants->{datadir}/sbin/audio-gen.pl $virtual_user $stoid &");
+		}
+
 		# Now call prog2file().
 		$args = "$vu ssi=yes sid='$sid'$cchp_param";
 		my $filename;
@@ -398,6 +407,11 @@ $task{$me}{code} = sub {
 				verbosity =>	verbosity(),
 				handle_err =>	0
 		});
+
+		if ($constants->{plugin}{FireHose}) {
+			gen_firehose_static($virtual_user, "index_firehose.shtml", $gSkin->{name}, "", {  skipmenu => 1, skippop => 1, fhfilter=> "story", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => 1  }); 
+			gen_firehose_static($virtual_user, "firehose.shtml", $gSkin->{name}, "", { duration => "7", mode => 'fulltile', mixedmode => '1', setfield => '1', color => "blue", nodates => '1'  }); 
+		}
 		$slashdb->markSkinClean($mp_skid);
 		delete $dirty_skins{$mp_skid};
 		$skins_logmsg = "rewrote static skin pages for $skins->{$mp_skid}{name}";
@@ -406,7 +420,6 @@ $task{$me}{code} = sub {
 	############################################################
 	# rewrite .shtml files for other skins' indexes
 	############################################################
-
 	if ($do_all) {
 		for my $key (sort { $a <=> $b } keys %dirty_skins) {
 			next unless $key;
@@ -425,6 +438,11 @@ $task{$me}{code} = sub {
 					verbosity =>	verbosity(),
 					handle_err =>	0
 			});
+			if ($constants->{plugin}{FireHose}) {
+				gen_firehose_static($virtual_user, "index_firehose.shtml", $skin->{name}, $skinname, { skipmenu => 1, skippop => 1, fhfilter=> "'story $skin->{name}'", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => "1"  }); 
+				gen_firehose_static($virtual_user, "firehose.shtml", $skin->{name}, $skinname, { duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "blue", nodates => '1', fhfilter => "'$skin->{name}'" }); 
+			}
+
 			$slashdb->markSkinClean($key);
 			$skins_logmsg ||= "rewrote static skin pages for";
 			$skins_logmsg .= " $skins->{$key}{name}";
@@ -490,6 +508,30 @@ sub _read_and_unlink_cchp_file {
 	}
 	unlink $cchp_file;
 	return($cc, $hp);
+}
+
+sub gen_firehose_static {
+	my($vu, $filename, $section, $skinname, $opts) = @_;
+	my $constants = getCurrentStatic();
+	my $fargs = "virtual_user=$vu ssi=yes section='$section'";
+	my $basedir = $constants->{basedir};
+	$skinname .= "/" if $skinname;
+
+	foreach (keys %$opts) {
+		$fargs .= " $_=$opts->{$_}";
+	}
+	$fargs .= " anonval=$constants->{firehose_anonval_param}" if $constants->{firehose_anonval_param};
+	slashdLog("$vu $filename $section $fargs");
+	$filename ||= "firehose.shtml";
+
+	prog2file(
+		"$basedir/firehose.pl",
+		"$basedir/$skinname/$filename", {
+			args => $fargs,
+			verbosity => verbosity(),
+			handle_err => 0
+
+	});
 }
 
 1;

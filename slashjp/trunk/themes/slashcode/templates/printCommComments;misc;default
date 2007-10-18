@@ -33,21 +33,22 @@ __template__
 [% END %]
 
 [% IF discussion2 %]
-	[% IF user.discussion2 == "slashdot" %]
+	[% IF discussion2 == "slashdot" %]
 	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
 	[%- ELSE %]
 	<script src="http://socialcomputingresearch.net/slashdot/js/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
 	[%- END %]
 	<script type="text/javascript">
 <!--
-	$('commentControlBoxStatus').className = '';
+	window.onscroll = d2act;
+	boxStatus(1);
 [% Slash.jsSelectComments(Slash.db, constants, user, { sid => sid, cid => cid }) %]
 //-->
 	</script>
 [% END %]
 
 [% IF cid %]
-	<ul id="commentlisting" class="[% user.mode %]"[% IF discussion2 %] onmouseover="floatButtons();"[% END %]>
+	<ul id="commentlisting" class="[% user.mode %]">
 	[% Slash.dispComment(comment) %]
 	<div class="comment_footer">
 	[% IF previous %]
@@ -70,16 +71,27 @@ __template__
 		[% Slash.linkComment(next, 1) %]&gt;&gt;
 	[% END %]
 	</div>
-	[% Slash.moderatorCommentLog('cid', cid, { show_m2s => (form.show_m2s.defined ? form.show_m2s : user.m2_with_comm_mod), need_m2_form => !moderate_form, need_m2_button => 1, title=>" " }); %]
+	[% m1_classname = "Slash::" _ constants.m1_pluginname;
+	   moddb = Slash.getObject(m1_classname);
+	   IF moddb;
+		   moddb.dispModCommentLog('cid', cid, {
+			show_m2s =>	  constants.m2 ? (form.show_m2s.defined
+							? form.show_m2s : user.m2_with_comm_mod)
+						: 0,
+			need_m2_form =>	  constants.m2 ? !moderate_form : 0,
+			need_m2_button => constants.m2,
+			title => " " });
+	   END;
+	%]
 [% END %]
 
 	[% lcp %]
 	[% IF lvl %]
 	[% END %]
 	[% thread = Slash.displayThread(sid, pid, lvl, comments) %]
-	[% IF thread %]
-		[% UNLESS cid %]<ul id="commentlisting"[% IF discussion2 %] onmouseover="floatButtons();"[% END %]>[% END %]
-			[% thread %]
+	[% IF thread || discussion2 %]
+		[% UNLESS cid %]<ul id="commentlisting">[% END %]
+			[% thread || '' %]
 			<li id="roothiddens" class="hide"></li>
 		[% UNLESS cid %]</ul>[% END %]
 	[% END %]
@@ -87,6 +99,10 @@ __template__
 	[% IF lvl %]
 	[% END %]
 	[% lcp %]
+
+[% IF discussion2 && !cid %]
+<div class="prev-next"><a href="javascript:ajaxFetchComments(0,1)"><span id="more_comments_num_a" class="hide">Check for more</span></a></div>
+[% END %]
 
 [% IF moderate_form %]
 	[% IF moderate_button %]
@@ -115,7 +131,13 @@ __template__
 		currents['oneline']  = [% user.state.comments.totals.oneline || 0 %];
 		// currents_total = [% (user.state.comments.totals.hidden || 0 ) + (user.state.comments.totals.full || 0) + (user.state.comments.totals.oneline || 0)  %];
 
-		finishLoading();
+		abbrev_comments      = {};
+		noshow_comments      = [[% user.state.comments.noshow.join(',') %]];
+		pieces_comments      = [[% user.state.comments.pieces.join(',') %]];
+		init_hiddens         = [[% user.state.comments.hiddens.join(',') %]];
+
+		[% IF discussion2 == "slashdot" %]d2act();
+		[% END -%]finishLoading();
 //-->
 	</script>
 [% END %]

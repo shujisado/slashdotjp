@@ -217,15 +217,19 @@ sub create {
 			$channel{syn}{$_} = delete $channel{$_};
 		}
 
-		my($item) = @{$param->{items}};
-		$rss->add_module(
-			prefix  => 'slash',
-			uri     => 'http://purl.org/rss/1.0/modules/slash/',
-		) if $item->{story};
-		$rss->add_module(
-			prefix => 'content',
-			uri    => 'http://purl.org/rss/1.0/modules/content/',
-		);
+		for (@{$param->{items}}) {
+			if ($_->{story}) {
+				$rss->add_module(
+					prefix  => 'slash',
+					uri     => 'http://purl.org/rss/1.0/modules/slash/',
+				);
+				$rss->add_module(
+					prefix => 'content',
+					uri    => 'http://purl.org/rss/1.0/modules/content/',
+				);
+				last;
+			}
+		}
 
 	} elsif ($version >= 0.91) {
 		# fix mappings for 0.91
@@ -406,11 +410,13 @@ sub rss_story {
 
 	my $topics = $reader->getTopics;
 	my $other_creator;
+	my $action;
 
 	$encoded_item->{title}  = $self->encode($story->{title})
 		if $story->{title};
 	if ($story->{sid}) {
 		my $edit = "admin.pl?op=edit&sid=$story->{sid}";
+		$action = "article.pl?sid=$story->{sid}&from=rss";
 		if ($story->{primaryskid}) {
 			my $dir = url2abs(
 				$reader->getSkin($story->{primaryskid})->{rootdir},
@@ -418,11 +424,13 @@ sub rss_story {
 			);
 			$encoded_item->{'link'} = _tag_link("$dir/article.pl?sid=$story->{sid}");
 			$edit = "$dir/$edit";
+			$action = "$dir/$action";
 		} else {
 			$encoded_item->{'link'} = _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
 			$edit = "$channel->{'link'}$edit";
+			$action = "$channel->{'link'}$action";
 		}
-		$_ = $self->encode($_, 'link') for ($encoded_item->{'link'}, $edit);
+		$_ = $self->encode($_, 'link') for ($encoded_item->{'link'}, $edit, $action);
 
 		if (getCurrentUser('is_admin')) {
 			$story->{introtext} .= qq[\n\n<p><a href="$edit">[ Edit ]</a></p>];
@@ -440,7 +448,12 @@ sub rss_story {
 
 	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
-		$encoded_item->{description} = $desc if $desc;
+		if ($desc) {
+			$encoded_item->{description} = $desc;
+			$encoded_item->{description} .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>" if $action;
+			# add poll if any
+			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+		}
 	}
 
 	if ($version >= 1.0) {

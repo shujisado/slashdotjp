@@ -44,7 +44,6 @@ sub SlashVirtualUser ($$$) {
 	createCurrentVirtualUser($cfg->{VirtualUser} = $user);
 	createCurrentDB		($cfg->{slashdb} = Slash::DB->new($user));
 	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf());
-#	$cfg->{constants}{section} = 'index'; # This is in here till I finish up some work -Brian
 
 	# placeholders ... store extra placeholders in DB?  :)
 	for (qw[user form themes template cookie objects cache site_constants]) {
@@ -396,6 +395,11 @@ sub IndexHandler {
 			writeLog('shtml');
 			return OK;
 		}
+	}
+
+	if ($uri eq '/firehose.pl') {
+		$r->uri($is_user ? '/firehose.pl' : '/firehose.shtml');
+		return OK;
 	}
 
 	if ($uri eq '/authors.pl') {

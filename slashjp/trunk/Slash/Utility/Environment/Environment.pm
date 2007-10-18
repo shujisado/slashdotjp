@@ -1338,9 +1338,6 @@ sub setCookie {
 	my $constants = getCurrentStatic();
 	my $gSkin = getCurrentSkin();
 
-	# We need to actually determine domain from preferences,
-	# not from the server, so the site admin can specify
-	# special preferences if they want to. -- pudge
 	my $cookiedomain = $gSkin->{cookiedomain} || $constants->{cookiedomain};
 	my $cookiepath   = $constants->{cookiepath};
 
@@ -1421,7 +1418,9 @@ sub getPublicLogToken {
 	$uid ||= getCurrentUser('uid');
 	if ($uid) {
 		my $slashdb = getCurrentDB();
-		my $logtoken = $slashdb->getLogToken($uid, 1, 2);
+		# Don't bump a public logtoken's expiration time if we're
+		# just getting its value to emit.
+		my $logtoken = $slashdb->getLogToken($uid, 1, 2, 0);
 		if ($logtoken) {
 			return bakeUserCookie($uid, $logtoken);
 		}
@@ -1503,6 +1502,9 @@ sub prepareUser {
 	# First we find a good reader DB so that we can use that for the user
 	my $user_types = setUserDBs();
 	my $reader = getObject('Slash::DB', { virtual_user => $user_types->{reader} });
+	if (!$reader) {
+		die "no reader found in prepareUser($uid), user_types: " . join(',', sort keys %$user_types);
+	}
 
 	if (!$uid) {
 		# No user defined;  set the anonymous coward user.
@@ -1530,7 +1532,10 @@ sub prepareUser {
 	} else {
 		$user = $reader->getUser($uid);
 		$user->{is_anon} = 0;
-		$user->{logtoken} = bakeUserCookie($uid, $slashdb->getLogToken($uid));
+		# If this was a public logtoken, we do want to bump its
+		# expiration time out, because it was used to authenticate.
+		$user->{logtoken} = bakeUserCookie($uid,
+			$slashdb->getLogToken($uid, 0, 0, 1));
 	}
 #print STDERR scalar(localtime) . " $$ prepareUser user->uid=$user->{uid} is_anon=$user->{is_anon}\n";
 
@@ -1565,7 +1570,33 @@ sub prepareUser {
 			$user->{$param} ||= $default || 0;
 		}
 	}
-	$user->{karma_bonus} = '+1' unless defined($user->{karma_bonus});
+	$user->{karma_bonus}  = '+1' unless defined($user->{karma_bonus});
+	# see Slash::discussion2()
+	$user->{state}{no_d2} = $form->{no_d2} ? 1 : 0;
+	$user->{discussion2} ||= 'none';
+
+	# pct of anon users get this
+	if ($user->{is_anon} && !$user->{state}{no_d2}) {
+#		my $i = hex(substr($user->{srcids}{16}, -2));
+		$hostip =~ /^(\d+).(\d+).(\d+).(\d+)$/;
+		my $i = $2;
+
+#		# for (0..255) { $x = ((($_-1)/256) < .1); last if !$x; printf "%d:%d\n", $_, $x; }
+		if ($ENV{GATEWAY_INTERFACE} && ( $i == 144 || $i == 113 || ((($i-1)/256) < .1) ) ) {  # 10 percent, x.(0..3).y.z
+			my $d2 = 'slashdot';
+
+			# get user-agent (ENV not populated yet)
+			my %headers = $r->headers_in;
+			# just in case:
+			@headers{map lc, keys %headers} = values %headers;
+			my $ua = $r->headers_in->{'user-agent'};
+			if ($ua =~ /MSIE (\d+)/) {
+				$d2 = 'none';# if $1 < 7;
+			}
+
+			$user->{discussion2} = $d2;
+		}
+	}
 
 	# All sorts of checks on user data.  The story_{never,always} checks
 	# are important because that data is fed directly into SQL queries
@@ -1634,7 +1665,7 @@ sub prepareUser {
 		# If the user is not a subscriber, they may still be
 		# _effectively_ a subscriber if they have a daypass.
 		my $daypass_db = getObject('Slash::Daypass', { db_type => 'reader' });
-		if ($daypass_db->userHasDaypass($user)) {
+		if ($daypass_db && $daypass_db->userHasDaypass($user)) {
 #			$user->{is_subscriber} = 1;
 			$user->{has_daypass} = 1;
 			$user->{state}{page_plummy} = 1;
@@ -1669,30 +1700,49 @@ print STDERR scalar(localtime) . " Env.pm $$ userHasDaypass uid=$user->{uid} cs=
 	}
 
 	if ($constants->{plugin}{Tags}) {
+		my $max_uid;
 		my $write = $constants->{tags_stories_allowwrite} || 0;
 		$user->{tags_canwrite_stories} = 0;
 		$user->{tags_canwrite_stories} = 1 if
 			!$user->{is_anon} && (
-				   $write >= 4
-				|| $write >= 3 && $user->{karma} >= 0
-				|| $write >= 2.5 && $user->{acl}{tags_stories_allowwrite}
+				   $write >= 2.5 && $user->{acl}{tags_stories_allowwrite}
 				|| $write >= 2 && $user->{is_subscriber}
 				|| $write >= 1 && $user->{is_admin}
 			);
+		if (!$user->{is_anon} && !$user->{tags_canwrite_stories}) {
+			$user->{tags_canwrite_stories} = 1 if
+				   $write >= 4
+				|| $write >= 3 && $user->{karma} >= 0;
+			if ($user->{tags_canwrite_stories} && $constants->{tags_userfrac_write} < 1) {
+				$max_uid = $slashdb->countUsers({ max => 1 });
+				if ($user->{uid} > $max_uid*$constants->{tags_userfrac_write}) {
+					$user->{tags_canwrite_stories} = 0;
+				}
+			}
+		}
 		my $read;
-		if ($user->{tags_canwrite_stories}) {
+		if ($user->{tags_canwrite_stories} || $constants->{tags_stories_allowread} >= 5) {
 			$user->{tags_canread_stories} = 1;
 		} else {
 			$read = $constants->{tags_stories_allowread} || 0;
 			$user->{tags_canread_stories} = 0;
 			$user->{tags_canread_stories} = 1 if
 				!$user->{is_anon} && (
-					   $read >= 4
-					|| $read >= 3 && $user->{karma} >= 0
-					|| $read >= 2.5 && $user->{acl}{tags_stories_allowread}
+					   $read >= 2.5 && $user->{acl}{tags_stories_allowread}
 					|| $read >= 2 && $user->{is_subscriber}
 					|| $read >= 1 && $user->{is_admin}
 				);
+		}
+		if (!$user->{is_anon} && !$user->{tags_canread_stories}) {
+			$user->{tags_canread_stories} = 1 if
+					   $read >= 4
+					|| $read >= 3 && $user->{karma} >= 0;
+			if ($user->{tags_canread_stories} && $constants->{tags_userfrac_read} < 1) {
+				$max_uid ||= $slashdb->countUsers({ max => 1 });
+				if ($user->{uid} > $max_uid*$constants->{tags_userfrac_read}) {
+					$user->{tags_canread_stories} = 0;
+				}
+			}
 		}
 	}
 
@@ -1811,6 +1861,7 @@ Hashref of cleaned-up data.
 	my %alphas = map {($_ => 1)} qw(
 		fieldname formkey commentstatus filter
 		hcanswer mode op section thisname type reskey
+		comments_control
 	),
 	# Survey
 	qw(
@@ -2196,7 +2247,7 @@ option.
 
 String.  There are types of DBs (reader, writer, search, log), and there may be more
 than one DB of each type.  By passing a db_type instead of a virtual_user, you
-request any DB of that ype, instead of a specific DB.
+request any DB of that type, instead of a specific DB.
 
 If neither "virtual_user" or "db_type" is passed, then the function will do a
 lookup of the class for what type of DB handle it wants, and then pick one
@@ -2278,34 +2329,46 @@ sub getObject {
 	}
 
 	if (!$data->{nocache} && $objects->{$class, $vuser}) {
-		# we've been here before, and it didn't work last time ...
-		# what, you think you can try it again and it will work
-		# magically this time?  you think you're better than me?
+		# We tried this before (and we're allowed to use the cache
+		# to return the last result).
 		if ($objects->{$class, $vuser} eq 'NA') {
+			# It failed.  Don't waste time retrying.
 			return undef;
-		} else {
-			return $objects->{$class, $vuser};
 		}
+		# We tried this before and it succeeded.
+		return $objects->{$class, $vuser};
+	}
 
-	} else {
-		loadClass($class);
-
-		if ($@) {
-			errorLog($@);
-		} elsif (!$class->can("new")) {
-			errorLog("Class $class is not returning an object.  Try " .
-				"`perl -M$class -le '$class->new'` to see why.\n");
-		} else {
+	# We either haven't tried loading this class before, or were
+	# asked not to use the cache.
+	if (loadClass($class)) { # 'require' the class
+		if ($class->isInstalled($vuser) && $class->can('new')) {
 			my $object = $class->new($vuser, @args);
 			if ($object) {
 				$objects->{$class, $vuser} = $object if !$data->{nocache};
 				return $object;
 			}
+			errorLog("Class $class is installed for '$vuser' but returned false for new()");
 		}
-
-		$objects->{$class, $vuser} = 'NA' if !$data->{nocache};
-		return undef;
+	} else {
+		if ($@) {
+			errorLog("Class $class could not be loaded: '$@'");
+		} elsif (!$class->can('new')) {
+			errorLog("Class $class is not returning an object, or"
+				. " at least not one that has a new() method.  Try"
+				. "`perl -M$class -le '$class->new'` to see why");
+		} else {
+			errorLog("Class $class could not be loaded");
+		}
 	}
+
+	# We got here because the 'return' in the successful case above
+	# was not reached.  So we know either the attempt to 'require'
+	# the class or call new() for the class failed.  Unless the
+	# caller requested that we not cache this information, mark the
+	# cache so we don't waste time with those shenanigans again.
+	$objects->{$class, $vuser} = 'NA' if !$data->{nocache};
+	return undef;
 }
 
 {
@@ -2313,25 +2376,36 @@ my %classes;
 sub loadClass {
 	my($class) = @_;
 
+	# If we use a cache, we won't actually call eval.  If that's the
+	# case, make sure we don't mislead the caller as to whether
+	# there's an error.
+	undef $@;
+
 	if ($classes{$class}) {
-		if ($classes{$class} eq 'NA') {
-			return 0;  # previous failure
-		}
-		return $classes{$class};  # previous success
+		# The eval to load this class was called earlier.  If it
+		# succeeded, this cached value will be 1;  otherwise it
+		# will be 'NA'.  Note that in this case, we return false
+		# indicating error without setting $@ to what the error
+		# was.
+		return($classes{$class} ne 'NA');
 	}
 
-	# see if module has been loaded in already ...
+	# To avoid calling eval unless necessary (eval'ing a string is slow),
+	# we also check %INC.  If this class was perhaps require'd by some
+	# other part of the code, we can avoid an eval here.
 	(my $file = $class) =~ s|::|/|g;
-	# ... because i really hate eval
-	undef $@;  # for good measure
 	eval "require $class" unless exists $INC{"$file.pm"};
-
+	
 	if ($@) {
+		# Our attempt to load the class failed.  Return false,
+		# and in this case, $@ tells what the error was.
 		$classes{$class} = 'NA';
 		return 0;
-	} else {
-		return $classes{$class} = 1;
 	}
+	# We loaded the class successfully.  Set the cache to 1 to
+	# short-circuit the next time loadClass is called, and
+	# return true.
+	return $classes{$class} = 1;
 }
 }
 
@@ -2497,11 +2571,27 @@ sub getOpAndDatFromStatusAndURI {
 		$uri = 'image';
 	} elsif ($uri =~ /\.png$/) {
 		$uri = 'image';
-	} elsif ($uri =~ /\.rss$/ || $uri =~ /\.xml$/ || $uri =~ /\.rdf$/ || $ENV{QUERY_STRING} =~ /\bcontent_type=rss\b/) {
+	} elsif ($uri =~ /\.(?:rss|xml|rdf|atom)$/ || $ENV{QUERY_STRING} =~ /\bcontent_type=(?:rss|xml|rdf|atom)\b/) {
 		$dat = $uri;
 		$uri = 'rss';
 	} elsif ($uri =~ /\.pl$/) {
 		$uri =~ s|^/(.*)\.pl$|$1|;
+		if ($uri eq "ajax") {
+			my $form = getCurrentForm();
+			if ($form && $form->{op}) {
+				my $user = getCurrentUser;
+				if ($user->{state}{ajax_accesslog_op}) {
+					$uri = $user->{state}{ajax_accesslog_op};
+				} else {
+					my $reader = getObject('Slash::DB', { db_type => 'reader' });
+					my $class = $reader->getClassForAjaxOp($form->{op});
+					$class =~s/^Slash:://g;
+					$class =~s/::/_/g;
+					$class =~ tr/A-Z/a-z/;
+					$uri = "ajax_$class" if $class;
+				}
+			}
+		}
 	# This is for me, I am getting tired of patching my local copy -Brian
 	} elsif ($uri =~ /\.tar\.gz$/) {
 		$uri =~ s|^/(.*)\.tar\.gz$|$1|;
@@ -2511,6 +2601,8 @@ sub getOpAndDatFromStatusAndURI {
 		$uri =~ s|^/(.*)\.dmg$|$1|;
 	} elsif ($uri =~ /\.css$/) {
 		$uri = 'css';
+	} elsif ($uri =~ /\.js$/) {
+		$uri = 'js';
 	} elsif ($uri =~ /\.shtml$/) {
 		$uri =~ s|^/(.*)\.shtml$|$1|;
 		$dat = $uri if $uri =~ $page;	
@@ -3138,7 +3230,7 @@ sub get_srcid_sql_in {
 	if ($type eq 'uid') {
 		return $srcid_q;
 	}
-	return "CONV($srcid_q, 16, 10)";
+	return "CAST(CONV($srcid_q, 16, 10) AS UNSIGNED)";
 }
 
 #========================================================================
@@ -3366,6 +3458,15 @@ sub getCurrentCache {
 #
 # pass in the regex that contains what a key SHOULD look like (e.g., '^\d+$'),
 # and optionally the original data as a hashref; assign result to variable
+#
+# I am not aware that this has ever been a problem, and I don't
+# know of any sites that use the debughash* vars.  Can we delete
+# this code? - Jamie 2006-08-27
+# 
+# It's been a problem before.  We don't use this regularly; you usually
+# set it only when you are having the problem.  I say we leave it in,
+# in case we need it again.  We have so many hashes like this, and so much
+# potential for misuse of them, I think we really should leave it in. -- pudge
 
 sub debugHash {
 	my($regex, $hash) = @_;
@@ -3401,6 +3502,8 @@ sub STORE {
 		warn "$$: bad hash: [$key] => [$value]: ", join "|", caller(0);
 	}
 }
+
+0 if $Slash::Utility::NO_ERROR_LOG; # prevent a "Used only once" warning
 
 1;
 
