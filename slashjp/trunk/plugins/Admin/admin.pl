@@ -209,6 +209,11 @@ sub main {
 			seclev		=> 500,
 			adminmenu	=> 'info',
 			tab_selected	=> 'pw'
+		},
+		static_files		=> {
+			function	=> \&showStaticFiles,
+			seclev		=> 100,
+			adminmenu	=> 'info',
 		}
 	};
 
@@ -1136,25 +1141,6 @@ sub editStory {
 			'stoid', 1);
 	}
 
-	# handle any media files that were given
-	if ($form->{media_file}) {
-		my $upload = $form->{query_apache}->upload;
-		if ($upload) {
-			my $fh = $upload->fh;
-			mkpath("/tmp/upload", 0, 0777) unless -e "/tmp/upload";
-			$form->{media_file} =~ s|^.*?([^/:\\]+)$|$1|;
-			my $name = $form->{media_file};
-			my $ofh = gensym();
-			if (!open $ofh, ">/tmp/upload/$name\0") {
-			} else {
-				while (<$fh>) {
-					print $ofh $_;
-				}
-				close $ofh;
-				$slashdb->insertMediaFile($stoid, $name);
-			}
-		}
-	}
 
 	# Basically, we upload the bodytext if we realize a name has been passed in -Brian
 	if ($form->{bodytext_file}) {
@@ -1313,6 +1299,7 @@ sub editStory {
 				$storyref->{$field});
 		}
 		$display_check = $storyref->{neverdisplay} ? '' : $constants->{markup_checked_attribute};
+		handleMediaFileForStory($stoid);
 
 	} else { # New Story
 
@@ -1527,7 +1514,11 @@ sub editStory {
 			tags_example	=> \@tags_example,
 		}, { Return => 1 });
 	}
-
+	my $pending_file_count = 0;
+	my $story_static_files = [];
+	if ($stoid) {
+		$pending_file_count = $slashdb->numPendingFilesForStory($stoid); 		$story_static_files = $slashdb->getStaticFilesForStory($stoid);
+	}
 	slashDisplay('editStory', {
 		stoid			=> $stoid,
 		storyref 		=> $storyref,
@@ -1557,6 +1548,8 @@ sub editStory {
 		user_signoff		=> $user_signoff,
 		add_related_text	=> $add_related_text,
 		yoogli_similar_stories  => $yoogli_similar_stories,
+		pending_file_count	=> $pending_file_count,
+		story_static_files	=> $story_static_files
 	});
 }
 
@@ -2107,9 +2100,47 @@ sub updateStory {
 
 		$slashdb->setRelatedStoriesForStory($form->{sid}, $related_sids_hr, $related_urls_hr, $related_cids_hr, $related_firehose_hr);
 		$slashdb->createSignoff($st->{stoid}, $user->{uid}, "updated");
+
+
+		# handle any media files that were given
+		handleMediaFileForStory($st->{stoid});
+
 		# make sure you pass it the goods
 		listStories(@_);
 	}
+}
+
+##################################################################
+sub handleMediaFileForStory {
+	my($stoid) = @_;
+	my $form    = getCurrentForm();
+	my $slashdb = getCurrentDB();
+	if ($form->{media_file}) {
+		my $upload = $form->{query_apache}->upload;
+		if ($upload) {
+			my $fh = $upload->fh;
+			use File::Path;
+			mkpath("/tmp/upload", 0, 0755) unless -e "/tmp/upload";
+			$form->{media_file} =~ s|^.*?([^/:\\]+)$|$1|;
+			my $name = $form->{media_file};
+			my $suffix;
+			($suffix) = $name =~ /(\.\w+)$/;
+			use File::Temp qw(:mktemp);
+			my ($ofh, $tmpname) = mkstemps("/tmp/upload/fileXXXXXX", $suffix );
+				
+			while (<$fh>) {
+				print $ofh $_;
+			}
+			close $ofh;
+			my $file = {
+				stoid	=> $stoid,
+				file	=> "$tmpname",
+				action 	=> "upload",
+			};
+			$slashdb->addFileToQueue($file);
+		}
+	}
+	
 }
 
 ##################################################################
@@ -2425,6 +2456,7 @@ sub saveStory {
 		slashHook('admin_save_story_success', { story => $data });
 		my $st = $slashdb->getStory($data->{sid});
 		my $stoid = $st->{stoid};
+		handleMediaFileForStory($stoid);
 		my %warn_skids = map {$_ => 1 } split('\|', $constants->{admin_warn_primaryskid});
 		my $data = {};
 		if ($warn_skids{$st->{primaryskid}}) {
@@ -2626,6 +2658,13 @@ sub displayPeerWeights {
 		nickname	=> $nickname_hr,
 	});
 
+}
+
+sub showStaticFiles {
+	my($form, $slashdb, $user, $constants) = @_;
+	my $story = $slashdb->getStory($form->{sid});
+	my $story_static_files = $slashdb->getStaticFilesForStory($story->{stoid});
+	slashDisplay("static_files", { story_static_files => $story_static_files, sid => $form->{sid} }); 
 }
 
 createEnvironment();

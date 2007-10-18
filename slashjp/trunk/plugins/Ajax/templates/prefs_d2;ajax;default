@@ -23,16 +23,16 @@ __template__
 		[% IF user.discussion2 && user.discussion2 == "slashdot" %]
                 	<blockquote>
 			<div>
-                	How Many Comments
-                	[% comment_q = Slash.db.getDescriptions('d2_comment_q');
-                   	comment_q_def = user.d2_comment_q || 0;
-                   	Slash.createSelect('d2_comment_q', comment_q, comment_q_def, 1) %]<br>
-                	
+			How Many Comments
+			[% comment_q_name = (user.is_subscriber || user.is_admin) ? 'd2_comment_q_all' : 'd2_comment_q';
+			   comment_q = Slash.db.getDescriptions(comment_q_name);
+			   Slash.createSelect('d2_comment_q', comment_q, user.d2_comment_q, 1) %]<br>
+
 			Comment Retrieval Order
-                	[% comment_order = Slash.db.getDescriptions('d2_comment_order');
-                   	comment_order_def = user.d2_comment_order || 0;
-                   	Slash.createSelect('d2_comment_order', comment_order, comment_order_def, 1) %]
-                	</div>
+			[% comment_order = Slash.db.getDescriptions('d2_comment_order');
+			   comment_order_def = user.d2_comment_order || 0; # score
+			   Slash.createSelect('d2_comment_order', comment_order, comment_order_def, 1) %]
+			</div>
 			</blockquote>
                 [% END %]
 
@@ -68,14 +68,6 @@ __template__
 
 		<label><input type="checkbox" name="nosigs"[% s_check %]>&nbsp;Disable Sigs</label>
                 [% PROCESS formNote note='Strip sig quotes from comments' %]
-
-                [% IF user.is_admin;
-			nospell_check = '';
-			IF user.no_spell;
-				nospell_check = constants.markup_checked_attribute;
-			END %]
-                	<label><input type="checkbox" name="no_spell"[% nospell_check %]>&nbsp;Disable Spellchecker</label>
-                [% END %]
 	</td>
 	</tr>
 </table>

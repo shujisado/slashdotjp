@@ -272,6 +272,9 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('dkid, name', 'discussion_kinds') },
 
 	'd2_comment_q'
+		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='d2_comment_q' AND code != 0") },
+
+	'd2_comment_q_all'
 		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='d2_comment_q'") },
 
 	'd2_comment_limits'
@@ -279,7 +282,6 @@ my %descriptions = (
 
 	'd2_comment_order'
 		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='d2_comment_order'") },
-
 );
 
 ########################################################
@@ -10316,7 +10318,7 @@ sub setUser {
 	my %old_values = ( );
 	my %new_values = ( );
 	if ($constants->{plugin}{Tags}) {
-		my @update_keys = sort keys %$hashref;
+		my @update_keys = sort map { s/^-//; $_ } keys %$hashref;
 		my $tagboxdb = getObject('Slash::Tagbox');
 		my @log_keys = $tagboxdb->userKeysNeedTagLog(\@update_keys);
 		%old_values = ( map { ($_, undef) } @log_keys );
@@ -10345,7 +10347,7 @@ sub setUser {
 		}
 		# If a tagbox needs copies of before-and-after data, first
 		# get a copy of the old data.
-		my @columns_needed = grep { exists $old_values{$_} } keys %minihash;
+		my @columns_needed = sort grep { exists $old_values{$_} } map { s/^-//; $_ } keys %minihash;
 		if (@columns_needed) {
 			my $old_hr = $self->sqlSelectHashref(
 				join(',', @columns_needed), $table, $where);
@@ -12482,6 +12484,37 @@ sub getMediaFile {
 	} else {
 		return $self->sqlSelect("width, height, location", "stories_media", "name=$data");
 	}
+}
+
+sub addFileToQueue {
+	my($self, $file) = @_;
+	$self->sqlInsert("file_queue", $file);
+}
+
+sub numPendingFilesForStory {
+	my($self, $stoid) = @_;
+	my $stoid_q = $self->sqlQuote($stoid);
+	$self->sqlCount("file_queue", "stoid=$stoid_q");
+}
+
+sub addStoryStaticFile {
+	my($self, $data) = @_;
+	$data ||= "";
+	
+	# Guess at file type if it isn't set
+	if ($data->{name} =~ /\.(jpg|gif|png)$/) {
+		$data->{filetype} ||= "image";
+	} elsif ($data->{name} =~ /\.(jpg|gif|png)$/) {
+		$data->{filetype} ||= "audio";
+	}
+
+	$self->sqlInsert("story_static_files", $data);
+}
+
+sub getStaticFilesForStory {
+	my($self, $stoid) = @_;
+	my $stoid_q = $self->sqlQuote($stoid);
+	return $self->sqlSelectAllHashrefArray("*", "story_static_files", "stoid=$stoid_q");
 }
 
 ########################################################
