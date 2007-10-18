@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-
+// $Id: sd_autocomplete.js,v 1.41 2007/09/28 21:21:20 scc Exp $
 
 YAHOO.namespace("slashdot");
 

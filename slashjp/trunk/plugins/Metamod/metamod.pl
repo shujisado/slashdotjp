@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-
+# $Id: metamod.pl,v 1.4 2006/10/26 17:33:04 jamiemccarthy Exp $
 
 use strict;
 use Slash;

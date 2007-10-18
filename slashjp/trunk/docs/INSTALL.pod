@@ -104,7 +104,7 @@ L<http:E<sol>E<sol>slashcode.cvs.sourceforge.netE<sol>*checkout*E<sol>slashcodeE
 
 The version of this file that you are currently reading is:
 
-
+$Id$
 
 If there are more recent versions of this file, you can find a list of
 those changes at:
@@ -1748,3 +1748,4 @@ send out any notices.  You can subscribe here:
 =head1 VERSION
 
 $Id$
+

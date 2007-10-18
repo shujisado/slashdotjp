@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-
+# $Id: firehose_backend.pl,v 1.1 2007/09/13 18:51:46 tvroom Exp $
 
 use strict;
 use Slash;

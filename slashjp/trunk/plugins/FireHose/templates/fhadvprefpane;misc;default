@@ -91,4 +91,4 @@ Page size: [% Slash.createSelect('pagesize', { 'small' => 'Small', 'large' => 'L
 
 </table>
 __version__
-
+$Id: fhadvprefpane;misc;default,v 1.17 2007/08/15 14:23:40 tvroom Exp $

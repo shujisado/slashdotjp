@@ -1,4 +1,4 @@
-
+# $Id: PLUGIN,v 1.25 2007/09/13 18:52:50 tvroom Exp $
 name=FireHose
 description="FireHose"
 css=firehose.css

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-
+# $Id: FireHose.pm,v 1.176 2007/10/04 15:47:38 jamiemccarthy Exp $
 
 package Slash::FireHose;
 
@@ -42,7 +42,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-
+($VERSION) = ' $Revision: 1.176 $ ' =~ /\$Revision:\s+([^\s]+)/;
 sub createFireHose {
 	my($self, $data) = @_;
 	$data->{dept} ||= "";
@@ -2392,4 +2392,4 @@ Slash(3).
 
 =head1 VERSION
 
-
+$Id: FireHose.pm,v 1.176 2007/10/04 15:47:38 jamiemccarthy Exp $

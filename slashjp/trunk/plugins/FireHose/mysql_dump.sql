@@ -1,5 +1,5 @@
 #
-
+# $Id: mysql_dump.sql,v 1.34 2007/09/26 21:25:50 jamiemccarthy Exp $
 #
 INSERT INTO ajax_ops VALUES (NULL, 'firehose_fetch_text', 'Slash::FireHose', 'fetchItemText', 'ajax_user_static', 'createuse');
 INSERT INTO ajax_ops VALUES (NULL, 'firehose_reject', 'Slash::FireHose', 'rejectItem', 'ajax_admin_static', 'use');

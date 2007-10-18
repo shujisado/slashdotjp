@@ -1,5 +1,5 @@
 #
-
+# $Id: mysql_dump.sql,v 1.1 2006/09/03 15:46:00 jamiemccarthy Exp $
 #
 
 INSERT INTO vars (name, value, description) VALUES ('m2', '0', 'Allows use of the metamoderation system');

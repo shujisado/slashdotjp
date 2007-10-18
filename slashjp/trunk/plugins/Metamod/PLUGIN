@@ -1,4 +1,4 @@
-
+# $Id: PLUGIN,v 1.2 2006/10/26 17:33:04 jamiemccarthy Exp $
 name=Metamod
 description="Metamoderation"
 htdoc=metamod.pl

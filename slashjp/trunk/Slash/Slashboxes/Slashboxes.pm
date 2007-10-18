@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-
+# $Id: Slashboxes.pm,v 1.2 2007/02/21 02:49:11 pudge Exp $
 
 package Slash::Slashboxes;
 
@@ -13,7 +13,7 @@ use Slash::Utility;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-
+($VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(getUserSlashboxes displaySlashboxes);
 
 #################################################################

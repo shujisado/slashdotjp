@@ -42,4 +42,4 @@ END;
 %]
 
 __version__
-
+$Id: formatHoseIntro;misc;default,v 1.9 2007/09/04 20:53:21 tvroom Exp $

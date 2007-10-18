@@ -3,7 +3,7 @@
 <html>
 <head>
         <title>Slashdot FAQ - Badges How-To</title>
-
+<!-- $Id: badges.shtml,v 1.2 2007/10/10 18:34:45 scc Exp $ -->
 <!--#include virtual="/slashcssbase.inc"-->
 <!--#include virtual="/slashhead-gen-full.inc"-->
 

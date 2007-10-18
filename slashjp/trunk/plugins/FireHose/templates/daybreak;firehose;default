@@ -25,4 +25,4 @@ __template__
 	<a onclick="firehose_set_options('issue', '[% cur_day %]'); return false;"  href="[% gSkin.rootdir %]/[% day_page %]?issue=[% cur_day %]&amp;duration=1[% index_extra %]">[% cur_days.0.1 %]</a><br>
 </div>
 __version__
-
+$Id: daybreak;firehose;default,v 1.9 2007/09/14 23:43:27 tvroom Exp $

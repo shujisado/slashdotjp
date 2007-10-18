@@ -1,5 +1,5 @@
 #
-
+# $Id: mysql_schema.sql,v 1.22 2007/09/04 07:16:37 pudge Exp $
 #
 DROP TABLE IF EXISTS firehose;
 CREATE TABLE firehose (
