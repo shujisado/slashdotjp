@@ -1,4 +1,4 @@
-# $Id: THEME,v 1.124 2007/10/11 22:14:06 pudge Exp $
+# $Id: THEME,v 1.125 2007/10/16 23:01:19 tvroom Exp $
 name=slashcode
 description="Slashcode.com theme"
 topic=htdocs/images/topics/topicbug.jpg
@@ -160,6 +160,7 @@ task=tasks/open_backend.pl
 task=tasks/p2f_hof_topics.pl
 task=tasks/performance_stats.pl
 task=tasks/precache_gse.pl
+task=tasks/process_file_queue.pl
 task=tasks/refresh_authors_cache.pl
 task=tasks/refresh_section_metakeywords.pl
 task=tasks/report_slashd_errors.pl

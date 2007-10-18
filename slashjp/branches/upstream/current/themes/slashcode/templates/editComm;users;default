@@ -64,9 +64,10 @@ __template__
 		[% IF user_edit.discussion2 && user_edit.discussion2 == "slashdot" %]
 		<blockquote><div>
 		How Many Comments
-		[% comment_q = Slash.db.getDescriptions('d2_comment_q');
-		   comment_q_def = user_edit.d2_comment_q || 0;
-		   Slash.createSelect('d2_comment_q', comment_q, comment_q_def, 1) %]<br>
+		[% comment_q_name = ( Slash.isSubscriber(user_edit) || (user_edit.seclev >= 100) ) ? 'd2_comment_q_all' : 'd2_comment_q';
+		   comment_q = Slash.db.getDescriptions(comment_q_name);
+		   Slash.createSelect('d2_comment_q', comment_q, user_edit.d2_comment_q, 1) %]<br>
+
 		Comment Retrieval Order
 		[% comment_order = Slash.db.getDescriptions('d2_comment_order');
 		   comment_order_def = user_edit.d2_comment_order || 0;
@@ -306,4 +307,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: editComm;users;default,v 1.64 2007/10/11 08:35:53 pudge Exp $
+$Id: editComm;users;default,v 1.65 2007/10/16 22:31:25 pudge Exp $

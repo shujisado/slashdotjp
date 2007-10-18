@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.339 2007/08/23 20:28:04 pudge Exp $
+# $Id: users.pl,v 1.340 2007/10/16 22:31:24 pudge Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -2742,6 +2742,13 @@ sub saveComm {
 			: 100); 
 	my $clsmall_bonus = ($form->{clsmall_bonus} !~ /^[\-+]?\d+$/) ? 0 : $form->{clsmall_bonus};
 	my $clbig_bonus = ($form->{clbig_bonus} !~ /^[\-+]?\d+$/) ? 0 : $form->{clbig_bonus};
+
+	# plum
+	$form->{d2_comment_q} = (isSubscriber($user_edit) || $user_edit->{seclev} >= 100)
+		? $form->{d2_comment_q}
+		: ($form->{d2_comment_q} eq '0')
+			? 1
+			: $form->{d2_comment_q};
 
 	my $user_edits_table = {
 		discussion2		=> $form->{discussion2} || undef,

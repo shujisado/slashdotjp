@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.56 2007/10/09 23:03:34 pudge Exp $
+# $Id: ajax.pl,v 1.57 2007/10/16 17:22:23 entweichen Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.56 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.57 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -526,7 +526,6 @@ sub saveModalPrefs {
                 d2_comment_order => $params{'d2_comment_order'} || undef,
                 emaildisplay     => $params{'emaildisplay'}     || undef,
                 nosigs           => ($params{'nosigs'}          ? 1 : 0),
-                no_spell         => ($params{'no_spell'}        ? 1 : 0),
         };
 
         $slashdb->setUser($params{uid}, $user_edits_table);

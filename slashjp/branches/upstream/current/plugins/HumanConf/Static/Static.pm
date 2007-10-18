@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Static.pm,v 1.39 2007/10/09 20:44:48 jamiemccarthy Exp $
+# $Id: Static.pm,v 1.40 2007/10/12 07:23:03 jamiemccarthy Exp $
 
 package Slash::HumanConf::Static;
 
@@ -19,7 +19,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.39 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.40 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -266,7 +266,7 @@ sub addPool {
 	my $success = $self->sqlInsert("humanconf_pool", {
 		hcqid =>	$question,
 		answer =>	$answer,
-		filename =>	"",
+		filename_img =>	"",
 		html =>		"",
 		inuse =>	1,
 	});
@@ -348,7 +348,8 @@ sub write_mp3_file {
 	my $filename_mp3 = sprintf("%02d/%s%s", $hcpid % 100, $encoded_name, '.mp3');
 	my $full_filename_mp3 = "$dir/$filename_mp3";
 	my $ssml_text = join('<break time=\"1s\">',
-		map { uc } split //, $answer);
+		"\u$answer.",
+		map { "\u$_." } split //, $answer);
 
 	my @voices = split / /, ($constants->{hc_cepstral_voices} || 'William');
 	my $voice = $voices[rand @voices];
@@ -357,19 +358,19 @@ sub write_mp3_file {
 	my $logdir = $constants->{logdir};
 	my $cepstral_prefix = catfile($logdir, "cepstral.");
 	my $ssml_fh = undef;
-	my $ssml_file = File::Temp::mktemp("${cepstral_prefix}XXXXXXXXXX.ssml");
+	my $ssml_file = File::Temp::mktemp("${cepstral_prefix}.ssml.XXXXXXXXXX");
 	if (open(my $ssml_fh, ">$ssml_file")) {
 		print $ssml_fh $ssml_text;
 		close $ssml_fh;
 	}
-	my $wav_file = $ssml_file; $wav_file =~ s/\.ssml$/.wav/;
+	my $wav_file = $ssml_file; $wav_file =~ s/\.ssml\./.wav./;
 	system("swift -f $ssml_file -o $wav_file");
 	unlink($ssml_file);
 	if ($constants->{hc_cepstral_mp3encoder}) {
 		system("$constants->{hc_cepstral_mp3encoder} -S --resample 22.05 $wav_file $full_filename_mp3");
 	}
 	unlink($wav_file);
-	return $full_filename_mp3;
+	return $filename_mp3;
 }
 
 sub get_sizediff {

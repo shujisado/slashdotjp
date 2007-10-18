@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.145 2007/10/11 22:14:06 pudge Exp $
+// $Id: common.js,v 1.146 2007/10/16 17:35:25 entweichen Exp $
 
 var fh_play = 0;
 var fh_is_timed_out = 0;
@@ -1415,7 +1415,8 @@ function hide_modal_box() {
 	return;
 }
 
-function getModalPrefs(section) {
+function getModalPrefs(section, title) {
+        document.getElementById('preference_title').innerHTML = title;
 	var params = [];
 	params['op'] = 'getModalPrefs';
 	params['section'] = section;

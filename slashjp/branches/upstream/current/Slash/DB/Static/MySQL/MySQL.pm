@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.259 2007/08/01 17:31:12 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.260 2007/10/16 23:04:51 tvroom Exp $
 
 package Slash::DB::Static::MySQL;
 
@@ -20,7 +20,7 @@ use URI ();
 use vars qw($VERSION);
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.259 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.260 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
@@ -1915,6 +1915,17 @@ sub getUrlsNeedingRefresh {
 		 AND believed_fresh_until < NOW()", 
 		"ORDER BY believed_fresh_until ASC LIMIT $limit"
 	);
+}
+
+sub getNextFileQueueCmds {
+	my($self) = @_;
+	return $self->sqlSelectAllHashrefArray("*", "file_queue", "", "ORDER BY fqid LIMIT 10");
+}
+
+sub deleteFileQueueCmd {
+	my($self,$fqid) = @_;
+	my $fqid_q = $self->sqlQuote($fqid);
+	$self->sqlDelete("file_queue", "fqid=$fqid_q");
 }
 
 1;

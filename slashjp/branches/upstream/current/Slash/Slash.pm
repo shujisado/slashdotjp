@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Slash.pm,v 1.335 2007/10/04 19:41:22 pudge Exp $
+# $Id: Slash.pm,v 1.336 2007/10/16 22:31:22 pudge Exp $
 
 package Slash;
 
@@ -145,7 +145,7 @@ sub selectComments {
 	my $d2_comment_q = $user->{d2_comment_q};
 	if ($discussion2 && !$d2_comment_q) {
 		if ($user->{is_anon}) {
-			$d2_comment_q = 5;
+			$d2_comment_q = 5; # medium
 		}
 	}
 

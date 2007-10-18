@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.7 2007/10/09 20:44:48 jamiemccarthy Exp $
+# $Id: mysql_schema,v 1.8 2007/10/12 07:23:03 jamiemccarthy Exp $
 #
 
 DROP TABLE IF EXISTS humanconf;
@@ -23,7 +23,7 @@ CREATE TABLE humanconf_pool (
 	inuse		TINYINT DEFAULT '0' NOT NULL,
 	filename_img	VARCHAR(63) NOT NULL,
 	filename_mp3	VARCHAR(63) DEFAULT NULL,
-	html		VARCHAR(255) NOT NULL,
+	html		TEXT NOT NULL,
 	PRIMARY KEY (hcpid),
 	KEY answer (answer),
 	KEY lastused (lastused)

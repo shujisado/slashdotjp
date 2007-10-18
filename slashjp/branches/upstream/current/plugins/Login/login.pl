@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: login.pl,v 1.27 2007/01/11 19:58:49 pudge Exp $
+# $Id: login.pl,v 1.28 2007/10/16 22:31:22 pudge Exp $
 
 use strict;
 use Slash 2.003;
@@ -12,7 +12,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.27 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.28 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
 	my $slashdb   = getCurrentDB();
@@ -446,10 +446,10 @@ sub getOtherUserParams {
 	my $params  = $reader->getDescriptions('otherusersparam');
 
 	for my $param (keys %$params) {
-		if (exists $form->{$param}) {
-			# set user too for output in this request
-			$data->{$param} = $user->{$param} = $form->{$param} || undef;
-		}
+		# set user too for output in this request
+		$data->{$param} = $user->{$param} = defined($form->{$param})
+			? $form->{$param}
+			: $params->{$param};
 	}
 }
 
