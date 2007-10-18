@@ -1,3 +1,10 @@
+slash (2.5.0.180-1) unstable; urgency=low
+
+  * New upstream cvs release
+    - Read upstream changelog
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 19 Oct 2007 05:22:02 +0900
+
 slash (2.5.0.119-17) unstable; urgency=low
 
   * Merged from OTP
