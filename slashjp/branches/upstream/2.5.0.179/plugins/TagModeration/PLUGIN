@@ -1,8 +1,0 @@
-# $Id: PLUGIN,v 1.1 2006/10/31 19:06:05 jamiemccarthy Exp $
-name=TagModeration
-description="Moderation (Tags)"
-mysql_dump=mysql_dump.sql
-mysql_schema=mysql_schema.sql
-requiresplugin=Ajax
-requiresplugin=Tags
-task=process_tagmoderation.pl
