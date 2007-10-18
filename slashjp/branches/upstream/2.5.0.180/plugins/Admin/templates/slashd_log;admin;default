@@ -1,0 +1,34 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+slashd_log
+__template__
+[% PROCESS titlebar width='100%', title='slashd tasks' %]
+
+<table width="100%">
+	<tr>
+		<td>task name</td>
+		<td>latest time for execution</td>
+		<td>latest run time</td>
+	</tr>
+	[% FOREACH task = tasks %]
+		<tr>
+			<td>[% task.0 %]</td>
+			<td>[% task.1 %]</td>
+			<td>[% Slash.timeCalc(task.2) %]</td>
+		</tr>
+	[% END %]
+</table>
+
+__seclev__
+500
+__version__
+$Id: slashd_log;admin;default,v 1.3 2005/07/27 22:53:54 pudge Exp $

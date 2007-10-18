@@ -1,0 +1,57 @@
+__section__
+default
+__description__
+Display the top topics
+
+* title = passed to titlebar
+* width = passed to titlebar
+* topics = arrayref of hashrefs of topics (tid, textname, image, width, height, cnt, count, stories)
+* currtime = current time
+__title__
+
+__page__
+topics
+__lang__
+en_US
+__name__
+topTopics
+__template__
+[% PROCESS titlebar %]
+<table width="[% width %]" border="0" cellpadding="3">
+[% FOREACH topic = topics %]
+	<tr><td align="right" valign="top>
+		[% topic.textname %]
+		<br>( [% topic.count %] )
+		<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"><IMG
+			src="[% constants.imagedir %]/topics/[% topic.image %]"
+			border="0" alt="[% topic.textname %]" align="right" valign="top"
+			hspace="0" vspace="10" width="[% topic.width %]"
+			height="[% topic.height %]"></a>
+	</td><td bgcolor="[% user.colors.bg_2 %]" valign="top">
+	[% FOREACH story = topic.stories %]
+		[% IF story.sid %]
+			[% storylinks = Slash.linkStory({
+				section	=> story.section,
+				tid	=> story.tid,
+				sid	=> story.sid,
+				'link'	=> story.title
+			}) %]
+<a href="[% storylinks.0 | strip_attribute %]"[% IF storylinks.2 %] title="[% storylinks.2 | strip_attribute %]"[% END %]>[% storylinks.1 | strip_html %]</a>
+				([% story.commentcount %] comments) - [% Slash.timeCalc(story.time, '%B %o, %Y') %]
+			<br>
+		[% END %]
+	[% END %]
+	[% FOREACH question = topic.polls %]
+                                <a href="[% gSkin.rootdir %]/pollBooth.pl?qid=[% question.0 %]">[% question.1 %]</a> on [%
+ Slash.timeCalc(question.2, '%B %o, %Y') %] with [% question.3 %] votes and [% question.4 %] comments.<br>
+	[% END %]
+	</td></tr>
+[% END %]
+</table>
+
+<br><center>generated on [% currtime %]</center><br>
+
+__seclev__
+10000
+__version__
+$Id: topTopics;topics;default,v 1.14 2005/07/27 22:54:48 pudge Exp $

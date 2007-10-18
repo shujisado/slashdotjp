@@ -1,0 +1,86 @@
+__section__
+default
+__description__
+Template to close up the maintable.
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+maintable_end
+__template__
+
+[%
+
+num_rows = 0;
+min_rows = 99;
+num_cols = user.state.mt.cols.max;
+FOR rowcount = user.state.mt.cols;
+	NEXT IF loop.first;
+	IF rowcount > num_rows;
+		num_rows = rowcount;
+	END;
+	IF rowcount < min_rows;
+		min_rows = rowcount;
+	END;
+END;
+WHILE user.state.mt.curcol < num_cols;
+	user.state.mt.curcol = user.state.mt.curcol + 1;
+	NEXT IF user.state.mt.cols.${user.state.mt.curcol} > min_rows;
+	IF user.state.mt.cols.${user.state.mt.curcol} < num_rows;
+		'<td>&nbsp;</td>';
+		newvalue = user.state.mt.cols.${user.state.mt.curcol} + 1;
+		user.state.mt.cols.${user.state.mt.curcol} = newvalue;
+	END;
+END;
+"</tr>\n";
+num_loops = 50;
+need_another_row = 1;
+WHILE num_loops && need_another_row;
+	need_another_row = 0;
+	user.state.mt.curcol = 1;
+	min_rows = 999;
+	FOR rowcheck = user.state.mt.cols;
+		NEXT IF loop.first;
+		IF rowcheck < num_rows;
+			need_another_row = 1;
+		END;
+		IF rowcheck < min_rows;
+			min_rows = rowcheck;
+			user.state.mt.curcol = loop.index;
+		END;
+	END;
+	IF need_another_row;
+		user.state.mt.curcol = user.state.mt.curcol - 1;
+		IF min_rows == 999; min_rows = 0; END;
+		user.state.mt.currow = min_rows + 1;
+		"<tr>";
+		user.state.mt.curcol = 0;
+		WHILE user.state.mt.curcol < num_cols;
+			user.state.mt.curcol = user.state.mt.curcol + 1;
+			val = user.state.mt.cols.${user.state.mt.curcol};
+			IF val > min_rows;
+				NEXT;
+			END;
+			IF val < num_rows;
+				'<td>&nbsp;</td>';
+				newval = val + 1;
+				user.state.mt.cols.${user.state.mt.curcol} = newval;
+			END;
+		END;
+		"</tr>\n";
+	END;
+	num_loops = num_loops - 1;
+END;
+
+%]
+
+</table>
+
+__seclev__
+10000
+__version__
+$Id: maintable_end;misc;default,v 1.7 2005/07/27 22:54:48 pudge Exp $
