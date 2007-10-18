@@ -2,7 +2,7 @@ package Slash::Clout::Vote;
 
 use vars qw($VERSION);
 
-
+($VERSION) = ' $Revision: $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 my $cumfrac = 0.45;
 my $months_back = 4;

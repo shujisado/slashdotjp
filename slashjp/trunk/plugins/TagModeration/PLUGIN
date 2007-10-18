@@ -1,4 +1,4 @@
-
+# $Id: $
 name=TagModeration
 description="Moderation (Tags)"
 mysql_dump=mysql_dump.sql

@@ -2,7 +2,7 @@ package Slash::Clout::Moderate;
 
 use vars qw($VERSION);
 
-
+($VERSION) = ' $Revision: $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub getUserClout {
 	my($class, $user_stub) = @_;

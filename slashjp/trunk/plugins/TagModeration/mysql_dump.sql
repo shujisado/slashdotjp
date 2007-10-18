@@ -1,5 +1,5 @@
 #
-
+# $Id: $
 #
 
 REPLACE INTO ajax_ops VALUES (NULL, 'comments_moderate_cid', 'Slash::TagModeration', 'ajaxModerateCid', 'comments-moderation-ajax', 'use');
