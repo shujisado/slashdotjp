@@ -815,7 +815,7 @@ INSERT INTO vars (name, value, description) VALUES ('comments_anon_speed_limit_m
 INSERT INTO vars (name, value, description) VALUES ('comments_wsfactor','1.0','Whitespace factor');
 INSERT INTO vars (name, value, description) VALUES ('commentstatus','0','default comment code');
 INSERT INTO vars (name, value, description) VALUES ('common_story_words', 'about above across after again against almost along already also although always among another anyone arise around aside asked available away became because become becomes been before began behind being better between both brought called came can\'t cannot certain certainly come could days didn\'t different does done down during each either else enough especially even ever every fact find following form found from further gave gets give given gives giving going gone hardly have having here himself however http important into it\'s itself just keep kept knew know known largely later least like look made mainly make many maybe might more most mostly much must nearly neither never next none noted nothing obtain obtained often once only other others ought over overall owing particularly past people perhaps please possible present probably quite rather read ready really right said same saying says seem seems seen several shall should show showed shown shows similar similarly since some something sometime sometimes somewhat soon such sure take taken tell than that that\'s their theirs them themselves then there therefore these they thing things think this those though through throughout thus time together told took toward turn under unless until upon used using usually various very want well were what what when where whether which while whole whom whose wide widely will will with within without would year years your', 'Words which are considered too common to be used in detecting "similar" stories');
-INSERT INTO vars (name, value, description) VALUES ('content_type_webpage','text/html; charset=UTF-8','The Content-Type header for webpages');
+INSERT INTO vars (name, value, description) VALUES ('content_type_webpage','text/html; charset=iso-8859-1','The Content-Type header for webpages');
 INSERT INTO vars (name, value, description) VALUES ('cookiedomain','','Domain for cookie to be active (normally leave blank)');
 INSERT INTO vars (name, value, description) VALUES ('cookiepath','/','Path on server for cookie to be active');
 INSERT INTO vars (name, value, description) VALUES ('cookiesecure','1','Set the secure flag in cookies if SSL is on?');
@@ -871,7 +871,7 @@ INSERT INTO vars (name, value, description) VALUES ('discussions_speed_limit','3
 INSERT INTO vars (name, value, description) VALUES ('do_expiry','1','Flag which controls whether we expire users.');
 INSERT INTO vars (name, value, description) VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated');
 INSERT INTO vars (name, value, description) VALUES ('draconian_charrefs','0','Enable strictest-possible rules for disallowing HTML entities/character references?');
-INSERT INTO vars (name, value, description) VALUES ('draconian_charset','0','Convert high-bit characters to character references, which are then filtered by approveCharrefs or encode_html_amp (works only with Latin-1 for now)');
+INSERT INTO vars (name, value, description) VALUES ('draconian_charset','1','Convert high-bit characters to character references, which are then filtered by approveCharrefs or encode_html_amp (works only with Latin-1 for now)');
 INSERT INTO vars (name, value, description) VALUES ('draconian_charset_convert','0','Convert some of high-bit chars to ASCII representations instead (see draconian_charset)');
 INSERT INTO vars (name, value, description) VALUES ('email_domains_invalid', 'example.com', 'space separated list of domains that are not valid for email addresses');
 INSERT INTO vars (name, value, description) VALUES ('enable_index_topic','','set this to the value in string param for index topic \(something like "topic_4"\)');
@@ -941,13 +941,6 @@ INSERT INTO vars (name, value, description) VALUES ('label_ui','0','Whether to l
 INSERT INTO vars (name, value, description) VALUES ('lastlookmemory','3600','Amount of time the uid last looked-at will be remembered/displayed');
 INSERT INTO vars (name, value, description) VALUES ('lastComments','0','Last time we checked comments for moderation points');
 INSERT INTO vars (name, value, description) VALUES ('lastsrandsec','awards','Last Block used in the semi-random block');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_attrib_prefix','','attribute prefix for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_base_dn','','base dn for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_dn','','binddn for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_passwd','','bind password for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_enable','0','enable LDAP migration (1: enable, 0: disable)');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_peer_attrib_prefix', '', 'peer attribute prefix for LDAP migration');
-INSERT INTO vars (name, value, description) VALUES ('ldap_server','','LDAP server hostname for LDAP migration');
 INSERT INTO vars (name, value, description) VALUES ('lenient_formkeys','0','0 - only ipid, 1 - ipid OR subnetid, in formkey validation check');
 INSERT INTO vars (name, value, description) VALUES ('log_admin','1','This turns on/off entries to the accesslog. If you are a small site and want a true number for your stats turn this off.');
 INSERT INTO vars (name, value, description) VALUES ('log_db_user','','The virtual user of the database that the code should write accesslog to. If you don\'t know what this is for, you should leave it blank.');
@@ -955,8 +948,6 @@ INSERT INTO vars (name, value, description) VALUES ('logdir','/usr/local/slash/w
 INSERT INTO vars (name, value, description) VALUES ('login_nontemp_days', '365', 'Days before a nontemp login expires');
 INSERT INTO vars (name, value, description) VALUES ('login_speed_limit', '20', 'How fast a user can create users, etc.');
 INSERT INTO vars (name, value, description) VALUES ('login_temp_minutes', '10', 'Minutes before a temporary login expires');
-INSERT INTO vars (name, value, description) VALUES ('mail_charset_body','us-ascii','Character Encoding used for mail body sent by the system (s. Encode::Supported)');
-INSERT INTO vars (name, value, description) VALUES ('mail_charset_header','MIME-Header','Character Encoding used for mail header sent by the system (s. Encode::MIME::Header)');
 INSERT INTO vars (name, value, description) VALUES ('mailfrom','admin@example.com','All mail addressed from the site looks like it is coming from here');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_hours','48','Mailing a password only allowed mailpass_max_num times per account per this many hours');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_num','2','Mailing a password only allowed this many times per account per mainpass_max_hours hours');
@@ -1023,7 +1014,7 @@ INSERT INTO vars (name, value, description) VALUES ('panic','0','0:Normal, 1:No 
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');
 INSERT INTO vars (name, value, description) VALUES ('poll_fwdfor','1','Loose proxy management for voting?');
-INSERT INTO vars (name, value, description) VALUES ('rdfencoding','UTF-8','Site encoding');
+INSERT INTO vars (name, value, description) VALUES ('rdfencoding','ISO-8859-1','Site encoding');
 INSERT INTO vars (name, value, description) VALUES ('rdfimg','http://www.example.com/images/topics/topicslash.gif','site icon to be used by RSS subscribers');
 INSERT INTO vars (name, value, description) VALUES ('rdfitemdesc','0','1 == include introtext in item description; 0 == don\'t.  Any other number is substr() of introtext to use');
 INSERT INTO vars (name, value, description) VALUES ('rdfitemdesc_html','0','1 == include HTML in item description; 0 == strip HTML (plain text only)');
@@ -1040,7 +1031,6 @@ INSERT INTO vars (name, value, description) VALUES ('referrer_external_static_re
 INSERT INTO vars (name, value, description) VALUES ('returnto_passwd',CONCAT('changeme',RAND()),'Password used to sign MD5s for returnto URLs from remote sites');
 INSERT INTO vars (name, value, description) VALUES ('rootdir','//www.example.com','Base URL of site; used for creating on-site links that need protocol-inspecific URL (so site can be used via HTTP and HTTPS at the same time)');
 INSERT INTO vars (name, value, description) VALUES ('rss_allow_index', '0', 'Allow RSS feeds to be served from index.pl (1 = admins, 2 = subscribers, 3 = all logged-in users)');
-INSERT INTO vars (name, value, description) VALUES ('rss_entitize_nonascii', 1, 'Convert non-ASCII-printable characters into entities?');
 INSERT INTO vars (name, value, description) VALUES ('rss_expire_days','7','Number of days till we blank the data from the database (the signatures still stick around though)');
 INSERT INTO vars (name, value, description) VALUES ('rss_max_items_incoming','15','Max number of rss items shown in a slashbox, by default');
 INSERT INTO vars (name, value, description) VALUES ('rss_max_items_outgoing','10','Max number of rss items emitted in an rss/rdf/atom feed');
@@ -1110,7 +1100,6 @@ INSERT INTO vars (name, value, description) VALUES ('totalComments','0','Total n
 INSERT INTO vars (name, value, description) VALUES ('totalhits','0','Total number of hits the site has had thus far');
 INSERT INTO vars (name, value, description) VALUES ('url_checker_user_agent', '', 'user Agent to use for url checking task, empty string results in lwp user agent being used');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
-INSERT INTO vars (name, value, description) VALUES ('use_dept_space2dash','1','replace whitespace to dash at \"dept.\" field');
 INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link','1','Boolean where to use next/prev links for articles');
 INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_series','0','Boolean where to use next/prev links for articles in a series (topic)');
 INSERT INTO vars (name, value, description) VALUES ('use_prev_next_link_section','0','Boolean where to use next/prev links for articles in a section');
@@ -1124,4 +1113,19 @@ INSERT INTO vars (name, value, description) VALUES ('users_show_info_seclev','0'
 INSERT INTO vars (name, value, description) VALUES ('users_speed_limit','20','How fast a user can change their prefs');
 INSERT INTO vars (name, value, description) VALUES ('writestatus','dirty','Simple Boolean to determine if homepage needs rewriting');
 INSERT INTO vars (name, value, description) VALUES ('xhtml','0','Boolean for whether we are using XHTML');
-INSERT INTO vars (name, value, description) VALUES ('tweak_japanese','0','Special tweak for Japanese.');
+
+# add constants for OSDN Japan
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_attrib_prefix','','attribute prefix for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_base_dn','','base dn for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_dn','','binddn for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_passwd','','bind password for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_enable','0','enable LDAP migration (1: enable, 0: disable)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_peer_attrib_prefix', '', 'peer attribute prefix for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mail_charset_body','us-ascii','Character Encoding used for mail body sent by the system (s. Encode::Supported)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mail_charset_header','MIME-Header','Character Encoding used for mail header sent by the system (s. Encode::MIME::Header)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_entitize_nonascii', 1, 'Convert non-ASCII-printable characters into entities?');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('tweak_japanese','0','Special tweak for Japanese.');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('use_dept_space2dash','1','replace whitespace to dash at \"dept.\" field');
+UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
+UPDATE vars SET value='0' WHERE name='draconian_charset';
+UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';
