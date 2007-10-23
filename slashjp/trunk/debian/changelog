@@ -1,9 +1,10 @@
-slash (2.5.0.180-1) unstable; urgency=low
+slash (2.5.0.180-0.1) unstable; urgency=low
 
   * New upstream cvs release
     - Read upstream changelog
+  * move Slash/LDAPDB/vars.sql contents to sql/mysql/default.sql
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 19 Oct 2007 05:22:02 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 19 Oct 2007 12:38:55 +0900
 
 slash (2.5.0.119-17) unstable; urgency=low
 

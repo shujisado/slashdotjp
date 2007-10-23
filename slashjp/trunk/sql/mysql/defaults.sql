@@ -941,6 +941,13 @@ INSERT INTO vars (name, value, description) VALUES ('label_ui','0','Whether to l
 INSERT INTO vars (name, value, description) VALUES ('lastlookmemory','3600','Amount of time the uid last looked-at will be remembered/displayed');
 INSERT INTO vars (name, value, description) VALUES ('lastComments','0','Last time we checked comments for moderation points');
 INSERT INTO vars (name, value, description) VALUES ('lastsrandsec','awards','Last Block used in the semi-random block');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_attrib_prefix','','attribute prefix for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_base_dn','','base dn for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_dn','','binddn for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_passwd','','bind password for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_enable','0','enable LDAP migration (1: enable, 0: disable)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_peer_attrib_prefix', '', 'peer attribute prefix for LDAP migration');
+INSERT INTO vars (name, value, description) VALUES ('ldap_server','','LDAP server hostname for LDAP migration');
 INSERT INTO vars (name, value, description) VALUES ('lenient_formkeys','0','0 - only ipid, 1 - ipid OR subnetid, in formkey validation check');
 INSERT INTO vars (name, value, description) VALUES ('log_admin','1','This turns on/off entries to the accesslog. If you are a small site and want a true number for your stats turn this off.');
 INSERT INTO vars (name, value, description) VALUES ('log_db_user','','The virtual user of the database that the code should write accesslog to. If you don\'t know what this is for, you should leave it blank.');
