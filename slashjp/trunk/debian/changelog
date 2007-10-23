@@ -3,8 +3,11 @@ slash (2.5.0.180-0.1) unstable; urgency=low
   * New upstream cvs release
     - Read upstream changelog
   * move Slash/LDAPDB/vars.sql contents to sql/mysql/default.sql
+  * Add enable/disable switch to agree privacy statement on create user
+  * Add libdata-javascript-anon-perl to Depends:
+    - for Ajax plugin
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 19 Oct 2007 12:38:55 +0900
+ -- Taku YASUI <tach@osdn.jp>  Tue, 23 Oct 2007 18:54:51 +0900
 
 slash (2.5.0.119-17) unstable; urgency=low
 
