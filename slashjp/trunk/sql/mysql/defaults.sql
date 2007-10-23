@@ -1126,6 +1126,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('mail_charset_header'
 INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_entitize_nonascii', 1, 'Convert non-ASCII-printable characters into entities?');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('tweak_japanese','0','Special tweak for Japanese.');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('use_dept_space2dash','1','replace whitespace to dash at \"dept.\" field');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('use_privacy_agreement','0','Need to agree privacy statement on create user');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';

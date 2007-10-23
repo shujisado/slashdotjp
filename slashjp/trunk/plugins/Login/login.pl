@@ -85,7 +85,7 @@ sub newUser {
 	if (!$newnick) {
 		push @note, getData('nick_invalid');
 		$error = 1;
-	} elsif (!$form->{agree_priv_cont}) {
+	} elsif ($constants->{use_privacy_agreement} && !$form->{agree_priv_cont}) {
 		push @note, getData('not_agree_priv_cont');
 		$error = 1;
 	} elsif (!$form->{email} || !emailValid($form->{email})) {
