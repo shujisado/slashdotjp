@@ -3,7 +3,7 @@
 <html>
 <head>
         <title>Slashdot FAQ - About Slashdot</title>
-<!-- $Id: slashmeta.shtml,v 1.12 2006/01/30 18:19:22 pudge Exp $ -->
+<!-- $Id$ -->
 <link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/core-tidied.css?T_2_5_0_180">
 <!--[if IE]><link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/iestyles.css?T_2_5_0_180"><![endif]-->
 <link rel="stylesheet" type="text/css" media="print" href="//images.slashdot.org/print.css?T_2_5_0_180">

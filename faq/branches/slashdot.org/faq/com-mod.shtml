@@ -3,7 +3,7 @@
 <html>
 <head>
         <title>Slashdot FAQ - Comments and Moderation</title>
-<!-- $Id: com-mod.shtml,v 1.23 2006/12/01 04:05:17 pudge Exp $ -->
+<!-- $Id$ -->
 <link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/core-tidied.css?T_2_5_0_180">
 <!--[if IE]><link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/iestyles.css?T_2_5_0_180"><![endif]-->
 <link rel="stylesheet" type="text/css" media="print" href="//images.slashdot.org/print.css?T_2_5_0_180">

@@ -279,7 +279,7 @@ var adpage = 'index';
 			<div id="misc" class="aduserbox">
 
 <!--
-($VERSION) = '$Id: tags.shtml,v 1.18 2007/10/05 18:17:59 scc Exp $' =~ /^\$Id: \S+ (\S+)/
+($VERSION) = '$Id$' =~ /^\$Id: \S+ (\S+)/
 -->
 
 <table>
