@@ -1,0 +1,415 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+        <title>Slashdot FAQ - Feeds</title>
+<!-- $Id: feeds.shtml,v 1.4 2007/10/04 21:57:12 pudge Exp $ -->
+<link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/core-tidied.css?T_2_5_0_180">
+<!--[if IE]><link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/iestyles.css?T_2_5_0_180"><![endif]-->
+<link rel="stylesheet" type="text/css" media="print" href="//images.slashdot.org/print.css?T_2_5_0_180">
+<link rel="stylesheet" type="text/css" media="handheld" href="//images.slashdot.org/handheld.css?T_2_5_0_180">
+
+
+
+<script src="//slashdot.org/all-minified.js?T_2_5_0_180" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+var adpage = 'index';
+</script>
+<link rel="top"       title="News for nerds, stuff that matters" href="//slashdot.org/" >
+<link rel="search"    title="Search Slashdot" href="//slashdot.org/search.pl">
+<link rel="alternate" title="Slashdot RSS" href="http://rss.slashdot.org/Slashdot/slashdot" type="application/rss+xml">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<!-- DoubleClick Random Number -->
+<script type="text/javascript">
+   dfp_ord=Math.random()*10000000000000000;
+   dfp_tile = 1;
+</script>
+<!-- End DoubleClick Random Number -->
+
+</head>
+<body>
+<div id="top_parent"></div>
+
+
+<div id="jump">
+	<a href="#main-articles">Stories</a>
+	<br>
+	<a href="#blocks">Slash Boxes</a>
+	<br>
+	<a href="#comments">Comments</a>
+</div>
+
+
+<div id="frame">
+<div></div>
+	<div id="topnav">
+		<div id="logo">
+			<h1>
+				<a href="//slashdot.org">Slashdot</a>
+			</h1>
+		</div>
+		<div class="search">
+
+			<form method="get" action="//slashdot.org/search.pl">
+				<fieldset>
+					<legend>Search</legend>
+					<input type="text" name="query" value="">
+					<input type="submit" value="Search" class="button">
+				</fieldset>
+			</form>
+
+		</div>
+	</div> 
+	<div id="slogan">
+		<h2>
+			News for nerds, stuff that matters
+		</h2>
+	</div>
+	<div id="wrapper">
+		<div id="user-section">
+			<div class="content">
+				<ul>
+			
+					<li class="begin"><a id="loginlink" class="collapsed" href="//slashdot.org/login.pl">Log In</a></li>
+					<li><a href="//slashdot.org/login.pl?op=newuserform" title="">Create Account</a></li>
+					<li><a href="//slashdot.org/subscribe.pl" title="An option to see Slashdot without these ads">Subscribe</a></li>
+					<li><a href="//slashdot.org/firehose.shtml">Firehose</a></li>
+			
+				</ul>
+				<ul id="user-utils">
+				
+					<li><a href="//slashdot.org/faq/accounts.shtml#ac050" title="Save preferences, your own Journal, define Friends &amp;  Foes for discussions, participate in Moderation and more ...">Why Log In?</a></li>
+				
+				
+					<li><a href="//slashdot.org/faq/subscriptions.shtml" title="An option to see Slashdot without these ads">Why Subscribe?</a></li>
+				
+				</ul>
+			
+				<div id="loginform">
+					<form action="//slashdot.org/login.pl" method="post">
+<fieldset>
+	<legend>Log In</legend>
+	<label>
+		Nickname
+	</label>
+	<input type="text" name="unickname" size="20" value="">
+	<label>
+		Password
+	</label>
+	<input type="hidden" name="returnto" value="//slashdot.org/">
+	<input type="hidden" name="op" value="userlogin">
+	<input type="password" name="upasswd" size="20">
+	<label class="checkbox">
+		<input type="checkbox" name="login_temp" value="yes">
+		Public Terminal
+	</label>
+	<input type="submit" name="userlogin" value="Log in" class="button">
+	</fieldset>
+</form>
+<p>
+	[ <b>
+		<a href="//slashdot.org/login.pl?op=newuserform">
+			Create a new account
+		</a>
+	</b> ]
+</p>
+				</div>
+			
+			</div>
+		</div>
+		<div id="links">
+			
+			<div class="block" id="links-sections">
+	<div class="title" id="links-sections-title">
+		<h4>
+			Sections
+		</h4>
+	</div>
+	<div class="content" id="links-sections-content">
+	<ul>
+	<li><h2><a href="//slashdot.org/">Main</a></h2></li>
+	
+	
+	<li><a href="//apple.slashdot.org/">Apple</a></li>
+	
+	
+	
+	<li><a href="//ask.slashdot.org/">AskSlashdot</a></li>
+	
+	
+	
+	<li><a href="//backslash.slashdot.org/">Backslash</a></li>
+	
+	
+	
+	<li><a href="//books.slashdot.org/">Books</a></li>
+	
+	
+	
+	<li><a href="//developers.slashdot.org/">Developers</a></li>
+	
+	
+	
+	<li><a href="//games.slashdot.org/">Games</a></li>
+	
+	
+	
+	<li><a href="//hardware.slashdot.org/">Hardware</a></li>
+	
+	
+	
+	<li><a href="//interviews.slashdot.org/">Interviews</a></li>
+	
+	
+	
+	<li><a href="//it.slashdot.org/">IT</a></li>
+	
+	
+	
+	<li><a href="//linux.slashdot.org/">Linux</a></li>
+	
+	
+	
+	<li><a href="//politics.slashdot.org/">Politics</a></li>
+	
+	
+	
+	<li><a href="//science.slashdot.org/">Science</a></li>
+	
+	
+	
+	<li><a href="//yro.slashdot.org/">YRO</a></li>
+	
+
+</ul>
+	</div>
+	
+</div>
+
+<div class="block" id="links-help">
+	<div class="title" id="links-help-title">
+		<h4>Help</h4>
+	</div>
+	<div class="content" id="links-help-content">
+		<ul>
+			<li><a href="//slashdot.org/faq/">FAQ</a></li>
+			<li><a href="http://sourceforge.net/tracker/?func=add&amp;group_id=4421&amp;atid=104421">Bugs</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-stories">
+	<div class="title" id="links-stories-title">
+		<h4>Stories</h4>
+	</div>
+	<div class="content" id="links-stories-content">
+		<ul>
+			<li><a href="//slashdot.org/search.pl">Old Stories</a></li>
+			<li><a href="http://polls.slashdot.org">Old Polls</a></li>
+			<li><a href="//slashdot.org/topics.shtml">Topics</a></li>
+			<li><a href="//slashdot.org/hof.shtml">Hall of Fame</a></li>
+			<li><a href="//slashdot.org/bookmarks/">Bookmarks</a></li>
+			<li><a href="//slashdot.org/submit.pl">Submit Story</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-about">
+	<div class="title" id="links-about-title">
+		<h4>About</h4>
+	</div>
+	<div class="content" id="links-about-content">
+		<ul>
+			<li><a href="//slashdot.org/supporters.shtml">Supporters</a></li>
+			<li><a href="//slashdot.org/code.shtml">Code</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-services">
+	<div class="title" id="links-services-title">
+		<h4>Services</h4>
+	</div>
+	<div class="content" id="links-services-content">
+		<ul>
+			<li><a href="http://jobs.slashdot.org/">Jobs</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=5698263263f8466f3709fd92f355367f">PriceGrabber</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=a27a66150282ba2c8d94d57fabaf3e58">Special Offers</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=08b6561b04abba73f86e9ec0b651305d">Sponsor Solutions</a></li>
+			<li><a href="http://www.techsay.com/default.php?page=join.php&amp;p=slashdot&amp;CID=SLASHDOTSITE">Surveys</a></li>
+		</ul>
+	</div>
+</div> 
+		
+                        
+<div class="block static" id="links-jobs">
+	<div class="title" id="links-jobs-title" style="cursor:pointer;" onclick="window.location='http://jobs.slashdot.org/';">
+		<h4><a href=" http://jobs.slashdot.org/" style="text-decoration:none;border-style:none;">Jobs</a></h4>
+	</div>
+	<div class="content" id="links-jobs-content">
+		<script type="text/javascript" src="http://edge.jobthread.com/feeds/jobroll/?s_user_id=100540&subtype=slashdot "></script>
+	</div>
+</div>
+			
+			
+			
+		</div>
+		<div id="contents">
+
+<div class="lb"><div class="ad1"><!-- ad position 1 -->
+<!-- DoubleClick Ad Tag -->
+
+<script type="text/javascript">
+                var ad6 = 'inactive';
+</script>
+<style type="text/css">.lb {_height: 90px;}</style>
+
+<div id="fad1">
+	<script type="text/javascript">
+	//<![CDATA[
+
+		var hint   = 'mainpage';
+
+		document.write('<script type="text/javascript" src="http://ad.doubleclick.net/adj/ostg.slashdot/mainpage_p1_leader;pg=;logged_in=0;tile='+dfp_tile+';ord='+dfp_ord+'?"><\/script>');
+		dfp_tile++;
+	//]]>
+	</script>
+</div>
+<!-- End DoubleClick Ad Tag --></div>
+</div>
+
+		
+			<div id="misc" class="aduserbox">
+
+        <ul class="menu">
+		<li><a href="subscriptions.shtml">Previous Section</a></li>
+		<li><a href="slashmeta.shtml">Next section</a></li>
+		<li><a href="index.shtml">Index</a></li>
+	</ul>
+        
+        <hr>
+
+<h2><a name="fe100">Where can I get Slashdot's main feed?</a></h2>
+	<p>The syndication feed for the Slashdot front page is available in <a href="http://rss.slashdot.org/Slashdot/slashdot/to">RSS 0.9</a>, <a href="http://rss.slashdot.org/Slashdot/slashdot">RSS 1.0</a>, and <a href="http://rss.slashdot.org/Slashdot/slashdotatom">Atom 1.0</a> formats.  Please do not request feeds more than once every 30 minutes.</p>
+	<p><em><small>
+		Answered by: <a href="mailto:pudge@slashdot.org">pudge</a><br>
+		Last Modified: 12/12/06
+	</small></em></p>
+
+<h2><a name="fe200">What other feeds are available?</a></h2>
+                <p>On most pages, if there is feed content available, it will be noted in the &lt;HEAD&gt; of the page.</p>
+                <p>Wherever you see <tt>rss</tt> below, you can also substitute with <tt>atom</tt> to get an Atom 1.0 feed, such as <tt>content_type=atom</tt> and <tt>journal/atom</tt>, or append <tt>atom</tt> to the end of the <tt>rss.slashdot.org</tt> URLs, like <tt>slashdotGamesatom</tt> (although some feeds, like Zoo and some search results, need some more work for Atom).</p>
+                <p>Where you see <tt><b>$username</b></tt> below, substitute the URI-encoded username of the user in question (such as <tt>Clifton+Wood</tt>).</p>
+                <p>Where you see <tt><b>$logtoken</b></tt>, you must include a token so the server knows you are you, in lieu of a cookie, as most newsreaders can't handle cookies well (you can find it in the &lt;HEAD&gt; of the page, if you are a logged in, and a subscriber).  <b>NOTE</b>: your logtoken is subject to change when you log out or change your login preferences.  See <a href="/faq/accounts.shtml#ac1200">the Accounts FAQ</a> for more information.</p>
+
+                <ul>
+			<li>Append the section name to the index link for individual section feeds.  For example:
+				<ul>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotGames">http://rss.slashdot.org/Slashdot/slashdotGames</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotAskSlashdot">http://rss.slashdot.org/Slashdot/slashdotAskSlashdot</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotYourRightsOnline">http://rss.slashdot.org/Slashdot/slashdotYourRightsOnline</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotApple">http://rss.slashdot.org/Slashdot/slashdotApple</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotHardware">http://rss.slashdot.org/Slashdot/slashdotHardware</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotIT">http://rss.slashdot.org/Slashdot/slashdotIT</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotScience">http://rss.slashdot.org/Slashdot/slashdotScience</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotPolitics">http://rss.slashdot.org/Slashdot/slashdotPolitics</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotLinux">http://rss.slashdot.org/Slashdot/slashdotLinux</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotInterviews">http://rss.slashdot.org/Slashdot/slashdotInterviews</a></li>
+					<li><a href="http://rss.slashdot.org/Slashdot/slashdotDevelopers">http://rss.slashdot.org/Slashdot/slashdotDevelopers</a></li>
+				</ul>
+			</li>
+			<li><tt>http://slashdot.org/index.pl?content_type=rss&amp;logtoken=<b>$logtoken</b></tt>
+						<ul><li>(this special subscriber version will respect your user homepage prefs; including
+						which stories appear from which sections; to get only a specific section, replace the
+						hostname, such as "apple.slashdot.org")</li></ul>
+					</li>
+
+			<li>Journals (add "<tt>/<b>$logtoken</b></tt>" if you are a subscriber, to get full HTML in the feed)<ul>
+					<li><tt>http://slashdot.org/~<b>$username</b>/journal/rss</tt></li>
+					<li><tt>http://slashdot.org/~<b>$username</b>/journal/friends/rss</tt></li>
+			</ul></li>
+
+			<li>Messages<ul>
+					<li><tt>http://slashdot.org/my/inbox/rss/<b>$logtoken</b></tt></li>
+			</ul></li>
+
+			<li>Zoo<ul>
+					<li><tt>http://slashdot.org/~<b>$username</b>/friends/rss</tt></li>
+					<li><tt>http://slashdot.org/~<b>$username</b>/foes/rss</tt></li>
+					<li><tt>http://slashdot.org/~<b>$username</b>/fans/rss</tt></li>
+					<li><tt>http://slashdot.org/~<b>$username</b>/freaks/rss</tt></li>
+					<li><tt>http://slashdot.org/~<b>$username</b>/zoo/rss</tt></li>
+					<li><tt>http://slashdot.org/~<b>$username</b>/friends/friends/rss</tt></li>
+					<li><tt>http://slashdot.org/~<b>$username</b>/friends/foes/rss</tt></li>
+			</ul></li>
+
+			<li>Search Results<ul>
+					<li>Merely add <tt>&amp;content_type=rss</tt> to the query string</li>
+			</ul></li>
+                </ul>
+
+	<p><em><small>
+		Answered by: <a href="mailto:pudge@slashdot.org">pudge</a><br>
+		Last Modified: 12/12/06
+	</small></em></p>
+
+
+        <hr>
+        <ul class="menu">
+		<li><a href="subscriptions.shtml">Previous Section</a></li>
+		<li><a href="slashmeta.shtml">Next section</a></li>
+		<li><a href="index.shtml">Index</a></li>
+	</ul>
+
+</div>	
+		</div>
+			<div id="footer">
+				<div class="search">
+				
+					<form method="get" action="//slashdot.org/search.pl">
+						<fieldset>
+							<legend>Search</legend>
+							<input type="text" name="query" value="" size="20">
+							<input type="submit" value="Search" class="button">
+						</fieldset>
+					</form>
+				
+				</div>
+				<div class="rightcontent">
+					
+                		        <small>Tout choses sont dites deja, mais comme personne n'ecoute, il faut
+toujours recommencer.
+		-- A. Gide</small>
+					
+				</div>	
+			</div>
+		</div>	
+	</div>
+	<div class="copyright">
+		<p>
+
+			All trademarks and copyrights on this page are owned by their respective owners.  Comments are owned by the Poster.  The Rest &copy; 1997-2007 <a href="http://sourceforge.com/">SourceForge</a>, Inc.
+		</p>
+	</div>
+	<div class="btmnav">
+		<ul>
+			<li class="begin"><a href="//slashdot.org/">home</a></li>
+			<li><a href="//slashdot.org/awards.shtml">awards</a></li>
+			<li><a href="//slashdot.org/submit.pl">contribute story</a></li>
+			<li><a href="//slashdot.org/search.pl">older articles</a></li>
+			<li><a href="http://sourceforge.com/">sourceforge, inc.</a></li>
+			<li><a href="http://web.sourceforge.com/media_kit.php">advertise</a></li>
+			<li><a href="//slashdot.org/about.shtml">about</a></li>
+			<li><a href="http://web.sourceforge.com/terms.php">terms of service</a></li>
+			<li><a href="http://web.sourceforge.com/privacy.php">privacy</a></li>
+			<li><a href="//slashdot.org/faq/">faq</a></li>
+			<li><a href="http://rss.slashdot.org/Slashdot/slashdot">rss</a></li>
+		</ul>
+	</div>
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
+<script type="text/javascript">
+	_uacct = "UA-32013-5";
+	_udn = "slashdot.org";
+	urchinTracker();
+</script>
+</body>
+</html>

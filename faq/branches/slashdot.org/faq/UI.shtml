@@ -1,0 +1,417 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+        <title>Slashdot FAQ - User Interface</title>
+<!-- $Id: UI.shtml,v 1.9 2006/01/23 21:23:36 tvroom Exp $ -->
+<link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/core-tidied.css?T_2_5_0_180">
+<!--[if IE]><link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/iestyles.css?T_2_5_0_180"><![endif]-->
+<link rel="stylesheet" type="text/css" media="print" href="//images.slashdot.org/print.css?T_2_5_0_180">
+<link rel="stylesheet" type="text/css" media="handheld" href="//images.slashdot.org/handheld.css?T_2_5_0_180">
+
+
+
+<script src="//slashdot.org/all-minified.js?T_2_5_0_180" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+var adpage = 'index';
+</script>
+<link rel="top"       title="News for nerds, stuff that matters" href="//slashdot.org/" >
+<link rel="search"    title="Search Slashdot" href="//slashdot.org/search.pl">
+<link rel="alternate" title="Slashdot RSS" href="http://rss.slashdot.org/Slashdot/slashdot" type="application/rss+xml">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<!-- DoubleClick Random Number -->
+<script type="text/javascript">
+   dfp_ord=Math.random()*10000000000000000;
+   dfp_tile = 1;
+</script>
+<!-- End DoubleClick Random Number -->
+
+</head>
+<body>
+<div id="top_parent"></div>
+
+
+<div id="jump">
+	<a href="#main-articles">Stories</a>
+	<br>
+	<a href="#blocks">Slash Boxes</a>
+	<br>
+	<a href="#comments">Comments</a>
+</div>
+
+
+<div id="frame">
+<div></div>
+	<div id="topnav">
+		<div id="logo">
+			<h1>
+				<a href="//slashdot.org">Slashdot</a>
+			</h1>
+		</div>
+		<div class="search">
+
+			<form method="get" action="//slashdot.org/search.pl">
+				<fieldset>
+					<legend>Search</legend>
+					<input type="text" name="query" value="">
+					<input type="submit" value="Search" class="button">
+				</fieldset>
+			</form>
+
+		</div>
+	</div> 
+	<div id="slogan">
+		<h2>
+			News for nerds, stuff that matters
+		</h2>
+	</div>
+	<div id="wrapper">
+		<div id="user-section">
+			<div class="content">
+				<ul>
+			
+					<li class="begin"><a id="loginlink" class="collapsed" href="//slashdot.org/login.pl">Log In</a></li>
+					<li><a href="//slashdot.org/login.pl?op=newuserform" title="">Create Account</a></li>
+					<li><a href="//slashdot.org/subscribe.pl" title="An option to see Slashdot without these ads">Subscribe</a></li>
+					<li><a href="//slashdot.org/firehose.shtml">Firehose</a></li>
+			
+				</ul>
+				<ul id="user-utils">
+				
+					<li><a href="//slashdot.org/faq/accounts.shtml#ac050" title="Save preferences, your own Journal, define Friends &amp;  Foes for discussions, participate in Moderation and more ...">Why Log In?</a></li>
+				
+				
+					<li><a href="//slashdot.org/faq/subscriptions.shtml" title="An option to see Slashdot without these ads">Why Subscribe?</a></li>
+				
+				</ul>
+			
+				<div id="loginform">
+					<form action="//slashdot.org/login.pl" method="post">
+<fieldset>
+	<legend>Log In</legend>
+	<label>
+		Nickname
+	</label>
+	<input type="text" name="unickname" size="20" value="">
+	<label>
+		Password
+	</label>
+	<input type="hidden" name="returnto" value="//slashdot.org/">
+	<input type="hidden" name="op" value="userlogin">
+	<input type="password" name="upasswd" size="20">
+	<label class="checkbox">
+		<input type="checkbox" name="login_temp" value="yes">
+		Public Terminal
+	</label>
+	<input type="submit" name="userlogin" value="Log in" class="button">
+	</fieldset>
+</form>
+<p>
+	[ <b>
+		<a href="//slashdot.org/login.pl?op=newuserform">
+			Create a new account
+		</a>
+	</b> ]
+</p>
+				</div>
+			
+			</div>
+		</div>
+		<div id="links">
+			
+			<div class="block" id="links-sections">
+	<div class="title" id="links-sections-title">
+		<h4>
+			Sections
+		</h4>
+	</div>
+	<div class="content" id="links-sections-content">
+	<ul>
+	<li><h2><a href="//slashdot.org/">Main</a></h2></li>
+	
+	
+	<li><a href="//apple.slashdot.org/">Apple</a></li>
+	
+	
+	
+	<li><a href="//ask.slashdot.org/">AskSlashdot</a></li>
+	
+	
+	
+	<li><a href="//backslash.slashdot.org/">Backslash</a></li>
+	
+	
+	
+	<li><a href="//books.slashdot.org/">Books</a></li>
+	
+	
+	
+	<li><a href="//developers.slashdot.org/">Developers</a></li>
+	
+	
+	
+	<li><a href="//games.slashdot.org/">Games</a></li>
+	
+	
+	
+	<li><a href="//hardware.slashdot.org/">Hardware</a></li>
+	
+	
+	
+	<li><a href="//interviews.slashdot.org/">Interviews</a></li>
+	
+	
+	
+	<li><a href="//it.slashdot.org/">IT</a></li>
+	
+	
+	
+	<li><a href="//linux.slashdot.org/">Linux</a></li>
+	
+	
+	
+	<li><a href="//politics.slashdot.org/">Politics</a></li>
+	
+	
+	
+	<li><a href="//science.slashdot.org/">Science</a></li>
+	
+	
+	
+	<li><a href="//yro.slashdot.org/">YRO</a></li>
+	
+
+</ul>
+	</div>
+	
+</div>
+
+<div class="block" id="links-help">
+	<div class="title" id="links-help-title">
+		<h4>Help</h4>
+	</div>
+	<div class="content" id="links-help-content">
+		<ul>
+			<li><a href="//slashdot.org/faq/">FAQ</a></li>
+			<li><a href="http://sourceforge.net/tracker/?func=add&amp;group_id=4421&amp;atid=104421">Bugs</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-stories">
+	<div class="title" id="links-stories-title">
+		<h4>Stories</h4>
+	</div>
+	<div class="content" id="links-stories-content">
+		<ul>
+			<li><a href="//slashdot.org/search.pl">Old Stories</a></li>
+			<li><a href="http://polls.slashdot.org">Old Polls</a></li>
+			<li><a href="//slashdot.org/topics.shtml">Topics</a></li>
+			<li><a href="//slashdot.org/hof.shtml">Hall of Fame</a></li>
+			<li><a href="//slashdot.org/bookmarks/">Bookmarks</a></li>
+			<li><a href="//slashdot.org/submit.pl">Submit Story</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-about">
+	<div class="title" id="links-about-title">
+		<h4>About</h4>
+	</div>
+	<div class="content" id="links-about-content">
+		<ul>
+			<li><a href="//slashdot.org/supporters.shtml">Supporters</a></li>
+			<li><a href="//slashdot.org/code.shtml">Code</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-services">
+	<div class="title" id="links-services-title">
+		<h4>Services</h4>
+	</div>
+	<div class="content" id="links-services-content">
+		<ul>
+			<li><a href="http://jobs.slashdot.org/">Jobs</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=5698263263f8466f3709fd92f355367f">PriceGrabber</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=a27a66150282ba2c8d94d57fabaf3e58">Special Offers</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=08b6561b04abba73f86e9ec0b651305d">Sponsor Solutions</a></li>
+			<li><a href="http://www.techsay.com/default.php?page=join.php&amp;p=slashdot&amp;CID=SLASHDOTSITE">Surveys</a></li>
+		</ul>
+	</div>
+</div> 
+		
+                        
+<div class="block static" id="links-jobs">
+	<div class="title" id="links-jobs-title" style="cursor:pointer;" onclick="window.location='http://jobs.slashdot.org/';">
+		<h4><a href=" http://jobs.slashdot.org/" style="text-decoration:none;border-style:none;">Jobs</a></h4>
+	</div>
+	<div class="content" id="links-jobs-content">
+		<script type="text/javascript" src="http://edge.jobthread.com/feeds/jobroll/?s_user_id=100540&subtype=slashdot "></script>
+	</div>
+</div>
+			
+			
+			
+		</div>
+		<div id="contents">
+
+<div class="lb"><div class="ad1"><!-- ad position 1 -->
+<!-- DoubleClick Ad Tag -->
+
+<script type="text/javascript">
+                var ad6 = 'inactive';
+</script>
+<style type="text/css">.lb {_height: 90px;}</style>
+
+<div id="fad1">
+	<script type="text/javascript">
+	//<![CDATA[
+
+		var hint   = 'mainpage';
+
+		document.write('<script type="text/javascript" src="http://ad.doubleclick.net/adj/ostg.slashdot/mainpage_p1_leader;pg=;logged_in=0;tile='+dfp_tile+';ord='+dfp_ord+'?"><\/script>');
+		dfp_tile++;
+	//]]>
+	</script>
+</div>
+<!-- End DoubleClick Ad Tag --></div>
+</div>
+
+		
+			<div id="misc" class="aduserbox">
+
+        <ul class="menu">
+               <li><a href="editorial.shtml">Previous section</a></li>
+               <li><a href="com-mod.shtml">Next section</a></li>
+               <li><a href="index.shtml">Index</a></li>
+        </ul>
+        
+        <hr>
+
+<h2><a name="ui100" id="ui100">I want a Slashbox that does X</a></h2>
+        <p>The policy for Slashboxes is as follows:</p>
+        <ol>
+                <li>The remote site gives us permission.</li>
+                <li>The remote site provides an RDF file for us to parse (here is <a href="/slashdot.rdf">our rdf</a> if you want an example).</li>
+                <li>We decide that it belongs on Slashdot.</li>
+        </ol>
+        <p>Currently the grand Slashbox poobah is <a href="mailto:pater@slashdot.org">CowboyNeal</a>. Email him a URL to the RDF, as well as a technical contact, and we'll consider your addition to the roster.</p>
+        <p><em><small>
+                Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
+                Last Modified: 6/14/00
+        </small></em></p>
+
+<h2><a name="ui200" id="ui200">What is this little [?] I see in stories?</a></h2>
+        <p>It designates a glossary style link to <a href="http://www.everything2.com">Everything2</a>. We use these to link things like acronyms or names when we think that they might be obscure enough that someone else might need some clarification.</p>
+        <p><em><small>
+                Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
+                Last Modified: 6/14/00
+        </small></em></p>
+
+<h2><a name="ui300" id="ui300">How can I see old stories?</a></h2>
+        <p>Slashdot has archived stories going back pretty much to the beginning of the site. You can access them by hitting the "older stuff" link on the main page or by searching for them in the database by using the search form at the bottom of the front page.</p>
+        <p><em><small>
+                Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
+                Last Modified: 12/17/01
+        </small></em></p>
+
+<h2><a name="ui400" id="ui400">Why do I see Some Other User's Nickname in my Menu?</a></h2>
+        <p>This is a short cut. Essentially, there is a tab on your user menu (appearing on many pages like Journals and Users) that shows the nickname and UID of the last user that you looked at. This is not a bug! This is a helpful shortcut so that you can hop back and forth between your friends information, and theirs.</p>
+        <p><em><small>
+                Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
+                Last Modified: 3/3/03
+        </small></em></p>
+
+<h2><a name="ui500" id="ui500">How do I control the amount of content on my index?</a></h2>
+
+<p>Slashdot content is broken down into Sections like Apple or Book  Reviews.  Within each
+of these sections, content is further divided into what we call 'Main  Page' and 'Sectional
+Content'.  The Main Page is the stuff we think is the best.  But we  try to keep
+the number of articles on the main page to 15-20 or so articles.   Some sections have
+more stories than that.  So we pick some stories as "Sectional Content".</p>
+
+<p>You have the ability to choose how much or how little content you  want to see from
+each section.  Further, you have th ability to choose if you want to  view each type
+of article in 'Full Text' or 'Abbreviated' format.</p>
+
+<p>Today on Slashdot, we default to having you see all Main Page  content in Full Text
+mode, and all Sectional Content in the new 'Abbreviated' format.  You  can change these
+settings both globally, as well as on a per section basis using a  tool usable from
+the left hand sectional menu, as well as from your user preference  page.  Each of these
+features a 'spectrum' of options.  On the far right, you will see  every single story
+posted to every section in full text.  On the far left, you will see  only main page
+stories, and even those only abbreviated.  The break down is as follows:
+
+<ul>
+<li><b>Full, Full</b> - Displays every single story we post, in full  text.</li>
+<li><b>Full, Abbreviated</b> - The current default is to display the  main page articles in full text, but to abbreviate all sectional content.</li>
+<li><b>Abbreviated, Abbreviated</b> - This setting abbreviates every  story posted to the section.</li>
+<li><b>Full, None</b> - This setting most closely mimics the old  Slashdot settings, where the main page stories were included up top, but the sectional stories were relegated to the sectional indexes.</li>
+<li><b>Abbreviated, None</b> - Abbreviate the main page content, and  hide the sectional content.</li>
+<li><b>None</b> - Completely suppress this section.  Hide it entirely  from your index.</li>
+</ul>
+        <p><em><small>
+                Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
+                Last Modified: 1/21/06 
+        <hr>
+        <ul class="menu">
+                
+                        <li><a href="editorial.shtml">Previous section</a></li>
+                        <li><a href="com-mod.shtml">Next section</a></li>
+                        <li><a href="index.shtml">Index</a></li>
+                </ul>
+        
+
+</div>	
+		</div>
+			<div id="footer">
+				<div class="search">
+				
+					<form method="get" action="//slashdot.org/search.pl">
+						<fieldset>
+							<legend>Search</legend>
+							<input type="text" name="query" value="" size="20">
+							<input type="submit" value="Search" class="button">
+						</fieldset>
+					</form>
+				
+				</div>
+				<div class="rightcontent">
+					
+                		        <small>Tout choses sont dites deja, mais comme personne n'ecoute, il faut
+toujours recommencer.
+		-- A. Gide</small>
+					
+				</div>	
+			</div>
+		</div>	
+	</div>
+	<div class="copyright">
+		<p>
+
+			All trademarks and copyrights on this page are owned by their respective owners.  Comments are owned by the Poster.  The Rest &copy; 1997-2007 <a href="http://sourceforge.com/">SourceForge</a>, Inc.
+		</p>
+	</div>
+	<div class="btmnav">
+		<ul>
+			<li class="begin"><a href="//slashdot.org/">home</a></li>
+			<li><a href="//slashdot.org/awards.shtml">awards</a></li>
+			<li><a href="//slashdot.org/submit.pl">contribute story</a></li>
+			<li><a href="//slashdot.org/search.pl">older articles</a></li>
+			<li><a href="http://sourceforge.com/">sourceforge, inc.</a></li>
+			<li><a href="http://web.sourceforge.com/media_kit.php">advertise</a></li>
+			<li><a href="//slashdot.org/about.shtml">about</a></li>
+			<li><a href="http://web.sourceforge.com/terms.php">terms of service</a></li>
+			<li><a href="http://web.sourceforge.com/privacy.php">privacy</a></li>
+			<li><a href="//slashdot.org/faq/">faq</a></li>
+			<li><a href="http://rss.slashdot.org/Slashdot/slashdot">rss</a></li>
+		</ul>
+	</div>
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
+<script type="text/javascript">
+	_uacct = "UA-32013-5";
+	_udn = "slashdot.org";
+	urchinTracker();
+</script>
+</body>
+</html>

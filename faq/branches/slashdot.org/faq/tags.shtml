@@ -1,0 +1,577 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <title>Slashdot FAQ - Tags</title>
+<link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/core-tidied.css?T_2_5_0_180">
+<!--[if IE]><link rel="stylesheet" type="text/css" media="screen, projection" href="//images.slashdot.org/iestyles.css?T_2_5_0_180"><![endif]-->
+<link rel="stylesheet" type="text/css" media="print" href="//images.slashdot.org/print.css?T_2_5_0_180">
+<link rel="stylesheet" type="text/css" media="handheld" href="//images.slashdot.org/handheld.css?T_2_5_0_180">
+
+
+
+<script src="//slashdot.org/all-minified.js?T_2_5_0_180" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+var adpage = 'index';
+</script>
+<link rel="top"       title="News for nerds, stuff that matters" href="//slashdot.org/" >
+<link rel="search"    title="Search Slashdot" href="//slashdot.org/search.pl">
+<link rel="alternate" title="Slashdot RSS" href="http://rss.slashdot.org/Slashdot/slashdot" type="application/rss+xml">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<!-- DoubleClick Random Number -->
+<script type="text/javascript">
+   dfp_ord=Math.random()*10000000000000000;
+   dfp_tile = 1;
+</script>
+<!-- End DoubleClick Random Number -->
+
+</head>
+<body>
+<div id="top_parent"></div>
+
+
+<div id="jump">
+	<a href="#main-articles">Stories</a>
+	<br>
+	<a href="#blocks">Slash Boxes</a>
+	<br>
+	<a href="#comments">Comments</a>
+</div>
+
+
+<div id="frame">
+<div></div>
+	<div id="topnav">
+		<div id="logo">
+			<h1>
+				<a href="//slashdot.org">Slashdot</a>
+			</h1>
+		</div>
+		<div class="search">
+
+			<form method="get" action="//slashdot.org/search.pl">
+				<fieldset>
+					<legend>Search</legend>
+					<input type="text" name="query" value="">
+					<input type="submit" value="Search" class="button">
+				</fieldset>
+			</form>
+
+		</div>
+	</div> 
+	<div id="slogan">
+		<h2>
+			News for nerds, stuff that matters
+		</h2>
+	</div>
+	<div id="wrapper">
+		<div id="user-section">
+			<div class="content">
+				<ul>
+			
+					<li class="begin"><a id="loginlink" class="collapsed" href="//slashdot.org/login.pl">Log In</a></li>
+					<li><a href="//slashdot.org/login.pl?op=newuserform" title="">Create Account</a></li>
+					<li><a href="//slashdot.org/subscribe.pl" title="An option to see Slashdot without these ads">Subscribe</a></li>
+					<li><a href="//slashdot.org/firehose.shtml">Firehose</a></li>
+			
+				</ul>
+				<ul id="user-utils">
+				
+					<li><a href="//slashdot.org/faq/accounts.shtml#ac050" title="Save preferences, your own Journal, define Friends &amp;  Foes for discussions, participate in Moderation and more ...">Why Log In?</a></li>
+				
+				
+					<li><a href="//slashdot.org/faq/subscriptions.shtml" title="An option to see Slashdot without these ads">Why Subscribe?</a></li>
+				
+				</ul>
+			
+				<div id="loginform">
+					<form action="//slashdot.org/login.pl" method="post">
+<fieldset>
+	<legend>Log In</legend>
+	<label>
+		Nickname
+	</label>
+	<input type="text" name="unickname" size="20" value="">
+	<label>
+		Password
+	</label>
+	<input type="hidden" name="returnto" value="//slashdot.org/">
+	<input type="hidden" name="op" value="userlogin">
+	<input type="password" name="upasswd" size="20">
+	<label class="checkbox">
+		<input type="checkbox" name="login_temp" value="yes">
+		Public Terminal
+	</label>
+	<input type="submit" name="userlogin" value="Log in" class="button">
+	</fieldset>
+</form>
+<p>
+	[ <b>
+		<a href="//slashdot.org/login.pl?op=newuserform">
+			Create a new account
+		</a>
+	</b> ]
+</p>
+				</div>
+			
+			</div>
+		</div>
+		<div id="links">
+			
+			<div class="block" id="links-sections">
+	<div class="title" id="links-sections-title">
+		<h4>
+			Sections
+		</h4>
+	</div>
+	<div class="content" id="links-sections-content">
+	<ul>
+	<li><h2><a href="//slashdot.org/">Main</a></h2></li>
+	
+	
+	<li><a href="//apple.slashdot.org/">Apple</a></li>
+	
+	
+	
+	<li><a href="//ask.slashdot.org/">AskSlashdot</a></li>
+	
+	
+	
+	<li><a href="//backslash.slashdot.org/">Backslash</a></li>
+	
+	
+	
+	<li><a href="//books.slashdot.org/">Books</a></li>
+	
+	
+	
+	<li><a href="//developers.slashdot.org/">Developers</a></li>
+	
+	
+	
+	<li><a href="//games.slashdot.org/">Games</a></li>
+	
+	
+	
+	<li><a href="//hardware.slashdot.org/">Hardware</a></li>
+	
+	
+	
+	<li><a href="//interviews.slashdot.org/">Interviews</a></li>
+	
+	
+	
+	<li><a href="//it.slashdot.org/">IT</a></li>
+	
+	
+	
+	<li><a href="//linux.slashdot.org/">Linux</a></li>
+	
+	
+	
+	<li><a href="//politics.slashdot.org/">Politics</a></li>
+	
+	
+	
+	<li><a href="//science.slashdot.org/">Science</a></li>
+	
+	
+	
+	<li><a href="//yro.slashdot.org/">YRO</a></li>
+	
+
+</ul>
+	</div>
+	
+</div>
+
+<div class="block" id="links-help">
+	<div class="title" id="links-help-title">
+		<h4>Help</h4>
+	</div>
+	<div class="content" id="links-help-content">
+		<ul>
+			<li><a href="//slashdot.org/faq/">FAQ</a></li>
+			<li><a href="http://sourceforge.net/tracker/?func=add&amp;group_id=4421&amp;atid=104421">Bugs</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-stories">
+	<div class="title" id="links-stories-title">
+		<h4>Stories</h4>
+	</div>
+	<div class="content" id="links-stories-content">
+		<ul>
+			<li><a href="//slashdot.org/search.pl">Old Stories</a></li>
+			<li><a href="http://polls.slashdot.org">Old Polls</a></li>
+			<li><a href="//slashdot.org/topics.shtml">Topics</a></li>
+			<li><a href="//slashdot.org/hof.shtml">Hall of Fame</a></li>
+			<li><a href="//slashdot.org/bookmarks/">Bookmarks</a></li>
+			<li><a href="//slashdot.org/submit.pl">Submit Story</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-about">
+	<div class="title" id="links-about-title">
+		<h4>About</h4>
+	</div>
+	<div class="content" id="links-about-content">
+		<ul>
+			<li><a href="//slashdot.org/supporters.shtml">Supporters</a></li>
+			<li><a href="//slashdot.org/code.shtml">Code</a></li>
+		</ul>
+	</div>
+</div>
+<div class="block" id="links-services">
+	<div class="title" id="links-services-title">
+		<h4>Services</h4>
+	</div>
+	<div class="content" id="links-services-content">
+		<ul>
+			<li><a href="http://jobs.slashdot.org/">Jobs</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=5698263263f8466f3709fd92f355367f">PriceGrabber</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=a27a66150282ba2c8d94d57fabaf3e58">Special Offers</a></li>
+			<li><a href="//slashdot.org/relocate.pl?id=08b6561b04abba73f86e9ec0b651305d">Sponsor Solutions</a></li>
+			<li><a href="http://www.techsay.com/default.php?page=join.php&amp;p=slashdot&amp;CID=SLASHDOTSITE">Surveys</a></li>
+		</ul>
+	</div>
+</div> 
+		
+                        
+<div class="block static" id="links-jobs">
+	<div class="title" id="links-jobs-title" style="cursor:pointer;" onclick="window.location='http://jobs.slashdot.org/';">
+		<h4><a href=" http://jobs.slashdot.org/" style="text-decoration:none;border-style:none;">Jobs</a></h4>
+	</div>
+	<div class="content" id="links-jobs-content">
+		<script type="text/javascript" src="http://edge.jobthread.com/feeds/jobroll/?s_user_id=100540&subtype=slashdot "></script>
+	</div>
+</div>
+			
+			
+			
+		</div>
+		<div id="contents">
+
+<div class="lb"><div class="ad1"><!-- ad position 1 -->
+<!-- DoubleClick Ad Tag -->
+
+<script type="text/javascript">
+                var ad6 = 'inactive';
+</script>
+<style type="text/css">.lb {_height: 90px;}</style>
+
+<div id="fad1">
+	<script type="text/javascript">
+	//<![CDATA[
+
+		var hint   = 'mainpage';
+
+		document.write('<script type="text/javascript" src="http://ad.doubleclick.net/adj/ostg.slashdot/mainpage_p1_leader;pg=;logged_in=0;tile='+dfp_tile+';ord='+dfp_ord+'?"><\/script>');
+		dfp_tile++;
+	//]]>
+	</script>
+</div>
+<!-- End DoubleClick Ad Tag --></div>
+</div>
+
+		
+			<div id="misc" class="aduserbox">
+
+<!--
+($VERSION) = '$Id: tags.shtml,v 1.18 2007/10/05 18:17:59 scc Exp $' =~ /^\$Id: \S+ (\S+)/
+-->
+
+<table>
+<tr>
+<td><a href="suggestions.shtml">Previous section</a></td>
+
+<td><a href="index.shtml">Index</a></td>
+</tr>
+</table>
+
+<hr>
+<br><a name="tags100" id="tags100"></a>
+<h2>What is this crazy tags thing?</h2>
+<p> Slashdot is currently experimenting with tagging articles.  You are
+encouraged to use this feature to submit a handful of tags: brief labels
+that you think best describe this article.  You might choose to say that
+this is an article about 'security' and 'mozilla'.
+</p>
+
+<p>This is all very beta. Currently, tagging is open to our users whose
+accounts are more than about six months old. If your account is more
+recent, you can still get tag access by
+<a href="/subscribe.pl">becoming a Slashdot subscriber</a>.</p>
+
+<p>We don't know exactly how this will all work, and a lot of it really
+depends on you.  If you choose to add your own tags, be aware:</p>
+
+<ul>
+<li>Your tags are <b>public</b>. Everyone will be able to see them!</li>
+<li>Individual tags should not include spaces: a space is used to enter
+multiple tags. Use "bigbrother", not "big brother".
+<li>For the <b>opposite</b> of a tag, prefix it with "!", e.g.  "!funny"
+means "not funny."</li>
+<li>Keep your tags brief.</li>
+<li>We provide a few example tags for you. Use them if you like.</li>
+<li>Don't forget to click 'Tag' to save your tags.</li>
+<li>After you save, your current list of tags is put back into the
+text field for you. If you clear it and re-click Tag, your old tags
+are undone. To add more tags, just add them to your list and
+re-click Tag.</li>
+<li>Tags must be all-lowercase, no punctuation. Numbers can  
+appear but can't be first. Smoosh them up: for "Web 2.0", tag  
+"web20". Max 64 chars.</li>
+<li>Avoid plurals when possible: "harddrive", not "harddrives".</li>
+</ul>
+
+<p>We're excited about this, and see huge potential for this system.
+From user feedback on articles, to comment moderation, the system is
+really limited only by your participation, and our database hardware! 
+</p>
+
+<p><i><font size=-1>Answered by: <a  
+href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
+<br><i><font size=-1>Last Modified: 11/02/06</font></i>
+
+
+
+<a name="tags110" id="tags110"></a>
+<h2>Are tags objective or subjective? Can I use any tag I want?</h2>
+
+<p>Other tagging systems let users make up any tags they want, and
+punt on the issue of objective meaning. So the tag "foo" means for each
+user whatever they want it to mean, and to the system it means nothing
+at all, it's just an identifier.</p>
+
+<p>We're going to build the next generation of moderation on top of
+tags. That means we're going to poach your namespace. Some tags will
+have a substantive effect on the system right from the start (or very
+soon). Our article tagger knows about tags like "dupe" or "typo".
+When we roll out tagging on comments, we will teach it "troll" and
+"informative". These tags can have a meaning in the system. And when
+<em>you</em> come up with ways of using tags that <em>we</em>
+haven't anticipated, we will bring them into the system.</p>
+
+<p>But your tags do not belong to you, they belong to everyone.
+We reserve the right to make changes that we think are necessary.
+Since this system is totally experimental, we don't know exactly what all
+of this might mean: it could mean one day we consolidate and change all
+"canine" to "dog" tags.  It could mean we define some system tag and usurp
+another tag. This is the nature of a system in active development. Don't
+say we didn't warn you!</p>
+
+<p>Tags elsewhere are your own personal playground and nobody cares if
+you mess around. On Slashdot, abusive uses of tags could have negative
+consequences. Precisely what that means, we don't know yet.</p>
+
+<p>Yes, that's pretty arbitrary. We'll spell out policy as this evolves.
+For now, the deal is: tag in good faith, and if there's abuse, we'll
+deal with it in good faith.</p>
+
+<p><i><font size=-1>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
+<br><i><font size=-1>Last Modified: 2/10/06</font></i>
+
+
+<br><a name="tags200" id="tags200"></a>
+<h2>What tags are defined?</h2>
+
+<p>Use <b>dupe</b> only when a Slashdot story is an actual duplicate of a
+previous <b>Slashdot</b> story, offering no new information.</p>
+
+<p>(Misusing the dupe or !dupe tag, by the way, is a great way to ensure
+your user account has reduced effect on our system in the years to come.
+Using it accurately and quickly will do the opposite.)</p>
+
+<p>Use <b>typo</b> when a Slashdot story writeup has spelling or
+grammatical errors, or bad HTML like a malformed link. Do not tag
+the story with the misspelled word in question.</p>
+
+<p>These tags will alert us to problems immediately (but they won't show
+up on the top tags list).</p>
+
+<p><i><font size=-1>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
+<br><i><font size=-1>Last Modified: 11/02/06</font></i>
+
+
+<br><a name="tags300" id="tags300"></a>
+<h2>What are Slashdot Bookmarks?</h2>
+
+<p>Slashdot Bookmarks exist to give you a quick place to save URLs for
+later,  to share them with  the Slashdot Community, and to submit them
+to the Slashdot Editors for consideration for posting.
+
+<p>Remember first and
+foremost that your bookmarks are public: whatever you bookmark will be
+available to any user of Slashdot.   You can also tag your bookmarks to
+aid you in finding them later.</p>
+
+<p>After you bookmark a URL, you will
+have the option to either Submit it directly to the Slashdot submission bin,
+or better yet, to write a Journal Entry about it.  Slashdot Journal Entries
+can now be automatically submitted to Slashdot editors for mainpage post
+consideration, so bookmarks are a great way to quickly
+submit stories.</p>
+
+<p><i><font size=-1>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
+<br><i><font size=-1>Last Modified: 3/22/06</font></i>
+
+
+<br><a name="tags310" id="tags310"></a>
+<h2>How do I save a Slashdot Bookmark?</h2>
+
+<p>You can bookmark a site by directly going to <a
+href="/bookmark.pl">the bookmarks page</a>,
+or alternatively, you can use the following lump of javascript as a
+browser button, and save it dynamically from your browser toolbar:</p>
+
+<p>All you need to do is drag one of the following links to your
+bookmark toolbar, or right-click and save the link as a bookmark.
+Subscribers using SSL will want to use the HTTPS version of this link.</p>
+
+<p>HTTP: <a href="javascript:location.href='http://slashdot.org/bookmark.pl?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">Post to Slashdot</a> (general users)
+<br>
+HTTPS: <a href="javascript:location.href='https://slashdot.org/bookmark.pl?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">Post to Slashdot</a> (for subscribers using SSL)
+</p>
+
+<p><i><font size=-1>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
+<br><i><font size=-1>Last Modified: 03/22/06</font></i>
+
+
+<br><a name="tags320" id="tags320"></a>
+<h2>How do I encourage my readers to bookmark at Slashdot?</h2>
+
+<p>In case your site's webpages aren't already cluttered enough with
+"Digg It" and "Add to Del.icio.us" links, you can add a badge or link that
+automatically submits your page to Slashdot. If enough readers
+click, your page will be brought to our editors' attention -- it's
+like a cheap, fast
+<a href="/submit.pl">submit.pl</a>.</p>
+
+<p><img src="http://images.slashdot.org/sdit6n.png" alt="sample slashdot badge" style="float:left; padding-right:1.5em;">
+Badges look like this, and besides allowing submission,
+show readers the current popularity of a submitted page
+and let them vote on it themselves. Here's a block of
+HTML you can include in any page:</p>
+
+<blockquote><p><pre>&lt;script src="http://slashdot.org/slashdot-it.js" type="text/javascript"&gt;&lt;/script&gt;</pre></blockquote>
+
+<p>You'll find details and examples in our <a href="/faq/badges.shtml">Badges How-To</a>.</p>
+
+<p><i><font size=-1>Answered by: <a href="mailto:scc@slashdot.org">scc</a></font></i>
+<br><i><font size=-1>Last Modified: 10/03/07</font></i>
+
+
+<br><a name="tags400" id="tags400"></a>
+<h2>How do I share my Bookmarks?</h2>
+
+<p>Your bookmarks are available to you at <a
+href="/my/bookmarks">/my/bookmarks</a>.  You can access other users'
+bookmarks from their homepages.  To read mine, you would use
+<a href=/~CmdrTaco/bookmarks/>/~CmdrTaco/bookmarks</a>.
+</p>
+<p><i><font size=-1>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
+<br><i><font size=-1>Last Modified: 3/22/06</font></i>
+
+
+<br><a name="tags410" id="tags410"></a>
+<h2>How can I see what Slashdotters are tagging?</h2>
+
+<p>At <a href="/tags">http://slashdot.org/tags</a>
+you can see some of the most popular tags. Each tag shows something
+about readers' thoughts on stories and bookmarks. Categorizational
+tags often work like a mini-search
+(<a href="/tags/web20">web20</a>,
+<a href="/tags/google">google</a>,
+<a href="/tags/globalwarming">globalwarming</a>,
+<a href="/tags/diebold">diebold</a>,
+<a href="/tags/bush">bush</a>,
+<a href="/tags/rumor">rumor</a>,
+<a href="/tags/xbox">xbox</a>),
+and commentary tags give a glimpse into Slashdotters' opinions
+(<a href="/tags/itsatrap">itsatrap</a>,
+<a href="/tags/fud">fud</a>,
+<a href="/tags/snakeoil">snakeoil</a>,
+<a href="/tags/cool">cool</a>,
+<a href="/tags/finally">finally</a>,
+<a href="/tags/whocares">whocares</a>,
+and the Jeopardy-style answers
+<a href="/tags/yes">yes</a> and <a href="/tags/no">no</a>).</p>
+
+<p>You can see your own tags by visiting
+<a href="/my/tags">/my/tags</a>,
+or any user's tags at
+<a href="/~CmdrTaco/tags">/~CmdrTaco/tags</a>.
+
+<p>We'll be doing the usual improvements -- RSS feeds, tag clouds,
+nicer formatting -- a little while down the road.</p>
+
+<p><i><font size=-1>Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i>
+<br><i><font size=-1>Last Modified: 11/02/06</font></i>
+
+
+<hr>
+<table>
+<tr>
+<td><a href="suggestions.shtml">Previous section</a></td>
+<td><a href="firehose.shtml">Next section</a></td>
+<td><a href="index.shtml">Index</a></td>
+</tr>
+</table>
+</div>	
+		</div>
+			<div id="footer">
+				<div class="search">
+				
+					<form method="get" action="//slashdot.org/search.pl">
+						<fieldset>
+							<legend>Search</legend>
+							<input type="text" name="query" value="" size="20">
+							<input type="submit" value="Search" class="button">
+						</fieldset>
+					</form>
+				
+				</div>
+				<div class="rightcontent">
+					
+                		        <small>Tout choses sont dites deja, mais comme personne n'ecoute, il faut
+toujours recommencer.
+		-- A. Gide</small>
+					
+				</div>	
+			</div>
+		</div>	
+	</div>
+	<div class="copyright">
+		<p>
+
+			All trademarks and copyrights on this page are owned by their respective owners.  Comments are owned by the Poster.  The Rest &copy; 1997-2007 <a href="http://sourceforge.com/">SourceForge</a>, Inc.
+		</p>
+	</div>
+	<div class="btmnav">
+		<ul>
+			<li class="begin"><a href="//slashdot.org/">home</a></li>
+			<li><a href="//slashdot.org/awards.shtml">awards</a></li>
+			<li><a href="//slashdot.org/submit.pl">contribute story</a></li>
+			<li><a href="//slashdot.org/search.pl">older articles</a></li>
+			<li><a href="http://sourceforge.com/">sourceforge, inc.</a></li>
+			<li><a href="http://web.sourceforge.com/media_kit.php">advertise</a></li>
+			<li><a href="//slashdot.org/about.shtml">about</a></li>
+			<li><a href="http://web.sourceforge.com/terms.php">terms of service</a></li>
+			<li><a href="http://web.sourceforge.com/privacy.php">privacy</a></li>
+			<li><a href="//slashdot.org/faq/">faq</a></li>
+			<li><a href="http://rss.slashdot.org/Slashdot/slashdot">rss</a></li>
+		</ul>
+	</div>
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
+<script type="text/javascript">
+	_uacct = "UA-32013-5";
+	_udn = "slashdot.org";
+	urchinTracker();
+</script>
+</body>
+</html>
+</body>
+</html>
+
