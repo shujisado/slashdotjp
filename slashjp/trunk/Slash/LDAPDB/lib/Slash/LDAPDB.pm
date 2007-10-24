@@ -65,7 +65,7 @@ sub new {
 
 sub bind {
     my $self = shift;
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     return 1 if defined $self->{_bind_p};
     $self->{_bind_p} = 1;
     my @args = ();
@@ -86,7 +86,7 @@ sub authUser {
     my $matchname = shift;
     my $pass = shift;
     __debug(8, "LDAP::authUser: start auth for $matchname");
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     my $userinfo = $self->getUser($matchname);
 
     if ($userinfo->{passwd} eq md5_hex($pass)) {
@@ -103,7 +103,7 @@ sub createUser {
     my $val  = shift;
     __debug(8, "LDAP::createUser called for user '$user'");
     __debug(9, "LDAP::createUser called with ". Data::Dumper->Dump([$val], [qw($val)]));
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     $val->{matchname} = $user;
 
     unless ($self->getUser($val->{matchname})) {
@@ -141,7 +141,7 @@ sub deleteUserByUid {
     my $self = shift;
     my $uid  = shift;
     __debug(8, "LDAP::deleteUser called for uid '$uid'");
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     my $userent = $self->getUserByUid($uid);
     $userent && $self->deleteUser($userent->{matchname});
 }
@@ -150,7 +150,7 @@ sub deleteUser {
     my $self = shift;
     my $user = shift;
     __debug(8, "LDAP::deleteUser called for user '$user'");
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     my $mesg = $self->_timeout(sub { $self->{_ldap}->delete("cn=${user},".$self->{base_dn}) });
     $mesg->code && __debug(3, "LDAP Error when deleteUser: ". $mesg->error);
     !$mesg->code;
@@ -162,7 +162,7 @@ sub setUser() {
     my $val  = shift;
     __debug(8, "LDAP::setUser called for user '$user'");
     __debug(9, "LDAP::setUser called with ". Data::Dumper->Dump([$val], [qw($val)]));
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     my $changes = $self->_s2lop($val);
     return -1 unless @$changes;
 
@@ -181,7 +181,7 @@ sub setUserByUid() {
     my $val  = shift;
     __debug(8, "LDAP::setUserByUid called for uid '$uid'");
     __debug(9, "LDAP::setUserByUid called with ". Data::Dumper->Dump([$val], [qw($val)]));
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     my $changes = $self->_s2lop($val);
     return -1 unless @$changes;
 
@@ -193,7 +193,7 @@ sub setUserByUid() {
 sub getUser() {
     my $self = shift;
     my $user = shift;
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     my $entry = $self->_get_userent("(cn=$user)");
     unless ($entry) {
 	__debug(5, "LDAP::getUser: Can't find user cn=$user");
@@ -205,7 +205,7 @@ sub getUser() {
 sub getUserByUid() {
     my $self = shift;
     my $uid  = shift;
-    $self->_check_diabled and return undef;
+    $self->_check_disabled and return undef;
     my $entry = $self->_get_userent("($self->{attrib_prefix}UidNumber=$uid)");
     unless ($entry) {
 	__debug(5, "LDAP::getUser: Can't find user uid=$uid");
@@ -311,7 +311,7 @@ sub __getCurrentStatic {
     Slash::Utility::Environment::getCurrentStatic();
 }
 
-sub _check_diabled {
+sub _check_disabled {
     my $self = shift;
     $self->{_disabled} and
 	__debug(1, "Slash::LDAP has been disabled: ($self->{_disabled})");
