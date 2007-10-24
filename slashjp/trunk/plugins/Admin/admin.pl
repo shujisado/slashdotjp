@@ -1975,7 +1975,7 @@ sub editFilter {
 	} elsif ($form->{deletefilter}) {
 		$slashdb->deleteContentFilter($form->{filter_id});
 		titlebar("100%", getTitle('updateFilter-delete-title'));
-		listFilters($formname);
+		listFilters(@_);
 		return();
 	}
 
