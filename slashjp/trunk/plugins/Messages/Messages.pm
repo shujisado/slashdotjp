@@ -457,7 +457,7 @@ sub send {
 		}
 
                 # Email and Mobile messages are both Email modes, but use different recipients.
-                if ($msg->{user}{prefs}{$msg->{code}} == $self->getMessageDeliveryByName("Mobile")) {
+                if ($msg->{user}{prefs}{$msg->{code}} && $msg->{user}{prefs}{$msg->{code}} == $self->getMessageDeliveryByName("Mobile")) {
                         $addr = $msg->{user}{mobile_text_address};
                 } else {
                         $addr = $msg->{altto} || $msg->{user}{realemail};
@@ -1120,7 +1120,7 @@ sub getMessageDeliveryByName {
 
         my $slashdb = getCurrentDB();
         my $name_q = $slashdb->sqlQuote($name);
-        my $code = $slashdb->sqlSelect("code", "message_deliverymodes", "name = $name_q");
+        my $code = $slashdb->sqlSelect("code", "message_deliverymodes", "name = $name_q") || -1;
 
         return($code);
 }
