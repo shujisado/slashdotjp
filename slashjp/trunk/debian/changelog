@@ -10,8 +10,10 @@ slash (2.5.0.180-0.1) unstable; urgency=low
   * Fix: remove filter failed: plugins/Admin/admin.pl
   * Typo fix at Slash/LDAPDB/lib/Slash/LDAPDB.pm
   * Fix warning: Wide character in print at plugins/Admin/admin.pl
+  * Fix warning: Use of uninitialized value in substitution iterator at
+    fixparam() in Slash/Utility/Data/Data.pm
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 24 Oct 2007 18:50:39 +0900
+ -- Taku YASUI <tach@osdn.jp>  Wed, 24 Oct 2007 19:16:59 +0900
 
 slash (2.5.0.119-17) unstable; urgency=low
 

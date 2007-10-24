@@ -2138,6 +2138,8 @@ The escaped data.
 
 sub fixparam {
 	my($url) = @_;
+	no utf8;
+	Encode::is_utf8($url) and $url = Encode::encode_utf8($url);
 	$url =~ s/([^$URI::unreserved ])/$URI::Escape::escapes{$1}/og;
 	$url =~ s/ /+/g;
 	return $url;
