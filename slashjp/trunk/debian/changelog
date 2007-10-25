@@ -12,8 +12,10 @@ slash (2.5.0.180-0.1) unstable; urgency=low
   * Fix warning: Wide character in print at plugins/Admin/admin.pl
   * Fix warning: Use of uninitialized value in substitution iterator at
     fixparam() in Slash/Utility/Data/Data.pm
+  * Fix warning: Use of uninitialized value and hash key at
+    templateEdit() in plugins/Admin/admin.pl
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 24 Oct 2007 19:16:59 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 25 Oct 2007 20:45:36 +0900
 
 slash (2.5.0.119-17) unstable; urgency=low
 

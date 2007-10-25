@@ -449,7 +449,7 @@ sub templateEdit {
 
 	$templateref = $slashdb->getTemplate($tpid, '', 1) if $tpid;
 
-	$seclev_flag = 0 if $templateref->{seclev} > $user->{seclev};
+	$seclev_flag = 0 if ($tpid && $templateref->{seclev} > $user->{seclev});
 
 	if ($form->{templatedelete}) {
 		$templatedelete_flag = 1;
@@ -460,7 +460,7 @@ sub templateEdit {
 		my $getskin = $skin eq 'All' ? '' : $skin;
 
 		unless ($form->{templateskin} || $form->{templatepage} || $form->{templatepageandskin} || $form->{templatesearch}) {
-			$form->{ $form->{templatelastselect} } = 1;
+			$form->{ $form->{templatelastselect} } = 1 if $form->{templatelastselect};
 		}
 
 		if ($form->{templateskin}) {
