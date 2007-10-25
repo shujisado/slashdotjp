@@ -57,8 +57,8 @@ sub new {
 
     if (!$self->{_disabled} &&
 	!($self->{_ldap} = Net::LDAP->new($self->{host}, timeout => $self->{timeout}))){
-	__debug(1, "LDAP: can't create DLAP object $@");
-	$self->{_disabled} = "DLAP object create fail: $@";
+	__debug(1, "LDAP: can't create LDAP object $@");
+	$self->{_disabled} = "LDAP object create fail: $@";
     }
     return $self;
 }
@@ -166,7 +166,7 @@ sub setUser() {
     my $changes = $self->_s2lop($val);
     return -1 unless @$changes;
 
-    __debug(9, "DLAP::serUser ".Data::Dumper->Dump([$changes], [qw($changes)]));
+    __debug(9, "LDAP::setUser ".Data::Dumper->Dump([$changes], [qw($changes)]));
 
     $self->bind;
     my $mesg = $self->_timeout(sub { $self->{_ldap}->modify("cn=$user,$self->{base_dn}",
