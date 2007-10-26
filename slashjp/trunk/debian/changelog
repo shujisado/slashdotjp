@@ -14,8 +14,9 @@ slash (2.5.0.180-0.1) unstable; urgency=low
     fixparam() in Slash/Utility/Data/Data.pm
   * Fix warning: Use of uninitialized value and hash key at
     templateEdit() in plugins/Admin/admin.pl
+  * Allow to change LDAPDB DEBUG_LEVEL using vars "ldap_debug_level"
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 25 Oct 2007 20:45:36 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 26 Oct 2007 15:01:29 +0900
 
 slash (2.5.0.119-17) unstable; urgency=low
 

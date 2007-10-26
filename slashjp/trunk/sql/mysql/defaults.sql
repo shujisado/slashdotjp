@@ -1119,6 +1119,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_attrib_prefix',
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_base_dn','','base dn for LDAP migration');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_dn','','binddn for LDAP migration');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_passwd','','bind password for LDAP migration');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_debug_level','0','LDAPDB debug level (default: 5)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_enable','0','enable LDAP migration (1: enable, 0: disable)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_peer_attrib_prefix', '', 'peer attribute prefix for LDAP migration');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mail_charset_body','us-ascii','Character Encoding used for mail body sent by the system (s. Encode::Supported)');
