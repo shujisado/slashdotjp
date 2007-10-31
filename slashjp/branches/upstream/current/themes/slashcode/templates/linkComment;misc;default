@@ -22,8 +22,8 @@ en_US
 __name__
 linkComment
 __template__
-<a href="[% gSkin.rootdir %]/comments.pl?sid=[% sid 
-                                              %]&amp;op=[% op;
+<a href="[% gSkin.rootdir %]/comments.pl?sid=[% sid;
+IF op.defined                                 %]&amp;op=[% op; END;
 IF threshold.defined                          %]&amp;threshold=[% threshold; END;
 IF commentsort.defined                        %]&amp;commentsort=[% commentsort; END;
 IF mode.defined                               %]&amp;mode=[% mode; END;
@@ -59,4 +59,4 @@ END %]"[% IF onclick %] onclick="[% onclick %]"[% END
 __seclev__
 10000
 __version__
-$Id: linkComment;misc;default,v 1.16 2007/10/04 19:41:22 pudge Exp $
+$Id: linkComment;misc;default,v 1.17 2007/10/23 23:20:19 pudge Exp $

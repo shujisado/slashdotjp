@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Blob.pm,v 1.15 2005/10/11 19:15:50 jamiemccarthy Exp $
+# $Id: Blob.pm,v 1.17 2007/10/24 19:11:10 tvroom Exp $
 
 package Slash::Blob;
 
@@ -16,7 +16,7 @@ use vars qw($VERSION);
 use base 'Exporter';
 use base 'Slash::DB::Utility';
 
-($VERSION) = ' $Revision: 1.15 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.17 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # When this plugin was first written, it used a hardcoded hash to
 # store MIME types.  Now we use the MIME::Types module.  But for
@@ -174,6 +174,12 @@ sub delete {
 sub clean {
 	my($self, $sig) = @_;
 	return $self->sqlDelete($self->{_table}, "reference_count < 1");
+}
+
+sub get {
+	my($self, $sig) = @_;
+	my $sig_q = $self->sqlQuote($sig);
+	return $self->sqlSelectHashref($self->{_table}, "id = $sig_q");
 }
 
 sub getFilesForStories {

@@ -86,7 +86,7 @@ __template__
 			[% PROCESS formNote note => "Where users can contact you" %]
 			[% IF constants.plugin.FireHose %]
 				[% PROCESS formLabel value => "Url"  %]
-				<input type="text" name="url" value="[% form.url | strip_attribute %]" size="50">
+				<input type="text" name="url" value="[% form.url | strip_attribute %]" size="50"> Url type [% Slash.createSelect('mediiatype', Slash.db.getDescriptions('mediatypes'), { default => form.mediatype || "none" , return => 1 }) %]
 				[% PROCESS formNote note => "Main url of submission (optional but if provided must be unique) " %]
 			[% END %]
 			[% PROCESS formLabel value => "Subject"  %]
@@ -155,4 +155,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: displayForm;submit;default,v 1.38 2007/05/29 20:07:35 tvroom Exp $
+$Id: displayForm;submit;default,v 1.40 2007/10/23 20:56:46 tvroom Exp $

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Display.pm,v 1.123 2007/10/04 19:41:22 pudge Exp $
+# $Id: Display.pm,v 1.124 2007/10/23 23:20:15 pudge Exp $
 
 package Slash::Utility::Display;
 
@@ -33,7 +33,7 @@ use Slash::Utility::Environment;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.123 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.124 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	cleanSlashTags
 	createMenu
@@ -1081,11 +1081,9 @@ The 'linkComment' template block.
 =cut
 
 sub linkComment {
-	my($linkdata, $printcomment, $date) = @_;
+	my($linkdata, $printcomment, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
-	return _hard_linkComment(@_) if $constants->{comments_hardcoded};
-
 	my $user = getCurrentUser();
 	my $adminflag = $user->{seclev} >= 10000 ? 1 : 0;
 
@@ -1095,17 +1093,21 @@ sub linkComment {
 		$linkdata->{$_} = undef unless exists $linkdata->{$_};
 	}
 
-	$linkdata->{pid} = $linkdata->{original_pid} || $linkdata->{pid};
+	$linkdata->{pid}     = $linkdata->{original_pid} || $linkdata->{pid};
+	$linkdata->{comment} = $printcomment;
 
-	slashDisplay('linkComment', {
-		%$linkdata, # defaults
-		adminflag	=> $adminflag,
-		date		=> $date,
-		threshold	=> defined($linkdata->{threshold}) ? $linkdata->{threshold} : $user->{threshold},
-		commentsort	=> $user->{commentsort},
-		mode		=> $user->{mode},
-		comment		=> $printcomment,
-	}, { Return => 1, Nocomm => 1 });
+	if (!$options->{noextra}) {
+		%$linkdata = (%$linkdata,
+			adminflag	=> $adminflag,
+			date		=> $options->{date},
+			threshold	=> defined($linkdata->{threshold}) ? $linkdata->{threshold} : $user->{threshold},
+			commentsort	=> $user->{commentsort},
+			mode		=> $user->{mode},
+		);
+	}
+
+	return _hard_linkComment($linkdata) if $constants->{comments_hardcoded};
+	slashDisplay('linkComment', $linkdata, { Return => 1, Nocomm => 1 });
 }
 
 #========================================================================
@@ -1314,7 +1316,7 @@ sub lockTest {
 ########################################################
 # this sucks, but it is here for now
 sub _hard_linkComment {
-	my($linkdata, $printcomment, $date) = @_;
+	my($linkdata) = @_;
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -1323,16 +1325,16 @@ sub _hard_linkComment {
 	my $subject = $linkdata->{subject};
 
 	my $display = qq|<a href="$gSkin->{rootdir}/comments.pl?sid=$linkdata->{sid}|;
-	$display .= "&amp;op=$linkdata->{op}" if $linkdata->{op};
-	$display .= "&amp;threshold=" . (defined($linkdata->{threshold}) ? $linkdata->{threshold} : $user->{threshold});
-	$display .= "&amp;commentsort=$user->{commentsort}" if defined $user->{commentsort};
-	$display .= "&amp;mode=$user->{mode}" if defined $user->{mode};
+	$display .= "&amp;op=$linkdata->{op}" if defined($linkdata->{op});
+	$display .= "&amp;threshold=$linkdata->{threshold}" if defined($linkdata->{threshold});
+	$display .= "&amp;commentsort=$user->{commentsort}" if defined $linkdata->{commentsort};
+	$display .= "&amp;mode=$user->{mode}" if defined $linkdata->{mode};
 	$display .= "&amp;no_d2=1" if $user->{state}{no_d2} || $linkdata->{no_d2};
 	$display .= "&amp;startat=$linkdata->{startat}" if $linkdata->{startat};
 	$display .= "&amp;tid=$user->{state}{tid}"
 		if $constants->{tids_in_urls} && $user->{state}{tid};
 
-	if ($printcomment) {
+	if ($linkdata->{comment}) {
 		$display .= "&amp;cid=$linkdata->{cid}";
 	} else {
 		$display .= "&amp;pid=" . ($linkdata->{original_pid} || $linkdata->{pid});
@@ -1346,7 +1348,7 @@ sub _hard_linkComment {
 		$display .= qq| (Score:$linkdata->{points})|
 			if !$user->{noscores} && $linkdata->{points};
 		$display .= " " . timeCalc($linkdata->{date}) 
-			if $date;
+			if $linkdata->{date};
 	}
 	#$display .= "\n";
 
@@ -1726,4 +1728,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Display.pm,v 1.123 2007/10/04 19:41:22 pudge Exp $
+$Id: Display.pm,v 1.124 2007/10/23 23:20:15 pudge Exp $

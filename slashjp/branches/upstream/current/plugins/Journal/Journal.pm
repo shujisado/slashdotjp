@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Journal.pm,v 1.66 2006/12/12 22:47:46 tvroom Exp $
+# $Id: Journal.pm,v 1.67 2007/10/26 03:05:27 pudge Exp $
 
 package Slash::Journal;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.66 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.67 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -61,10 +61,14 @@ sub set {
 	$self->sqlUpdate('journals', \%j1, "id=$id") if keys %j1;
 	$self->sqlUpdate('journals_text', \%j2, "id=$id") if $j2{article};
 	if ($constants->{plugin}{FireHose}) {
-		my $journal_item = $self->get($id);
-		my $firehose = getObject("Slash::FireHose");
-		if ($journal_item->{promotetype} eq "publicize" || $journal_item->{promotetype} eq "publish") {
-			$firehose->createUpdateItemFromJournal($id);
+		my $reskey = getObject('Slash::ResKey');
+		my $rkey = $reskey->key('submit', { nostate => 1 });
+		if ($rkey && $rkey->createuse) {
+			my $journal_item = $self->get($id);
+			my $firehose = getObject("Slash::FireHose");
+			if ($journal_item->{promotetype} eq "publicize" || $journal_item->{promotetype} eq "publish") {
+				$firehose->createUpdateItemFromJournal($id);
+			}
 		}
 	}
 }
@@ -210,11 +214,15 @@ sub create {
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { journal_last_entry_date => $date });
 	if ($constants->{plugin}{FireHose}) {
-		my $firehose = getObject("Slash::FireHose");
-		my $journal = getObject("Slash::Journal");
-		my $j = $journal->get($id);
-		if ($j->{promotetype} eq "publicize" || $j->{promotetype} eq "publish") {
-			$firehose->createItemFromJournal($id);
+		my $reskey = getObject('Slash::ResKey');
+		my $rkey = $reskey->key('submit', { nostate => 1 });
+		if ($rkey && $rkey->createuse) {
+			my $firehose = getObject("Slash::FireHose");
+			my $journal = getObject("Slash::Journal");
+			my $j = $journal->get($id);
+			if ($j->{promotetype} eq "publicize" || $j->{promotetype} eq "publish") {
+				$firehose->createItemFromJournal($id);
+			}
 		}
 	}
 

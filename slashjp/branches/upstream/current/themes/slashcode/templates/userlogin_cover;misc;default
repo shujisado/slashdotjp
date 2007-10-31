@@ -18,7 +18,7 @@ __template__
 <div id="login_box" style="display:none">
 [% PROCESS titlebar
 	title => "Please Log In to Continue" _
-		'<a href="javascript:hide_login_box()" class="close" title="Close this box"><img id="login_box_close" src="' _
+		'<a href="#" onclick="hide_login_box(); return false" class="close" title="Close this box"><img id="login_box_close" src="' _
 		gSkin.imagedir _ '/images/sic_close.png" alt="Close"></a>'
 %]
 <div id="login_box_content">
@@ -29,4 +29,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: userlogin_cover;misc;default,v 1.1 2007/10/11 22:14:06 pudge Exp $
+$Id: userlogin_cover;misc;default,v 1.2 2007/10/24 00:30:08 scc Exp $

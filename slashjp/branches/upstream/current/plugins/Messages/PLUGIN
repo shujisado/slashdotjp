@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.13 2007/06/19 18:00:35 entweichen Exp $
+# $Id: PLUGIN,v 1.14 2007/10/24 21:21:12 jamiemccarthy Exp $
 name=Messages
 description="Messaging system"
 mysql_schema=mysql_schema
@@ -14,6 +14,7 @@ template=templates/dailynews;messages;default
 template=templates/data;messages;default
 template=templates/display;messages;default
 template=templates/display_prefs;messages;default
+template=templates/edit;messages;default
 template=templates/emailsponsor;messages;default
 template=templates/footer;messages;default
 template=templates/html_invalid;misc;default

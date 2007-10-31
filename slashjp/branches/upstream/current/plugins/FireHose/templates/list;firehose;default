@@ -47,7 +47,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 
 <div id="slashboxes">
 [% UNLESS user.noboxes %]
-  [% IF slashboxes && !(form.smalldevices || form.gadget || (constants.smalldevices_ua_regex && ua.match(constants.smalldevices_ua_regex)));
+  [% IF slashboxes && !(form.smalldevices || form.embed || (constants.smalldevices_ua_regex && ua.match(constants.smalldevices_ua_regex)));
     slashboxes %]
   [% END %]
 [% END %]
@@ -196,4 +196,4 @@ firehose_slider_init();
 </script>
 
 __version__
-$Id: list;firehose;default,v 1.103 2007/10/11 22:14:06 pudge Exp $
+$Id: list;firehose;default,v 1.104 2007/10/24 00:30:08 scc Exp $

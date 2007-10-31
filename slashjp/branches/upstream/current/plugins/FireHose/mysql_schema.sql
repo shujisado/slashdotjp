@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.22 2007/09/04 07:16:37 pudge Exp $
+# $Id: mysql_schema.sql,v 1.23 2007/10/23 20:52:13 tvroom Exp $
 #
 DROP TABLE IF EXISTS firehose;
 CREATE TABLE firehose (
@@ -35,6 +35,7 @@ CREATE TABLE firehose (
 	body_length MEDIUMINT UNSIGNED DEFAULT 0 NOT NULL,
 	word_count MEDIUMINT UNSIGNED DEFAULT 0 NOT NULL,
 	srcname VARCHAR(32) NOT NULL DEFAULT '',
+	mediatype enum("text", "none", "video", "image", "audio") default "none" NOT NULL,
 	PRIMARY KEY (id),
 	UNIQUE globjid (globjid),
 	KEY createtime (createtime),

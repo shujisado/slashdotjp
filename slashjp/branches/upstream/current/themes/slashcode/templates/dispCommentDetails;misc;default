@@ -26,7 +26,7 @@ __template__
 				cid     => cid,
 				subject => ('#' _ cid),
 				subject_only => 1
-			}, 1) %])[% END %]
+			}, 1, { noextra => 1 }) %])[% END %]
 			<small>
 			[% has_homepage = homepage && homepage.length > 8;
 				has_journal = journal_last_entry_date.search('[1-9]');
@@ -47,4 +47,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: dispCommentDetails;misc;default,v 1.2 2007/10/04 19:41:22 pudge Exp $
+$Id: dispCommentDetails;misc;default,v 1.3 2007/10/23 23:20:19 pudge Exp $

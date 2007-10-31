@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Environment.pm,v 1.222 2007/10/17 06:31:24 pudge Exp $
+# $Id: Environment.pm,v 1.223 2007/10/24 21:19:34 jamiemccarthy Exp $
 
 package Slash::Utility::Environment;
 
@@ -33,7 +33,7 @@ use Socket qw( inet_aton inet_ntoa );
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.222 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.223 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 
 	dbAvailable
@@ -3170,7 +3170,7 @@ or an assignment into an SQL integer value.  This value should _not_ be
 quoted but rather inserted directly into an SQL request.  For example,
 if passed "123" (a user id), will return "CAST('123' AS UNSIGNED)"
 (same value, quoted);  if passed "200123456789abcd" (an encoded IP),
-will return "CAST(CONV('200123456789abcd', 16, 10) AS UNSIGNED" which
+will return "CAST(CONV('200123456789abcd', 16, 10) AS UNSIGNED)" which
 can be used as an assignment into or test against a BIGINT column.
 
 For speed, does not do error-checking against the value passed in.
@@ -3500,4 +3500,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Environment.pm,v 1.222 2007/10/17 06:31:24 pudge Exp $
+$Id: Environment.pm,v 1.223 2007/10/24 21:19:34 jamiemccarthy Exp $

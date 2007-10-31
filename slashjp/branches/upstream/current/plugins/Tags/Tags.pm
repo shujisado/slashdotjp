@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.84 2007/10/09 20:04:42 jamiemccarthy Exp $
+# $Id: Tags.pm,v 1.85 2007/10/24 21:12:23 jamiemccarthy Exp $
 
 package Slash::Tags;
 
@@ -17,7 +17,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.84 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.85 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -26,14 +26,19 @@ sub new {
 	my($class, $user) = @_;
 	my $self = {};
 
-	my $plugin = getCurrentStatic('plugin');
-	return unless $plugin->{Tags};
+	return undef unless $class->isInstalled();
 
 	bless($self, $class);
 	$self->{virtual_user} = $user;
 	$self->sqlConnect();
 
 	return $self;
+}
+
+sub isInstalled {
+	my($class) = @_;
+	my $constants = getCurrentStatic();
+	return $constants->{plugin}{Tags} || 0;
 }
 
 ########################################################
@@ -617,7 +622,8 @@ if (!$clout_info) { use Carp; Carp::cluck("getCloutInfo returned false for clid=
 			# XXX this stub is good enough for now but we may
 			# need the whole actual getUser() user at some
 			# future time
-			$uid_clout_hr->{$uid} = $clout_info->{class}->getUserClout(\%user_stub);
+			my $clout = getObject($clout_info->{class}, { db_type => 'reader' });
+			$uid_clout_hr->{$uid} = $clout->getUserClout(\%user_stub);
 		}
 	}
 

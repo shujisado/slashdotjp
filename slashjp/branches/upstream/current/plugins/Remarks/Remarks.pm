@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Remarks.pm,v 1.10 2006/07/18 23:08:55 pudge Exp $
+# $Id: Remarks.pm,v 1.11 2007/10/24 00:30:08 scc Exp $
 
 package Slash::Remarks;
 
@@ -34,7 +34,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.10 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.11 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ########################################################
 sub new {
@@ -180,7 +180,7 @@ sub ajaxConfigSave {
 	}
 	$slashdb->setUser($user->{uid}, $data) if keys %$data;
 	# this should be in a template -- pudge
-	return "<a href=\"javascript:closePopup('remarksconfig-popup', 1)\">Close</a>";
+	return "<a href=\"#\" onclick=\"closePopup('remarksconfig-popup', 1)\">Close</a>";
 }
 
 1;
@@ -194,4 +194,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Remarks.pm,v 1.10 2006/07/18 23:08:55 pudge Exp $
+$Id: Remarks.pm,v 1.11 2007/10/24 00:30:08 scc Exp $

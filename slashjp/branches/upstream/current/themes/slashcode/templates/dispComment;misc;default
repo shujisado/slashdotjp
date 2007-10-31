@@ -27,14 +27,14 @@ __template__
 <div id="comment_status_[% cid %]" class="commentstatus"></div>
 <div id="comment_[% cid %]"[% IF discussion2 %] class="[% class %]"[% END %]>
 [% END; IF !options.noshow %]
-	<div class="commentTop">
+	<div id="comment_top_[% cid %]" class="commentTop newcomment">
 		<div class="title">
 			[% IF discussion2 %]
-			<h4><a id="comment_link_[% cid %]" name="comment_link_[% cid %]" href="[% gSkin.rootdir %]/comments.pl?sid=[% sid %]&amp;cid=[% cid %]" onclick="return setFocusComment([% cid %])">[% subject %]</a></h4>
+			<h4><a id="comment_link_[% cid %]" name="comment_link_[% cid %]" href="[% gSkin.rootdir %]/comments.pl?sid=[% sid %]&amp;cid=[% cid %]" onclick="return setFocusComment([% cid %])">[% subject %]</a>
 			[% ELSE %]
-			<h4><a name="[% cid %]">[% subject %]</a></h4>
+			<h4><a name="[% cid %]">[% subject %]</a>
 			[%- END %]
-			[% UNLESS user.noscores %]<span id="comment_score_[% cid %]" class="score">(Score:[% IF points.length; points; ELSE; "?"; END %][% IF reasons && reason %], [% reasons.$reason.name %][% END %])</span>[% END %]
+			[% UNLESS user.noscores %]<span id="comment_score_[% cid %]" class="score">(Score:[% IF points.length; points; ELSE; "?"; END %][% IF reasons && reason %], [% reasons.$reason.name %][% END %])</span>[% END %]</h4>
 		</div>
 		<div class="details">
 			by
@@ -81,4 +81,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: dispComment;misc;default,v 1.61 2007/08/29 06:23:17 pudge Exp $
+$Id: dispComment;misc;default,v 1.64 2007/10/25 02:12:17 pudge Exp $
