@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+submit
+__lang__
+en_US
+__name__
+messagenew_subj
+__template__
+New Submission "[% submission.subj %]"
+
+__seclev__
+100
+__version__
+$Id: messagenew_subj;submit;default,v 1.4 2003/03/04 19:07:59 pudge Exp $

@@ -1,0 +1,41 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+search
+__lang__
+en_US
+__name__
+rsssearch
+__template__
+<div class="rsssearch">
+[% FOREACH entry=entries %]
+	<div class="search-results">
+		<h4>
+			<a href="[% entry.link %]">[% entry.title %]</a>
+		</h4>
+		<div class="data">
+			On [% Slash.timeCalc(entry.created) %]
+		</div>
+		[% IF entry.description %]
+		<div class="intro">
+			[% entry.description %]...
+		</div>
+		[% END %]
+		[% IF entry.score %]
+		<div class="score">
+			Score: [% entry.score %]
+		</div>
+		[% END %]
+	</div>
+[% END %]
+[% PROCESS pagination %]
+</div>
+</div>
+__seclev__
+100
+__version__
+$Id: rsssearch;search;default,v 1.4 2005/07/27 22:54:12 pudge Exp $
