@@ -1710,7 +1710,7 @@ sub getDescForTopicsRendered {
 	my $user = getCurrentUser();
 	my $tree = $slashdb->getTopicTree();
 	my $mainpage_nexus_tid = getCurrentStatic("mainpage_nexus_tid");
-	my $primary_nexus_tid  = $primaryskid ? $slashdb->getNexusFromSkid($primaryskid) || 0;
+	my $primary_nexus_tid  = $primaryskid ? $slashdb->getNexusFromSkid($primaryskid) : 0;
 	my @story_nexuses        = grep { $tree->{$_}{nexus} } keys %$topics_rendered;
 
 	my @sorted_nexuses = 	map { $_->[1] } 

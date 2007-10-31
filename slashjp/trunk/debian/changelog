@@ -1,8 +1,9 @@
 slash (2.5.0.181-0.1) unstable; urgency=low
 
   * New upstream CVS release
+  * Fix syntax error on plugins/Admin/admin.pl
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 14:53:58 +0900
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 16:08:34 +0900
 
 slash (2.5.0.180-0.1) unstable; urgency=low
 
