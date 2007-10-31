@@ -1,3 +1,9 @@
+slash (2.5.0.181-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 14:53:58 +0900
+
 slash (2.5.0.180-0.1) unstable; urgency=low
 
   * New upstream cvs release
@@ -18,7 +24,7 @@ slash (2.5.0.180-0.1) unstable; urgency=low
   * Fix warning: Use of uninitialized value at
     getDescForTopicsRendered() at plugins/Admin/admin.pl
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 26 Oct 2007 15:06:24 +0900
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 14:53:53 +0900
 
 slash (2.5.0.119-17) unstable; urgency=low
 

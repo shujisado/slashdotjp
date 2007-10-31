@@ -1516,7 +1516,9 @@ sub editStory {
 	}
 	my $pending_file_count = 0;
 	my $story_static_files = [];
-	if ($stoid) {
+	if ($stoid || $form->{sid}) {
+		my $story = $slashdb->getStory($form->{sid});
+		$stoid ||= $story->{stoid};
 		$pending_file_count = $slashdb->numPendingFilesForStory($stoid); 		$story_static_files = $slashdb->getStaticFilesForStory($stoid);
 	}
 	slashDisplay('editStory', {
@@ -1722,7 +1724,7 @@ sub getDescForTopicsRendered {
 					[$val, $_]
 				} @story_nexuses;
 
-	my $remove = qq{[<a href="javascript:st_main_add_really(%d,'%s',0,1)" class="nex_remove">x</a>]};
+	my $remove = qq{[<a href="#" onclick="st_main_add_really(%d,'%s',0,1); return false" class="nex_remove">x</a>]};
 
 	my $desc;
 	if (!@sorted_nexuses) {
@@ -2116,28 +2118,53 @@ sub handleMediaFileForStory {
 	my($stoid) = @_;
 	my $form    = getCurrentForm();
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	my $saveblob = $constants->{admin_use_blob_for_upload};
+	my $savefile = !$saveblob;
+
 	if ($form->{media_file}) {
 		my $upload = $form->{query_apache}->upload;
 		if ($upload) {
 			my $fh = $upload->fh;
 			use File::Path;
-			mkpath("/tmp/upload", 0, 0755) unless -e "/tmp/upload";
 			$form->{media_file} =~ s|^.*?([^/:\\]+)$|$1|;
 			my $name = $form->{media_file};
 			my $suffix;
 			($suffix) = $name =~ /(\.\w+)$/;
-			use File::Temp qw(:mktemp);
-			my ($ofh, $tmpname) = mkstemps("/tmp/upload/fileXXXXXX", $suffix );
+			my($ofh, $tmpname, $blobdata);
+			mkpath("/tmp/upload", 0, 0755) unless -e "/tmp/upload";
+
+			if ($savefile) {
+				use File::Temp qw(:mktemp);
+				($ofh, $tmpname) = mkstemps("/tmp/upload/fileXXXXXX", $suffix );
+			}
 				
 			while (<$fh>) {
-				print $ofh $_;
+				print $ofh $_ if $savefile;
+				$blobdata .= $_ if $saveblob;
 			}
-			close $ofh;
+			if ($savefile) {
+				close $ofh;
+			}
+			my $action = $form->{media_action} eq "thumbnails" ? "thumbnails" : "upload";
 			my $file = {
 				stoid	=> $stoid,
-				file	=> "$tmpname",
-				action 	=> "upload",
+				action 	=> $action,
 			};
+			if ($savefile) {
+				$file->{file} = "$tmpname";
+			}
+			if ($saveblob) {
+				my $data;
+				my $blob = getObject("Slash::Blob");
+				$file->{blobid} = $blob->create({
+						data 	=> $blobdata,
+						seclev 	=> 0,
+						filename => $name
+				});
+
+			}
 			$slashdb->addFileToQueue($file);
 		}
 	}

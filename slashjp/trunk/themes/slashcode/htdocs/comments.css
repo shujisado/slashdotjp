@@ -138,6 +138,16 @@ html > body .commentwrap table {
 .hide { display: none   }
 .show { display: inline }
 
+.oldcomment {
+	opacity: .65;
+	filter: alpha(opacity=65);
+}
+.newcomment {
+}
+.currcomment {
+	opacity: .50;
+	filter: alpha(opacity=50);
+}
 
 .comment > .hidden  {
 	display: none;

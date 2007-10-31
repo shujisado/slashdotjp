@@ -282,6 +282,8 @@ my %descriptions = (
 
 	'd2_comment_order'
 		=> sub { $_[0]->sqlSelectMany('code, name', 'code_param', "type='d2_comment_order'") },
+	'mediatypes'
+		=> sub { $_[0]->sqlSelectMany('code, name', 'string_param', "type='mediatypes'")}
 );
 
 ########################################################
@@ -6064,7 +6066,7 @@ sub getCommentsForUser {
 
 	if ($cid && $one_cid_only) {
 		$where .= "AND cid=$cid";
-	} elsif ($user->{hardthresh}) {
+	} elsif ($user->{hardthresh} && !$options->{discussion2}) {
 		my $threshold_q = $self->sqlQuote($user->{threshold});
 		$where .= "AND (comments.points >= $threshold_q";
 		$where .= "  OR comments.uid=$user->{uid}"	unless $user->{is_anon};
