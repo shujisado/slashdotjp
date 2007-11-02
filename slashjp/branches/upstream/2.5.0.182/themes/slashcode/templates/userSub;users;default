@@ -1,0 +1,51 @@
+__section__
+default
+__description__
+Display user's info
+
+* title = passed to titlebar
+
+__title__
+
+__page__
+users
+__lang__
+en_US
+__name__
+userSub
+__template__
+[% nick = nick | strip_literal %]
+[% IF nick_match %]
+	[% title = "Your Stories" %]
+[% ELSE %]
+	[% title = "$nick's stories" %]
+[% END %]
+[% PROCESS titlebar title=title %]
+<div class="generalbody">
+	<p>
+		<b>
+			[% IF nick_match %]
+				You have
+			[% ELSE %]
+				[% nick %] has
+			[% END %] 
+			submitted [% storycount %] stories.
+			[% IF storycount > constants.user_submitter_display_default %] 
+			Below are the most recent [% form.min %] stories.
+			[% END %]
+		</b>
+	<p>
+	[% n = 0 %]
+	[% FOREACH story = stories %]
+		[% n = n + 1 %]
+			<a href="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
+				[% story.title %]
+			</a> 
+			on [% Slash.timeCalc(story.time) %]<br>
+	[% END %]
+</div>
+
+__seclev__
+500
+__version__
+$Id: userSub;users;default,v 1.11 2006/02/17 22:26:04 pudge Exp $

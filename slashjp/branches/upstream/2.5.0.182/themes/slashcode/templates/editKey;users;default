@@ -1,0 +1,23 @@
+__section__
+default
+__description__
+Edit public key
+
+* pubkey = public key text
+__title__
+
+__page__
+users
+__lang__
+en_US
+__name__
+editKey
+__template__
+
+[% PROCESS formLabel value => 'Public Key' %]
+<textarea name="pubkey" rows="4" cols="30">[% pubkey | strip_literal %]</textarea>
+
+__seclev__
+500
+__version__
+$Id: editKey;users;default,v 1.6 2005/07/27 22:54:47 pudge Exp $

@@ -1,0 +1,23 @@
+__section__
+default
+__description__
+Print warning when admin's story matches another story
+
+* percent = percent match
+* subject = subject of other story
+* nickname = nickname of other author
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+lockTest
+__template__
+<b>[% percent %]%</b> matching with [% subject %] by <b>[% nickname %]</b><br>
+
+__seclev__
+10000
+__version__
+$Id: lockTest;misc;default,v 1.7 2005/07/27 22:54:48 pudge Exp $

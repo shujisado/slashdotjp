@@ -1,0 +1,20 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+journuserboxes
+__template__
+<div id="slashboxes">
+[% PROCESS userboxes %]
+</div>
+__seclev__
+500
+__version__
+$Id: journuserboxes;misc;default,v 1.12 2005/07/27 22:54:11 pudge Exp $

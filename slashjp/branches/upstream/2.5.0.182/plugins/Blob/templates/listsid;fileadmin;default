@@ -1,0 +1,35 @@
+__section__
+default
+__description__
+
+__title__
+Attached files list
+__page__
+fileadmin
+__lang__
+en_US
+__name__
+listsid
+__template__
+<p>
+<a href="[% constants.real_rootdir %]/admin.pl?op=edit&amp;sid=[% sid %]">[% Slash.db.getStory(sid, 'title') %]</a><br>
+<form action="[% constants.real_rootdir %]/fileadmin.pl" method="post" enctype="multipart/form-data">
+[% PROCESS formLabel value => "Add a new file" comment => "filename is used to determine content type so make sure you name them well" %]
+Description <input type="text" name="description" size="50"><br>
+File to upload: <input type="file" name="file_content"><br>
+
+[% PROCESS formLabel value => "Delete Files" comment => "" %]
+	[% FOREACH file=files %]
+		<a href="[% constants.real_rootdir %]/blob.pl?id=[% file.file_id %]">[% file.description | strip_literal %]</a> [% IF file.is_image %](image)[% END %] <input type="checkbox" name="delete" value="[% file.id %]"><br>
+	[% END %]
+	<p>
+	<b>Checked files will be deleted</b> 
+	<input type="hidden" name="op" value="addFileForStory">
+	<input type="hidden" name="sid" value="[% sid %]">
+	<input type="submit" name="Submit" value="Submit">
+</form>
+
+__seclev__
+10000
+__version__
+$Id: listsid;fileadmin;default,v 1.4 2005/07/27 22:53:54 pudge Exp $
