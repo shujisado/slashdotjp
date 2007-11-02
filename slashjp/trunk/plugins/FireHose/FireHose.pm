@@ -59,6 +59,7 @@ sub createFireHose {
 	$text_data->{title} = delete $data->{title};
 	$text_data->{introtext} = delete $data->{introtext};
 	$text_data->{bodytext} = delete $data->{bodytext};
+	$text_data->{media} = delete $data->{media};
 
 	$self->sqlDo('SET AUTOCOMMIT=0');
 	my $ok = $self->sqlInsert("firehose", $data);
@@ -156,7 +157,9 @@ sub createItemFromJournal {
 			tid			=> $journal->{tid},
 			srcid			=> $id,
 			discussion		=> $journal->{discussion},
-			type			=> $type
+			type			=> $type,
+			ipid			=> $user->{ipid},
+			subnetid		=> $user->{subnetid},
 		};
 		$self->createFireHose($data);
 		if ($publicize && !isAnon($journal->{uid})) {
@@ -302,6 +305,7 @@ sub updateItemFromStory {
 				createtime	=> $story->{time},
 				introtext	=> parseSlashizedLinks($story->{introtext}),
 				bodytext	=> parseSlashizedLinks($story->{bodytext}),
+				media		=> $story->{media},
 				primaryskid	=> $story->{primaryskid},
 				tid 		=> $story->{tid},
 				public		=> $public,
@@ -309,6 +313,7 @@ sub updateItemFromStory {
 				discussion	=> $story->{discussion},
 				body_length	=> $story->{body_length},
 				word_count	=> $story->{word_count},
+				thumb		=> $story->{thumb},
 				
 			};
 			$self->setFireHose($id, $data);
@@ -338,6 +343,7 @@ sub createItemFromStory {
 			createtime	=> $story->{time},
 			introtext	=> parseSlashizedLinks($story->{introtext}),
 			bodytext	=> parseSlashizedLinks($story->{bodytext}),
+			media		=> $story->{media},
 			popularity	=> $popularity,
 			editorpop	=> $popularity,
 			primaryskid	=> $story->{primaryskid},
@@ -347,6 +353,7 @@ sub createItemFromStory {
 			public		=> $public,
 			dept		=> $story->{dept},
 			discussion	=> $story->{discussion},
+			thumb		=> $story->{thumb},
 		};
 		$self->createFireHose($data);
 	}
@@ -1128,6 +1135,7 @@ sub ajaxFireHoseGetUpdates {
 					slashDisplay("formatHoseIntro", { introtext => $introtext, url => $url, $item => $item }, { Return => 1 });
 					$html->{"text-$_->{id}"} = $introtext;
 					$html->{"fhtime-$_->{id}"} = timeCalc($item->{createtime});
+					$html->{"topic-$_->{id}"} = slashDisplay("dispTopicFireHose", { item => $item, adminmode => $adminmode }, { Return => 1});
 					# updated
 				}
 			}
@@ -1461,6 +1469,7 @@ sub setFireHose {
 	$text_data->{title} = delete $data->{title} if defined $data->{title};
 	$text_data->{introtext} = delete $data->{introtext} if defined $data->{introtext};
 	$text_data->{bodytext} = delete $data->{bodytext} if defined $data->{bodytext};
+	$text_data->{media} = delete $data->{media} if defined $data->{media};
 
 	$self->sqlUpdate('firehose', $data, "id=$id_q");
 	$self->sqlUpdate('firehose_text', $text_data, "id=$id_q") if keys %$text_data;
@@ -2380,6 +2389,13 @@ sub ajaxFireHoseUsage {
 	$data->{globjid_cnt} = $slashdb->sqlSelect("count(distinct globjid)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($up_id, $down_id) $d_clause");
 	$data->{globjid_cnt_hour} = $slashdb->sqlSelect("count(distinct globjid)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($up_id, $down_id) $h_clause");
 	slashDisplay("firehose_usage", $data, { Return => 1 });
+}
+
+sub getNextItemsForThumbnails {
+	my($self, $lastid, $limit) = @_;
+	$limit = " LIMIT $limit" if $limit;
+	$lastid = " AND firehose.id > $lastid" if defined $lastid;
+	return $self->sqlSelectAllHashrefArray("firehose.id,urls.url", "firehose,urls", "firehose.type='submission' AND firehose.url_id=urls.url_id AND mediatype='video' $lastid", "ORDER BY firehose.id ASC $limit");
 }
 
 1;

@@ -5368,18 +5368,26 @@ sub getAL2Comments {
 
 sub checkAL2 {
 	my($self, $srcids, $type) = @_;
+	my $type_ar = ref($type) ? $type : [ $type ];
 
 	# If the caller is querying about a type that does not
 	# exist for this site, that's OK, it just means that no
-	# srcid can have it.  So we can return without querying
-	# the DB.
+	# srcid can have it.  If none of the types given exist,
+	# we can return without querying the DB.
 	my $types = $self->getAL2Types();
-	return 0 if !exists $types->{$type};
+	my $any_exist = 0;
+	for my $t (@$type_ar) {
+		$any_exist = 1, last if exists $types->{$t};
+	}
+	return 0 unless $any_exist;
 
-	# It's at least possible that the srcids have this type,
-	# so run the check.
+	# It's at least possible that the srcids have one or more
+	# of these types, so run the check.
 	my $data = $self->getAL2($srcids);
-	return $data->{$type} ? 1 : 0;
+	for my $t (@$type_ar) {
+		return 1 if exists $types->{$t} && $data->{$type};
+	}
+	return 0;
 }
 
 sub getAL2List {
@@ -12499,9 +12507,10 @@ sub numPendingFilesForStory {
 	$self->sqlCount("file_queue", "stoid=$stoid_q");
 }
 
-sub addStoryStaticFile {
+sub addStaticFile {
 	my($self, $data) = @_;
-	$data ||= "";
+	my $constants = getCurrentStatic();
+	$data ||= {};
 	
 	# Guess at file type if it isn't set
 	if ($data->{name} =~ /\.(jpg|gif|png)$/) {
@@ -12509,14 +12518,26 @@ sub addStoryStaticFile {
 	} elsif ($data->{name} =~ /\.(jpg|gif|png)$/) {
 		$data->{filetype} ||= "audio";
 	}
+	$data->{name} =~ s/^\Q$constants->{basedir}\E\/images//g;
 
-	$self->sqlInsert("story_static_files", $data);
+	$self->sqlInsert("static_files", $data);
+	my $sfid = $self->getLastInsertId;
+	return $sfid;
 }
 
 sub getStaticFilesForStory {
 	my($self, $stoid) = @_;
 	my $stoid_q = $self->sqlQuote($stoid);
-	return $self->sqlSelectAllHashrefArray("*", "story_static_files", "stoid=$stoid_q");
+	return $self->sqlSelectAllHashrefArray("*", "static_files", "stoid=$stoid_q");
+}
+
+sub getStaticFile {
+	my $answer = _genericGetCache({
+		table		=> 'static_files',
+		table_prime	=> 'sfid',
+		arguments	=> \@_,
+	});
+	return $answer;
 }
 
 ########################################################
