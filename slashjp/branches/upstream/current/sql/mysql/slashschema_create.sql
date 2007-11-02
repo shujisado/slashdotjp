@@ -4,7 +4,7 @@
 #--------------------------------------------------------
 # Server version	3.23.26-beta
 #
-# $Id: slashschema_create.sql,v 1.254 2007/10/23 23:20:15 pudge Exp $
+# $Id: slashschema_create.sql,v 1.255 2007/10/30 20:30:08 tvroom Exp $
 #
 
 #
@@ -1065,13 +1065,14 @@ CREATE TABLE story_topics_rendered (
 
 
 #
-# Table structure for table 'story_static_files'
+# Table structure for table 'static_files'
 #
 
-DROP TABLE IF EXISTS story_static_files;
+DROP TABLE IF EXISTS static_files;
 CREATE TABLE story_static_files(
 	sfid mediumint unsigned NOT NULL auto_increment,
 	stoid mediumint unsigned NOT NULL,
+	fhid mediumint unsigned NOT NULL,
 	filetype ENUM("file", "image", "audio") not null default "file",
 	name varchar(255) default '' NOT NULL,
 	width smallint unsigned not null default 0,

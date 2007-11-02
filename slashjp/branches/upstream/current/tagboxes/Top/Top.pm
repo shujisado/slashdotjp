@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Top.pm,v 1.13 2007/10/18 03:02:50 jamiemccarthy Exp $
+# $Id: Top.pm,v 1.14 2007/11/01 20:35:19 jamiemccarthy Exp $
 
 package Slash::Tagbox::Top;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.14 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -200,6 +200,16 @@ sub run {
 		$a cmp $b
 	} keys %scores;
 
+	# Eliminate tagnames in a given list, and their opposites.
+	my %nontop = ( map { ($_, 1) }
+		grep { $_ }
+		map { ($_, $tags_reader->getOppositeTagname($_)) }
+		split / /, ($constants->{tagbox_top_excludetagnames} || '')
+	);
+	# Eliminate tagnames that are just the author's name.
+	my @names = map { lc } @{ $tags_reader->getAuthorNames() };
+	for my $name (@names) { $nontop{$name} = 1 }
+
 	# Eliminate tagnames below the minimum score required, and
 	# those that didn't make it to the top 5
 	# XXX the "4" below (aka "top 5") is hardcoded currently, should be a var
@@ -212,7 +222,8 @@ sub run {
 		my $fhid = $firehose->getFireHoseIdFromGlobjid($affected_id);
 		my @top = ( );
 		if ($fhid) {
-			@top = grep { $scores{$_} >= $minscore1 }
+			@top =  grep { $scores{$_} >= $minscore1 }
+				grep { !$nontop{$_} }
 				sort {
 					$scores{$b} <=> $scores{$a}
 					||
@@ -227,6 +238,7 @@ sub run {
 	if ($type eq 'stories') {
 
 		my @top = grep { $scores{$_} >= $minscore2 }
+			grep { !$nontop{$_} }
 			sort {
 				$scores{$b} <=> $scores{$a}
 				||

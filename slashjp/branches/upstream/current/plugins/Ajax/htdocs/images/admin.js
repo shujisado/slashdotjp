@@ -1,4 +1,4 @@
-// $Id: admin.js,v 1.41 2007/10/24 00:30:06 scc Exp $
+// $Id: admin.js,v 1.42 2007/10/30 20:33:48 tvroom Exp $
 
 function um_ajax(the_behaviors, the_events) {
 	var params =[];
@@ -300,4 +300,12 @@ function firehose_get_and_post(id) {
 		onComplete: function() { $('postform-'+id).submit();}
 	};
 	ajax_update(params, 'postform-'+id, handlers); 
+}
+
+function appendToBodytext(text) {
+	var obj = $('admin-bodytext');
+	if (obj) {
+		obj.className = "show";
+		obj.value = obj.value  + text;
+	}
 }

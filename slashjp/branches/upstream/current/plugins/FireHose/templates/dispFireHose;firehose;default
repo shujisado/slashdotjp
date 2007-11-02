@@ -75,20 +75,13 @@ END %]
 	[% IF bodywrapper;
 		Slash.getData('byline', { adminmode => adminmode, item => item, the_user => the_user }, 'firehose');
 	%]
-
-	<div class="[% IF bodycontent && mode == "fulltitle" %]hide[% ELSIF bodycontent %]body[% ELSE %]empty[% END %]" id="fhbody-[% item.id %]"  [% IF !topic.image %]style="min-height: auto !important; "[% END %]>
+	[% hasimage = item.tid || (item.thumb && item.type == "story") || (adminmode && item.type == "submission") %]
+	<div class="[% IF bodycontent && mode == "fulltitle" %]hide[% ELSIF bodycontent %]body[% ELSE %]empty[% END %]" id="fhbody-[% item.id %]"  [% IF !hasimage  %]style="min-height: auto !important; "[% END %]>
 	[% END %]
-		[% IF item.tid %]
-		<div class="topic">
+		[% IF hasimage %]
+		<div class="topic" id="topic-[% item.id %]">
 			[% IF bodycontent %]
-			[% topic = Slash.db.getTopic(item.tid) %]
-			[% IF user.noicons || user.simpledesign || user.lowbandwidth %]
-				[ <a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]">[% topic.textname %]</a> ]
-			[% ELSIF topic.image %]
-				<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]">
-				<img src="[% constants.imagedir %]/topics/[% topic.image %]" width="[% topic.width %]" height="[% topic.height %]" alt="[% topic.textname %]" title="[% topic.textname %]" >
-			</a>
-			[% END %]
+			[% PROCESS dispTopicFireHose item = item %]
 			[% END %]
 		</div>
 		[% END %]
@@ -99,6 +92,11 @@ END %]
 			   PROCESS formatHoseIntro; 
 			END %]
 			[% introtext %]
+			[% IF item.media %]
+			<div class="media">
+			[% item.media %]
+			</div>
+			[% END %]
 		</div>
 	[% IF bodywrapper %]
 	</div>
@@ -158,4 +156,4 @@ END %]
 [% END %]
 [% END %]
 __version__
-$Id: dispFireHose;firehose;default,v 1.62 2007/09/04 20:53:21 tvroom Exp $
+$Id: dispFireHose;firehose;default,v 1.65 2007/11/01 00:24:42 tvroom Exp $

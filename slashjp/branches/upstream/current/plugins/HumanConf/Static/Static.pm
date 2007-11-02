@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Static.pm,v 1.40 2007/10/12 07:23:03 jamiemccarthy Exp $
+# $Id: Static.pm,v 1.41 2007/10/25 17:11:15 jamiemccarthy Exp $
 
 package Slash::HumanConf::Static;
 
@@ -19,7 +19,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.40 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.41 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -347,7 +347,7 @@ sub write_mp3_file {
 	my $constants = getCurrentStatic();
 	my $filename_mp3 = sprintf("%02d/%s%s", $hcpid % 100, $encoded_name, '.mp3');
 	my $full_filename_mp3 = "$dir/$filename_mp3";
-	my $ssml_text = join('<break time=\"1s\">',
+	my $ssml_text = join(' ',
 		"\u$answer.",
 		map { "\u$_." } split //, $answer);
 

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: bookmark.pl,v 1.21 2007/07/12 14:18:05 tvroom Exp $
+# $Id: bookmark.pl,v 1.22 2007/11/01 20:35:18 jamiemccarthy Exp $
 
 use strict;
 use Slash;
@@ -110,6 +110,8 @@ sub saveBookmark {
 		url_id 		=> $url_id,
 		uid    		=> $user->{uid},
 		title		=> strip_notags($form->{title}),
+		srcid_32	=> get_srcid_sql_in($user->{srcids}{32}),
+		srcid_24	=> get_srcid_sql_in($user->{srcids}{24}),
 	};
 
 	my $bookmark_id;

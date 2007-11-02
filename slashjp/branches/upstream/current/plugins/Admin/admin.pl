@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: admin.pl,v 1.323 2007/10/24 00:30:06 scc Exp $
+# $Id: admin.pl,v 1.324 2007/10/30 20:21:09 tvroom Exp $
 
 use strict;
 use File::Temp 'tempfile';
@@ -2018,7 +2018,7 @@ sub updateStory {
 
 	my $time = findTheTime();
 
-	for my $field (qw( introtext bodytext )) {
+	for my $field (qw( introtext bodytext media)) {
 		local $Slash::Utility::Data::approveTag::admin = 2;
 		$form->{$field} = cleanSlashTags($form->{$field});
 		$form->{$field} = strip_html($form->{$field});
@@ -2057,8 +2057,10 @@ sub updateStory {
 		commentstatus	=> $form->{commentstatus},
 		bodytext	=> $form->{bodytext},
 		introtext	=> $form->{introtext},
+		media		=> $form->{media},
 		relatedtext	=> $form->{relatedtext},
 		related_sids	=> $related_sids,
+		thumb		=> $form->{thumb},
 		-rendered	=> 'NULL', # freshenup.pl will write this
 		is_dirty	=> 1
 	};
@@ -2144,7 +2146,7 @@ sub handleMediaFileForStory {
 			if ($savefile) {
 				close $ofh;
 			}
-			my $action = $form->{media_action} eq "thumbnails" ? "thumbnails" : "upload";
+			my $action = "upload";
 			my $file = {
 				stoid	=> $stoid,
 				action 	=> $action,
@@ -2455,9 +2457,11 @@ sub saveStory {
 		bodytext	=> $form->{bodytext},
 		introtext	=> $form->{introtext},
 		relatedtext	=> $form->{relatedtext},
+		media		=> $form->{media},
 		subid		=> $form->{subid},
 		fhid		=> $form->{fhid},
 		commentstatus	=> $form->{commentstatus},
+		thumb		=> $form->{thumb},
 		-rendered	=> 'NULL', # freshenup.pl will write this
 	};
 

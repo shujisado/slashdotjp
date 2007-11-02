@@ -21,8 +21,8 @@ __template__
 [% STOP %]
 [% END %]
 [% user.noscores = 1; # Do not show scores in comment display. %]
-<b>PLEASE READ THE DIRECTIONS CAREFULLY BEFORE EMAILING
-[% constants.siteadmin_name.uc %]!</b> <p>What follows are random
+<b>PLEASE READ THE DIRECTIONS CAREFULLY BEFORE EMAILING US!</b>
+<p>What follows are random
 moderations performed on comments in the last few weeks on [% constants.sitename %].
 You are asked to <b>honestly</b> evaluate the actions of the moderator of each
 comment. Moderators who are ranked poorly will cease to be eligible for
@@ -86,4 +86,4 @@ to do this unless you need more context to fairly meta moderate.<br><br></li>
 __seclev__
 1000
 __version__
-$Id: dispTheComments;metamod;default,v 1.1 2006/09/03 15:46:00 jamiemccarthy Exp $
+$Id: dispTheComments;metamod;default,v 1.2 2007/11/01 20:32:02 jamiemccarthy Exp $

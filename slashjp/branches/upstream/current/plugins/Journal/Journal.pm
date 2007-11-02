@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Journal.pm,v 1.67 2007/10/26 03:05:27 pudge Exp $
+# $Id: Journal.pm,v 1.68 2007/11/01 20:35:18 jamiemccarthy Exp $
 
 package Slash::Journal;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.67 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.68 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -192,14 +192,16 @@ sub create {
 
 	my $constants = getCurrentStatic();
 
-	my $uid = getCurrentUser('uid');
+	my $user = getCurrentUser();
 	$self->sqlInsert("journals", {
-		uid		=> $uid,
+		uid		=> $user->{uid},
 		description	=> $description,
 		tid		=> $tid,
-		-date		=> 'now()',
+		-date		=> 'NOW()',
 		posttype	=> $posttype,
-		promotetype	=> $promotetype
+		promotetype	=> $promotetype,
+		srcid_24	=> get_srcid_sql_in($user->{srcids}{24}),
+		srcid_32	=> get_srcid_sql_in($user->{srcids}{32}),
 	});
 
 	my($id) = $self->getLastInsertId({ table => 'journals', prime => 'id' });
@@ -212,7 +214,7 @@ sub create {
 
 	my($date) = $self->sqlSelect('date', 'journals', "id=$id");
 	my $slashdb = getCurrentDB();
-	$slashdb->setUser($uid, { journal_last_entry_date => $date });
+	$slashdb->setUser($user->{uid}, { journal_last_entry_date => $date });
 	if ($constants->{plugin}{FireHose}) {
 		my $reskey = getObject('Slash::ResKey');
 		my $rkey = $reskey->key('submit', { nostate => 1 });

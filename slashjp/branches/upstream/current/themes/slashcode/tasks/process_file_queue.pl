@@ -1,8 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/local/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: process_file_queue.pl,v 1.2 2007/10/23 20:58:05 tvroom Exp $
+# $Id: process_file_queue.pl,v 1.6 2007/10/31 20:27:40 tvroom Exp $
 
 use File::Path;
 use File::Temp;
@@ -29,10 +29,13 @@ $task{$me}{code} = sub {
 			$file_queue_cmds = $slashdb->getNextFileQueueCmds();
 		}
 		$cmd = shift @$file_queue_cmds;
-		if ($cmd->{blobid}) {
-			$cmd->{file} = blobToFile($cmd->{blobid});
-		}
-		if($cmd) {
+		if ($cmd) {
+			if ($cmd->{blobid}) {
+				$cmd->{file} = blobToFile($cmd->{blobid});
+			}
+			if ($cmd->{action} eq 'upload' && $cmd->{file} =~ /\.(jpg|gif|png)/i) {
+				$cmd->{action} = "thumbnails";
+			}
 			handleFileCmd($cmd);
 		}
 		last if $task_exit_flag;
@@ -55,20 +58,29 @@ sub handleFileCmd {
 			my $thumb = $namebase . "-thumb." . $suffix;
 			my $thumbsm = $namebase . "-thumbsm." . $suffix;
 			slashdLog("About to create thumb $path$thumb");
-			system("convert -size 100x100 $path$name $path$thumb");
+			system("/usr/bin/convert -size 260x194  $path$name  -resize '130x97>'  -bordercolor transparent  -border 48 -gravity center -crop 130x97+0+0 -page +0+0 $path$thumb");
 			my $data = {
-				stoid => $cmd->{stoid},
-				name => $thumb
+				stoid => $cmd->{stoid} || 0,
+				fhid  => $cmd->{fhid} || 0 ,
+				name => "$path$thumb"
 			};
-			addStoryFile($data, $path);
+			my $sfid = addFile($data);
+
+			if ($cmd->{fhid}) {
+				my $firehose = getObject("Slash::FireHose");
+				if ($firehose) {
+					$firehose->setFireHose($cmd->{fhid}, { thumb => $sfid });
+				}
+			}
 
 			slashdLog("About to create thumbsms $path$thumbsm");
-			system("convert -size 50x50 $path$name $path$thumbsm");
+			system("/usr/bin/convert -size 100x74 $path$name  -resize '50x37>'  -bordercolor transparent -border 18 -gravity center -crop 50x37+0+0 -page +0+0 $path$thumbsm");
 			$data = {
-				stoid => $cmd->{stoid},
-				name => $thumbsm
+				stoid => $cmd->{stoid} || 0,
+				fhid  => $cmd->{fhid} || 0,
+				name => "$path$thumbsm"
 			};
-			addStoryFile($data, $path);
+			addFile($data);
 		}
 	}
 	if ($cmd->{action} eq "upload") {
@@ -77,7 +89,7 @@ sub handleFileCmd {
 	}
 	$slashdb->deleteFileQueueCmd($cmd->{fqid});
 	if (verifyFileLocation($cmd->{file})) {
-		unlink $cmd->{file};
+		# unlink $cmd->{file};
 	}
 }
 
@@ -118,8 +130,10 @@ sub blobToFile {
 	my($suffix) = $blob_ref->{filename} =~ /(\.\w+$)/;
 	$suffix = lc($suffix);
 	my ($ofh, $tmpname) = mkstemps("/tmp/upload/fileXXXXXX", $suffix );
+	slashdLog("Writing file data to $tmpname\n");
 	print $ofh $blob_ref->{data};
 	close $ofh;
+	$blob->delete($blobid);
 	return $tmpname;
 }
 
@@ -144,11 +158,12 @@ sub uploadFile {
 			push @files, $destfile if $destfile;
 			my $name = fileparse($destfile);
 			my $data = {
-				stoid => $cmd->{stoid},
-				name => $name
+				stoid => $cmd->{stoid} || 0,
+				fhid => $cmd->{fhid} || 0,
+				name => "$destpath/$name"
 			};
 
-			addStoryFile($data, "$destpath/");
+			addFile($data);
 		}
 
 
@@ -158,8 +173,18 @@ sub uploadFile {
 		makeFileDir($destpath);
 		my $numdir = sprintf("%09d",$cmd->{fhid});
 		my ($prefix) = $numdir =~ /\d\d\d\d\d\d(\d\d\d)/;
-		my $destfile = copyFileToLocation($cmd->{file}, $destpath, $prefix);
-		push @files, $destfile if $destfile;
+		if (verifyFileLocation($file)) {
+			my $destfile = copyFileToLocation($file, $destpath, $prefix);
+			my $name = fileparse($destfile);
+			push @files, $destfile if $destfile;
+			my $data = {
+				stoid => $cmd->{stoid} || 0,
+				fhid => $cmd->{fhid} || 0,
+				name => "$destpath/$name"
+			};
+			slashdLog("Add firehose item: $data->{name}");
+			addFile($data);
+		}
 	}
 	return \@files;
 }
@@ -192,16 +217,16 @@ sub copyFileToLocation {
 	return $ret_val;
 }
 
-sub addStoryFile {
-	my($data, $path) = @_;
+sub addFile {
+	my($data) = @_;
 	print "Add story file\n";
 	my $slashdb = getCurrentDB();
-	slashdLog("addStoryFile $path $data->{name}");
-	if ($data->{name} =~ /\.(png|gif|jpg)$/i && $path) {
-		($data->{width}, $data->{height}) = imgsize("$path$data->{name}");
-		slashdLog("addStoryFile $data->{width} $data->{height}");
+	slashdLog("addFile $data->{name}");
+	if ($data->{name} =~ /\.(png|gif|jpg)$/i) {
+		($data->{width}, $data->{height}) = imgsize("$data->{name}");
+		slashdLog("addFile $data->{width} $data->{height}");
 	}
-	$slashdb->addStoryStaticFile($data);
+	return $slashdb->addStaticFile($data);
 }
 
 1;
