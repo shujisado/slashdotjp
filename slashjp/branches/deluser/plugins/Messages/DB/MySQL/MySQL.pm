@@ -38,6 +38,10 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='deliverymodes'") },
 	'messagecodes'
 		=> sub { $_[0]->sqlSelectMany('code,type', 'message_codes', "code >= 0") },
+	'bvdeliverymodes'
+		=> sub { $_[0]->sqlSelectAllHashref('code', 'code,name,bitvalue', 'message_deliverymodes') },
+	'bvmessagecodes'
+		=> sub { $_[0]->sqlSelectAllHashref('type', 'code,type,delivery_bvalue', 'message_codes', "code >= 0") },
 );
 
 sub getDescriptions {
@@ -457,6 +461,12 @@ sub _getMailingUsers {
 		sectioncollapse
 		daily_mail_special seclev
 	)];
+	# XXX While normally I'm all in favor of using object-specific
+	# get and set methods, here getUser() may be the wrong approach.
+	# We may have tens of thousands of users in @$users and it will
+	# be a significant optimization of resources both for slashd and
+	# for the database to grab just the above fields all at once.
+	# -Jamie 2007-08-08
 	$users     = { map { $_ => $self->getUser($_, $fields) } @$users };
 	return $users;
 }

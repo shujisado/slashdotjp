@@ -10,6 +10,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::XML;
 use Time::HiRes;
+use Slash::Slashboxes;
 
 sub main {
 my $start_time = Time::HiRes::time;
@@ -91,23 +92,37 @@ my $start_time = Time::HiRes::time;
 	my $gse_hr = { };
 	# Set the characteristics that stories can be in to appear.  This
 	# is a simple list:  the current skin's nexus, and then if the
-	# current skin is the mainpage, add in the list of story_always_topic
-	# and story_always_nexus tids, and story_always_author uids..
+	# current skin is the mainpage, add in the list of nexuses that
+	# the mainpage needs the user's story_always_topic
+	# and story_always_nexus tids.
+	# It's pretty ugly that this duplicates some of the effect of
+	# getDispModesForStories().  This code really should be
+	# simplified and consolidated.
 	$gse_hr->{tid} = [ $gSkin->{nexus} ];
 	if ($gSkin->{skid} == $constants->{mainpage_skid}) {
-		my $nexus_children = $reader->getStorypickableNexusChildren($constants->{mainpage_nexus_tid});
-		push @{$gse_hr->{tid}}, @$nexus_children;
-		
-		my @always_tids = split ",",
-			$user->{story_always_topic};
+		# This may or may not be necessary;  gSE() should
+		# already know to do this.  But it should not hurt
+		# to add the tids here.
+		if ($constants->{brief_sectional_mainpage}) {
+			my $nexus_children = $reader->getMainpageDisplayableNexuses();
+			push @{$gse_hr->{tid}}, @$nexus_children;
+		}
 
-		# Let gse know that we're asking for extra tids  beyond those expected by default
-		$gse_hr->{tid_extras} = 1 if @always_tids;
-		
-		push @{$gse_hr->{tid}}, @$nexus_children;
-		push @{$gse_hr->{tid}}, @always_tids,
-			if @always_tids;
+		my @extra_tids = split ",", $user->{story_always_topic};
+		push @extra_tids, split ",", $user->{story_always_nexus};
+		# Let gse know that we're asking for extra tids beyond
+		# those expected by default.  
+		if (@extra_tids) {
+			$gse_hr->{tid_extras} = 1;
+			push @{$gse_hr->{tid}}, @extra_tids;
+		}
+
+		# Eliminate duplicates and sort.
+		my %tids = ( map { ($_, 1) } @{$gse_hr->{tid}} );
+		$gse_hr->{tid} = [ keys %tids ];
 	}
+	@{ $gse_hr->{tid} } = sort { $a <=> $b } @{ $gse_hr->{tid} };
+
 	# Now exclude characteristics.  One tricky thing here is that
 	# we never exclude the nexus for the current skin -- if the user
 	# went to foo.sitename.com explicitly, then they're going to see
@@ -131,12 +146,34 @@ my $start_time = Time::HiRes::time;
 #	$gse_hr->{limit} = $user_maxstories if $user_maxstories;
 
 	$gse_hr->{issue} = $issue if $issue;
-	if (rand(1) < $constants->{index_gse_backup_prob}) {
-		$stories = $reader->getStoriesEssentials($gse_hr);
-	} else {
-		$stories = $slashdb->getStoriesEssentials($gse_hr);
+	my $gse_db = rand(1) < $constants->{index_gse_backup_prob} ? $reader : $slashdb;
+	$stories = $gse_db->getStoriesEssentials($gse_hr);
+
+	# Workaround for a bug in saving/updating.  Sometimes a story
+	# will be saved with neverdisplay=1 but with an incorrect
+	# story_topics_rendered row that places it in a nexus as well.
+	# Until we figure out why, there's additional logic here to
+	# make sure we screen out neverdisplay stories. -Jamie 2007-08-06
+	my $stoid_in_str = join(',', map { $_->{stoid} } @$stories);
+	my $nd_hr = { };
+	if ($stoid_in_str) {
+		my $nd_hr = $gse_db->sqlSelectAllKeyValue('stoid, value',
+			'story_param',
+			qq{stoid IN ($stoid_in_str) AND name='neverdisplay' AND value != 0});
+		if (keys %$nd_hr) {
+			for my $story_hr (@$stories) {
+				$story_hr->{neverdisplay} = 1 if $nd_hr->{ $story_hr->{stoid} };
+			}
+		}
 	}
-	
+	if (grep { $_->{neverdisplay} } @$stories) {
+		require Data::Dumper; $Data::Dumper::Sortkeys = 1;
+		my @nd_ids = map { $_->{stoid} } grep { $_->{neverdisplay} } @$stories;
+		my $gse_str = Data::Dumper::Dumper($gse_hr); $gse_str =~ s/\s+/ /g;
+		print STDERR scalar(gmtime) . " index.pl ND story '@nd_ids' returned by gSE called with params: '$gse_str'\n";
+		$stories = [ grep { !$_->{neverdisplay} } @$stories ];
+	}
+
 	#my $last_mainpage_view;
 	#$last_mainpage_view = $slashdb->getTime() if $gSkin->{nexus} == $constants->{mainpage_skid} && !$user->{is_anon};
 
@@ -201,7 +238,7 @@ my $start_time = Time::HiRes::time;
 	Slash::Utility::Anchor::getSkinColors();
 
 	# displayStories() pops stories off the front of the @$stories array.
-	# Whatever's left is fed to displayStandardBlocks for use in the
+	# Whatever's left is fed to displaySlashboxes for use in the
 	# index_more block (aka Older Stuff).
 	# We really should make displayStories() _return_ the leftover
 	# stories as well, instead of modifying $stories in place to just
@@ -217,7 +254,7 @@ my $start_time = Time::HiRes::time;
 		$last_date  =~ s/(\d\d\d\d)-(\d\d)-(\d\d).*$/$1$2$3/;
 	}
 
-	my $StandardBlocks = displayStandardBlocks($gSkin, $stories,
+	my $StandardBlocks = displaySlashboxes($gSkin, $stories,
 		{ first_date => $first_date, last_date => $last_date }
 	);
 
@@ -245,8 +282,13 @@ my $start_time = Time::HiRes::time;
 		}
 	}
 
+	my $metamod_elig = 0;
+	if ($constants->{m2}) {
+		my $metamod_reader = getObject('Slash::Metamod', { db_type => 'reader' });
+		$metamod_elig = $metamod_reader->metamodEligible($user);
+	}
 	slashDisplay('index', {
-		metamod_elig	=> scalar $reader->metamodEligible($user),
+		metamod_elig	=> $metamod_elig,
 		future_plug	=> $future_plug,
 		daypass_plug_text => $daypass_plug_text,
 		stories		=> $Stories,
@@ -276,16 +318,15 @@ my $start_time = Time::HiRes::time;
 
 }
 
-
 sub getDispModesForStories {
 	my($stories, $stories_data_cache, $user, $modes, $story_to_dispmode_hr) = @_;
 
-	my @story_always_topic = split (',', $user->{story_always_topic});
-	my @story_always_nexus = split (',', $user->{story_always_nexus});
-	my @story_full_brief_nexus = split (',', $user->{story_full_brief_nexus});
-	my @story_brief_always_nexus = split (',', $user->{story_brief_always_nexus});
-	my @story_full_best_nexus = split (',', $user->{story_full_best_nexus});
-	my @story_brief_best_nexus = split (',', $user->{story_brief_best_nexus});
+	my @story_always_topic =	split (',', $user->{story_always_topic});
+	my @story_always_nexus =	split (',', $user->{story_always_nexus});
+	my @story_full_brief_nexus =	split (',', $user->{story_full_brief_nexus});
+	my @story_brief_always_nexus =	split (',', $user->{story_brief_always_nexus});
+	my @story_full_best_nexus =	split (',', $user->{story_full_best_nexus});
+	my @story_brief_best_nexus =	split (',', $user->{story_brief_best_nexus});
 
 	my(%mp_dispmode_nexus, %sec_dispmode_nexus);
 	$mp_dispmode_nexus{$_}  = $modes->[0] foreach (@story_always_nexus, @story_full_brief_nexus, @story_full_best_nexus);
@@ -417,16 +458,9 @@ sub saveUserBoxes {
 }
 
 #################################################################
-sub getUserBoxes {
-	my $boxes = getCurrentUser('slashboxes');
-	$boxes =~ s/'//g;
-	return split /,/, $boxes;
-}
-
-#################################################################
 sub upBid {
 	my($bid) = @_;
-	my @a = getUserBoxes();
+	my @a = getUserSlashboxes();
 	# Build the %order hash with the order in the values.
 	my %order = ( );
 	for my $i (0..$#a) {
@@ -442,7 +476,7 @@ sub upBid {
 #################################################################
 sub dnBid {
 	my($bid) = @_;
-	my @a = getUserBoxes();
+	my @a = getUserSlashboxes();
 	# Build the %order hash with the order in the values.
 	my %order = ( );
 	for my $i (0..$#a) {
@@ -458,125 +492,9 @@ sub dnBid {
 #################################################################
 sub rmBid {
 	my($bid) = @_;
-	my @a = getUserBoxes();
+	my @a = getUserSlashboxes();
 	@a = grep { $_ ne $bid } @a;
 	saveUserBoxes(@a);
-}
-
-#################################################################
-sub displayStandardBlocks {
-	my($skin, $older_stories_essentials, $other) = @_;
-	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $cache = getCurrentCache();
-	my $gSkin = getCurrentSkin();
-
-	return if $user->{noboxes};
-
-	my $return = '';
-	my(@boxes, $boxcache);
-	my($boxBank, $skinBoxes) = $reader->getPortalsCommon();
-	my $getblocks = $skin->{skid} || $constants->{mainpage_skid};
-
-	# two variants of box cache: one for index with portalmap,
-	# the other for any other section, or without portalmap
-
-	if ($user->{slashboxes}
-		&& ($getblocks == $constants->{mainpage_skid} || $constants->{slashbox_sections})
-	) {
-		@boxes = getUserBoxes();
-		$boxcache = $cache->{slashboxes}{index_map}{$user->{light}} ||= {};
-	} else {
-		@boxes = @{$skinBoxes->{$getblocks}}
-			if ref $skinBoxes->{$getblocks};
-		$boxcache = $cache->{slashboxes}{$getblocks}{$user->{light}} ||= {};
-	}
-
-	for my $bid (@boxes) {
-		next if $user->{lowbandwidth}  && $constants->{lowbandwidth_bids_regex} eq "NONE";
-		next if $user->{lowbandwidth} && !($bid =~ $constants->{lowbandwidth_bids_regex} );
-		if ($bid eq 'mysite') {
-			$return .= portalsidebox(
-				getData('userboxhead'),
-				$user->{mylinks} || getData('userboxdefault'),
-				$bid,
-				'',
-				$getblocks
-			);
-
-		} elsif ($bid =~ /_more$/ && $older_stories_essentials) {
-			$return .= portalsidebox(
-				getData('morehead'),
-				getOlderStories($older_stories_essentials, $skin,
-					{ first_date => $other->{first_date}, last_date => $other->{last_date} }),
-				$bid,
-				'',
-				$getblocks,
-				'olderstuff'
-			) if @$older_stories_essentials;
-
-		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
-			# do nothing!
-
-		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
-			$return .= $boxcache->{$bid} ||= portalsidebox(
-				$boxBank->{$bid}{title},
-				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
-				$boxBank->{$bid}{bid},
-				$boxBank->{$bid}{url},
-				$getblocks,
-				'login'
-			);
-
-		} elsif ($bid eq 'poll' && !$constants->{poll_cache}) {
-			# this is only executed if poll is to be dynamic
-			$return .= portalsidebox(
-				$boxBank->{$bid}{title},
-				pollbooth('_currentqid', 1),
-				$boxBank->{$bid}{bid},
-				$boxBank->{$bid}{url},
-				$getblocks
-			);
-		} elsif ($bid eq 'friends_journal' && $constants->{plugin}{Journal} && $constants->{plugin}{Zoo}) {
-			my $journal = getObject("Slash::Journal", { db_type => 'reader' });
-			my $zoo = getObject("Slash::Zoo", { db_type => 'reader' });
-			my $uids = $zoo->getFriendsUIDs($user->{uid});
-			my $articles = $journal->getsByUids($uids, 0,
-				$constants->{journal_default_display}, { titles_only => 1 })
-				if $uids && @$uids;
-			# We only display if the person has friends with data
-			if ($articles && @$articles) {
-				$return .= portalsidebox(
-					getData('friends_journal_head'),
-					slashDisplay('friendsview', { articles => $articles}, { Return => 1 }),
-					$bid,
-					"$gSkin->{rootdir}/my/journal/friends",
-					$getblocks
-				);
-			}
-		# this could grab from the cache in the future, perhaps ... ?
-		} elsif ($bid eq 'rand' || $bid eq 'srandblock') {
-			# don't use cached title/bid/url from getPortalsCommon
-			my $data = $reader->getBlock($bid, [qw(title block bid url)]);
-			$return .= portalsidebox(
-				@{$data}{qw(title block bid url)},
-				$getblocks
-			);
-
-		} else {
-			$boxcache->{$bid} ||= portalsidebox(
-				$boxBank->{$bid}{title},
-				$reader->getBlock($bid, 'block'),
-				$boxBank->{$bid}{bid},
-				$boxBank->{$bid}{url},
-				$getblocks
-			);
-			$return .= $boxcache->{$bid};
-		}
-	}
-
-	return $return;
 }
 
 #################################################################

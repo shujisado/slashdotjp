@@ -368,6 +368,15 @@ sub saveUserBoxes {
 }
 
 #################################################################
+sub ajaxSaveUserBoxes {
+	my($slashdb, $constants, $user, $form) = @_;
+	return if $user->{is_anon};
+	$user->{slashboxes} = $form->{bids};
+	$slashdb->setUser($user->{uid},
+		{ slashboxes => $user->{slashboxes} });
+}
+
+#################################################################
 sub getUserBoxes {
 	my $boxes = getCurrentUser('slashboxes');
 	$boxes =~ s/'//g;

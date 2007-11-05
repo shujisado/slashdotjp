@@ -250,6 +250,8 @@ sub handler {
 					||
 				($constants->{plugin}{ScheduleShifts} && $uri =~ m{^/shifts\.pl$})
 					||
+				($constants->{plugin}{FireHose} && $uri =~ m{^/firehose\.pl$})
+					||
 				# hmmm ... journal.pl no work, because can be called as /journal/
 				($constants->{journal_rdfitemdesc_html}
 					&& $form->{content_type} =~ $constants->{feed_types}
@@ -704,6 +706,12 @@ sub userdir_handler {
 					$r->uri('/users.pl');
 					$r->filename($constants->{basedir} . '/users.pl');
 
+				} elsif ($op eq 'firehose') {
+					my $filter = fixparam("user:");
+					$r->args("op=userfirehose");
+					$r->uri('users.pl');
+					$r->filename($constants->{basedir} . '/users.pl')
+
 				} else {
 					$r->args("op=edituser");
 					$r->uri('/users.pl');
@@ -740,10 +748,12 @@ sub userdir_handler {
 			s/%([a-fA-F0-9]{2})/pack('C', hex($1))/ge;
 		}
 
+
 		my $slashdb = getCurrentDB();
 		my $reader_user = $slashdb->getDB('reader');
 		my $reader = getObject('Slash::DB', { virtual_user => $reader_user });
 		my $uid = $reader->getUserUID($nick);
+		my $nick_orig = $nick;
 		$nick = fixparam($nick);	# make safe to pass back to script
 
 		# maybe we should refactor this code a bit ...
@@ -846,6 +856,12 @@ sub userdir_handler {
 
 		} elsif ($op eq 'bookmarks') {
 			$r->args("op=showbookmarks&nick=$nick&uid=$uid");
+			$r->uri('/users.pl');
+			$r->filename($constants->{basedir} . '/users.pl');
+		
+		} elsif ($op eq 'firehose') {
+			my $filter = fixparam("\"user:$nick_orig\"");
+			$r->args("op=userfirehose&uid=$uid");
 			$r->uri('/users.pl');
 			$r->filename($constants->{basedir} . '/users.pl');
 
@@ -999,6 +1015,7 @@ Leela:He opened up relations with China. He doesn't want to hear about your ding
 Leela:This is by a wide margin the least likely thing that has ever happened.
 Leela:I'm a millionaire! Suddenly I have an opinion about the capital gains tax.
 Leela:Do you have idiots on your planet?
+Leela:My old life wasn't as glamorous as my webpage made it look.
 EOT
 
 1;

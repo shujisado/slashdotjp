@@ -81,8 +81,23 @@ sub getPopularBookmarks {
 }
 
 sub getBookmarkFeeds {
-	my($self) = @_;
-	$self->sqlSelectAllHashrefArray("*", "bookmark_feeds");
+	my($self, $options) = @_;
+	$options ||= {};
+	my $other = "";
+	$other = "ORDER BY RAND() DESC" if $options->{rand_order};
+	$self->sqlSelectAllHashrefArray("*,RAND()", "bookmark_feeds", "", $other);
+}
+
+sub getBookmarkFeedByUid {
+	my($self, $uid) = @_;
+	my $uid_q = $self->sqlQuote($uid);
+	$self->sqlSelectHashref("*", "bookmark_feeds", "uid=$uid_q");
+}
+
+sub getBookmark {
+	my($self, $id) = @_;
+	my $id_q = $self->sqlQuote($id);
+	$self->sqlSelectHashref("*", "bookmarks", "bookmark_id=$id_q");
 }
 
 1;

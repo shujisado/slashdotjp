@@ -71,6 +71,10 @@ sub slashdLog {
 	doLog('slashd', \@_, 1, 'runtask');
 }
 
+sub tagboxLog {
+	doLog('tagbox', \@_, 1, 'runtask');
+}
+
 # A command to log an error to a DB table.  This is only for messages
 # that are important enough that the admins should see them (maybe in
 # the admin.pl backend, but definitely in email at the end of the day).
@@ -233,7 +237,6 @@ sub parse_slash_sites {
 	# will give us 4294967294, so let's get it that way. -- pudge
 	my($c_name, $c_pass, $c_uid, $c_gid) = getpwuid($uid);
 	if ( $uid != $c_uid || $gid != $c_gid ) {
-#	if ( $uid != $orig_euid or $gid != $orig_egid ) {
 		die "can't set uid/gid to $uid/$gid ($>/$))";
 	}
 	# If we made it this far, everything's cool
@@ -328,6 +331,7 @@ sub main {
 	my $start_time = Time::HiRes::time;
 	# runtask doesn't fork, there wouldn't be much point
 	my $rc = $subref->($virtual_user, $constants, $slashdb, $user, {}, $gSkin);
+	$rc = '' if !defined $rc;
 	if (verbosity() >= 2) {
 		my $duration = sprintf("%.2f", Time::HiRes::time - $start_time);
 		slashdLog("$task_name end: $rc (ran in ${duration}s)");

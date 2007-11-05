@@ -14,16 +14,22 @@ use base 'Slash::DB::Utility';
 sub new {
 	my($class, $user, @args) = @_;
 
+	return undef unless $class->isInstalled();
+
+	# We don't instantiate an object of class Slash::SearchToo.
+	# Instead, a var determines which API subclass of S::ST the
+	# site wants, and an object of that class is created here
+	# and returned.
 	my $constants = getCurrentStatic();
-	return unless $constants->{plugin}{'SearchToo'};
-
 	my $api_class = $constants->{search_too_class} || 'Slash::SearchToo::Classic';
-	# we COULD do a use base here ... but then different Slash sites
-	# cannot use different backends, so hang it -- pudge
-	my $self = getObject($api_class, $user, @args);
+#	return undef unless $api_class->isInstalled();
+	# Just in case this var is set incorrectly, prevent an infinite
+	# loop between new and getObject.
+	die "var 'search_too_class' invalid" if $api_class eq $class;
 
+	my $self = getObject($api_class, $user, @args);
 	if (!$self) {
-		warn "Could not get $api_class";
+		warn "Could not get $api_class: $@";
 		$self = {};
 		bless($self, $class);
 		$self->{virtual_user} = $user;
@@ -31,6 +37,11 @@ sub new {
 	}
 
 	return $self;
+}
+
+sub isInstalled {
+	my $constants = getCurrentStatic();
+	return $constants->{plugin}{SearchToo} || 0;
 }
 
 #################################################################
@@ -94,6 +105,12 @@ sub prepResults {
 	$results->{records_matches}  = $sopts->{matches};
 	$results->{records_max}      = $sopts->{max};
 	$results->{records_start}    = $sopts->{start};
+	if ($sopts->{matches}) {
+		$results->{records_page}  = int($sopts->{start}/$sopts->{max}) + 1;
+		$results->{records_pages} = int($sopts->{matches}/$sopts->{max}) + 1;
+	} else {
+		$results->{records_page}  = $results->{records_page} = 0;
+	}
 
 	return $results;
 }
@@ -104,27 +121,61 @@ sub prepResults {
 sub _fudge_data {
 	my($self, $data) = @_;
 
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my %processed;
 
-	if ($data->{topic}) {
-		my @topics = ref $data->{topic}
-			? @{$data->{topic}}
-			: $data->{topic};
+	my $topic = $data->{tids} || $data->{tid} || $data->{topic};
+	if ($topic) {
+		my @topics = ref $topic
+			? @$topic
+			: $topic;
 		$processed{topic} = \@topics;
+
+		my @topic_names;
+		for my $tid (@topics) {
+			next if $tid =~ /\D/;
+			my $name = $reader->getTopic($tid, 'keyword');
+			push @topic_names, $name if $name;
+		}
+		$processed{topic_names} = \@topic_names;
+
 	} else {
 		$processed{topic} = [];
+		$processed{topic_names} = [];
 	}
 
-	if ($data->{section}) {
+
+	if ($data->{primaryskid}) {
+		$processed{section} = $data->{primaryskid};
+	} elsif ($data->{section}) {
 		# make sure we pass a skid
 		if ($data->{section} =~ /^\d+$/) {
 			$processed{section} = $data->{section};
 		} else {
-			my $reader = getObject('Slash::DB', { db_type => 'reader' });
+			$processed{section_name} = $data->{section};
 			# get section name, for most compatibility with this API
 			my $skid = $reader->getSkidFromName($data->{section});
 			$processed{section} = $skid if $skid;
 		}
+	}
+
+	if ($processed{section}) {
+		my $skin = $reader->getSkin($processed{section});
+		if ($skin) {
+			$processed{section_name} ||= $skin->{name};
+		}
+	}
+
+
+	if ($data->{uid}) {
+		$processed{uid_name} = $reader->getUser($data->{uid}, 'nickname');
+	}
+
+
+	if ($data->{date}) {
+		my $format = '%Y%m%d%H%M%S';
+		$processed{date} = timeCalc($data->{date}, '%Y%m%d%H%M%S');
+		$processed{dayssince1970} = int(timeCalc($data->{date}, '%s') / 86400);
 	}
 
 	return \%processed;

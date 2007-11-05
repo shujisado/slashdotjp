@@ -18,6 +18,9 @@ __template__
 		[% IF form.subid %]
 			<input type="hidden" name="subid" value="[% form.subid | strip_attribute %]">
 		[% END %]
+		[% IF form.fhid %]
+			<input type="hidden" name="fhid" value="[% form.fhid | strip_attribute %]">
+		[% END %]
 		<div id="slashboxes">
 			[% IF constants.plugin.Events && Slash.getObject('Slash::Events') %]
 				[% PROCESS sidebox
@@ -75,9 +78,17 @@ __template__
 					[% seen_related.${story.sid} = 1 %]
 				</tr>
 				[% END %]
-				
+			        [% FOREACH story = yoogli_similar_stories.keys.sort %]
+                                <tr class="story_main">
+                                        <td>Y=[% yoogli_similar_stories.$story.relevance.substr(0, 4) %]</td>
+                                        <td><a href="[% yoogli_similar_stories.$story.url %]">[% yoogli_similar_stories.$story.title.substr(0, 35) %]...</a></td>
+                                        <td>[% Slash.timeCalc(yoogli_similar_stories.$story.date) %]</td>
+                                        <td><input type="checkbox" name="related_story" value="[% yoogli_similar_stories.$story.sid | strip_attribute %]"[% IF storyref.related_sids_hr.${yoogli_similar_stories.$story.sid}; constants.markup_checked_attribute; END %]></td>
+                                        <td>&nbsp;</td>
+                                        [% seen_related.${yoogli_similar_stories.$story.sid} = 1 %]
+                                </tr>
+                                [% END %]	
 
-				
 		[% FOREACH rel_sid = storyref.related_sids_hr.keys %]
 			[% IF seen_related.$rel_sid; NEXT; END; %]
 			[% story = storyref.related_sids_hr.$rel_sid %]
@@ -235,13 +246,57 @@ __template__
 				[% PROCESS editbuttons %]
 
 				<label>
+					Upload an image/audio file for this story [% IF pending_file_count %]([% pending_file_count %] awaiting processing)[% END %]
+				</label>
+				<input type="file" name="media_file">
+
+				[% IF story_static_files && story_static_files.size  %]
+					<label>
+						<a href="[% constants.rootdir %]/admin.pl?op=static_files&amp;sid=[% sid %]">Media Files associated with this story</a>
+					</label>
+					<table cellpadding="3" cellspacing="3">
+					<tr><td>Select <br>Thumb</td><td colspan="3"></td><td>Click to <br>add to body</td></tr>
+					[% FOREACH mfile = story_static_files %]
+					[% filename = mfile.name %]
+					[% filename = filename.replace(".*\/", ""); %]
+					<tr><td><input type="radio" name="thumb" value="[% mfile.sfid %]" [% IF storyref.thumb == mfile.sfid; constants.markup_checked_attribute; END %]></td><td>[% filename %]</td><td>[% mfile.width %]</td>
+					<td>[% mfile.height %]</td>
+
+<td>
+[% IF mfile.filetype == "image" %]
+[% height = mfile.height; width = mfile.width %]
+[% IF width && height %]
+	[% WHILE (height > 225 || width > 225) %]
+		[% height = height / 1.3  %]
+		[% width = width / 1.3 %]
+	[% END %]
+	[% width = width.int %]
+	[% height = height.int %]
+[% END %]
+<a href="#bodytext" onclick="appendToBodytext('\n<img src=\'[% constants.imagedir %][% mfile.name %]\' width=\'[% mfile.width %]\' height=\'[% mfile.height %]\'>')"><img src="[% constants.imagedir %][% mfile.name %]" width="[% width %]" height="[% height %]"></a>
+[% ELSE %]
+<a href="#bodytext" onclick="appendToBodytext('\n<a href=\'[% constants.imagedir %][% mfile.name %]\'>[% filename %]</a>')">Add [% filename %]</a>
+[% END %]
+</td>
+</tr>
+					[% END %]
+					<tr><td><input type="radio" name="thumb" value="0"></td><td>None</td><td colspan="1"></td></tr>
+					</table>
+				[% END %]
+
+				<label>
 					Upload a file for bodytext
 				</label>
 				<input type="file" name="bodytext_file">
+				<a name="bodytext"></a>
 				<label>
-					Extended Copy[% IF storyref.bodytext_wordcount %] <em>([% storyref.bodytext_wordcount %] word[% IF storyref.bodytext_wordcount != 1; "s"; END %])</em>[% END %]
+					<a href="#" onclick="toggleId('admin-bodytext','hide','show'); return false">Extended Copy</a>[% IF storyref.bodytext_wordcount %] <em>([% storyref.bodytext_wordcount %] word[% IF storyref.bodytext_wordcount != 1; "s"; END %])</em>[% END %]
 				</label>
-				<textarea name="bodytext" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]" wrap="virtual">[% storyref.bodytext | strip_literal %]</textarea>
+				<textarea name="bodytext" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]" wrap="virtual" id="admin-bodytext" class="[% storyref.bodytext ? "show" : "hide" %]">[% storyref.bodytext | strip_literal %]</textarea>
+				<label>
+					<a href="#" onclick="toggleId('admin-media','hide','show'); return false">Media</a>
+				</label>
+				<textarea name="media" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]" wrap="virtual" id="admin-media" class="[% storyref.media ? "show" : "hide" %]">[% storyref.media | strip_literal %]</textarea>
 				<div class="notes">[% ispell_comments.bodytext %]</div>
 				[% PROCESS editbuttons %]
 			</fieldset>

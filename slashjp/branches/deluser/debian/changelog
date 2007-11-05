@@ -1,3 +1,38 @@
+slash (2.5.0.182-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 02 Nov 2007 17:00:48 +0900
+
+slash (2.5.0.181-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix syntax error on plugins/Admin/admin.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 16:08:34 +0900
+
+slash (2.5.0.180-0.1) unstable; urgency=low
+
+  * New upstream cvs release
+    - Read upstream changelog
+  * move Slash/LDAPDB/vars.sql contents to sql/mysql/default.sql
+  * Add enable/disable switch to agree privacy statement on create user
+  * Add libdata-javascript-anon-perl to Depends:
+    - for Ajax plugin
+  * Fix: password notification email send fail: plugins/Messages/Messages.pm
+  * Fix: remove filter failed: plugins/Admin/admin.pl
+  * Typo fix at Slash/LDAPDB/lib/Slash/LDAPDB.pm
+  * Fix warning: Wide character in print at plugins/Admin/admin.pl
+  * Fix warning: Use of uninitialized value in substitution iterator at
+    fixparam() in Slash/Utility/Data/Data.pm
+  * Fix warning: Use of uninitialized value and hash key at
+    templateEdit() in plugins/Admin/admin.pl
+  * Allow to change LDAPDB DEBUG_LEVEL using vars "ldap_debug_level"
+  * Fix warning: Use of uninitialized value at
+    getDescForTopicsRendered() at plugins/Admin/admin.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 14:53:53 +0900
+
 slash (2.5.0.119-17) unstable; urgency=low
 
   * Merged from OTP

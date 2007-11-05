@@ -16,6 +16,10 @@ sup
 	padding: 0;
 }
 
+#top_parent {
+	border: 1px solid transparent;
+}
+
 a { color: #600; }
 a:visited { color: #000; }
 a:hover { text-decoration: none; }
@@ -685,3 +689,86 @@ pre
 .sb_header { font-size: 125%; font-weight: bold; color: #600; }
 .hide { display: none }
 .buttons { text-align: right }
+
+
+/* rules for the autocomplete machinery */
+.tagmenu a { text-decoration: underline; cursor: pointer; }
+
+a.ac-source
+{
+  color: white;
+  background-color: darkgray;
+}
+
+#ac-select-widget
+{
+  display: block;
+  position: absolute;
+  z-index: 9050;
+  width: 120px;
+  background-color: lightgray;
+}
+#ac-select-widget.hidden, #ac-select-input.hidden { display: none; }
+
+#ac-select-widget input
+{
+  border: 2px solid lightgray;
+  width: 122px;
+  margin: 0;
+  padding: 0;
+}
+
+#ac-choices { width: 100%; }
+
+#ac-choices .yui-ac-content
+{
+  width: 100%;
+  background: #fff;
+  overflow: hidden;
+  z-index: 9050;
+  border: 1px solid darkgray;
+}
+
+#ac-choices ul
+{
+  display: block;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 0 0;
+  width: 100%;
+  font-family: sans-serif;
+}
+
+#ac-choices li
+{
+  display: block;
+  margin: 0;
+  padding: 0 4px 0 4px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+#ac-choices li.yui-ac-highlight { background: #ff0; }
+
+
+/* modal */
+#modal_cover {background-color: #222; height: 100%; opacity: 0.75; filter: alpha(opacity=75); position: fixed; width: 100%; z-index: 1000000;}
+#modal_box .generaltitle .title h3 {background: transparent; margin: 0; padding: .1em .3em 0 .3em;}
+#modal_box .generaltitle .title { margin: 0; border: none;}
+#modal_box {position: fixed; margin: 15% 25%; width: 60%;z-index: 1000001;border: 4px solid #222;}
+#modal_box h3 a {position: absolute !important; right: .3em; top: .3em}
+#modal_box #modal_box_content legend {display: none;}
+#modal_box #modal_box_content fieldset {margin: 0;padding: 0;border: none;}
+#modal_box #modal_box_content {overflow: auto; background-color: #fff;padding: 0 2em 2em 2em; border-top: 1px solid #222;}
+
+
+/* login pop */
+#login_cover {background-color: #222; height: 100%; opacity: 0.75;position: fixed;width: 100%;z-index: 1000000; overflow: hidden;}
+#login_box .generaltitle .title h3 {background: transparent; margin: 0; padding: .1em .3em 0 .3em;}
+#login_box .generaltitle .title {margin: 0;border: none;}
+#login_box {position: fixed;margin: 25%;width: 50%;z-index: 1000001;border: 4px solid #222;}
+#login_box h3 a {position: absolute !important;right: .3em;top: .3em}
+#login_box #login_box_content legend {display: none;}
+#login_box #login_box_content fieldset {margin: 0;padding: 0;border: none;}
+#login_box #login_box_content {background-color: #fff;padding: 0 2em 2em 2em; border-top: 1px solid #222;}
+

@@ -95,7 +95,7 @@ END %]
 			[% story.introtext %]
 		</div>
 
-[% IF full && user.is_admin && !preview && env.script_name != '/admin.pl' %]<br><a href="[% gSkin.rootdir -%]/admin.pl?op=edit&amp;sid=[% story.sid %]">[ Edit ]</a>&nbsp;[% IF constants.plugin.Ajax %][% PROCESS signoff stoid = story.stoid %][% END %][% END %]
+[% IF full && user.is_admin && !preview && env.script_name != '/admin.pl' %]<br><a href="[% gSkin.rootdir -%]/admin.pl?op=edit&amp;sid=[% story.sid %]">[ Edit ]</a>&nbsp;[% IF constants.plugin.Ajax %][% PROCESS signoff stoid = story.stoid %] [% PROCESS neverdisplay stoid = stoid %][% END %][% END %]
 
 [% IF story.is_future && !user.is_admin %]<p>See any serious problems with this story?
 [% IF constants.ircslash_remarks %]
@@ -151,7 +151,7 @@ END;
 	[% title %]  [% IF story.commentcount %][% IF thresh_commentcount && story.commentcount != thresh_commentcount %][% thresh_commentcount %] of [% END %][% story.commentcount %] comment[% IF story.commentcount > 1 %]s[% END %][% END %] 
 	[% IF user.is_admin %]<a href="[% gSkin.rootdir -%]/admin.pl?op=edit&amp;sid=[% story.sid %]">(edit)</a>[% END %]
 	[% IF expandable %]
-	<a href="javascript:toggleIntro('intro-[% story.stoid %]','togglest-[% story.stoid %]');"><span id="togglest-[% story.stoid %]">[+]</span></a>
+	<a href="#" onclick="toggleIntro('intro-[% story.stoid %]','togglest-[% story.stoid %]'); return false"><span id="togglest-[% story.stoid %]">[+]</span></a>
 	[% END %]
 	[% IF getintro %]
 	<div class="introhide" id="intro-[% story.stoid %]">

@@ -52,15 +52,26 @@ __template__
 <table width="100%">
 	<tr>
 		<td valign="middle">
-		[% IF user.is_admin || user.acl.discussion2_uofm || user.acl.discussion2_slashdot || user.is_subscriber || !constants.subscribe %]
         	<p><b>Discussion Style</b><p>
 		<blockquote><div>
-        	<input type="radio" name="discussion2" value="none"[% constants.markup_checked_attribute IF !user_edit.discussion2 || (user_edit.discussion2 && user_edit.discussion2 != "uofm" && user_edit.discussion2 != "slashdot") %]> Normal<br>
+        	<input type="radio" name="discussion2" value="none"[% constants.markup_checked_attribute IF !user_edit.discussion2 || (user_edit.discussion2 && user_edit.discussion2 != "uofm" && user_edit.discussion2 != "slashdot") %]> Slashdot Classic Discussion System<br>
 		[% IF user.is_admin || user.acl.discussion2_uofm %]
         	<input type="radio" name="discussion2" value="uofm"[% constants.markup_checked_attribute IF user_edit.discussion2 == "uofm" %]> University of Michigan Testing<br>
-		[% END; IF user.is_admin || user.acl.discussion2_slashdot || user.is_subscriber || !constants.subscribe %]
-        	<input type="radio" name="discussion2" value="slashdot"[% constants.markup_checked_attribute IF user_edit.discussion2 == "slashdot" %]> Slashdot's New Discussion System Testing<br>
 		[% END %]
+        	<input type="radio" name="discussion2" value="slashdot"[% constants.markup_checked_attribute IF user_edit.discussion2 == "slashdot" %]> Slashdot Interactive Discussion System (a.k.a. D2)<br>
+		</div></blockquote>
+
+		[% IF user_edit.discussion2 && user_edit.discussion2 == "slashdot" %]
+		<blockquote><div>
+		How Many Comments
+		[% comment_q_name = ( Slash.isSubscriber(user_edit) || (user_edit.seclev >= 100) ) ? 'd2_comment_q_all' : 'd2_comment_q';
+		   comment_q = Slash.db.getDescriptions(comment_q_name);
+		   Slash.createSelect('d2_comment_q', comment_q, user_edit.d2_comment_q, 1) %]<br>
+
+		Comment Retrieval Order
+		[% comment_order = Slash.db.getDescriptions('d2_comment_order');
+		   comment_order_def = user_edit.d2_comment_order || 0;
+		   Slash.createSelect('d2_comment_order', comment_order, comment_order_def, 1) %]
 		</div></blockquote>
 		[% END %]
 
@@ -124,6 +135,8 @@ __template__
 		    not just loop over the reasons already existing,
 		    like it did before?
 		 %]
+
+[% IF constants.m1 %]
 		<p><b><a name="reason_bonus">Reason Modifier</a></b> (assign a modifier to different moderation reasons)<br>
 		<table>
 			<tr>
@@ -159,6 +172,7 @@ __template__
 				<td>	[% reason_select.Redundant %]	</td>
 			</tr>
 		</table>
+[% END %]
 
 		<p><b>People Modifier</b> (assign a modifier to different people)<br>
 		<table>
@@ -276,8 +290,10 @@ __template__
 		</div></blockquote>
 		[% IF user.is_admin %]
 		<label>Show Moderations in User Comment Listing <input type="checkbox" name="mod_with_comm" [% s_mod_check %]></label>
-		<label>Show Metamoderation in User Moderation Listing <input type="checkbox" name="m2_with_mod" [% s_m2_check %]></label>
-		<label>Show Metamoderation in Comment Moderation Listing <input type="checkbox" name="m2_with_mod_on_comm" [% s_m2c_check %]></label>
+			[% IF constants.m2 %]
+				<label>Show Metamoderation in User Moderation Listing <input type="checkbox" name="m2_with_mod" [% s_m2_check %]></label>
+				<label>Show Metamoderation in Comment Moderation Listing <input type="checkbox" name="m2_with_mod_on_comm" [% s_m2c_check %]></label>
+			[% END %]
 		[% END %]
 		</td>
 	</tr>

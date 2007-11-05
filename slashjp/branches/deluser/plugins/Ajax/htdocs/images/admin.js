@@ -1,19 +1,58 @@
 // $Id$
 
-function admin_signoff(el) {
+function um_ajax(the_behaviors, the_events) {
+	var params =[];
+	params['op'] = 'um_ajax';
+	params['behaviors'] = the_behaviors;
+	params['events'] = the_events;
+	ajax_update(params, 'links-vendors-content');
+}
+
+function um_fetch_settings() {
+	var params =[];
+	params['op'] = 'um_fetch_settings';
+	ajax_update(params, 'links-vendors-content');
+}
+
+function um_set_settings(behavior) {
+	var params =[];
+	params['op'] = 'um_set_settings';
+	params['behavior'] = behavior;
+	ajax_update(params, 'links-vendors-content');
+}
+
+function admin_signoff(stoid, type, id) {
 	var params = [];
-	var reskeyel = $('signoff-reskey-' + el.value);
+	var reskeyel = $('signoff-reskey-' + stoid);
 	params['op'] = 'admin_signoff';
-	params['stoid'] = el.value;
+	params['stoid'] = stoid;
 	params['reskey'] = reskeyel.value;
-	ajax_update(params, 'signoff_' + el.value);
-	
+	ajax_update(params, 'signoff_' + stoid);
+	if (type == "firehose") {
+		firehose_collapse_entry(id);
+	}
+}
+
+function admin_neverdisplay(stoid, type, fhid) {
+	var params = [];
+	params['op'] = 'admin_neverdisplay';
+	params['reskey'] = reskey_static;
+	params['stoid'] = stoid;
+	params['fhid'] = fhid;
+	if (confirm("Set story to neverdisplay?")) {
+		ajax_update(params, 'nvd-' + stoid);
+		if (type == "firehose") {
+			firehose_remove_entry(fhid);
+		}
+	}
 }
 
 function adminTagsCommands(id, type) {
 	var toggletags_message_id = 'toggletags-message-' + id;
 	var toggletags_message_el = $(toggletags_message_id);
-	toggletags_message_el.innerHTML = 'Executing commands...';
+	if (toggletags_message_el) {
+		toggletags_message_el.innerHTML = 'Executing commands...';
+	}
 
 	var params = [];
 	type = type || "stories";
@@ -21,6 +60,8 @@ function adminTagsCommands(id, type) {
 	if (type == "stories") {
 		params['sidenc'] = id;
 	} else if (type == "urls") {
+		params['id'] = id;
+	} else if (type == "firehose") {
 		params['id'] = id;
 	}
 	params['type'] = type;
@@ -37,17 +78,16 @@ function tagsHistory(id, type) {
 	var params = [];
 	type = type || "stories";
 	params['type'] = type;
+	params['op'] = 'tags_history';
 	if (type == "stories") {
-		params['op'] = 'tags_history';
 		params['sidenc'] = id;
-	} else if (type == "urls") {
-		params['op'] = 'tags_history';
+	} else if (type == "urls" || type == "firehose") {
 		params['id'] = id;
 	}
 	var tagshistid = "taghist-" + id;
 	var popupid    = "taghistory-" + id;
 	var title      = "History ";
-	var buttons    = createPopupButtons("<a href=\"#\">[?]</a></span><span><a href=\"javascript:closePopup('" + popupid + "-popup')\">[X]</a>");
+	var buttons    = createPopupButtons("<a href=\"#\" onclick=\"return false\">[?]</a></span><span><a href=\"#\" onclick=\"closePopup('" + popupid + "-popup'); return false\">[X]</a>");
 	title = title + buttons;
 	createPopup(getXYForId(tagshistid), title, popupid);
 	ajax_update(params, "taghistory-" + id + "-contents");
@@ -74,8 +114,6 @@ function remarks_create() {
 function remarks_fetch(secs, limit) {
 	var params = [];
 	params['op'] = 'remarks_fetch';
-	// this not being used? -- pudge
-	remarks_max = $('remarks_max');
 	params['limit'] = limit;
 	// run it every 30 seconds; don't need to call again
 	ajax_periodic_update(secs, params, 'remarks_table');
@@ -85,7 +123,7 @@ function remarks_popup() {
 	var params = [];
 	params['op'] = 'remarks_config';
 	var title = "Remarks Config ";
-	var buttons = createPopupButtons('<a href="javascript:closePopup(\'remarksconfig-popup\', 1)">[X]</a>');
+	var buttons = createPopupButtons('<a href="#" onclick="closePopup(\'remarksconfig-popup\', 1); return false">[X]</a>');
 	title = title + buttons;
 	createPopup(getXYForId('remarks_table'), title + buttons, 'remarksconfig');
 	ajax_update(params, 'remarksconfig-contents');
@@ -142,6 +180,34 @@ function admin_storyadminbox_fetch(secs) {
 	ajax_periodic_update(secs, params, "storyadmin-content");
 }
 
+function console_update(use_fh_interval, require_fh_timeout) {
+	use_fh_interval = use_fh_interval || 0;
+
+	if (require_fh_timeout && !fh_is_timed_out) {
+		return;
+	}
+
+	var params = [];
+	params['op'] = 'console_update'
+	var handlers = {
+		onComplete: json_handler
+	};
+	ajax_update(params, '', handlers);
+	var interval = 30000;
+	if(use_fh_interval) {
+		interval = getFirehoseUpdateInterval(); 
+	}
+	setTimeout("console_update(" + use_fh_interval + "," + fh_is_timed_out +")", interval);
+}
+
+function firehose_usage() {
+	var params = [];
+	params['op'] = 'firehose_usage'
+	var interval = 300000;
+	ajax_update(params, 'firehose_usage-content');
+	setTimeout("firehose_usage()", interval);
+}
+
 function make_spelling_correction(misspelled_word, form_element) {
 	var selected_key   = "select_" + form_element + '_' + misspelled_word;
 	var selected_index = document.forms.slashstoryform.elements[selected_key].selectedIndex;
@@ -181,4 +247,65 @@ function make_spelling_correction(misspelled_word, form_element) {
 	if (numrows.length == 1) {
 		table.parentNode.removeChild(table);
 	}	
+}
+
+function firehose_reject (el) {
+	var params = [];
+	var fh = $('firehose-' + el.value);
+	params['op'] = 'firehose_reject';
+	params['id'] = el.value;
+	params['reskey'] = reskey_static;
+	ajax_update(params, 'reject_' + el.value);
+	firehose_remove_entry(el.value);
+}
+
+function firehose_open_note(id) {
+	var nf = $('note-form-'+id);
+	var nt = $('note-text-'+id);
+	var ni = $('note-input-'+id);
+	nf.className="";
+	ni.focus();
+	nt.className="hide";
+}
+
+function firehose_save_note(id) {
+	var nf = $('note-form-'+id);
+	var nt = $('note-text-'+id);
+	var ni = $('note-input-'+id);
+	var params = [];
+	params['op'] = 'firehose_save_note';
+	params['note'] = ni.value;
+	params['id'] = id;
+	ajax_update(params, 'note-text-'+id);
+	nf.className = "hide";
+	nt.className = "";
+}
+
+function firehose_get_admin_extras(id) {
+	var params=[];
+	params['id'] = id;
+	params['op'] = 'firehose_get_admin_extras';
+	var handlers = {
+		onComplete: json_handler
+	};
+	ajax_update(params, '', handlers);
+}
+
+function firehose_get_and_post(id) {
+	var params=[];
+	params['id']  = id;
+	params['op'] = 'firehose_get_form';
+	firehose_collapse_entry(id);
+	var handlers = {
+		onComplete: function() { $('postform-'+id).submit();}
+	};
+	ajax_update(params, 'postform-'+id, handlers); 
+}
+
+function appendToBodytext(text) {
+	var obj = $('admin-bodytext');
+	if (obj) {
+		obj.className = "show";
+		obj.value = obj.value  + text;
+	}
 }

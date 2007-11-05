@@ -170,8 +170,16 @@ sub main {
 		$story->{time} = $constants->{subscribe_future_name}
 			if $story->{is_future} && !($user->{is_admin} || $user->{author});
 
-		my $pollbooth = pollbooth($story->{qid}, 1)
-			if $story->{qid} and ($slashdb->hasPollActivated($story->{qid}) or $user->{is_admin}) ;
+		my $pollbooth = '';
+		if ($story->{qid}) {
+			if (my $pollbooth_db = getObject('Slash::PollBooth')) {
+				if (	   $user->{is_admin}
+					|| $pollbooth_db->hasPollActivated($story->{qid})
+				) {
+					$pollbooth = pollbooth($story->{qid}, 1);
+				}
+			}
+		}
 		slashDisplay('display', {
 			poll			=> $pollbooth,
 			section			=> $SECT,
@@ -227,6 +235,13 @@ sub main {
 			$message = getData('no_such_sid');
 		}
 		print $message;
+	}
+
+	my $plugins = $slashdb->getDescriptions('plugins');
+	if (!$user->{is_anon} && $plugins->{Tags} && $story) {
+		my $tagsdb = getObject('Slash::Tags');
+		$tagsdb->markViewed($user->{uid},
+			$reader->getGlobjidCreate('stories', $story->{stoid}));
 	}
 
 	footer();

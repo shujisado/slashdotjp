@@ -75,15 +75,17 @@ sub newUser {
 
 	my $plugins = $slashdb->getDescriptions('plugins');
 
-	# check if user exists
-	$form->{newusernick} = nickFix($form->{newusernick});
-	my $matchname = nick2matchname($form->{newusernick});
-
 	my @note;
 	my $error = 0;
 
 	my $ldap = Slash::LDAPDB->new(attrib_prefix => getCurrentStatic->{ldap_peer_attrib_prefix});
-	if (!$form->{agree_priv_cont}) {
+	# check if new nick is OK and if user exists
+	my $newnick = nickFix($form->{newusernick});
+	my $matchname = nick2matchname($newnick);
+	if (!$newnick) {
+		push @note, getData('nick_invalid');
+		$error = 1;
+	} elsif ($constants->{use_privacy_agreement} && !$form->{agree_priv_cont}) {
 		push @note, getData('not_agree_priv_cont');
 		$error = 1;
 	} elsif (!$form->{email} || !emailValid($form->{email})) {
@@ -111,7 +113,7 @@ sub newUser {
 		       	&& !$ldap->authUser($matchname, $form->{peerpasswd})) {
 		push @note, getData('ldap_peer_pass_fail');
 		$error = 1;
-	} elsif ($matchname ne '' && $form->{newusernick} ne '') {
+	} elsif ($matchname ne '' && $newnick ne '') {
 		if ($constants->{newuser_portscan}) {
 			my $is_trusted = $slashdb->checkAL2($user->{srcids}, 'trusted');
 			if (!$is_trusted) {
@@ -127,14 +129,14 @@ sub newUser {
 		}
 	} else {
 		push @note, getData('duplicate_user', { 
-			nick => $form->{newusernick},
+			nick => $newnick,
 		});
 		$error = 1;
 	}
 
 	if (!$error) {
 		my $uid = $slashdb->createUser(
-			$matchname, $form->{email}, $form->{newusernick}
+			$matchname, $form->{email}, $newnick
 		);
 		if ($uid) {
 			my $data = {};
@@ -172,7 +174,7 @@ sub newUser {
 		} else {
 #			$slashdb->resetFormkey($form->{formkey});	
 			push @note, getData('duplicate_user', { 
-				nick => $form->{newusernick},
+				nick => $newnick,
 			});
 			$error = 1;
 		}
@@ -248,9 +250,7 @@ sub mailPasswd {
 		@srcids{keys %{$user->{srcids}}} = values %{$user->{srcids}};
 		delete $srcids{uid};
 
-		if ($reader->checkAL2(\%srcids, 'nopost')
-			|| $reader->checkAL2(\%srcids, 'nopostanon')
-		) {
+		if ($reader->checkAL2(\%srcids, [qw( nopost nopostanon spammer )])) {
 			push @note, getData('mail_readonly');
 			$error = 1;
 
@@ -351,7 +351,7 @@ sub savePrefs {
 			$error = 1;
 		}
 
-		if ($form->{pass1} && length $form->{pass1} >= 20) {
+		if ($form->{pass1} && length $form->{pass1} > 20) {
 			push @note, getData('passtoolong');
 			$error = 1;
 		}
@@ -466,10 +466,10 @@ sub getOtherUserParams {
 	my $params  = $reader->getDescriptions('otherusersparam');
 
 	for my $param (keys %$params) {
-		if (exists $form->{$param}) {
-			# set user too for output in this request
-			$data->{$param} = $user->{$param} = $form->{$param} || undef;
-		}
+		# set user too for output in this request
+		$data->{$param} = $user->{$param} = defined($form->{$param})
+			? $form->{$param}
+			: $params->{$param};
 	}
 }
 
