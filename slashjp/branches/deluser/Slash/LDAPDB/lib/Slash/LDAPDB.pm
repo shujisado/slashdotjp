@@ -162,7 +162,9 @@ sub deleteUser {
 									  delete => [
 										     objectClass => 'slashdotUserInfo',
 										     'slashdotUidNumber',
-										     'slashdotEmail'
+										     'slashdotPassword',
+										     'slashdotEmail',
+										     'slashdotRealname'
 										    ]
 									 ]) });
     } else {
