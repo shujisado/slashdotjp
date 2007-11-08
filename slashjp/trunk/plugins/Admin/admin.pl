@@ -1586,7 +1586,7 @@ sub extractRelatedStoriesFromForm {
 #	my $regexsid = regexSid();
 
 	my $match = qr{(\d\d\/\d\d\/\d\d\/\d{6,})};
-	my $match_cid = qr{/comments\.pl\?[^'"<>\s]*cid=(\d+)};
+	my $match_cid = qr{/comments\.pl[^'"<>\s]*[?&;]cid=(\d+)};
 
 	if ($form->{add_related}) {
 		my @add_related = split('\n', $form->{add_related});
