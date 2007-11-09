@@ -55,7 +55,7 @@ sub new {
 		  @_ };
     bless $self, $class;
 
-    $DEBUG_LEVEL = $constants->{ldap_debug_level} || $DEBUG_LEVEL;
+    $DEBUG_LEVEL = $constants->{ldap_debug_level} >= 0 ? $constants->{ldap_debug_level} : $DEBUG_LEVEL;
 
     if (!$self->{_disabled} &&
 	!($self->{_ldap} = Net::LDAP->new($self->{host}, timeout => $self->{timeout}))){

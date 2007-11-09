@@ -3,8 +3,9 @@ slash (2.5.0.183-0.1) unstable; urgency=low
   * New upstream CVS release
   * Fix: $uid is not defined at plugins/Journal/Journal.pm
   * Fix: gSkin.imagedir has not been defined, change to constants.imagedir
+  * Fix: does not apply when ldap_debug_level is 0 at LDAPDB
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 09 Nov 2007 18:32:10 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 09 Nov 2007 19:15:25 +0900
 
 slash (2.5.0.182-0.1) unstable; urgency=low
 
