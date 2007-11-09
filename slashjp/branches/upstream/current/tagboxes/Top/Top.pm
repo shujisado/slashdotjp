@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Top.pm,v 1.14 2007/11/01 20:35:19 jamiemccarthy Exp $
+# $Id: Top.pm,v 1.15 2007/11/07 23:17:06 jamiemccarthy Exp $
 
 package Slash::Tagbox::Top;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.14 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.15 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -231,8 +231,8 @@ sub run {
 				} keys %scores;
 			$#top = 4 if $#top > 4;
 			$firehose->setFireHose($fhid, { toptags => join(' ', @top) });
+			main::tagboxLog("Top->run $affected_id with " . scalar(@$tag_ar) . " tags, setFireHose $fhid to '@top' >= $minscore1");
 		}
-		main::tagboxLog("Top->run $affected_id with " . scalar(@$tag_ar) . " tags, setFireHose $fhid to '@top' >= $minscore1");
 	}
 
 	if ($type eq 'stories') {

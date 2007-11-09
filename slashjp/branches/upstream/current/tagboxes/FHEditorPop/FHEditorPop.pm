@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHEditorPop.pm,v 1.19 2007/10/18 03:02:50 jamiemccarthy Exp $
+# $Id: FHEditorPop.pm,v 1.20 2007/11/08 21:52:21 jamiemccarthy Exp $
 
 # This goes by seclev right now but perhaps should define "editor"
 # to be more about author than admin seclev.  In which case the
@@ -32,7 +32,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.19 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.20 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -145,6 +145,8 @@ sub run {
 	my $tagboxdb = getObject('Slash::Tagbox');
 	my $firehose = getObject('Slash::FireHose');
 
+	my $fhitem = $firehose->getFireHose($affected_id);
+
 	# All firehose entries start out with popularity 1.
 	my $popularity = 1;
 
@@ -212,6 +214,14 @@ sub run {
 #main::tagboxLog(sprintf("extra_pop for %d: %.6f * %.6f", $tag_hr->{tagid}, $extra_pop, $udc_mult));
 		$extra_pop *= $udc_mult;
 		$popularity += $extra_pop;
+	}
+
+	# If this is spam, its score goes way down.
+	if ($fhitem->{is_spam} eq 'yes') {
+		my $max = defined($constants->{firehose_spam_score})
+			? $constants->{firehose_spam_score}
+			: -50;
+		$popularity = $max if $popularity > $max;
 	}
 
 	# Set the corresponding firehose row to have this popularity.

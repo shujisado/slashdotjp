@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Journal.pm,v 1.68 2007/11/01 20:35:18 jamiemccarthy Exp $
+# $Id: Journal.pm,v 1.69 2007/11/07 23:15:56 jamiemccarthy Exp $
 
 package Slash::Journal;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.68 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.69 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -200,8 +200,8 @@ sub create {
 		-date		=> 'NOW()',
 		posttype	=> $posttype,
 		promotetype	=> $promotetype,
-		srcid_24	=> get_srcid_sql_in($user->{srcids}{24}),
-		srcid_32	=> get_srcid_sql_in($user->{srcids}{32}),
+		-srcid_24	=> get_srcid_sql_in($user->{srcids}{24}),
+		-srcid_32	=> get_srcid_sql_in($user->{srcids}{32}),
 	});
 
 	my($id) = $self->getLastInsertId({ table => 'journals', prime => 'id' });

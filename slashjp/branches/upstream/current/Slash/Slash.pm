@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Slash.pm,v 1.340 2007/11/01 19:32:23 jamiemccarthy Exp $
+# $Id: Slash.pm,v 1.341 2007/11/02 14:26:40 jamiemccarthy Exp $
 
 package Slash;
 
@@ -1629,7 +1629,7 @@ sub displayStory {
 			$atstorytime = $constants->{subscribe_future_name};
 		} else {
 			$atstorytime = $user->{aton} . ' '
-				. timeCalc($story->{'time'}, $df, 0, { is_old => $is_old });
+				. timeCalc($story->{'time'}, $df, undef, { is_old => $is_old });
 		}
 		$return =~ s/\Q__TIME_TAG__\E/$atstorytime/;
 

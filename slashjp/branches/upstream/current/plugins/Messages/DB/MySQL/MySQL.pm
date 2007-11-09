@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.35 2007/08/08 16:57:57 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.36 2007/11/07 18:05:14 entweichen Exp $
 
 package Slash::Messages::DB::MySQL;
 
@@ -31,7 +31,7 @@ use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.35 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.36 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 my %descriptions = (
 	'deliverymodes'
@@ -42,6 +42,8 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectAllHashref('code', 'code,name,bitvalue', 'message_deliverymodes') },
 	'bvmessagecodes'
 		=> sub { $_[0]->sqlSelectAllHashref('type', 'code,type,delivery_bvalue', 'message_codes', "code >= 0") },
+        'bvmessagecodes_slev'
+                => sub { $_[0]->sqlSelectAllHashref('type', 'code,type,seclev,delivery_bvalue', 'message_codes', "code >= 0") },
 );
 
 sub getDescriptions {

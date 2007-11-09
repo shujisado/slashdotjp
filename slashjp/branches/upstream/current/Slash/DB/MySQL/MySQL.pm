@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.991 2007/11/01 20:35:18 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.993 2007/11/07 23:15:22 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.991 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.993 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -5075,11 +5075,13 @@ sub getAL2TypeById {
 # 	{ norss => 0, trusted => 1, comment => 'we love these guys' },
 # 	{ adminuid => 78724 });
 
-# This method always succeeds.  It returns 1 if a row was actually
-# added to al2, 0 if there was merely an existing row that was updated.
+# This method always succeeds unless srcid is 0.  It returns
+# 1 if a row was actually added to al2, 0 if there was merely an
+# existing row that was updated.
 
 sub setAL2 {
 	my($self, $srcid, $type_hr, $options) = @_;
+	return undef if !$srcid;
 	my $adminuid = $options->{adminuid} || getCurrentUser('uid') || 0;
 	my $ts_sql = $options->{ts} ? $self->sqlQuote($options->{ts}) : 'NOW()';
 
@@ -12140,6 +12142,8 @@ sub _addGlobjEssentials_journals {
 	for my $id (@journal_ids) {
 		my $globjid = $journals_hr->{$id};
 		my $fixnick = $journaldata_hr->{$id}{nickname};
+if (!defined $fixnick) { print STDERR scalar(gmtime) . " _addGlobjEssentials_journals no nick for journal $id\n"; }
+		$fixnick = fixparam($fixnick || '');
 		$data_hr->{$globjid}{url} = "$constants->{rootdir}/~$fixnick/journal/$id";
 		$data_hr->{$globjid}{title} = $journaldata_hr->{$id}{description};
 		$data_hr->{$globjid}{created_at} = $journaldata_hr->{$id}{date};
@@ -12491,6 +12495,20 @@ sub getStaticFilesForStory {
 	my $stoid_q = $self->sqlQuote($stoid);
 	return $self->sqlSelectAllHashrefArray("*", "static_files", "stoid=$stoid_q");
 }
+
+sub getStaticFiles {
+	my($self, $stoid, $fhid) = @_;
+	my $stoid_q = $self->sqlQuote($stoid);
+	my $fhid_q = $self->sqlQuote($fhid);
+	my @where;
+	push @where, "stoid=$stoid_q";
+	push @where, "fhid=$fhid_q";
+	my $where = join ' OR ', @where;
+	print STDERR " $where \n";
+	return $self->sqlSelectAllHashrefArray("*", "static_files", $where);
+}
+
+
 
 sub getStaticFile {
 	my $answer = _genericGetCache({
