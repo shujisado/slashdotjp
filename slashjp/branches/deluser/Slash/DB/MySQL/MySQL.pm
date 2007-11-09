@@ -1564,7 +1564,7 @@ sub deleteUser {
 	});
 	my $rows = $self->sqlDelete("users_param", "uid=$uid");
 	$self->setUser_delete_memcached($uid);
-	#Slash::LDAPDB->new()->deletUserByUid($uid); # do NOT delete entry. just remove site data...
+	Slash::LDAPDB->new()->deletUserByUid($uid); # delete LDAP entries too
 	return $rows;
 }
 
