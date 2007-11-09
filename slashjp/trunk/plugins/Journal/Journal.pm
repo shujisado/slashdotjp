@@ -227,7 +227,7 @@ sub create {
 		}
 	}
 
-	$self->updateUsersJournal($uid);
+	$self->updateUsersJournal($user->{uid});
 
 	return $id;
 }
