@@ -1,0 +1,55 @@
+__section__
+default
+__description__
+Template to display a story in printable mode.
+
+* topic = topic data structure
+* story = story data structure
+* links = List of links in the story. Each element of link is a pair of:
+	<URL, TEXT>
+
+__title__
+
+__page__
+print
+__lang__
+en_US
+__name__
+dispStory
+__seclev__
+10000
+__template__
+[% UNLESS form.nohtml;
+	topic = "<a href=\"$gSkin.absolutedir/search.pl?tid=$topic.tid\">$topic.alttext</a>";
+ELSE;
+	topic = topic.alttext;
+END -%]
+
+<table border="0" cellspacing="0" cellpadding="0">
+<tr><td><b>Title</b></td>	<td>&nbsp;&nbsp;</td>	<td>[% story.title %]</td></tr>
+<tr><td><b>Date</b></td>	<td>&nbsp;&nbsp;</td>	<td>[% story.storytime %]</td></tr>
+<tr><td><b>Author</b></td>	<td>&nbsp;&nbsp;</td>	<td>[% author.nickname | strip_literal %]</td></tr>
+<tr><td><b>Topic</b></td>	<td>&nbsp;&nbsp;</td>	<td>[% topic %]</td></tr>
+[% IF constants.use_dept -%]
+<tr><td colspan="2" NOWRAP>from the <em>[% story.dept %]</em> dept.</td></tr>
+[% END -%]
+</table>
+<small>[% gSkin.absolutedir -%]/article.pl?sid=[% story.sid %]</small>
+
+<p>[% Slash.parseSlashizedLinks(story.introtext) %]</p>
+[% IF story.bodytext -%]
+<p>[% Slash.parseSlashizedLinks(story.bodytext) %]</p>
+[% END -%]
+
+[% IF links.size -%]
+<table border="0" width="25%" cellspacing="0" cellpadding="0">
+<tr><td>Links</td></tr>
+<tr><td><HR NOSHADE></td></tr>
+</table>
+
+<ol>[% FOR l=links -%]
+<li>"[% l.1 %]" - [% l.0 %]</li>
+[% END %]</ol>
+[% END -%]
+__version__
+$Id: dispStory;print;default,v 1.8 2005/07/27 22:54:12 pudge Exp $

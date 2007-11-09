@@ -1,0 +1,44 @@
+__section__
+default
+__description__
+* site_info - list of site info variables
+
+__title__
+admin interface siteInfo Template
+__page__
+users
+__lang__
+en_US
+__name__
+listAbuses
+__template__
+[% PROCESS titlebar title="User Abuses" %]
+<div class="generalbody">
+[% IF abuses.0 %]
+<table cellspacing="0">
+	<tr>
+		<td bgcolor="[% user.colors.fg_4 %]"><b>Timestamp</b></td>
+		<td bgcolor="[% user.colors.fg_4 %]"><b>UID</b></td>
+		<td bgcolor="[% user.colors.fg_4 %]"><b>IPID</b></td>
+		<td bgcolor="[% user.colors.fg_4 %]"><b>SubnetID</b></td>
+		<td bgcolor="[% user.colors.fg_4 %]"><b>Now</b></td>
+	</tr>
+[% FOR abuse = abuses %]
+	<tr>
+		<td>[% abuse.0 %]</td>
+		<td><a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% abuse.1 %]">[% abuse.1 %]</td>
+		<td><a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% abuse.2 %]">[% abuse.2 %]</td>
+		<td><a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% abuse.3 %]">[% abuse.3 %]</td>
+		<td>[% abuse.4 %]</td>
+	</tr>
+[% END %]
+</table>
+[% ELSE %]
+No abuses for this user
+[% END %]
+</div>
+
+__seclev__
+100
+__version__
+$Id: listAbuses;users;default,v 1.4 2005/07/27 22:54:48 pudge Exp $

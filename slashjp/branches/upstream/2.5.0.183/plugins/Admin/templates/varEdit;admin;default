@@ -1,0 +1,35 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+varEdit
+__template__
+[% PROCESS titlebar %]
+<div class="generalbody">
+	<form action="[% env.script_name %]" method="post">
+		<fieldset>
+			<legend>Vars editor</legend>
+			<input type="hidden" name="op" value="vars">
+			<label>Select Variable Name</label>[% vars_select %]
+			<input type="submit" name="varedit" value="Select Var" class="button"
+			<label>Variable Name</label>
+			<input type="text" name="thisname" value="[% varsref.name %]">
+			<label>Value</label><input type="text" name="value" value="[% varsref.value %]">
+			<label>Description</label>
+			<input type="text" name="desc" value="[% FILTER strip_attribute %][% varsref.description %][% END %]" size="60">
+			<input type="submit" name="varsave" value="Save" class="button">
+		</fieldset>
+	</form>
+</div>
+
+__seclev__
+500
+__version__
+$Id: varEdit;admin;default,v 1.7 2005/09/16 14:04:34 lancelot Exp $

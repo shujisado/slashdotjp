@@ -1,0 +1,21 @@
+__section__
+default
+__description__
+__title__
+newest three template (gets written to blocks)
+__page__
+misc
+__lang__
+en_US
+__name__
+three
+__template__
+[% FOREACH story = stories.keys.sort %]
+<li><a href="[% gSkin.rootdir %]/admin.pl?title=new%20story&amp;op=edit&amp;sid=[% story %]">[% stories.$story.title %]</a></li>
+[% END %]
+
+
+__seclev__
+100
+__version__
+$Id: three;misc;default,v 1.6 2005/07/27 22:54:48 pudge Exp $
