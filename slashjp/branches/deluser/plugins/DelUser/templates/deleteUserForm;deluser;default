@@ -1,0 +1,18 @@
+__section__
+default
+__description__
+Delete user form
+__title__
+Delete user form
+__page__
+deluser
+__lang__
+en_US
+__name__
+deleteUserForm
+__template__
+This is test
+__seclev__
+500
+__version__
+$Id: $
