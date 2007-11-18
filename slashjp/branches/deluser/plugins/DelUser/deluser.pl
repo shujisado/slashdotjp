@@ -28,7 +28,7 @@ sub main {
 
 	my %ops = (
 	    deleteform => [$user_ok, \&deleteUserForm],
-	    delete => [$post_ok, \&deleteUser],
+	    deleteok => [$post_ok && $user_ok , \&deleteUser],
 	    );
 
 	# set default op
@@ -49,18 +49,22 @@ sub main {
 
 ##################################################################
 sub deleteUserForm {
-    my($slashdb, $reader, $constants, $user, $form) = @_;
-    slashDisplay('deleteUserForm');
+    my($slashdb, $reader, $constants, $user, $form, $note) = @_;
+    slashDisplay('deleteUser');
     footer();
 }
 
 sub deleteUser {
     my($slashdb, $reader, $constants, $user, $form) = @_;
+    my $note;
     my $uid = $user->{uid};
 
 #    my $rows = $slashdb->deleteUser($uid);
-    slashDisplay('deleteUserFinished');
-    footer();
+#    slashDisplay('deleteUserFinished');
+#    footer();
+
+#    redirect("$rootdir/my/logout");
+    deleteUserForm(@_, $note);
 }
 
 createEnvironment();
