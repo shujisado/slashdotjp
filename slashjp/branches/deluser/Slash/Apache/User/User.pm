@@ -712,6 +712,11 @@ sub userdir_handler {
 					$r->uri('users.pl');
 					$r->filename($constants->{basedir} . '/users.pl')
 
+				} elsif ($op eq 'delete') {
+					$r->args("op=deleteform");
+					$r->uri('/deluser.pl');
+					$r->filename($constants->{basedir} . '/deluser.pl');
+
 				} else {
 					$r->args("op=edituser");
 					$r->uri('/users.pl');
