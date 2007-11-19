@@ -27,14 +27,15 @@ $task{$me}{code} = sub {
 			$story->{title} = $storydata->{$story->{stoid}}->{title};
 		}
 		#$topic = $topic ||= 'index';
-		open(FILE, ">$constants->{basedir}/$constants->{sidebardir}/"
+		open(my $fh, ">$constants->{basedir}/$constants->{sidebardir}/"
 		              . $slashdb->getTopic($tid)->{keyword}
 			      . ".shtml") || next;
-		print FILE slashDisplay('sidebar',
+		binmode $fh, ':utf8';
+		print $fh slashDisplay('sidebar',
 			{ stories => $stories,
 			  section => $nexus_topics->{$tid} },
 			{ Return => 1 });
-		close(FILE);
+		close($fh);
 	}
 };
 

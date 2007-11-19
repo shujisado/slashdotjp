@@ -1,9 +1,11 @@
 slash (2.5.0.184-1) unstable; urgency=low
 
   * New upstream CVS release
-  * Fix: Wide character in print warning at new_headfoot.pl
+  * Fix: Wide character in print warning at following tasks:
+    - new_headfoot.pl
+    - create_sidebar.pl
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 19 Nov 2007 17:32:07 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 19 Nov 2007 10:16:18 +0000
 
 slash (2.5.0.183-0.1) unstable; urgency=low
 
