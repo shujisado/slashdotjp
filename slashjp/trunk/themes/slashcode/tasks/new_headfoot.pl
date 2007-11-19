@@ -25,6 +25,7 @@ $task{$me}{code} = sub {
 
 	my $file = "$constants->{basedir}/slashhead-gen-full.inc";
 	open my $fh, ">$file" or die "Can't open $file : $!";
+	binmode $fh, ':utf8';
 	setCurrentForm('ssi', 1);
 	my $header = header("", "", { noheader => 1, Return => 1 });
 	setCurrentForm('ssi', 0);
@@ -33,6 +34,7 @@ $task{$me}{code} = sub {
 	
 	$file = "$constants->{basedir}/slashcssbase.inc";
 	open $fh, ">$file" or die "Can't open $file : $!";
+	binmode $fh, ':utf8';
 	my $cssbase = slashDisplay("html-header", { only_css => 1}, { Return => 1 });
 	print $fh $cssbase;
 
@@ -71,6 +73,7 @@ sub skinHeaders {
 		}
 
 		open my $fh, ">$file" or die "Can't open $file : $!";
+		binmode $fh, ':utf8';
 		my $header = header("", $skinname, { noheader => 1, Return => 1, Page => $_->[0], nopageid => 1 });
 		print $fh $header;
 		close $fh;
@@ -79,6 +82,7 @@ sub skinHeaders {
 	setCurrentForm('ssi', 0);
 	open my $fh, ">$constants->{basedir}/$skinname/slashfoot.inc"
 		or die "Can't open $constants->{basedir}/$skinname/slashfoot.inc: $!";
+	binmode $fh, ':utf8';
 	my $footer = footer({ Return => 1 });
 	print $fh $footer;
 	close $fh;
