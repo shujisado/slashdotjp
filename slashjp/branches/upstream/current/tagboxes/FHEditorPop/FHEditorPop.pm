@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHEditorPop.pm,v 1.20 2007/11/08 21:52:21 jamiemccarthy Exp $
+# $Id: FHEditorPop.pm,v 1.21 2007/11/09 16:21:35 jamiemccarthy Exp $
 
 # This goes by seclev right now but perhaps should define "editor"
 # to be more about author than admin seclev.  In which case the
@@ -32,7 +32,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.20 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.21 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -145,7 +145,8 @@ sub run {
 	my $tagboxdb = getObject('Slash::Tagbox');
 	my $firehose = getObject('Slash::FireHose');
 
-	my $fhitem = $firehose->getFireHose($affected_id);
+	my $fhid = $firehose->getFireHoseIdFromGlobjid($affected_id);
+	my $fhitem = $firehose->getFireHose($fhid);
 
 	# All firehose entries start out with popularity 1.
 	my $popularity = 1;
@@ -225,8 +226,6 @@ sub run {
 	}
 
 	# Set the corresponding firehose row to have this popularity.
-	my $affected_id_q = $self->sqlQuote($affected_id);
-	my $fhid = $self->sqlSelect('id', 'firehose', "globjid = $affected_id_q");
 	my $firehose_db = getObject('Slash::FireHose');
 	warn "Slash::Tagbox::FHEditorPop->run bad data, fhid='$fhid' db='$firehose_db'" if !$fhid || !$firehose_db;
 	if ($options->{return_only}) {

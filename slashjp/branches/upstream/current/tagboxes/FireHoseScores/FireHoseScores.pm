@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHoseScores.pm,v 1.5 2007/11/08 21:52:21 jamiemccarthy Exp $
+# $Id: FireHoseScores.pm,v 1.7 2007/11/13 17:25:04 jamiemccarthy Exp $
 
 package Slash::Tagbox::FireHoseScores;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -166,8 +166,7 @@ sub run {
 	my $tagsdb = getObject('Slash::Tags');
 	my $tagboxdb = getObject('Slash::Tagbox');
 	my $firehose_db = getObject('Slash::FireHose');
-	my $affected_id_q = $self->sqlQuote($affected_id);
-	my $fhid = $self->sqlSelect('id', 'firehose', "globjid = $affected_id_q");
+	my $fhid = $firehose_db->getFireHoseIdFromGlobjid($affected_id);
 	warn "Slash::Tagbox::FireHoseScores->run bad data, fhid='$fhid' db='$firehose_db'" if !$fhid || !$firehose_db;
 	my $fhitem = $firehose_db->getFireHose($fhid);
 
@@ -235,8 +234,8 @@ sub run {
 		$popularity += $extra_pop;
 	}
 
-	# If this is spam, its score goes way down.
-	if ($fhitem->{is_spam} eq 'yes') {
+	# If this is spam, or contains a spam URL, its score goes way down.
+	if ($fhitem->{is_spam} eq 'yes' || $firehose_db->itemHasSpamURL($fhitem)) {
 		my $max = defined($constants->{firehose_spam_score})
 			? $constants->{firehose_spam_score}
 			: -50;

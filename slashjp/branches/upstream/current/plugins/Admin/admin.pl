@@ -2,14 +2,14 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: admin.pl,v 1.326 2007/11/08 08:54:00 pudge Exp $
+# $Id: admin.pl,v 1.327 2007/11/13 17:25:04 jamiemccarthy Exp $
 
 use strict;
 use File::Temp 'tempfile';
 use Image::Size;
 use Time::HiRes;
 use LWP::UserAgent;
-use URI::URL;
+use URI;
 use XML::Simple;
 
 use Slash;
@@ -1449,7 +1449,7 @@ sub editStory {
 	my $yoogli_similar_stories = {};
 	if ($constants->{yoogli_oai_search}) {
 		my $query = $constants->{yoogli_oai_query_base} .= '?verb=GetRecord&metadataPrefix=oai_dc&rescount=';
-		$query .= $constants->{yoogli_oai_result_count} . '&identifier=' . URI::URL->new($storyref->{introtext});
+		$query .= $constants->{yoogli_oai_result_count} . '&identifier=' . URI->new($storyref->{introtext});
 
 		my $ua = new LWP::UserAgent;
 		$ua->timeout($constants->{yoogli_oai_result_count} + 2);

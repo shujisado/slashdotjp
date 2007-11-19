@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.61 2007/11/08 08:53:55 pudge Exp $
+# $Id: ajax.pl,v 1.62 2007/11/12 15:27:41 entweichen Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.61 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.62 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -518,6 +518,11 @@ sub getModalPrefs {
 					delete $bvmessagecodes->{$bvmessagecode};
 					last;
 				}
+                                # build our list of valid delivery modes
+                                if (($bvdeliverymodes->{$bvdeliverymode}->{'bitvalue'} & $bvmessagecodes->{$bvmessagecode}->{'delivery_bvalue'}) ||
+                                    ($bvdeliverymodes->{$bvdeliverymode}->{'bitvalue'} == 0)) {
+                                        push(@{$bvmessagecodes->{$bvmessagecode}->{'valid_bvdeliverymodes'}}, $bvdeliverymodes->{$bvdeliverymode}->{'code'});
+                                }
 			}
 		}
 

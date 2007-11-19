@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.341 2007/11/01 20:35:18 jamiemccarthy Exp $
+# $Id: users.pl,v 1.342 2007/11/13 23:52:38 jamiemccarthy Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -700,7 +700,7 @@ sub mailPasswd {
 		# existing nopost and spammer
 		my $srcids_to_check = $user->{srcids};
 		$err_name = 'mailpasswd_readonly_err'
-			if $reader->checkAL2($srcids_to_check, [qw( nopost spammer )]);
+			if $reader->checkAL2($srcids_to_check, 'nopost');
 	}
 	if (!$err_name) {
 		$err_name = 'mailpasswd_toooften_err'
@@ -3177,7 +3177,7 @@ sub saveMiscOpts {
 sub listReadOnly {
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 
-	my $readonlylist = $reader->getAL2List([qw( nopost spammer )]);
+	my $readonlylist = $reader->getAL2List('nopost');
 
 	slashDisplay('listReadOnly', {
 		readonlylist => $readonlylist,

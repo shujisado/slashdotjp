@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.149 2007/10/31 19:55:14 entweichen Exp $
+// $Id: common.js,v 1.150 2007/11/14 14:47:19 scc Exp $
 
 var fh_play = 0;
 var fh_is_timed_out = 0;
@@ -18,6 +18,7 @@ var firehose_duratiton = '';
 var firehose_removed_first = '0';
 var firehose_future;
 var firehose_removals;
+var firehose_is_embedded = 0;
 var fh_colorslider; 
 var fh_ticksize;
 var fh_pageval = 0;
@@ -1078,6 +1079,9 @@ function firehose_get_updates(options) {
 	params['duration'] = firehose_duration;
 	params['issue'] = firehose_issue;
 	params['page'] = page;
+	if ( firehose_is_embedded ) {
+		params['embed'] = 1;
+	}
 	params['fh_pageval'] = fh_pageval;
 	$('busy').className = "";
 	ajax_update(params, '', handlers);

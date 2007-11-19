@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Despam.pm,v 1.2 2007/11/08 21:52:21 jamiemccarthy Exp $
+# $Id: Despam.pm,v 1.3 2007/11/13 17:23:39 jamiemccarthy Exp $
 
 package Slash::Tagbox::Despam;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -167,7 +167,7 @@ sub run {
 			if ($binspam_count > $constants->{tagbox_despam_binspamsallowed_ip}) {
 				main::tagboxLog(sprintf("%s->run marking srcid %s for %d admin binspam tags, based on %d (%d)",
 				ref($self), $submitter_srcid, $binspam_count, $fhid, $affected_id));
-				$self->despam_srcid($fhitem, $binspam_count);
+				$self->despam_srcid($submitter_srcid, $binspam_count);
 			}
 		}
 	} else {
@@ -182,7 +182,7 @@ sub run {
 		if ($binspam_count > $constants->{tagbox_despam_binspamsallowed}) {
 			main::tagboxLog(sprintf("%s->run marking uid %d for %d admin binspam tags, based on %d (%d)",
 				ref($self), $submitter_uid, $binspam_count, $fhid, $affected_id));
-			$self->despam_uid($fhitem, $binspam_count);
+			$self->despam_uid($submitter_uid, $binspam_count);
 		}
 	}
 }
