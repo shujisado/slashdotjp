@@ -5078,6 +5078,28 @@ sub getAL2Types {
 } # end closure
 
 { # closure
+my $_al2_type_aliases = undef;
+sub _load_al2_type_aliases {
+	my($self) = @_;
+	my $alias_text = getCurrentStatic('al2_type_aliases') || '';
+	$_al2_type_aliases = { };
+	return if !$alias_text;
+	my @aliases = grep { $_ } split /\s+/, $alias_text;
+	for my $alias (@aliases) {
+		my($src, $implied) = $alias =~ /^(\w+)->(\w+)$/;
+		$_al2_type_aliases->{$src} = $implied if $src && $implied;
+	}
+}
+sub getAL2TypeAliases {
+	my($self) = @_;
+	$self->_load_al2_type_aliases if !defined($_al2_type_aliases);
+	# Return a copy of the cache, just in case anyone munges it up.
+	my $aliases = {( %$_al2_type_aliases )};
+	return $aliases;
+}
+} # end closure
+
+{ # closure
 my %_al2_types_by_id = ( );
 sub getAL2TypeById {
 	my($self, $al2tid) = @_;
@@ -5261,11 +5283,8 @@ sub getAL2 {
 	}
 
 	# XXXSRCID Try to use memcached to retrieve this data.
-#use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-#print STDERR "getAL2 srcids: " . Dumper($srcids);
 	my($where) = $self->_get_where_and_valuelist_al2($srcids);
 	my $values = $self->sqlSelectColArrayref('value', 'al2', $where);
-#print STDERR "getAL2 where: '$where' values: " . Dumper($values);
 
 	# The al2.value column ORs together for all the AL2 rows that
 	# apply for a user.  E.g. if the subnet has 'nopost' set, the
@@ -5285,9 +5304,18 @@ sub getAL2 {
 		) {
 			$retval->{$name} = $al2types->{$name};
 		}
-#print STDERR "getAL2 name=$name bv=$bitvector bp=$al2types->{$name}{bitpos}\n";
 	}
-#if ($retval && keys %$retval) { print STDERR "getAL2 retval keys: '" . join(" ", sort keys %$retval) . "'\n"; }
+
+	# If there are any al2 type aliases, return dummy hashref fields
+	# for them too.
+	my $aliases = $self->getAL2TypeAliases();
+	for my $src (keys %$aliases) {
+		if ($retval->{$src}) {
+			my $implied = $aliases->{$src};
+			$retval->{$implied} = { implied_by => $src };
+		}
+	}
+
 	return $retval;
 }
 
@@ -5301,8 +5329,6 @@ sub getAL2Log {
 	if (!ref($srcid)) {
 		$srcid = { get_srcid_type($srcid) => $srcid };
 	}
-#use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-#print STDERR "getAL2Log srcid: " . Dumper($srcid);
 	my($where) = $self->_get_where_and_valuelist_al2($srcid);
 
 	# Do the main select on al2_log to pull in all the changes made
@@ -6644,7 +6670,7 @@ sub _stories_time_clauses {
 		}
 	} else {
 		$is_future_column = '0 AS is_future';
-		$where = "$column_name < $now";
+		$where = "$column_name <= $now";
 	}
 
 	return ($is_future_column, $where);

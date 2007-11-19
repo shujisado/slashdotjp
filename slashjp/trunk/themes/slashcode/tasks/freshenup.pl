@@ -45,7 +45,7 @@ $task{$me}{code} = sub {
 	# runtask -u slashusername -o run_all=1,timeout_shtml=300 freshenup
 	$do_all = 1 
 		if $constants->{task_options}{run_all};
-	my $timeout_render = 30;
+	my $timeout_render = $constants->{task_options}{timeout_render} || 30;
 	my $timeout_shtml = $constants->{task_options}{timeout_shtml} || 90;
 
 	my $max_stories = defined($constants->{freshenup_max_stories})
@@ -410,7 +410,8 @@ $task{$me}{code} = sub {
 
 		if ($constants->{plugin}{FireHose}) {
 			gen_firehose_static($virtual_user, "index_firehose.shtml", $gSkin->{name}, "", {  skipmenu => 1, skippop => 1, fhfilter=> "story", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => 1  }); 
-			gen_firehose_static($virtual_user, "firehose.shtml", $gSkin->{name}, "", { duration => "7", mode => 'fulltile', mixedmode => '1', setfield => '1', color => "blue", nodates => '1'  }); 
+			gen_firehose_static($virtual_user, "firehose.shtml", $gSkin->{name}, "", { duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "blue", nodates => '1'  }); 
+			gen_firehose_static($virtual_user, "embed_firehose.shtml", $gSkin->{name}, "", { embed => '1', smalldevices => '1', duration => "7", mode => 'fulltitle', setfield => '1', color => "blue", nodates => '1'  }); 
 		}
 		$slashdb->markSkinClean($mp_skid);
 		delete $dirty_skins{$mp_skid};
@@ -441,6 +442,7 @@ $task{$me}{code} = sub {
 			if ($constants->{plugin}{FireHose}) {
 				gen_firehose_static($virtual_user, "index_firehose.shtml", $skin->{name}, $skinname, { skipmenu => 1, skippop => 1, fhfilter=> "'story $skin->{name}'", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => "1"  }); 
 				gen_firehose_static($virtual_user, "firehose.shtml", $skin->{name}, $skinname, { duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "blue", nodates => '1', fhfilter => "'$skin->{name}'" }); 
+				gen_firehose_static($virtual_user, "embed_firehose.shtml", $skin->{name}, $skinname, { embed => '1', smalldevices => '1', duration => "7", mode => 'fulltitle', setfield => '1', color => "blue", nodates => '1', fhfilter => "'$skin->{name}'" }); 
 			}
 
 			$slashdb->markSkinClean($key);

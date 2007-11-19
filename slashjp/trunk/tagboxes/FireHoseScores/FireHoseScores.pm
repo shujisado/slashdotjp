@@ -166,8 +166,7 @@ sub run {
 	my $tagsdb = getObject('Slash::Tags');
 	my $tagboxdb = getObject('Slash::Tagbox');
 	my $firehose_db = getObject('Slash::FireHose');
-	my $affected_id_q = $self->sqlQuote($affected_id);
-	my $fhid = $self->sqlSelect('id', 'firehose', "globjid = $affected_id_q");
+	my $fhid = $firehose_db->getFireHoseIdFromGlobjid($affected_id);
 	warn "Slash::Tagbox::FireHoseScores->run bad data, fhid='$fhid' db='$firehose_db'" if !$fhid || !$firehose_db;
 	my $fhitem = $firehose_db->getFireHose($fhid);
 
@@ -235,8 +234,8 @@ sub run {
 		$popularity += $extra_pop;
 	}
 
-	# If this is spam, its score goes way down.
-	if ($fhitem->{is_spam} eq 'yes') {
+	# If this is spam, or contains a spam URL, its score goes way down.
+	if ($fhitem->{is_spam} eq 'yes' || $firehose_db->itemHasSpamURL($fhitem)) {
 		my $max = defined($constants->{firehose_spam_score})
 			? $constants->{firehose_spam_score}
 			: -50;
