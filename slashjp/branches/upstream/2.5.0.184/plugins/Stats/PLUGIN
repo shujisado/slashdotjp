@@ -1,0 +1,21 @@
+# $Id: PLUGIN,v 1.17 2003/08/29 15:21:08 jamie Exp $
+name=Stats
+description="Stats system"
+htdoc=stats.pl
+mysql_dump=mysql_dump
+mysql_schema=mysql_schema
+requiresplugin=Blob
+task=adminmail.pl
+task=stats_graphs_delete.pl
+template=templates/calculate;stats;default
+template=templates/csv;stats;default
+template=templates/data;adminmail;default
+template=templates/display;adminmail;default
+template=templates/display;modmail;default
+template=templates/graph;stats;default
+template=templates/graphs;stats;default
+template=templates/list;stats;default
+template=templates/make_graph;stats;default
+template=templates/report;stats;default
+template=templates/stats_days;stats;default
+template=templates/table;stats;default

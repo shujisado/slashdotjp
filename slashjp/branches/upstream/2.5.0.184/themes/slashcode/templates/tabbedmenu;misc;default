@@ -1,0 +1,59 @@
+__section__
+default
+__description__
+Prints a tabbed menu bar.
+
+* user = the current user, of course. needed for background color
+* tabs = array of tabs, each tab hashref with keys "link", "label" and "sel_label"
+* tab_selected = the label of the selected tab
+* justify = 'left' or 'right', default is left
+* color = 'colored' or 'white', default is colored - this is whether
+  or not the selected tab should match colored or white background
+  below it
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+tabbedmenu
+__template__
+
+[% save_tab_selected = tab_selected %]
+[% IF justify != 'right'; justify = 'left'; END %]
+[% IF color != 'white'; color = 'colored'; END %]
+[% IF color == 'colored';
+        details = {
+                selected        => ' class="selected"',
+		unselected	=> '',
+		nextelected	=> ' class="nextselected"',
+        };
+ELSE;
+        details = {
+                selected        => ' class="selected"',
+                unselected      => '',
+                nextelected     => ' class="nextselected"',
+        };
+END %]
+[% IF tabs.size > 0 %]<ul class="menu">[% END %]
+[% FOREACH tab = tabs;
+        IF loop.first;
+                tabtmpl = "start_tab";
+        ELSIF !loop.last;
+                tabtmpl = "mid_tab";
+        ELSE;
+                tabtmpl = "end_tab";
+        END;
+        PROCESS $tabtmpl link=tab.link label=tab.label
+                justify=justify color=color details=details
+                tab_is_selected=(tab.label == save_tab_selected || tab.sel_label == save_tab_selected)
+                next_tab_is_selected=(loop.next && (loop.next.label == save_tab_selected || loop.next.sel_label == save_tab_selected));
+END %]
+[% IF tabs.size > 0 %]</ul>[% END %]
+
+__seclev__
+10000
+__version__
+$Id: tabbedmenu;misc;default,v 1.12 2005/07/27 22:54:48 pudge Exp $

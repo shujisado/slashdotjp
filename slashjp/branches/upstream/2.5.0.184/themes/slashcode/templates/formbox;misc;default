@@ -1,0 +1,32 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+formbox
+__template__
+[% begin %]
+<table width="[% boxwidth || "95%" %]" align="CENTER">
+<tr><td colspan="2">
+[% PROCESS titlebar width => (barwidth || "100%") %]
+</td></tr>
+[% FOR pair = pairs %]
+<tr><td bgcolor="[% user.colors.bg_2 %]" valign="top">
+<b>[% pair.label %]</b>
+</td><td>
+[% pair.value %]
+</td></tr>
+[% END %]
+</table>
+[% end %]
+
+__seclev__
+255
+__version__
+$Id: formbox;misc;default,v 1.6 2005/07/27 22:54:47 pudge Exp $

@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+Display a link to a file in Slash::Blob
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+fileLink
+__template__
+<a href="[% constants.real_rootdir %]/blob.pl?id=[% id | strip_attribute %]" title="[% title | strip_attribute %]">[% text %]</a>
+__seclev__
+10000
+__version__
+$Id: fileLink;misc;default,v 1.5 2005/07/27 22:54:47 pudge Exp $

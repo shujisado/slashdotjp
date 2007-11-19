@@ -1,0 +1,82 @@
+__section__
+default
+__description__
+Message body that is sent back to a user whenever a moderation from
+this user is metamoderated.
+
+* num_m2mods = Number of metamoderators involved over ALL listed results.
+
+* m2 = List of hashrefs containing the following keys:
+	title	- Title of the discussion in which the moderated comment appears.
+	url	- URL of the comment in question
+	subj	- subject of moderated comment
+	vote	- moderation vote on that comment
+	reason  - Reason given for original moderation
+
+* change = Total amount of karma change over listed results.
+
+__title__
+Metamoderation Message Body
+__page__
+messages
+__lang__
+en_US
+__name__
+msg_m2
+__template__
+
+[% vote_result = { '-1' => 'Unfair', '0' => 'Half-Fair (a tie)', '1' => 'Fair' }; %]
+
+[% IF msg.mode == 1 %]<p>[% END %]
+Some of your past moderations have been meta-moderated by other
+[% constants.sitename %] readers. Here are the exciting results:
+
+[% IF msg.mode == 1%]
+<ul>
+[% FOREACH m2item = m2 -%]
+	<li> "<a href="[% gSkin.rootdir; m2item.url | strip_attribute %]">[% m2item.subj %]</a>" from the discussion
+	"[% m2item.title %]" which you moderated as <b>[% m2item.reason.name %]</b> was voted 
+	<b>[% vote_result.${m2item.vote} %]</b>.
+
+[% END %]
+</ul>
+[% ELSE %]
+[% FOREACH m2item = m2 -%]
+	[%- reason = m2item.reason -%]
+	- "[% m2item.subj | decode_entities %]" from the discussion
+	[% discussion | decode_entities %] which you moderated as
+	"[% reason.name %]" was voted [% vote_result.${m2item.vote} %].
+[% IF m2item.url -%]
+	[% absolutedir; m2item.url %]
+
+[%- END %]
+[% END %]
+[%- END -%]
+[% IF (m2_summary.fair + m2_summary.unfair) > 0;
+	"Summary of your recent moderation: " ;
+	Slash.getData("percentage", { sum => m2_summary.fair, count => (m2_summary.fair + m2_summary.unfair )}, "misc");
+	" Fair";
+	IF msg.mode == 1; "<p>"; END;
+END %]
+[%
+	msg1 = '';
+	msg2 = '';
+	IF change > 0;
+		msg1="outstanding";
+		msg2="rewarded with some karma";
+	ELSIF change < 0;
+		msg1="poor";
+		msg2="assessed a karma penalty";
+	END;
+	IF change < 0;
+		change = change * -1;
+	END;
+%][% IF msg1 && msg2 %]
+For your [% msg1 %] moderation, you have been [% msg2 %].
+[% END %]
+[% IF msg.mode == 1 %]<p>[% END %]Thank you for moderating.
+
+__seclev__
+500
+__version__
+$Id: msg_m2;messages;default,v 1.14 2005/07/27 22:54:11 pudge Exp $

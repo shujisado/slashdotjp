@@ -1,0 +1,33 @@
+__section__
+default
+__description__
+THIS SHOULD NOT BE USED AND IS GOING AWAY
+
+Create a link to a story, whenever it needs one
+
+* dynamic = boolean for using dynamic, instead of static, page
+* mode = comment mode
+* threshold = comment threshold
+* sid = story id
+* section = story section
+* text = text to put in link
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+linkStory
+__template__
+[%# define site_url just in case url is not passed to template %]
+[% site_url = url ? url : gSkin.rootdir %] 
+[% IF dynamic %]
+<a href="[% site_url %]/article.pl?sid=[% sid %][% IF mode %]&amp;mode=[% mode %][% END %][% IF tid_string %]&amp;tid=[% tid_string %][% END %][% IF threshold %]&amp;threshold=[% threshold %][% END %]" title="[% title | strip_attribute %]">[% text %]</a>
+[% ELSE %]
+<a href="[% site_url %]/[% section %]/[% sid %].shtml[% IF tid_string %]?tid=[% tid_string %][% END %]" title="[% title | strip_attribute %]">[% text %]</a>
+[% END %]
+__seclev__
+10000
+__version__
+$Id: linkStory;misc;default,v 1.16 2005/07/27 22:54:48 pudge Exp $

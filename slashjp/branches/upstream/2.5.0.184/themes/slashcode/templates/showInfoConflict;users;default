@@ -1,0 +1,32 @@
+__section__
+default
+__description__
+show info uid/nick conflict
+
+* user = hashref for user being edited
+* seclev_field = boolean to display seclev editing field
+* uid_checked = whether or not uid is checked
+* nickname_checked = whether or not nickname is checked
+* author_select = select popup for authors
+* author_flag = current user is author
+* authoredit_flag = current user can edit authors
+__title__
+show info uid/nick conflict
+__page__
+users
+__lang__
+en_US
+__name__
+showInfoConflict
+__template__
+[% PROCESS titlebar width="80%" title="UID/nickname conflict" %]
+<p>There is are two users on this system, one using [% id %] as a user ID:<br>
+<b><a href="[% gSkin.rootdir %]/users.pl?op=[% op %]&amp;uid=[% id %]&amp;userfield=[% id %]">UID [% id %] nickname [% nick %]</a></b><br>
+And the other using [% id %] as a nickname:<br>
+<b><a href="[% gSkin.rootdir %]/users.pl?op=[% op %]&amp;uid=[% conflict_id %]&amp;userfield=[% conflict_id %]">UID [% conflict_id %] nickname [% id %]</a></b><br>
+Select whichever you're looking for.</p>
+
+__seclev__
+10000
+__version__
+$Id: showInfoConflict;users;default,v 1.5 2005/07/27 22:54:48 pudge Exp $
