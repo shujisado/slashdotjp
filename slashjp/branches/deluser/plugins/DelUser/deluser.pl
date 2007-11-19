@@ -11,8 +11,10 @@ use strict;
 use utf8;
 
 use Slash;
+use Slash::Constants qw(:web :messages);
 use Slash::Display;
 use Slash::Utility;
+use Slash::XML;
 use Data::Dumper;
 
 sub main {
@@ -23,12 +25,11 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $post_ok = $user->{state}{post};
 	my $user_ok = !$user->{is_anon};
-	# lc just in case
-	my $op = lc($form->{op});
+	my $delete_ok = $form->{delete_ok};
 
 	my %ops = (
 	    deleteform => [$user_ok, \&deleteUserForm],
-	    deleteok => [$post_ok && $user_ok , \&deleteUser],
+	    deleteok => [$post_ok && $user_ok $$ $delete_ok, \&deleteUser],
 	    );
 
 	# set default op
@@ -39,6 +40,7 @@ sub main {
 
 	# if not logged in
 	if (!$user_ok) {
+	    my $rootdir = getCurrentStatic('rootdir');
 	    redirect("$rootdir/");
 	}
 
@@ -50,21 +52,21 @@ sub main {
 ##################################################################
 sub deleteUserForm {
     my($slashdb, $reader, $constants, $user, $form, $note) = @_;
+    header();
     slashDisplay('deleteUser');
     footer();
 }
 
 sub deleteUser {
     my($slashdb, $reader, $constants, $user, $form) = @_;
-    my $note;
     my $uid = $user->{uid};
 
-#    my $rows = $slashdb->deleteUser($uid);
-#    slashDisplay('deleteUserFinished');
-#    footer();
-
-#    redirect("$rootdir/my/logout");
-    deleteUserForm(@_, $note);
+    my $rows = $slashdb->deleteUser($uid);
+    if ($rows) {
+	my $rootdir = getCurrentStatic('rootdir');
+	redirect("$rootdir/my/logout");
+    }
+#    deleteUserForm(@_, $note);
 }
 
 createEnvironment();

@@ -34,24 +34,26 @@ __template__
     }
   }
   function toggle_form(flag) {
-    toggle_recurse(document.getElementById("createuserform"), flag);
+    toggle_recurse(document.getElementById("deleteuserform"), flag);
   }
 // -->
     </script>
-    <form action="[% constants.real_rootdir %]/deluser.pl" method="post">
+    <form id="deleteuserform" action="[% constants.real_rootdir %]/deluser.pl" method="post">
       <fieldset>
 	<legend></legend>
-	[% PROCESS formkey_tag %]
 	<input type="hidden" name="uid" value="[% user.uid %]">
 	<p>アカウントを削除する場合は，以下のチェックボックスにチェックを入れ送信ボタンを押してください。</p>
 	<div id="delete_ok_box">
-	  <input id="delete_ok" type="checkbox" name="delete_ok" value="delete_ok" onClick="toggle_form(this.checked)" onKeydown="toggle_form(this.checked)">
-	  <label for="delete_ok">本当に削除する</label>
+	  <label>
+	    <input id="delete_ok" type="checkbox" name="delete_ok" value="delete_ok" onClick="toggle_form(this.checked)" onKeydown="toggle_form(this.checked)">本当に削除する</label>
 	</div>
 	<input type="hidden" name="op" value="delete">
 	<input type="submit" value="送信" class="button">
       </fieldset>
     </form>
+    <script language="JavaScript">
+  toggle_form(document.getElementById("delete_ok").checked);
+    </script>
   </div>
 </div>
 __seclev__
