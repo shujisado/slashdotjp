@@ -1,7 +1,5 @@
 name=DelUser
 description="User deletion plugin"
-#mysql_dump=mysql_dump
-#mysql_schema=mysql_schema
 htdoc=deluser.pl
-#task=get_translation_articles.pl
-template=templates/deleteUserForm;deluser;default
+template=templates/deleteUser;deluser;default
+template=templates/deleteUserFinished;deluser;default

@@ -5,11 +5,7 @@
 # $Id: $
 
 use strict;
-#use Image::Size;
-#use POSIX qw(O_RDWR O_CREAT O_EXCL tmpnam);
-
 use utf8;
-
 use Slash;
 use Slash::Constants qw(:web :messages);
 use Slash::Display;
@@ -27,6 +23,7 @@ sub main {
 	my $user_ok = !$user->{is_anon};
 	my $delete_ok = $form->{delete_ok};
 
+
 	my %ops = (
 	    deleteform => [$user_ok, \&deleteUserForm],
 	    deleteok => [$post_ok && $user_ok $$ $delete_ok, \&deleteUser],
@@ -38,8 +35,8 @@ sub main {
 	    $form->{op} = $op = 'deleteform';
 	}
 
-	# if not logged in
-	if (!$user_ok) {
+	# if not logged in or you are admin
+	if (!$user_ok || $user->{seclev} < 2) {
 	    my $rootdir = getCurrentStatic('rootdir');
 	    redirect("$rootdir/");
 	}
@@ -61,12 +58,22 @@ sub deleteUser {
     my($slashdb, $reader, $constants, $user, $form) = @_;
     my $uid = $user->{uid};
 
-    my $rows = $slashdb->deleteUser($uid);
-    if ($rows) {
-	my $rootdir = getCurrentStatic('rootdir');
-	redirect("$rootdir/my/logout");
+    if (!$form->{delete_ok}) {
+	my $note = '';
+	deleteUserForm(@_, $note);
+    } else {
+	my $rows = $slashdb->deleteUser($uid);
+	if ($rows) {
+	    $slashdb->deleteLogToken($uid);
+	    $uid = $constants->{anonymous_coward_uid};
+	    delete $cookies->{user};
+	    setCookie('user', '');
+
+	    header();
+	    slashDisplay('deleteUserFinished');
+	    footer();
+	}
     }
-#    deleteUserForm(@_, $note);
 }
 
 createEnvironment();

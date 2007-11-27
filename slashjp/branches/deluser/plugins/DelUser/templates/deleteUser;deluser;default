@@ -9,14 +9,15 @@ deluser
 __lang__
 en_US
 __name__
-deleteUserForm
+deleteUser
 __template__
 <div id="slashboxes">
         [% PROCESS userboxes %]
 </div>
 [% thisnickname = user.nickname | strip_literal;
-   title = "アカウント$thisnickname ($user.uid)を削除" %]
+   title = "アカウント $thisnickname ($user.uid)を削除" %]
 <div id="users-blocks">
+  [% PROCESS prefs_titlebar tab_selected='deluser' %]
   <div class="generalbody">
     <script language="JavaScript">
 // <!--
@@ -43,6 +44,7 @@ __template__
 	<legend></legend>
 	<input type="hidden" name="uid" value="[% user.uid %]">
 	<p>アカウントを削除する場合は，以下のチェックボックスにチェックを入れ送信ボタンを押してください。</p>
+	<p>この操作により，システムに登録されているあなたの個人情報や発言全てが削除されます。</p>
 	<div id="delete_ok_box">
 	  <label>
 	    <input id="delete_ok" type="checkbox" name="delete_ok" value="delete_ok" onClick="toggle_form(this.checked)" onKeydown="toggle_form(this.checked)">本当に削除する</label>

@@ -1,0 +1,26 @@
+__section__
+default
+__description__
+Delete user finished
+__title__
+Delete user finished
+__page__
+deluser
+__lang__
+en_US
+__name__
+deleteUserFinished
+__template__
+<div id="slashboxes">
+        [% PROCESS userboxes %]
+</div>
+<div id="users-blocks">
+  <div class="generalbody">
+    [% INCLUDE titlebar title="アカウントの削除が完了しました" %]
+    <p>個人情報を含む，あなたに関係するデータはシステムから削除されました。Slashdot Japan をご利用いただきありがとうございました。</p>
+  </div>
+</div>
+__seclev__
+500
+__version__
+$Id: $
