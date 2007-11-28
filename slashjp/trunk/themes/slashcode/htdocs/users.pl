@@ -3066,7 +3066,8 @@ sub saveHome {
 		if ($form->{restore_defaults}) {
 			setToDefaults($user_edits_table, {}, {
 				maxstories	=> $gSkin->{artcount_max} || 30,
-				tzcode		=> "JST",
+				tzcode		=> $constants->{default_tzcode} || "EST",
+				dfid		=> $constants->{default_dfid} || 0,
 				# XXX shouldn't this reset ALL the defaults,
 				# not just these two?
 			});
