@@ -1645,6 +1645,10 @@ sub listTagnamesRecent {
 sub tagnameorder {
 	my($a1, $a2) = $a =~ /(^\!)?(.*)/;
 	my($b1, $b2) = $b =~ /(^\!)?(.*)/;
+	$a1 ||= "";
+	$a2 ||= "";
+	$b1 ||= "";
+	$b2 ||= "";
 	$a2 cmp $b2 || $a1 cmp $b1;
 }
 
