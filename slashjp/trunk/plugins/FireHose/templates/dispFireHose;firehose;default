@@ -114,7 +114,7 @@ END %]
 		<ul>
 			<li class="more"><b>
 			[% IF item.type == "story" %]
-				[% the_skin = Slash.db.getSkin(item.primaryskid) %]
+				[% the_skin = item.primaryskid ? Slash.db.getSkin(item.primaryskid) : Slash.db.getSkin(constants.mainpage_skid) %]
 				[% 
 				readmore_link = "Read More";
 				
@@ -142,7 +142,7 @@ END %]
 			   disc = Slash.db.getDiscussion(item.discussion); %]
 			<li class="comments[% IF !disc.commentcount || options.nocommentcnt %] nocomment[% END %]">
 				[% skin = gSkin %]
-				[% IF item.type == "story"; skin = Slash.db.getSkin(item.primaryskid); END %]
+				[% IF item.type == "story"; skin = item.primaryskid ? Slash.db.getSkin(item.primaryskid) : Slash.db.getSkin(constants.mainpage_skid); END %]
 				<a href="[% skin.rootdir %]/comments.pl?sid=[% item.discussion %]">[% disc.commentcount %]</a> <span>comment[% IF disc.commentcount != 1 %]s[% END %]</span>
 			</li>
 			[% END %]
