@@ -4963,8 +4963,6 @@ UPDATE string_param SET name = '9' WHERE type = 'otherusersparam' AND code = 'd2
 # 2007-10-25
 UPDATE vars SET value = 'T_2_5_0_181' WHERE name = 'cvs_tag_currentcode';
 
-# PUDGE LAST UPDATED HERE
-
 # For plugins/FireHose
 # Install CPAN module File::Type for plugins/FireHose 
 ALTER TABLE firehose_text ADD COLUMN media TEXT;
@@ -5007,8 +5005,6 @@ ALTER TABLE ad_settings ADD COLUMN always TINYINT UNSIGNED NOT NULL DEFAULT 0;
 # 18 = "Invalid HTML Input" (see the Messages dump to add back)
 DELETE FROM message_codes WHERE code = 18;
 
-# SLASHCODE/USEPERL LAST UPDATED HERE
-
 # Redundant for many sites, but this is here because an earlier error
 # in the upgrades file may have left your site without them if you
 # didn't have the FireHose plugin installed.
@@ -5036,8 +5032,6 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('tagbox_despam_declou
 # 2007-11-08
 UPDATE vars SET value = 'T_2_5_0_183' WHERE name = 'cvs_tag_currentcode';
 
-# SLASHDOT LAST UPDATED HERE
-
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('spamurlregexes','',100,'static','Whitespace-delimited list of regexes which indicate a spammer URL.','mainpage',5,'Spam URL Regexes',0,NULL,NULL,0);
 INSERT IGNORE INTO vars (name, value, description) VALUES ('al2_type_aliases', 'spammer->nosubmit spammer->nopost nopost->nopostanon', 'List of AL2s that imply other AL2s, in a whitespace-delimited list of A->B format');
 
@@ -5047,8 +5041,29 @@ UPDATE code_param SET name = 'Many' WHERE type = 'd2_comment_q' AND name = 'Larg
 UPDATE code_param SET name = 'Oldest' WHERE type = 'd2_comment_order' AND name = 'Date';
 UPDATE code_param SET name = 'Highest Rated' WHERE type = 'd2_comment_order' AND name = 'Score';
 
-UPDATE al2_types SET name='spammer',title='Binspammer' WHERE name='binspam';
+UPDATE al2_types SET name='spammer',title='Spammer' WHERE name='binspam';
 
 # 2007-11-14
 UPDATE vars SET value = 'T_2_5_0_184' WHERE name = 'cvs_tag_currentcode';
+
+# SLASHDOT LAST UPDATED HERE
+
+# not for slashdot
+UPDATE vars SET value = 'yes no binspam dupe notthebest offtopic stupid slownewsday interesting funny insightful' WHERE name = 'tagbox_top_excludetagnames';
+
+# PUDGE LAST UPDATED HERE
+
+# 2007-12-05
+UPDATE vars SET value = 'T_2_5_0_185' WHERE name = 'cvs_tag_currentcode';
+
+# SLASHCODE/USEPERL LAST UPDATED HERE
+
+# for plugins/Tags
+INSERT INTO ajax_ops VALUES (NULL, 'admin_recenttagnamesbox', 'Slash::Tags', 'ajax_recenttagnamesbox', 'ajax_admin', 'createuse');
+
+# for plugins/FireHose
+INSERT IGNORE INTO ajax_ops VALUES (NULL, 'firehose_usage', 'Slash::FireHose', 'ajaxFireHoseUsage', 'ajax_admin', 'createuse');
+
+# 2007-12-05
+UPDATE vars SET value = 'T_2_5_0_186' WHERE name = 'cvs_tag_currentcode';
 

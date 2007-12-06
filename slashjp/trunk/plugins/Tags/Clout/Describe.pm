@@ -62,7 +62,9 @@ sub get_nextgen {
 		 sourcetag.tagnameid,
 		 sourcetag.globjid,
 		 gtid",
-		"tags AS sourcetag, globjs, tags_peerclout AS sourcetpc, users_info,
+		"tags AS sourcetag,
+		 tagname_params AS tagparam,
+		 globjs, tags_peerclout AS sourcetpc, users_info,
 		 tags AS newtag LEFT JOIN tags_peerclout AS newtpc USING (uid)",
 		"sourcetag.inactivated IS NULL
 		 AND sourcetag.globjid=globjs.globjid
@@ -70,7 +72,8 @@ sub get_nextgen {
 		 AND sourcetpc.clid=$self->{clid}
 		 AND sourcetag.globjid=newtag.globjid
 		 AND sourcetag.tagnameid=newtag.tagnameid
-		 AND sourcetag.tagnameid NOT IN ($self->{nodid}, $self->{nixid})
+			AND sourcetag.tagnameid=tagparam.tagnameid
+			AND tagparam.name='descriptive'
 		 AND sourcetag.tagid != newtag.tagid
 		 AND newtag.created_at >= DATE_SUB(NOW(), INTERVAL $self->{months_back} MONTH)
 		 AND newtag.uid=users_info.uid
@@ -271,10 +274,10 @@ sub balance_weight_vectors {
 	my $total = $w_pos_mag+$w_neg_mag;
 	if ($w_pos_mag > $total * 0.60) {
 		my $neg_reduc_factor = $w_neg_mag*3/$w_pos_mag;
-		@ret = map { $_ < 0 ? $_*$neg_reduc_factor : $_ } @_;
+		@ret = map { $_ < 0 ? $_*$neg_reduc_factor : $_ } @w;
 	} elsif ($w_neg_mag > $total * 0.60) {
 		my $pos_reduc_factor = $w_pos_mag*3/$w_neg_mag;
-		@ret = map { $_ > 0 ? $_*$pos_reduc_factor : $_ } @_;
+		@ret = map { $_ > 0 ? $_*$pos_reduc_factor : $_ } @w;
 	} else {
 		# No change.
 		@ret = @w;
