@@ -1,0 +1,27 @@
+__section__
+default
+__description__
+Display saved poll.
+
+No specially passed variables.
+__title__
+
+__page__
+pollBooth
+__lang__
+en_US
+__name__
+savepoll
+__template__
+[% FOREACH n = [1..8] %]
+	[% aid = "aid$n" %]
+	[% votes = "votes$n" %]
+	[% IF form.$aid %]
+<br>Answer [% n %] '[% form.$aid %]' [% form.$votes %]
+	[% END %]
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: savepoll;pollBooth;default,v 1.3 2005/07/27 22:54:12 pudge Exp $

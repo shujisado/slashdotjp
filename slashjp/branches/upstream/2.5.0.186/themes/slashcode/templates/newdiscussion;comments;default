@@ -1,0 +1,34 @@
+__section__
+default
+__description__
+
+Form which is displayed when user creates a discussion.
+
+* error = Any error messages that may have occurred during processing.
+* id = The ID # of the new discussion.
+* format_select	= [Optional] See template "edit_comment;misc;default"
+
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+newdiscussion
+__template__
+[% IF id %]
+[% PROCESS titlebar width => "100%", title => "New $label.ucfirst Created" %]
+<p>Your [% label %], <a href="[% gSkin.rootdir %]/comments.pl?sid=[% id %]"><b>[% form.title %]</b></a>,
+has been created.  Go to <a href="[% gSkin.rootdir %]/comments.pl?sid=[% id %]">[% gSkin.absolutedir %]/comments.pl?sid=[% id %]</a> to begin posting.  Remember this URL!</p>
+<p><b>Please note, without a comment your [% label %] will not be listed in any indexes.</b></p>
+<p>
+[% ELSE %]
+[% IF error; error; ELSE; PROCESS titlebar width => "100%", title => "Unknown error" %]
+<p>An unknown error has occurred.</p>
+[% END; END %]
+
+__seclev__
+500
+__version__
+$Id: newdiscussion;comments;default,v 1.13 2005/07/27 22:54:48 pudge Exp $
