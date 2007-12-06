@@ -4,8 +4,10 @@ slash (2.5.0.184-1) unstable; urgency=low
   * Fix: Wide character in print warning at following tasks:
     - new_headfoot.pl
     - create_sidebar.pl
+  * Add set_sectionlinks.pl to themes/slashcode/tasks
+    - create recentSection template for left menu
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 19 Nov 2007 10:16:18 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 19 Nov 2007 10:29:29 +0000
 
 slash (2.5.0.183-0.1) unstable; urgency=low
 
