@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.150 2007/11/14 14:47:19 scc Exp $
+// $Id: common.js,v 1.151 2007/11/29 17:44:53 entweichen Exp $
 
 var fh_play = 0;
 var fh_is_timed_out = 0;
@@ -1451,7 +1451,7 @@ function saveModalPrefs() {
 		onComplete: function() {
 			hide_modal_box();
 			if (document.forms['modal_prefs'].refreshable.value)
-				document.location=document.forms['modal_prefs'].refreshable.value;
+				document.location=document.URL;
 		}
 	};
 	ajax_update(params, '', handlers);

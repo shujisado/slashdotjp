@@ -42,6 +42,9 @@ __template__
 		<i>(none)</i>
 	[% END %]
 
+[% CASE 'recenttagnamesbox_js' %]
+	<script type="text/javascript">admin_recenttagnamesbox_fetch(60);</script>
+
 [% CASE 'error' %]
 	Sorry, an error occurred.
 	[% returnme.data_constant = 1 %] 
@@ -54,4 +57,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: data;tags;default,v 1.5 2006/04/05 19:57:19 jamiemccarthy Exp $
+$Id: data;tags;default,v 1.6 2007/12/06 02:49:31 jamiemccarthy Exp $

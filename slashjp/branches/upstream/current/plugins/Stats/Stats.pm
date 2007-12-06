@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Stats.pm,v 1.185 2007/01/30 22:18:29 tvroom Exp $
+# $Id: Stats.pm,v 1.186 2007/11/29 23:26:30 jamiemccarthy Exp $
 
 package Slash::Stats;
 
@@ -22,7 +22,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.185 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.186 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user, $options) = @_;
@@ -1670,9 +1670,52 @@ sub getTopReferers {
 	return $self->sqlSelectAll(
 		"DISTINCT SUBSTRING_INDEX(referer,'/',3) AS referer, COUNT(id) AS c",
 		"accesslog_temp",
-		"referer IS NOT NULL AND LENGTH(referer) > 0 AND referer LIKE 'http%' $where ",
+		"op != 'slashdot-it'
+		 AND referer IS NOT NULL AND LENGTH(referer) > 0 AND referer LIKE 'http%'
+		 $where",
 		"GROUP BY referer ORDER BY c DESC, referer LIMIT $count"
 	);
+}
+
+sub getTopBadgeURLs {
+	my($self, $options) = @_;
+	# This is Slashdot-specific.  It won't make much sense for any
+	# other site to use it.
+	my $constants = getCurrentStatic();
+	return [ ] unless $constants->{basedomain} eq 'slashdot.org';
+
+	my $count = $options->{count} || 10;
+	my $top_ar = $self->sqlSelectAll(
+		"query_string AS qs, COUNT(*) AS c",
+		"accesslog_temp",
+		"op='slashdot-it'",
+		"GROUP BY qs ORDER BY c DESC, qs LIMIT $count"
+	);
+	for my $duple (@$top_ar) {
+		my($qs, $c) = @$duple;
+		$qs =~ s/^.*url=//;
+		$qs =~ s/\%[a-fA-F0-9]?$//;
+		$qs =~ s/%([a-fA-F0-9]{2})/pack('C', hex($1))/ge;
+		$duple = [$qs, $c];
+	}
+	return $top_ar;
+}
+
+sub getTopBadgeHosts {
+	my($self, $options) = @_;
+	my $count = $options->{count} || 10;
+	my $url_count = $count * 20;
+	my $top_ar = $self->getTopBadgeURLs({ count => $url_count });
+	my %count = ( );
+	for my $duple (@$top_ar) {
+		my($uri, $c) = @$duple;
+		my $host = URI->new($uri)->host();
+		$count{$host} += $c;
+	}
+	my @top_hosts = (sort { $count{$b} <=> $count{$a} || $a <=> $b } keys %count);
+	$#top_hosts = $count-1 if scalar @top_hosts > $count;
+	my @top = ( map { [ $_, $count{$_} ] } @top_hosts );
+	return \@top;
 }
 
 ########################################################
@@ -2104,4 +2147,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Stats.pm,v 1.185 2007/01/30 22:18:29 tvroom Exp $
+$Id: Stats.pm,v 1.186 2007/11/29 23:26:30 jamiemccarthy Exp $

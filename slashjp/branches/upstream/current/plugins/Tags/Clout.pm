@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Clout.pm,v 1.4 2007/10/24 21:12:23 jamiemccarthy Exp $
+# $Id: Clout.pm,v 1.5 2007/11/16 17:21:23 jamiemccarthy Exp $
 
 package Slash::Clout;
 
@@ -19,7 +19,7 @@ use base 'Slash::DB';
 
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub init {
 	my($self) = @_;
@@ -38,31 +38,6 @@ sub init {
 	$self->{nixid} = $tags_reader->getTagnameidCreate($constants->{tags_downvote_tagname} || 'nix');
 	1;
 }
-
-#sub insert_nextgen {
-#        my($g, $insert_ar) = @_;
-#        my $slashdb = getCurrentDB();
-#        for my $hr (@$insert_ar) {
-#                $hr->{gen} = $g; 
-#                $slashdb->sqlInsert('tags_peerweight', $hr);
-#        }
-#}       
-#        
-#sub update_tags_peerweight {
-#        my($insert_ar) = @_;
-#        for my $hr (@$insert_ar) {
-#                $tags_peerweight->{ $hr->{uid} } = $hr->{weight}; 
-#        } 
-#}               
-#                
-#sub B_copy_peerweight_sql {
-#        my $slashdb = getCurrentDB();
-#        $slashdb->sqlDo("SET AUTOCOMMIT=0");
-#        $slashdb->sqlDo("DELETE FROM users_param WHERE name='tagpeerval2'");
-#        $slashdb->sqlDo("INSERT INTO users_param SELECT NULL, uid, 'tagpeerval2', ROUND(weight,6)+0 FROM tags_peerweight");
-#        $slashdb->sqlDo("COMMIT");
-#        $slashdb->sqlDo("SET AUTOCOMMIT=1");
-#}
 
 1;
 

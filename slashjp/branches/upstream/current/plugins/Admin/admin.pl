@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: admin.pl,v 1.327 2007/11/13 17:25:04 jamiemccarthy Exp $
+# $Id: admin.pl,v 1.329 2007/11/29 22:15:20 tvroom Exp $
 
 use strict;
 use File::Temp 'tempfile';
@@ -10,7 +10,6 @@ use Image::Size;
 use Time::HiRes;
 use LWP::UserAgent;
 use URI;
-use XML::Simple;
 
 use Slash;
 use Slash::Display;
@@ -1446,34 +1445,6 @@ sub editStory {
 		}
 	}
 
-	my $yoogli_similar_stories = {};
-	if ($constants->{yoogli_oai_search}) {
-		my $query = $constants->{yoogli_oai_query_base} .= '?verb=GetRecord&metadataPrefix=oai_dc&rescount=';
-		$query .= $constants->{yoogli_oai_result_count} . '&identifier=' . URI->new($storyref->{introtext});
-
-		my $ua = new LWP::UserAgent;
-		$ua->timeout($constants->{yoogli_oai_result_count} + 2);
-		my $req = new HTTP::Request GET => $query;
-		my $res = $ua->request($req);
-		if ($res->is_success) {
-			my $xml = new XML::Simple;
-			my $content = eval { $xml->XMLin($res->content) };
-			unless ($@) {
-				my $sid_regex = regexSid();
-				foreach my $metadata (@{$content->{'GetRecord'}{'record'}}) {
-                                        next if $metadata->{'metadata'}{'title'} eq $storyref->{title};
-					my $key = $metadata->{'header'}{'identifier'};
-					my($sid) = $metadata->{'metadata'}{'identifier'} =~ $sid_regex;
-					$yoogli_similar_stories->{$key}{'date'}  = $reader->getStory($sid, 'time');
-					$yoogli_similar_stories->{$key}{'url'}   = $metadata->{'metadata'}{'identifier'};
-					$yoogli_similar_stories->{$key}{'title'} = $metadata->{'metadata'}{'title'};
-					$yoogli_similar_stories->{$key}{'relevance'} = $metadata->{'metadata'}{'relevance'};
-					$yoogli_similar_stories->{$key}{'sid'} = $sid;
-				}
-			}
-		}
-	}
-
 	my $admindb = getObject('Slash::Admin');
 	my $authortext = $admindb->showStoryAdminBox($storyref);
 	my $slashdtext = $admindb->showSlashdBox();
@@ -1554,7 +1525,6 @@ sub editStory {
 		signofftext		=> $signofftext,
 		user_signoff		=> $user_signoff,
 		add_related_text	=> $add_related_text,
-		yoogli_similar_stories  => $yoogli_similar_stories,
 		pending_file_count	=> $pending_file_count,
 		story_static_files	=> $story_static_files
 	});
@@ -2091,6 +2061,12 @@ sub updateStory {
 	$data->{neverdisplay} = $form->{display} ? '' : 1;
 
 #print STDERR "admin.pl before updateStory data: " . Dumper($data);
+	if ($data->{neverdisplay}) {
+		print STDERR "Setting sid: $form->{sid} to neverdisplay\n";
+		use Data::Dumper;
+		print STDERR Dumper($form);
+		print STDERR Dumper($data);
+	}
 	if (!$slashdb->updateStory($form->{sid}, $data)) {
 		titlebar('100%', getTitle('story_update_failed'));
 		editStory(@_);

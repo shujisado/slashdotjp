@@ -19,6 +19,7 @@ __template__
   <div class="menu" onmouseover="dont_hide_nodnix_menu()" onmouseout="hide_nodnix_menu(750)" onmousedown="hide_nodnix_menu()">
     <ul>
       <li title="Tag this item 'interesting', voting it up" onmousedown="nodnix_tag('interesting', '+')">interesting</li>
+      <li title="Tag this item 'fresh', voting it up" onmousedown="nodnix_tag('fresh', '+')">fresh</li>
       <li title="Tag this item 'funny', voting it up" onmousedown="nodnix_tag('funny', '+')">funny</li>
       <li title="Tag this item 'insightful', voting it up" onmousedown="nodnix_tag('insightful', '+')">insightful</li>
     </ul>
@@ -33,8 +34,9 @@ __template__
       <li title="Tag this item 'offtopic', voting it down" onmousedown="nodnix_tag('offtopic', '-')">offtopic</li>
       <li title="Tag this item 'stupid', voting it down" onmousedown="nodnix_tag('stupid', '-')">stupid</li>
       <li title="Tag this item 'slownewsday', voting it down" onmousedown="nodnix_tag('slownewsday', '-')">slownewsday</li>
+      <li title="Tag this item 'stale', voting it down" onmousedown="nodnix_tag('stale', '-')">stale</li>
     </ul>
   </div>
 </div>
 __version__
-$Id: nodnix_menus;firehose;default,v 1.4 2007/11/01 20:35:18 jamiemccarthy Exp $
+$Id: nodnix_menus;firehose;default,v 1.6 2007/12/05 18:46:46 scc Exp $

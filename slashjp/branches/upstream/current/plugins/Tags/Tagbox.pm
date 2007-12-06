@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tagbox.pm,v 1.8 2007/04/19 05:35:00 jamiemccarthy Exp $
+# $Id: Tagbox.pm,v 1.9 2007/11/29 23:26:51 jamiemccarthy Exp $
 
 package Slash::Tagbox;
 
@@ -17,7 +17,7 @@ use base 'Slash::DB::MySQL';
 
 use Data::Dumper;
 
-($VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.9 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -284,6 +284,20 @@ sub addFeederInfo {
 	$info_hr->{tbid} = $tbid;
 	die "attempt to create tagboxlog_feeder row with no non-NULL ids: " . Dumper($info_hr)
 		if !( $info_hr->{tagid} || $info_hr->{tdid} || $info_hr->{tuid} );
+	return $self->sqlInsert('tagboxlog_feeder', $info_hr);
+}
+
+sub forceFeederRecalc {
+	my($self, $tbid, $affected_id) = @_;
+	my $info_hr = {
+		-created_at =>	'NOW()',
+		tbid =>		$tbid,
+		affected_id =>	$affected_id,
+		importance =>	9999,
+		tagid =>	0,
+		tdid =>		0,
+		tuid =>		0,
+	};
 	return $self->sqlInsert('tagboxlog_feeder', $info_hr);
 }
 

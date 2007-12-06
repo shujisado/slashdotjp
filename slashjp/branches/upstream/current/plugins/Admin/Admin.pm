@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Admin.pm,v 1.35 2007/01/03 17:52:52 tvroom Exp $
+# $Id: Admin.pm,v 1.36 2007/12/06 02:49:31 jamiemccarthy Exp $
 
 package Slash::Admin;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.35 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.36 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -454,10 +454,10 @@ sub showSlashdBox {
 		tasks_next              => \@tasks_next,
 		tasks_inprogress        => \@tasks_inprogress,
 		tasks_last              => \@tasks_last,
-	}, , { Return => 1 });
-	
+	}, { Return => 1 });
+
 	return $text if $options->{contents_only};
-	
+
 	$updater = getData('slashdbox_js', {}, "admin") if $options->{updater};
 	slashDisplay('sidebox', {
 		updater 	=> $updater,
@@ -478,7 +478,7 @@ sub showPerformanceBox {
 	my $updater;
 	my $perf_box = slashDisplay('performance_box', {}, { Return => 1 });
 	return $perf_box if $options->{contents_only};
-	$updater =getData('perfbox_js', {}, "admin") if $options->{updater};
+	$updater = getData('perfbox_js', {}, "admin") if $options->{updater};
 	slashDisplay("sidebox", {
 		updater 	=> $updater,
 		name 		=> 'performancebox',

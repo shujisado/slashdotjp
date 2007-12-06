@@ -1,4 +1,4 @@
-// $Id: admin.js,v 1.42 2007/10/30 20:33:48 tvroom Exp $
+// $Id: admin.js,v 1.43 2007/12/06 02:49:31 jamiemccarthy Exp $
 
 function um_ajax(the_behaviors, the_events) {
 	var params =[];
@@ -178,6 +178,12 @@ function admin_storyadminbox_fetch(secs) {
 	var params = [];
 	params['op'] = 'admin_storyadminbox';
 	ajax_periodic_update(secs, params, "storyadmin-content");
+}
+
+function admin_recenttagnamesbox_fetch(secs) {
+	var params = [];
+	params['op'] = 'admin_recenttagnamesbox';
+	ajax_periodic_update(secs, params, "recenttagnames-content");
 }
 
 function console_update(use_fh_interval, require_fh_timeout) {

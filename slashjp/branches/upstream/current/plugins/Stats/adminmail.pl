@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: adminmail.pl,v 1.215 2007/06/12 20:58:26 jamiemccarthy Exp $
+# $Id: adminmail.pl,v 1.216 2007/11/29 23:26:30 jamiemccarthy Exp $
 
 use strict;
 use Slash::Constants qw( :messages :slashd );
@@ -819,6 +819,8 @@ EOT
 	}
 
 	$data{top_referers} = $logdb->getTopReferers({count => 20});
+	$data{top_badgehosts} = $logdb->getTopBadgeHosts({count => 20});
+	$data{top_badgeurls} = $logdb->getTopBadgeURLs({count => 20});
 
 	my $new_users_yest = $slashdb->getNumNewUsersSinceDaysback(1)
 		- $slashdb->getNumNewUsersSinceDaysback(0);

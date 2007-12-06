@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.23 2007/09/26 19:39:13 pudge Exp $
+# $Id: mysql_dump.sql,v 1.24 2007/12/06 02:49:31 jamiemccarthy Exp $
 #
 
 INSERT INTO reskey_resources VALUES (100, 'ajax_base', 'no');
@@ -162,6 +162,7 @@ INSERT INTO ajax_ops VALUES (NULL, 'admin_slashdbox', 'Slash::Admin', 'ajax_slas
 INSERT INTO ajax_ops VALUES (NULL, 'admin_storyadminbox', 'Slash::Admin', 'ajax_storyadminbox', 'ajax_admin', 'createuse');
 INSERT INTO ajax_ops VALUES (NULL, 'admin_authorbox', 'Slash::Admin', 'ajax_authorbox', 'ajax_admin', 'createuse');
 INSERT INTO ajax_ops VALUES (NULL, 'admin_perfbox', 'Slash::Admin', 'ajax_perfbox', 'ajax_admin', 'createuse');
+INSERT INTO ajax_ops VALUES (NULL, 'admin_recenttagnamesbox', 'Slash::Tags', 'ajax_recenttagnamesbox', 'ajax_admin', 'createuse');
 INSERT INTO ajax_ops VALUES (NULL, 'admin_learnword', 'Slash::Admin', 'admin_learnword', 'ajax_admin', 'createuse');
 
 

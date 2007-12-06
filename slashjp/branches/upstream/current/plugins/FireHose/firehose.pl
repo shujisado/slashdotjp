@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: firehose.pl,v 1.44 2007/09/13 18:44:11 pudge Exp $
+# $Id: firehose.pl,v 1.45 2007/11/15 17:30:39 scc Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.44 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.45 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -65,7 +65,8 @@ sub main {
 			$redirect = 0;
 		} 
 		if ($redirect) {
-			redirect("$gSkin->{rootdir}/firehose.shtml");
+			my $prefix = $form->{embed} ? "embed_" : "";
+			redirect("$gSkin->{rootdir}/${prefix}firehose.shtml");
 			return;
 		}
 	}

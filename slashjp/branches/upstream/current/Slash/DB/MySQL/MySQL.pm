@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.996 2007/11/13 23:50:31 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.997 2007/11/29 19:07:41 tvroom Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.996 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.997 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -12384,20 +12384,12 @@ sub updateSubMemory {
 	my $noid = $self->sqlSelect('noid','submissions_notes',
 		'submatch=' . $self->sqlQuote($submatch));
 
-        if ($noid) {
-                $self->sqlUpdate('submissions_notes', {
-                        subnote => $subnote,
-                        uid     => $user->{uid},
-                        '-time' => 'NOW()',
-                }, "noid=" . $noid);
-        } else {
-                $self->sqlInsert('submissions_notes', {
-                        submatch        => $submatch,
-                        subnote         => $subnote,
-			uid             => $user->{uid},
-                        '-time'         => 'NOW()',
-                });
-	}
+	$self->sqlInsert('submissions_notes', {
+       		submatch        => $submatch,
+		subnote         => $subnote,
+		uid             => $user->{uid},
+                '-time'         => 'NOW()',
+        });
 }
 
 sub getSubmissionMemory {

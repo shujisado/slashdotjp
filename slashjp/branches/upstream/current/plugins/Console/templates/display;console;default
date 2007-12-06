@@ -17,6 +17,7 @@ __template__
 	[% perfbox %]
 	[% Slash.sidebox("Firehose Usage", ' ', "firehose_usage", 1) %]
 	[% slashdbox %]
+	[% tagnamesbox %]
 </div>
 <div id="console">
 	[% remarks %]
@@ -50,4 +51,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: display;console;default,v 1.12 2007/10/24 00:30:08 scc Exp $
+$Id: display;console;default,v 1.13 2007/12/06 02:49:31 jamiemccarthy Exp $

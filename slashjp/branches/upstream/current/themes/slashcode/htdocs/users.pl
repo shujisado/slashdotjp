@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.342 2007/11/13 23:52:38 jamiemccarthy Exp $
+# $Id: users.pl,v 1.343 2007/11/29 20:31:50 tvroom Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -906,7 +906,7 @@ sub showFireHose {
 	$form->{mode} = "full";
 	$form->{color} = "black";
 	$form->{orderby} = "createtime";
-	$form->{orderdidr} = "DESC";
+	$form->{orderdir} = "DESC";
 	$form->{skipmenu} = 1;
 	$form->{duration} = -1;
 	$form->{fhfilter} = "\"user:$user_edit->{nickname}\"";
