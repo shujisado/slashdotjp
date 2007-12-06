@@ -1509,7 +1509,7 @@ sub setLastscanned {
 }
 
 sub listTagnamesAll {
-	my($self, $options) = @_;
+	my($self, $clout_type, $$options) = @_;
 	my $tagname_ar;
 	if ($options->{really_all}) {
 		$tagname_ar = $self->sqlSelectColArrayref('tagname', 'tagnames',
