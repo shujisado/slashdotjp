@@ -1,0 +1,79 @@
+<html lang="ja">
+<head>
+<link REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="../slashcssbase.inc" -->
+<title>Slashdot FAQ (日本語版) - バッジの手引き</title>
+
+<!--#include virtual="/slashhead.inc"-->
+
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="interviews.shtml">前のセクション</A>
+		<TD><A HREF="metamod.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+        <hr>
+
+<h2>スラッシュドットの一部を自分のページに表示する</h2>
+<p>バッジまたはリンクを自分のページに (またはブログの場合は、すべてのページに表示されるようにページテンプレートに) 追加すると、あなたの読者が簡単にそのページをスラッシュドットにタレコめるようになります。ページが掲載された後は、読者に議論に参加してもらうことができます。</p>
+
+<h2><a name="ba100" id="ba100">バッジ</a> <img src="http://images.slashdot.org/sdit4n.png" style="margin-bottom:-0.1em; padding-left:0.25em;" alt="スラッシュドットのバッジの例" title="スラッシュドットのバッジはこのように表示されます"/>
+</h2>
+<p>スラッシュドットのバッジは、そのための最も簡単で強力なツールです。Web ページにバッジを追加するには、次の HTML 文をページに挿入します。
+<xmp><script src="http://slashdot.org/slashdot-it.js" type="text/javascript"></script></xmp></p>
+
+<p>まだタレコまれていないページの場合、読者はバッジを使って簡単にタレコむことができます。ページが掲載された後は、色のアクセントでページの人気度が表され、読者はトグルスイッチでスラッシュドットのシステムに投票することができます。バッジ自体は、スラッシュドットに掲載されたストーリーとその議論にリンクされます。タレコミは匿名ユーザでもログインユーザでもできますが、直接投票できるのはログインユーザだけです。匿名ユーザには、投票前にログイン画面が表示されます。投票済みのログインユーザは、自分の投票の状態をトグルスイッチで確認できます。たとえば次のように表示されます。</p>
+
+<p><img src="http://images.slashdot.org/sdit2u.png" style="padding-left:2em;"
+alt="スラッシュドットのバッジの例" title="スラッシュドットのバッジはこのように表示されます"/></p>
+
+<p>スラッシュドットのバッジは、バッジスクリプトを呼び出す前に JavaScript の値を設定することで、ある程度カスタマイズできます。たとえば、<i>slashdot_title</i> を設定してタレコミ用のタイトルの候補を示すことや、<i>slashdot_url</i> を設定して、ブラウザで現在表示しているページの代わりに特定の URL を指定することができます。次に例を示します。
+<xmp><script type="text/javascript">
+  slashdot_title="Your Title Here";
+  slashdot_url="http://example.com/my-story.html";
+</script>
+<script src="http://slashdot.org/slashdot-it.js" type="text/javascript"></script></xmp></p>
+
+
+<h2><a name="ba101" id="ba101">リンク</a></h2>
+<p>セキュリティまたは管理上の理由から、独自のイメージや普通の HTML リンクの書式を使いたい場合があります。次のコードは適切なリンクを自動的に作成するので、このままページに直接貼り付けることができます。
+<xmp><a href="javascript:location.href='http://slashdot.org/slashdot-it.pl?op=basic&url='+encodeURIComponent(location.href)">Slashdot It!</a></xmp></p>
+
+<p>また、次のようにページごとに '手動で' URL 引数を作成することもできます。
+<xmp><!-- for a page at http://example.com/my-story.html, edit as appropriate for your site --> <a href="http://slashdot.org/slashdot-it.pl?op=basic&url=http%3A%2F%2Fexample.com%2Fmy-story.html">Slashdot It!</a></xmp></p>
+
+<p>'favicon' サイズのスラッシュドットアイコンを追加するには、次のコードを使います。
+<xmp><img src="http://images.slashdot.org/favicon.ico" alt="スラッシュドット" border="0" height="16" width="16"></xmp>
+これをリンクに挿入する (または、すべてをきちんとするために実際にリンクを複製する) と、次のように表示されます。</p>
+
+<p style="padding-left:2em;"><!--
+  HERE IS THE SIMPLE LINK AND FAVICON:
+--><a href="javascript:location.href='http://slashdot.org/slashdot-it.pl?op=basic&url='+encodeURIComponent(location.href)"
+><img src="http://images.slashdot.org/favicon.ico" alt="スラッシュドット" border="0" height="16" width="16"
+></a>&#xA0;<a href="javascript:location.href='http://slashdot.org/slashdot-it.pl?op=basic&url='+encodeURIComponent(location.href)"
+>Slashdot It!</a><!--
+  END
+--></p>
+
+<p>このリンクの作成に使われている HTML を見たければ、ソースを表示してください。<a href="http://images.slashdot.org/favicon.ico">favicon イメージ</a>をダウンロードし、自分のサーバに置いて配信してもかまいません。</p>
+
+<p>これらの単純なリンクには、バッジほどの機能はありません。バッジと同様に、あなたの読者は簡単にストーリーをタレコむことや、リンクをたどって掲載済みのストーリーと議論にアクセスすることができます。そして、そこでページの人気度を確認したり、投票したりすることはできます -- ただし単純なリンクでは、あなたのページから直接これらの操作を行うことはできません。リンクの利点は、たとえば CSS を使ってリンクのスタイル、イメージ、および書式を完全に制御し、ページの他の部分と調和させることができる点です。すべてはあなた次第です。</p>
+
+<hr>
+<TABLE>
+	<TR width="100%">
+		<TD><A HREF="interviews.shtml">前のセクション</A>
+		<TD><A HREF="metamod.shtml">次のセクション</A>
+		<TD><A HREF="index.shtml">インデックス</A>
+	</TR>
+</TABLE>
+
+<!--#include virtual="/slashfoot.inc"-->
+
