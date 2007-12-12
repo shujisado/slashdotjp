@@ -6,8 +6,10 @@ slash (2.5.0.186-1) unstable; urgency=low
   * Fix: Use of uninitialized value in string comparison (cmp) at
     /usr/share/perl5/Slash/Tags.pm line 1648.
   * Fix: cannot getSkin for empty skid='0' at firehose.pl
+  * Fix: Supress warning when $item->{link} does not exist at
+    /usr/share/slash/sbin/portald
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 06 Dec 2007 22:03:51 +0900
+ -- Taku YASUI <tach@osdn.jp>  Wed, 12 Dec 2007 16:28:17 +0900
 
 slash (2.5.0.184-1) unstable; urgency=low
 

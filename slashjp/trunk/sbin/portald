@@ -204,7 +204,7 @@ sub getRDF {
 			}
 
 			# filter URL like the rest
-			my $link = fudgeurl($item->{link});
+			my $link = $item->{link} ? fudgeurl($item->{link}) : $item->{link};
 			next unless $link;
 
 			# convert links to sections of our own site
