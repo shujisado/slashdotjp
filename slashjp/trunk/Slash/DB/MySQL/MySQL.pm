@@ -7660,7 +7660,7 @@ sub createStory {
 		};
 
 		my $id;
-		if ($story->{discussion} && $story->{journal_id}) {
+		if ($story->{discussion} && ($story->{journal_id} || $constants->{takeover_discussion_from_firehose})) {
 			# updating now for journals tips off users that this will
 			# be a story soon, esp. ts, url, title, kind ... i don't
 			# care personally, does it matter?  if so we can task some
@@ -7671,7 +7671,7 @@ sub createStory {
 			delete $discussion->{uid}; # leave it "owned" by poster
 
 			$id = $story->{discussion};
-			$discussion->{kind} = 'journal-story';
+			$discussion->{kind} = $story->{journal_id} ? 'journal-story' : 'story';
 			$discussion->{type} = 'open'; # should be already
 			$discussion->{archivable} = 'yes'; # for good measure
 
