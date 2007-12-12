@@ -8,8 +8,10 @@ slash (2.5.0.186-1) unstable; urgency=low
   * Fix: cannot getSkin for empty skid='0' at firehose.pl
   * Fix: Supress warning when $item->{link} does not exist at
     /usr/share/slash/sbin/portald
+  * Add: takeover_discussion_from_firehose constants
+    to takeover discussions before approve.
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 12 Dec 2007 16:28:17 +0900
+ -- Taku YASUI <tach@osdn.jp>  Wed, 12 Dec 2007 20:52:07 +0900
 
 slash (2.5.0.184-1) unstable; urgency=low
 

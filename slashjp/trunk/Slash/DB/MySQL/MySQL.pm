@@ -7601,6 +7601,8 @@ sub createStory {
 						});
 					}
 				}
+			} elsif ( $constants->{takeover_discussion_from_firehose} && $item && $item->{discussion} ) {
+				$story->{discussion} = $item->{discussion};
 			}
 
 		} elsif ($story->{subid}) {
