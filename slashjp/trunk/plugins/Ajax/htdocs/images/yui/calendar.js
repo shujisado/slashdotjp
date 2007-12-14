@@ -1406,7 +1406,7 @@ YAHOO.widget.Calendar.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 	*/
-	this.cfg.addProperty("MONTHS_SHORT",	{ value:["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], handler:this.configLocale } );
+	this.cfg.addProperty("MONTHS_SHORT",	{ value:["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], handler:this.configLocale } );
 
 	/**
 	* The long month labels for the current locale.
@@ -1414,7 +1414,7 @@ YAHOO.widget.Calendar.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
 	*/
-	this.cfg.addProperty("MONTHS_LONG",		{ value:["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], handler:this.configLocale } );
+	this.cfg.addProperty("MONTHS_LONG",		{ value:["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], handler:this.configLocale } );
 
 	/**
 	* The 1-character weekday labels for the current locale.
@@ -1422,7 +1422,7 @@ YAHOO.widget.Calendar.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["S", "M", "T", "W", "T", "F", "S"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_1CHAR",	{ value:["S", "M", "T", "W", "T", "F", "S"], handler:this.configLocale } );
+	this.cfg.addProperty("WEEKDAYS_1CHAR",	{ value:["日", "月", "火", "水", "木", "金", "土"], handler:this.configLocale } );
 
 	/**
 	* The short weekday labels for the current locale.
@@ -1430,7 +1430,7 @@ YAHOO.widget.Calendar.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_SHORT",	{ value:["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"], handler:this.configLocale } );
+	this.cfg.addProperty("WEEKDAYS_SHORT",	{ value:["日", "月", "火", "水", "木", "金", "土"], handler:this.configLocale } );
 
 	/**
 	* The medium weekday labels for the current locale.
@@ -1438,7 +1438,7 @@ YAHOO.widget.Calendar.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_MEDIUM",	{ value:["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], handler:this.configLocale } );
+	this.cfg.addProperty("WEEKDAYS_MEDIUM",	{ value:["日", "月", "火", "水", "木", "金", "土"], handler:this.configLocale } );
 
 	/**
 	* The long weekday labels for the current locale.
@@ -1446,7 +1446,7 @@ YAHOO.widget.Calendar.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_LONG",	{ value:["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], handler:this.configLocale } );
+	this.cfg.addProperty("WEEKDAYS_LONG",	{ value:["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"], handler:this.configLocale } );
 
 	/**
 	* Refreshes the locale values used to build the Calendar.
@@ -3466,7 +3466,7 @@ YAHOO.widget.CalendarGroup.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 	*/
-	this.cfg.addProperty("MONTHS_SHORT",	{ value:["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], handler:this.delegateConfig } );
+	this.cfg.addProperty("MONTHS_SHORT",	{ value:["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], handler:this.delegateConfig } );
 
 	/**
 	* The long month labels for the current locale.
@@ -3474,7 +3474,7 @@ YAHOO.widget.CalendarGroup.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
 	*/
-	this.cfg.addProperty("MONTHS_LONG",		{ value:["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], handler:this.delegateConfig } );
+	this.cfg.addProperty("MONTHS_LONG",		{ value:["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], handler:this.delegateConfig } );
 
 	/**
 	* The 1-character weekday labels for the current locale.
@@ -3482,7 +3482,7 @@ YAHOO.widget.CalendarGroup.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["S", "M", "T", "W", "T", "F", "S"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_1CHAR",	{ value:["S", "M", "T", "W", "T", "F", "S"], handler:this.delegateConfig } );
+	this.cfg.addProperty("WEEKDAYS_1CHAR",	{ value:["日", "月", "火", "水", "木", "金", "土"], handler:this.delegateConfig } );
 
 	/**
 	* The short weekday labels for the current locale.
@@ -3490,7 +3490,7 @@ YAHOO.widget.CalendarGroup.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_SHORT",	{ value:["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"], handler:this.delegateConfig } );
+	this.cfg.addProperty("WEEKDAYS_SHORT",	{ value:["日", "月", "火", "水", "木", "金", "土"], handler:this.delegateConfig } );
 
 	/**
 	* The medium weekday labels for the current locale.
@@ -3498,7 +3498,7 @@ YAHOO.widget.CalendarGroup.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_MEDIUM",	{ value:["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], handler:this.delegateConfig } );
+	this.cfg.addProperty("WEEKDAYS_MEDIUM",	{ value:["日", "月", "火", "水", "木", "金", "土"], handler:this.delegateConfig } );
 
 	/**
 	* The long weekday labels for the current locale.
@@ -3506,7 +3506,7 @@ YAHOO.widget.CalendarGroup.prototype.setupConfig = function() {
 	* @type String[]
 	* @default ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 	*/
-	this.cfg.addProperty("WEEKDAYS_LONG",	{ value:["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], handler:this.delegateConfig } );
+	this.cfg.addProperty("WEEKDAYS_LONG",	{ value:["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"], handler:this.delegateConfig } );
 
 	/**
 	* The setting that determines which length of month labels should be used. Possible values are "short" and "long".

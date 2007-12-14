@@ -24,7 +24,7 @@ function _bundleDates( date1, date2 ) {
 }
 
 function datesToHumanReadable( date1, date2 ) {
-  var day_name = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var day_name = ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"];
 
   function day_ordinal( d ) {
     switch ( d ) {
@@ -36,7 +36,7 @@ function datesToHumanReadable( date1, date2 ) {
   }
 
 
-  var month_name = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  var month_name = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
 
   function minimalHumanReadable( y, m, d, wd ) {
     var now = new Date();
@@ -48,7 +48,7 @@ function datesToHumanReadable( date1, date2 ) {
 
   
 
-  return _datesToSelector(function(y,m,d){return ""+d+" "+month_name[m-1]+" "+y;}, _bundleDates(date1, date2));
+  return _datesToSelector(function(y,m,d){return ""+y+"年"+month_name[m-1]+d+"日";}, _bundleDates(date1, date2));
 }
 
 function datesToYUISelector( date1, date2 ) {
@@ -201,7 +201,7 @@ YAHOO.slashdot.DateWidget.prototype.setDate = function( date, mode ) {
 
 YAHOO.slashdot.DateWidget.prototype._setDateFromSelection = function( date, allowModeChange ) {
   var oldLabel = this._label.innerHTML;
-  var newLabel = "Day of " + datesToHumanReadable(date);
+  var newLabel = "" + datesToHumanReadable(date);
   var labelChanged = oldLabel != newLabel;
   if ( labelChanged )
     this._label.innerHTML = newLabel;

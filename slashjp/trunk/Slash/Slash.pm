@@ -1816,6 +1816,7 @@ sub getOlderDays {
 sub getOlderDaysFromDay {
 	my($day, $start, $end, $options) = @_;
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
 	$day     ||= $slashdb->getDay(0);
 	$start   ||= 0;
 	$end     ||= 0;
@@ -1842,9 +1843,9 @@ sub getOlderDaysFromDay {
 		my $label;
 		my($y, $m, $d) = $_ =~ /(\d{4})(\d{2})(\d{2})/;
 		if ($_ eq $today) {
-			$label = "Today";
+			$label = $constants->{today};
 		} elsif ($_ eq $yesterday) {
-			$label = "Yesterday";
+			$label = $constants->{yesterday};
 		} elsif ($_ <= $today && $_ >= $weekago) {
 			$label = timeCalc($_, "%A", 0);
 		} elsif ($ty == $y) {

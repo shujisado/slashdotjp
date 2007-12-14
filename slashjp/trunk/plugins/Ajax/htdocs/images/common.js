@@ -1127,7 +1127,7 @@ function run_before_update() {
 	if (secs > inactivity_timeout) {
 		fh_is_timed_out = 1;
 		if ($('message_area'))
-			$('message_area').innerHTML = "Automatic updates have been slowed due to inactivity";
+			$('message_area').innerHTML = "サーバの反応が良くないので自動更新は遅れます";
 		//firehose_pause();
 	}
 }
@@ -1139,7 +1139,7 @@ function firehose_play() {
 	if ($('message_area'))
 		$('message_area').innerHTML = "";
 	if ($('pauseorplay'))
-		$('pauseorplay').innerHTML = "Updated";
+		$('pauseorplay').innerHTML = "更新";
 	var pause = $('pause');
 	
 	var play_div = $('play');
@@ -1158,7 +1158,7 @@ function firehose_pause() {
 	pause.className = "hide";
 	play_div.className = "show";
 	if ($('pauseorplay'))
-		$('pauseorplay').innerHTML = "Paused";
+		$('pauseorplay').innerHTML = "停止";
 	firehose_set_options('pause', '1');
 }
 
