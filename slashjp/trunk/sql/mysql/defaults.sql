@@ -1134,6 +1134,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('use_privacy_agreemen
 INSERT IGNORE INTO vars (name, value, description) VALUES ('takeover_discussion_from_firehose','0','Enable to takeover discussion before approve from firehose');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('today','Today','string of "Today" for translation');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('yesterday','Yesterday','string of "Yesterday" for translation');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('year','','string of year suffix');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_no_tracking_query','0','When "1", the code does not add rss tracking code like "?from=rss".');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('no_d2','0','When "1", disable using discussion2.');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';

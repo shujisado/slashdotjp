@@ -365,9 +365,10 @@ sub jsSelectComments {
 		}
 	} else {
 		my $comments_new;
-		my @keys = qw(pid kids points uid);
+		my @keys = qw(pid points uid);
 		for my $cid (grep $_, keys %$comments) {
 			@{$comments_new->{$cid}}{@keys} = @{$comments->{$cid}}{@keys};
+			$comments_new->{$cid}{kids} = [sort { $a <=> $b } @{$comments->{$cid}{kids}}];
 
 			# we only care about it if it is not original ... we could
 			# in theory guess at what it is and just use a flag, but that
@@ -399,6 +400,12 @@ sub jsSelectComments {
 		$total -= $d2_seen_0 =~ tr/,//; # total
 		$total--; # off by one
 		$extra .= "d2_seen = '$d2_seen_0';\nmore_comments_num = $total;\n";
+	}
+
+	# maybe also check if this ad should be running with some other var?
+	# from ads table? -- pudge
+	if ($constants->{run_ads} && $constants->{run_ads_inline_comments}) {
+		$extra .= "adTimerUrl = '$constants->{run_ads_inline_comments}';\n";
 	}
 
 	return <<EOT;
@@ -1358,8 +1365,8 @@ sub dispComment {
 		vislenify($comment); # create $comment->{ipid_vis} and {subnetid_vis}
 		if ($constants->{comments_hardcoded}) {
 			$comment->{ipid_display} = <<EOT;
-IPID: <a href="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{ipid}&amp;fieldname=ipid">$comment->{ipid_vis}</a>&nbsp;&nbsp;SubnetID: 
-<a href="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{subnetid}&amp;fieldname=subnetid">$comment->{subnetid_vis}</a>
+<span class="user_ipid_display">[<a href="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{ipid}&amp;fieldname=ipid">$comment->{ipid_vis}</a>
+<a href="$constants->{real_rootdir}/users.pl?op=userinfo&amp;userfield=$comment->{subnetid}&amp;fieldname=subnetid">$comment->{subnetid_vis}</a>]</span>
 EOT
 		} else {
 			$comment->{ipid_display} = slashDisplay(
@@ -1850,8 +1857,14 @@ sub getOlderDaysFromDay {
 			$label = timeCalc($_, "%A", 0);
 		} elsif ($ty == $y) {
 			$label = timeCalc($_, "%B %e", 0);
+			if ($constants->{tweak_japanese}) {
+				$label = timeCalc($_, "%b%o", 0);
+			}
 		} else {
 			$label = timeCalc($_, "%b. %e, %Y", 0);
+			if ($constants->{tweak_japanese}) {
+				$label = timeCalc($_, "%Y$constants->{year}%b%o", 0);
+			}
 		}
 		push @$ret_array, [ $_, $label ];
 	}
@@ -2034,17 +2047,17 @@ sub _hard_dispComment {
 		if (!$comment->{karma_bonus} || $comment->{karma_bonus} eq 'no') {
 			$nofollow = ' rel="nofollow"';
 		}
-		$userinfo_to_display = qq[<a href="$comment->{homepage}"$nofollow>$homepage</a>]
+		$userinfo_to_display = qq[<a href="$comment->{homepage}" title="$comment->{homepage}" class="user_homepage_display"$nofollow>Homepage</a>]
 			if $homepage;
 		if ($comment->{journal_last_entry_date} =~ /[1-9]/) {
-			$userinfo_to_display .= " | " if $userinfo_to_display;
-			$userinfo_to_display .= sprintf('Last Journal: <a href="%s/~%s/journal/">%s</a>',
+			$userinfo_to_display .= "\n" if $userinfo_to_display;
+			$userinfo_to_display .= sprintf('<a href="%s/~%s/journal/" title="%s" class="user_journal_display">Journal</a>',
 				$constants->{real_rootdir},
 				$nick_param,
 				timeCalc($comment->{journal_last_entry_date})
 			);
 		}
-		$userinfo_to_display = "<br>($userinfo_to_display)" if $userinfo_to_display;
+		#$userinfo_to_display = "<br>($userinfo_to_display)" if $userinfo_to_display;
 
 		$user_nick_to_display = qq{<a href="$constants->{real_rootdir}/~$nick_param">$nick_literal ($comment->{uid})</a>};
 		if ($constants->{plugin}{Subscribe} && $constants->{subscribe}
