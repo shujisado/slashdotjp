@@ -416,7 +416,10 @@ sub rss_story {
 		if $story->{title};
 	if ($story->{sid}) {
 		my $edit = "admin.pl?op=edit&sid=$story->{sid}";
-		$action = "article.pl?sid=$story->{sid}&from=rss";
+		$action = "article.pl?sid=$story->{sid}";
+		if (!$constants->{rss_no_tracking_query}) {
+			$action .= "&from=rss";
+		}
 		if ($story->{primaryskid}) {
 			my $dir = url2abs(
 				$reader->getSkin($story->{primaryskid})->{rootdir},
@@ -573,10 +576,13 @@ sub rss_item_description {
 sub _tag_link {
 	my($link) = @_;
 	my $uri = URI->new($link);
-	if (my $orig_query = $uri->query) {
-		$uri->query("$orig_query&from=rss");
-	} else {
-		$uri->query("from=rss");
+	my $constants = getCurrentStatic();
+	if (!$constants->{rss_no_tracking_query}) {
+		if (my $orig_query = $uri->query) {
+			$uri->query("$orig_query&from=rss");
+		} else {
+			$uri->query("from=rss");
+		}
 	}
 	return $uri->as_string;
 }
