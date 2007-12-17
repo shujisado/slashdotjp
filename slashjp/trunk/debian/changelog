@@ -1,8 +1,9 @@
 slash (2.5.0.187-1) unstable; urgency=low
 
   * New upstream CVS release
+  * Fix: unwanted debug output at Slash/DB/MySQL/MySQL.pm
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 17 Dec 2007 22:31:10 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 17 Dec 2007 23:50:32 +0900
 
 slash (2.5.0.186-1) unstable; urgency=low
 
