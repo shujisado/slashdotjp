@@ -1,0 +1,65 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2005 by Open Source Technology Group. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id: web,v 1.11 2005/03/11 19:58:04 pudge Exp $
+
+# this program does some really cool stuff.
+# so i document it here.  yay for me!
+
+use strict;
+use Slash 2.003;	# require Slash 2.3.x
+use Slash::Constants qw(:web);
+use Slash::Display;
+use Slash::Utility;
+use vars qw($VERSION);
+
+($VERSION) = ' $Revision: 1.11 $ ' =~ /\$Revision:\s+([^\s]+)/;
+
+
+# this is an example main().  feel free to use what you think
+# works best for your program, just make it readable and clean.
+
+sub main {
+	my $slashdb   = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user      = getCurrentUser();
+	my $form      = getCurrentForm();
+	my $gSkin     = getCurrentSkin();
+
+	# possible value of "op" parameter in form
+	my %ops = (
+	# Ex:	op	=> [is_allowed,		\&function	],
+		foo	=> [ 1,			\&showFoo	],
+		bar	=> [ 1,			\&saveBar	],
+		baz	=> [ !$user->{is_anon},	\&editBaz	],
+		buz	=> [ $user->{is_admin},	\&createBuz	],
+		default	=> [ 1,			\&showFoo	]
+	);
+
+	# prepare op to proper value if bad value given
+	my $op = $form->{op};
+	if (!$op || !exists $ops{$op} || !$ops{$op}[ALLOWED]) {
+		$op = 'default';
+	}
+
+	header(getData('header')) or return;	# from data;SCRIPTNAME;default
+
+	# dispatch of op
+	$ops{$op}[FUNCTION]->($slashdb, $constants, $user, $form, $gSkin);
+
+	# writeLog('SOME DATA');	# if appropriate
+	footer();
+}
+
+sub showFoo {
+	my($slashdb, $constants, $user, $form) = @_;
+	# ...
+}
+
+# etc.
+
+createEnvironment();
+main();
+
+1;

@@ -1,0 +1,57 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+journalhead
+__template__
+[% orig_title = title %]
+<div id="slashboxes">
+[% UNLESS user.lowbandwidth %]
+[% PROCESS userboxes %]
+[% END %]
+[% title = orig_title %]
+</div>
+<div id="users-blocks">
+[% IF menutype == 'prefs';
+        Slash.createMenu("users", {
+                tab_selected => "me",
+                style => "tabbed"
+        });
+        PROCESS prefs_titlebar tab_selected => "journal";
+	'<div class="generalbody">';
+        Slash.createMenu("journal", {
+                style => "tabbed"
+        });
+ELSIF useredit && useredit.uid != user.uid;
+        Slash.createMenu("users", {
+                tab_selected => "otheruser",
+                style => "tabbed",
+        });
+        PROCESS user_titlebar tab_selected => "journal";
+	'<div class="generalbody">';
+        Slash.createMenu("journal", {
+                style => "tabbed"
+        });
+ELSE;
+        Slash.createMenu("users", {
+                tab_selected => "me",
+                style => "tabbed"
+        });
+        PROCESS user_titlebar tab_selected => "journal";
+	'<div class="generalbody">';
+        Slash.createMenu("journal", {
+                style => "tabbed"
+        });
+END %]
+
+__seclev__
+500
+__version__
+$Id: journalhead;journal;default,v 1.17 2005/10/25 19:03:19 tvroom Exp $

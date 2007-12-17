@@ -1,0 +1,8 @@
+# $Id: PLUGIN,v 1.3 2003/08/29 15:21:07 jamie Exp $
+name=Print
+htdoc=print.pl
+image=images/print.gif
+description="provides a printable story display"
+template=templates/dispStory;print;default
+template=templates/footer;print;default
+template=templates/header;print;default

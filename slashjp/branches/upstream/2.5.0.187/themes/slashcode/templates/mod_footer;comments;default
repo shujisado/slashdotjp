@@ -1,0 +1,28 @@
+__section__
+default
+__description__
+This block is displayed right after moderation occurs.
+
+No specially passed variables.
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+mod_footer
+__template__
+</ul>
+[% IF metamod_elig %]
+<br>For [% constants.sitename %]'s moderation system to function properly,
+we need as many users as possible to
+<a href="[% gSkin.rootdir %]/metamod.pl">Meta-Moderate</a>.
+You are currently eligible... why not hop over and help? Meta-moderating well
+(not blowing it off) can help you get your mod points back faster.<br>
+[% END %]
+
+__seclev__
+1000
+__version__
+$Id: mod_footer;comments;default,v 1.9 2005/07/27 22:54:48 pudge Exp $

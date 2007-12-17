@@ -1,0 +1,32 @@
+__section__
+default
+__description__
+Displays people.
+
+* people = arrayref of people (nickname, uid, last entry time, last entry description, last entry id)
+__title__
+
+__page__
+zoo
+__lang__
+en_US
+__name__
+alllist
+__template__
+<table width="90%" border="0" cellpadding="2" cellspacing="0">
+[% FOREACH item = people %]
+    <tr>
+	<td valign="top">
+		<a href="[% gSkin.rootdir %]/~[% item.1 | strip_paramattr %]/">[% item.1 %]</a>
+	</td>
+	<td valign="top">
+		[% PROCESS zoo_icons person=item.0 %]
+	</td>
+</tr>
+[% END %]
+</table>
+<br><br>
+__seclev__
+100
+__version__
+$Id: alllist;zoo;default,v 1.5 2006/01/23 20:42:59 pudge Exp $

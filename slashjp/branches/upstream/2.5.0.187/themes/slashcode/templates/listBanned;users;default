@@ -1,0 +1,46 @@
+__section__
+default
+__description__
+lists banned IPs
+__title__
+admin interface Banlist Template
+__page__
+users
+__lang__
+en_US
+__name__
+listBanned
+__template__
+[% PROCESS titlebar title="Banned" %]
+<div class="generalbody">
+
+[% IF bannedlist %]
+<p><b>Banned List:</b></p>
+<table border="0" cellpadding="0">
+        <tr>
+                <td bgcolor="[% user.colors.fg_4 %]"><b>Time Stamp</b></td>
+                <td bgcolor="[% user.colors.fg_4 %]"><b>uid</b></td>
+                <td bgcolor="[% user.colors.fg_4 %]"><b>IPID</b></td>
+                <td bgcolor="[% user.colors.fg_4 %]"><b>SubnetID</b></td>
+                <td bgcolor="[% user.colors.fg_4 %]"><b>Reason</b></td>
+        </tr>
+                [% FOREACH banned = bannedlist %]
+        <tr>
+                <td>[% banned.ts %]</td>
+                <td><a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% banned.uid %]">[% banned.uid %]</a></td>
+                <td><a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% banned.ipid %]">[% banned.ipid %]</a></td>
+                <td><a href="[% gSkin.rootdir %]/users.pl?op=userinfo&amp;userfield=[% banned.subnetid %]">[% banned.subnetid %]</a></td>
+                <td>[% banned.reason %]</td>
+        </tr>
+                [% END %]
+</table>
+
+[% ELSE %]
+No banned users 
+[% END %]
+
+</div>
+__seclev__
+100
+__version__
+$Id: listBanned;users;default,v 1.8 2005/08/28 17:51:06 jamiemccarthy Exp $
