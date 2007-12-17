@@ -12580,7 +12580,6 @@ sub getStaticFiles {
 	push @where, "stoid=$stoid_q";
 	push @where, "fhid=$fhid_q";
 	my $where = join ' OR ', @where;
-	print STDERR " $where \n";
 	return $self->sqlSelectAllHashrefArray("*", "static_files", $where);
 }
 
