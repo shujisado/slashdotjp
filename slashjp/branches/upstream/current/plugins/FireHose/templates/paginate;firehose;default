@@ -35,7 +35,7 @@ __template__
 	[% IF split_refresh %]<!-- split -->[% END %]
 	[% IF !split_refresh %]
 	<span class="active">
-		[% IF form.skipmenu %]
+		[% IF form.skipmenu || no_peer %]
 			[% PROCESS datewidget id='fhcalendar_pag' init='firehose_calendar_init' %]
 		[% ELSE %]
 			[% PROCESS datewidget id='fhcalendar_pag' peer = 'fhcalendar' init='firehose_calendar_init' %]
@@ -153,4 +153,4 @@ __template__
 </div>
 [% END %]
 __version__
-$Id: paginate;firehose;default,v 1.28 2007/09/14 23:34:58 tvroom Exp $
+$Id: paginate;firehose;default,v 1.29 2007/12/12 22:21:12 tvroom Exp $

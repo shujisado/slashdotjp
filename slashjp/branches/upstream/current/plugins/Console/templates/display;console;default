@@ -14,10 +14,9 @@ __template__
 <div id="slashboxes">
 	[% authorbox %]
 	[% storyadmin %]
+	[% tagnamesbox %]
 	[% perfbox %]
 	[% Slash.sidebox("Firehose Usage", ' ', "firehose_usage", 1) %]
-	[% slashdbox %]
-	[% tagnamesbox %]
 </div>
 <div id="console">
 	[% remarks %]
@@ -51,4 +50,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: display;console;default,v 1.13 2007/12/06 02:49:31 jamiemccarthy Exp $
+$Id: display;console;default,v 1.14 2007/12/11 12:53:04 jamiemccarthy Exp $

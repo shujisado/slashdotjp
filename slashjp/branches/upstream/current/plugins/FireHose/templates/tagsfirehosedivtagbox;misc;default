@@ -15,7 +15,7 @@ tagsfirehosedivtagbox
 __template__
 [% IF user.tags_canread_stories %]
 <div id="tagbox-[% id %]" class="tags">
-[% IF !form.skipvote && !options.nothumbs %]
+[% IF !form.skipvote && !options.nothumbs && !skipvote %]
 	<span id="updown-[% item.id %]" class="vote[% IF vote == "down" %]ddown[% ELSIF vote == "up" %]dup[% END %]">
 	  <a href="#" onclick="firehose_up_down('[% item.id %]','+'); return false" class="up" title="Vote this item up"
 	     [% IF !user.is_anon %]onMouseDown="show_nod_menu(this, '[% item.id %]')" onMouseOver="show_nod_menu(this, '[% item.id %]', 1200, 5200)" onMouseOut="dont_show_nodnix_menu()"[% END %]>+</a>
@@ -59,4 +59,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: tagsfirehosedivtagbox;misc;default,v 1.36 2007/10/24 00:30:08 scc Exp $
+$Id: tagsfirehosedivtagbox;misc;default,v 1.37 2007/12/12 22:21:12 tvroom Exp $

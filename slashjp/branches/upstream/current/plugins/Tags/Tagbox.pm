@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tagbox.pm,v 1.9 2007/11/29 23:26:51 jamiemccarthy Exp $
+# $Id: Tagbox.pm,v 1.10 2007/12/06 20:03:04 jamiemccarthy Exp $
 
 package Slash::Tagbox;
 
@@ -17,7 +17,7 @@ use base 'Slash::DB::MySQL';
 
 use Data::Dumper;
 
-($VERSION) = ' $Revision: 1.9 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.10 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -314,8 +314,7 @@ sub markTagboxRunComplete {
 	push @id_clauses, "tagid <= $affected_hr->{max_tagid}" if $affected_hr->{max_tagid};
 	push @id_clauses, "tdid  <= $affected_hr->{max_tdid}"  if $affected_hr->{max_tdid};
 	push @id_clauses, "tuid  <= $affected_hr->{max_tuid}"  if $affected_hr->{max_tuid};
-	die "markTagboxRunComplete called with no max ids: " . Dumper($affected_hr)
-		if !@id_clauses;
+	@id_clauses = ("tagid=0 AND tdid=0 AND tuid=0") if !@id_clauses;
 	my $id_clause = join(' OR ', @id_clauses);
 	$delete_clause .= " AND ($id_clause)";
 

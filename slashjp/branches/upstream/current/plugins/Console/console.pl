@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: console.pl,v 1.6 2007/12/06 02:49:31 jamiemccarthy Exp $
+# $Id: console.pl,v 1.7 2007/12/11 12:53:04 jamiemccarthy Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -54,7 +54,6 @@ sub display {
 
 	my $admindb 	= getObject('Slash::Admin');
 	my $storyadmin 	= $admindb->showStoryAdminBox("");
-	my $slashdbox 	= $admindb->showSlashdBox();
 	my $perfbox	= $admindb->showPerformanceBox();
 	my $authorbox	= $admindb->showAuthorActivityBox();
 	my $firehosebox = "";
@@ -73,7 +72,6 @@ sub display {
 	slashDisplay('display', {
 		remarks 	=> $remarkstext,
 		storyadmin 	=> $storyadmin,
-		slashdbox 	=> $slashdbox,
 		perfbox		=> $perfbox,
 		authorbox	=> $authorbox,
 		firehosebox	=> $firehosebox,

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: PollBooth.pm,v 1.10 2006/09/12 21:07:50 jamiemccarthy Exp $
+# $Id: PollBooth.pm,v 1.11 2007/12/13 16:00:44 tvroom Exp $
 
 package Slash::PollBooth;
 
@@ -16,7 +16,7 @@ use vars qw($VERSION @EXPORT);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.10 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.11 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -243,7 +243,7 @@ sub getPollUpdateHashFromStory {
 		"stories",
 		"stoid=$stoid");
 	my $data;
-	my $viewable = $self->checkStoryViewable($stoid);
+	my $viewable = $self->checkStoryViewable($stoid, 0, { no_time_restrict => 1});
 	if ($story_ref->{qid}) {
 		$data->{date}           = $story_ref->{time} if $opts->{date};
 		$data->{polltype}       = $viewable ? "story" : "nodisplay" if $opts->{polltype};

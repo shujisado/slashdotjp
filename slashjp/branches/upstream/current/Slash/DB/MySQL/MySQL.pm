@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.997 2007/11/29 19:07:41 tvroom Exp $
+# $Id: MySQL.pm,v 1.998 2007/12/12 22:03:20 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.997 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.998 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -12113,6 +12113,7 @@ sub _addGlobjEssentials_stories {
 
 sub _addGlobjEssentials_urls {
 	my($self, $ar, $data_hr) = @_;
+	my $constants = getCurrentStatic();
 	my $urls_hr = _addGlobjEssentials_getids($ar, 'urls');
 	my @url_ids = sort { $a <=> $b } keys %$urls_hr;
 	my $id_str = join(',', @url_ids);
@@ -12122,9 +12123,25 @@ sub _addGlobjEssentials_urls {
 			'urls',
 			"url_id IN ($id_str)")
 		: { };
+	my $hoseid_hr = { };
+	my $firehose = getObject('Slash::FireHose');
+	if ($firehose) {
+		$hoseid_hr = $id_str
+			? $self->sqlSelectAllKeyValue(
+				'DISTINCT url_id, id',
+				'firehose',
+				"url_id IN ($id_str) AND type='bookmark'")
+			: { };
+	}
 	for my $url_id (@url_ids) {
 		my $globjid = $urls_hr->{$url_id};
-		$data_hr->{$globjid}{url} = $urldata_hr->{$url_id}{url};
+		# If there's a firehose entry for this URL's bookmark,
+		# link to it.  Otherwise, link directly to the URL.
+		# Is this a good idea?  Since there's no way to delete
+		# a firehose entry, I think so.
+		$data_hr->{$globjid}{url} = $hoseid_hr->{$url_id}
+			? "$constants->{rootdir}/firehose.pl?op=view&id=$hoseid_hr->{$url_id}"
+			: $urldata_hr->{$url_id}{url};
 		$data_hr->{$globjid}{title} = $urldata_hr->{$url_id}{validatedtitle}
 			|| $urldata_hr->{$url_id}{initialtitle};
 		$data_hr->{$globjid}{created_at} = $urldata_hr->{$url_id}{createtime};

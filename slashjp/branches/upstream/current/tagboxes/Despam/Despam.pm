@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Despam.pm,v 1.3 2007/11/13 17:23:39 jamiemccarthy Exp $
+# $Id: Despam.pm,v 1.4 2007/12/12 22:01:57 jamiemccarthy Exp $
 
 package Slash::Tagbox::Despam;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -273,7 +273,8 @@ sub despam_uid {
 		 AND firehose.uid = $uid
 		 AND type IN ('submission', 'journal')
 		 AND createtime >= DATE_SUB(NOW(), INTERVAL $daysback DAY)
-		 AND tagnameid = $self->{upvoteid}");
+		 AND tagnameid = $self->{upvoteid}
+		 AND inactivated IS NULL");
 	my $max_clout = defined($constants->{tagbox_despam_upvotermaxclout})
 		? $constants->{tagbox_despam_upvotermaxclout} : '0.85';
 	for my $upvoter (@$upvoter_ar) {

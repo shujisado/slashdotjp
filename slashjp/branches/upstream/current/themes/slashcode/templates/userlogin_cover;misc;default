@@ -19,7 +19,7 @@ __template__
 [% PROCESS titlebar
 	title => "Please Log In to Continue" _
 		'<a href="#" onclick="hide_login_box(); return false" class="close" title="Close this box"><img id="login_box_close" src="' _
-		gSkin.imagedir _ '/images/sic_close.png" alt="Close"></a>'
+		constants.imagedir _ '/sic_close.png" alt="Close"></a>'
 %]
 <div id="login_box_content">
 [% PROCESS userlogin # pass 'return_url' as parameter to userlogin_cover template %]
@@ -29,4 +29,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: userlogin_cover;misc;default,v 1.2 2007/10/24 00:30:08 scc Exp $
+$Id: userlogin_cover;misc;default,v 1.3 2007/12/13 20:54:56 pudge Exp $

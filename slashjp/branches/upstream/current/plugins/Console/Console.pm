@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Console.pm,v 1.4 2007/12/06 02:49:31 jamiemccarthy Exp $
+# $Id: Console.pm,v 1.5 2007/12/11 12:53:03 jamiemccarthy Exp $
 
 package Slash::Console;
 
@@ -34,7 +34,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub ajaxConsoleUpdate {
@@ -43,7 +43,6 @@ sub ajaxConsoleUpdate {
 	my $html = {};
 	my $admindb 	= getObject('Slash::Admin');
 	$html->{'storyadmin-content'}	= $admindb->showStoryAdminBox("", { contents_only => 1});
-	$html->{'slashdbox-content'}	= $admindb->showSlashdBox({ contents_only => 1});
 	$html->{'performancebox-content'}	= $admindb->showPerformanceBox({ contents_only => 1});
 	$html->{'authoractivity-content'}	= $admindb->showAuthorActivityBox({ contents_only => 1});
 	if (my $tagsdb = getObject('Slash::Tags')) {
@@ -65,4 +64,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Console.pm,v 1.4 2007/12/06 02:49:31 jamiemccarthy Exp $
+$Id: Console.pm,v 1.5 2007/12/11 12:53:03 jamiemccarthy Exp $

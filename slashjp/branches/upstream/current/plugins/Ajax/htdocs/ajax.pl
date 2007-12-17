@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.63 2007/11/29 18:41:52 entweichen Exp $
+# $Id: ajax.pl,v 1.64 2007/12/12 20:35:46 entweichen Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.63 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.64 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -178,6 +178,7 @@ sub getSectionPrefsHTML {
 			story023_default	=> \%story023_default,
 			multiple_values		=> $multiple_values,
 			master_value		=> $master_value,
+                        tabbed                  => $form->{'tabbed'},
 		},
 		{ Return => 1 }
 	);
@@ -534,7 +535,8 @@ sub getModalPrefs {
 				messagecodes    => $messagecodes,
 				deliverymodes   => $deliverymodes,
 				bvmessagecodes  => $bvmessagecodes,
-				bvdeliverymodes => $bvdeliverymodes
+				bvdeliverymodes => $bvdeliverymodes,
+                                tabbed          => $form->{'tabbed'},
 			},
 			{ Return => 1 }
 		);
@@ -543,7 +545,8 @@ sub getModalPrefs {
         } else {
                 return
 			slashDisplay('prefs_' . $form->{'section'}, {
-				user => $user,
+				user   => $user,
+                                tabbed => $form->{'tabbed'},
 			},
 			{ Return => 1 }
 		);

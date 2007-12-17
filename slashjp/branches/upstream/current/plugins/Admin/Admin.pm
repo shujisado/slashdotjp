@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Admin.pm,v 1.36 2007/12/06 02:49:31 jamiemccarthy Exp $
+# $Id: Admin.pm,v 1.38 2007/12/13 21:22:53 pudge Exp $
 
 package Slash::Admin;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.36 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.38 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -257,6 +257,15 @@ sub ajax_neverdisplay {
 	$slashdb->setStory($stoid, { neverdisplay => 1 });
 	return "neverdisplay";
 
+}
+
+sub ajax_sub_memory {
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	return unless $user->{is_admin};
+	$slashdb->updateSubMemory($form->{submatch}, $form->{subnote});
+	return "Added note of $form->{subnote} for term $form->{submatch}";
 }
 
 ##################################################################
