@@ -11,9 +11,10 @@ slash (2.5.0.186-1) unstable; urgency=low
   * Add: takeover_discussion_from_firehose constants
     to takeover discussions before approve.
   * Add: select adding '?from=rss' phrase to rss link
-    using constants 'rss_no_tracking_query'.
+    with constants 'rss_no_tracking_query'
+  * Add: select enabling discussion2 or not with constants 'no_d2'
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 17 Dec 2007 17:20:25 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 17 Dec 2007 17:54:08 +0900
 
 slash (2.5.0.184-1) unstable; urgency=low
 

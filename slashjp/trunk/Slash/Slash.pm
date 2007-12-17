@@ -2257,6 +2257,9 @@ sub tempUofmCipherObj {
 # is discussion2 active?
 sub discussion2 {
 	my $user = $_[0] || getCurrentUser();
+	if (getCurrentStatic('no_d2')) {
+		return 0;
+	}
 	if ($user->{discussion2}) {
 		return $user->{discussion2} =~ /^(?:slashdot|uofm)$/
 			? $user->{discussion2} : 0;

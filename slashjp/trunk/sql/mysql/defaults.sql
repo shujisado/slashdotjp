@@ -1135,6 +1135,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('takeover_discussion_
 INSERT IGNORE INTO vars (name, value, description) VALUES ('today','Today','string of "Today" for translation');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('yesterday','Yesterday','string of "Yesterday" for translation');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_no_tracking_query','0','When "1", the code does not add rss tracking code like "?from=rss".');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('no_d2','0','When "1", disable using discussion2.');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';
