@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 # $Id: badge.pl,v 1.1 2007/12/13 15:55:16 scc Exp $
 
 use strict;
