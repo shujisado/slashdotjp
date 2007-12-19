@@ -1,0 +1,105 @@
+/*-- CSS File for Slashdot Japan Journals, (c) 2004 Slashdot Japan --*/
+
+/*-Common stteing--------------------------------*/
+div.journal {
+  width: 98%;
+}
+
+div.journalmain {
+  width: 98%;
+  padding-left: 0.5em;
+}
+
+div.journalmain ul {
+  margin-left: 1em;
+  margin-bottom: 0.5em;
+}
+
+div.journalmain li {
+  margin-left: 0.5em;
+}
+
+div.journal .journalentry {
+  margin-bottom: 2em;
+}
+
+div.journal .journaltitle {
+  font-weight: bold;
+}
+
+div.journal .journaltopic {
+  margin: 1em;
+}
+
+div.journal .journaltext {
+  padding-top: 0.6em;
+  margin: 0.5em;
+}
+div.journal .journalnav {
+  text-align: right;
+  font-size: 90%;
+  margin-top: 1em;
+}
+
+
+/*--Slashdotjp Theme ---------------------------*/
+div.slashdotjp .journalmain {
+  padding-top: 2em;
+}
+div.slashdotjp .journaltopic {
+  float: right;
+}
+
+/*--Liquid Theme--------------------------------*/
+
+div.liquid .journalentry {
+  padding-bottom: 0.4em;
+  border-bottom: solid 2px #d6d6d6;
+  border-right: solid 2px #d6d6d6;
+  border-left: solid 2px #d6d6d6;
+  background: url(http://images.slashdot.jp/stripe_background.gif);
+}
+
+div.liquid .journalhead {
+  width: 100%;  /* IE6 background-bug workaround */
+  background: url(http://images.slashdot.jp/macbarbw.gif) repeat-x;
+  border-bottom: solid 1px #d6d6d6;
+}
+
+div.liquid .entrynav {
+  padding: 0.5em;
+  float: right;
+}
+
+div.liquid .entrynav img {
+  border: none;
+}
+
+#contents div.liquid h2 {
+  font-size: 120%;
+  padding: 0.5em;
+  margin: 0px;
+}
+
+
+#contents div.liquid h2 img {
+  vertical-align: middle;
+  border: none
+}
+
+div.liquid .journaltext {
+  width: 100%;  /* IE6 background-bug workaround */
+}
+
+div.liquid .journalcomment {
+  text-align: left;
+  padding: 0.4em;
+  width: 100%; /* IE6 background-bug workaround */
+}
+
+div.liquid .journalcomment a {
+  background: url(http://images.slashdot.jp/macbarbw.gif) repeat-x;
+  color: black;
+  padding: 0.4em;
+  border: solid 1px #666666;
+}
