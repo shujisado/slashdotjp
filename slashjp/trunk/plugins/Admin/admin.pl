@@ -1190,7 +1190,7 @@ sub editStory {
 		$storyref->{commentstatus} = $form->{commentstatus};
 
 		$storyref->{uid} ||= $user->{uid};
-		if ($constants->{use_dept_space2dash}){
+		if ($constants->{use_dept_space2dash} && $storyref->{dept}){
 			$storyref->{dept} =~ s/[-\s]+/-/g;
 			$storyref->{dept} =~ s/^-//;
 			$storyref->{dept} =~ s/-$//;
@@ -1212,6 +1212,7 @@ sub editStory {
 		$extracolumns = $slashdb->getNexusExtrasForChosen($chosen_hr);
 
 		for my $field (qw( introtext bodytext )) {
+			next unless ($storyref->{$field});
 			local $Slash::Utility::Data::approveTag::admin = 2;
 			$storyref->{$field} = $slashdb->autoUrl($form->{section}, $storyref->{$field});
 			$storyref->{$field} = cleanSlashTags($storyref->{$field});
@@ -1586,6 +1587,7 @@ sub extractRelatedStoriesFromForm {
 
 	# Extract sids from urls in introtext and bodytext
 	foreach ($form->{introtext}, $form->{bodytext}) {
+		next unless ($_);
 		push @$related, $1 while /$match/g;
 		push @$related_cids, $1 while /$match_cid/g;
 	}
