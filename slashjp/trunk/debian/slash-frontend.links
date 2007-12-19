@@ -1,1 +1,1 @@
-var/lib/slash/httpd/slash.conf etc/apache/conf.d/slash.conf
+var/lib/slash/httpd/slash.conf etc/apache/conf.d/00slash.conf

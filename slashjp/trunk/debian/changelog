@@ -3,8 +3,11 @@ slash (2.5.0.187-1) unstable; urgency=low
   * New upstream CVS release
   * Fix: unwanted debug output at Slash/DB/MySQL/MySQL.pm
   * Suppress warning at plugins/Admin/admin.pl
+  * Change slash.conf filename
+    - before: /etc/apache/conf.d/slash.conf
+    - after: /etc/apache/conf.d/00slash.conf
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 19 Dec 2007 20:13:59 +0900
+ -- Taku YASUI <tach@osdn.jp>  Wed, 19 Dec 2007 11:43:12 +0000
 
 slash (2.5.0.186-1) unstable; urgency=low
 
