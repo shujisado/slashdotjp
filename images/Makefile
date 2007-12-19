@@ -1,27 +1,34 @@
 # Makefile for slashdot.jp images
 
-CORE_TIDIED = css/core-tidied.css
-CORE_TIDIED_ORIG = $(CORE_TIDIED).orig
+DESTDIR = /var/lib/slash/site/slashdot.jp/htdocs/images
 
-default: $(CORE_TIDIED) images
+sections = apple ask books developer games hardware it linux mobile politics yro
+csses = core-tidied
+
+default: $(csses) $(sections) images
+
+install: default
+	rsync -n -avHSC --delete --delete-after --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp ./ $(DESTDIR)
 
 images: images-stamp
 images-stamp:
-	perl -ne 'print "http:$$1\n" if /url\((\/\/images\.slashdot\.org\/[^)]+)/;' $(CORE_TIDIED_ORIG) | \
+	perl -ne 'print "http:$$1\n" if /url\((\/\/images\.slashdot\.org\/[^)]+)/;' $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections)) | \
+		sed -e 's/\.pnh$$/.png/' | \
 		sort -u | \
-		wget --no-host-directories --mirror --verbose -i -
+		wget --no-host-directories --mirror --no-verbose -i -
 	touch images-stamp
 
-$(CORE_TIDIED): $(CORE_TIDIED_ORIG)
-	cat $(CORE_TIDIED_ORIG) | sed -e 's/images\.slashdot\.org/images\.slashdot\.jp/' > $(CORE_TIDIED)
+$(csses): %: css/%.css
+$(sections): %: css/slashdot_%.css
+$(patsubst %,css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
+	cat $@.orig | sed -e 's/images\.slashdot\.org/images\.slashdot\.jp/' > $@
 
-$(CORE_TIDIED_ORIG): get
-get:
-	wget -q http://images.slashdot.org/core-tidied.css -O $(CORE_TIDIED_ORIG)
+css/%.css.orig: FORCE
+	wget --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
 
 force: clean default
 
 clean:
-	rm -f $(CORE_TIDIED) $(CORE_TIDIED_ORIG) images-stamp
+	rm -f css/*.css.orig $(patsubst %,css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)) images-stamp
 
-.PHONY: default get clean force
+.PHONY: default images clean force install FORCE
