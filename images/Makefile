@@ -3,9 +3,10 @@
 DESTDIR = /var/lib/slash/site/slashdot.jp/htdocs/images
 
 sections = apple ask books developer games hardware it linux mobile politics yro
-csses = core-tidied comments
+csses = core-tidied comments firehose search polls admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw
+jses = all-minified
 
-default: $(csses) $(sections) images
+default: $(csses) $(sections) $(jses) images
 
 install: default
 	rsync -n -avHSC --delete --delete-after --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp ./ $(DESTDIR)
@@ -25,6 +26,9 @@ $(patsubst %,css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)):
 
 css/%.css.orig: FORCE
 	wget --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
+
+$(jses): FORCE
+	wget --no-verbose http://slashdot.org/$(patsubst %,%.js, $@) -O $(patsubst %,%.js, $@)
 
 force: clean default
 
