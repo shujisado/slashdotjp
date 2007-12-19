@@ -1,0 +1,28 @@
+a {color: #000; text-decoration: underline }
+div#topnav { background: #000 url(//images.slashdot.jp/topnav-bg-linux.png) repeat-x left top; }
+  div#topnav div#logo h1 a { background: url(//images.slashdot.jp/logo-linux.png) no-repeat left top; }
+div.article div.title,
+div.generaltitle div.title,
+div.commentTop div.title
+{ background: #000 url(//images.slashdot.jp/article-title-bg-linux.png) repeat-x left top; }
+  div.article div.title h3,
+  div.generaltitle div.title h3,
+  div.commentTop div.title h4
+  { background: url(//images.slashdot.jp/article-title-left-linux.png) no-repeat left top; }
+    div.article div.title span,
+    div.article div.title span a { color: #ddd; }
+div#links div.block div.content ul li a:hover {background: #000 url(//images.slashdot.jp/link-arrow.gif) no-repeat right center; color: #fff;}
+div#slashboxes div.block div.content { background: #eed url(//images.slashdot.jp/slashbox-bottom-left-linux.png) no-repeat left bottom; }
+.data_head, .barColor, .tb_col, , .thor .commentControlFooter { background: #000; }
+.date_head { color: #fff; }
+.comment > .oneline .commentTop .title h4 a { color: #666; }
+div.commentSub { border-bottom: 1px solid #666; }
+
+//firehose related css begin
+.story, .story a  {color: #fff !important;}
+.story .date, .story a.skin {color: #ffffff !important;}
+#firehose .article div.tagtitleclosed span span, #firehose .article div.tagtitleopen span span, #firehose .generaltitle h3 a, #firehose div.tags div.tagtitleclosed a, #firehose div.tags div.tagtitleclosed, #firehose div.tags div.tagtitleopen a, #firehose div.tags div.tagtitleopen {color: #000 !important}
+#firehose div.briefarticle .story div.title h3, #firehose div.briefarticle .story div.title, #firehose div.article .story div.title h3, #firehose div.article .story div.title, .firemenu div.title, .firemenu div.title h3
+{ background: #000 url(//images.slashdot.jp/article-title-bg-linux.png) repeat-x left top !important}
+#firehose .story .generaltitle .title a { color: #fff !important; }
+// firehose related css end
