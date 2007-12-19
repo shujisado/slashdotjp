@@ -1,0 +1,19 @@
+= ここのコンテンツについて =
+slashdot.jp 用のコンテンツ。
+
+== 使い方 ==
+make すると、slashdot.org から css を取得し、その中に書かれている URL
+から、画像ファイルなどを取得する。詳しくは Makefile を参照のこと。
+
+== slashdot.jp の css について ==
+
+css はすべて css ディレクトリにある。
+下記 1. と 2. に関しては、make で自動取得・自動生成する。
+
+ 1. .css.orig
+   * slashdot.org からダウンロードしてきたもの
+ 2. .css (同名の .css.orig がある)
+   * .css.orig 内の images.slashdot.org を images.slashdot.jp に変えたもの
+ 3. slashdotjp_*.css
+   * slashdot.jp オリジナルの css
+
