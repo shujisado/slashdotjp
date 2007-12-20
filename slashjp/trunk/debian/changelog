@@ -6,8 +6,9 @@ slash (2.5.0.187-1) unstable; urgency=low
   * Change slash.conf filename
     - before: /etc/apache/conf.d/slash.conf
     - after: /etc/apache/conf.d/00slash.conf
+  * Add libtimedate-perl-ja to Suggests: at slash-common
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 19 Dec 2007 11:43:12 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 20 Dec 2007 09:37:02 +0900
 
 slash (2.5.0.186-1) unstable; urgency=low
 
