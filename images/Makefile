@@ -16,7 +16,7 @@ images-stamp:
 	perl -ne "print \"http:\$$1\n\" if /url\(['\"]?(\/\/images\.slashdot\.org\/[^)'\"]+)/;" $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections)) | \
 		sed -e 's/\.pnh$$/.png/' | \
 		sort -u | \
-		wget --no-host-directories --mirror --no-verbose -i -
+		wget --no-proxy --no-host-directories --mirror --no-verbose -i -
 	touch images-stamp
 
 $(csses): %: css/%.css
@@ -25,10 +25,10 @@ $(patsubst %,css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)):
 	cat $@.orig | sed -e 's/images\.slashdot\.org/images.slashdot.jp/' > $@
 
 css/%.css.orig: FORCE
-	wget --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
+	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
 
 $(jses): FORCE
-	wget --no-verbose http://slashdot.org/$(patsubst %,%.js, $@) -O $(patsubst %,%.js, $@)
+	wget --no-proxy --no-verbose http://slashdot.org/$(patsubst %,%.js, $@) -O $(patsubst %,%.js, $@)
 
 force: clean default
 
