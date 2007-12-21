@@ -460,18 +460,21 @@ sub getFireHoseEssentials {
 		} elsif ($options->{tagged_positive} || $options->{tagged_negative} || $options->{tagged_non_negative}) {
 			my $labels;
 			my $not = '';
+			my $tags = getObject('Slash::Tags');
+
 			if ($options->{tagged_positive}) {
-				$labels = $constants->{tags_positive_tagnames} || 'nod';
+				$labels = $tags->getPositiveTags;
+				$labels = ['nod'] unless @$labels;
 			} else { # tagged_non_negative || tagged_negative
-				$labels = $constants->{tags_negative_tagnames} || 'nix';
+				$labels = $tags->getNegativeTags;
+				$labels = ['nix'] unless @$labels;
 				$not = 'NOT' if $options->{tagged_non_negative};
 			}
 
-			my $tags = getObject('Slash::Tags');
 			my $ids = join ',', grep $_, map {
 				s/\s+//g;
 				$tags->getTagnameidFromNameIfExists($_)
-			} split /,/, $labels;
+			} @$labels;
 			push @where, "tags.tagnameid $not IN ($ids)";
 
 			if ($not) {
@@ -1852,7 +1855,7 @@ sub getAndSetOptions {
 		$self->setUser($user->{uid}, { firehose_usermode => $form->{firehose_usermode} ? 1 : "" });
 	}
 
-	foreach (qw(nodates nobylines nothumbs nocolors)) {
+	foreach (qw(nodates nobylines nothumbs nocolors noslashboxes nomarquee)) {
 		if ($form->{setfield}) {
 			if (defined $form->{$_}) {
 				$options->{$_} = $form->{$_} ? 1 : 0;
@@ -2135,7 +2138,7 @@ sub listView {
 	my $firehose_reader = getObject('Slash::FireHose', {db_type => 'reader'});
 	my $featured;
 
-	if ($gSkin->{name} eq "idle") {
+	if ($gSkin->{name} eq "idle" && !$user->{firehose_nomarquee}) {
 		my($res) = $firehose_reader->getFireHoseEssentials({ primaryskid => $gSkin->{skid}, type => "story", limit => 1, orderby => 'createtime', orderdir => 'DESC'});
 		if ($res && $res->[0]) {
 			$featured = $firehose_reader->getFireHose($res->[0]->{id});
@@ -2145,7 +2148,7 @@ sub listView {
 	my $base_page = $lv_opts->{fh_page} || "firehose.pl";
 
 	if ($featured && $featured->{id}) {
-		$options->{no_id} = $featured->{id};
+		$options->{not_id} = $featured->{id};
 	}
 	my($items, $results) = $firehose_reader->getFireHoseEssentials($options);
 

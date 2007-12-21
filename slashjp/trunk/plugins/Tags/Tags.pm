@@ -422,7 +422,7 @@ sub setTag {
 
 sub setTagname {
 	my($self, $id, $params) = @_;
-	return 0 if !$id || !$params || !%$params;
+	return 0 if !$id || $id !~ /^\d+$/ || !$params || !%$params;
 
 	my $changed = 0;
 	for my $key (sort keys %$params) {
@@ -1911,6 +1911,66 @@ sub showRecentTagnamesBox {
 sub ajax_recenttagnamesbox {
 	my $tagsdb = getObject("Slash::Tags");
 	$tagsdb->showRecentTagnamesBox({ contents_only => 1});
+}
+
+sub getTagnameidsByParam {
+	my($self, $name, $value) = @_;
+	return $self->sqlSelectColArrayref('tagnameid', 'tagname_params',
+		'name=' . $self->sqlQuote($name),
+		'AND value=' . $self->sqlQuote($value)
+	);
+}
+
+sub getTagnamesByParam {
+	my($self, $name, $value) = @_;
+	my $tagnameids = $self->getTagnameidsByParam($name, $value);
+	return [ map { $self->getTagnameDataFromId($_)->{tagname} } @$tagnameids ];
+}
+
+sub getPopupTags {
+	my($self) = @_;
+	return $self->getTagnamesByParam('popup', '1');
+}
+
+sub limitToPopupTags {
+	my($self, $tags) = @_;
+	my $pop = $self->getPopupTags;
+
+	my %tags = map { $_ => 0 } @$tags;
+	for (@$pop) {
+		$tags{$_} = 1 if exists $tags{$_};
+	}
+	$tags{$_} or delete $tags{$_} for keys %tags;
+	@$tags = keys %tags;
+}
+
+sub getNegativePopupTags {
+	my($self) = @_;
+	my $neg = $self->getNegativeTags;
+	$self->limitToPopupTags($neg);
+	return $neg;
+}
+
+sub getPositivePopupTags {
+	my($self) = @_;
+	my $pos = $self->getPositiveTags;
+	$self->limitToPopupTags($pos);
+	return $pos;
+}
+
+sub getExcludedTags {
+	my($self) = @_;
+	return $self->getTagnamesByParam('excluded', '1');
+}
+
+sub getNegativeTags {
+	my($self) = @_;
+	return $self->getTagnamesByParam('posneg', '-');
+}
+
+sub getPositiveTags {
+	my($self) = @_;
+	return $self->getTagnamesByParam('posneg', '+');
 }
 
 #################################################################
