@@ -844,7 +844,8 @@ else
 {c=new YAHOO.widget.AutoComplete(this._sourceEl,"ac-choices",YAHOO.slashdot.dataSources[tagDomain]);c.delimChar=" ";c.minQueryLength=3;}
 c.typeAhead=false;c.forceSelection=false;c.allowBrowserAutocomplete=false;c.maxResultsDisplayed=25;c.animVert=false;return c;}
 YAHOO.slashdot.AutoCompleteWidget.prototype._show=function(obj,callbackParams,tagDomain)
-{this._sourceEl=obj;if(this._sourceEl)
+{if(this._sourceEl)
+this._hide();this._sourceEl=obj;if(this._sourceEl)
 {this._callbackParams=callbackParams;this._callbackParams._tagDomain=tagDomain;this._completer=this._newCompleter(tagDomain);if(typeof callbackParams.yui=="object")
 for(var field in callbackParams.yui)
 this._completer[field]=callbackParams.yui[field];if(callbackParams.delayAutoHighlight)
@@ -1020,7 +1021,7 @@ function toggleFirehoseTagbox(id){var fhtb=$('fhtagbox-'+id);if(fhtb.className==
 function firehose_set_options(name,value){var pairs=[["orderby","createtime","popularity","time","popularity"],["orderby","popularity","time","popularity","createtime"],["orderdir","ASC","asc","desc","DESC"],["orderdir","DESC","desc","asc","ASC"],["mode","full","abbrev","full","fulltitle"],["mode","fulltitle","full","abbrev","full"],];var params=[];params['op']='firehose_set_options';params['reskey']=reskey_static;var theForm=document.forms["firehoseform"];if(name=="firehose_usermode"){if(value==true){value=1;}
 if(value==false){value=0;}
 params['setusermode']=1;params[name]=value;}
-if(name=="nodates"||name=="nobylines"||name=="nothumbs"||name=="nocolors"||name=="mixedmode"||name=="nocommentcnt"){value=value==true?1:0;params[name]=value;params['setfield']=1;var classname;if(name=="nodates"){classname="date";}else if(name=="nobylines"){classname="nickname";}
+if(name=="nodates"||name=="nobylines"||name=="nothumbs"||name=="nocolors"||name=="mixedmode"||name=="nocommentcnt"||name=="nomarquee"||name=="noslashboxes"){value=value==true?1:0;params[name]=value;params['setfield']=1;var classname;if(name=="nodates"){classname="date";}else if(name=="nobylines"){classname="nickname";}
 if(classname){var els=document.getElementsByClassName(classname,$('firehoselist'));var classval=classname;if(value){classval=classval+" hide";}
 for(i=0;i<els.length;i++){els[i].className=classval;}}}
 if(name=="fhfilter"&&theForm){for(i=0;i<theForm.elements.length;i++){if(theForm.elements[i].name=="fhfilter"){params['fhfilter']=theForm.elements[i].value;}}
@@ -1162,6 +1163,7 @@ function um_fetch_settings(){var params=[];params['op']='um_fetch_settings';ajax
 function um_set_settings(behavior){var params=[];params['op']='um_set_settings';params['behavior']=behavior;ajax_update(params,'links-vendors-content');}
 function admin_signoff(stoid,type,id){var params=[];var reskeyel=$('signoff-reskey-'+stoid);params['op']='admin_signoff';params['stoid']=stoid;params['reskey']=reskeyel.value;ajax_update(params,'signoff_'+stoid);if(type=="firehose"){firehose_collapse_entry(id);}}
 function admin_neverdisplay(stoid,type,fhid){var params=[];params['op']='admin_neverdisplay';params['reskey']=reskey_static;params['stoid']=stoid;params['fhid']=fhid;if(confirm("Set story to neverdisplay?")){ajax_update(params,'nvd-'+stoid);if(type=="firehose"){firehose_remove_entry(fhid);}}}
+function admin_submit_memory(fhid){var params=[];params['op']='admin_submit_memory';params['reskey']=reskey_static;params['submatch']=$('submatch-'+fhid).value;params['subnote']=$('subnote-'+fhid).value;ajax_update(params,'sub_mem_message-'+fhid);}
 function adminTagsCommands(id,type){var toggletags_message_id='toggletags-message-'+id;var toggletags_message_el=$(toggletags_message_id);if(toggletags_message_el){toggletags_message_el.innerHTML='Executing commands...';}
 var params=[];type=type||"stories";params['op']='tags_admin_commands';if(type=="stories"){params['sidenc']=id;}else if(type=="urls"){params['id']=id;}else if(type=="firehose"){params['id']=id;}
 params['type']=type;var tags_admin_commands_el=$('tags_admin_commands-'+id);params['commands']=tags_admin_commands_el.value;var reskeyel=$('admin_commands-reskey-'+id);params['reskey']=reskeyel.value;ajax_update(params,'tags-admin-'+id);toggletags_message_el.innerHTML='Commands executed.';}
