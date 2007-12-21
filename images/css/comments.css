@@ -1,16 +1,16 @@
 /* Move the links div to the right */
 .comment div.title {
   border-bottom: 1px solid #fff;
-  background: #044 url("//images.slashdot.jp/article-title-bg.png") repeat-x left top;
+  background: #044 url("//tach.office.osdn.jp:8001/article-title-bg.png") repeat-x left top;
 }
 .comment div.title h4 a { margin: 0 .7em; color: #fff; background: none !important;}
-.comment div.title h4 { font-size: 100%; padding: .3em 0; color: #fff; font-weight: bold; background: url("//images.slashdot.jp/article-title-left.png") no-repeat left top; }
+.comment div.title h4 { font-size: 100%; padding: .3em 0; color: #fff; font-weight: bold; background: url("//tach.office.osdn.jp:8001/article-title-left.png") no-repeat left top; }
 
 
 #commentlisting ul li {
   padding-left: 1.55em;
   margin: 0 0 .75em 0;
-  background: url("//images.slashdot.jp/comment-line.png") no-repeat 3px 0px;
+  background: url("//tach.office.osdn.jp:8001/comment-line.png") no-repeat 3px 0px;
 }
 #commentlisting .commentBody ul {background: transparent}
 
@@ -27,11 +27,11 @@ div.commentwrap {
   position: relative;
   margin: .5em 0 1.25em 0;
   padding: 0;
-  background: #696969 url("//images.slashdot.jp/commentbox-bg.png") repeat-x left top;
+  background: #696969 url("//tach.office.osdn.jp:8001/commentbox-bg.png") repeat-x left top;
  clear: right; 
 }
 div.commentwrap div.commentBox:first-child {
-	background: url("//images.slashdot.jp/commentbox-left.png") no-repeat left top;
+	background: url("//tach.office.osdn.jp:8001/commentbox-left.png") no-repeat left top;
 }
 div.commentBox {
   padding: .3em .7em;
@@ -46,13 +46,13 @@ div.commentBox {
 div.commentBoxForm {
   padding: 1.3em 0 0 0;
   text-align: center;
-  background: #eee url("//images.slashdot.jp/commentboxform-bg.png") repeat-x left bottom;
+  background: #eee url("//tach.office.osdn.jp:8001/commentboxform-bg.png") repeat-x left bottom;
 }
   div.commentBoxForm form { padding: 0; }
     div.commentBoxForm fieldset { }
   div.commentBoxForm div.commentBox {
     padding: .75em 0 .5em 0;
-    background: url("//images.slashdot.jp/commentboxform-bottom-right.png") no-repeat right bottom;
+    background: url("//tach.office.osdn.jp:8001/commentboxform-bottom-right.png") no-repeat right bottom;
   }
   div.commentBoxForm div.commentBox small {
     color: #555;
@@ -82,7 +82,7 @@ div.commentBoxForm {
   div.commentTop div.details {
     padding: .2em .7em .4em .7em;
     font-size: 93%;
-    background: #e6e6e6 url("//images.slashdot.jp/article-details-bg.png") repeat-x left bottom;
+    background: #e6e6e6 url("//tach.office.osdn.jp:8001/article-details-bg.png") repeat-x left bottom;
   }
   div.commentTop div.details a { padding-left: 0; }
   div.commentTop div.details small { font-size: 100%; }
@@ -97,7 +97,7 @@ div.commentSub {
   font-weight: bold;
   color: #ccc;
   border-bottom: 1px solid #066;
-  background: url("//images.slashdot.jp/commentsub-bg.png") repeat-x left bottom;
+  background: url("//tach.office.osdn.jp:8001/commentsub-bg.png") repeat-x left bottom;
 }
 
 /* Related Stories */  
@@ -123,7 +123,7 @@ div.commentSub {
 	margin: 0 0 0 -.3em;
 	padding: 0 .3em;
 	text-decoration: none;
-	background: url("//images.slashdot.jp/comm-minus.gif") 0 .2em no-repeat;
+	background: url("//tach.office.osdn.jp:8001/comm-minus.gif") 0 .2em no-repeat;
 	right: -1.4em;
 	z-index: 2;
 	cursor: pointer;
@@ -133,7 +133,7 @@ div.commentSub {
 	margin: 0;
 	padding: 0 .3em;
 	text-decoration: none;
-	background: url("//images.slashdot.jp/comm-plus.gif") 0 .2em no-repeat;
+	background: url("//tach.office.osdn.jp:8001/comm-plus.gif") 0 .2em no-repeat;
 	right: -1.4em;
 	z-index: 1;
 	cursor: pointer;
@@ -213,7 +213,7 @@ div.commentSub {
 .vertical #d2act {position: absolute; left: 1.2em !important}
 .vertical #d2act.rooted {left:-10.6em !important;}
 #d2act div.block {background: transparent}
-#d2act div.block div.title h4 {text-align: left; background: url("//images.slashdot.jp/commentbox-left.png") top left no-repeat !important;}
+#d2act div.block div.title h4 {text-align: left; background: url("//tach.office.osdn.jp:8001/commentbox-left.png") top left no-repeat !important;}
 .rooted #d2act.rooted div.block div.title h4 { background: none !important; }
 #d2act .close {position: absolute; top: .2em; right: .2em; color: #ccc; text-decoration: none; font-style: sans-serif; border: 1px solid #bbb; border-bottom: 1px solid #444; border-right: 1px solid #555; padding: 0 .3em;}
 #d2act .close:hover {position: absolute; top: .2em; right: .2em; color: #eee; text-decoration: none; font-style: sans-serif; border: 1px solid #444; border-bottom: 1px solid #aaa; border-right: 1px solid #ccc; padding: 0 .3em;}

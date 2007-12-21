@@ -6,7 +6,7 @@ body {
   color: #111;
   font: 82%/150% sans-serif;
   border-bottom: 7px solid #066;
-  background: #222 url(//images.slashdot.jp/body-bg.png) repeat-x left bottom;
+  background: #222 url(//tach.office.osdn.jp:8001/body-bg.png) repeat-x left bottom;
 }
 
 #top_parent {
@@ -35,7 +35,7 @@ h1, h2, h3, h4, h5, h6 {
   padding-left: 1.25em;
   margin-bottom: 20px;
 }
-#slashboxes #contents ul li { list-style-image: url(//images.slashdot.jp/bullet.gif); }
+#slashboxes #contents ul li { list-style-image: url(//tach.office.osdn.jp:8001/bullet.gif); }
 
 #contents p {
   margin: 0 0 1em 0;
@@ -74,7 +74,7 @@ clear: both;
   position: relative;
   height: 55px;
   margin: 5px 1.25em 0 1.25em;
-  background: #044 url(//images.slashdot.jp/topnav-bg.png) repeat-x left top;
+  background: #044 url(//tach.office.osdn.jp:8001/topnav-bg.png) repeat-x left top;
 }
   #topnav div#rec_topics_header,
   #topnav ul { display: none; } /* Hide the topic icons */
@@ -94,7 +94,7 @@ clear: both;
       outline: none;
       text-indent: -5000px;
       text-decoration: none;
-      background: url(//images.slashdot.jp/logo.png) no-repeat left top;
+      background: url(//tach.office.osdn.jp:8001/logo.png) no-repeat left top;
     }
   #topnav div.search {
     position: absolute;
@@ -138,13 +138,13 @@ div#user-section {
   margin-bottom: 1.25em;
   white-space: nowrap;
   font-size: 93%;
-  background: #e6e6e6 url(//images.slashdot.jp/sections-bg.png) repeat-x left bottom;
+  background: #e6e6e6 url(//tach.office.osdn.jp:8001/sections-bg.png) repeat-x left bottom;
 }
   div#user-section * { line-height: 100%; }
   div#user-section div.content {
     overflow: hidden;
     padding: .5em .8em;
-    background: url(//images.slashdot.jp/sections-right.png) no-repeat right bottom;
+    background: url(//tach.office.osdn.jp:8001/sections-right.png) no-repeat right bottom;
   }
     div#user-section ul { float: left; }
     
@@ -169,9 +169,9 @@ div#user-section ul li:before {content:"|"; color: #999;}
     div#user-section ul li:first-child:before {content:" ";}
         div#user-section ul li a#loginlink {
           padding-left: 1.2em;
-          background: url(//images.slashdot.jp/login-arrow-collapsed.gif) no-repeat 0 50%;
+          background: url(//tach.office.osdn.jp:8001/login-arrow-collapsed.gif) no-repeat 0 50%;
         }
-        div#user-section ul li a#loginlink.expanded { background-image: url(//images.slashdot.jp/login-arrow-expanded.gif); }
+        div#user-section ul li a#loginlink.expanded { background-image: url(//tach.office.osdn.jp:8001/login-arrow-expanded.gif); }
         
     div#user-section ul#user-utils { float: right; padding: 0 0 .3em 0; margin-top: .25em; }
     
@@ -203,7 +203,7 @@ div.generaltitle div.title {
   margin-bottom: 0;
   padding: 0;
   border-bottom: 1px solid #fff;
-  background: #044 url(//images.slashdot.jp/article-title-bg.png) repeat-x left top;
+  background: #044 url(//tach.office.osdn.jp:8001/article-title-bg.png) repeat-x left top;
 }
   div.generaltitle div.title a { color: #fff; text-decoration: none;}
   div.generaltitle div.title h3 {
@@ -211,19 +211,19 @@ div.generaltitle div.title {
     color: #fff;
     font-size: 123%; /* 16px */
     font-weight: bold;
-    background: url(//images.slashdot.jp/article-title-left.png) no-repeat left top;
+    background: url(//tach.office.osdn.jp:8001/article-title-left.png) no-repeat left top;
   }
 
 
 /* General Body */
-div.generalbody form { padding: .5em .7em 1em .7em; background: #eee url(//images.slashdot.jp/corner-eee-bottom-right.png) no-repeat right bottom; }
+div.generalbody form { padding: .5em .7em 1em .7em; background: #eee url(//tach.office.osdn.jp:8001/corner-eee-bottom-right.png) no-repeat right bottom; }
 div#users-blocks div.generalbody form {background: transparent; padding: 0;}
   div.generalbody form fieldset {  }
   div.generalbody form label { font-weight: bold; }
 
 
 /* Blocks */
-div.block div.title { background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x; }
+div.block div.title { background: #666 url(//tach.office.osdn.jp:8001/block-title-bg.png) repeat-x; }
   div.block div.title * { line-height: 100%; }
   div.block div.title h4 {
     padding: .5em .8em .6em .8em;
@@ -241,14 +241,14 @@ div#links {
   width: 9.25em;
   padding-bottom: 10px;
   margin-right: 1.25em;
-  background: #eee url(//images.slashdot.jp/links-bg.png) no-repeat left bottom;
+  background: #eee url(//tach.office.osdn.jp:8001/links-bg.png) no-repeat left bottom;
 }
   div#links div.block div.content, div#links div.block { margin: 0; padding: 0; }   
-  div#links div.block div.title {  margin: 0; position: relative; background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;}
+  div#links div.block div.title {  margin: 0; position: relative; background: #666 url(//tach.office.osdn.jp:8001/block-title-bg.png) repeat-x;}
   div#links div.block div.title h4 { margin: 0; padding: .5em .8em .6em 2em; }
   div#links div.block div.title h4,
-  div#links div.block.expanded div.title h4 { background: url(//images.slashdot.jp/block-arrow-expanded.gif) no-repeat .8em 50%; }
-  div#links div.block.collapsed div.title h4 { background: url(//images.slashdot.jp/block-arrow-collapsed.gif) no-repeat .8em 50%; }
+  div#links div.block.expanded div.title h4 { background: url(//tach.office.osdn.jp:8001/block-arrow-expanded.gif) no-repeat .8em 50%; }
+  div#links div.block.collapsed div.title h4 { background: url(//tach.office.osdn.jp:8001/block-arrow-collapsed.gif) no-repeat .8em 50%; }
  
   div#links div.block.static div.title h4 { padding-left: .8em; background: none; }
   div#links div.block div.content ul { margin: 0; padding: 0; border-bottom: 1px solid #ddd; }
@@ -267,7 +267,7 @@ div#links {
   div#links div.block div.content ul li a:hover {
     color: #fff;
     text-decoration: none; margin: 0; 
-    background: #066 url(//images.slashdot.jp/link-arrow.gif) no-repeat right center;
+    background: #066 url(//tach.office.osdn.jp:8001/link-arrow.gif) no-repeat right center;
   }
 
 /* Articles */
@@ -275,7 +275,7 @@ div.article { position: relative; }
   div.article div.title {
     margin: 0;
     border-bottom: 1px solid #fff;
-    background: #044 url(//images.slashdot.jp/article-title-bg.png) repeat-x left top;
+    background: #044 url(//tach.office.osdn.jp:8001/article-title-bg.png) repeat-x left top;
   }
     div.article div.title span,
     div.article div.title span a { color: #8DC7C0;}
@@ -286,16 +286,16 @@ div.article { position: relative; }
       color: #fff;
       font-size: 123%; /* 16px */
       font-weight: bold;
-      background: url(//images.slashdot.jp/article-title-left.png) no-repeat left top;
+      background: url(//tach.office.osdn.jp:8001/article-title-left.png) no-repeat left top;
     }
-    div.article div.future div.title { background: #700 url("//images.slashdot.jp/slc.gif") top left no-repeat;}
+    div.article div.future div.title { background: #700 url("//tach.office.osdn.jp:8001/slc.gif") top left no-repeat;}
     div.article div.future div.title h3 { background: transparent; }
     div.article div.details, div.article div.body { padding: .2em .7em; }
     div.article div.details {
       padding: .4em .7em .5em .7em;
       font-size: 93%; /* 12px */
       line-height: 130%;
-      background: #ddd url(//images.slashdot.jp/article-details-bg.png) repeat-x left top;
+      background: #ddd url(//tach.office.osdn.jp:8001/article-details-bg.png) repeat-x left top;
     }
       div.article div.details strong {
         font-weight: normal;
@@ -324,12 +324,12 @@ div.storylinks * { line-height: 110%; }
   div.storylinks div {
         margin: 0; 
         padding: 0;
-        background: url(//images.slashdot.jp/storylinks-bg.png) repeat-x left bottom;
+        background: url(//tach.office.osdn.jp:8001/storylinks-bg.png) repeat-x left bottom;
         }
   div.storylinks ul {
     margin: 0;
     padding: .75em 12em .75em .6em;
-    background: url(//images.slashdot.jp/storylinks-right.png) no-repeat right bottom;
+    background: url(//tach.office.osdn.jp:8001/storylinks-right.png) no-repeat right bottom;
   }
     div.storylinks ul li {
       display: inline;
@@ -357,12 +357,12 @@ div.storylinks * { line-height: 110%; }
 div.briefarticles {
   margin: 1.5em 0;
   border-bottom: 1px solid #066;
-  background: #e8e8e8 url(//images.slashdot.jp/briefarticle-top-left.png) no-repeat left top;
+  background: #e8e8e8 url(//tach.office.osdn.jp:8001/briefarticle-top-left.png) no-repeat left top;
 }
 div.briefarticles div.briefarticle {
     padding: .5em .7em;
     border-bottom: 1px solid #ccc;
-    background: url(//images.slashdot.jp/briefarticle-fade.png) repeat-y right top;
+    background: url(//tach.office.osdn.jp:8001/briefarticle-fade.png) repeat-y right top;
 }
 div.briefarticles div.briefarticle span.storytitle a { font-weight: bold; }
 div.future div.briefarticle { background: #700;}
@@ -372,7 +372,7 @@ div.future div.briefarticle a { color: #fff;}
 a.yesterday {
   padding-left: 15px;
   font-weight: bold;
-  background: url('//images.slashdot.jp/arrow-left.png') no-repeat left center;
+  background: url('//tach.office.osdn.jp:8001/arrow-left.png') no-repeat left center;
 }
 
 
@@ -388,12 +388,12 @@ div#slashboxes {
     margin-bottom: 1.25em;
   }
     div#slashboxes div.block div.title h4 {
-      background: url(//images.slashdot.jp/block-title-right.png) no-repeat right top;
+      background: url(//tach.office.osdn.jp:8001/block-title-right.png) no-repeat right top;
 	padding: .5em .8em .6em .8em; 
     }
     div#slashboxes div.block div.content {
       padding: .4em;
-      background: #eee url(//images.slashdot.jp/slashbox-bottom-left.png) no-repeat left bottom;
+      background: #eee url(//tach.office.osdn.jp:8001/slashbox-bottom-left.png) no-repeat left bottom;
     }
       div#slashboxes div.block div.content p { margin: 0;}
       div#slashboxes div.block div.content ul { margin: 0; padding: 0; list-style-image: none; }
@@ -408,7 +408,7 @@ div#slashboxes {
 /* Footer */
 div#footer {
   margin-top: 1.25em;
-  background: #bbb url(//images.slashdot.jp/footer-bg.png) repeat-x left top;
+  background: #bbb url(//tach.office.osdn.jp:8001/footer-bg.png) repeat-x left top;
 clear: both;
 }
   div#footer div.search {
@@ -420,7 +420,7 @@ clear: both;
   div#footer div.rightcontent {
     padding: 1.35em 1.25em 1.5em 0;
     text-align: right;
-    background: url(//images.slashdot.jp/footer-right.png) no-repeat right top;
+    background: url(//tach.office.osdn.jp:8001/footer-right.png) no-repeat right top;
   }
     div#footer div.rightcontent table {
       width: auto;
@@ -438,14 +438,14 @@ clear: both;
 /* Copyright */
 div.copyright {
   margin: 0 1.25em 15px 1.25em;
-  background: #444 url(//images.slashdot.jp/copyright-bg.png) repeat-x left bottom;
+  background: #444 url(//tach.office.osdn.jp:8001/copyright-bg.png) repeat-x left bottom;
 }
   div.copyright p {
     padding: .85em 1.25em;
     color: #999;
     font-size: 85%; /* 11px */
     text-align: center;
-    background: url(//images.slashdot.jp/copyright-left.png) no-repeat left bottom;
+    background: url(//tach.office.osdn.jp:8001/copyright-left.png) no-repeat left bottom;
   }
   div.copyright a { color: #ccc; }
 
@@ -480,17 +480,17 @@ div#users-blocks div.title, #users div.title, #search div.title, #users-lists di
 #users-lists div.title { margin: 1em 0 0 0; }
 div#usermenu {
   margin: 0 0 .5em 0;
-  background: #e6e6e6 url(//images.slashdot.jp/sections-bg.png) repeat-x left bottom;
+  background: #e6e6e6 url(//tach.office.osdn.jp:8001/sections-bg.png) repeat-x left bottom;
 }
 ul.menu {  
   font-size: 93%; /* 12px */
   padding: .5em 0;
   overflow: auto;
-  background: url(//images.slashdot.jp/storylinks-bg.png) repeat-x bottom left;
+  background: url(//tach.office.osdn.jp:8001/storylinks-bg.png) repeat-x bottom left;
 }
 #usermenu ul.menu {  
   font-size: 93%; /* 12px */
-    background: url(//images.slashdot.jp/sections-right.png) no-repeat right bottom;
+    background: url(//tach.office.osdn.jp:8001/sections-right.png) no-repeat right bottom;
       padding: .5em .8em;
 }
   ul.menu li { 
@@ -514,12 +514,12 @@ ul.menu {
 
 table.data {
   clear: none;
-  background: #dfdfdf url(//images.slashdot.jp/corner-bottom-right.png) no-repeat right bottom;
+  background: #dfdfdf url(//tach.office.osdn.jp:8001/corner-bottom-right.png) no-repeat right bottom;
 }
   table.data tr.data_head { font-size: 93%; }
     table.data tr.data_head th { 
 padding: .3em .5em; text-align: left; 
-  background: #e6e6e6 url(//images.slashdot.jp/sections-bg.png) repeat-x left bottom;
+  background: #e6e6e6 url(//tach.office.osdn.jp:8001/sections-bg.png) repeat-x left bottom;
  ; border-bottom: 1px solid #fff; color: #444;}
     table.data tr.data_head a { color: #fff; }
 
@@ -624,7 +624,7 @@ ul.sub input:hover {text-decoration: none;}
 .user .sub_title { position: absolute; left: 20%; height: 1.3em}
 .user .sub_info { position: absolute; left: 60%; height: 1.3em}
 
-div.submenu {font-size: 90%; padding: .1em 0; color: #fff; background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x; }
+div.submenu {font-size: 90%; padding: .1em 0; color: #fff; background: #666 url(//tach.office.osdn.jp:8001/block-title-bg.png) repeat-x; }
 div.submenu label { display: inline; margin: 0 0 0 .8em;}
 div.submenu input, div.submenu select { margin: 0 1em 0 0 }
 div.submenu form, div.submenu fieldset {padding: 0; margin: 0;}
@@ -739,7 +739,7 @@ a.ac-source
         padding: .1em 0;
         font-size: 85%; /* 11px */
         text-align: center;
-        background: #111 url(//images.slashdot.jp/ostg-bg.png) repeat-x;
+        background: #111 url(//tach.office.osdn.jp:8001/ostg-bg.png) repeat-x;
 	clear: both;
 }
 #ostgnavbar a {
@@ -757,9 +757,9 @@ a.ac-source
 div#links div.block div#links-loggedin-title,
 div#links div.block div#links-login-title
 {
-  background: #666 url(//images.slashdot.jp/block-title-right.png) no-repeat right top;
+  background: #666 url(//tach.office.osdn.jp:8001/block-title-right.png) no-repeat right top;
 }
-div#links div.block div#links-opcenter-title { background: #6d745f url(//images.slashdot.jp/topnav-bg-vendors.png) repeat-x 0px -30px; }
+div#links div.block div#links-opcenter-title { background: #6d745f url(//tach.office.osdn.jp:8001/topnav-bg-vendors.png) repeat-x 0px -30px; }
 div#links div.block div#links-opcenter-content { background: #DBE8B8;}
 
 /* New user link */
@@ -772,14 +772,14 @@ a#newuser {
   text-shadow: #000 0 0 0;
   font-weight: bold;
   line-height: 100%;
-  background: url(//images.slashdot.jp/button-right.png) no-repeat right top;
+  background: url(//tach.office.osdn.jp:8001/button-right.png) no-repeat right top;
 }
 a#newuser span {
   display: block;
   height: 28px;
   padding-top: .55em;
   line-height: 100%;
-  background: url(//images.slashdot.jp/button-left.png) no-repeat left top;
+  background: url(//tach.office.osdn.jp:8001/button-left.png) no-repeat left top;
 }
 
 
@@ -813,7 +813,7 @@ div#slashboxes div#olderstuff-content ul li { font-weight: bold; }
   }
     div#slashboxes div#olderstuff-content ul li ul li {
       padding: 0;
-      list-style-image: url(//images.slashdot.jp/bullet.gif);
+      list-style-image: url(//tach.office.osdn.jp:8001/bullet.gif);
       font-weight: normal;
     }
     div#olderstuff-content ul li ul li em { font-style: normal; }
@@ -840,11 +840,11 @@ div#slashboxes div.block div#login-title, div#slashboxes div.block div#userlogin
 div#slashboxes div.block div#login-content, div#slashboxes div.block div#userlogin-content {
   padding: 0;
   color: #fff;
-  background: #919191 url(//images.slashdot.jp/login-content-bg.png) repeat-x left bottom;
+  background: #919191 url(//tach.office.osdn.jp:8001/login-content-bg.png) repeat-x left bottom;
 }
-  div#slashboxes div.block div#login-content form, div#slashboxes div.block div#userlogin-content form { border-bottom: 1px solid #aaa; padding-bottom: .75em; background: url(//images.slashdot.jp/login-title-right.png) no-repeat right top; }
+  div#slashboxes div.block div#login-content form, div#slashboxes div.block div#userlogin-content form { border-bottom: 1px solid #aaa; padding-bottom: .75em; background: url(//tach.office.osdn.jp:8001/login-title-right.png) no-repeat right top; }
   div#slashboxes div.block div#login-content a, div#slashboxes div.block div#userlogin-content a { color: #eee; font-weight: normal; }
-  div#slashboxes div.block div#login-content p, div#slashboxes div.block div#userlogin-content p { padding: .2em 0 .5em 0; font-size: 93%; text-align: center; background: url(//images.slashdot.jp/login-content-bottom-left.png) no-repeat left bottom; }
+  div#slashboxes div.block div#login-content p, div#slashboxes div.block div#userlogin-content p { padding: .2em 0 .5em 0; font-size: 93%; text-align: center; background: url(//tach.office.osdn.jp:8001/login-content-bottom-left.png) no-repeat left bottom; }
   div#slashboxes div.block div#login-content input, div#slashboxes div.block div#userlogin-content input { width: 98%; margin: 0 auto .5em auto; font-size: 93%; }
   div#slashboxes div.block div#login-content label, div#slashboxes div.block div#userlogin-content label {  }
   div#slashboxes div.block div#login-content label.checkbox, div#slashboxes div.block div#userlogin-content label.checkbox { display: block; margin-bottom: .75em; }
@@ -852,8 +852,8 @@ div#slashboxes div.block div#login-content, div#slashboxes div.block div#userlog
   div#slashboxes div.block div#login-content input.button, div#slashboxes div.block div#userlogin-content input.button { width: auto; margin: 0; }
     
 /* System messages */    
-div#message {padding: 0; margin: 0 0 1em 0; border-bottom: 1px solid #333; background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x top left; }
-  div#message div.content { padding: 0; margin: 0; background: url(//images.slashdot.jp/block-title-left.png) no-repeat left top; }
+div#message {padding: 0; margin: 0 0 1em 0; border-bottom: 1px solid #333; background: #666 url(//tach.office.osdn.jp:8001/block-title-bg.png) repeat-x top left; }
+  div#message div.content { padding: 0; margin: 0; background: url(//tach.office.osdn.jp:8001/block-title-left.png) no-repeat left top; }
     div#message div.content p {margin: 0; padding: .3em .7em; color: #fff;}
 
 
@@ -864,8 +864,8 @@ div#message div.content a {color: #fff;}
 /* Related */
   div.briefarticle {position: relative;}
   div.briefarticle a span {text-indent: -5000px; position: relative; float: left;} 
-   div.briefarticle a span.expanded {width: 15px; background: url(//images.slashdot.jp/login-arrow-expanded.gif) no-repeat 0 50%; }
-  div.briefarticle a span, div.briefarticle a span.condensed  {width: 15px; background: url(//images.slashdot.jp/login-arrow-collapsed.gif) no-repeat 0 50%; }
+   div.briefarticle a span.expanded {width: 15px; background: url(//tach.office.osdn.jp:8001/login-arrow-expanded.gif) no-repeat 0 50%; }
+  div.briefarticle a span, div.briefarticle a span.condensed  {width: 15px; background: url(//tach.office.osdn.jp:8001/login-arrow-collapsed.gif) no-repeat 0 50%; }
   div div.briefcomment { padding-left: 4em; padding-top: 0px }
 
 
@@ -895,7 +895,7 @@ div.tags {
   padding: 0;
   font-size: 93%;
   line-height: 100%;
-  background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x; 
+  background: #666 url(//tach.office.osdn.jp:8001/block-title-bg.png) repeat-x; 
 }
   div.tags div.tagtitleclosed, 
   div.tags div.tagtitleopen {
@@ -904,17 +904,17 @@ div.tags {
 	position: relative;
 	background: #fff;
   }
-  div.tags div.tagtitleopen {color: #fff;  background: url(//images.slashdot.jp/block-title-right.png) no-repeat top right; }
+  div.tags div.tagtitleopen {color: #fff;  background: url(//tach.office.osdn.jp:8001/block-title-right.png) no-repeat top right; }
     div.tags div.tagtitleopen a {color: #fff;}
     div.tags div.tagtitleclosed a { text-decoration: none; }
     div.tags div.tagtitleclosed .tagmenu a { text-decoration: underline; }
   div.tags div.tagtitleopen span.tagsheader, 
   div.tags div.tagtitleclosed span.tagsheader {text-indent: -5000px; position:absolute; left: 10px; } 
-   div.tags div.tagtitleopen span.tagsheader {width: 15px; background: url(//images.slashdot.jp/block-arrow-expanded.gif) no-repeat 0 50%; }
-  div.tags div.tagtitleclosed span.tagsheader {width: 15px; background: url(//images.slashdot.jp/login-arrow-collapsed.gif) no-repeat 0 50%; }
+   div.tags div.tagtitleopen span.tagsheader {width: 15px; background: url(//tach.office.osdn.jp:8001/block-arrow-expanded.gif) no-repeat 0 50%; }
+  div.tags div.tagtitleclosed span.tagsheader {width: 15px; background: url(//tach.office.osdn.jp:8001/login-arrow-collapsed.gif) no-repeat 0 50%; }
   div.tags div.tagtitleopen i a, div.tags div.tagtitleclosed i a {background: transparent;}
   div.tags div.tagbody {
-    background: #ddd url(//images.slashdot.jp/article-details-bg.png) repeat-x;
+    background: #ddd url(//tach.office.osdn.jp:8001/article-details-bg.png) repeat-x;
     padding: .85em 0 0 .85em;
     color: #666;
 border: #ccc 1px solid; border-top: none;
@@ -928,7 +928,7 @@ border: #ccc 1px solid; border-top: none;
 
 /* General Title */
 div.generaltitle div.title {
-  background: #044 url(//images.slashdot.jp/article-title-bg.png) repeat-x left top;
+  background: #044 url(//tach.office.osdn.jp:8001/article-title-bg.png) repeat-x left top;
 }
   div.generaltitle div.title a { color: #fff; }
   div.generaltitle div.title h3 {
@@ -936,20 +936,20 @@ div.generaltitle div.title {
     color: #fff;
     font-size: 123%; /* 16px */
     font-weight: bold;
-    background: url(//images.slashdot.jp/article-title-left.png) no-repeat left top;
+    background: url(//tach.office.osdn.jp:8001/article-title-left.png) no-repeat left top;
   }
 
 /* Journal */
 #journalgeneric {margin: 1em 0;}
 div.generalbody div#journalgeneric div.article {
   margin-bottom: 1.5em;
-  background: url(//images.slashdot.jp/storylinks-bg.png) repeat-x left bottom;
+  background: url(//tach.office.osdn.jp:8001/storylinks-bg.png) repeat-x left bottom;
 }
 #journalgeneric div.intro i {display: inline; font-style: italic; border: none; margin: 0; padding: 0;}
 #journalgeneric div.intro i a {font-style: italic;}
   div.generalbody div#journalgeneric div.article div.body {
     padding-bottom: 2em;
-    background: url(//images.slashdot.jp/storylinks-right.png) no-repeat right bottom;
+    background: url(//tach.office.osdn.jp:8001/storylinks-right.png) no-repeat right bottom;
   }
 #journalgeneric div.storylinks ul li {
 	margin: 0;
@@ -969,7 +969,7 @@ div.generalbody div#journalgeneric div.article {
 div.journalpage {
   margin-top: .8em;
   padding: .4em .7em .5em .7em;
-  background: #dfdfdf url(//images.slashdot.jp/corner-bottom-right.png) no-repeat right bottom;
+  background: #dfdfdf url(//tach.office.osdn.jp:8001/corner-bottom-right.png) no-repeat right bottom;
 }
   div.journalpage br { display: none; }
 
@@ -1035,7 +1035,7 @@ pre, code { font-size: 93%; }
 
 /* Edit */
 .edit { width: 4em; position: relative;}
-        .edit a { position: relative; float: right; margin-top: -1.2em; display: block; width: 4em; text-indent: -700em; text-decoration: none; background: url(//images.slashdot.jp/sic_edit.png) right no-repeat; }
+        .edit a { position: relative; float: right; margin-top: -1.2em; display: block; width: 4em; text-indent: -700em; text-decoration: none; background: url(//tach.office.osdn.jp:8001/sic_edit.png) right no-repeat; }
 div.article div.title span.edit a {text-decoration: none;}
 .briefarticle .edit a {margin: -1.5em .3em 0 0;}
 
@@ -1067,7 +1067,7 @@ div.article div.title span.edit a {text-decoration: none;}
 #vendorStory-26-popup {width: 18.5em; border: 2px solid #c5d1a6}
 #vendorStory-26-contents {background: #DBE8B8}
 #vendorStory-26-popup div.title h3
-{ background: #6d745f url(//images.slashdot.jp/vendors-slc.gif) no-repeat top left; }
+{ background: #6d745f url(//tach.office.osdn.jp:8001/vendors-slc.gif) no-repeat top left; }
 #vendorStory-26-popup div.title h3 a {color: #fff}
 #vendorStory-26-popup div.title span a, #vendorStory-26-popup div.title span  { color: #DBE8B8; }
 #vendorStory-26-contents a { color: #6d745f; }
@@ -1102,7 +1102,7 @@ a:focus { overflow:hidden }
 #anniversary .event h4 span {font-weight: normal}
 #anniversary .event input {display: inline; margin: 0 0 0 -2.3em; position: absolute; left: 3em; top: 1em;}
 #anniversary .event, #anniversary .date, #anniversary .details  {display: block;}
-#anniversary .event {padding: 1em 3em; margin: 0 0 1em 0; background: transparent url(//images.slashdot.jp/storylinks-bg.png) repeat-x scroll left bottom;  position: relative;}
+#anniversary .event {padding: 1em 3em; margin: 0 0 1em 0; background: transparent url(//tach.office.osdn.jp:8001/storylinks-bg.png) repeat-x scroll left bottom;  position: relative;}
 #anniversary ul.menu#fhtablist a img {margin: 0 0 -4px 0}
 .map
 {

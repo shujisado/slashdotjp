@@ -64,7 +64,7 @@ html>body #admin { margin: 0 auto .2em 0; }
 {
 	padding: 0;
 	margin: 0 0 0 2em;
-	list-style: url("//images.slashdot.jp/drop.gif");
+	list-style: url("//tach.office.osdn.jp:8001/drop.gif");
 }
 
 #slashboxes #slashd li em,
@@ -112,7 +112,7 @@ body .adminstoryform legend { display: none;}
 
 
 /* Story table */
-.tb_col { border: 1px solid #555; padding: 0 .4em; background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;}
+.tb_col { border: 1px solid #555; padding: 0 .4em; background: #666 url(//tach.office.osdn.jp:8001/block-title-bg.png) repeat-x;}
 
 .lt_tb_col {color: #fff; border: 1px solid #444; padding: 0 0 0 .4em; background: #555 !important;}
 
@@ -122,7 +122,7 @@ body .adminstoryform legend { display: none;}
 .admin #adminmenu a {color: #066;}
 #adminmenu ul.nestedmenu a {color: #ddd;}
 #adminmenu ul.nestedmenu li:hover a {color: #fff;}
-.admin #adminmenu ul.nestedmenu, #adminmenu ul.nestedmenu {height: 1.3em; font: 100% sans-serif; background: #111 url(//images.slashdot.jp/ostg-bg.png) repeat-x top left !important;}
+.admin #adminmenu ul.nestedmenu, #adminmenu ul.nestedmenu {height: 1.3em; font: 100% sans-serif; background: #111 url(//tach.office.osdn.jp:8001/ostg-bg.png) repeat-x top left !important;}
 
 
 #adminmenu ul.nestedmenu { list-style: none; }

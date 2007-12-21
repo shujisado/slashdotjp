@@ -1,15 +1,15 @@
 a {color: #369}
-div#topnav { background: #369 url(//images.slashdot.jp/topnav-bg-dev.png) repeat-x left top; } 
-  div#topnav div#logo h1 a { background: url(//images.slashdot.jp/logo-dev.png) no-repeat left top; } 
+div#topnav { background: #369 url(//tach.office.osdn.jp:8001/topnav-bg-dev.png) repeat-x left top; } 
+  div#topnav div#logo h1 a { background: url(//tach.office.osdn.jp:8001/logo-dev.png) no-repeat left top; } 
 div.article div.title,
 div.generaltitle div.title,
 div.commentTop div.title
-{ background: #369 url(//images.slashdot.jp/article-title-bg-dev.png) repeat-x left top; } 
+{ background: #369 url(//tach.office.osdn.jp:8001/article-title-bg-dev.png) repeat-x left top; } 
   div.article div.title h3,
   div.generaltitle div.title h3,
   div.commentTop div.title h4
-  { background: url(//images.slashdot.jp/article-title-left-dev.png) no-repeat left top; } 
-div#links div.block div.content ul li a:hover {background: #369 url(//images.slashdot.jp/link-arrow.gif) no-repeat right center; color: #fff;}
+  { background: url(//tach.office.osdn.jp:8001/article-title-left-dev.png) no-repeat left top; } 
+div#links div.block div.content ul li a:hover {background: #369 url(//tach.office.osdn.jp:8001/link-arrow.gif) no-repeat right center; color: #fff;}
 div#slashboxes div.block div.content { background: #eee; }
     div.article div.title span,
     div.article div.title span a { color: #ddd; }
@@ -23,7 +23,7 @@ div.commentSub { border-bottom: 1px solid #369; }
 .story .date, .story a.skin {color: #ffffff !important;}
 #firehose .article div.tagtitleclosed span span, #firehose .article div.tagtitleopen span span, #firehose div.tags div.tagtitleclosed a, #firehose div.tags div.tagtitleclosed,  #firehose div.tags div.tagtitleopen a,  #firehose div.tags div.tagtitleopen  {color: #369 !important}
 div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.article .story div.title h3, div.article .story div.title, .firemenu div.title, .firemenu div.title h3
-{ background: #369 url(//images.slashdot.jp/article-title-bg-dev.png) repeat-x left top !important}
+{ background: #369 url(//tach.office.osdn.jp:8001/article-title-bg-dev.png) repeat-x left top !important}
 .story .generaltitle .title a { color: #fff !important; }
 // firehose related css end
 
