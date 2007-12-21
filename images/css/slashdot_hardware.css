@@ -1,5 +1,5 @@
 div#topnav { background: #044; }
-  div#topnav div#logo h1 a { background: url(//tach.office.osdn.jp:8001/logo-hardware.png) no-repeat left top; }
+  div#topnav div#logo h1 a { background: url(//images.slashdot.jp/logo-hardware.png) no-repeat left top; }
 div.article div.title,
 div.generaltitle div.title,
 div.commentTop div.title
@@ -7,8 +7,8 @@ div.commentTop div.title
   div.article div.title h3,
   div.generaltitle div.title h3,
   div.commentTop div.title h4
-  { background: url(//tach.office.osdn.jp:8001/slc.gif) no-repeat left top; }
-div#links div.block div.content ul li a:hover {background: #044 url(//tach.office.osdn.jp:8001/link-arrow.gif) no-repeat right center; color: #fff;}
+  { background: url(//images.slashdot.jp/slc.gif) no-repeat left top; }
+div#links div.block div.content ul li a:hover {background: #044 url(//images.slashdot.jp/link-arrow.gif) no-repeat right center; color: #fff;}
 div.article div.title span,
 div.article div.title span a { color: #90bca9; }
 .data_head, .barColor, .tb_col, .thor .commentControlFooter { background: #044; }
