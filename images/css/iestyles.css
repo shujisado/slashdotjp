@@ -1,0 +1,117 @@
+#message iframe { width: 99% !important; }
+* html body {
+ width: expression(document.documentElement.clientWidth < 750 ? "750px" : "auto");
+}
+div.tags, .adminoptions, #indexhead, div.generaltitle, div#commentwrap, .commentbox, ul.menu, #usermenu, div#links div.block div.content, #commentlisting ul { position: relative;}
+#adminmenu ul.menu { display: block; position: absolute; left: 17em; }
+/* #topnav { width: 96%; } */
+
+div#users-blocks {margin: 0 214px 0 0; overflow: hidden;}
+form {width: 94%}
+#users-lists {width: 99%}
+
+/*
+div#message {padding: 0; margin: 0 0 1em 0; border-bottom: 1px solid #333; } */
+  /* div#message div.content { padding: 0; margin: 0; background: #666 url(//images.slashdot.jp/slc.gif) no-repeat left top; } */
+/*  div#message div.content { padding: 0; margin: 0; background: #666 !important; } */
+
+.user .sub_title { position: absolute; left: 10em; width: 19em; height: 1.3em; overflow: hidden; }
+.user .sub_info { position: absolute; left: 30em; width: 10em; height: 1.3em; overflow: hidden; }
+
+ul.menu li {float: left; }
+ul.menu:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+div#contents div.storylinks {position: relative;}
+div#contents div.storylinks ul li.comments {
+     _right: 18.5em; 
+     margin: 0;
+     padding: .2em 1em;
+     _padding: .1em 1em;
+     text-align: right;
+     text-shadow: #000 0 0 0;
+     background: none;
+    }
+
+div#links div.block div.content ul li { border-bottom: 1px solid #eee; }
+div.commentwrap { border: 1px solid #fff; border-width: 1px 0; }
+/* div#contents div#message { background-color: #fff; }
+  div#contents div#message p { padding: .35em .7em .3em .7em; border-bottom: 1px solid #fff; } */
+/* disabled for topnav width fix: 2007-09-14 by tach
+div#topnav {
+  margin: 5px 1.25em 0 1.25em;
+  margin-left: 1.25em;
+  margin-right: 1.25em;
+  margin-right: 100px;
+}
+ */
+div#topnav div.search { width: 210px; }
+div.search input.button { margin-left: 3px; }
+#commentlisting {width: 99%;} 
+
+/* Tags */
+div.tags div.tagtitleopen,
+div.tags div.tagtitleclosed {height: 100%; }
+div.tags div.tagtitleopen {background: transparent}
+
+/* Comments */
+  div.commentTop div.title {
+    padding: 0 0 .5em 0;
+    height: 100%;
+  }
+    div.commentTop div.title h4 {
+      padding: .5em .7em 0 .7em;
+      float: left;
+ }
+div#contents ul li { list-style-image: none; }
+
+/* Thanks: http://positioniseverything.net/easyclearing.html */
+div#user-section div.content,
+div#contents {display: inline-table;}
+/* Hides from IE-mac \*/
+* html ul.menu,
+* html div#user-section div.content,
+* html div#contents {height: 1%;}
+div#user-section div.content,
+div#contents {display: block;}
+/* End hide from IE-mac */
+
+
+{ margin: -1.6em .3em 0 0; _background: url(//images.slashdot.jp/sic_edit.gif) right no-repeat;}
+.briefarticle .edit a {margin: -2em .4em 0 0;}
+
+#users blockquote { position: static; }
+
+#editjournal-description { width: 90%; } 
+div#journal {
+   word-break: break-all;
+}
+div.journal table { word-break: break-all; position: static; }
+
+.journalentry .generaltitle { position: static; }
+.journal blockquote { display: block; position: static; }
+div.liquid .journalentry { padding-right: 0px !important; margin-right: 0px !important;}
+div.liquid .journalentry { width: 96% !important; }
+div.liquid .journalhead { _width: 103% !important; }
+div.liquid .journalhead h2 { padding-top: 0px; padding-bottom: 0px; }
+div.liquid .journaltext { display: block !important; }
+div.liquid .journaltext { position: static; word-break: break-all; }
+
+div.ad200 {
+	margin-bottom: 0.5em;
+}
+
+div.commentTop div.title span.score { font-size: 90%; }
+
+.storylinks {
+  border-left: 1px solid #fff; /* do NOT delete left border to keep background */
+  padding-right: 3px;
+}
+
+.storylinks ul {
+  padding-right: 0px !important;
+}
