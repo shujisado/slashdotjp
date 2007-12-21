@@ -147,8 +147,8 @@ sub project_tags_udc {
 			my $this_hour_ut = $cur_hour - 3600*$h;
 			my($this_hourofday, $this_dayofweek) =
 				$slashdb->sqlSelect("HOUR(FROM_UNIXTIME($this_hour_ut)), DAYOFWEEK(FROM_UNIXTIME($this_hour_ut))");
-			my $this_hour_ratio = $proportion_hourofday->{$this_hourofday}*24;
-			my $this_day_ratio  = $proportion_dayofweek->{$this_dayofweek}*7;
+			my $this_hour_ratio = $proportion_hourofday->{$this_hourofday} ? $proportion_hourofday->{$this_hourofday}*24 : 0;
+			my $this_day_ratio  = $proportion_dayofweek->{$this_dayofweek} ? $proportion_dayofweek->{$this_dayofweek}*7 : 0;
 			$period_ratio->{$h} = $this_hour_ratio * $this_day_ratio;
 #print STDERR "period ratio for $this_hour_ut ($cur_hour - $h): $period_ratio->{$h} (day $this_dayofweek hour $this_hourofday hour_ratio $this_hour_ratio day_ratio $this_day_ratio)\n";
 		}

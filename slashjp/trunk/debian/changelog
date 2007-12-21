@@ -10,9 +10,11 @@ slash (2.5.0.187-1) unstable; urgency=low
   * Add libfile-type-perl and libfinance-quote-perl to Depends of slash-common
     - Some plugin need these modules
   * Suppress "Use of uninitialized value" at
-    /usr/share/perl5/Slash/FireHose.pm line 2017
+    plugins/FireHose/FireHose.pm line 2017
+  * Suppress "Use of uninitialized value" at
+    plugins/Tags/tags_udc.pl line 150
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 21 Dec 2007 19:35:27 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 21 Dec 2007 20:38:58 +0900
 
 slash (2.5.0.186-1) unstable; urgency=low
 
