@@ -7,8 +7,12 @@ slash (2.5.0.187-1) unstable; urgency=low
     - before: /etc/apache/conf.d/slash.conf
     - after: /etc/apache/conf.d/00slash.conf
   * Add libtimedate-perl-ja to Suggests: at slash-common
+  * Add libfile-type-perl and libfinance-quote-perl to Depends of slash-common
+    - Some plugin need these modules
+  * Suppress "Use of uninitialized value" at
+    /usr/share/perl5/Slash/FireHose.pm line 2017
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 20 Dec 2007 09:37:02 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 21 Dec 2007 19:35:27 +0900
 
 slash (2.5.0.186-1) unstable; urgency=low
 

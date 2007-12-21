@@ -2014,7 +2014,7 @@ sub getAndSetOptions {
 		}
 		$options->{duration} ||= -1;
 	} else  {
-		if ($user->{state}{firehose_page} ne "user") {
+		if (!$user->{state}{firehose_page} || $user->{state}{firehose_page} ne "user") {
 			$options->{accepted} = "no" if !$options->{accepted};
 		}
 		
