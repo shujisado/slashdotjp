@@ -14,14 +14,14 @@
 
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="interviews.shtml">前のセクション</A>
-		<TD><A HREF="metamod.shtml">次のセクション</A>
+		<TD><A HREF="firehose.shtml">前のセクション</A>
+		<TD><A HREF="com-mod.shtml">次のセクション</A>
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
 <hr>
-<br><a name="tags100" id="tags100"></a>
-<h2>このタグっていったい何?</h2>
+<br>
+<h2><a name="tags100" id="tags100">このタグっていったい何?</a></h2>
 <p> 現在スラッシュドットでは、記事にタグを付ける実験をしています。ぜひこの機能を利用して、一握りのタグを提供してください。タグは記事の内容を最も的確に表していると思われる簡単なラベルです。それが 'セキュリティ' と 'Mozilla' に関する記事であることを伝えることができます。
 </p>
 
@@ -49,8 +49,7 @@ href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>La
 
 
 
-<a name="tags110" id="tags110"></a>
-<h2>タグは客観的ですか、それとも主観的ですか?どのようなタグでも好きに使えますか?</h2>
+<h2><a name="tags110" id="tags110">タグは客観的ですか、それとも主観的ですか?どのようなタグでも好きに使えますか?</a></h2>
 
 <p>他のタグ付けシステムでは、ユーザが好きなタグを作れるようになっていて、客観的な意味の問題をあいまいにしています。そのため &quot;foo&quot; というタグはユーザごとに意味がまちまちで、システムにとっては何の意味も持たず、単なる識別名に過ぎません。</p>
 
@@ -65,8 +64,7 @@ href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>La
 <p><i><font size=-1>Answered by:<a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>Last Modified: 2/10/06</font></i>
 
 
-<br><a name="tags200" id="tags200"></a>
-<h2>どのようなタグが定義されていますか?</h2>
+<h2><a name="tags200" id="tags200">どのようなタグが定義されていますか?</a></h2>
 
 <p><b>重複</b> は、スラッシュドットのストーリーが実際に以前の<b>スラッシュドットの</b>ストーリーと重複していて、新しい情報を何も提供していない場合にのみ使います。</p>
 
@@ -79,8 +77,7 @@ href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>La
 <p><i><font size=-1>Answered by:<a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>Last Modified: 11/02/06</font></i>
 
 
-<br><a name="tags300" id="tags300"></a>
-<h2>スラッシュドットブックマークとは何ですか?</h2>
+<h2><a name="tags300" id="tags300">スラッシュドットブックマークとは何ですか?</a></h2>
 
 <p>スラッシュドットブックマークは、URL を保存しておいて、スラッシュドットのコミュニティと共有したり、スラッシュドットの編集者にタレコんで掲載を検討してもらうための手軽な場所です。
 
@@ -91,8 +88,7 @@ href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>La
 <p><i><font size=-1>Answered by:<a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>Last Modified: 3/22/06</font></i>
 
 
-<br><a name="tags310" id="tags310"></a>
-<h2>スラッシュドットブックマークを保存する方法は?</h2>
+<h2><a name="tags310" id="tags310">スラッシュドットブックマークを保存する方法は?</a></h2>
 
 <p><a
 href="/bookmark.pl">ブックマークページ</a>を直接開いてサイトをブックマークします。または、下の JavaScript をブラウザボタンとして使い、ブラウザのツールバーからブックマークを動的に保存することもできます。</p>
@@ -105,8 +101,7 @@ href="/bookmark.pl">ブックマークページ</a>を直接開いてサイト�
 <p><i><font size=-1>Answered by:<a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>Last Modified: 03/22/06</font></i>
 
 
-<br><a name="tags320" id="tags320"></a>
-<h2>スラッシュドットでブックマークするよう自分の読者に促すにはどうすればいいですか?</h2>
+<h2><a name="tags320" id="tags320">スラッシュドットでブックマークするよう自分の読者に促すにはどうすればいいですか?</a></h2>
 
 <p>あなたのサイトの Web ページにまだ &quot;Digg It&quot; や &quot;Add to Del.icio.us&quot; というリンクが散乱していなければ、ページをスラッシュドットに自動的にタレコむためのバッジまたはリンクを追加することができます。十分な数の読者がクリックすると、あなたのページが編集者の目にとまります。早くて安上がりな <a href="/submit.pl">submit.pl</a> のようなものです。</p>
 
@@ -119,8 +114,7 @@ href="/bookmark.pl">ブックマークページ</a>を直接開いてサイト�
 <p><i><font size=-1>Answered by:<a href="mailto:scc@slashdot.org">scc</a></font></i> <br><i><font size=-1>Last Modified: 10/03/07</font></i>
 
 
-<br><a name="tags400" id="tags400"></a>
-<h2>ブックマークを共有するには?</h2>
+<h2><a name="tags400" id="tags400">ブックマークを共有するには?</a></h2>
 
 <p>自分のブックマークは <a
 href="/my/bookmarks">/my/bookmarks</a> から利用できます。他のユーザのブックマークには、そのユーザのホームページからアクセスすることができます。私のブックマークを見る場合は、<a href=/~CmdrTaco/bookmarks/>/~CmdrTaco/bookmarks</a> にアクセスします。
@@ -128,8 +122,7 @@ href="/my/bookmarks">/my/bookmarks</a> から利用できます。他のユー�
 <p><i><font size=-1>Answered by:<a href="mailto:malda@slashdot.org">CmdrTaco</a></font></i> <br><i><font size=-1>Last Modified: 3/22/06</font></i>
 
 
-<br><a name="tags410" id="tags410"></a>
-<h2>スラッシュドットのユーザがどのようなタグを付けているかを見るには?</h2>
+<h2><a name="tags410" id="tags410">スラッシュドットのユーザがどのようなタグを付けているかを見るには?</a></h2>
 
 <p><a href="/tags">http://slashdot.jp/tags</a> で、最も広く使われているタグの一部を見ることができます。それぞれのタグは、ストーリーおよびブックマークに関する読者の何らかの考えを示しています。分類系のタグの多くはミニ検索のような役割を果たし (<a href="/tags/web20">web20</a>、<a href="/tags/google">google</a>、<a href="/tags/globalwarming">globalwarming</a>、<a href="/tags/diebold">diebold</a>、<a href="/tags/bush">bush</a>、<a href="/tags/rumor">rumor</a>、<a href="/tags/xbox">xbox</a>)、コメント系のタグではスラッシュドットのユーザの意見を垣間見ることができます (<a href="/tags/itsatrap">itsatrap</a>、<a href="/tags/fud">fud</a>、<a href="/tags/snakeoil">snakeoil</a>、<a href="/tags/cool">cool</a>、<a href="/tags/finally">finally</a>、<a href="/tags/whocares">whocares</a>、それに「Jeopardy」(訳注: アメリカのクイズ番組) 形式の回答 <a href="/tags/yes">yes</a> と <a href="/tags/no">no</a>)。</p>
 
@@ -143,8 +136,8 @@ href="/my/bookmarks">/my/bookmarks</a> から利用できます。他のユー�
 <hr>
 <TABLE>
 	<TR width="100%">
-		<TD><A HREF="interviews.shtml">前のセクション</A>
-		<TD><A HREF="metamod.shtml">次のセクション</A>
+		<TD><A HREF="firehose.shtml">前のセクション</A>
+		<TD><A HREF="com-mod.shtml">次のセクション</A>
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>

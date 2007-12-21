@@ -115,6 +115,33 @@
         <li><strong><a href="/faq/interviews.shtml#int1400">インタビュー・ゲストを提案するにはどうすればいいのですか？</a></strong></li>
 </ul>
 
+<!-- Firehose -->
+<h2><strong><a href="/faq/firehose.shtml">スラッシュドット Firehose</a></strong></h2>
+<ul>
+        <li><strong><a href="/faq/firehose.shtml#fh100">スラッシュドット Firehose とは何ですか?</a></strong></li>
+        <li><strong><a href="/faq/firehose.shtml#fh200">Firehose の中に記事があるのはなぜですか?</a></strong></li>
+        <li><strong><a href="/faq/firehose.shtml#fh300">色にはどのような意味がありますか?</a></strong></li>
+        <li><strong><a href="/faq/firehose.shtml#fh400">カレンダーウィジェットはどのような働きをしますか?</a></strong></li>
+        <li><strong><a href="/faq/firehose.shtml#fh500">Firehose のタブの使い道は?</a></strong></li>
+        <li><strong><a href="/faq/firehose.shtml#fh600">どのブラウザがサポートされていますか?</a></strong></li>
+        <li><strong><a href="/faq/firehose.shtml#fh700">赤色になったタレコミを掲載しなかったのはなぜですか?</a></strong></li>
+        <li><strong><a href="/faq/firehose.shtml#fh800">なんだか○○に似ていませんか?</a></strong></li>
+</ul>
+
+<!-- Tags -->
+<h2><strong><a href="/faq/tags.shtml">タグ</a></strong></h2>
+<ul>
+        <li><strong><a href="/faq/tags.shtml#tags100">このタグっていったい何?</a></strong></li>
+        <li><strong><a href="/faq/tags.shtml#tags110">タグは客観的ですか、それとも主観的ですか?どのようなタグでも好きに使えますか?</a></strong></li>
+        <li><strong><a href="/faq/tags.shtml#tags200">どのようなタグが定義されていますか?</a></strong></li>
+        <li><strong><a href="/faq/tags.shtml#tags300">スラッシュドットブックマークとは何ですか?</a></strong></li>
+        <li><strong><a href="/faq/tags.shtml#tags310">スラッシュドットブックマークを保存する方法は?</a></strong></li>
+        <li><strong><a href="/faq/tags.shtml#tags320">スラッシュドットでブックマークするよう自分の読者に促すにはどうすればいいですか?</a></strong></li>
+        <li><strong><a href="/faq/tags.shtml#tags400">ブックマークを共有するには?</a></strong></li>
+        <li><strong><a href="/faq/tags.shtml#tags410">スラッシュドットのユーザがどのようなタグを付けているかを見るには?</a></strong></li>
+</ul>
+
+
 <!-- Comments and Moderation -->
 <H2><B><A HREF="com-mod.shtml">コメントとモデレーション</A></B></H2>
 <UL>
@@ -305,6 +332,14 @@
                 <li><strong><a href="/faq/friends.shtml#fj980">トモのトモやトモのテキって何ですか?</a></strong></li>
                 <li><strong><a href="/faq/friends.shtml#fj1000">トモやテキを追加または削除する方法は?</a></strong></li>
 </ul>
+
+<!-- Tags -->
+<h2><strong><a href="/faq/badge.shtml">バッジの手引き</a></strong></h2>
+<ul>
+        <li><strong><a href="/faq/badge.shtml#ba100">バッジ</a> <img src="http://images.slashdot.jp/sdit4n.png" style="margin-bottom:-0.1em; padding-left:0.25em;" alt="スラッシュドットのバッジの例" title="スラッシュドットのバッジはこのように表示されます"/></strong></li>
+        <li><strong><a href="/faq/badge.shtml#ba101">リンク</a></strong></li>
+</ul>
+
 
 <!-- Slashdot Meta -->
 <H2><B><A HREF="slashmeta.shtml">Slashdotについて</A></B></H2>
