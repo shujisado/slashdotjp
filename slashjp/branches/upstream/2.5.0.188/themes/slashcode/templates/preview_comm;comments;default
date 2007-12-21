@@ -1,0 +1,24 @@
+__section__
+default
+__description__
+Template which describes how the comment preview form is displayed.
+
+* preview = comment to preview
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+preview_comm
+__template__
+<ul id="commentlisting">
+[% Slash.dispComment(preview) %]
+</li>
+</ul>
+
+__seclev__
+1000
+__version__
+$Id: preview_comm;comments;default,v 1.8 2005/10/11 02:34:10 tvroom Exp $

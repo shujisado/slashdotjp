@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+Subject of Email-a-Story email messages.
+
+__title__
+Email-a-Story Subject Template
+__page__
+email
+__lang__
+en_US
+__name__
+email_subj
+__seclev__
+5000
+__template__
+[% story.title %]
+__version__
+$Id: email_subj;email;default,v 1.3 2003/08/12 21:35:38 pudge Exp $

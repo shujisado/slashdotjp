@@ -1,0 +1,46 @@
+__section__
+default
+__description__
+List all the current topics
+
+* title = passed to titlebar
+* width = passed to titlebar
+* topic_admin = boolean for whether current user is admin
+* topics = hashref of current topics
+__title__
+
+__page__
+topics
+__lang__
+en_US
+__name__
+listTopics
+__template__
+[% PROCESS titlebar %]
+<div class="generalbody">
+	<table width="100%" cellpadding="0" cellspacing="0">
+		<tr>
+[% x = 0 %]
+		[% FOREACH topic = topics.sort("textname"); %]
+			[%
+			    match_term = "^" _ constants.topiclist_ignore_prefix IF constants.topiclist_ignore_prefix;
+			    NEXT IF match_term && topic.keyword.match(match_term);
+			    x = x + 1; "</tr><tr>" 
+		            IF (x mod 6) == 1 %]
+			<td align="center">
+				<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"><img src="[% constants.imagedir %]/topics/[% topic.image %]" alt="[% topic.textname %]" width="[% topic.width %]" height="[% topic.height %]">
+				[% IF user.is_admin %]
+					</a> <a href="[% gSkin.rootdir %]/admin.pl?op=topics&amp;nexttid=[% topic.tid %]">
+				[% END %]
+				<br>
+				[% topic.textname %]</a>
+			</td>
+[% END %]
+		</tr>
+	</table>
+</div>
+
+__seclev__
+10000
+__version__
+$Id: listTopics;topics;default,v 1.10 2005/12/08 03:43:42 tvroom Exp $

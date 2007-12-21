@@ -1,0 +1,49 @@
+__section__
+default
+__description__
+Renders the form which users will use to enter email address (and, optionally)
+story ID.
+
+	* (optional) story - Hashref containing pre-selected story data.
+
+__title__
+Email Story Form
+__page__
+email
+__lang__
+en_US
+__name__
+emailStoryForm
+__seclev__
+5000
+__template__
+
+[% INCLUDE titlebar 
+	width="99%"
+	title="Email a Story" -%]
+
+<form action="[% gSkin.rootdir %]/email.pl" method="post">
+[% IF form.formkey -%]
+<input type="hidden" name="formkey" value="[% form.formkey %]">
+[% END -%]
+<input type="hidden" name="op" value="email_send">
+[% IF form.sid -%]
+<input type="hidden" name="sid" value="[% form.sid | strip_attribute %]">
+[% END -%]
+
+[% UNLESS form.sid -%]
+<p>Enter story ID to mail: 
+<input type="text" name="sid" size="16">
+[% ELSE -%]
+Selected story: <i>[% story.title %]</i>
+<small>[% Slash.timeCalc(story.time) %] ([% story.sid %])</small>
+</blockquote>
+[% END -%]
+
+<p>Enter email address to send story to: 
+<input type="text" name="email" size="50">
+<p><input type="submit" value="Send Email">
+</form>
+
+__version__
+$Id: emailStoryForm;email;default,v 1.5 2005/07/27 22:53:54 pudge Exp $

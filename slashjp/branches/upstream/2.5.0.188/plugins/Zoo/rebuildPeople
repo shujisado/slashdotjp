@@ -1,0 +1,71 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2005 by Open Source Technology Group. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id: rebuildPeople,v 1.19 2005/03/11 19:58:22 pudge Exp $
+
+use strict;
+use File::Basename;
+use Getopt::Std;
+use Slash;
+use Slash::DB;
+use Slash::Utility;
+use Slash::Constants ':people';
+
+use vars qw( $slashdb $werder $constants $junk );
+
+(my $VERSION) = ' $Revision: 1.19 $ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+
+my %opts;
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hu:v', \%opts);
+usage() if $opts{'h'};
+$opts{'u'} ||= 'slash';
+
+createEnvironment($opts{u});
+$slashdb = getCurrentDB();
+$constants = getCurrentStatic();
+
+
+# 
+my $people = $slashdb->sqlSelectColArrayref('DISTINCT uid', 'people');
+
+my $zoo = getObject("Slash::Zoo");
+for (@$people) {
+	my $people = $zoo->rebuildUser($_);
+	$slashdb->setUser($_, { people => $people});
+
+}
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] [#users]
+
+This rebuilds the people table for the Zoo system.
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+
+EOT
+	exit;
+}
+
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2005 by Open Source Technology Group. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}

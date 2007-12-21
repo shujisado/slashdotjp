@@ -1,0 +1,21 @@
+#
+# $Id: mysql_prep,v 1.10 2006/02/10 14:59:18 jamiemccarthy Exp $
+#
+
+# If you are using a replicated slave to search on, which we
+# recommend, you need only perform these ALTERs on the slave.
+# Replication from an InnoDB master to a MyISAM slave works.
+
+# XXX Also, see the comment re LOCK IN SHARE MODE in MySQL.pm
+# setCommentForMod().
+
+ALTER TABLE story_text		Type=MyISAM, ADD FULLTEXT title (title), ADD FULLTEXT intro_body (introtext,bodytext);
+ALTER TABLE comments		Type=MyISAM, ADD FULLTEXT subject (subject);
+ALTER TABLE comment_text	Type=MyISAM, ADD FULLTEXT (comment);
+# ALTER TABLE blocks add fulltext (description,title,block);
+ALTER TABLE users		Type=MyISAM, ADD FULLTEXT  (nickname);
+ALTER TABLE pollquestions	Type=MyISAM, ADD FULLTEXT (question);
+ALTER TABLE journals		Type=MyISAM, ADD FULLTEXT (description);
+ALTER TABLE journals_text	Type=MyISAM, ADD FULLTEXT (article);
+#ALTER TABLE submissions	Type=MyISAM, ADD FULLTEXT (subj,story);
+

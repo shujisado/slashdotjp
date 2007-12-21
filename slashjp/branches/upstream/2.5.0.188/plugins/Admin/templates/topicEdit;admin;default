@@ -1,0 +1,105 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+topicEdit
+__template__
+[% PROCESS titlebar %]
+<div class="generalbody">
+	<form action="[% env.script_name %]" method="post" name="slashstoryform" id="slashstoryform" onsubmit="return false;">
+	<input type="hidden" name="op" value="topics">
+	[% PROCESS formLabel value => "Select a topic" comment => "hit the create button if you wish to create a new topic" %]
+	[% Slash.createSelect('nexttid', topic_desc, form.nexttid, 1, 0, 1)%]	
+	<input type="button" name="topiced" value="Edit Topic" onclick="stc_submit(this)">
+
+	[% IF topic.tid %]<input type="hidden" name="tid" value="[% topic.tid %]">[% END %]
+
+
+	[% PROCESS formLabel value => "Full Topic Title", comment => "alt tags & user interface" %]
+	<input type="text" name="textname" value="[% FILTER strip_attribute %][% topic.textname %][% END %]">
+
+	[% PROCESS formLabel value => "Abbreviated Topic Title" comment => "admin interface & DNS" %]
+	<input type="text" name="keyword" value="[% topic.keyword | strip_attribute %]">
+
+	[% IF images_flag %]
+		[% PROCESS formLabel value => "Image" %]
+		[% image_select %] or URL <input type="text" size="30" name="image2" value="[% image2 %]">
+
+		[% PROCESS formLabel value => "Dimensions" %]
+		<input type="text" name="width" value="[% topic.width %]" size="4">x<input type="text" name="height" value="[% topic.height %]" size="4">
+		[% PROCESS formNote note = "WxH or leave blank to guess" %] 
+
+		[% IF topic.image %]
+		[% PROCESS formLabel value => "Image Preview" %]
+			<img src="[% constants.imagedir %]/topics/[% topic.image %]" alt="[% topic.textname %]" width="[% topic.width %]" height="[% topic.height %]"><br>
+		[% END %]
+	[% END %]
+	<label class="checkbox">
+	<input type="checkbox" name="series" value="yes"[% topic.series == 'yes' ? ' checked' : '' %]> Series
+	[%- PROCESS formNote note = "For recurring stories in sequence" %]
+	</label>
+	<label class="checkbox">
+	<input type="checkbox" name="nexus" value="1"[% topic.nexus ? ' checked' : '' %]> Nexus [% IF topic.nexus %]- <a href="[% gSkin.rootdir %]/admin.pl?op=topic_extras&amp;tid=[% topic.tid %]">Edit topic extras for [% topic.keyword | strip_attribute %] topic</a>[% END %]
+	[%- PROCESS formNote note => "Grouping of related stories" %]
+	</label>
+
+	<label class="checkbox">
+	<input type="checkbox" name="submittable" value="1"[% topic.submittable ? ' checked' : '' %]> Submittable
+	[%- PROCESS formNote note => "Users can submit stories under this topic" %]
+	</label>
+	<label class="checkbox">
+	<input type="checkbox" name="searchable" value="1"[% topic.searchable  ? ' checked' : '' %]> Searchable
+	[%- PROCESS formNote note => "Does this topic show up under search?" %]
+	</label>
+	<label class="checkbox">
+	<input type="checkbox" name="storypickable" value="1"[% topic.storypickable ? ' checked' : '' %]> Story Pickable
+	[%- PROCESS formNote note => "Can a user select this topic for story exclusion?" %]
+	</label>
+<fieldset id="st-display">
+	<legend>Select Parent/Children </legend> 
+	[% topic_select %]
+
+	<input type="button" name="topicnew" value="Create New Topic" onclick="stc_submit(this)">
+	<input type="button" name="topicsave" value="Save Topic" onclick="stc_submit(this)">
+</fieldset>
+
+<fieldset>
+        <legend>Topic Parameters</legend>
+	[% IF topic_param.size %]
+	[% PROCESS formLabel value => "Current Topic Parameters" %]
+	<table>
+	[% FOREACH tp = topic_param %]
+		<tr><td>[% tp.name %]:</td><td> <input type="text" name="tp_cur_[% tp.name %]" value="[% tp.value | strip_attribute %]" size="50"></td></tr>
+	[% END %]
+	</table>
+	[% END %]
+
+	[% PROCESS formLabel value => "Custom Topic Parameters" %]
+	<table>
+	<tr><th>Name</th><th>Value</th></tr>
+	[% FOREACH number = [1..2] %]
+	<tr><td><input type="text" name="tpname_new_[% number %]" size="22" maxlength="32"></td><td><input type="text" name="tpvalue_new_[% number %]" size="60"</td></tr>
+	[% END %]
+	</table>
+	</p>
+
+	<input type="button" name="topicnew" value="Create New Topic" onclick="stc_submit(this)">
+	<input type="button" name="topicsave" value="Save Topic" onclick="stc_submit(this)">
+
+	[% PROCESS formLabel value => "Delete & Reparent", comment => "irreversibly delete this topic, and reparent its children" %]
+	[% Slash.createSelect('replacementtid', topic_desc, '', 1, 0, 1) %]
+	<input type="button" name="topicdelete" value="Delete Topic" onclick="stc_submit(this)">
+		</fieldset>
+	</form>
+</div>
+__seclev__
+500
+__version__
+$Id: topicEdit;admin;default,v 1.26 2005/07/27 22:53:54 pudge Exp $
