@@ -9,7 +9,7 @@ jses = all-minified
 default: $(csses) $(sections) $(jses) images
 
 install: default
-	rsync -n -avHSC --delete --delete-after --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp ./ $(DESTDIR)
+	rsync -n -avHSC --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp ./ $(DESTDIR)
 
 images: images-stamp
 images-stamp:
@@ -22,7 +22,7 @@ images-stamp:
 $(csses): %: css/%.css
 $(sections): %: css/slashdot_%.css
 $(patsubst %,css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
-	cat $@.orig | sed -e 's/images\.slashdot\.org/images\.slashdot\.jp/' > $@
+	cat $@.orig | sed -e 's/images\.slashdot\.org/images.slashdot.jp/' > $@
 
 css/%.css.orig: FORCE
 	wget --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
@@ -33,6 +33,9 @@ $(jses): FORCE
 force: clean default
 
 clean:
-	rm -f css/*.css.orig $(patsubst %,css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)) images-stamp
+	rm -f css/*.css.orig image-stamp \
+		$(patsubst %,css/%.css, $(csses)) \
+		$(patsubst %,css/slashdot_%.css, $(sections)) \
+		$(patsubst %,%.js, $(jses))
 
 .PHONY: default images clean force install FORCE
