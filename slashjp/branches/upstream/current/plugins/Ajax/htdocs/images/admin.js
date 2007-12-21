@@ -1,4 +1,4 @@
-// $Id: admin.js,v 1.43 2007/12/06 02:49:31 jamiemccarthy Exp $
+// $Id: admin.js,v 1.44 2007/12/20 18:46:05 tvroom Exp $
 
 function um_ajax(the_behaviors, the_events) {
 	var params =[];
@@ -45,6 +45,15 @@ function admin_neverdisplay(stoid, type, fhid) {
 			firehose_remove_entry(fhid);
 		}
 	}
+}
+
+function admin_submit_memory(fhid) {
+	var params = [];
+	params['op'] = 'admin_submit_memory';
+	params['reskey'] = reskey_static;
+	params['submatch'] = $('submatch-'+fhid).value;
+	params['subnote'] = $('subnote-'+fhid).value;
+	ajax_update(params, 'sub_mem_message-'+fhid);
 }
 
 function adminTagsCommands(id, type) {

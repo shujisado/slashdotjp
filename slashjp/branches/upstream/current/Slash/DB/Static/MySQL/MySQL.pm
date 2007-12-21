@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.260 2007/10/16 23:04:51 tvroom Exp $
+# $Id: MySQL.pm,v 1.262 2007/12/20 22:07:32 pudge Exp $
 
 package Slash::DB::Static::MySQL;
 
@@ -20,7 +20,7 @@ use URI ();
 use vars qw($VERSION);
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.260 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.262 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
@@ -1926,6 +1926,23 @@ sub deleteFileQueueCmd {
 	my($self,$fqid) = @_;
 	my $fqid_q = $self->sqlQuote($fqid);
 	$self->sqlDelete("file_queue", "fqid=$fqid_q");
+}
+
+sub getRecentThumbAndMediaStories {
+	my($self, $skid, $limit) = @_;
+	$limit ||= 20;
+
+	my $skid_clause = "";
+	$skid_clause = " AND primaryskid = " .$self->sqlQuote($skid) if $skid;
+
+	return $self->sqlSelectColArrayref(
+		"story_param.stoid", 
+		"stories,story_param", 
+		"name in ('thumb','media') AND stories.stoid=story_param.stoid 
+		 AND time <= NOW() $skid_clause", 
+		"GROUP BY stories.stoid ORDER BY time DESC LIMIT $limit"
+	);
+
 }
 
 1;

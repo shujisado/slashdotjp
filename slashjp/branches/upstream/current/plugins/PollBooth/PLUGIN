@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.5 2005/11/01 19:46:13 tvroom Exp $
+# $Id: PLUGIN,v 1.6 2007/12/14 21:57:24 tvroom Exp $
 name=PollBooth
 description="PollBooth"
 mysql_schema=mysql_schema
@@ -9,6 +9,7 @@ template=templates/data;pollBooth;default
 template=templates/editpoll;pollBooth;default
 template=templates/listpolls;pollBooth;default
 template=templates/pollbooth;misc;default
+template=templates/pollplug;misc;default
 template=templates/savepoll;pollBooth;default
 template=templates/vote;pollBooth;default
 template=templates/detachpoll;pollBooth;default

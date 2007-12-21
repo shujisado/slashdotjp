@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Top.pm,v 1.15 2007/11/07 23:17:06 jamiemccarthy Exp $
+# $Id: Top.pm,v 1.16 2007/12/18 23:40:03 pudge Exp $
 
 package Slash::Tagbox::Top;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.15 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.16 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -204,7 +204,8 @@ sub run {
 	my %nontop = ( map { ($_, 1) }
 		grep { $_ }
 		map { ($_, $tags_reader->getOppositeTagname($_)) }
-		split / /, ($constants->{tagbox_top_excludetagnames} || '')
+		@{$tags_reader->getExcludedTags}
+#		split / /, ($constants->{tagbox_top_excludetagnames} || '')
 	);
 	# Eliminate tagnames that are just the author's name.
 	my @names = map { lc } @{ $tags_reader->getAuthorNames() };

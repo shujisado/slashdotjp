@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: sd_autocomplete.js,v 1.41 2007/09/28 21:21:20 scc Exp $
+// $Id: sd_autocomplete.js,v 1.42 2007/12/18 19:52:37 scc Exp $
 
 YAHOO.namespace("slashdot");
 
@@ -359,6 +359,11 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._newCompleter = function( tagDomain 
 
 YAHOO.slashdot.AutoCompleteWidget.prototype._show = function( obj, callbackParams, tagDomain )
   {
+      // onTextboxBlur should have already hidden the previous instance (if any), but if events
+      //  come out of order, we must hide now to prevent broken listeners
+    if ( this._sourceEl )
+      this._hide();
+
     this._sourceEl = obj;
 
     if ( this._sourceEl )

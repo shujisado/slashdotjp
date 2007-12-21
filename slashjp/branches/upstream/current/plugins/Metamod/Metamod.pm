@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Metamod.pm,v 1.7 2007/10/09 18:57:09 jamiemccarthy Exp $
+# $Id: Metamod.pm,v 1.8 2007/12/17 22:28:03 jamiemccarthy Exp $
 
 package Slash::Metamod;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -745,6 +745,11 @@ sub getMetamodsForUserRaw {
 			# We need older mods.
 			$only_old_clause = " AND id <= $oldzone";
 		}
+		my $only_perdec_clause = '';
+		my $perdec = $constants->{m2_only_perdec} || 10;
+		if ($perdec < 10) {
+			$only_perdec_clause = " AND FLOOR((id % 100)/10) <= $perdec";
+		}
 		$mod_hr = { };
 		$mod_hr = $reader->sqlSelectAllHashref(
 			"id",
@@ -756,7 +761,7 @@ sub getMetamodsForUserRaw {
 			 AND reason IN ($m2able_reasons)
 			 AND active=1
 			 AND ts < DATE_SUB(NOW(), INTERVAL $m2_wait_hours HOUR)
-			 $already_id_clause $already_cid_clause $only_old_clause",
+			 $only_perdec_clause $already_id_clause $already_cid_clause $only_old_clause",
 			"ORDER BY rank LIMIT $limit"
 		);
 		if (!$mod_hr || !scalar(keys %$mod_hr)) {
