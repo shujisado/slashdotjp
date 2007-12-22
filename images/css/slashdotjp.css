@@ -42,8 +42,11 @@ div#slashboxes {
 	font-size: 88%;
 	overflow: hidden;
 }
+#wrapper #articles,
 #wrapper #indexhead,
-#wrapper #articles {
+#search.aduserbox .generaltitle,
+#search.aduserbox .generalbody,
+div#users-blocks {
 	margin-right: 212px;
 }
 div#slashboxes div.block img.map {
