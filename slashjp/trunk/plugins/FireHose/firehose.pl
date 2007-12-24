@@ -73,6 +73,9 @@ sub main {
 
 	if ($op ne "rss") {
 		my $title = "$constants->{sitename} - Firehose";
+		if ($constants->{firehose_name}) {
+			$title = "$constants->{sitename} - $constants->{firehose_name}";
+		}
 		if ($form->{index}) {
 			$title = "$constants->{sitename} - $constants->{slogan}";
 		}
