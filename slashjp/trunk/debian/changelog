@@ -1,8 +1,13 @@
 slash (2.5.0.188-1) unstable; urgency=low
 
   * New upstream CVS release
+  * Suppress warning of portald
+    - Use of uninitialized value in pattern match (m//) at
+      /usr/lib/perl5/Slash/DB/Static/MySQL.pm line 1514
+    - Use of uninitialized value in numeric comparison (<=>) at
+      /usr/lib/perl5/Slash/DB/Static/MySQL.pm line 866.
 
- -- Taku YASUI <tach@osdn.jp>  Sat, 22 Dec 2007 05:16:00 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 24 Dec 2007 20:35:07 +0900
 
 slash (2.5.0.187-1) unstable; urgency=low
 
