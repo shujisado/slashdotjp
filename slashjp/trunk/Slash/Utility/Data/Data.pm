@@ -431,7 +431,7 @@ sub urlFromSite {
 	# We decide whether to use the secure homepage or not
 	# based on whether the current page is secure.
 	my $base = root2abs();
-	my $clean = URI->new_abs($url || $gSkin->{rootdir}, $base);
+	my $clean = URI->new_abs($url || $gSkin->{rootdir}, $base || $constants->{absolutedir});
 
 	# obviously, file: URLs are local
 	if ($clean->scheme eq 'file') {
