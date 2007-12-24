@@ -148,6 +148,7 @@ sub createItemFromJournal {
 			title 			=> $journal->{description},
 			globjid 		=> $globjid,
 			uid 			=> $journal->{uid},
+			createtime		=> $journal->{date},
 			attention_needed 	=> "yes",
 			public 			=> "yes",
 			introtext 		=> $introtext,

@@ -8,8 +8,9 @@ slash (2.5.0.188-1) unstable; urgency=low
       /usr/lib/perl5/Slash/DB/Static/MySQL.pm line 866.
   * Fix for FireHose initial data script at
     /usr/lib/perl5/Slash/Utility/Data.pm line 434
+  * Add journal time to FireHose when journal is added to FireHose
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 24 Dec 2007 22:59:42 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 24 Dec 2007 23:59:35 +0900
 
 slash (2.5.0.187-1) unstable; urgency=low
 
