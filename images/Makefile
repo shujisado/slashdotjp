@@ -21,19 +21,23 @@ images-stamp:
 
 $(csses): %: css/%.css
 $(sections): %: css/slashdot_%.css
-$(patsubst %,css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
+$(patsubst %,css/%.css,$(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
 	cat $@.orig | sed -e 's/images\.slashdot\.org/images.slashdot.jp/' > $@
 
 css/%.css.orig: FORCE
-	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
+	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%,$@) -O $@
 
-$(jses): FORCE
-	wget --no-proxy --no-verbose http://slashdot.org/$(patsubst %,%.js, $@) -O $(patsubst %,%.js, $@)
+$(jses): %: %.js
+$(patsubst %,%.js,$(jses)): %: %.orig
+	cat $@.orig | sed -e 's/ Firehose / スラたま /' > $@
+
+%.js.orig: FORCE
+	wget --no-proxy --no-verbose http://slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
 
 force: clean default
 
 clean:
-	rm -f css/*.css.orig image-stamp \
+	rm -f css/*.css.orig *.js.orig image-stamp \
 		$(patsubst %,css/%.css, $(csses)) \
 		$(patsubst %,css/slashdot_%.css, $(sections)) \
 		$(patsubst %,%.js, $(jses))
