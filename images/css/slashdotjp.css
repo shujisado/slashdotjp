@@ -75,6 +75,10 @@ div.storylinks ul {
 	font-size: 90%;
 }
 
+div#message div.content div.microad {
+	margin: 0.3em 0.7em;
+}
+
 div.microad_comment {
 	overflow: hidden;
 	background: #FFF;
