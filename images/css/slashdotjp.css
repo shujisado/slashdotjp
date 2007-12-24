@@ -96,6 +96,16 @@ xmp {
 	list-style: url(//images.slashdot.jp/drop.gif);
 }
 
+/* slashdot.jp announce area */
+div#slashdotjp-site-announce {
+	background: #FFC;
+	border: 1px solid #055;
+	margin-bottom: 4px;
+	padding: 2px;
+	font-weight: bold;
+	font-size: 82%;
+}
+
 /* upper osdnbar */
 #osdnbar {
 	font-weight: normal;
