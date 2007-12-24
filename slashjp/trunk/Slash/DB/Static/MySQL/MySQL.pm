@@ -859,7 +859,7 @@ sub getTop10Comments {
 		$_->[1] = $self->sqlSelect(
 			'UNIX_TIMESTAMP(MAX(ts)) - UNIX_TIMESTAMP(MIN(ts))',
 			'moderatorlog',
-			"cid=$_->[0]");
+			"cid=$_->[0]") || 0;
 	}
 
 	@$cids = sort { $a->[1] <=> $b->[1] } @$cids;
@@ -1509,10 +1509,13 @@ sub countStoriesWithTopic {
 sub createRSS {
 	my($self, $bid, $item) = @_;
 #use Data::Dumper; $Data::Dumper::Sortkeys = 1; print STDERR "createRSS $bid item: " . Dumper($item);
+	$item->{title} ||= '';
 	$item->{title} =~ /^(.*)$/;
 	my $title_md5 = md5_hex(encode_utf8($1));
+	$item->{description} ||= '';
 	$item->{description} =~ /^(.*)$/;
 	my $description_md5 = md5_hex(encode_utf8($1));
+	$item->{'link'} ||= '';
 	$item->{'link'} =~ /^(.*)$/;
 	my $link_md5 = md5_hex(encode_utf8($1));
 
