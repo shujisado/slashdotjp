@@ -30,7 +30,7 @@ css/%.css.orig: FORCE
 $(jses): %: %.js
 $(patsubst %, %.js, $(jses)): %: %.orig
 	cat $@.orig | \
-		sed -e 's/ Firehose / スラたま /' | \
+		sed -e 's/ Firehose / アレたま /' | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' > $@
 
 %.js.orig: FORCE
