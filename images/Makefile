@@ -21,15 +21,17 @@ images-stamp:
 
 $(csses): %: css/%.css
 $(sections): %: css/slashdot_%.css
-$(patsubst %,css/%.css,$(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
+$(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
 	cat $@.orig | sed -e 's/images\.slashdot\.org/images.slashdot.jp/' > $@
 
 css/%.css.orig: FORCE
-	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%,$@) -O $@
+	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
 
 $(jses): %: %.js
-$(patsubst %,%.js,$(jses)): %: %.orig
-	cat $@.orig | sed -e 's/ Firehose / スラたま /' > $@
+$(patsubst %, %.js, $(jses)): %: %.orig
+	cat $@.orig | \
+		sed -e 's/ Firehose / スラたま /' | \
+		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' > $@
 
 %.js.orig: FORCE
 	wget --no-proxy --no-verbose http://slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
