@@ -1086,7 +1086,7 @@ setTimeout("firehose_handle_update()",wait_interval);}else{firehose_reorder();fi
 function firehose_reorder(){if(firehose_ordered){var fhlist=$('firehoselist');if(fhlist){var item_count=0;for(i=0;i<firehose_ordered.length;i++){if(/^\d+$/.test(firehose_ordered[i])){item_count++;}
 var fhel=$('firehose-'+firehose_ordered[i]);if(fhlist&&fhel){fhlist.appendChild(fhel);}
 if(firehose_future[firehose_ordered[i]]){if($("ttype-"+firehose_ordered[i])){$("ttype-"+firehose_ordered[i]).className="future";}}else{if($("ttype-"+firehose_ordered[i])&&$("ttype-"+firehose_ordered[i]).className=="future"){$("ttype-"+firehose_ordered[i]).className="story";}}}
-if(console_updating){document.title=sitename+" - Console ("+item_count+")";}else{document.title=sitename+" - スラたま ("+item_count+")";}}}}
+if(console_updating){document.title=sitename+" - Console ("+item_count+")";}else{document.title=sitename+" - アレたま ("+item_count+")";}}}}
 function firehose_get_next_updates(){var interval=getFirehoseUpdateInterval();fh_is_updating=0;firehose_add_update_timerid(setTimeout("firehose_get_updates()",interval));}
 function firehose_get_updates_handler(transport){if($('busy')){$('busy').className="hide";}
 var response=eval_response(transport);var processed=0;firehose_removals=response.update_data.removals;firehose_ordered=response.ordered;firehose_future=response.future;firehose_before=Array(0);firehose_after=Array(0);for(i=0;i<firehose_ordered.length;i++){if(i>0){firehose_before[firehose_ordered[i]]=firehose_ordered[i-1];}
