@@ -3,8 +3,9 @@ slash (2.5.0.188-2) unstable; urgency=low
   * Remove unwanted code at plugins/Admin/admin.pl
   * Fix firehose table update error: Unknown column 'media' in 'field list'
     at /usr/share/perl5/Slash/FireHose.pm:1518
+  * Remove unwanted debug code at plugins/FireHose/FireHose.pm line 302
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 25 Dec 2007 18:11:50 +0900
+ -- Taku YASUI <tach@osdn.jp>  Tue, 25 Dec 2007 18:49:20 +0900
 
 slash (2.5.0.188-1) unstable; urgency=low
 

@@ -299,7 +299,7 @@ sub updateItemFromStory {
 		if ($id) {
 			# If a story is getting its primary skid to an ignored value set its firehose entry to non-public
 			my $public = ($story->{neverdisplay} || $ignore_skids{$story->{primaryskid}}) ? "no" : "yes";
-			print STDERR "Stoid: $story->{stoid} FHID: $id Public: $public ND: $story->{neverdisplay}\n";
+			#print STDERR "Stoid: $story->{stoid} FHID: $id Public: $public ND: $story->{neverdisplay}\n";
 			my $data = {
 				title 		=> $story->{title},
 				uid		=> $story->{uid},
