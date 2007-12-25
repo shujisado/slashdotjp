@@ -104,6 +104,16 @@ xmp {
 	list-style: url(//images.slashdot.jp/drop.gif);
 }
 
+/* Fix slashdot.org <i> impremant */
+div.article div.intro i
+{
+	border-left: none;
+	display: inline;
+	font-style: normal;
+	margin: 0;
+	padding: 0;
+}
+
 /* slashdot.jp announce area */
 div#slashdotjp-site-announce {
 	background: #FFC;
