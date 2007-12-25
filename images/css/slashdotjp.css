@@ -114,6 +114,12 @@ div.article div.intro i
 	padding: 0;
 }
 
+/* Fix blockquote color */
+blockquote, .quote
+{
+	color: #000;
+}
+
 /* slashdot.jp announce area */
 div#slashdotjp-site-announce {
 	background: #FFC;
