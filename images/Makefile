@@ -24,7 +24,8 @@ $(sections): %: css/slashdot_%.css
 $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
 	cat $@.orig | \
 		sed -e 's/images\.slashdot\.org/images.slashdot.jp/' | \
-		perl -npe 's/\bfont-family:[^;]+;//' > $@
+		perl -npe 's/\bfont-family:[^;]+;//' | \
+		perl -npe 's/\bsans-serif\b//' > $@
 
 css/%.css.orig: FORCE
 	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@

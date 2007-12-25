@@ -61,7 +61,7 @@
 #firehose_pages a { color: #bbb; border: 1px solid #444; background: #444; padding: 3px !important; }
 #firehose_pages a:hover { color: #ccc; border: 1px solid #666; background: #555;}
 #firehose_pages a.fh_cur_page { margin: 0; color: #fff !important; border: 1px solid #555; background: #666 url('//images.slashdot.jp/block-title-bg.png') repeat-x;}
-#firehose_pages a b {color: #888; font-size: 130%;  sans-serif}
+#firehose_pages a b {color: #888; font-size: 130%;  }
 #fhcalendar_pag {float: left !important;}
 
 

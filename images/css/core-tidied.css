@@ -4,7 +4,7 @@ body {
   min-width: 680px;
   padding-bottom: 15px;
   color: #111;
-  font: 82%/150% sans-serif;
+  font: 82%/150% ;
   border-bottom: 7px solid #066;
   background: #222 url(//images.slashdot.jp/body-bg.png) repeat-x left bottom;
 }

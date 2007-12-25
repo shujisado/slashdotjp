@@ -215,8 +215,8 @@ div.commentSub {
 #d2act div.block {background: transparent}
 #d2act div.block div.title h4 {text-align: left; background: url("//images.slashdot.jp/commentbox-left.png") top left no-repeat !important;}
 .rooted #d2act.rooted div.block div.title h4 { background: none !important; }
-#d2act .close {position: absolute; top: .2em; right: .2em; color: #ccc; text-decoration: none; font-style: sans-serif; border: 1px solid #bbb; border-bottom: 1px solid #444; border-right: 1px solid #555; padding: 0 .3em;}
-#d2act .close:hover {position: absolute; top: .2em; right: .2em; color: #eee; text-decoration: none; font-style: sans-serif; border: 1px solid #444; border-bottom: 1px solid #aaa; border-right: 1px solid #ccc; padding: 0 .3em;}
+#d2act .close {position: absolute; top: .2em; right: .2em; color: #ccc; text-decoration: none; font-style: ; border: 1px solid #bbb; border-bottom: 1px solid #444; border-right: 1px solid #555; padding: 0 .3em;}
+#d2act .close:hover {position: absolute; top: .2em; right: .2em; color: #eee; text-decoration: none; font-style: ; border: 1px solid #444; border-bottom: 1px solid #aaa; border-right: 1px solid #ccc; padding: 0 .3em;}
 #d2act .commentControlFooter {border-bottom: 1px solid #444; border-top: 1px solid #ccc; text-align: right padding: 3px; background: #666; color: #fff; font-size: 11px; }
 #d2act .commentControlFooter a {  color: #fff; text-decoration: none; }
 .loki { display: inline;}

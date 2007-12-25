@@ -39,7 +39,7 @@ Version 0.12
 }
 
 .yui-calcontainer .title {
-	font:100% sans-serif;
+	font:100% ;
 	color:#000;
 	font-weight:bold;
 	margin-bottom:5px;
@@ -60,7 +60,7 @@ Version 0.12
 /* Calendar element styles */
 
 .yui-calendar {
-	font:100% sans-serif;
+	font:100% ;
 	text-align:center;
 	border-spacing:0;
 	border-collapse:separate;
