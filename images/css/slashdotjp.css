@@ -46,6 +46,10 @@ div#slashboxes {
 #wrapper #indexhead,
 #search.aduserbox .generaltitle,
 #search.aduserbox .generalbody,
+#firehoselist,
+#firehose #message,
+.firemenu,
+#firehose .paginate,
 div#users-blocks {
 	margin-right: 212px;
 }
