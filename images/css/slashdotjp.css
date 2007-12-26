@@ -120,6 +120,12 @@ blockquote, .quote
 	color: #000;
 }
 
+/* Suppress long URLs/words */
+div.commentBody {
+	overflow-x: auto;
+	work-break: break-all;
+}
+
 /* slashdot.jp announce area */
 div#slashdotjp-site-announce {
 	background: #FFC;
