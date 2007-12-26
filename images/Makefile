@@ -6,9 +6,10 @@ sections = apple ask books developer games hardware it linux mobile politics yro
 csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw
 jses = all-minified
 
-default: $(csses) $(sections) $(jses) images
+default: update
+update: $(csses) $(sections) $(jses) images
 
-install: default
+install:
 	rsync -avHSC --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp ./ $(DESTDIR)
 
 images: images-stamp
@@ -47,4 +48,4 @@ clean:
 		$(patsubst %,css/slashdot_%.css, $(sections)) \
 		$(patsubst %,%.js, $(jses))
 
-.PHONY: default images clean force install FORCE
+.PHONY: default update images clean force install FORCE
