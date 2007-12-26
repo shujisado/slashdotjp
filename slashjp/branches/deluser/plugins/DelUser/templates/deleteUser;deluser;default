@@ -49,7 +49,7 @@ __template__
 	  <label>
 	    <input id="delete_ok" type="checkbox" name="delete_ok" value="delete_ok" onClick="toggle_form(this.checked)" onKeydown="toggle_form(this.checked)">本当に削除する</label>
 	</div>
-	<input type="hidden" name="op" value="delete">
+	<input type="hidden" name="op" value="deleteok">
 	<input type="submit" value="送信" class="button">
       </fieldset>
     </form>

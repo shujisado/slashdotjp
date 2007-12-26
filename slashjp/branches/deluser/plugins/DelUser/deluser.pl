@@ -7,6 +7,7 @@
 use strict;
 use utf8;
 use Slash;
+#use Slash::Apache ();
 use Slash::Constants qw(:web :messages);
 use Slash::Display;
 use Slash::Utility;
@@ -26,7 +27,7 @@ sub main {
 
 	my %ops = (
 	    deleteform => [$user_ok, \&deleteUserForm],
-	    deleteok => [$post_ok && $user_ok $$ $delete_ok, \&deleteUser],
+	    deleteok => [$post_ok && $user_ok && $delete_ok, \&deleteUser],
 	    );
 
 	# set default op
@@ -36,7 +37,7 @@ sub main {
 	}
 
 	# if not logged in or you are admin
-	if (!$user_ok || $user->{seclev} < 2) {
+	if (!$user_ok || $user->{seclev} > 2) {
 	    my $rootdir = getCurrentStatic('rootdir');
 	    redirect("$rootdir/");
 	}
@@ -49,6 +50,8 @@ sub main {
 ##################################################################
 sub deleteUserForm {
     my($slashdb, $reader, $constants, $user, $form, $note) = @_;
+    my $error;
+    my $err = formkeyHandler('generate_formkey', 'deluser', 0, \$error, {});
     header();
     slashDisplay('deleteUser');
     footer();
@@ -58,21 +61,28 @@ sub deleteUser {
     my($slashdb, $reader, $constants, $user, $form) = @_;
     my $uid = $user->{uid};
 
-    if (!$form->{delete_ok}) {
+    my @checks = qw(valid_check formkey_check regen_formkey);
+    my $error;
+    for (@checks) {
+   	 my $err = formkeyHandler($_, 'deluser', 0, \$error, {});
+	 last if $err || $error;
+    }
+
+    if ($error || !$form->{delete_ok}) {
 	my $note = '';
 	deleteUserForm(@_, $note);
     } else {
-	my $rows = $slashdb->deleteUser($uid);
-	if ($rows) {
-	    $slashdb->deleteLogToken($uid);
-	    $uid = $constants->{anonymous_coward_uid};
-	    delete $cookies->{user};
-	    setCookie('user', '');
+#	my $rows = $slashdb->deleteUser($uid);
+#	if ($rows) {
+#	    $slashdb->deleteLogToken($uid);
+#	    $uid = $constants->{anonymous_coward_uid};
+	    #delete $cookies->{user};
+#	    setCookie('user', '');
 
 	    header();
 	    slashDisplay('deleteUserFinished');
 	    footer();
-	}
+#	}
     }
 }
 
