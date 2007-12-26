@@ -155,9 +155,10 @@ sub deleteUser {
     $self->_check_disabled and return undef;
 
     my $userinfo = $self->getUser($user);
+    my $mesg;
     if (grep('otpUserInfo', $userinfo->{objectClass})) {
       __debug(8, "LDAP::deleteUser: User $user is also OTP's. The LDAP entry is only modified.");
-      my $mesg = $self->_timeout(sub { $self->{_ldap}->modify("cn=$user,$self->{base_dn}",
+      $mesg = $self->_timeout(sub { $self->{_ldap}->modify("cn=$user,$self->{base_dn}",
 							      changes => [
 									  delete => [
 										     objectClass => 'slashdotUserInfo',
@@ -168,7 +169,7 @@ sub deleteUser {
 										    ]
 									 ]) });
     } else {
-      my $mesg = $self->_timeout(sub { $self->{_ldap}->delete("cn=${user},".$self->{base_dn}) });
+      $mesg = $self->_timeout(sub { $self->{_ldap}->delete("cn=${user},".$self->{base_dn}) });
     }
     $mesg->code && __debug(3, "LDAP Error when deleteUser: ". $mesg->error);
     !$mesg->code;
