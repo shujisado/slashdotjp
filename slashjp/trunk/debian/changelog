@@ -1,3 +1,10 @@
+slash (2.5.0.188-3) unstable; urgency=low
+
+  * Suppress "Use of uninitialized value" when running tasks/daemons at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 441
+
+ -- Taku YASUI <tach@debian.or.jp>  Thu, 27 Dec 2007 20:29:54 +0900
+
 slash (2.5.0.188-2) unstable; urgency=low
 
   * Remove unwanted code at plugins/Admin/admin.pl
