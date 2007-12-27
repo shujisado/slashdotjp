@@ -12,3 +12,4 @@ usr/bin/slash-command-wrapper		usr/bin/slash-runtask
 usr/bin/slash-command-wrapper		usr/bin/slash-install-slashsite
 usr/bin/slash-command-wrapper		usr/bin/slash-install-theme
 usr/bin/slash-command-wrapper		usr/bin/slash-install-plugin
+usr/bin/slash-command-wrapper		usr/bin/slash-install-tagbox

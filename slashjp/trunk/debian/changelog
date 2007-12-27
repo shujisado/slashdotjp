@@ -2,8 +2,10 @@ slash (2.5.0.188-3) unstable; urgency=low
 
   * Suppress "Use of uninitialized value" when running tasks/daemons at
     /usr/lib/perl5/Slash/Utility/Data.pm line 441
+  * Add slash-install-tagbox command to run
+    /usr/share/slash/bin/install-tagbox
 
- -- Taku YASUI <tach@debian.or.jp>  Thu, 27 Dec 2007 20:29:54 +0900
+ -- Taku YASUI <tach@debian.or.jp>  Thu, 27 Dec 2007 20:36:11 +0900
 
 slash (2.5.0.188-2) unstable; urgency=low
 
