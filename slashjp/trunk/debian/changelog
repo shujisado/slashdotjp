@@ -4,8 +4,10 @@ slash (2.5.0.188-3) unstable; urgency=low
     /usr/lib/perl5/Slash/Utility/Data.pm line 441
   * Add slash-install-tagbox command to run
     /usr/share/slash/bin/install-tagbox
+  * Fix: subscriber_bonus should be enabled when Subscribe plugin has been
+    installed at users.pl
 
- -- Taku YASUI <tach@debian.or.jp>  Thu, 27 Dec 2007 20:36:11 +0900
+ -- Taku YASUI <tach@debian.or.jp>  Fri, 28 Dec 2007 01:58:40 +0900
 
 slash (2.5.0.188-2) unstable; urgency=low
 

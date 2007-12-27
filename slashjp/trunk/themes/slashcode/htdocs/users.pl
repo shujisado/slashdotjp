@@ -1237,7 +1237,7 @@ sub showInfo {
 		$comment->{points} += $user->{karma_bonus}
 			if defined($user->{karma_bonus}) && $comment->{karma_bonus} eq 'yes';
 		$comment->{points} += $user->{subscriber_bonus}
-			if defined($user->{subscriber_bonus}) && $comment->{subscriber_bonus} eq 'yes';
+			if $constants->{plugin}{Subscribe} && defined($user->{subscriber_bonus}) && $comment->{subscriber_bonus} eq 'yes';
 
 		# fix points in case they are out of bounds
 		$comment->{points} = $constants->{comment_minscore} if $comment->{points} < $constants->{comment_minscore};
