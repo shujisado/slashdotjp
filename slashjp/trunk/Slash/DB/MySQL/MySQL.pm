@@ -3709,6 +3709,7 @@ sub setStory_delete_memcached_by_stoid {
 
 	# Make sure the list of stoids is unique.
 	$stoid_list = [ $stoid_list ] if !ref($stoid_list);
+	$stoid_list = [grep($_, @$stoid_list)];
 	return if !$stoid_list || !@$stoid_list;
 	my %stoids = ( map { ($_, 1) } @$stoid_list );
 	$stoid_list = [ sort { $a <=> $b } keys %stoids ];
