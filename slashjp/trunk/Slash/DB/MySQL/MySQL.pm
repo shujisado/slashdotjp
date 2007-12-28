@@ -6829,7 +6829,11 @@ sub getStoriesEssentials {
 	# mcdkey now because, even if we can't read from the cache, we may
 	# be able to write into it later.)
 	my $mcdkey;
-	$mcdkey = "$self->{_mcd_keyprefix}:gse:$tid->[0]:$the_minute" if $mcd;
+	# *** THIS FIX IS AD-HOC AND PLEASE USE CAREFULLY ***
+	# $tid->[0] is the young number of tids, threfore sometimes it is
+	# different from $gSkin->{nexus}.
+	#$mcdkey = "$self->{_mcd_keyprefix}:gse:$tid->[0]:$the_minute" if $mcd;
+	$mcdkey = "$self->{_mcd_keyprefix}:gse:$gSkin->{nexus}:$the_minute" if $mcd;
 	my $try_mcd = ($mcd
 		&& !$tid_extras
 		&& $offset == 0
