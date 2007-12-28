@@ -1210,7 +1210,7 @@ sub setSectionExtras {
 sub getContentFilters {
 	my($self, $formname, $field) = @_;
 
-	my $field_string = $field ne '' ? " AND field = '$field'" : " AND field != ''";
+	my $field_string = $field ? " AND field = '$field'" : " AND field != ''";
 
 	my $filters = $self->sqlSelectAll("*", "content_filters",
 		"regex != '' $field_string AND form = '$formname'");

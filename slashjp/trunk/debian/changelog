@@ -11,8 +11,10 @@ slash (2.5.0.188-5) unstable; urgency=low
     /usr/lib/perl5/Slash/DB/MySQL.pm line 3713."
   * Return empty array reference when $stoid is empty at
     getStoryTopicsRendered() function
+  * Suppress "Use of uninitialized value in string ne at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 1213"
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 20:08:15 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 20:37:39 +0900
 
 slash (2.5.0.188-4) unstable; urgency=low
 
