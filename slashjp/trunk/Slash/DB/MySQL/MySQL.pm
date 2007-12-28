@@ -10178,6 +10178,7 @@ sub getSkin {
 	my $skins = $self->getSkins($options);
 	if ($skid !~ /^\d+$/) {
 		for my $id (sort keys %$skins) {
+			next unless (exists($skins->{$id}{name}));
 			if ($skins->{$id}{name} eq $skid) {
 				return $skins->{$id};
 			}
