@@ -1,0 +1,35 @@
+Source: slash
+Section: web
+Priority: extra
+Maintainer: OSDN Japan <admin@osdn.jp>
+Build-Depends: debhelper (>= 5), cdbs, libperl-dev (>= 5.8.8), apache-dev, libapache-mod-perl, libcompress-zlib-perl, libdbix-password-perl, libsoap-lite-perl
+Standards-Version: 3.7.2
+Uploaders: Taku YASUI <tach@osdn.jp>, Tatsuki SUGIURA <sugi@osdn.jp>, Tatsuki SUGIURA <sugi@nemui.org>
+
+Package: slash-common
+Architecture: any
+Depends: libcompress-zlib-perl, libxml-parser-perl, libdbix-password-perl (>= 1.8-5), libnet-perl, libtimedate-perl, libapache-dbilogger-perl, libhtml-parser-perl, libhtml-format-perl, libxml-rss-perl, libimage-size-perl, libemail-valid-perl, libtemplate-perl, libmail-sendmail-perl, libsoap-lite-perl, liblingua-stem-perl, libhtml-template-perl, libmime-types-perl, libparallel-useragent-perl, libhtml-popuptreeselect-perl, libnet-ldap-perl, libjcode-pm-perl, libhtml-calendarmonth-perl, libgd-gd2-perl, libgd-text-perl, libdata-javascript-anon-perl, libdate-calc-perl, libfile-type-perl, libfinance-quote-perl, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
+Suggests: libtimedate-perl-ja
+Description: The code that runs Slashdot - common files
+ Slash -- Slashdot Like Automated Storytelling Homepage -- is an architecture
+ to put together web sites.  It comes with functionality for posting articles,
+ conducting polls, having discussions, and can be extended in innumerable ways.
+ Slash uses the combination apache+perl+mysql.
+
+Package: slash-backend
+Architecture: any
+Depends: slash-common, adduser, mysql-server-5.0 | mysql-server-4.1, libschedule-cron-perl, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
+Description: The code that runs Slashdot - Backend server
+ Slash -- Slashdot Like Automated Storytelling Homepage -- is an architecture
+ to put together web sites.  It comes with functionality for posting articles,
+ conducting polls, having discussions, and can be extended in innumerable ways.
+ Slash uses the combination apache+perl+mysql.
+
+Package: slash-frontend
+Architecture: any
+Depends: slash-common, adduser, libapache-mod-perl, libapache-request-perl, libgd-graph-perl, apache, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
+Description: The code that runs Slashdot - Frontend server settings
+ Slash -- Slashdot Like Automated Storytelling Homepage -- is an architecture
+ to put together web sites.  It comes with functionality for posting articles,
+ conducting polls, having discussions, and can be extended in innumerable ways.
+ Slash uses the combination apache+perl+mysql.
