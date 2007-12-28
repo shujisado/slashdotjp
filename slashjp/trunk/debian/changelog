@@ -2,8 +2,9 @@ slash (2.5.0.188-4) unstable; urgency=low
 
   * Fix memcached keyname to get/set stories for correct skin
     *** THIS FIX IS AD-HOC AND PLEASE USE CAREFULLY ***
+  * Remove unwanted STDERR debug output at index.pl
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 17:01:15 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 17:05:40 +0900
 
 slash (2.5.0.188-3) unstable; urgency=low
 
