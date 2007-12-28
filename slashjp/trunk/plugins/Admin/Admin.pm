@@ -174,7 +174,7 @@ sub getRelated {
 			$a_attr =~ s/\Q$1\E//;
 		}
 
-		$a_attr =~ /\bhref\s*=\s*(["'])(.*?)\1/;
+		$a_attr =~ /\bhref\s*=\s*(["'])(.*?)\1/i;
 		my $a_href = $2;
 		# If we want to exclude certain types of links from appearing
 		# in Related Links, we can make that decision based on the
