@@ -3064,11 +3064,12 @@ sub saveTopic {
 	my $submittable = $topic->{submittable} || 'no';
 	my $searchable  = $topic->{searchable}  || 'no';
 	my $storypickable  = $topic->{storypickable} || 'no';
+	my $series = $topic->{series} || 'no';
 
 	my $data = {
 		keyword		=> $topic->{keyword},
 		textname	=> $topic->{textname},
-		series		=> $topic->{series} eq 'yes' ? 'yes' : 'no',
+		series		=> $series eq 'yes' ? 'yes' : 'no',
 		image		=> $image,
 		width		=> $topic->{width} || '',
 		height		=> $topic->{height} || '',

@@ -1,3 +1,11 @@
+slash (2.5.0.188-5) unstable; urgency=low
+
+  * Suppress "Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 3068"
+    - initialize $series and use it
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 17:24:38 +0900
+
 slash (2.5.0.188-4) unstable; urgency=low
 
   * Fix memcached keyname to get/set stories for correct skin
