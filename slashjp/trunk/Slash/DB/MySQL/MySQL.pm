@@ -9793,6 +9793,7 @@ sub getStoryTopicsRendered {
 	my $mcd = $self->getMCD();
 	my $mcdkey;
 	my $answer;
+	return [] unless ($stoid);
 	if ($mcd) {
 		$mcdkey = "$self->{_mcd_keyprefix}:str:";
 		$answer = $mcd->get("$mcdkey$stoid");
