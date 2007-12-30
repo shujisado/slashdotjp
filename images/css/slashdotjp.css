@@ -140,11 +140,12 @@ div#slashdotjp-site-announce {
 }
 
 /* ads format */
+/* disabled: "overflow: hidden" remove ads. orz...
 div.article div.bigbanner,
 div.adsense_468x60 {
 	overflow: hidden;
 	width: 100%;
-}
+} */
 
 /* upper osdnbar */
 #osdnbar {
