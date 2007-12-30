@@ -25,6 +25,7 @@ $(sections): %: css/slashdot_%.css
 $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
 	cat $@.orig | \
 		sed -e 's/images\.slashdot\.org/images.slashdot.jp/' | \
+		sed -e 's/text-align: right padding: 3px;/text-align: right; padding: 3px;/' | \
 		perl -npe 's/\bfont-family:[^;]+;//' | \
 		perl -npe 's/\bsans-serif\b//' > $@
 
