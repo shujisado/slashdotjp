@@ -48,7 +48,9 @@ div#slashboxes {
 #search.aduserbox .generalbody,
 #firehoselist,
 #firehose #message,
-.firemenu,
+#firehose #messagearea,
+#firehose #itemsreturned,
+#firehose .firemenu,
 #firehose .paginate,
 div#users-blocks {
 	margin-right: 212px;
@@ -135,6 +137,13 @@ div#slashdotjp-site-announce {
 	padding: 2px;
 	font-weight: bold;
 	font-size: 82%;
+}
+
+/* ads format */
+div.article div.bigbanner,
+div.adsense_468x60 {
+	overflow: hidden;
+	width: 100%;
 }
 
 /* upper osdnbar */
