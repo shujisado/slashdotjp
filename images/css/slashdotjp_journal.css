@@ -1,12 +1,7 @@
 /*-- CSS File for Slashdot Japan Journals, (c) 2004 Slashdot Japan --*/
 
 /*-Common stteing--------------------------------*/
-div.journal {
-  width: 98%;
-}
-
 div.journalmain {
-  width: 98%;
   padding-left: 0.5em;
 }
 

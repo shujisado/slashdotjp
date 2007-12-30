@@ -1,12 +1,52 @@
 * html body {
- width: expression(document.documentElement.clientWidth < 750 ? "750px" : "auto");
+	width: expression(document.documentElement.clientWidth < 750 ? "750px" : "auto");
+}
+
+/* topnav search width */
+#topnav div.search {
+	width: 20em;
+}
+
+/* override for original iestyles.css */
+#commentwrap {
+	clear: right;
+}
+ul.menu li {
+	float: none;
+}
+
+/* journal fix */
+#editjournal-description {
+	width: 90%;
+}
+div#journal {
+	word-break: break-all;
+	width: 99%;
+}
+div.journal table {
+	word-break: break-all;
+	position: static;
+}
+.journalentry .generaltitle { position: static; }
+.journal blockquote { display: block; position: static; }
+div.liquid .journalentry { padding-right: 0px !important; margin-right: 0px !important;}
+div.liquid .journalentry { width: 96% !important; }
+div.liquid .journalhead { _width: 103% !important; }
+div.liquid .journalhead h2 { padding-top: 0px; padding-bottom: 0px; }
+div.liquid .journaltext { display: block !important; }
+div.liquid .journaltext { position: static; word-break: break-all; }
+
+div#indexhead div#message {
+	width: 99%;
 }
 
 div.ad200 {
 	margin-bottom: 0.5em;
 }
 
+
 /* Reset margin for slashdot.jp */
+div#users-blocks,
 #firehoselist,
 #firehose #message,
 #firehose .firemenu,

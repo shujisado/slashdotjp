@@ -3,7 +3,7 @@
 DESTDIR = /var/lib/slash/site/slashdot.jp/htdocs/images
 
 sections = apple ask books developer games hardware it linux mobile politics yro
-csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw
+csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw iestyles
 jses = all-minified
 
 default: update
