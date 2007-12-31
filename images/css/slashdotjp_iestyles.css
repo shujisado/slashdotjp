@@ -8,9 +8,6 @@
 }
 
 /* override for original iestyles.css */
-#commentwrap {
-	clear: right;
-}
 ul.menu li {
 	float: none;
 }
