@@ -141,7 +141,7 @@ sub give_out_tokens {
 	# Note:  this is a large array -- on Slashdot, at least tens of
 	# thousands of elements.
 
-	my $count_hr = $log_reader->fetchEligibleModerators_accesslog_read();
+	my $count_hr = $mod_reader->fetchEligibleModerators_accesslog_read();
 
 	my @eligible_uids = @{$mod_reader->fetchEligibleModerators_users($count_hr)};
 	my $eligible = scalar @eligible_uids;

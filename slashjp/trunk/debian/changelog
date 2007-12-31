@@ -1,3 +1,10 @@
+slash (2.5.0.188-6) unstable; urgency=low
+
+  * Fix to use correct db object at
+    plugins/Moderation/process_moderation.pl line 144
+
+ -- Taku YASUI <tach@debian.or.jp>  Mon, 31 Dec 2007 16:44:52 +0900
+
 slash (2.5.0.188-5) unstable; urgency=low
 
   * Suppress "Use of uninitialized value in string eq at
