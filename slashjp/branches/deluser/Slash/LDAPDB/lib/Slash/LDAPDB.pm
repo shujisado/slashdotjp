@@ -34,11 +34,8 @@ our $VERSION = '0.01';
 
 our %PREFIX_KEY;
 @PREFIX_KEY{qw(UidNumber Passwd Email Realname)} = ();
-our %keymap_s2l = (uid => 'UidNumber', passwd => 'Passwd', nickname => 'displayName',
-		   matchname => 'cn',  realname => 'Realname', realemail => 'Email'
-		  );
+our %keymap_s2l;
 our %keymap_l2s;
-@keymap_l2s{@keymap_s2l{keys(%keymap_s2l)}} = keys(%keymap_s2l); # make reverse map
 
 our $DEBUG_LEVEL = 5;
 
@@ -54,6 +51,11 @@ sub new {
 		  _disabled => $constants->{ldap_enable} ? 0 : "by init arg",
 		  @_ };
     bless $self, $class;
+
+    our %keymap_s2l = (uid => 'UidNumber', passwd => $constants->{ldap_attrib_prefix}.'Passwd', nickname => 'displayName',
+		       matchname => 'cn',  realname => $constants->{ldap_attrib_prefix}.'Realname', realemail => $constants->{ldap_attrib_prefix}.'Email'
+		      );
+    @keymap_l2s{@keymap_s2l{keys(%keymap_s2l)}} = keys(%keymap_s2l); # make reverse map
 
     $DEBUG_LEVEL = $constants->{ldap_debug_level} || $DEBUG_LEVEL;
 
@@ -154,20 +156,18 @@ sub deleteUser {
     __debug(8, "LDAP::deleteUser called for user '$user'");
     $self->_check_disabled and return undef;
 
-    my $userinfo = $self->getUser($user);
+    my $entry = $self->_get_userent("(cn=$user)");
     my $mesg;
-    if (grep('otpUserInfo', $userinfo->{objectClass})) {
+    if (grep(/otpUserInfo/, $entry->get_value('objectClass'))) {
       __debug(8, "LDAP::deleteUser: User $user is also OTP's. The LDAP entry is only modified.");
+      $self->_timeout(sub { $self->{_ldap}->modify("cn=$user,$self->{base_dn}", delete => [qw(slashdotRealname)])});
       $mesg = $self->_timeout(sub { $self->{_ldap}->modify("cn=$user,$self->{base_dn}",
-							      changes => [
-									  delete => [
-										     objectClass => 'slashdotUserInfo',
-										     'slashdotUidNumber',
-										     'slashdotPassword',
-										     'slashdotEmail',
-										     'slashdotRealname'
-										    ]
-									 ]) });
+							   changes => [
+								       delete => [slashdotUidNumber => []],
+								       delete => [slashdotPasswd => []],
+								       delete => [slashdotEmail => []],
+								       delete => [objectClass => 'slashdotUserInfo']
+								      ]) });
     } else {
       $mesg = $self->_timeout(sub { $self->{_ldap}->delete("cn=${user},".$self->{base_dn}) });
     }
