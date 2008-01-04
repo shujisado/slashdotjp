@@ -7,12 +7,9 @@
 use strict;
 use utf8;
 use Slash;
-#use Slash::Apache ();
 use Slash::Constants qw(:web :messages);
 use Slash::Display;
 use Slash::Utility;
-use Slash::XML;
-use Data::Dumper;
 
 sub main {
 	my $user = getCurrentUser();
@@ -72,17 +69,16 @@ sub deleteUser {
 	my $note = '';
 	deleteUserForm(@_, $note);
     } else {
-#	my $rows = $slashdb->deleteUser($uid);
-#	if ($rows) {
-#	    $slashdb->deleteLogToken($uid);
-#	    $uid = $constants->{anonymous_coward_uid};
-	    #delete $cookies->{user};
-#	    setCookie('user', '');
+	my $rows = $slashdb->deleteUser($uid);
+	if ($rows) {
+	    $slashdb->deleteLogToken($uid);
+	    $uid = $constants->{anonymous_coward_uid};
+	    setCookie('user', '');
 
 	    header();
 	    slashDisplay('deleteUserFinished');
 	    footer();
-#	}
+	}
     }
 }
 
