@@ -1,0 +1,25 @@
+__section__
+default
+__description__
+Creates title for a portalbox
+
+* title = title
+* url = url
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+portalboxtitle
+__template__
+[% IF url;
+	title = "<a href=\"$url\">$title</a>";
+END %]
+[% title %]
+
+__seclev__
+500
+__version__
+$Id$
