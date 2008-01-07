@@ -12,6 +12,7 @@
 
 <!--#include virtual="/slashhead.inc"-->
 
+<div class="faq">
 <TABLE>
 	<TR>
 		<TD><A HREF="faq-meta.shtml">前のセクション</A>
@@ -347,5 +348,6 @@ Last Modified: 12/1/04
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
+</div>
 
 <!--#include virtual="/slashfoot.inc"-->

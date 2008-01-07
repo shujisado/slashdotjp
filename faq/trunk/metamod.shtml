@@ -12,6 +12,7 @@
 
 <!--#include virtual="/slashhead.inc"-->
 
+<div class="faq">
 <TABLE>
 	<TR width="100%">
 		<TD><A HREF="com-mod.shtml">前のセクション</A>
@@ -202,5 +203,6 @@ M2 でカルマが高くなるのは、みんなに M2 してもらいたいか�
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
+</div>
 
 <!--#include virtual="/slashfoot.inc"-->

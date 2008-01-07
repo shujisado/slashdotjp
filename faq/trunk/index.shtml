@@ -13,6 +13,7 @@
 
 <!--#include virtual="/slashhead.inc"-->
 
+<div class="faq">
 <H1>Slashdot FAQ</H1>
 
 <P>
@@ -470,5 +471,6 @@
 	<LI><B><A HREF="suggestions.shtml#su1500">スラッシュドットにバグを見つけました。誰に連絡すればよいですか?</A></B>	
 
 </UL>
+</div>
 
 <!--#include virtual="/slashfoot.inc"-->

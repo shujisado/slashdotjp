@@ -12,6 +12,7 @@
 
 <!--#include virtual="/slashhead.inc"-->
 
+<div class="faq">
 <TABLE>
 	<TR width="100%">
 		<TD><A HREF="advertising.shtml">前のセクション</A>
@@ -118,5 +119,6 @@
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
+</div>
 
 <!--#include virtual="/slashfoot.inc"-->

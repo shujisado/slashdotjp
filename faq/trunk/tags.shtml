@@ -12,6 +12,7 @@
 
 <!--#include virtual="/slashhead.inc"-->
 
+<div class="faq">
 <TABLE>
 	<TR width="100%">
 		<TD><A HREF="firehose.shtml">前のセクション</A>
@@ -141,6 +142,7 @@ href="/my/bookmarks">/my/bookmarks</a> から利用できます。他のユー�
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
+</div>
 
 <!--#include virtual="/slashfoot.inc"-->
 

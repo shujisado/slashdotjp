@@ -12,6 +12,7 @@
 
 <!--#include virtual="/slashhead.inc"-->
 
+<div class="faq">
 <TABLE>
 	<TR width="100%">
 		<TD><A HREF="badges.shtml">前のセクション</A>
@@ -374,5 +375,6 @@ OSI は、ソフトウェアはオープンであるほうがより優れた開�
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
+</div>
 
 <!--#include virtual="/slashfoot.inc"-->

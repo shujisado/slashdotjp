@@ -12,6 +12,7 @@
 
 <!--#include virtual="/slashhead.inc"-->
 
+<div class="faq">
 <TABLE>
 	<TR>
 		<TD><A HREF="editorial.shtml">次のセクション</A>
@@ -75,5 +76,6 @@ Slashmaster<img src="http://images.slashdot.jp/a.gif">slashdot.jp
 		<TD><A HREF="index.shtml">インデックス</A>
 	</TR>
 </TABLE>
+</div>
 
 <!--#include virtual="/slashfoot.inc"-->
