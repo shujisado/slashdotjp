@@ -153,7 +153,22 @@ sub deleteUser {
     my $user = shift;
     __debug(8, "LDAP::deleteUser called for user '$user'");
     $self->_check_disabled and return undef;
-    my $mesg = $self->_timeout(sub { $self->{_ldap}->delete("cn=${user},".$self->{base_dn}) });
+
+    my $entry = $self->_get_userent("(cn=$user)");
+    my $mesg;
+    if (grep(/otpUserInfo/, $entry->get_value('objectClass'))) {
+      __debug(8, "LDAP::deleteUser: User $user is also OTP's. The LDAP entry is only modified.");
+      $self->_timeout(sub { $self->{_ldap}->modify("cn=$user,$self->{base_dn}", delete => [qw(slashdotRealname)])});
+      $mesg = $self->_timeout(sub { $self->{_ldap}->modify("cn=$user,$self->{base_dn}",
+							      changes => [
+									  delete => [slashdotUidNumber => []],
+									  delete => [slashdotPasswd => []],
+									  #delete => [slashdotEmail => []], # this is done by deleteUser() in MySQL.pm
+									  delete => [objectClass => 'slashdotUserInfo']
+									 ]) });
+    } else {
+      $mesg = $self->_timeout(sub { $self->{_ldap}->delete("cn=${user},".$self->{base_dn}) });
+    }
     $mesg->code && __debug(3, "LDAP Error when deleteUser: ". $mesg->error);
     !$mesg->code;
 }

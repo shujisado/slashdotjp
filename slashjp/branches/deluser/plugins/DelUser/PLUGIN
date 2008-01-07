@@ -1,0 +1,5 @@
+name=DelUser
+description="User deletion plugin"
+htdoc=deluser.pl
+template=templates/deleteUser;deluser;default
+template=templates/deleteUserFinished;deluser;default

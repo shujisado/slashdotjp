@@ -1,0 +1,65 @@
+__section__
+default
+__description__
+Delete user form
+__title__
+Delete user form
+__page__
+deluser
+__lang__
+en_US
+__name__
+deleteUser
+__template__
+<div id="slashboxes">
+        [% PROCESS userboxes %]
+</div>
+[% thisnickname = user.nickname | strip_literal;
+   title = "アカウント $thisnickname ($user.uid)を削除" %]
+<div id="users-blocks">
+  [% PROCESS prefs_titlebar tab_selected='deluser' %]
+  <div class="generalbody">
+    <script language="JavaScript">
+// <!--
+  function toggle_recurse(elem, flag) {
+    for (var i = 0; i < elem.childNodes.length; i++) {
+      var e = elem.childNodes[i];
+      if ( e.id == "delete_ok_box" ) { continue; }
+      if (e.tagName == "SELECT" || e.tagName == "INPUT") {
+        e.disabled = !flag;
+      } else if (e.tagName == "LABEL") {
+        e.style.color = flag ? "black" : "#666";
+        e.disabled = !flag;
+      }
+      toggle_recurse(e, flag);
+    }
+  }
+  function toggle_form(flag) {
+    toggle_recurse(document.getElementById("deleteuserform"), flag);
+  }
+// -->
+    </script>
+    <form id="deleteuserform" action="[% constants.real_rootdir %]/deluser.pl" method="post">
+      <fieldset>
+	<legend></legend>
+	<input type="hidden" name="uid" value="[% user.uid %]">
+	<p>アカウントを削除する場合は，以下のチェックボックスにチェックを入れ送信ボタンを押してください。</p>
+	<p>この操作により，システムに登録されているあなたの個人情報や発言全てが削除されます。</p>
+	<div id="delete_ok_box">
+	  <label>
+	    <input id="delete_ok" type="checkbox" name="delete_ok" value="delete_ok" onClick="toggle_form(this.checked)" onKeydown="toggle_form(this.checked)">本当に削除する</label>
+	</div>
+	[% PROCESS formkey_tag %]
+	<input type="hidden" name="op" value="deleteok">
+	<input type="submit" value="送信" class="button">
+      </fieldset>
+    </form>
+    <script language="JavaScript">
+  toggle_form(document.getElementById("delete_ok").checked);
+    </script>
+  </div>
+</div>
+__seclev__
+500
+__version__
+$Id: $
