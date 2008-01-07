@@ -145,6 +145,7 @@ div.faq ul,
 div#search div.sectiontitle table td ul,
 div#polls div.generalbody ul,
 div#submit div.generalbody ul,
+div#contents div#comments ul,
 form#createuserform ul {
 	margin: 1em 0pt 1em 2em !important;
 }
