@@ -139,6 +139,16 @@ div#slashdotjp-site-announce {
 	font-size: 82%;
 }
 
+/* Fix normal ul */
+div.general_contents ul,
+div.faq ul,
+div#search div.sectiontitle table td ul,
+div#polls div.generalbody ul,
+div#submit div.generalbody ul,
+form#createuserform ul {
+	margin: 1em 0pt 1em 2em !important;
+}
+
 /* ads format */
 div.article div.bigbanner,
 div.adsense_468x60 {
