@@ -102,6 +102,7 @@ sub forward {
 sub display {
 	my ($form, $slashdb, $user, $constants) = @_;
 	my $url = $form->{url};
+	my $title = $form->{title} ? $form->{title} : '';
 	my $style = 'v0';
 	
 	if ($form->{style} =~ m/^([hv][01])/i) {
@@ -124,6 +125,7 @@ sub display {
 	slashDisplay('main', {
 		style => $style,
 		url => $url,
+		title => $title,
 		fireHoseId => $fh_id,
 		voted => $voted
 	}, {Page => 'badge'});

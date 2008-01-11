@@ -2,8 +2,9 @@ slash (2.5.0.188-6) unstable; urgency=low
 
   * Fix to use correct db object at
     plugins/Moderation/process_moderation.pl line 144
+  * Add feature: sending title for badge.js
 
- -- Taku YASUI <tach@debian.or.jp>  Mon, 31 Dec 2007 16:44:52 +0900
+ -- Taku YASUI <tach@debian.or.jp>  Fri, 11 Jan 2008 16:47:42 +0900
 
 slash (2.5.0.188-5) unstable; urgency=low
 
