@@ -3598,6 +3598,8 @@ sub getUserAdmin {
 		$ipid_karma = $reader->getNetIDKarma("ipid", $ipid) if $ipid;
 	}
 
+	my $clout_types_ar = [ sort grep /\D/, keys %{$slashdb->getCloutTypes} ];
+
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
 		useredit		=> $user_edit,
@@ -3627,7 +3629,9 @@ sub getUserAdmin {
 		proxy_check		=> $proxy_check,
 		subnet_karma		=> $subnet_karma,
 		ipid_karma		=> $ipid_karma,
-		post_restrictions	=> $post_restrictions
+		post_restrictions	=> $post_restrictions,
+
+		clout_types_ar		=> $clout_types_ar,
 	}, 1);
 }
 
