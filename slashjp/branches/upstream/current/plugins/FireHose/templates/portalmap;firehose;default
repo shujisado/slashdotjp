@@ -16,8 +16,9 @@ portalmap
 __template__
 
 [% title %]
+<span class="closebox" onClick="ajaxRemoveSlashbox('[% bid %]-container')"></span>
 
 __seclev__
 500
 __version__
-$Id: portalmap;firehose;default,v 1.1 2007/02/23 02:47:36 scc Exp $
+$Id: portalmap;firehose;default,v 1.2 2008/01/09 20:07:02 scc Exp $

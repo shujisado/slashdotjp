@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Environment.pm,v 1.223 2007/10/24 21:19:34 jamiemccarthy Exp $
+# $Id: Environment.pm,v 1.226 2008/01/09 19:57:54 jamiemccarthy Exp $
 
 package Slash::Utility::Environment;
 
@@ -33,7 +33,7 @@ use Socket qw( inet_aton inet_ntoa );
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.223 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.226 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 
 	dbAvailable
@@ -1856,9 +1856,9 @@ Hashref of cleaned-up data.
 
 	# fields that have ONLY a-zA-Z0-9_
 	my %alphas = map {($_ => 1)} qw(
-		fieldname formkey commentstatus filter
-		hcanswer mode op section thisname type reskey
-		comments_control
+		commentstatus comments_control content_type
+		fieldname filter formkey hcanswer id
+		mode op reskey section thisname type
 	),
 	# Survey
 	qw(
@@ -1878,6 +1878,12 @@ Hashref of cleaned-up data.
 		query		=> sub { $_[0] =~ s|[\000-\040<>\177-\377]+| |g;
 			        	 $_[0] =~ s|\s+| |g;				},
 		colorblock	=> sub { $_[0] =~ s|[^\w#,]+||g				},
+# What I actually want to do for userfield is allow it to match
+# [\w.]+, or pass emailValid(), or be changed to the return value
+# from nickFix().  For technical reasons I'm putting that off
+# until probably next week.  Until then this breaks some very
+# minor functionality. - Jamie 2008-01-09
+		userfield	=> sub { $_[0] =~ s|[^\w.@ -]||g			},
 	);
 
 
@@ -3500,4 +3506,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Environment.pm,v 1.223 2007/10/24 21:19:34 jamiemccarthy Exp $
+$Id: Environment.pm,v 1.226 2008/01/09 19:57:54 jamiemccarthy Exp $

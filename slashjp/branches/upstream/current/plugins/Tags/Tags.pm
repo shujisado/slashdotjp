@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.94 2007/12/20 20:37:48 jamiemccarthy Exp $
+# $Id: Tags.pm,v 1.96 2008/01/09 20:04:51 jamiemccarthy Exp $
 
 package Slash::Tags;
 
@@ -17,7 +17,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.94 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.96 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -293,9 +293,9 @@ sub getTagnameidCreate {
 #
 # This method assumes that the tag does not already exist,
 # and thus the first action it tries is creating that tag.
-# If it is likely or even possible that the tag does
-# already exist, this method will be less efficient than
-# getTagnameidCreate.
+# If you _don't_ have reason to believe that the tag does
+# _not_ already exist, this method will be less efficient
+# than getTagnameidCreate.
 
 sub createTagname {
 	my($self, $name) = @_;
@@ -1532,32 +1532,50 @@ sub listTagnamesActive {
 	my $max_num =         $options->{max_num}         || 100;
 	my $seconds =         $options->{seconds}         || (3600*6);
 	my $include_private = $options->{include_private} || 0;
+	my $min_slice =       $options->{min_slice}       || 0;
+	$min_slice = 0 if !$constants->{plugin}{FireHose};
 
 	# This seems like a horrendous query, but I _think_ it will run
 	# in acceptable time, even under fairly heavy load.
 	# Round off time to the last minute.
-	my $the_time = $self->getTime({ unix_format => 1 });
-	substr($the_time, -2) = '00';
-	my $next_minute_q = $self->sqlQuote( time2str( '%Y-%m-%d %H:%M:00', $the_time + 60, 'GMT') );
+	my $now_ut = $self->getTime({ unix_format => 1 });
+	my $next_minute_ut = int($now_ut/60+1)*60;
+	my $next_minute_q = $self->sqlQuote( time2str( '%Y-%m-%d %H:%M:00', $next_minute_ut, 'GMT') );
 	my $private_clause = $include_private ? '' : " AND private='no'";
+
+	# If we are asked to only look at tags on firehose items of a
+	# particular color slice or better, then 
+	my $slice_table_clause = '';
+	my $slice_where_clause = '';
+	if ($min_slice) {
+		$slice_table_clause = ', firehose';
+		my $firehose_reader = getObject('Slash::FireHose', { db_type => 'reader' });
+		my $min_pop = $firehose_reader->getMinPopularityForColorLevel($min_slice);
+		$slice_where_clause =
+			"AND tags.globjid=firehose.globjid
+			 AND firehose.popularity >= $min_pop";
+	}
+
 	my $ar = $self->sqlSelectAllHashrefArray(
 		"tagnames.tagname AS tagname,
 		 tags.tagid AS tagid,
 		 tags.tagnameid AS tagnameid,
 		 users_info.uid AS uid,
-		 UNIX_TIMESTAMP($next_minute_q) - UNIX_TIMESTAMP(tags.created_at) AS secsago",
+		 $next_minute_ut - UNIX_TIMESTAMP(tags.created_at) AS secsago",
 		"users_info,
 		 tags LEFT JOIN tag_params
 		 	ON (tags.tagid=tag_params.tagid AND tag_params.name='tag_clout'),
 		 tagnames LEFT JOIN tagname_params
-			ON (tagnames.tagnameid=tagname_params.tagnameid AND tagname_params.name='tag_clout')",
+			ON (tagnames.tagnameid=tagname_params.tagnameid AND tagname_params.name='tag_clout')
+		 $slice_table_clause",
 		"tagnames.tagnameid=tags.tagnameid
 		 AND tags.uid=users_info.uid
 		 AND inactivated IS NULL $private_clause
 		 AND tags.created_at >= DATE_SUB($next_minute_q, INTERVAL $seconds SECOND)
 		 AND users_info.tag_clout > 0
 		 AND IF(tag_params.value     IS NULL, 1, tag_params.value)     > 0
-		 AND IF(tagname_params.value IS NULL, 1, tagname_params.value) > 0");
+		 AND IF(tagname_params.value IS NULL, 1, tagname_params.value) > 0
+		 $slice_where_clause");
 	return [ ] unless $ar && @$ar;
 	$self->addCloutsToTagArrayref($ar, $clout_type);
 
@@ -1956,7 +1974,7 @@ sub getPositivePopupTags {
 
 sub getExcludedTags {
 	my($self) = @_;
-	return $self->getTagnamesByParam('excluded', '1');
+	return $self->getTagnamesByParam('exclude', '1');
 }
 
 sub getNegativeTags {

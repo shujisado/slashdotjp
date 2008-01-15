@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Despam.pm,v 1.4 2007/12/12 22:01:57 jamiemccarthy Exp $
+# $Id: Despam.pm,v 1.5 2008/01/07 16:17:56 jamiemccarthy Exp $
 
 package Slash::Tagbox::Despam;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -151,8 +151,8 @@ sub run {
 	my $submitter_uid = $fhitem->{uid};
 	my $submitter_srcid = $fhitem->{srcid_32};
 
-	main::tagboxLog(sprintf("%s->run marking fhid %d as is_spam", ref($self), $fhid));
-	$slashdb->sqlUpdate('firehose', { is_spam => 'yes' }, "id=$fhid");
+	main::tagboxLog(sprintf("%s->run marking fhid %d (%d) as is_spam", ref($self), $fhid, $affected_id));
+	$firehose_db->setFireHose($fhid, { is_spam => 'yes' });
 
 	if (isAnon($submitter_uid)) {
 		# Non-logged-in user, check by IP (srcid_32)

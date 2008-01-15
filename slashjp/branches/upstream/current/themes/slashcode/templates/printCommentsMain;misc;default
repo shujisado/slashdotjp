@@ -20,7 +20,9 @@ __name__
 printCommentsMain
 __template__
 [% horiz = 0; rooted = 0;
-   IF user.comments_control;
+   IF gSkin.name == 'idle';
+   	horiz = 1;
+   ELSIF user.comments_control;
    	rooted = 1 IF user.comments_control == 'rooted';
    	horiz = 1 IF rooted || user.comments_control == 'horizontal';
    ELSE;
@@ -302,4 +304,4 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 __seclev__
 10000
 __version__
-$Id: printCommentsMain;misc;default,v 1.98 2007/12/03 23:47:50 pudge Exp $
+$Id: printCommentsMain;misc;default,v 1.99 2008/01/07 16:25:17 scc Exp $

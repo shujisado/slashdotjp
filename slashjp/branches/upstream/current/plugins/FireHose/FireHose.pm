@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHose.pm,v 1.196 2007/12/20 18:50:18 tvroom Exp $
+# $Id: FireHose.pm,v 1.197 2008/01/09 20:04:51 jamiemccarthy Exp $
 
 package Slash::FireHose;
 
@@ -41,7 +41,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.196 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.197 $ ' =~ /\$Revision:\s+([^\s]+)/;
 sub createFireHose {
 	my($self, $data) = @_;
 	$data->{dept} ||= "";
@@ -666,9 +666,22 @@ sub getFireHoseEssentials {
 	return($items, $results, $count);
 }
 
+# A single-globjid wrapper around getUserFireHoseVotesForGlobjs.
+
+sub getUserFireHoseVoteForGlobjid {
+	my($self, $uid, $globjid) = @_;
+	my $vote_hr = $self->getUserFireHoseVotesForGlobjs($uid, [ $globjid ]);
+	return $vote_hr->{$globjid};
+}
+
+# This isn't super important but I'd prefer the method name to
+# be getUserFireHoseVotesForGlobjids.  We spelled out "Globjid"
+# in the methods getTagsByGlobjid and getFireHoseIdFromGlobjid.
+# Not worth changing right now - Jamie 2008-01-09
+
 sub getUserFireHoseVotesForGlobjs {
 	my($self, $uid, $globjs) = @_;
-	my $constants = getCurrentUser();
+	my $constants = getCurrentStatic();
 
 	return {} if !$globjs;
 	$globjs = [$globjs] if !ref $globjs;
@@ -686,7 +699,8 @@ sub getUserFireHoseVotesForGlobjs {
 	my $results = $self->sqlSelectAllKeyValue(
 		"globjid,tagnameid",
 		"tags", 
-		"globjid in ($glob_str) and inactivated is NULL AND uid = $uid_q AND tagnameid IN ($upid,$dnid)"
+		"globjid IN ($glob_str) AND inactivated IS NULL
+		 AND uid = $uid_q AND tagnameid IN ($upid,$dnid)"
 	);
 
 	foreach (keys %$results) {
@@ -811,13 +825,12 @@ sub itemHasSpamURL {
 sub getPrimaryFireHoseItemByUrl {
 	my($self, $url_id) = @_;
 	my $ret_val = 0;
-	my $constants = getCurrentUser();
 	if ($url_id) {
 		my $url_id_q = $self->sqlQuote($url_id);
 		my $count = $self->sqlCount("firehose", "url_id=$url_id_q");
 		if ($count > 0) {
 			my($uid, $id) = $self->sqlSelect("uid,id", "firehose", "url_id = $url_id_q", "order by id asc");
-			if ($uid == $constants->{anon_coward_uid}) {
+			if (isAnon($uid)) {
 				$ret_val = $id;
 			} else {
 				# Logged in, give precedence to most recent submission
@@ -2430,4 +2443,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: FireHose.pm,v 1.196 2007/12/20 18:50:18 tvroom Exp $
+$Id: FireHose.pm,v 1.197 2008/01/09 20:04:51 jamiemccarthy Exp $

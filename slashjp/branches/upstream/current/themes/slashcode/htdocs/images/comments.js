@@ -1,4 +1,4 @@
-// $Id: comments.js,v 1.103 2007/12/18 23:40:04 pudge Exp $
+// $Id: comments.js,v 1.104 2008/01/10 01:33:10 pudge Exp $
 
 var comments;
 var root_comments;
@@ -813,7 +813,7 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 			if (adTimerInsert) {
 				var tree = $('tree_' + adTimerInsert);
 				if (tree) {
-					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740"></iframe>';
+					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740"Êframeborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
 					var html = '<li id="comment_ad_' + adTimerInsert + '" class="inlinead"> ' + adcall +'  </li>';
 
 					var commtree = $('commtree_' + adTimerInsert);

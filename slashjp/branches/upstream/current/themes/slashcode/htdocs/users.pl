@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.343 2007/11/29 20:31:50 tvroom Exp $
+# $Id: users.pl,v 1.344 2008/01/09 19:55:15 jamiemccarthy Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -3594,6 +3594,8 @@ sub getUserAdmin {
 		$ipid_karma = $reader->getNetIDKarma("ipid", $ipid) if $ipid;
 	}
 
+	my $clout_types_ar = [ sort grep /\D/, keys %{$slashdb->getCloutTypes} ];
+
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
 		useredit		=> $user_edit,
@@ -3623,7 +3625,9 @@ sub getUserAdmin {
 		proxy_check		=> $proxy_check,
 		subnet_karma		=> $subnet_karma,
 		ipid_karma		=> $ipid_karma,
-		post_restrictions	=> $post_restrictions
+		post_restrictions	=> $post_restrictions,
+
+		clout_types_ar		=> $clout_types_ar,
 	}, 1);
 }
 
