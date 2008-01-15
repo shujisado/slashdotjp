@@ -1,0 +1,61 @@
+__section__
+default
+__description__
+Display selection table for all the submissions
+
+* cur_skin = current skin
+* cur_note = current note
+* def_skin = default skin
+* def_note = default note
+* skins = arrayref of active skins
+* notes = arrayref of active notes
+* sn = hashref of counts of submissions (sn.$skin.$note)
+* title = passed to titlebar
+* width = passed to titlebar
+__title__
+
+__page__
+submit
+__lang__
+en_US
+__name__
+subEdTable
+__template__
+<div class="generalbody">
+[% PROCESS titlebar %]
+	<form action="[% env.script_name %]" method="post">
+		<fieldset>
+			<legend>Submissions List</legend>
+			<input type="hidden" name="op" value="list">
+					Classification
+					<select name="note">
+					[% FOREACH note = notes %]
+						<option value="[% note.1 %]"[% IF note.1 == cur_note %] selected[% END %]>[% s = skins.0.0; n = note.0; sn.$s.$n || '0'; ' '; note.0 %]</option>
+					[% END %]
+					</select>
+
+					Section
+					<select name="skin">
+					[% FOREACH skin = skins %]
+						<option value="[% skin.1 %]"[% IF skin.1 == cur_skin %] selected[% END %]>[% s = skin.0; n = notes.0.0; sn.$s.$n || '0'; ' '; skin.0 %]</option>
+					[% END %]
+					</select>
+
+					Filter
+					<input name="filter" value="[% form.filter %]" size="30">
+
+					Results	
+					<select name="limit">
+						<option value="all"[% IF form.limit == 'all' %] selected[% END %]>All</option>
+						<option value="10"[% IF form.limit == 10 %] selected[% END %]>10</option>
+						<option value="25"[% IF form.limit == 25 %] selected[% END %]>25</option>
+						<option value="50"[% IF form.limit == 50 %] selected[% END %]>50</option>
+					</select>
+
+					<input type="submit" value="Filter Submissions">
+		</fieldset>
+	</form>
+__seclev__
+10000
+__version__
+$Id: subEdTable;submit;default,v 1.13 2006/02/25 22:53:03 cowboyneal Exp $

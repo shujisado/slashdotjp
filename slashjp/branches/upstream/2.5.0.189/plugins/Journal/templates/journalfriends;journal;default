@@ -1,0 +1,64 @@
+__section__
+default
+__description__
+Displays friends.
+
+* friends = arrayref of friends (nickname, uid, last entry time, last entry description, last entry id)
+* search = boolean for if this screen is shown as the result of a user search
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+journalfriends
+__template__
+[% showform = !user.is_anon && !search;
+   IF showform;
+       reskey = Slash.getObject('Slash::ResKey');
+       rkey = reskey.key('zoo');
+       IF !rkey.create;  # didn't work, bail
+           showform = 0;
+       END;
+   END;
+%]
+
+
+[% IF search; nickstrip = form.nickname | strip_literal; END %]
+[% PROCESS titlebar
+	title => (search ? "User Search Results for \"$nickstrip\"" : "Your Friends"),
+	width => "100%"
+%]
+
+[% IF showform %]<form method="post" action="[% gSkin.rootdir %]/zoo.pl">
+<fieldset>
+	<legend>Latest from your friends</legend>
+[% PROCESS reskey_tag %]
+<input type="hidden" name="op" value="delete">
+<input type="hidden" name="type" value="friend">[% END %]
+<table width="100%" border="0" cellpadding="2" cellspacing="0">
+[% FOREACH friend = friends %]
+    <tr><td valign="top"><a href="[% gSkin.rootdir %]/~[% friend.0 | strip_paramattr %]/">[% friend.0 %]</a></td>
+[% IF friend.2 %]
+    <td valign="top"><a href="[% gSkin.rootdir %]/~[% friend.0 | strip_paramattr %]/journal/"><b>[% friend.3 %]</b></a></td>
+    <td valign="top"><em>[% Slash.timeCalc(friend.2) %]</em></td>
+[% ELSE %]
+    <td valign="top">&nbsp;</td>
+    <td valign="top"><em>User has no journal entries.</em></td>
+[% END %]
+[% IF showform %]     <td valign="top" align="center"><input type="checkbox" name="del_[% friend.1 %]" value="1"></td>
+[% END %]
+</tr>
+[% END %]
+[% IF showform %]<tr><td colspan="3">&nbsp;</td><td align="center"><input type="submit" value="Remove Friends"></td></tr>[% END %]
+</table>
+[% IF showform %]</fieldset></form>[% END %]
+<br><br>
+
+[% PROCESS searchusers %]
+
+__seclev__
+100
+__version__
+$Id: journalfriends;journal;default,v 1.15 2006/01/23 20:42:59 pudge Exp $

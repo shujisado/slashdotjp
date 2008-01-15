@@ -1,0 +1,124 @@
+__section__
+default
+__description__
+Add LINK REL navigation stuff for header
+
+We populate the linkrel array, then print it out.  Kinda ugly, but
+not as ugly as what was there before.
+
+* link - hashref of data to use for LINK REL stuff
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+linkrel
+__template__
+[% linkrels = [] %]
+
+[% tmp = BLOCK -%]
+<link rel="top"       title="[% constants.slogan | strip_attribute %]" href="[% constants.real_rootdir %]/" >
+[%- END;
+   linkrels.push(tmp) %]
+[% tmp = BLOCK -%]
+<link rel="search"    title="Search [% constants.sitename | strip_attribute %]" href="[% gSkin.rootdir %]/search.pl">
+[%- END;
+   linkrels.push(tmp) %]
+
+[% # XXXSKIN fix! %]
+[% IF link.section;
+	tmp = BLOCK;
+	myurl = link.section.rootdir || "${gSkin.rootdir}/${link.section.section}" -%]
+<link rel="parent"    title="[% link.section.title | strip_attribute %]" href="[% myurl %]/">
+	[%- END;
+   linkrels.push(tmp);
+END %]
+
+
+
+[% IF env.script_name.search('index\.pl');
+	IF link.prev; tmp = BLOCK -%]
+<link rel="prev"      title="[% link.prev.title | strip_attribute %]" href="[% link.prev.url %]">
+	[%- END; linkrels.push(tmp); END;
+	    IF link.next; tmp = BLOCK -%]
+<link rel="next"      title="[% link.next.title | strip_attribute %]" href="[% link.next.url %]">
+	[%- END; linkrels.push(tmp); END;
+
+
+
+ELSIF env.script_name.search('article\.pl');
+	IF link.prev; tmp = BLOCK -%]
+<link rel="prev"      title="[% link.prev.title | strip_attribute %]" href="[% gSkin.rootdir %]/article.pl?sid=[% link.prev.sid %]">
+	[%- END; linkrels.push(tmp); END;
+	    IF link.next; tmp = BLOCK -%]
+<link rel="next"      title="[% link.next.title | strip_attribute %]" href="[% gSkin.rootdir %]/article.pl?sid=[% link.next.sid %]">
+	[%- END; linkrels.push(tmp); END;
+	    # author is uid
+	    IF link.author; tmp = BLOCK -%]
+<link rel="author"    href="[% gSkin.rootdir %]/search.pl?op=stories&amp;author=[% link.author %]">
+	[%- END; linkrels.push(tmp); END;
+	    IF constants.plugin.Print; tmp = BLOCK -%]
+<link rel="alternate" title="Print Article" href="[% gSkin.rootdir %]/print.pl?sid=[% story.sid %]">
+	[%- END; linkrels.push(tmp); END;
+
+
+
+ELSIF env.script_name.search('journal\.pl');
+	IF link.uid && link.nickname; tmp = BLOCK -%]
+<link rel="author"    title="[% link.nickname | strip_attribute %]" href="[% gSkin.rootdir %]/~[% link.nickname | strip_paramattr %]/">
+	[%- END; linkrels.push(tmp); tmp = BLOCK -%]
+<link rel="alternate" title="[% link.nickname | strip_attribute %]'s Journal RSS" href="[% PROCESS rsslink_journal rsslink_style = 'journal' %]" type="application/rss+xml">
+	[%- END; linkrels.push(tmp); tmp = BLOCK -%]
+<link rel="alternate" title="[% link.nickname | strip_attribute %]'s Friends' Journals RSS" href="[% PROCESS rsslink_journal rsslink_style = 'journalfriends' %]" type="application/rss+xml">
+	[%- END; linkrels.push(tmp); END;
+
+	IF constants.journal_top;
+		IF constants.journal_top_recent; tmp = BLOCK -%]
+<link rel="alternate" title="Most Recent Journals RSS" href="[% constants.real_rootdir %]/journal.pl?op=top&amp;content_type=rss" type="application/rss+xml">
+		[%- END; linkrels.push(tmp); END;
+		    IF constants.journal_top_posters; tmp = BLOCK -%]
+<link rel="alternate" title="Most Active Journals RSS" href="[% constants.real_rootdir %]/journal.pl?op=top&amp;type=count&amp;content_type=rss" type="application/rss+xml">
+		[%- END; linkrels.push(tmp); END;
+		    IF constants.journal_top_friend; tmp = BLOCK -%]
+<link rel="alternate" title="Most Befriended Journals RSS" href="[% constants.real_rootdir %]/journal.pl?op=top&amp;type=friends&amp;content_type=rss" type="application/rss+xml">
+		[%- END; linkrels.push(tmp); END;
+	END;
+
+
+ELSIF env.script_name.search('messages\.pl');
+	IF !user.is_anon; tmp = BLOCK -%]
+<link rel="alternate" title="[% constants.sitename | strip_attribute %] Messages RSS" href="[% gSkin.rootdir %]/my/inbox/rss/[% Slash.getPublicLogToken() | fixparam %]" type="application/rss+xml">
+	[%- END; linkrels.push(tmp); END;
+ELSIF env.script_name.search('bookmark\.pl');
+	tmp = BLOCK -%]
+<link rel="alternate" title="[% constants.sitename | strip_attribute %] Popular Bookmarks" href="[% gSkin.rootdir %]/bookmarks_popular.rss" type="application/rss+xml">
+	[%- END; linkrels.push(tmp); 
+	tmp = BLOCK -%]
+<link rel="alternate" title="[% constants.sitename | strip_attribute %] Recent Bookmarks" href="[% gSkin.rootdir %]/bookmarks_recent.rss" type="application/rss+xml">
+	[%- END; linkrels.push(tmp);
+
+ELSE; # default author link, where author is a nickname
+	    IF link.author; tmp = BLOCK -%]
+<link rel="author"    title="[% link.author | strip_attribute %]" href="[% gSkin.rootdir %]/~[% link.author | strip_paramattr %]/">
+	[%- END; linkrels.push(tmp); END;
+
+END %]
+
+
+[% tmp = BLOCK -%]
+<link rel="alternate" title="[% constants.sitename | strip_attribute %] RSS" href="[% PROCESS rsslink %]" type="application/rss+xml">
+[%- END;
+   linkrels.push(tmp) %]
+
+
+
+[% FOR linkrel = linkrels;
+	linkrel; "\n";
+END %]
+
+__seclev__
+10000
+__version__
+$Id: linkrel;misc;default,v 1.16 2006/04/25 20:32:31 tvroom Exp $

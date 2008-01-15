@@ -1,0 +1,44 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+search
+__lang__
+en_US
+__name__
+journalsearch
+__template__
+
+<div class="journalsearch">
+[% FOREACH journal=entries %]
+	<div class="search-results">
+		<h4>
+			<a href="[% gSkin.rootdir %]/~[% journal.nickname | strip_paramattr %]/journal/[% journal.id %]">[% journal.description %]</a>
+		</h4>
+		<div class="data">
+			On [% Slash.timeCalc(journal.date) %]
+		</div>
+		<div class="intro">
+			[% journal.article %]
+		</div>
+		<div class="author">
+			Author: <a href="[% gSkin.rootdir %]/~[% journal.nickname | strip_paramattr %]/">[% journal.nickname | strip_literal %]</a>
+		</div>
+		[% IF journal.score %]
+		<div class="score">
+			Score: ([% journal.score %])
+		</div>
+		[% END %]
+	</div>
+[% END %]
+[% PROCESS pagination %]
+</div>
+</div>
+
+__seclev__
+100
+__version__
+$Id: journalsearch;search;default,v 1.20 2006/01/23 20:42:59 pudge Exp $

@@ -1,0 +1,4 @@
+# $Id: PLUGIN,v 1.1 2005/04/19 20:32:13 pudge Exp $
+name=OAI
+description="Open Archives Initiative"
+htdocs=oai.pl

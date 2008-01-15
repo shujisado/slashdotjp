@@ -1,0 +1,27 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+searchusers
+__template__
+<form method="post" action="[% gSkin.rootdir %]/journal.pl" enctype="application/x-www-form-urlencoded">
+	<fieldset>
+		<legend>Find a User&#39;s Journal</legend>
+		<input type="hidden" name="op" value="searchusers">
+		<input type="text" name="nickname" size="20">
+		<input type="submit" value="Find" class="button">
+		[% PROCESS formNote note = 'Yes we all need a friend to hold on to' %]
+	</fieldset>
+</form>
+
+__seclev__
+500
+__version__
+$Id: searchusers;journal;default,v 1.6 2005/07/27 22:54:10 pudge Exp $
