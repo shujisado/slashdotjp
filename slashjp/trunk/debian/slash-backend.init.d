@@ -19,6 +19,7 @@ PROGNAME="slashd";
 DATADIR="/usr/share/slash";
 SLASHD="$DATADIR/sbin/$PROGNAME";
 SLASHSITE="$DATADIR/slash.sites";
+NICE=10
 
 # To figure out where things are...
 TZ="GMT";
@@ -58,13 +59,13 @@ start_slashd () {
 	# the appropriate lines, below.  But why wouldn't you?
 
 	if [ "$MYSUDO" ] ; then
-		TZ=GMT $MYSUDO $SLASHD $VIRTUAL_USER_NAME &
+		TZ=GMT $MYSUDO nice -n $NICE $SLASHD $VIRTUAL_USER_NAME &
 	elif [ "$OS" = "FreeBSD" ] ; then
-		TZ=GMT su $USERNAME -c "$SLASHD $VIRTUAL_USER_NAME" &
+		TZ=GMT su $USERNAME -c "nice -n $NICE $SLASHD $VIRTUAL_USER_NAME" &
 	elif [ "$OS" = "Linux" ] ; then 
-		su --shell="/bin/sh" - $USERNAME -c "TZ=GMT $SLASHD $VIRTUAL_USER_NAME" &
+		su --shell="/bin/sh" - $USERNAME -c "TZ=GMT nice -n $NICE $SLASHD $VIRTUAL_USER_NAME" &
 	else
-		su - $USERNAME -c "TZ=GMT $SLASHD $VIRTUAL_USER_NAME" &
+		su - $USERNAME -c "TZ=GMT nice -n $NICE $SLASHD $VIRTUAL_USER_NAME" &
 	fi
 }
 
