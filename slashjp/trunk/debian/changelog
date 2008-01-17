@@ -5,8 +5,9 @@ slash (2.5.0.189-1) unstable; urgency=low
   * Suppress following warning messages:
     - Use of uninitialized value in numeric gt (>) at
       message_delivery.pl line 86.
+  * Add logcheck ignore rules for slashd.log to slash-backend
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 17 Jan 2008 20:24:46 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 17 Jan 2008 21:12:33 +0900
 
 slash (2.5.0.188-6) unstable; urgency=low
 
