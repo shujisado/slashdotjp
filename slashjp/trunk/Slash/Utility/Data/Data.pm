@@ -211,7 +211,7 @@ sub emailValid {
 		&& $email =~ $constants->{email_domains_invalid};
 
 	my $valid = Email::Valid->new;
-	return 0 unless $valid->rfc822($email);
+	return 0 unless $valid->address($email);
 
 	return 1;
 }
