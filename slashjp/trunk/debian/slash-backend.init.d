@@ -25,6 +25,9 @@ NICE=10
 TZ="GMT";
 export TZ;
 
+# load default file
+test -f /etc/default/slash && . /etc/default/slash
+
 WHICH_CAT=`which cat`;
 WHICH_CUT=`which cut`;
 WHICH_PS=`which ps`;

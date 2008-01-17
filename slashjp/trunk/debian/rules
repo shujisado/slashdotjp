@@ -70,3 +70,4 @@ install/slash-backend::
 	for f in `find $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/$(cdbs_curpkg)/utils -type f`; do \
 	  perl -i -npe '$$.==1 and m|#!(.*/)?perl( .*)?$$| and $$_="#!/usr/bin/perl$2\n"' $$f; \
 	done
+	touch $(CURDIR)/debian/$(cdbs_curpkg)/etc/default/slash

@@ -7,8 +7,9 @@ slash (2.5.0.189-1) unstable; urgency=low
       message_delivery.pl line 86.
   * Add logcheck ignore rules for slashd.log to slash-backend
   * Add to set nice value for slashd
+  * Add to load /etc/default/slash for slashd
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 17 Jan 2008 21:24:00 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 17 Jan 2008 21:26:29 +0900
 
 slash (2.5.0.188-6) unstable; urgency=low
 
