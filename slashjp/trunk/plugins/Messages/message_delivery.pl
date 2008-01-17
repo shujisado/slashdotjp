@@ -83,7 +83,7 @@ $task{$me}{code} = sub {
 				next;
 			}
 
-			if ($constants->{message_delivery_debug} > 0) {
+			if ($constants->{message_delivery_debug} && $constants->{message_delivery_debug} > 0) {
 				use Data::Dumper;
 				foreach my $m (@$coll) {
 					delete $m->{user}{people};
