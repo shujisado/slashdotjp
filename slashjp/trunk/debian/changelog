@@ -1,8 +1,9 @@
 slash (2.5.0.189-1) unstable; urgency=low
 
   * New upstream CVS release
+  * Suppress warning at slash-template-tool -d
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 16 Jan 2008 02:57:37 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 17 Jan 2008 17:15:17 +0900
 
 slash (2.5.0.188-6) unstable; urgency=low
 
