@@ -2558,6 +2558,9 @@ sub saveUser {
 		if ($slashdb->existsEmail($form->{realemail})) {
 			$note .= getError('emailexists_err', 0, 1);
 			$form->{realemail} = $user_edit->{realemail}; # can't change!
+		} elsif (!emailValid($form->{realemail})) {
+			$note .= getError('email_invalid', 0, 1);
+			$form->{realemail} = $user_edit->{realemail}; # can't change!
 		}
 	}
 

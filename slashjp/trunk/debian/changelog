@@ -9,8 +9,9 @@ slash (2.5.0.189-1) unstable; urgency=low
   * Add to set nice value for slashd
   * Add to load /etc/default/slash for slashd
   * Change Email::Valid method to address() to reject wide chars
+  * Disable to change invalid email address
 
- -- Taku YASUI <tach@debian.or.jp>  Thu, 17 Jan 2008 23:56:52 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 18 Jan 2008 13:26:10 +0900
 
 slash (2.5.0.188-6) unstable; urgency=low
 
