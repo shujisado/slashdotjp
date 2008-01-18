@@ -15,6 +15,8 @@ Finishing sleep:
 \[freshenup\.pl\] slash [a-z0-9A-Z_]+\.shtml
 \[freshenup\.pl\] setStory on [0-9]+ stories
 \[freshenup\.pl\] rewrote static skin pages for
+\[freshenup\.pl\] Will process for [0-9]+ extra minutes, [0-9]+ stories
+\[freshenup\.pl\] Aborting stories at freshen, too much elapsed time
 \[p2f_hof_topics\.pl\] (hof|topics|authors)\.pl 
 \[reskey_purge\.pl\] Purged [0-9]+ reskeys
 \[delete_accesslog\.pl\] deleted so far [0-9]+ of [0-9]+ rows
