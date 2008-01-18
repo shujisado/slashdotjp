@@ -1,9 +1,6 @@
---- tmp/usr/share/slash/bin/install-slashsite	2006-04-28 10:45:51.000000000 +0900
-+++ tmp.orig/usr/share/slash/bin/install-slashsite	2006-05-10 12:45:18.154644890 +0900
-@@ -30,13 +30,13 @@
- usage() if !$opts{'u'} and ($opts{'h'} or !keys %opts);
- # if invoked with both -u and -h, call usage() later, after we load Slash::Install
- version() if $opts{'v'};
+--- tmp/usr/share/slash/bin/install-slashsite.orig	2007-10-18 13:48:31.000000000 +0000
++++ tmp/usr/share/slash/bin/install-slashsite	2008-01-18 08:27:15.000000000 +0000
+@@ -33,7 +33,7 @@
  
  $| = 1;
  
@@ -12,13 +9,7 @@
  my(	$owner, $owner_id, $group, $group_id, $password,
  	$sitename, $username, $realname, $email, $dbh, @create, $sql,
  	@sql, $hostname, $hostname_f, $host_noport, $httpd, %slash_sites,
- 	$driver, $theme, $symlink, $include
- );
- 
-@@ -516,14 +516,15 @@
- </Directory>
- 
- <VirtualHost $host_port>
+@@ -533,8 +533,9 @@
      ServerAdmin $email
      DocumentRoot $prefix_site/$sitename/htdocs
      ServerName $host_noport
@@ -30,6 +21,3 @@
  
      PerlSetupEnv On
      PerlSetEnv TZ GMT
- $include
-     SlashVirtualUser $opts{'u'}
- 
