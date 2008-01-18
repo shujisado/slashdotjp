@@ -15,7 +15,7 @@ clean::
 	find . -name Makefile.old | xargs -r rm -f
 
 
-common-build-arch::
+common-build-arch common-build-indep::
 	cd Slash && perl Makefile.PL
 	$(MAKE) -C Slash
 	set -e; for d in plugins/* tagboxes/*; do \
@@ -28,7 +28,7 @@ common-build-arch::
 	  ) \
 	done
 
-common-install-arch::
+common-install-arch common-install-indep::
 	$(MAKE) -C Slash install_vendor DESTDIR=$(DEB_DESTDIR)
 	for d in plugins/* tagboxes/*; do \
 	  test -f $$d/Makefile.PL \
