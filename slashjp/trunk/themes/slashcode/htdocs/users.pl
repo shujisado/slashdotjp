@@ -573,7 +573,7 @@ sub newUser {
 	$form->{newusernick} = nickFix($form->{newusernick});
 	my $matchname = nick2matchname($form->{newusernick});
 
-	if (!$form->{email} || $form->{email} !~ /\@/) {
+	if (!$form->{email} || !emailValid($form->{email})) {
 		print getError('email_invalid', 0, 1);
 		return;
 	} elsif ($form->{email} ne $form->{email2}) {
