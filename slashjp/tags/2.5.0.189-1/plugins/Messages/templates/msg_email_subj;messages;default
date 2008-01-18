@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+msg_email_subj
+__template__
+[% subj = msg.subject || msg.type %]
+[[% constants.sitename %]] [% subj | decode_entities | strip_anchor %]
+__seclev__
+500
+__version__
+$Id$

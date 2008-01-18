@@ -1,0 +1,8 @@
+# $Id$
+name=Hof
+description="High score stuff"
+htdoc=hof.pl
+mysql=mysql_dump.sql
+template=templates/data;hof;default
+template=templates/main;hof;default
+
