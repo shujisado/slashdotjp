@@ -33,6 +33,7 @@ use URI::Escape;
 use XML::Parser::Expat;
 use XML::RSS 0.95;
 use Schedule::Cron;
+use POSIX 'setsid';
 
 use Slash;
 use Slash::Constants ':slashd';
@@ -735,8 +736,20 @@ sub pull_task {
 
 sub main {
 
+	# daemon initialize: fork and exit
+	open(STDOUT, '+>' . devnull())
+		or die "Can't write to /dev/null: $!";
+	open(STDIN, '+<' . devnull())
+		or die "Can't read /dev/null: $!";
+	defined(my $pid = fork)
+		or die "Can't fork: $!";
+	exit if ($pid);
+	setsid()
+		or die "Can't start a new session: $!";
+
 	# Initialize logging and all the low-level stuff.
 
+	sleep 1; # (2007-01-20; slashjp) Insert this to avoid DB connection reset
 	slashdLogInit();
 	slashdLog("Starting up Slashd (verbosity " . verbosity()
 		. ") with pid $$");

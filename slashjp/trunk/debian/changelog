@@ -7,8 +7,9 @@ slash (2.5.0.189-2) unstable; urgency=low
   * Fix: suppress _addGlobjEssentials_journals no nick for journal message by
     tagbox.pl
     - Do not process for deleted journals
+  * Fix: slashd daemonizes correctly
 
- -- Taku YASUI <tach@osdn.jp>  Sun, 20 Jan 2008 05:26:35 +0900
+ -- Taku YASUI <tach@osdn.jp>  Sun, 20 Jan 2008 06:51:13 +0900
 
 slash (2.5.0.189-1) unstable; urgency=low
 

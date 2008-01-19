@@ -62,13 +62,13 @@ start_slashd () {
 	# the appropriate lines, below.  But why wouldn't you?
 
 	if [ "$MYSUDO" ] ; then
-		TZ=GMT $MYSUDO nice -n $NICE $SLASHD $VIRTUAL_USER_NAME &
+		TZ=GMT $MYSUDO nice -n $NICE $SLASHD $VIRTUAL_USER_NAME
 	elif [ "$OS" = "FreeBSD" ] ; then
-		TZ=GMT su $USERNAME -c "nice -n $NICE $SLASHD $VIRTUAL_USER_NAME" &
+		TZ=GMT su $USERNAME -c "nice -n $NICE $SLASHD $VIRTUAL_USER_NAME"
 	elif [ "$OS" = "Linux" ] ; then 
-		su --shell="/bin/sh" - $USERNAME -c "TZ=GMT nice -n $NICE $SLASHD $VIRTUAL_USER_NAME" &
+		su --shell="/bin/sh" - $USERNAME -c "TZ=GMT nice -n $NICE $SLASHD $VIRTUAL_USER_NAME"
 	else
-		su - $USERNAME -c "TZ=GMT nice -n $NICE $SLASHD $VIRTUAL_USER_NAME" &
+		su - $USERNAME -c "TZ=GMT nice -n $NICE $SLASHD $VIRTUAL_USER_NAME"
 	fi
 }
 
@@ -130,7 +130,8 @@ case "$1" in
 			break_parts;
 			echo -n "Starting $PROGNAME $VIRTUAL_USER_NAME: ";
 			start_slashd;
-			echo "ok PID = $!";
+			sleep 1;
+			echo "ok PID = `cat ${RUNNINGPID}`";
 		done
 		;;
 
