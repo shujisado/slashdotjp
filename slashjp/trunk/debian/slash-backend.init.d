@@ -130,7 +130,7 @@ case "$1" in
 			break_parts;
 			echo -n "Starting $PROGNAME $VIRTUAL_USER_NAME: ";
 			start_slashd;
-			sleep 1;
+			sleep 3;
 			echo "ok PID = `cat ${RUNNINGPID}`";
 		done
 		;;
