@@ -1,4 +1,4 @@
-(Exiting|Starting) slashd
+(Exiting|Starting) (slashd|runtask)
 Starting up Slashd
 first task will be
 sent SIGUSR1 to running tasks:
@@ -9,6 +9,8 @@ Finishing sleep:
 :[0-9]{2} [0-9]{4} [-a-z0-9A-Z_]+\.pl forked;
 \[?[-a-z0-9A-Z_]+\.pl\]? (begin|end|reaped) \([0-9.]+s?\)
 [-a-z0-9A-Z_]+\.pl set resource_info '[a-z0-9_]+' to (0|1)
+runtask [-a-z0-9A-Z_]+\.pl (begin|end)
+runtask .* (Begin|End)
 \[adminmail\.pl\] [-a-z0-9A-Z_. ]+ (Begin|End)
 \[freshenup\.pl\] (Updating|updated) [0-9/]+
 \[freshenup\.pl\] (index|article|firehose)\.pl 
