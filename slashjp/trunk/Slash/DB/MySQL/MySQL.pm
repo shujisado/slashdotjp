@@ -12232,6 +12232,7 @@ sub _addGlobjEssentials_journals {
 			"id IN ($id_str) AND journals.uid=users.uid")
 		: { };
 	for my $id (@journal_ids) {
+		next unless ($self->sqlSelect('id','journals','id=$id'));
 		my $globjid = $journals_hr->{$id};
 		my $fixnick = $journaldata_hr->{$id}{nickname};
 if (!defined $fixnick) { print STDERR scalar(gmtime) . " _addGlobjEssentials_journals no nick for journal $id\n"; }
