@@ -148,7 +148,8 @@ case "$1" in
 			if [ ! -f $RUNNINGPID ] ;then
 				echo -n "Restarting $PROGNAME $VIRTUAL_USER_NAME, no PID file: ";
 				start_slashd;
-				echo "ok PID = $!";
+				sleep 3;
+				echo "ok PID = `cat ${RUNNINGPID}`";
 			else
 				# OK, this might not work on every platform since the "ps"
 				# is different on alot of OSes.
@@ -158,7 +159,8 @@ case "$1" in
 					echo -n "Restarting $PROGNAME $VIRTUAL_USER_NAME, no valid PID file: ";
 					rm -f $RUNNINGPID;
 					start_slashd;
-					echo "ok PID = $!";
+					sleep 3;
+					echo "ok PID = `cat ${RUNNINGPID}`";
 				fi
 			fi
 		done
