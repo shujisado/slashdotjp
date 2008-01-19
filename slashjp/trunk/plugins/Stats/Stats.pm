@@ -144,11 +144,16 @@ sub new {
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX referer (referer(4))");
 		# XXX there should be a way to check whether the source accesslog table
 		# already had this index, and if so, to leave it off.
-		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_subscriber ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_other ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_rss ADD INDEX ts (ts)");
+		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX ts (ts)")
+			unless ($self->{_dbh}->selectrow_hashref("SHOW FIELDS FROM accesslog_temp LIKE 'ts'")->{Key});
+		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX ts (ts)")
+			unless ($self->{_dbh}->selectrow_hashref("SHOW FIELDS FROM accesslog_temp_errors LIKE 'ts'")->{Key});
+		$self->sqlDo("ALTER TABLE accesslog_temp_subscriber ADD INDEX ts (ts)")
+			unless ($self->{_dbh}->selectrow_hashref("SHOW FIELDS FROM accesslog_temp_subscriber LIKE 'ts'")->{Key});
+		$self->sqlDo("ALTER TABLE accesslog_temp_other ADD INDEX ts (ts)")
+			unless ($self->{_dbh}->selectrow_hashref("SHOW FIELDS FROM accesslog_temp_other LIKE 'ts'")->{Key});
+		$self->sqlDo("ALTER TABLE accesslog_temp_rss ADD INDEX ts (ts)")
+			unless ($self->{_dbh}->selectrow_hashref("SHOW FIELDS FROM accesslog_temp_rss LIKE 'ts'")->{Key});
 
 		# Create the other accesslog_temp_* tables and add their indexes.
 		return undef unless $self->_do_insert_select(
