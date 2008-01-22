@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.65 2007/12/19 18:47:11 entweichen Exp $
+# $Id: ajax.pl,v 1.66 2008/01/18 22:36:50 pudge Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.65 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.66 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -361,12 +361,20 @@ sub fetchComments {
 		}
 
 		if (@$special_cids) {
-			my @cid_data = map {{
-				uid    => $comments->{$_}{uid},
-				pid    => $comments->{$_}{pid},
-				points => $comments->{$_}{points},
-				kids   => []
-			}} @$special_cids;
+			my @cid_data;
+			for my $cid (@$special_cids) {
+				my $comments_new = {
+					uid     => $comments->{$cid}{uid},
+					pid     => $comments->{$cid}{pid},
+					points  => $comments->{$cid}{points},
+					kids    => []
+				};
+				if ($comments->{$cid}{subject_orig} && $comments->{$cid}{subject_orig} eq 'no') {
+					$comments_new->{subject} = $comments->{$cid}{subject};
+					$comments->{$cid}{subject} = 'Re:';
+				}
+				push @cid_data, $comments_new;
+			}
 
 			$data{new_cids_order} = [ @$special_cids ];
 			$data{new_cids_data}  = \@cid_data;

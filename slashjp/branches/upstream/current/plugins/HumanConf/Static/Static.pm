@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Static.pm,v 1.41 2007/10/25 17:11:15 jamiemccarthy Exp $
+# $Id: Static.pm,v 1.42 2008/01/18 22:36:50 pudge Exp $
 
 package Slash::HumanConf::Static;
 
@@ -19,7 +19,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.41 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.42 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -367,7 +367,7 @@ sub write_mp3_file {
 	system("swift -f $ssml_file -o $wav_file");
 	unlink($ssml_file);
 	if ($constants->{hc_cepstral_mp3encoder}) {
-		system("$constants->{hc_cepstral_mp3encoder} -S --resample 22.05 $wav_file $full_filename_mp3");
+		system("TERM=dumb $constants->{hc_cepstral_mp3encoder} -S --resample 22.05 $wav_file $full_filename_mp3");
 	}
 	unlink($wav_file);
 	return $filename_mp3;

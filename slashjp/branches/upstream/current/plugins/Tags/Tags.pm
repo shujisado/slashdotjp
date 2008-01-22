@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.96 2008/01/09 20:04:51 jamiemccarthy Exp $
+# $Id: Tags.pm,v 1.97 2008/01/18 21:28:17 jamiemccarthy Exp $
 
 package Slash::Tags;
 
@@ -17,7 +17,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.96 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.97 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -190,9 +190,8 @@ sub createTag {
 		# a tag_clout in tagname_params.
 		my $admincmds_ar = $self->getTagnameAdmincmds(
 			$tag->{tagnameid}, $tag->{globjid});
-		# Any admin command other than '^' means clout must be set
-		# to 0.
-		if (grep { $_->{cmdtype} ne '^' } @$admincmds_ar) {
+		# Any negative admin command means clout must be set to 0.
+		if (grep { $_->{cmdtype} =~ /^[_#]/ } @$admincmds_ar) {
 			my $count = $self->sqlInsert('tag_params', {
 				tagid =>	$tagid,
 				name =>		'tag_clout',

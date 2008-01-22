@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.998 2007/12/12 22:03:20 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.1000 2008/01/15 00:17:38 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.998 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.1000 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -1583,8 +1583,7 @@ sub getUserAuthenticate {
 	}
 
 	if ($kind != $PUBLIC && $kind != $LOGTOKEN && !$uid_verified) {
-		my $cryptpasswd = encryptPassword($passwd);
-		my @pass = $self->sqlSelect(
+		my($db_uid, $db_passwd, $db_newpasswd) = $self->sqlSelect(
 			'uid,passwd,newpasswd',
 			'users',
 			"uid=$uid_try_q"
@@ -1592,8 +1591,8 @@ sub getUserAuthenticate {
 
 		# try ENCRYPTED -> ENCRYPTED
 		if ($kind == $EITHER || $kind == $ENCRYPTED) {
-			if ($passwd eq $pass[$PASSWD]) {
-				$uid_verified = $pass[$UID];
+			if (comparePassword($passwd, $db_passwd, 0, ($kind == $ENCRYPTED))) {
+				$uid_verified = $db_uid;
 				# get existing logtoken, if exists, or new one
 				$cookpasswd = $self->getLogToken($uid_verified, 1);
 			}
@@ -1601,8 +1600,8 @@ sub getUserAuthenticate {
 
 		# try PLAINTEXT -> ENCRYPTED
 		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
-			if ($cryptpasswd eq $pass[$PASSWD]) {
-				$uid_verified = $pass[$UID];
+			if (comparePassword($passwd, $db_passwd, ($kind == $PLAIN), 0)) {
+				$uid_verified = $db_uid;
 				# get existing logtoken, if exists, or new one
 				$cookpasswd = $self->getLogToken($uid_verified, 1);
 			}
@@ -1610,14 +1609,15 @@ sub getUserAuthenticate {
 
 		# try PLAINTEXT -> NEWPASS
 		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
-			if ($passwd eq $pass[$NEWPASSWD]) {
+			if ($passwd eq $db_newpasswd) {
+				my $cryptpasswd = encryptPassword($passwd);
 				$self->sqlUpdate('users', {
 					newpasswd	=> '',
 					passwd		=> $cryptpasswd
 				}, "uid=$uid_try_q");
 				$newpass = 1;
 
-				$uid_verified = $pass[$UID];
+				$uid_verified = $db_uid;
 				# delete existing logtokens
 				$self->deleteLogToken($uid_verified, 1);
 				# create new logtoken
@@ -9970,53 +9970,43 @@ sub getTopicParamsForTid {
 	return $self->sqlSelectAllHashrefArray("*", "topic_param", "tid = $tid_q");
 }
 
-########################################################
-# As of 2004/04:
+# getStoryTopics returns a hashref whose keys are the tids
+# chosen for a story.  The values depend on $add_names:
+#
 # $add_names of 1 means to return the alt text, which is the
 # human-readable name of a topic.  This is currently used
 # only in article.pl to add these words and phrases to META
 # information on the webpage.
+#
 # $add_names of 2 means to return the name, which is a
 # (not-guaranteed-unique) short single keyword.  This is
 # currently used only in adminmail.pl to append something
 # descriptive to the numeric tid for the topichits_123_foo
 # stats.
+#
+# Any other $add_names value means to return '1' for values.
+
 sub getStoryTopics {
 	my($self, $id, $add_names) = @_;
-	my($topicdesc);
 
 	my $stoid = $self->getStoidFromSidOrStoid($id);
 	return undef unless $stoid;
 
-	my $topics = $self->sqlSelectAll(
+	my $topics = $self->sqlSelectColArrayref(
 		'tid',
 		'story_topics_chosen',
 		"stoid=$stoid"
 	);
 
-	# All this to avoid a join. :/
-	#
-	# Poor man's hash assignment from an array for the short names.
-	# XXX This really should be done by pulling data from
-	# getTopicTree()
-	$topicdesc =  {
-		map { @{$_} }
-		@{$self->sqlSelectAll(
-			'tid, keyword',
-			'topics'
-		)}
-	} if $add_names == 2;
+	my $field = '';
+	if ($add_names == 1) {		$field = 'textname'	}
+	elsif ($add_names == 2) {	$field = 'keyword'	}
 
-	# We use a Description for the long names.
-	$topicdesc = $self->getDescriptions('topics')
-		if !$topicdesc && $add_names;
-
-	my $answer;
-	for my $topic (@$topics) {
-		$answer->{$topic->[0]} = $add_names && $topicdesc
-			? $topicdesc->{$topic->[0]} : 1;
+	my $tree = $self->getTopicTree();
+	my $answer = { };
+	for my $tid (keys %$tree) {
+		$answer->{$tid} = $field ? $tree->{$tid}{$field} : 1;
 	}
-
 	return $answer;
 }
 

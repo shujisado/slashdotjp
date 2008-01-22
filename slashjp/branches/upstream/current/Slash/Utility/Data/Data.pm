@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Data.pm,v 1.208 2007/10/10 20:45:07 jamiemccarthy Exp $
+# $Id: Data.pm,v 1.210 2008/01/18 21:28:41 jamiemccarthy Exp $
 
 package Slash::Utility::Data;
 
@@ -43,6 +43,7 @@ use POSIX qw(UINT_MAX);
 use Safe;
 use Slash::Constants qw(:strip);
 use Slash::Utility::Environment;
+use Slash::Apache::User::PasswordSalt;
 use URI;
 use XML::Parser;
 
@@ -61,7 +62,7 @@ BEGIN {
 	$HTML::Tagset::linkElements{slash} = ['src', 'href'];
 }
 
-($VERSION) = ' $Revision: 1.208 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.210 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	addDomainTags
 	createStoryTopicData
@@ -75,6 +76,7 @@ BEGIN {
 	cleanRedirectUrl
 	cleanRedirectUrlFromForm
 	commify
+	comparePassword
 	countTotalVisibleKids
 	countWords
 	createSid
@@ -203,6 +205,7 @@ True if email is valid, false otherwise.
 
 sub emailValid {
 	my($email) = @_;
+	return 0 if !$email;
 
 	my $constants = getCurrentStatic();
 	return 0 if $constants->{email_domains_invalid}
@@ -772,8 +775,10 @@ Random password.
 
 =head2 encryptPassword(PASSWD)
 
-Encrypts given password.  Currently uses MD5, but could change in the future,
-so do not depend on implementation.
+Encrypts given password, using the most recent salt (if any) in
+Slash::Apache::User::PasswordSalt for the current virtual user.
+Currently uses MD5, but could change in the future, so do not
+depend on the implementation.
 
 =over 4
 
@@ -797,7 +802,76 @@ Encrypted password.
 
 sub encryptPassword {
 	my($passwd) = @_;
-	return md5_hex($passwd);
+	my $slashdb = getCurrentDB();
+	my $vu = $slashdb->{virtual_user};
+	my $salt = Slash::Apache::User::PasswordSalt::getCurrentSalt($vu);
+	return md5_hex("$salt$passwd");
+}
+
+#========================================================================
+
+=head2 comparePassword(PASSWD, MD5, ISPLAIN, ISENC)
+
+Given a password and an MD5 hex string, compares the two to see if they
+represent the same value.  To be precise:
+
+If the password given is equal to the MD5 string, it must already be
+in MD5 format and be correct, so return true
+
+Otherwise, the password is assumed to be plaintext.  Each possible
+salt-encryption of it (including the encryption with empty salt) is
+compared against the MD5 string.  True is returned if there is any
+match.
+
+If ISPLAIN is true, PASSWD is assumed to be plaintext, so the
+(trivial equality) test against the encrypted MD5 is not performed.
+
+If ISENC is true, PASSWD is assumed to be already encrypted, so the
+tests of salting and encrypting it are not performed.
+
+(If neither is true, all tests are performed.  If both are true, no
+tests are performed and 0 is returned.)
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item PASSWD
+
+Possibly-correct password, either plaintext or already-MD5's,
+to be checked.
+
+=item MD5
+
+Encrypted correct password.
+
+=back
+
+=item Return value
+
+0 or 1.
+
+=back
+
+=cut
+
+sub comparePassword {
+	my($passwd, $md5, $is_plain, $is_enc) = @_;
+	if (!$is_plain) {
+		return 1 if $passwd eq $md5;
+	}
+	if (!$is_enc) {
+		return 1 if md5_hex($passwd) eq $md5;
+		my $slashdb = getCurrentDB();
+		my $vu = $slashdb->{virtual_user};
+		my $salt_ar = Slash::Apache::User::PasswordSalt::getSalts($vu);
+		for my $salt (reverse @$salt_ar) {
+			return 1 if md5_hex("$salt$passwd") eq $md5;
+		}
+	}
+	return 0;
 }
 
 #========================================================================
@@ -4367,4 +4441,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Data.pm,v 1.208 2007/10/10 20:45:07 jamiemccarthy Exp $
+$Id: Data.pm,v 1.210 2008/01/18 21:28:41 jamiemccarthy Exp $

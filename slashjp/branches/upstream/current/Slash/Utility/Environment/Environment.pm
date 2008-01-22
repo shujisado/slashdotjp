@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Environment.pm,v 1.226 2008/01/09 19:57:54 jamiemccarthy Exp $
+# $Id: Environment.pm,v 1.227 2008/01/18 22:36:50 pudge Exp $
 
 package Slash::Utility::Environment;
 
@@ -33,7 +33,7 @@ use Socket qw( inet_aton inet_ntoa );
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.226 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.227 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 
 	dbAvailable
@@ -1573,16 +1573,10 @@ sub prepareUser {
 	$user->{state}{no_d2} = $form->{no_d2} ? 1 : 0;
 	$user->{discussion2} ||= 'none';
 
-	# pct of anon users get this
+	# most anon users get this
 	if ($user->{is_anon} && !$user->{state}{no_d2}) {
-#		my $i = hex(substr($user->{srcids}{16}, -2));
-		$hostip =~ /^(\d+).(\d+).(\d+).(\d+)$/;
-		my $i = $2;
-
-#		# for (0..255) { $x = ((($_-1)/256) < .1); last if !$x; printf "%d:%d\n", $_, $x; }
-		if ($ENV{GATEWAY_INTERFACE} && ( $i == 144 || ((($i-1)/256) < .5) ) ) {  # 10 percent, x.(0..3).y.z
-			my $d2 = 'slashdot';
-
+		my $d2 = 'slashdot';
+		if ($ENV{GATEWAY_INTERFACE}) {
 			# get user-agent (ENV not populated yet)
 			my %headers = $r->headers_in;
 			# just in case:
@@ -1591,9 +1585,8 @@ sub prepareUser {
 			if ($ua =~ /MSIE (\d+)/) {
 				$d2 = 'none';# if $1 < 7;
 			}
-
-			$user->{discussion2} = $d2;
 		}
+		$user->{discussion2} = $d2;
 	}
 
 	# All sorts of checks on user data.  The story_{never,always} checks
@@ -3506,4 +3499,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Environment.pm,v 1.226 2008/01/09 19:57:54 jamiemccarthy Exp $
+$Id: Environment.pm,v 1.227 2008/01/18 22:36:50 pudge Exp $

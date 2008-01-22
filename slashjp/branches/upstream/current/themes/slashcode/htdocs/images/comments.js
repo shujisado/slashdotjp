@@ -1,4 +1,4 @@
-// $Id: comments.js,v 1.104 2008/01/10 01:33:10 pudge Exp $
+// $Id: comments.js,v 1.106 2008/01/18 22:36:50 pudge Exp $
 
 var comments;
 var root_comments;
@@ -88,8 +88,8 @@ function updateComment(cid, mode) {
 				}
 			}
 		}
-		if (doshort)
-			setShortSubject(cid, mode, cl);
+//		if (doshort)
+		setShortSubject(cid, mode, cl);
 		existingdiv.className = existingdiv.className.replace(/full|hidden|oneline/, mode);
 	}
 
@@ -384,16 +384,13 @@ function setShortSubject(cid, mode, cl) {
 	// subject is there only if it is a "reply"
 	// check pid to make sure parent is there at all ... check visibility too?
 	if (cl && cl.innerHTML && comments[cid]['subject'] && comments[cid]['pid']) {
-		var thisdiv = fetchEl('comment_' + comments[cid]['pid']);
-		if (thisdiv) {
-			setDefaultDisplayMode(comments[cid]['pid']);
-			if (!mode)
-				mode = displaymode[cid];
-			if (mode == 'full' || (mode == 'oneline' && displaymode[comments[cid]['pid']] == 'hidden')) {
-				cl.innerHTML = comments[cid]['subject'];
-			} else if (mode == 'oneline') {
-				cl.innerHTML = 'Re:';
-			}
+		setDefaultDisplayMode(comments[cid]['pid']);
+		if (!mode)
+			mode = displaymode[cid];
+		if (mode == 'full' || (mode == 'oneline' && displaymode[comments[cid]['pid']] == 'hidden')) {
+			cl.innerHTML = comments[cid]['subject'];
+		} else if (mode == 'oneline') {
+			cl.innerHTML = 'Re:';
 		}
 	}
 }
@@ -813,7 +810,7 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 			if (adTimerInsert) {
 				var tree = $('tree_' + adTimerInsert);
 				if (tree) {
-					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740"Êframeborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
+					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740" frameborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
 					var html = '<li id="comment_ad_' + adTimerInsert + '" class="inlinead"> ' + adcall +'  </li>';
 
 					var commtree = $('commtree_' + adTimerInsert);

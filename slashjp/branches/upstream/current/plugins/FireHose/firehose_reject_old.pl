@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: firehose_reject_old.pl,v 1.2 2007/08/15 03:07:29 tvroom Exp $
+# $Id: firehose_reject_old.pl,v 1.3 2008/01/16 20:28:18 tvroom Exp $
 
 use strict;
 
@@ -22,7 +22,7 @@ $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin) = @_;
 	my $firehose = getObject("Slash::FireHose");
-	my $old = $slashdb->sqlSelectColArrayref("id", "firehose", "createtime < DATE_SUB(NOW(),INTERVAL 7 DAY) and category ='' and rejected='no'");
+	my $old = $slashdb->sqlSelectColArrayref("id", "firehose", "createtime < DATE_SUB(NOW(),INTERVAL 7 DAY) and type !='story' AND category ='' and rejected='no'");
 	foreach (@$old) {
 		$firehose->reject($_);
 	}

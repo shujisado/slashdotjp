@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: balance_readers.pl,v 1.16 2007/08/29 15:58:58 jamiemccarthy Exp $
+# $Id: balance_readers.pl,v 1.17 2008/01/16 17:28:14 jamiemccarthy Exp $
 
 # For now this just gathers data.  The actual reweighting will come
 # later. - Jamie 2004/11/10
@@ -379,11 +379,11 @@ sub adjust_readers {
 
 		# If this DB is marked as isalive='no', it's not our
 		# responsibility, skip it.
-		next VU if $reader_info->{dead};
+		next VU if $reader_info->{$vu}{dead};
 
 		# If this DB was not reachable, set its weight to 0
 		# immediately.
-		if ($reader_info->{unreachable}) {
+		if ($reader_info->{$vu}{unreachable}) {
 			set_reader_weight_adjust($slashdb, $vu, 0);
 			next VU;
 		}

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Slash.pm,v 1.342 2007/12/13 20:54:55 pudge Exp $
+# $Id: Slash.pm,v 1.343 2008/01/18 22:36:50 pudge Exp $
 
 package Slash;
 
@@ -76,6 +76,17 @@ sub selectComments {
 	$cid ||= 0;
 
 	my $discussion2 = discussion2($user);
+
+	# it's a bit of a drag, but ... oh well! 
+	# print_cchp gets messed up with d2, so we just punt and have
+	# selectComments called twice if necessary, the first time doing
+	# print_cchp, then blanking that out so it is not done again -- pudge
+	if ($discussion2 && $form->{ssi} && $form->{ssi} eq 'yes' && $form->{cchp}) {
+		$user->{discussion2} = 'none';
+		selectComments($discussion, $cid, $options);
+		$user->{discussion2} = $discussion2;
+		delete $form->{cchp};
+	}
 
 	my $commentsort = defined $options->{commentsort}
 		? $options->{commentsort}
@@ -323,11 +334,12 @@ sub jsSelectComments {
 	# also consolidate code with ajax.pl:fetchComments
 	# version 0.9 is broken; 0.6 and 1.00 seem to work -- pudge 2006-12-19
 	require Data::JavaScript::Anon;
-	my($slashdb, $constants, $user, $form) = @_;
+	my($slashdb, $constants, $user, $form, $gSkin) = @_;
 	$slashdb   ||= getCurrentDB();
 	$constants ||= getCurrentStatic();
 	$user      ||= getCurrentUser();
 	$form      ||= getCurrentForm();
+	$gSkin     ||= getCurrentSkin();
 
 	my $id = $form->{sid};
 	my $pid = $form->{cid} || 0;
@@ -404,8 +416,14 @@ sub jsSelectComments {
 
 	# maybe also check if this ad should be running with some other var?
 	# from ads table? -- pudge
-	if ($constants->{run_ads} && $constants->{run_ads_inline_comments}) {
-		$extra .= "adTimerUrl = '$constants->{run_ads_inline_comments}';\n";
+	if ( $constants->{run_ads}
+	 && !$user->{state}{page_adless}
+	 && !$user->{state}{page_buying}
+	 &&  $user->{currentSkin} ne 'admin'
+	 &&  $constants->{run_ads_inline_comments}
+	) {
+		(my $url = $constants->{run_ads_inline_comments}) =~ s/<topic>/$gSkin->{name}/g;
+		$extra .= "adTimerUrl = '$url';\n";
 	}
 
 	return <<EOT;

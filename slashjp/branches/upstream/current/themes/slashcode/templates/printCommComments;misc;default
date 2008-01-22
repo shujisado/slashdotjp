@@ -42,7 +42,7 @@ __template__
 <!--
 	window.onscroll = d2act;
 	boxStatus(1);
-[% Slash.jsSelectComments(Slash.db, constants, user, { sid => sid, cid => cid }) %]
+[% Slash.jsSelectComments(Slash.db, constants, user, { sid => sid, cid => cid }, gSkin) %]
 //-->
 	</script>
 [% END %]
@@ -155,4 +155,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: printCommComments;misc;default,v 1.63 2007/10/24 00:30:08 scc Exp $
+$Id: printCommComments;misc;default,v 1.64 2008/01/18 22:36:51 pudge Exp $

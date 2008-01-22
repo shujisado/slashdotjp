@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tags_udc.pl,v 1.5 2007/09/28 02:08:03 jamiemccarthy Exp $
+# $Id: tags_udc.pl,v 1.6 2008/01/18 21:27:52 jamiemccarthy Exp $
 
 # Tags Upvote/Downvote Count
 #
@@ -21,11 +21,12 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = '2-59/5 * * * *';
 $task{$me}{timespec_panic_1} = ''; # not that important
 $task{$me}{fork} = SLASHD_NOWAIT;
+$task{$me}{on_startup} = 1;
 
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;

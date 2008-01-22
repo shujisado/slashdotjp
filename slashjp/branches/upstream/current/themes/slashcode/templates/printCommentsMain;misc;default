@@ -115,6 +115,7 @@ __template__
 	<div class="commentBoxForm" id="commentControlBox">
 [% UNLESS discussion2 %]
 		<form action="[% gSkin.rootdir %]/comments.pl">
+		[% IF user.state.no_d2 %]<input type="hidden" name="no_d2" value="1">[% END %]
 		<fieldset>
 		<legend>Display Options</legend>
 		[% UNLESS discussion2 %]
@@ -201,7 +202,7 @@ __template__
 			}) %]
 		[% END %]
 		</span>
-		<span title="Toggle window location" onclick="toggleDisplayOptions()" class="close">/</span>
+		<span id="d2toggle" title="Toggle window location" onclick="toggleDisplayOptions()" class="close">/</span>
 				</h4>
 			</div>
 		</div>
@@ -304,4 +305,4 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 __seclev__
 10000
 __version__
-$Id: printCommentsMain;misc;default,v 1.99 2008/01/07 16:25:17 scc Exp $
+$Id: printCommentsMain;misc;default,v 1.101 2008/01/21 16:49:48 scc Exp $

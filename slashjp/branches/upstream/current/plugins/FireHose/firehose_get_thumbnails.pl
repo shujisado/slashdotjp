@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: firehose_get_thumbnails.pl,v 1.3 2007/11/01 02:01:04 tvroom Exp $
+# $Id: firehose_get_thumbnails.pl,v 1.4 2008/01/16 22:24:24 jamiemccarthy Exp $
 
 use strict;
 
@@ -39,7 +39,7 @@ $task{$me}{code} = sub {
 		my ($scheme, $domain, $path, $query, $frag) = uri_split($_->{url});
 		my $page = get $_->{url};
 		slashdLog("$_->{id}: $_->{url}\n");
-		my @pairs = split(/&/, $query);
+		my @pairs = split /&/, ($query || '');
 		my $params = {};
 		foreach my $pair (@pairs) {
 			my ($name, $value) = split(/=/, $pair);
