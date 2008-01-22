@@ -9,8 +9,8 @@ jses = all-minified
 default: update
 update: $(csses) $(sections) $(jses) images
 
-install:
-	rsync -avHSC --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp ./ $(DESTDIR)
+install: default
+	rsync -avHSC --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp --exclude=\*.jp ./ $(DESTDIR)
 
 images: images-stamp
 images-stamp:

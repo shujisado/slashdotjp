@@ -1,1 +1,5 @@
 /* Override slashcode_lite.css for slashdot.jp */
+
+div#firehose div.story div.generaltitle div.title a {
+	color: #fff !important;
+}
