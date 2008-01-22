@@ -21,6 +21,8 @@ SLASHD="$DATADIR/sbin/$PROGNAME";
 SLASHSITE="$DATADIR/slash.sites";
 NICE=10
 
+test -x $SLASHD || exit 0
+
 # To figure out where things are...
 TZ="GMT";
 export TZ;
