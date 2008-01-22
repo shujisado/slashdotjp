@@ -1,0 +1,99 @@
+__section__
+default
+__description__
+Display a story (normally called from within displayStory())
+
+* width = width for titlebar
+* title = title for titlebar
+* story = story data structure
+* section = section data structure
+* topic = topic data structure
+* author = author data structure
+* full = boolean to display full story (incl. bodytext)
+* magic = boolean to put section name in story title
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+dispFeature
+__template__
+[% IF magic;
+	thisskin = Slash.db.getSkin(story.primaryskid);
+	IF thisskin.rootdir;
+		title = "<a href=\"$thisskin.rootdir/\">";
+	ELSE;
+		IF user.is_anon;
+			title = "<a href=\"$gSkin.rootdir/$thisskin.name/\">";
+		ELSE;
+			title = "<a href=\"$gSkin.rootdir/index.pl?section=$story.primaryskid\">";
+		END;
+	END;
+	title = "$title$thisskin.title</a>: $story.title";
+ELSE;
+	title = story.title;
+END %]
+
+[% title = "Feature Story: $title" %]
+
+[% PROCESS titlebar %]
+
+	<table border="0" cellpadding="0" cellspacing="0"><tr>
+		<td background="[% constants.imagedir %]/gl.gif"><img src="[% constants.imagedir %]/pix.gif" width="11" height="11" alt=""></td>
+		<td bgcolor="#E6E6E6" width="100%">
+			<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr>
+				<td bgcolor="#E6E6E6">
+					posted by <a href="[% author.homepage %]">[% author.nickname | strip_literal %]</a>
+						[% story.atstorytime %]<br>
+					[% IF constants.use_dept %]from the <b>[% story.dept %]</b> dept.[% END %]
+				</td>
+			</tr></table>
+		</td>
+		<td background="[% constants.imagedir %]/gr.gif"><img src="[% constants.imagedir %]/pix.gif" width="11" height="11" alt=""></td>
+	</tr>
+	<tr><td bgcolor="#006666" colspan="3"><img src="[% constants.imagedir %]/pix.gif" width="1" height="1" alt=""></td></tr>
+	<tr>
+		<td background="[% constants.imagedir %]/wl.gif"><img src="[% constants.imagedir %]/pix.gif" width="11" height="11" alt=""></td>
+		<td bgcolor="[% user.colors.bg_1 %]" width="100%">
+			<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="[% user.colors.bg_1 %]">
+				[% IF user.noicons %][ <a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"><b>[% topic.textname %]</b></a> ]
+				[% ELSE %]<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"
+					><img src="[% topic.image %]" width="[% topic.width %]"
+						height="[% topic.height %]" border="0" align="RIGHT"
+						hspace="20" vspace="10" alt="[% topic.textname %]"></a>
+				[% END %]
+				[% story.introtext %]
+			</td></tr></table>
+		</td>
+		<td background="[% constants.imagedir %]/wr.gif"><img src="[% constants.imagedir %]/pix.gif" width="11" height="11" alt=""></td>
+	</tr>
+	<tr bgcolor="[% user.colors.bg_3 %]"><td colspan="3"><img src="[% constants.imagedir %]/pix.gif" width="1" height="1" alt=""></td></tr>
+	</table>
+
+
+[% IF full && story.bodytext %]
+
+<br>
+
+<table border="0" cellpadding="0" cellspacing="0"><tr>
+	<tr bgcolor="[% user.colors.bg_3 %]"><td colspan="3"><img src="[% constants.imagedir %]/pix.gif" width="1" height="1" alt=""></td></tr>
+	<tr>
+		<td background="[% constants.imagedir %]/wl.gif"><img src="[% constants.imagedir %]/pix.gif" width="11" height="11" alt=""></td>
+		<td bgcolor="[% user.colors.bg_1 %]" width="100%">
+			<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="[% user.colors.bg_1 %]">
+				[% story.bodytext %]
+			</td></tr></table>
+		</td>
+		<td background="[% constants.imagedir %]/wr.gif"><img src="[% constants.imagedir %]/pix.gif" width="11" height="11" alt=""></td>
+	</tr>
+	<tr bgcolor="[% user.colors.bg_3 %]"><td colspan="3"><img src="[% constants.imagedir %]/pix.gif" width="1" height="1" alt=""></td></tr>
+</table>
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: dispFeature;misc;default,v 1.9 2005/07/27 22:54:46 pudge Exp $

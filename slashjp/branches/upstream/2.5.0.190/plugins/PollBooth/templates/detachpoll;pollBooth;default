@@ -1,0 +1,33 @@
+__section__
+default
+__description__
+sid = story sid to detach poll from
+qid = poll qid
+warning = warnings associated with poll
+__title__
+detachpoll;pollBooth;default
+__page__
+pollBooth
+__lang__
+en_US
+__name__
+detachpoll
+__seclev__
+10000
+__template__
+[% PROCESS titlebar width='100%' %]
+[% IF warning.no_sid %]
+	<b>No story sid given--could not complete operation.</b>
+[% ELSIF warning.no_sid_qid_match %]
+	<b>Warning: </b>The poll qid you specified ('[% qid %]') does not appear to be currently attached to the story sid specified ('[% sid %]').  This could mean that the story doesn't have a poll attached to it or is linked to a different poll.  <p>If you're sure you want to detach any polls currently connected to this story click <a href="[% gSkin.rootdir %]/pollBooth.pl?sid=[% sid | strip_paramattr %]&amp;qid=[% qid | strip_paramattr %]&amp;op=detach&amp;force=1">continue</a>.
+
+[% ELSE %]
+	Poll detached from story successfully.<br>
+	You can now <a href="[% gSkin.rootdir %]/admin.pl?op=edit&amp;sid=[% sid | strip_paramattr %]">edit</a> or <a href="[% gSkin.rootdir %]/article.pl?sid=[% sid | strip_paramattr %]">view</a> the story.<br><br>
+	[% IF qid %]
+	You can also continue on <a href="[% gSkin.rootdir %]/pollBooth.pl?op=edit&amp;qid=[% qid | strip_paramattr %]">edit</a> or <a href="[% gSkin.rootdir %]/pollBooth.pl?qid=[% qid | strip_paramattr %]">view</a> the poll that was attached to this story.<br>
+
+	[% END %]
+[% END %]
+__version__
+$Id: detachpoll;pollBooth;default,v 1.5 2006/01/23 20:42:59 pudge Exp $

@@ -1,0 +1,4 @@
+# $Id: PLUGIN,v 1.2 2003/08/29 15:21:07 jamie Exp $
+name=FAQ
+description="Generic Slash FAQ"
+htdoc=faq.shtml

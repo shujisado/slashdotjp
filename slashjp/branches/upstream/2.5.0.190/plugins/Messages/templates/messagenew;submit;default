@@ -1,0 +1,34 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+submit
+__lang__
+en_US
+__name__
+messagenew
+__template__
+[% IF msg.mode == 1 %]
+
+<p>
+[% submission.name %] has submitted a new story,
+<b><a href="[% gSkin.rootdir %]/submit.pl?op=viewsub&amp;subid=[% submission.subid %]&amp;title=[%
+submission.subj | strip_paramattr %]">[% submission.subj | strip_literal %]</a></b>.
+</p>
+
+[% ELSE %]
+
+[% submission.name %] has submitted a new story on [% constants.sitename %].
+
+    [% submission.subj | decode_entities %]
+    [% absolutedir %]/submit.pl?op=viewsub&subid=[% submission.subid %]&title=[% submission.subj | fixparam %]
+
+[% END %]
+
+__seclev__
+100
+__version__
+$Id: messagenew;submit;default,v 1.8 2006/01/23 20:42:59 pudge Exp $

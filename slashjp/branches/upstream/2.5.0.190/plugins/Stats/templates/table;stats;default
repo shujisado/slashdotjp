@@ -1,0 +1,52 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+stats
+__lang__
+en_US
+__name__
+table
+__template__
+[% PROCESS calculate %]
+
+<h2 align="CENTER">[% period %] Report for [% constants.sitename %]</h2>
+
+<p align="CENTER">
+<a href="[% gSkin.rootdir %]/stats.pl?[% env.query_string | replace('op=table', 'op=csv') %]"
+>Download CSV data for spreadsheet</a>
+</p>
+
+<p align="CENTER">
+<table border="2" cellpadding="2" cellspacing="2">
+
+	<tr>
+		<th></th>
+[% pct = 100 div alldata.size;
+   FOREACH this = alldata;
+	NEXT IF loop.index == 0;
+	myindex = loop.index - 1 %]
+		<th width="[% pct %]%">[% alltypes.${myindex} %]</th>
+[% END %]
+	</tr>
+
+[% FOREACH day = days %]
+	<tr>
+		<th>[% day %]</th>
+
+	[% myindex = loop.index;
+	   FOREACH this = alldata;
+		NEXT IF loop.index == 0 %]
+		<td align="RIGHT">[% Slash.commify(this.${myindex}) %]</td>
+	[% END %]
+	</tr>
+[% END %]
+</table>
+</p>
+__seclev__
+1000
+__version__
+$Id: table;stats;default,v 1.5 2005/07/27 22:54:13 pudge Exp $
