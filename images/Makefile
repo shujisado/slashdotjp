@@ -20,6 +20,7 @@ images-stamp:
 		wget --no-proxy --no-host-directories --mirror --no-verbose -i -
 	touch images-stamp
 
+css/slashcode_lite.css: %: %.orig %.jp
 $(csses): %: css/%.css
 $(sections): %: css/slashdot_%.css
 $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
@@ -28,8 +29,9 @@ $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections))
 		sed -e 's/text-align: right padding: 3px;/text-align: right; padding: 3px;/' | \
 		perl -npe 's/\bfont-family:[^;]+;//' | \
 		perl -npe 's/\bsans-serif\b//' > $@
+	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
 
-css/%.css.orig: FORCE
+css/%.css.orig:
 	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
 
 $(jses): %: %.js
@@ -38,7 +40,7 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/ Firehose / アレたま /' | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' > $@
 
-%.js.orig: FORCE
+%.js.orig:
 	wget --no-proxy --no-verbose http://slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
 
 force: clean default
