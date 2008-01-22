@@ -1642,6 +1642,7 @@ sub getUserAuthenticate {
 					passwd		=> $cryptpasswd
 				}, "uid=$uid_try_q");
 				$newpass = 1;
+				Slash::LDAPDB->new()->setUserByUid($uid_try, {passwd => $cryptpasswd});
 
 				$uid_verified = $pass[$UID];
 				# delete existing logtokens

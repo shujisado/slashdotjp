@@ -10,8 +10,12 @@ slash (2.5.0.189-2) unstable; urgency=low
   * Fix: slashd daemonizes correctly
   * Add cron.d to check and restart slashd
   * Fix: remaining top10Comments in sbin/portald ... changed to topComments
+  * Fix: cannot authenticate using LDAP when the users has never changed their
+    password
+    - Add to change LDAP password when the user has new passwords are
+      authenticated
 
- -- Taku YASUI <tach@debian.or.jp>  Sun, 20 Jan 2008 10:03:43 +0900
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jan 2008 17:15:39 +0900
 
 slash (2.5.0.189-1) unstable; urgency=low
 
