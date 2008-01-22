@@ -20,7 +20,7 @@ images-stamp:
 		wget --no-proxy --no-host-directories --mirror --no-verbose -i -
 	touch images-stamp
 
-css/slashcode_lite.css: %: %.orig %.jp
+css/slashcode_lite.css css/iestyles.css: %: %.orig %.jp
 $(csses): %: css/%.css
 $(sections): %: css/slashdot_%.css
 $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
