@@ -85,6 +85,15 @@ $task{$me}{code} = sub {
 	}
 
 	############################################################
+	# delete neverdisplay stories from story_dirty
+	############################################################
+
+	if ($do_all && my $count = $slashdb->sqlDelete("story_dirty USING story_dirty, story_param",
+		"story_dirty.stoid=story_param.stoid AND story_param.name='neverdisplay' AND story_param.value=1")) {
+		slashdLog("Deleted $count neverdisplay stories from story_dirty") if verbosity() >= 1;
+	}
+
+	############################################################
 	# users_count update (memcached and var)
 	############################################################
 
