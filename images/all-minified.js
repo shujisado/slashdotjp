@@ -1110,7 +1110,7 @@ function firehose_play(){fh_play=1;setFirehoseAction();firehose_set_options('pau
 $('message_area').innerHTML="";if(pausepanel){pausepanel.innerHTML="Updated";}
 var pause=$('pause');var play_div=$('play');if(play_div){play_div.className="hide";}
 if(pause){pause.className="show";}}
-function firehose_pause(){fh_play=0;var pause=$('pause');var play_div=$('play');pause.className="hide";play_div.className="show";if($('pauseorplay')){$('pauseorplay').innerHTML="Paused";}
+function firehose_pause(){fh_play=0;var pause=$('pause');var play_div=$('play');pause.className="hide";play_div.className="show";if($('pauseorplay')){$('pauseorplay').innerHTML="停止中";}
 firehose_set_options('pause','1');}
 function firehose_add_update_timerid(timerid){fh_update_timerids.push(timerid);}
 function firehose_collapse_entry(id){var fhbody=$('fhbody-'+id);var fh=$('firehose-'+id);if(fhbody&&fhbody.className=="body"){fhbody.className="hide";}

@@ -38,6 +38,7 @@ $(jses): %: %.js
 $(patsubst %, %.js, $(jses)): %: %.orig
 	cat $@.orig | \
 		sed -e 's/ Firehose / アレたま /' | \
+		sed -e 's/innerHTML="Paused"/innerHTML="停止中"/' | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' > $@
 
 %.js.orig:
