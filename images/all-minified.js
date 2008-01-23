@@ -1107,7 +1107,7 @@ return interval;}
 function run_before_update(){var secs=getSecsSinceLastFirehoseAction();if(secs>inactivity_timeout){fh_is_timed_out=1;if($('message_area'))
 $('message_area').innerHTML="Automatic updates have been slowed due to inactivity";}}
 function firehose_play(){fh_play=1;setFirehoseAction();firehose_set_options('pause','0');var pausepanel=$('pauseorplay');if($('message_area'))
-$('message_area').innerHTML="";if(pausepanel){pausepanel.innerHTML="Updated";}
+$('message_area').innerHTML="";if(pausepanel){pausepanel.innerHTML="更新中";}
 var pause=$('pause');var play_div=$('play');if(play_div){play_div.className="hide";}
 if(pause){pause.className="show";}}
 function firehose_pause(){fh_play=0;var pause=$('pause');var play_div=$('play');pause.className="hide";play_div.className="show";if($('pauseorplay')){$('pauseorplay').innerHTML="停止中";}
