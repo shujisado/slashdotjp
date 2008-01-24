@@ -545,8 +545,9 @@ sub linkStory {
 		# but we would need to `mv articles mainpage`, or ln -s, and it just seems better
 		# to me to keep the same URL scheme if possible
 		my $skinname = $skin->{name} eq 'mainpage' ? 'articles' : $skin->{name};
+		my $sid = defined($story_link->{sid}) ? $story_link->{sid} : $story_ref->{sid};
 		$url .= "/$skinname" unless ($url =~ /\/${skinname}$/);
-		$url .= "/" . ($story_link->{sid} || $story_ref->{sid}) . ".shtml";
+		$url .= "/" . $sid . ".shtml";
 		# manually add the tid(s), if wanted
 		if ($constants->{tids_in_urls} && $params{tids}) {
 			$url .= '?';
