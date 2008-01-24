@@ -27,6 +27,8 @@ $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections))
 	cat $@.orig | \
 		sed -e 's/images\.slashdot\.org/images.slashdot.jp/' | \
 		sed -e 's/text-align: right padding: 3px;/text-align: right; padding: 3px;/' | \
+		sed -e 's/#articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100;/#articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100; }/' | \
+		sed -e 's/#commentwrap {clear: both;}/* html #commentwrap {clear: both;}/' | \
 		perl -npe 's/\bfont-family:[^;]+;//' | \
 		perl -npe 's/\bsans-serif\b//' > $@
 	if [ -f $@.jp ]; then cat $@.jp >> $@; fi

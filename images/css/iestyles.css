@@ -27,7 +27,7 @@ div#contents div#message { background-color: #fff; }
   div#contents div#message p { padding: .35em .7em .3em .7em; border-bottom: 1px solid #fff; }
 
 /* Comments */
-#commentwrap {clear: both;}
+* html #commentwrap {clear: both;}
 #ccw-panel-container, div.ccw-panel, .ccw-count-pos, .ccw-count-text, .horizontal #ccw-body, .horizontal div.ccw-panel { left: 0; }
 #commentlisting {width: 99%;}
 #commentlisting ul li { background: url(//images.slashdot.jp/comment-line.png) no-repeat 3px 4px; }
@@ -130,7 +130,7 @@ h3 .close {_filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//im
 #articles div.storylinks, div.storylinks div, div.storylinks ul {position: relative !important; margin: 0 !important; padding: 0 !important; height: 3em;}
 #articles div.storylinks {margin-top: 1em !important}
 #articles div.storylinks div {height: 2.3em; margin: 0 0 1em 0 !important} 
-#articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100; }
+#articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100; } 
 div.storylinks ul {padding: .75em 8em .75em .6em; }
 #articles div.storylinks ul li a { _position: relative;}
 
