@@ -6,7 +6,7 @@ slash (2.5.0.189-3) unstable; urgency=low
   * Fix: Use of uninitialized value at
     /usr/lib/perl5/Slash/Utility/Display.pm line 549.
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 24 Jan 2008 12:44:30 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 24 Jan 2008 19:58:59 +0900
 
 slash (2.5.0.189-2) unstable; urgency=low
 

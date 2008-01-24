@@ -12150,6 +12150,7 @@ sub _addGlobjEssentials_stories {
 	my $stoids_hr = _addGlobjEssentials_getids($ar, 'stories');
 	my @stoids = keys %$stoids_hr;
 	for my $stoid (@stoids) {
+		next unless ($self->sqlSelect('stoid','stories',"stoid=$stoid"));
 		my $globjid = $stoids_hr->{$stoid};
 		my $story = $self->getStory($stoid);
 		my $data_ar = linkStory({ stoid => $stoid });
