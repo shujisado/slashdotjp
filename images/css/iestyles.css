@@ -148,6 +148,9 @@ div.storylinks ul {padding: .75em 8em .75em .6em; }
 #topnav div.search {
 	width: 20em;
 }
+*:first-child + html #topnav div.search {
+	margin-right: 1.25em;
+}
 
 /* override for original iestyles.css */
 ul.menu li {
