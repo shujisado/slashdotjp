@@ -159,6 +159,10 @@ form#createuserform ul {
 	margin: 1em 0pt 1em 2em !important;
 }
 
+div#bookmark ul.menu {
+	margin: 0 !important;
+}
+
 /* ads format */
 div.article div.bigbanner,
 div.adsense_468x60 {
