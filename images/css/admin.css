@@ -208,3 +208,25 @@ margin: 0 .6em;
 
 #simstories, #articles .note {margin: 0 0 1em 0; background: transparent; padding: 0 19em 0 1em;}
 tr.data_head {background: #ddd; }
+/* Fixed admin menu */
+div#adminmenu {
+	background: transparent url(//images.slashdot.jp/storylinks-bg.png) repeat-x scroll left bottom;
+	font-size: 93%;
+	overflow: auto;
+	margin: 0;
+	padding: 0.3em 1em;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 10000;
+}
+div#adminmenu ul.menu {
+	display: inline;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+}
+body {
+	margin-top: 1.6em;
+}
