@@ -20,3 +20,6 @@ div#adminmenu ul.menu {
 body {
 	margin-top: 1.6em;
 }
+* html body {
+	margin-top: 0;
+}
