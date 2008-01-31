@@ -5,8 +5,10 @@ slash (2.5.0.189-3) unstable; urgency=low
   * Change to delete nonexistent stories from story_dirty
   * Fix: Use of uninitialized value at
     /usr/lib/perl5/Slash/Utility/Display.pm line 549.
+  * Add logcheck ignore rules
+    - Suppress story deleting message
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 24 Jan 2008 19:58:59 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 31 Jan 2008 06:53:10 +0000
 
 slash (2.5.0.189-2) unstable; urgency=low
 

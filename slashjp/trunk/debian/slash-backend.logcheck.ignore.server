@@ -12,7 +12,7 @@ Finishing sleep:
 runtask [-a-z0-9A-Z_]+\.pl (begin|end)
 runtask .* (Begin|End)
 \[adminmail\.pl\] [-a-z0-9A-Z_. ]+ (Begin|End)
-\[freshenup\.pl\] (Updating|updated) [0-9/]+
+\[freshenup\.pl\] (Updating|updated|Deleting) [0-9/]+
 \[freshenup\.pl\] (index|article|firehose)\.pl 
 \[freshenup\.pl\] slash [a-z0-9A-Z_]+\.shtml
 \[freshenup\.pl\] setStory on [0-9]+ stories
