@@ -635,6 +635,13 @@ sub DESTROY {
 	$self->{_dbh}->disconnect if !$ENV{GATEWAY_INTERFACE} && $self->{_dbh};
 }
 
+sub getFireHoseIdBySubid {
+	my($self, $subid) = @_;
+	my $constants = getCurrentStatic();
+	return undef unless ($constants->{plugin}{FireHose});
+	my $subid_q = $self->sqlQuote($subid);
+	return $self->sqlSelect("id", "firehose", "srcid=$subid_q AND type='submission'") || undef;
+}
 
 1;
 

@@ -1493,6 +1493,7 @@ sub editStory {
 	}
 	my $pending_file_count = 0;
 	my $story_static_files = [];
+	$form->{fhid} ||= $admindb->getFireHoseIdBySubid($subid) if ($subid && $constants->{plugin}{FireHose});
 	if ($stoid || $form->{sid}) {
 		my $story = $slashdb->getStory($form->{sid});
 		$stoid ||= $story->{stoid};
