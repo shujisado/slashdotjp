@@ -7,12 +7,13 @@ slash (2.5.0.189-3) unstable; urgency=low
     /usr/lib/perl5/Slash/Utility/Display.pm line 549.
   * Add logcheck ignore rules
     - Suppress story deleting message
+    - Suppress Deleted nonexistent stories from story_dirty message
   * Fix: takeover discussion failed when the story has been created from
     submit.pl
   * Fix: remaining firehose url at discussion table when takeover discussion
     from firehose.
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 31 Jan 2008 09:03:10 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 31 Jan 2008 09:05:59 +0000
 
 slash (2.5.0.189-2) unstable; urgency=low
 
