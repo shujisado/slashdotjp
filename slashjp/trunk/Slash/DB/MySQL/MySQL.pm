@@ -7667,7 +7667,7 @@ sub createStory {
 		};
 
 		my $id;
-		if ($story->{discussion} && ($story->{journal_id} || $constants->{takeover_discussion_from_firehose})) {
+		if ($story->{discussion} && $story->{journal_id}) {
 			# updating now for journals tips off users that this will
 			# be a story soon, esp. ts, url, title, kind ... i don't
 			# care personally, does it matter?  if so we can task some
@@ -7678,7 +7678,7 @@ sub createStory {
 			delete $discussion->{uid}; # leave it "owned" by poster
 
 			$id = $story->{discussion};
-			$discussion->{kind} = $story->{journal_id} ? 'journal-story' : 'story';
+			$discussion->{kind} = 'journal-story';
 			$discussion->{type} = 'open'; # should be already
 			$discussion->{archivable} = 'yes'; # for good measure
 
@@ -7690,6 +7690,15 @@ sub createStory {
 					stoid	=> $stoid,
 					updated	=> 0,
 				}, 'id=' . $self->sqlQuote($story->{journal_id}));
+			}
+
+		} elsif ($story->{discussion} && $constants->{takeover_discussion_from_firehose}) {
+			$id = $story->{discussion};
+			$discussion->{kind} = 'story';
+			$discussion->{type} = 'open'; # should be already
+			$discussion->{archivable} = 'yes'; # for good measure
+			if (!$self->setDiscussion($id, $discussion)) {
+				$error = "Failed to set discussion data for story\n";
 			}
 
 		} else {
