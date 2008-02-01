@@ -1,4 +1,4 @@
-// $Id: comments.js,v 1.106 2008/01/18 22:36:50 pudge Exp $
+// $Id: comments.js,v 1.109 2008/01/31 19:24:59 pudge Exp $
 
 var comments;
 var root_comments;
@@ -48,6 +48,7 @@ var alt_down = 0;
 var ctrl_down = 0;
 var meta_down = 0;
 var d2_seen = '';
+var low_bandwidth = 0;
 
 var adTimerSecs;
 var adTimerClicks;
@@ -375,6 +376,12 @@ function selectParent(cid, collapse) {
 		return true; // follow link
 	}
 	return false;
+}
+
+function vertBarClick (pid) {
+	comments_started = 1;
+	setCurrentComment(pid);
+	return selectParent(pid, 2);
 }
 
 function setShortSubject(cid, mode, cl) {
@@ -1237,9 +1244,14 @@ function toggleDisplayOptions() {
 	} else if ( d2out.className == 'horizontal' ) { // horizontal->rooted
 		newMode = 'rooted';
 		d2out.className = 'horizontal rooted';
-	} else { // (rooted, none)->vertical
-		newMode = d2out.className = 'vertical';
-		gCommentControlWidget.setOrientation('Y');
+	} else {
+		if (!low_bandwidth) { // (rooted, none)->vertical
+			newMode = d2out.className = 'vertical';
+			gCommentControlWidget.setOrientation('Y');
+		} else { // vertical not happy in low-bandwidth
+			newMode = d2out.className = 'horizontal';
+			gCommentControlWidget.setOrientation('X');
+		}
 	}
 
 	d2act();
@@ -1783,9 +1795,9 @@ function keyHandler(e, k) {
 			if (!k)
 				doModifiers(e);
 			var collapseCurrent = shift_down;
-			var getNextUnread   = ctrl_down;
+			var getNextUnread   = ctrl_down; // not working right, and interfering anyway -- pudge
 			var skipit = 0;
-			if (meta_down || alt_down)
+			if (meta_down || alt_down || ctrl_down)
 				skipit = 1;
 			if (!k)
 				resetModifiers();
@@ -1860,7 +1872,7 @@ function keyHandler(e, k) {
 	}
 }
 
-// at first comment, comment is not in window OR comment is not full
+// at first comment, and comment is not in window OR comment is not full
 function noSeeFirstComment (cid) {
 	setDefaultDisplayMode(cid);
 	if (!comments_started && (!commentIsInWindow(cid) || (viewmodevalue[displaymode[cid]] < viewmodevalue['full']))) {
@@ -1982,4 +1994,3 @@ function dummyComment(cid) {
 
 	return(html.replace(/\-\-CID\-\-/g, cid));
 }
-

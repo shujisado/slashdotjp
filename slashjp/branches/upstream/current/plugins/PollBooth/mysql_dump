@@ -1,8 +1,8 @@
 #
-# $Id: mysql_dump,v 1.8 2005/12/23 00:10:03 jamiemccarthy Exp $
+# $Id: mysql_dump,v 1.9 2008/01/31 15:18:40 jamiemccarthy Exp $
 #
 
-INSERT INTO discussion_kinds (dkid, name) VALUES (NULL, 'poll');
+INSERT IGNORE INTO discussion_kinds (dkid, name) VALUES (NULL, 'poll');
 
 INSERT INTO hooks (param, class, subroutine) VALUES ('admin_save_story_success','Slash::PollBooth','createAutoPollFromStory');
 

@@ -88,12 +88,13 @@ END %]
 	   		   introtext = item.introtext;
 			   # set introtext with extra data we want
 			   PROCESS formatHoseIntro; 
-			END %]
+			%]
 			[% introtext %]
-			[% IF item.media %]
-			<div class="media">
-			[% item.media %]
-			</div>
+			[% IF view_mode && item.media %]
+				<div class="media">
+					[% item.media %]
+				</div>
+			[% END %]
 			[% END %]
 		</div>
 	[% IF bodywrapper %]
@@ -154,4 +155,4 @@ END %]
 [% END %]
 [% END %]
 __version__
-$Id: dispFireHose;firehose;default,v 1.67 2007/12/12 22:21:13 tvroom Exp $
+$Id: dispFireHose;firehose;default,v 1.70 2008/01/29 22:14:02 tvroom Exp $

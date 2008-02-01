@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHose.pm,v 1.199 2008/01/18 21:18:20 tvroom Exp $
+# $Id: FireHose.pm,v 1.211 2008/01/31 17:57:01 jamiemccarthy Exp $
 
 package Slash::FireHose;
 
@@ -41,7 +41,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.199 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.211 $ ' =~ /\$Revision:\s+([^\s]+)/;
 sub createFireHose {
 	my($self, $data) = @_;
 	$data->{dept} ||= "";
@@ -846,6 +846,17 @@ sub getPrimaryFireHoseItemByUrl {
 	return $ret_val;
 }
 
+sub ajaxFetchMedia {
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+	my $firehose = getObject("Slash::FireHose");
+	my $id = $form->{id};
+	return unless $id && $firehose;
+	my $item = $firehose->getFireHose($id);
+	return $item->{media};
+}
+
 sub fetchItemText {
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
@@ -978,7 +989,7 @@ sub ajaxRemoveUserTab {
 	my $firehose = getObject("Slash::FireHose");
 	my $opts = $firehose->getAndSetOptions();
 	my $html = {};
-	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts }, { Return => 1});
+	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section} }, { Return => 1});
 
 	return Data::JavaScript::Anon->anon_dump({
 		html	=> $html
@@ -991,7 +1002,7 @@ sub ajaxFireHoseSetOptions {
 	my $firehose = getObject("Slash::FireHose");
 	my $opts = $firehose->getAndSetOptions();
 	my $html = {};
-	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section} }, { Return => 1});
+	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}  }, { Return => 1});
 	$html->{fhoptions} = slashDisplay("firehose_options", { nowrapper => 1, options => $opts }, { Return => 1});
 	$html->{fhadvprefpane} = slashDisplay("fhadvprefpane", { options => $opts }, { Return => 1});
 
@@ -1060,7 +1071,7 @@ sub ajaxSaveFirehoseTab {
 
 	my $opts = $firehose->getAndSetOptions();
 	my $html = {};
-	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts }, { Return => 1});
+	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section} }, { Return => 1});
 	$html->{message_area} = $message;
 	return Data::JavaScript::Anon->anon_dump({
 		html	=> $html
@@ -1526,10 +1537,10 @@ sub setFireHose {
 
 	my $text_data = {};
 
-	$text_data->{title} = delete $data->{title} if defined $data->{title};
-	$text_data->{introtext} = delete $data->{introtext} if defined $data->{introtext};
-	$text_data->{bodytext} = delete $data->{bodytext} if defined $data->{bodytext};
-	$text_data->{media} = delete $data->{media} if defined $data->{media};
+	$text_data->{title} = delete $data->{title} if exists $data->{title};
+	$text_data->{introtext} = delete $data->{introtext} if exists $data->{introtext};
+	$text_data->{bodytext} = delete $data->{bodytext} if exists $data->{bodytext};
+	$text_data->{media} = delete $data->{media} if exists $data->{media};
 
 	$self->sqlUpdate('firehose', $data, "id=$id_q");
 	$self->sqlUpdate('firehose_text', $text_data, "id=$id_q") if keys %$text_data;
@@ -1558,7 +1569,8 @@ sub dispFireHose {
 		options			=> $options->{options},
 		vote			=> $options->{vote},
 		bodycontent_include	=> $options->{bodycontent_include},
-		nostorylinkwrapper	=> $options->{nostorylinkwrapper}
+		nostorylinkwrapper	=> $options->{nostorylinkwrapper},
+		view_mode		=> $options->{view_mode}
 	}, { Page => "firehose",  Return => 1 });
 }
 
@@ -1631,8 +1643,8 @@ sub getAndSetOptions {
 	my $types = { feed => 1, bookmark => 1, submission => 1, journal => 1, story => 1, vendor => 1, misc => 1 }; 
 	my $tabtypes = { tabsection => 1, tabpopular => 1, tabrecent => 1, tabuser => 1};
 	
-	my $tabtype = $tabtypes->{$form->{tabtype}} ? $form->{tabtype} : '';
-
+	my $tabtype = '';
+	$tabtype = $form->{tabtype} if $form->{tabtype} && $tabtypes->{ $form->{tabtype} };
 
 	my $modes = { full => 1, fulltitle => 1 };
 	my $pagesizes = { "small" => 1, "large" => 1 };
@@ -1735,12 +1747,16 @@ sub getAndSetOptions {
 
 	my $fhfilter;
 
-	if ($opts->{initial} && !$tabtype) {
-		$tabtype = 'tabsection';
-		$form->{section} = $gSkin->{skid} == $constants->{mainpage_skid} ? 0 : $gSkin->{skid};
+	if ($opts->{initial}) {
+		if (!defined $form->{section}) {
+			$form->{section} = $gSkin->{skid} == $constants->{mainpage_skid} ? 0 : $gSkin->{skid};
+		}
+		if (!$tabtype) {
+			$tabtype = 'tabsection';
+		}
 	}
 
-	my $the_skin = $self->getSkin($form->{section});
+	my $the_skin = $form->{section} ? $self->getSkin($form->{section}) : $gSkin;
 
 
 	if ($tabtype eq 'tabsection') {
@@ -1752,7 +1768,7 @@ sub getAndSetOptions {
 		$form->{fhfilter} = "-story";
 		$options->{orderby} = "createtime";
 		$options->{orderdir} = "DESC";
-		$options->{color} = "blue";
+		$options->{color} = "indigo";
 	} elsif ($tabtype eq 'tabpopular') {
 		$form->{fhfilter} = "-story";
 		$options->{orderby} = "popularity";
@@ -1799,7 +1815,7 @@ sub getAndSetOptions {
 	my $system_tabs = [ 
 		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story"},
 		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story"},
-		{ tabtype => 'tabrecent',  color => 'blue',  filter => "$skin_prefix\-story"},
+		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story"},
 	];
 
 	if (!$user->{is_anon}) {
@@ -1833,7 +1849,9 @@ sub getAndSetOptions {
 				$data->{mode}  	  = $options->{mode};
 				$data->{filter}	  = $options->{fhfilter};
 				$data->{color}	  = $options->{color};
-				$self->createOrReplaceUserTab($user->{uid}, $tab->{tabname}, $data);
+				if (!$user->{is_anon} && $tab->{tabname}) {
+					$self->createOrReplaceUserTab($user->{uid}, $tab->{tabname}, $data) ;
+				}
 			}
 		}
 	}
@@ -1843,7 +1861,9 @@ sub getAndSetOptions {
 		foreach (keys %$tab_compare) {
 			$data->{$_} = $options->{$tab_compare->{$_}} || '';
 		}
-		$self->createOrReplaceUserTab($user->{uid}, "untitled", $data);
+		if (!$user->{is_anon}) {
+			$self->createOrReplaceUserTab($user->{uid}, "untitled", $data);
+		}
 		$user_tabs = $self->getUserTabs();
 		foreach (@$user_tabs) {
 			$_->{active} = 1 if $_->{tabname} eq "untitled" 
@@ -1934,7 +1954,6 @@ sub getAndSetOptions {
 			$fhfilter .= " $gSkin->{name}";
 		}
 	}
-
 	my $fh_ops = $self->splitOpsFromString($fhfilter);
 	
 
@@ -2092,7 +2111,6 @@ sub getAndSetOptions {
 		$options->{not_id} = $form->{not_id};
 	}
 
-
 	return $options;
 }
 
@@ -2196,12 +2214,21 @@ sub listView {
 	my $featured;
 
 	if ($gSkin->{name} eq "idle" && !$user->{firehose_nomarquee}) {
-		my($res) = $firehose_reader->getFireHoseEssentials({ primaryskid => $gSkin->{skid}, type => "story", limit => 1, orderby => 'createtime', orderdir => 'DESC'});
+		my $featured_ops ={ primaryskid => $gSkin->{skid}, type => "story", limit => 1, orderby => 'createtime', orderdir => 'DESC'};
+
+		if ($user->{is_subscriber}) {
+			$featured_ops->{createtime_subscriber_future} = 1;
+		} else {
+			$featured_ops->{createtime_no_future} = 1;
+		}
+
+		my($res) = $firehose_reader->getFireHoseEssentials($featured_ops);
 		if ($res && $res->[0]) {
 			$featured = $firehose_reader->getFireHose($res->[0]->{id});
 		}
 	}
-	my $initial = ($form->{tab} || $form->{tabtype} || $form->{fhfilter}) ? 0 : 1;
+	my $initial = ($form->{tab} || $form->{tabtype} || $form->{fhfilter} || defined $form->{page} || $lv_opts->{fh_page} eq "console.pl" ) ? 0 : 1;
+
 	my $options = $lv_opts->{options} || $self->getAndSetOptions({ initial => $initial });
 	my $base_page = $lv_opts->{fh_page} || "firehose.pl";
 
@@ -2263,7 +2290,7 @@ sub listView {
 		}
 		$i++;
 	}
-	my $Slashboxes = displaySlashboxes();
+	my $Slashboxes = displaySlashboxes($gSkin);
 	my $refresh_options;
 	$refresh_options->{maxtime} = $maxtime;
 	if (uc($options->{orderdir}) eq "ASC") {
@@ -2361,7 +2388,7 @@ sub ajaxFirehoseListTabs {
 	my $firehose = getObject("Slash::FireHose");
 	my $tabs = $firehose->getUserTabs({ prefix => $form->{prefix}});
 	@$tabs = map { $_->{tabname}} grep { $_->{tabname} ne "untitled" } @$tabs;
-	return join "\n", @$tabs;
+	return join "\n", @$tabs, "untit";
 }
 
 sub splitOpsFromString {
@@ -2493,9 +2520,10 @@ sub getNextItemsForThumbnails {
 
 sub createSectionSelect {
 	my($self, $default) = @_;
-	my $skins = $self->getSkins();
-	my $constants = getCurrentStatic();
-	my $ordered = [];
+	my $skins 	= $self->getSkins();
+	my $constants 	= getCurrentStatic();
+	my $user = 	getCurrentUser();
+	my $ordered 	= [];
 	my $menu;
 
 	foreach my $skid (keys %$skins) {
@@ -2505,9 +2533,12 @@ sub createSectionSelect {
 			$menu->{$skid} = $skins->{$skid}{title};
 		}
 	}
+	my $onchange = $user->{is_anon} 
+		? "firehose_change_section_anon(this.options[this.selectedIndex].value)" 
+		: "firehose_set_options('tabsection', this.options[this.selectedIndex].value)";
 
 	@$ordered = sort {$a == 0 ? -1 : $b == 0 ? 1 : 0 || $menu->{$a} cmp $menu->{$b} } keys %$menu;
-	return createSelect("fh_section", $menu, { default => $default, return => 1, nsort => 0, ordered => $ordered, multiple => 0, onchange =>"firehose_set_options('tabsection', this.options[this.selectedIndex].value)"});
+	return createSelect("section", $menu, { default => $default, return => 1, nsort => 0, ordered => $ordered, multiple => 0, onchange => $onchange });
 
 	
 }
@@ -2523,4 +2554,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: FireHose.pm,v 1.199 2008/01/18 21:18:20 tvroom Exp $
+$Id: FireHose.pm,v 1.211 2008/01/31 17:57:01 jamiemccarthy Exp $

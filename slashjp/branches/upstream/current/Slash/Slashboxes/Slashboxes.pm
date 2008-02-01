@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Slashboxes.pm,v 1.2 2007/02/21 02:49:11 pudge Exp $
+# $Id: Slashboxes.pm,v 1.3 2008/01/24 18:27:41 entweichen Exp $
 
 package Slash::Slashboxes;
 
@@ -13,7 +13,7 @@ use Slash::Utility;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(getUserSlashboxes displaySlashboxes);
 
 #################################################################
@@ -89,6 +89,9 @@ sub displaySlashboxes {
 				'login'
 			);
 
+                } elsif ($bid eq 'index_jobs' && ($user->{is_anon} || !$constants->{use_default_slashboxes})) {
+                        # do nothing!
+                        
 		} elsif ($bid eq 'poll' && !$constants->{poll_cache}) {
 			# this is only executed if poll is to be dynamic
 			$return .= portalsidebox(
@@ -123,6 +126,9 @@ sub displaySlashboxes {
 				@{$data}{qw(title block bid url)},
 				$getblocks
 			);
+
+                } elsif ($bid eq 'srandblock_ostg' && !$constants->{use_default_slashboxes}) {
+                        # Don't add this Slashbox at all if the site has it toggled off
 
 		} else {
 			$boxcache->{$bid} ||= portalsidebox(

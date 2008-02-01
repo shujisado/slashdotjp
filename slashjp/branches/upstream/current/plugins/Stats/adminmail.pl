@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: adminmail.pl,v 1.217 2008/01/21 15:49:48 jamiemccarthy Exp $
+# $Id: adminmail.pl,v 1.218 2008/01/30 22:56:18 jamiemccarthy Exp $
 
 use strict;
 use Slash::Constants qw( :messages :slashd );
@@ -827,8 +827,8 @@ EOT
 		$statsSave->createStatDaily("badgehost_$host", $count);
 	}
 
-	$data{bookmarks_anon} = $logdb->getNumBookmarks({ anon_only => 1 });
-	$statsSave->createStatDaily("bookmarks_anon", $data{bookmarks_anon});
+	$data{bookmarks} = $stats->getNumBookmarks();
+	$statsSave->createStatDaily("bookmarks", $data{bookmarks});
 
 	my $new_users_yest = $slashdb->getNumNewUsersSinceDaysback(1)
 		- $slashdb->getNumNewUsersSinceDaysback(0);

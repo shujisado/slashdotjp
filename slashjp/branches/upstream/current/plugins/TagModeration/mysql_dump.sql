@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.1 2006/10/31 19:06:05 jamiemccarthy Exp $
+# $Id: mysql_dump.sql,v 1.2 2008/01/31 17:53:44 jamiemccarthy Exp $
 #
 
 REPLACE INTO ajax_ops VALUES (NULL, 'comments_moderate_cid', 'Slash::TagModeration', 'ajaxModerateCid', 'comments-moderation-ajax', 'use');
@@ -16,6 +16,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('m1_pointgrant_factor
 INSERT IGNORE INTO vars (name, value, description) VALUES ('m1_pointgrant_factor_downfairratio', '1.3', 'Factor of downmods fairness ratio in deciding who is eligible for moderation (1=irrelevant, 2=top user twice as likely)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('m1_pointgrant_factor_fairtotal', '1.3', 'Factor of fairness total in deciding who is eligible for moderation (1=irrelevant, 2=top user twice as likely)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('m1_pointgrant_factor_stirratio', '1.3', 'Factor of stirred-points ratio in deciding who is eligible for moderation (1=irrelevant, 2=top user twice as likely)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('m1_pointgrant_highclout', '4', 'Clout level that earns a user more mod points when granted');
 
 INSERT IGNORE INTO modreasons (id, name, m2able, listable, val, karma, fairfrac) VALUES ( 0, 'Normal',        0, 0,  0,  0, 0.5);
 INSERT IGNORE INTO modreasons (id, name, m2able, listable, val, karma, fairfrac) VALUES ( 1, 'Offtopic',      1, 1, -1, -1, 0.5);

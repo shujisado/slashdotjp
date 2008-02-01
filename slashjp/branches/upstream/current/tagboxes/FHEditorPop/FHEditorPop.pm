@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHEditorPop.pm,v 1.21 2007/11/09 16:21:35 jamiemccarthy Exp $
+# $Id: FHEditorPop.pm,v 1.23 2008/01/30 22:57:28 jamiemccarthy Exp $
 
 # This goes by seclev right now but perhaps should define "editor"
 # to be more about author than admin seclev.  In which case the
@@ -32,7 +32,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.21 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.23 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -218,7 +218,8 @@ sub run {
 	}
 
 	# If this is spam, its score goes way down.
-	if ($fhitem->{is_spam} eq 'yes') {
+	my $firehose_db = getObject('Slash::FireHose');
+	if ($fhitem->{is_spam} eq 'yes' || $firehose_db->itemHasSpamURL($fhitem)) {
 		my $max = defined($constants->{firehose_spam_score})
 			? $constants->{firehose_spam_score}
 			: -50;
@@ -226,7 +227,6 @@ sub run {
 	}
 
 	# Set the corresponding firehose row to have this popularity.
-	my $firehose_db = getObject('Slash::FireHose');
 	warn "Slash::Tagbox::FHEditorPop->run bad data, fhid='$fhid' db='$firehose_db'" if !$fhid || !$firehose_db;
 	if ($options->{return_only}) {
 		return $popularity;

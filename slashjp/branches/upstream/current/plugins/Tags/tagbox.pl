@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tagbox.pl,v 1.16 2007/09/26 21:25:51 jamiemccarthy Exp $
+# $Id: tagbox.pl,v 1.18 2008/01/30 22:42:38 jamiemccarthy Exp $
 
 use strict;
 
@@ -171,6 +171,8 @@ sub update_feederlog {
 	my $clout_types = $tagsdb->getCloutTypes();
 	for my $tagbox (@$tagboxes) {
 
+main::tagboxLog("update_feederlog name=$tagbox->{name} tbid=$tagbox->{tbid} objtbid=$tagbox->{object}{tbid} last=$tagbox->{last_tagid_logged}");
+
 		my @tags_copy = @$tags_ar;
 		my $clout_type = $clout_types->{ $tagbox->{clid} };
 		$tagsdb->addCloutsToTagArrayref(\@tags_copy, $clout_type);
@@ -193,6 +195,7 @@ sub update_feederlog {
 				$feeder_ar = undef;
 				$feeder_ar = $tagbox->{object}->feed_newtags($tags_this_tagbox_ar);
 				# XXX optimize by consolidating here: sum importances, max tagids
+main::tagboxLog("update_feederlog name=$tagbox->{name} inserting " . ($feeder_ar ? scalar(@$feeder_ar) : 'none') . ' based on ' . scalar(@$tags_this_tagbox_ar) . ' tags');
 				insert_feederlog($tagbox, $feeder_ar) if $feeder_ar;
 				# XXX The previous insert and this update should be wrapped
 				# in a transaction.
@@ -279,7 +282,7 @@ sub update_feederlog {
 sub insert_feederlog {
 	my($tagbox, $feeder_ar) = @_;
 	for my $feeder_hr (@$feeder_ar) {
-#print STDERR "addFeederInfo: tbid=$tagbox->{tbid} tagid=$feeder_hr->{tagid} affected_id=$feeder_hr->{affected_id} imp=$feeder_hr->{importance}\n";
+main::tagboxLog("addFeederInfo: tbid=$tagbox->{tbid} tagid=$feeder_hr->{tagid} affected_id=$feeder_hr->{affected_id} imp=$feeder_hr->{importance}");
 		$tagboxdb->addFeederInfo($tagbox->{tbid}, $feeder_hr);
 	}
 }

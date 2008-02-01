@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Stats.pm,v 1.190 2008/01/21 15:49:48 jamiemccarthy Exp $
+# $Id: Stats.pm,v 1.191 2008/01/28 14:35:50 jamiemccarthy Exp $
 
 package Slash::Stats;
 
@@ -22,7 +22,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.190 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.191 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user, $options) = @_;
@@ -1122,10 +1122,11 @@ sub getOpCombinationStats {
 		push @where, "a$tn.op=" . $self->sqlQuote($hit);
 	}
 	if (@$nohit_ar) {
+		my $tnprev = $tn;
 		++$tn;
 		my $notlist = join ',', map { $self->sqlQuote($_) } @$nohit_ar;
 		$tables[-1] .= " LEFT JOIN accesslog_temp_uidip AS a$tn
-			ON (a$tn.uidip=a1.uidip AND a$tn.op IN ($notlist))";
+			ON (a$tn.uidip=a$tnprev.uidip AND a$tn.op IN ($notlist))";
 		push @where, "a$tn.op IS NULL";
 	}
 	my $tables = join ', ', @tables;
@@ -1750,7 +1751,7 @@ sub getTopBadgeURLs {
 		$qs =~ s/^.*url=//;
 		$qs =~ s/\%[a-fA-F0-9]?$//;
 		$qs =~ s/%([a-fA-F0-9]{2})/pack('C', hex($1))/ge;
-		$duple = [$qs, $c];
+		$duple = [fudgeurl($qs), $c];
 	}
 	return $top_ar;
 }
@@ -1764,14 +1765,18 @@ sub getTopBadgeHosts {
 	for my $duple (@$top_ar) {
 		my($uri, $c) = @$duple;
 		my $uri_obj = URI->new($uri);
-		my $host = $uri_obj && $uri_obj->can('host') ? $uri_obj->host() : $uri;
+		my $host = $uri_obj && $uri_obj->can('host') ? lc($uri_obj->host()) : $uri;
+		$host =~ s/^www\.//;
 		$count{$host} += $c;
 	}
-	my @top_hosts = (sort { $count{$b} <=> $count{$a} || $a <=> $b } keys %count);
+	my @top_hosts = (sort { $count{$b} <=> $count{$a} || $a cmp $b } keys %count);
 	$#top_hosts = $count-1 if scalar @top_hosts > $count;
 	my @top = ( map { [ $_, $count{$_} ] } @top_hosts );
 	return \@top;
 }
+
+# Not much point in anon_only option, at least not right now, since
+# bookmarks don't get created anonymously at the moment.
 
 sub getNumBookmarks {
 	my($self, $options) = @_;
@@ -2212,4 +2217,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Stats.pm,v 1.190 2008/01/21 15:49:48 jamiemccarthy Exp $
+$Id: Stats.pm,v 1.191 2008/01/28 14:35:50 jamiemccarthy Exp $

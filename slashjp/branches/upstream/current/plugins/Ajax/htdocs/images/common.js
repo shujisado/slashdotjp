@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.160 2008/01/21 18:42:37 tvroom Exp $
+// $Id: common.js,v 1.165 2008/01/31 19:02:35 pudge Exp $
 
 // global settings, but a firehose might use a local settings object instead
 var firehose_settings = {};
@@ -29,6 +29,7 @@ var fh_colorslider;
 var fh_ticksize;
 var fh_pageval = 0;
 var fh_colors = Array(0);
+var fh_use_jquery = 0;
 var vendor_popup_timerids = Array(0);
 var vendor_popup_id = 0;
 var fh_slider_init_set = 0;
@@ -503,7 +504,7 @@ function firehose_set_options(name, value) {
 		["orderdir", 	"ASC", 		"asc",		"desc",		"DESC"],
 		["orderdir", 	"DESC", 	"desc",		"asc",		"ASC"],
 		["mode", 	"full", 	"abbrev",	"full",		"fulltitle"],
-		["mode", 	"fulltitle", 	"full",		"abbrev",	"full"],
+		["mode", 	"fulltitle", 	"full",		"abbrev",	"full"]
 	];
 	var params = [];
 	params['op'] = 'firehose_set_options';
@@ -684,6 +685,7 @@ function firehose_remove_tab(tabid) {
 	params['op'] = 'firehose_remove_tab';
 	params['tabid'] = tabid;
 	params['reskey'] = reskey_static;
+	params['section'] = firehose_settings.section;
 	ajax_update(params, '', handlers);
 
 }
@@ -898,6 +900,8 @@ function firehose_handle_update() {
 		if(el[0] == "add") {
 			if (firehose_settings.before[el[1]] && $('firehose-' + firehose_settings.before[el[1]])) {
 				new Insertion.After('firehose-' + firehose_settings.before[el[1]], el[2]);
+
+
 			} else if (firehose_settings.after[el[1]] && $('firehose-' + firehose_settings.after[el[1]])) {
 				new Insertion.Before('firehose-' + firehose_settings.after[el[1]], el[2]);
 			} else if (insert_new_at == "bottom") {
@@ -935,6 +939,15 @@ function firehose_handle_update() {
 			myAnim.onComplete.subscribe(function() {
 				if ($(fh)) {
 					$(fh).style.height = "";
+					if (fh_use_jquery) {
+						jQuery("#" + fh + " h3 a[class!='skin']").click(
+				                	function(){
+                	        				jQuery(this).parent('h3').next('div.hide').toggle("fast");
+				                        	jQuery(this).parent('h3').find('a img').toggle("fast");
+                        			        	return false;
+                        				}
+                				);
+					}
 				}
 			});
 			myAnim.animate();
@@ -1240,25 +1253,28 @@ function firehose_calendar_init( widget ) {
 }
 
 function firehose_slider_init() {
-	fh_colorslider = YAHOO.widget.Slider.getHorizSlider("colorsliderbg", "colorsliderthumb", 0, 105, fh_ticksize);
-	fh_colorslider.setValue(fh_ticksize * fh_colors_hash[fh_color] , 1);
-	fh_colorslider.subscribe("slideEnd", firehose_slider_end);
+	if (!fh_slider_init_set) {
+		fh_colorslider = YAHOO.widget.Slider.getHorizSlider("colorsliderbg", "colorsliderthumb", 0, 105, fh_ticksize);
+		var fh_set_val_return = fh_colorslider.setValue(fh_ticksize * fh_colors_hash[fh_color] , 1);
+		var fh_get_val_return = fh_colorslider.getValue();
+		fh_colorslider.subscribe("slideEnd", firehose_slider_end);
+	}
 }	
-
-function firehose_slider_set_color(color) {
-	if (!check_logged_in()) return;
-
-	fh_colorslider.setValue(fh_ticksize * fh_colors_hash[color] , 1);
-}
 
 function firehose_slider_end(offsetFromStart) {
 	var newVal = fh_colorslider.getValue();
+	if (newVal) {
+		fh_slider_init_set = 1;
+	}
 	var color = fh_colors[ newVal / fh_ticksize ];
 	$('fh_slider_img').title = "Firehose filtered to " + color;
 	if (fh_slider_init_set) {
 		firehose_set_options("color", color)
 	}
-	fh_slider_init_set = 1;
+}
+
+function firehose_change_section_anon(section) {
+	window.location.href= window.location.protocol + "//" + window.location.host + "/firehose.pl?section=" + encodeURIComponent(section) + "&tabtype=tabsection";
 }
 
 function pausePopVendorStory(id) {
@@ -1342,6 +1358,7 @@ function firehose_save_tab(id) {
 	};
 	params['op'] = 'firehose_save_tab';
 	params['tabname'] = ti.value;
+	params['section'] = firehose_settings.section;
 
 	params['tabid'] = id;
 	ajax_update(params, '',  handlers);
@@ -1474,6 +1491,17 @@ function getModalPrefs(section, title, tabbed) {
 	ajax_update(params, 'modal_box_content', handlers);
 
 	return;
+}
+
+function firehose_get_media_popup(id) {
+	if ($('preference_title')) {
+		$('preference_title').innerHTML = "Media";
+	}
+	var params = [];
+	params['op'] = 'firehose_get_media';
+	params['id'] = id;
+	var handlers = {onComplete:show_modal_box};
+	ajax_update(params, 'modal_box_content', handlers);
 }
 
 function saveModalPrefs() {

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.1000 2008/01/15 00:17:38 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.1003 2008/01/30 22:38:59 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.1000 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.1003 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -3474,7 +3474,7 @@ sub setStory {
 	if (!exists($change_hr->{last_update})
 		&& !exists($change_hr->{-last_update})) {
 		my @non_cchp = grep !/^(commentcount|hitparade|hits)$/, keys %$change_hr;
-		@fh_update_fields = grep /^(title|uid|time|introtext|bodytext|primaryskid|tid|neverdisplay)$/, keys %$change_hr;
+		@fh_update_fields = grep /^(title|uid|time|introtext|bodytext|primaryskid|tid|neverdisplay|media|thumb)$/, keys %$change_hr;
 		
 		if (@non_cchp > 0) {
 			$change_hr->{-last_update} = 'NOW()';
@@ -6701,9 +6701,9 @@ sub _stories_time_clauses {
 # options is that any change to any story necessitates invalidating all
 # memcached data that might now or might previously have referenced
 # that story.  There is no way to delete all memcached keys that match
-# a regex or prefix (and this is by design:  it will never have this
+# a regex or prefix (and this is by design:  it may never have this
 # capability), so by keeping only 1-2 keys for each tid, instead of
-# keeping a key for every possibly option, we make that deletion
+# keeping a key for every possible option, we make that deletion
 # tractable and even easy.
 #
 # There are only two elements to a memcached gSE key:  the tid of the
@@ -10004,7 +10004,7 @@ sub getStoryTopics {
 
 	my $tree = $self->getTopicTree();
 	my $answer = { };
-	for my $tid (keys %$tree) {
+	for my $tid (@$topics) {
 		$answer->{$tid} = $field ? $tree->{$tid}{$field} : 1;
 	}
 	return $answer;

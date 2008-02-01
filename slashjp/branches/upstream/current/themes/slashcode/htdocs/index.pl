@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: index.pl,v 1.163 2007/08/18 02:19:12 jamiemccarthy Exp $
+# $Id: index.pl,v 1.166 2008/01/30 22:46:10 jamiemccarthy Exp $
 
 use strict;
 use Slash;
@@ -157,7 +157,7 @@ my $start_time = Time::HiRes::time;
 	my $stoid_in_str = join(',', map { $_->{stoid} } @$stories);
 	my $nd_hr = { };
 	if ($stoid_in_str) {
-		my $nd_hr = $gse_db->sqlSelectAllKeyValue('stoid, value',
+		$nd_hr = $gse_db->sqlSelectAllKeyValue('stoid, value',
 			'story_param',
 			qq{stoid IN ($stoid_in_str) AND name='neverdisplay' AND value != 0});
 		if (keys %$nd_hr) {
@@ -172,6 +172,31 @@ my $start_time = Time::HiRes::time;
 		my $gse_str = Data::Dumper::Dumper($gse_hr); $gse_str =~ s/\s+/ /g;
 		print STDERR scalar(gmtime) . " index.pl ND story '@nd_ids' returned by gSE called with params: '$gse_str'\n";
 		$stories = [ grep { !$_->{neverdisplay} } @$stories ];
+	}
+
+	# A kludge to keep Politics stories off the mainpage.  The
+	# proper fix would be to redesign story_topics_rendered to
+	# include a weight in the (stoid,nexus_tid) tuple, and to
+	# have gSE only select stories from its nexus list with that
+	# weight or higher.  Instead I've been asked to hardcode
+	# an "offmainpage" boolean at story save time which will be
+	# checked at story display time. -Jamie 2008-01-25
+	if ($gSkin->{skid} == $constants->{mainpage_skid}) {
+		my $om_hr = { };
+		if ($stoid_in_str) {
+			$om_hr = $gse_db->sqlSelectAllKeyValue('stoid, value',
+				'story_param',
+				qq{stoid IN ($stoid_in_str) AND name='offmainpage' AND value != 0});
+			if (keys %$om_hr) {
+				for my $story_hr (@$stories) {
+					$story_hr->{offmainpage} = 1 if $om_hr->{ $story_hr->{stoid} };
+				}
+			}
+		}
+		# XXX should only grep a story out if the story has
+		# NO nexuses that the user has requested appear in
+		# full on the mainpage
+		$stories = [ grep { !$_->{offmainpage} } @$stories ];
 	}
 
 	#my $last_mainpage_view;
@@ -645,42 +670,28 @@ sub displayStories {
 				$link = "$story->{word_count} $msg->{words}";
 			}
 	
-			if ($story->{body_length} || $story->{commentcount}) {
-				if (!$constants->{index_readmore_with_bytes}) {
-					push @links, linkStory({
-						'link'		=> $link,
-						sid		=> $story->{sid},
-						tid		=> $story->{tid},
-						mode		=> 'nocomment',
-						skin		=> $story->{primaryskid},
-					}, '', $ls_other) if $story->{body_length};
-				}
-
-				my @commentcount_link;
-				my $thresh = $threshComments[$user->{threshold} + 1];
-
-				if ($user->{threshold} > -1 && $story->{commentcount} ne $thresh) {
-					$commentcount_link[0] = linkStory({
-						sid		=> $story->{sid},
-						tid		=> $story->{tid},
-						threshold	=> $user->{threshold},
-						'link'		=> $thresh,
-						skin		=> $story->{primaryskid},
-					}, '', $ls_other);
-				}
-
-				$commentcount_link[1] = linkStory({
+			if (!$constants->{index_readmore_with_bytes}) {
+				push @links, linkStory({
+					'link'		=> $link,
 					sid		=> $story->{sid},
 					tid		=> $story->{tid},
-					threshold	=> -1,
-					'link'		=> $story->{commentcount} || 0,
-					skin		=> $story->{primaryskid}
-				}, '', $ls_other);
-
-				push @commentcount_link, $thresh, ($story->{commentcount} || 0);
-				push @links, getData('comments', { cc => \@commentcount_link })
-					if $story->{commentcount} || $thresh;
+					mode		=> 'nocomment',
+					skin		=> $story->{primaryskid},
+				}, '', $ls_other) if $story->{body_length};
 			}
+
+			my @commentcount_link;
+			my $thresh = $threshComments[1];  # threshold == 0
+
+			$commentcount_link[1] = linkStory({
+				sid		=> $story->{sid},
+				tid		=> $story->{tid},
+				'link'		=> $story->{commentcount} || 0,
+				skin		=> $story->{primaryskid}
+			}, '', $ls_other);
+
+			push @commentcount_link, $thresh, ($story->{commentcount} || 0);
+			push @links, getData('comments', { cc => \@commentcount_link });
 
 			if ($story->{primaryskid} != $constants->{mainpage_skid} && $gSkin->{skid} == $constants->{mainpage_skid}) {
 				my $skin = $reader->getSkin($story->{primaryskid});

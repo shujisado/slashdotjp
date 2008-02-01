@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: PasswordSalt.pm,v 1.1 2008/01/14 23:46:52 jamiemccarthy Exp $
+# $Id: PasswordSalt.pm,v 1.2 2008/01/31 15:17:45 jamiemccarthy Exp $
 
 package Slash::Apache::User::PasswordSalt;
 
@@ -11,7 +11,7 @@ use Slash::Utility::Environment;
 use vars qw($REVISION $VERSION);
 
 $VERSION   	= '2.003000';  # v2.3.0
-($REVISION)	= ' $Revision: 1.1 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($REVISION)	= ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 #
@@ -69,15 +69,16 @@ sub loadSalts {
 	close $fh;
 }
 
-sub getSalts {
+sub getPwSalts {
 	my($virtual_user) = @_;
+	return [ ] if !$virtual_user;
 	loadSalts();
 	return $salt_hr->{$virtual_user} || [ ];
 }
 
-sub getCurrentSalt {
+sub getCurrentPwSalt {
 	my($virtual_user) = @_;
-	my $salt_ar = getSalts($virtual_user);
+	my $salt_ar = getPwSalts($virtual_user);
 	return @$salt_ar ? $salt_ar->[-1] : '';
 }
 

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: firehose.pl,v 1.47 2008/01/18 22:00:45 tvroom Exp $
+# $Id: firehose.pl,v 1.49 2008/01/29 17:35:37 tvroom Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.47 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.49 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -27,9 +27,9 @@ sub main {
 	my $anonval = $constants->{firehose_anonval_param} || "";
 
 	my %ops = (
-		list		=> [1,  \&list, 1, $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1 }],
+		list		=> [1,  \&list, 1, $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1, change => 1, section => 1  }],
 		view		=> [1, 	\&view, 0,  ""],
-		default		=> [1,	\&list, 1,  $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1 }],
+		default		=> [1,	\&list, 1,  $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1, change => 1, section => 1 }],
 		edit		=> [1,	\&edit, 100,  ""],
 		rss		=> [1,  \&rss, 1, ""]
 	);
@@ -112,6 +112,7 @@ sub view {
 
 		my $firehosetext = $firehose_reader->dispFireHose($item, {
 			mode			=> 'full',
+			view_mode		=> 1,
 			tags_top		=> $tags_top,
 			options			=> $options,
 			nostorylinkwrapper	=> $discussion ? 1 : 0,

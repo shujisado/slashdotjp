@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.32 2007/12/19 18:19:16 entweichen Exp $
+# $Id: PLUGIN,v 1.34 2008/01/31 16:23:28 entweichen Exp $
 name=Ajax
 description="Ajax (Asynchronous Javascript and XML)"
 mysql_dump=mysql_dump.sql
@@ -21,6 +21,7 @@ htdoc=htdocs/images/yui/animation.js
 htdoc=htdocs/images/yui/autocomplete.js
 htdoc=htdocs/images/yui/calendar.js
 htdoc=htdocs/images/yui/slider.js
+htdoc=htdocs/images/yui/datasource-beta.js
 htdoc=htdocs/images/sd_autocomplete.js
 htdoc=htdocs/images/sd_calendar.js
 htdoc=htdocs/images/slashbox.js
@@ -40,3 +41,5 @@ template=templates/modal_footer;misc;default
 template=templates/prefs_user;ajax;default
 template=templates/prefs_sectional;ajax;default
 template=templates/prefs_home;ajax;default
+template=templates/prefs_slashboxes;ajax;default
+template=templates/prefs_authors;ajax;default

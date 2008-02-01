@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tags_udc.pl,v 1.6 2008/01/18 21:27:52 jamiemccarthy Exp $
+# $Id: tags_udc.pl,v 1.7 2008/01/31 15:20:19 jamiemccarthy Exp $
 
 # Tags Upvote/Downvote Count
 #
@@ -21,7 +21,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = '2-59/5 * * * *';
 $task{$me}{timespec_panic_1} = ''; # not that important
@@ -64,14 +64,16 @@ $task{$me}{code} = sub {
 
 	my $min_tag_hour_ut = $slashdb->sqlSelect(
 		'FLOOR(UNIX_TIMESTAMP(MIN(created_at))/3600)*3600', 'tags');
-	my $min_pop_hour_ut = $slashdb->sqlSelect(
-		'FLOOR(UNIX_TIMESTAMP(MIN(hourtime  ))/3600)*3600', 'tags_udc');
-	my $hour_ut = $min_pop_hour_ut - 3600;
-	while ($hour_ut >= $min_tag_hour_ut && time() < $start_time + $max_run_time && !$task_exit_flag) {
-		populate_tags_udc($hour_ut);
-		$hour_ut -= 3600;
-		Time::HiRes::sleep(0.1);
-		++$updated;
+	if (defined $min_tag_hour_ut) {
+		my $min_pop_hour_ut = $slashdb->sqlSelect(
+			'FLOOR(UNIX_TIMESTAMP(MIN(hourtime  ))/3600)*3600', 'tags_udc');
+		my $hour_ut = $min_pop_hour_ut - 3600;
+		while ($hour_ut >= $min_tag_hour_ut && time() < $start_time + $max_run_time && !$task_exit_flag) {
+			populate_tags_udc($hour_ut);
+			$hour_ut -= 3600;
+			Time::HiRes::sleep(0.1);
+			++$updated;
+		}
 	}
 
 	sleep 5;

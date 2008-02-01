@@ -1,13 +1,13 @@
 #
-# $Id: dump,v 1.20 2005/12/23 00:10:03 jamiemccarthy Exp $
+# $Id: dump,v 1.21 2008/01/31 15:18:40 jamiemccarthy Exp $
 #
 
 # this should be inserted, but Zoo might not be installed ... ?
 #INSERT INTO people (uid, person, type) VALUES (1,2,"friend");
 #INSERT INTO people (uid, person, type) VALUES (2,2,"friend");
 
-INSERT INTO discussion_kinds (dkid, name) VALUES (NULL, 'journal');
-INSERT INTO discussion_kinds (dkid, name) VALUES (NULL, 'journal-story');
+INSERT IGNORE INTO discussion_kinds (dkid, name) VALUES (NULL, 'journal');
+INSERT IGNORE INTO discussion_kinds (dkid, name) VALUES (NULL, 'journal-story');
 
 INSERT INTO journal_themes (name) VALUES ('generic');
 INSERT INTO journal_themes (name) VALUES ('greypage');

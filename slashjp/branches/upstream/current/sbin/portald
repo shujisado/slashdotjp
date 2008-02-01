@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: portald,v 1.52 2008/01/12 05:11:35 pudge Exp $
+# $Id: portald,v 1.53 2008/01/24 17:38:46 entweichen Exp $
 
 ###############################################################################
 # portald  - this is the "daemon" responsible for retrieving portal and site
@@ -294,7 +294,7 @@ foreach (keys %savedBlocks) {
 }
 
 # from 'portald-site'
-newSemiRandomBlock($slashdb) if defined &newSemiRandomBlock;
+newSemiRandomOSTGBlock($slashdb) if defined &newSemiRandomOSTGBlock;
 
 portaldLog("Sucessfully Saved Portals");
 

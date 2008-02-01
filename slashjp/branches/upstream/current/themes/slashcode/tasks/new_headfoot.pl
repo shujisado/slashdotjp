@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: new_headfoot.pl,v 1.19 2005/11/23 15:28:55 jamiemccarthy Exp $
+# $Id: new_headfoot.pl,v 1.21 2008/01/25 06:04:33 tvroom Exp $
 
 use strict;
 use Slash;
@@ -77,11 +77,22 @@ sub skinHeaders {
 	}
 
 	setCurrentForm('ssi', 0);
-	open my $fh, ">$constants->{basedir}/$skinname/slashfoot.inc"
-		or die "Can't open $constants->{basedir}/$skinname/slashfoot.inc: $!";
-	my $footer = footer({ Return => 1 });
-	print $fh $footer;
-	close $fh;
+	my $foot_pages = $slashdb->getHeadFootPages($skinname, 'footer');
+
+	foreach (@$foot_pages) {
+		my $file;
+		
+		if ($_->[0] eq 'misc') {
+			$file = "$constants->{basedir}/$skinname/slashfoot.inc";
+		} else {
+			$file = "$constants->{basedir}/$skinname/slashfoot-$_->[0].inc";
+		}
+
+		open my $fh, ">$file" or die "Can't open $file : $!";
+		my $footer = footer({ Return => 1, Page=> $_->[0] });
+		print $fh $footer;
+		close $fh;
+	}
 }
 
 1;

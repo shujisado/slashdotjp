@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Despam.pm,v 1.6 2008/01/21 15:53:42 jamiemccarthy Exp $
+# $Id: Despam.pm,v 1.7 2008/01/24 18:27:41 jamiemccarthy Exp $
 
 package Slash::Tagbox::Despam;
 
@@ -28,7 +28,7 @@ use Slash::Tagbox;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -122,7 +122,7 @@ sub feed_deactivatedtags {
 
 sub feed_userchanges {
 	my($self, $users_ar) = @_;
-	main::tagboxLog("Despam->feed_userchanges called (oddly): users_ar='" . join(' ', map { $_->{tuid} } @$users_ar) .  "'");
+	main::tagboxLog("Despam->feed_userchanges called (oddly): users_ar='" . join(' ', map { $_->{tuid} } @$users_ar) .  "', returning nothing");
 	return [ ];
 }
 
@@ -157,7 +157,7 @@ sub run {
 		 AND firehose.uid = $submitter_uid");
 	my $binspam_tagids = $slashdb->sqlSelectColArrayref(
 		'tagid',
-		'tags',
+		'tags, firehose',
 		"tags.uid IN ($admin_in_str)
 		 AND tags.inactivated IS NULL
 		 AND tags.tagnameid = $self->{spamid}

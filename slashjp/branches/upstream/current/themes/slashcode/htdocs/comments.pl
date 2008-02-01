@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: comments.pl,v 1.266 2007/08/23 18:06:40 pudge Exp $
+# $Id: comments.pl,v 1.267 2008/01/31 19:24:59 pudge Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -1570,7 +1570,7 @@ sub setDiscussion2 {
 	my($form, $slashdb, $user, $constants, $gSkin) = @_;
 	return if $user->{is_anon};
 	$slashdb->setUser($user->{uid}, {
-		discussion2 => $form->{discussion2_slashdot} ? 'slashdot' : ''
+		discussion2 => $form->{discussion2_slashdot} ? 'slashdot' : 'none'
 	});
 
 	my $referrer = $ENV{HTTP_REFERER};

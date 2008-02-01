@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Environment.pm,v 1.227 2008/01/18 22:36:50 pudge Exp $
+# $Id: Environment.pm,v 1.229 2008/01/28 14:45:31 jamiemccarthy Exp $
 
 package Slash::Utility::Environment;
 
@@ -33,7 +33,7 @@ use Socket qw( inet_aton inet_ntoa );
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.227 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.229 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 
 	dbAvailable
@@ -1569,14 +1569,17 @@ sub prepareUser {
 		}
 	}
 	$user->{karma_bonus}  = '+1' unless defined($user->{karma_bonus});
-	# see Slash::discussion2()
-	$user->{state}{no_d2} = $form->{no_d2} ? 1 : 0;
-	$user->{discussion2} ||= 'none';
 
-	# most anon users get this
-	if ($user->{is_anon} && !$user->{state}{no_d2}) {
-		my $d2 = 'slashdot';
-		if ($ENV{GATEWAY_INTERFACE}) {
+	# see Slash::discussion2()
+	# if D2 is not set, it is because user is anon, or user has not
+	# selected D2 one way or another.  such users get D2 by default unless
+	# no_d2 is set, or they are IE users
+	$user->{state}{no_d2} = $form->{no_d2} ? 1 : 0;
+	if (!$user->{discussion2}) {
+		my $d2 = 'slashdot';  # default for all users
+		if ($user->{state}{no_d2}) {
+			$d2 = 'none';
+		} elsif ($ENV{GATEWAY_INTERFACE}) {
 			# get user-agent (ENV not populated yet)
 			my %headers = $r->headers_in;
 			# just in case:
@@ -2516,6 +2519,7 @@ sub getOpAndDatFromStatusAndURI {
 	my($status, $uri, $dat) = @_;
 	$dat ||= "";
 
+	# XXX check regexSid()
 	my $page = qr|\d{2}/\d{2}/\d{2}/\d{4,7}|;
 
 	if ($status == 302) {
@@ -2602,6 +2606,7 @@ sub getOpAndDatFromStatusAndURI {
 	} elsif ($uri =~ m|^/([^/]*)/([^/]*/)+$|) {
 		$uri = $1;
 	}
+	$uri = 'image' if $uri eq 'images';
 	($uri, $dat);
 }
 
@@ -3499,4 +3504,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Environment.pm,v 1.227 2008/01/18 22:36:50 pudge Exp $
+$Id: Environment.pm,v 1.229 2008/01/28 14:45:31 jamiemccarthy Exp $
