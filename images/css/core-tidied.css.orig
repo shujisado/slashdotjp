@@ -1111,5 +1111,5 @@ a:focus { overflow:hidden }
         padding: 0 10px;
         text-indent: -7000em;
         position: absolute;
-        background: url('http://sd-strict.test.ostg.com/images/sic_icons.png') no-repeat 0px -1599px;
+        background: url('//images.slashdot.org/sic_icons.png') no-repeat 0px -1599px;
 }
