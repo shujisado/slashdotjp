@@ -58,7 +58,6 @@ common-install-arch common-install-indep::
 		Zoo/rebuildPerson ; do \
 	  chmod +x $(DEB_DESTDIR)/usr/share/slash/plugins/$$f; \
 	done
-	chmod +x $(DEB_DESTDIR)/usr/share/perl5/Slash/block_proxy_net.pl
 
 install/slash-backend::
 	mkdir -p $(CURDIR)/debian/$(cdbs_curpkg)/var/lib/slash/site
