@@ -95,7 +95,8 @@ sub new {
 
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp_host_addr");
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_build_unique_uid");
-		$self->sqlDo("CREATE TABLE accesslog_temp_host_addr (host_addr char(32) UNIQUE NOT NULL, anon ENUM('no','yes') NOT NULL DEFAULT 'yes', PRIMARY KEY (host_addr, anon)) TYPE = InnoDB");
+		$self->sqlDo("CREATE TABLE accesslog_temp_host_addr (host_addr char(32) NOT NULL, anon ENUM('no','yes') NOT NULL DEFAULT 'yes', PRIMARY KEY (host_addr, anon)) TYPE = InnoDB");
+		$self->sqlDo("CREATE TABLE accesslog_temp_uidip (uidip varchar(32) NOT NULL, op varchar(254) NOT NULL, PRIMARY KEY (uidip, op)) TYPE = InnoDB");
 		$self->sqlDo("CREATE TABLE accesslog_build_unique_uid ( uid MEDIUMINT UNSIGNED NOT NULL, PRIMARY KEY (uid)) TYPE = InnoDB");
 
 		# Then, get the schema in its CREATE TABLE statement format.
@@ -226,6 +227,24 @@ sub new {
 			{ ignore => 1 } 
 			);
 
+		return undef unless $self->_do_insert_select(
+			"accesslog_temp_uidip",
+			"IF(uid = $constants->{anonymous_coward_uid}, uid, host_addr), op",
+			"accesslog_temp",
+			"",
+			3, 60, 
+			{ ignore => 1 }
+			);
+	
+		return undef unless $self->_do_insert_select(
+			"accesslog_temp_uidip",
+			"IF(uid = $constants->{anonymous_coward_uid}, uid, host_addr), op",
+			"accesslog_temp_rss",
+			"",
+			3, 60, 
+			{ ignore => 1 }
+			);
+	
 
 	}
 
@@ -1084,6 +1103,42 @@ sub getSummaryStats {
 		$where);
 }
 
+# $hit_ar and $nohit_ar are hashrefs which indicate which op
+# combinations to check.  For example:
+#	$hit_ar = [ 'index', 'rss' ];
+#	$nohit_ar = [ 'article', 'comments' ];
+# will return the number of IP-uid combinations which logged one
+# or more hits with op=index, one or more hits with op=rss, and
+# zero hits for both op=article and op=comments hits.
+#
+# This is a logical AND, so you can think of the test as being:
+# 	uidip hit w AND hit x AND NOT hit y AND NOT hit z
+
+sub getOpCombinationStats {
+	my($self, $hit_ar, $nohit_ar) = @_;
+
+	my @tables = ( );
+	my @where = ( );
+	my $tn = 0;
+	for my $hit (@$hit_ar) {
+		++$tn;
+		push @tables, "accesslog_temp_uidip AS a$tn";
+		push @where, "a$tn.uidip = a1.uidip" if $tn > 1;
+		push @where, "a$tn.op=" . $self->sqlQuote($hit);
+	}
+	if (@$nohit_ar) {
+		my $tnprev = $tn;
+		++$tn;
+		my $notlist = join ',', map { $self->sqlQuote($_) } @$nohit_ar;
+		$tables[-1] .= " LEFT JOIN accesslog_temp_uidip AS a$tn
+			ON (a$tn.uidip=a$tnprev.uidip AND a$tn.op IN ($notlist))";
+		push @where, "a$tn.op IS NULL";
+	}
+	my $tables = join ', ', @tables;
+	my $where  = join ' AND ', @where;
+
+	return $self->sqlSelect('COUNT(DISTINCT a1.uidip)', $tables, $where);
+}
 
 ########################################################
 sub getSectionSummaryStats {
@@ -1701,7 +1756,7 @@ sub getTopBadgeURLs {
 		$qs =~ s/^.*url=//;
 		$qs =~ s/\%[a-fA-F0-9]?$//;
 		$qs =~ s/%([a-fA-F0-9]{2})/pack('C', hex($1))/ge;
-		$duple = [$qs, $c];
+		$duple = [fudgeurl($qs), $c];
 	}
 	return $top_ar;
 }
@@ -1709,22 +1764,36 @@ sub getTopBadgeURLs {
 sub getTopBadgeHosts {
 	my($self, $options) = @_;
 	my $count = $options->{count} || 10;
-	my $url_count = $count * 20;
+	my $url_count = $count * 40;
 	my $top_ar = $self->getTopBadgeURLs({ count => $url_count });
 	my %count = ( );
 	for my $duple (@$top_ar) {
 		my($uri, $c) = @$duple;
 		my $uri_obj = URI->new($uri);
-		my $host = $uri_obj ? $uri_obj->host() : $uri;
+		my $host = $uri_obj && $uri_obj->can('host') ? lc($uri_obj->host()) : $uri;
+		$host =~ s/^www\.//;
 		$count{$host} += $c;
 	}
-	my @top_hosts = (sort { $count{$b} <=> $count{$a} || $a <=> $b } keys %count);
+	my @top_hosts = (sort { $count{$b} <=> $count{$a} || $a cmp $b } keys %count);
 	$#top_hosts = $count-1 if scalar @top_hosts > $count;
 	my @top = ( map { [ $_, $count{$_} ] } @top_hosts );
 	return \@top;
 }
 
-########################################################
+# Not much point in anon_only option, at least not right now, since
+# bookmarks don't get created anonymously at the moment.
+
+sub getNumBookmarks {
+	my($self, $options) = @_;
+	my $constants = getCurrentStatic();
+	my $anon_clause = '';
+	$anon_clause = " AND uid=$constants->{anonymous_coward_uid}" if $options->{anon_only};
+	return $self->sqlCount('bookmark_id',
+		'bookmarks',
+		"createdtime $self->{_day_between_clause} $anon_clause");
+}
+
+#######################################################
 sub countSfNetIssues {
 	my($self, $group_id) = @_;
 	my $constants = getCurrentStatic();

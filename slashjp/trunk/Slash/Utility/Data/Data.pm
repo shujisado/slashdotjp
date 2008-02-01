@@ -43,6 +43,7 @@ use POSIX qw(UINT_MAX);
 use Safe;
 use Slash::Constants qw(:strip);
 use Slash::Utility::Environment;
+use Slash::Apache::User::PasswordSalt;
 use URI;
 use XML::Parser;
 use Encode;
@@ -76,6 +77,7 @@ BEGIN {
 	cleanRedirectUrl
 	cleanRedirectUrlFromForm
 	commify
+	comparePassword
 	countTotalVisibleKids
 	countWords
 	createSid
@@ -168,6 +170,7 @@ sub nick2matchname {
 
 #========================================================================
 # If you change createSid() for your site, change regexSid() too.
+# Check getOpAndDatFromStatusAndURI also.
 # If your site will have multiple formats of sids, you'll want this
 # to continue matching the old formats too.
 # NOTE: sid is also used for discussion ID (and maybe stoid too?),
@@ -204,6 +207,7 @@ True if email is valid, false otherwise.
 
 sub emailValid {
 	my($email) = @_;
+	return 0 if !$email;
 
 	my $constants = getCurrentStatic();
 	return 0 if $constants->{email_domains_invalid}
@@ -773,8 +777,10 @@ Random password.
 
 =head2 encryptPassword(PASSWD)
 
-Encrypts given password.  Currently uses MD5, but could change in the future,
-so do not depend on implementation.
+Encrypts given password, using the most recent salt (if any) in
+Slash::Apache::User::PasswordSalt for the current virtual user.
+Currently uses MD5, but could change in the future, so do not
+depend on the implementation.
 
 =over 4
 
@@ -798,7 +804,77 @@ Encrypted password.
 
 sub encryptPassword {
 	my($passwd) = @_;
-	return md5_hex(Encode::encode_utf8($passwd));
+	my $slashdb = getCurrentDB();
+	my $vu = $slashdb->{virtual_user};
+	my $salt = Slash::Apache::User::PasswordSalt::getCurrentPwSalt($vu);
+	$passwd = Encode::encode_utf8($passwd);
+	return md5_hex("$salt$passwd");
+}
+
+#========================================================================
+
+=head2 comparePassword(PASSWD, MD5, ISPLAIN, ISENC)
+
+Given a password and an MD5 hex string, compares the two to see if they
+represent the same value.  To be precise:
+
+If the password given is equal to the MD5 string, it must already be
+in MD5 format and be correct, so return true
+
+Otherwise, the password is assumed to be plaintext.  Each possible
+salt-encryption of it (including the encryption with empty salt) is
+compared against the MD5 string.  True is returned if there is any
+match.
+
+If ISPLAIN is true, PASSWD is assumed to be plaintext, so the
+(trivial equality) test against the encrypted MD5 is not performed.
+
+If ISENC is true, PASSWD is assumed to be already encrypted, so the
+tests of salting and encrypting it are not performed.
+
+(If neither is true, all tests are performed.  If both are true, no
+tests are performed and 0 is returned.)
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item PASSWD
+
+Possibly-correct password, either plaintext or already-MD5's,
+to be checked.
+
+=item MD5
+
+Encrypted correct password.
+
+=back
+
+=item Return value
+
+0 or 1.
+
+=back
+
+=cut
+
+sub comparePassword {
+	my($passwd, $md5, $is_plain, $is_enc) = @_;
+	if (!$is_plain) {
+		return 1 if $passwd eq $md5;
+	}
+	if (!$is_enc) {
+		return 1 if md5_hex($passwd) eq $md5;
+		my $slashdb = getCurrentDB();
+		my $vu = $slashdb->{virtual_user};
+		my $salt_ar = Slash::Apache::User::PasswordSalt::getSalts($vu);
+		for my $salt (reverse @$salt_ar) {
+			return 1 if md5_hex("$salt$passwd") eq $md5;
+		}
+	}
+	return 0;
 }
 
 #========================================================================
@@ -1973,7 +2049,7 @@ sub approveTag {
 		for my $a (@attr_order) {
 			my $a_lc = lc $a;
 			next unless $allowed{$a_lc};
-			my $data = $attr_data{$a_lc};
+			my $data = $attr_data{$a_lc} || '';
 			$data = fudgeurl($data) if $allowed{$a_lc}{url};
 			next unless length $data;
 			$wholetag .= qq{ $a_lc="$data"};

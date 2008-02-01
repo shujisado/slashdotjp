@@ -254,13 +254,13 @@ sub j_on_auth {
 	# we want to msg ourselves to catch the current time from the
 	# Jabber server, so we can skip messages from the channel log
 	# when we enter the channel
-	my $to = "$jchannel\@$jchanserver/$jnick";
-	slashdLog("sending to: $to");
-	$jabber->MessageSend(
-		to		=> $to,
-		type		=> 'chat',
-		body		=> 'timestamp',
-	);
+# 	my $to = "$jchannel\@$jchanserver/$jnick";
+# 	slashdLog("sending to: $to");
+# 	$jabber->MessageSend(
+# 		to		=> $to,
+# 		type		=> 'chat',
+# 		body		=> 'timestamp',
+# 	);
 
 	# XXX: this will silently fail on a nick collision ...
 	$jabber->MUCJoin(
@@ -861,8 +861,8 @@ sub possible_check_dbs {
 			$ok = 0 if !$dbs_data->{$dbid}{was_alive}
 				|| !$dbs_data->{$dbid}{was_reachable}
 				|| !$dbs_data->{$dbid}{was_running};
-			$ok = 0 if $dbs_data->{$dbid}{lag} > ($constants->{ircslash_dbalert_lagthresh} || 30);
-			$ok = 0 if $dbs_data->{$dbid}{bog} > ($constants->{ircslash_dbalert_bogthresh} || 30);
+			$ok = 0 if $ok && $dbs_data->{$dbid}{lag} > ($constants->{ircslash_dbalert_lagthresh} || 30);
+			$ok = 0 if $ok && $dbs_data->{$dbid}{bog} > ($constants->{ircslash_dbalert_bogthresh} || 30);
 		}
 		# "Great" means good enough to clear out a previously
 		# reported alert.
@@ -871,8 +871,8 @@ sub possible_check_dbs {
 			$great = 0 if !$dbs_data->{$dbid}{was_alive}
 				|| !$dbs_data->{$dbid}{was_reachable}
 				|| !$dbs_data->{$dbid}{was_running};
-			$great = 0 if $dbs_data->{$dbid}{lag} > ($constants->{ircslash_dbalert_lagthresh} || 30)/2;
-			$great = 0 if $dbs_data->{$dbid}{bog} > ($constants->{ircslash_dbalert_bogthresh} || 30)/2;
+			$great = 0 if $great && $dbs_data->{$dbid}{lag} > ($constants->{ircslash_dbalert_lagthresh} || 30)/2;
+			$great = 0 if $great && $dbs_data->{$dbid}{bog} > ($constants->{ircslash_dbalert_bogthresh} || 30)/2;
 		}
 		if (!$ok) {
 			# There's something about the DBs that we

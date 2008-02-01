@@ -1571,20 +1571,17 @@ sub prepareUser {
 		}
 	}
 	$user->{karma_bonus}  = '+1' unless defined($user->{karma_bonus});
+
 	# see Slash::discussion2()
+	# if D2 is not set, it is because user is anon, or user has not
+	# selected D2 one way or another.  such users get D2 by default unless
+	# no_d2 is set, or they are IE users
 	$user->{state}{no_d2} = $form->{no_d2} ? 1 : 0;
-	$user->{discussion2} ||= 'none';
-
-	# pct of anon users get this
-	if ($user->{is_anon} && !$user->{state}{no_d2}) {
-#		my $i = hex(substr($user->{srcids}{16}, -2));
-		$hostip =~ /^(\d+).(\d+).(\d+).(\d+)$/;
-		my $i = $2;
-
-#		# for (0..255) { $x = ((($_-1)/256) < .1); last if !$x; printf "%d:%d\n", $_, $x; }
-		if ($ENV{GATEWAY_INTERFACE} && ( $i == 144 || ((($i-1)/256) < .5) ) ) {  # 10 percent, x.(0..3).y.z
-			my $d2 = 'slashdot';
-
+	if (!$user->{discussion2}) {
+		my $d2 = 'slashdot';  # default for all users
+		if ($user->{state}{no_d2}) {
+			$d2 = 'none';
+		} elsif ($ENV{GATEWAY_INTERFACE}) {
 			# get user-agent (ENV not populated yet)
 			my %headers = $r->headers_in;
 			# just in case:
@@ -1593,9 +1590,8 @@ sub prepareUser {
 			if ($ua =~ /MSIE (\d+)/) {
 				$d2 = 'none';# if $1 < 7;
 			}
-
-			$user->{discussion2} = $d2;
 		}
+		$user->{discussion2} = $d2;
 	}
 
 	# All sorts of checks on user data.  The story_{never,always} checks
@@ -2545,6 +2541,7 @@ sub getOpAndDatFromStatusAndURI {
 	my($status, $uri, $dat) = @_;
 	$dat ||= "";
 
+	# XXX check regexSid()
 	my $page = qr|\d{2}/\d{2}/\d{2}/\d{4,7}|;
 
 	if ($status == 302) {
@@ -2631,6 +2628,7 @@ sub getOpAndDatFromStatusAndURI {
 	} elsif ($uri =~ m|^/([^/]*)/([^/]*/)+$|) {
 		$uri = $1;
 	}
+	$uri = 'image' if $uri eq 'images';
 	($uri, $dat);
 }
 

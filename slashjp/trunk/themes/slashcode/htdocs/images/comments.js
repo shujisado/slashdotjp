@@ -48,6 +48,7 @@ var alt_down = 0;
 var ctrl_down = 0;
 var meta_down = 0;
 var d2_seen = '';
+var low_bandwidth = 0;
 
 var adTimerSecs;
 var adTimerClicks;
@@ -88,8 +89,8 @@ function updateComment(cid, mode) {
 				}
 			}
 		}
-		if (doshort)
-			setShortSubject(cid, mode, cl);
+//		if (doshort)
+		setShortSubject(cid, mode, cl);
 		existingdiv.className = existingdiv.className.replace(/full|hidden|oneline/, mode);
 	}
 
@@ -377,6 +378,12 @@ function selectParent(cid, collapse) {
 	return false;
 }
 
+function vertBarClick (pid) {
+	comments_started = 1;
+	setCurrentComment(pid);
+	return selectParent(pid, 2);
+}
+
 function setShortSubject(cid, mode, cl) {
 	if (!cl)
 		cl = fetchEl('comment_link_' + cid);
@@ -384,16 +391,13 @@ function setShortSubject(cid, mode, cl) {
 	// subject is there only if it is a "reply"
 	// check pid to make sure parent is there at all ... check visibility too?
 	if (cl && cl.innerHTML && comments[cid]['subject'] && comments[cid]['pid']) {
-		var thisdiv = fetchEl('comment_' + comments[cid]['pid']);
-		if (thisdiv) {
-			setDefaultDisplayMode(comments[cid]['pid']);
-			if (!mode)
-				mode = displaymode[cid];
-			if (mode == 'full' || (mode == 'oneline' && displaymode[comments[cid]['pid']] == 'hidden')) {
-				cl.innerHTML = comments[cid]['subject'];
-			} else if (mode == 'oneline') {
-				cl.innerHTML = 'Re:';
-			}
+		setDefaultDisplayMode(comments[cid]['pid']);
+		if (!mode)
+			mode = displaymode[cid];
+		if (mode == 'full' || (mode == 'oneline' && displaymode[comments[cid]['pid']] == 'hidden')) {
+			cl.innerHTML = comments[cid]['subject'];
+		} else if (mode == 'oneline') {
+			cl.innerHTML = 'Re:';
 		}
 	}
 }
@@ -813,7 +817,7 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 			if (adTimerInsert) {
 				var tree = $('tree_' + adTimerInsert);
 				if (tree) {
-					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740"Êframeborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
+					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740" frameborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
 					var html = '<li id="comment_ad_' + adTimerInsert + '" class="inlinead"> ' + adcall +'  </li>';
 
 					var commtree = $('commtree_' + adTimerInsert);
@@ -1240,9 +1244,14 @@ function toggleDisplayOptions() {
 	} else if ( d2out.className == 'horizontal' ) { // horizontal->rooted
 		newMode = 'rooted';
 		d2out.className = 'horizontal rooted';
-	} else { // (rooted, none)->vertical
-		newMode = d2out.className = 'vertical';
-		gCommentControlWidget.setOrientation('Y');
+	} else {
+		if (!low_bandwidth) { // (rooted, none)->vertical
+			newMode = d2out.className = 'vertical';
+			gCommentControlWidget.setOrientation('Y');
+		} else { // vertical not happy in low-bandwidth
+			newMode = d2out.className = 'horizontal';
+			gCommentControlWidget.setOrientation('X');
+		}
 	}
 
 	d2act();
@@ -1786,9 +1795,9 @@ function keyHandler(e, k) {
 			if (!k)
 				doModifiers(e);
 			var collapseCurrent = shift_down;
-			var getNextUnread   = ctrl_down;
+			var getNextUnread   = ctrl_down; // not working right, and interfering anyway -- pudge
 			var skipit = 0;
-			if (meta_down || alt_down)
+			if (meta_down || alt_down || ctrl_down)
 				skipit = 1;
 			if (!k)
 				resetModifiers();
@@ -1863,7 +1872,7 @@ function keyHandler(e, k) {
 	}
 }
 
-// at first comment, comment is not in window OR comment is not full
+// at first comment, and comment is not in window OR comment is not full
 function noSeeFirstComment (cid) {
 	setDefaultDisplayMode(cid);
 	if (!comments_started && (!commentIsInWindow(cid) || (viewmodevalue[displaymode[cid]] < viewmodevalue['full']))) {
@@ -1985,4 +1994,3 @@ function dummyComment(cid) {
 
 	return(html.replace(/\-\-CID\-\-/g, cid));
 }
-

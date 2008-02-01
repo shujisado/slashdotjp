@@ -313,7 +313,7 @@ YAHOO.slashdot.AutoCompleteWidget = function()
     this._sourceEl = null;
     this._denyNextAttachTo = null;
 
-    YAHOO.util.Event.addListener(document.body, "click", this._onClick, this, true);
+    YAHOO.util.Event.addListener(document.body, "click", this._onSdClick, this, true);
     // add body/window blur to detect changing windows?
   }
 
@@ -394,17 +394,16 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._show = function( obj, callbackParam
             YAHOO.util.Dom.removeClass(this._spareInput, "hidden");
             this._spareInput.value = "";
             this._spareInput.focus();
+            this._pending_hide = setTimeout("YAHOO.slashdot.gCompleterWidget._hide()", 15000);
           }
         else
           YAHOO.util.Dom.addClass(this._spareInput, "hidden");
 
-        this._completer.itemSelectEvent.subscribe(this._onItemSelectEvent, this);
-        this._completer.unmatchedItemSelectEvent.subscribe(this._onItemSelectEvent, this);
-        this._completer.textboxBlurEvent.subscribe(this._onTextboxBlurEvent, this);
+        this._completer.itemSelectEvent.subscribe(this._onSdItemSelectEvent, this);
+        this._completer.unmatchedItemSelectEvent.subscribe(this._onSdItemSelectEvent, this);
+        this._completer.textboxBlurEvent.subscribe(this._onSdTextboxBlurEvent, this);
 
-        YAHOO.util.Event.addListener(this._textField(), "keyup", this._onTextboxKeyUp, this, true);
-
-        this._pending_hide = setTimeout("YAHOO.slashdot.gCompleterWidget._hide()", 15000);
+        YAHOO.util.Event.addListener(this._textField(), "keydown", this._onSdTextboxKeyDown, this, true);
       }
   }
 
@@ -422,10 +421,10 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._hide = function()
       {
         YAHOO.util.Dom.removeClass(this._sourceEl, "ac-source");
 
-        YAHOO.util.Event.removeListener(this._textField(), "keyup", this._onTextboxKeyUp, this, true);
-        this._completer.itemSelectEvent.unsubscribe(this._onItemSelectEvent, this);
-        this._completer.unmatchedItemSelectEvent.unsubscribe(this._onItemSelectEvent, this);
-        this._completer.textboxBlurEvent.unsubscribe(this._onTextboxBlurEvent, this);
+        YAHOO.util.Event.removeListener(this._textField(), "keydown", this._onSdTextboxKeyDown, this, true);
+        this._completer.itemSelectEvent.unsubscribe(this._onSdItemSelectEvent, this);
+        this._completer.unmatchedItemSelectEvent.unsubscribe(this._onSdItemSelectEvent, this);
+        this._completer.textboxBlurEvent.unsubscribe(this._onSdTextboxBlurEvent, this);
 
         this._sourceEl = null;
         this._callbackParams = null;
@@ -447,7 +446,7 @@ YAHOO.slashdot.AutoCompleteWidget.prototype.attach = function( obj, callbackPara
     if ( denyThisAttach )
       return;
 
-    if ( newSourceEl )
+    if ( newSourceEl && newSourceEl !== this._sourceEl )
       {
         callbackParams._sourceEl = newSourceEl;
         this._show(newSourceEl, callbackParams, tagDomain);
@@ -458,7 +457,7 @@ YAHOO.slashdot.AutoCompleteWidget.prototype.attach = function( obj, callbackPara
       }
   }
 
-YAHOO.slashdot.AutoCompleteWidget.prototype._onClick = function( e, me )
+YAHOO.slashdot.AutoCompleteWidget.prototype._onSdClick = function( e, me )
   {
       // if the user re-clicked the item to which I'm attached, then they mean to hide me
       //  I'm going to hide automatically, because a click outside the text will blur, and that makes me go away
@@ -467,7 +466,7 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._onClick = function( e, me )
     me._denyNextAttachTo = reclicked ? me._sourceEl : null;
   }
 
-YAHOO.slashdot.AutoCompleteWidget.prototype._onItemSelectEvent = function( type, args, me )
+YAHOO.slashdot.AutoCompleteWidget.prototype._onSdItemSelectEvent = function( type, args, me )
   {
     var tagname = args[2];
     if ( tagname !== undefined && tagname !== null ) {
@@ -486,14 +485,14 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._onItemSelectEvent = function( type,
     }
   }
 
-YAHOO.slashdot.AutoCompleteWidget.prototype._onTextboxBlurEvent = function( type, args, me )
+YAHOO.slashdot.AutoCompleteWidget.prototype._onSdTextboxBlurEvent = function( type, args, me )
   {
     var o = me._denyNextAttachTo;
     me._hide();
     me._denyNextAttachTo = o;
   }
 
-YAHOO.slashdot.AutoCompleteWidget.prototype._onTextboxKeyUp = function( e, me )
+YAHOO.slashdot.AutoCompleteWidget.prototype._onSdTextboxKeyDown = function( e, me )
   {
     if ( me._callbackParams && me._callbackParams.delayAutoHighlight )
       {
@@ -508,11 +507,16 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._onTextboxKeyUp = function( e, me )
           me._hide();
           break;
         case 13:
-          me._completer.unmatchedItemSelectEvent.fire(me._completer, me, me._completer._sCurQuery);
+        	// I'm sorry to say we have to test first, something somehow somewhere can still leave
+        	//	leave this listener dangling; want to look deeper into this, as this would _still_
+        	//	leave the listener dangling
+          if ( me._completer )
+            me._completer.unmatchedItemSelectEvent.fire(me._completer, me, me._completer._sCurQuery);
           break;
         default:
           if ( me._pending_hide )
             clearTimeout(me._pending_hide);
+          if ( me._needsSpareInput() )
           me._pending_hide = setTimeout("YAHOO.slashdot.gCompleterWidget._hide()", 15000);
       }
   }

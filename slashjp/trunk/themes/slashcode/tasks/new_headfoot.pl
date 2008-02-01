@@ -80,12 +80,23 @@ sub skinHeaders {
 	}
 
 	setCurrentForm('ssi', 0);
-	open my $fh, ">$constants->{basedir}/$skinname/slashfoot.inc"
-		or die "Can't open $constants->{basedir}/$skinname/slashfoot.inc: $!";
-	binmode $fh, ':utf8';
-	my $footer = footer({ Return => 1 });
-	print $fh $footer;
-	close $fh;
+	my $foot_pages = $slashdb->getHeadFootPages($skinname, 'footer');
+
+	foreach (@$foot_pages) {
+		my $file;
+		
+		if ($_->[0] eq 'misc') {
+			$file = "$constants->{basedir}/$skinname/slashfoot.inc";
+		} else {
+			$file = "$constants->{basedir}/$skinname/slashfoot-$_->[0].inc";
+		}
+
+		open my $fh, ">$file" or die "Can't open $file : $!";
+		binmode $fh, ':utf8';
+		my $footer = footer({ Return => 1, Page=> $_->[0] });
+		print $fh $footer;
+		close $fh;
+	}
 }
 
 1;
