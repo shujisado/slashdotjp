@@ -206,6 +206,7 @@ sub createUpdateItemFromBookmark {
 			activity 	=> $activity,
 			public 		=> "yes",
 			type		=> $type,
+			createtime	=> $bookmark->{createdtime},
 			srcid		=> $id
 		};
 		$data->{introtext} = $options->{introtext} if $options->{introtext};

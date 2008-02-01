@@ -10,6 +10,7 @@ use Slash::XML;
 use Slash::Constants qw(:slashd :strip);
 use XML::RSS;
 use LWP::UserAgent;
+use HTTP::Date;
 
 use vars qw( %task $me );
 
@@ -59,11 +60,12 @@ $task{$me}{code} = sub {
 					url_id 		=> $url_id,
 					uid    		=> $feed->{uid},
 					title		=> $title,
+					-createdtime	=> $item->{dc}->{date} ? "FROM_UNIXTIME(" . HTTP::Date::str2time($item->{dc}->{date}, 'UTC') . ")" : undef,
 				};
 				
 				my $user_bookmark = $bookmark->getUserBookmarkByUrlId($feed->{uid}, $url_id);
 				if (!$user_bookmark) {
-					$bookmark_data->{"-createdtime"} = 'NOW()';
+					$bookmark_data->{"-createdtime"} ||= 'NOW()';
 					slashdLog("creating feed bookmark $url_id");
 					slashdLog("$url_id $link $title");
 					slashdLog("after creating bookmark");

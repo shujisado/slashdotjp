@@ -1,8 +1,9 @@
 slash (2.5.0.192-1) unstable; urgency=low
 
   * New upstream CVS release
+  * Change bookmark_feed createdtime from NOW() to date of RSS items
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 01 Feb 2008 20:53:00 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 01 Feb 2008 23:06:29 +0900
 
 slash (2.5.0.189-3) unstable; urgency=low
 
