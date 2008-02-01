@@ -1,0 +1,5 @@
+#
+# $Id: prep,v 1.2 2003/08/29 16:18:44 jamie Exp $
+#
+
+UPDATE spider_timespec SET last_run=now() WHERE last_run=0;

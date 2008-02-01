@@ -1,0 +1,28 @@
+__section__
+default
+__description__
+Prints the bar above each story, containing the actual title of the story.
+
+* width = width of widget
+* title = text for title
+* color = color (colored or white)
+* details = hashref of images and colors
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+start_tab
+__template__
+[% IF tab_is_selected %]
+	<li[% details.selected %]><b class="begin"><a href="[% link %]" class="begin">[% label %]</a></b></li>
+[% ELSE %]
+	<li[% details.unselected %]><span class="begin"><a href="[% link %]" class="begin">[% label %]</a></span></li>
+[% END %]
+__seclev__
+10000
+__version__
+$Id: start_tab;misc;default,v 1.13 2005/08/17 17:41:27 lancelot Exp $

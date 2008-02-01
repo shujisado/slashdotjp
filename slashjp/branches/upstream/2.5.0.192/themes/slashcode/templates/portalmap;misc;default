@@ -1,0 +1,28 @@
+__section__
+default
+__description__
+Creates imagemap for inclusion in titlebar of a portalbox
+
+* title = title of portalbox
+* bid = block id of block in portalbox
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+portalmap
+__template__
+<map name="[% bid %]">
+	<area shape="rect" coords="0,0,7,7" href="[% env.script_name %]?op=d&amp;bid=[% bid %]" alt="Down">
+	<area shape="rect" coords="8,0,14,7" href="[% env.script_name %]?op=x&amp;bid=[% bid %]" alt="Kill">
+	<area shape="rect" coords="15,0,21,7" href="[% env.script_name %]?op=u&amp;bid=[% bid %]" alt="Up">
+</map>
+<img src="[% constants.imagedir %]/portalmap.gif" width="21" height="7" usemap="#[% bid %]" class="map" alt="">
+[% title %]
+
+__seclev__
+500
+__version__
+$Id: portalmap;misc;default,v 1.7 2005/07/27 22:54:48 pudge Exp $

@@ -1,0 +1,25 @@
+__section__
+default
+__description__
+
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+mid_tab
+__template__
+
+[% IF tab_is_selected %]
+        <li[% details.selected %]><b><a href="[% link %]">[% label %]</a></b></li>
+[% ELSE %]
+         <li[% details.unselected %]><a href="[% link %]">[% label %]</a></li>
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: mid_tab;misc;default,v 1.13 2005/08/17 17:41:27 lancelot Exp $

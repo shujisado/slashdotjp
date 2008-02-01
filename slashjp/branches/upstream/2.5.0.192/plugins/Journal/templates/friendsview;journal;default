@@ -1,0 +1,46 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+friendsview
+__template__
+<div id="journalgeneric">
+[% FOREACH diatribe = articles; topic = diatribe.topic %]
+	<div class="article">
+		<div class="title">
+			<h3>[% diatribe.description %]</h3>
+		</div>
+		<div class="details">
+			Posted by <a href="[% gSkin.rootdir %]/~[% diatribe.nickname | strip_paramattr %]/journal/">[% diatribe.nickname | strip_literal %]</a> [% user.aton %]
+			<i>[% Slash.timeCalc(diatribe.date) %]</i> (<a href="[% gSkin.rootdir %]/~[% diatribe.nickname | strip_paramattr %]/journal/[% diatribe.id %]">#[% diatribe.id %]</a>)
+			[% IF diatribe.discussion %]
+				<br>
+				<a href="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">[% diatribe.commentcount %] Comment[% diatribe.commentcount != 1 ? "s" : "" %]</a>
+			[% END %]
+		</div>
+
+		<div class="body">
+			<div class="topic">
+				<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"><img src="[% constants.imagedir %]/topics/[% topic.image %]" width="[% topic.width %]" height="[% topic.height %]" alt="[% topic.textname %]"></a>
+			</div>
+			<div class="intro">[% diatribe.article %]</div>
+		</div>
+	</div>
+[% END %]
+</div>
+
+<div class="journalpage">
+	[% PROCESS pagination %]
+</div>
+
+__seclev__
+500
+__version__
+$Id: friendsview;journal;default,v 1.12 2006/01/23 20:42:59 pudge Exp $

@@ -1,0 +1,144 @@
+__section__
+default
+__description__
+* storylistref
+* ndays_represented = the number of days that appear in the listing
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+listStories
+__template__
+[% skins = Slash.db.getSkins %]
+<div class="generalbody">
+<table border="0" cellpadding="2" cellspacing="0" width="100%" class="admin_story_list">
+
+
+		[% IF constants.label_ui %]
+	<tr>
+		<td><b>Edit</b></td>
+		<td><b>Preview</b></td>
+		<td><b>Author</b></td>
+		<td><b>Topic</b></td>
+		<td><b>Skin</b></td>
+		<td><b>Hits</b></td>
+		<td><b>Comments</b></td>
+		<td><b>Date</b></td>
+	</tr>
+		[% END %]
+
+[% IF storylistref && storylistref.size > 0;
+
+storiestoday = 0;
+IF ndays_represented > (constants.admin_maxdays_divider || 10);
+	showdayboundaries = 0;
+ELSE;
+	showdayboundaries = 1;
+END;
+FOREACH story = storylistref;
+	IF showdayboundaries && story.td != yesterday;
+		storiestoday = storiestoday > 1 ? storiestoday : '';
+%]
+	<tr>
+		<td class="lt_tb_col right">
+			[% storiestoday %]
+		</td>
+		<td colspan="7" align="right" class="tb_col right lt_text_col">
+			[% story.td %]
+		</td>
+	</tr>
+[%		storiestoday = 0;
+	END;
+
+	yesterday = story.td;
+	storiestoday = storiestoday + 1;
+
+	class_prefix = "";
+	IF constants.signoff_use;
+		IF !user_signoffs.${story.stoid}.cnt;
+			class_prefix = "ns_";
+		ELSIF story_signoffs.${story.stoid}.cnt < needed_signoffs;
+			class_prefix = "ss_";
+		END;
+	END;
+
+	class = class_prefix _'story_main';
+	IF story.displaystatus > 0;
+		class = class_prefix _ 'story_sec';
+	ELSIF story.in_trash == 'yes' || story.displaystatus < 0;
+		class = 'story_nd';
+	END;
+	
+	class = class _ " ps_" _ story.primaryskid;
+	%]
+
+	<tr class="[% class %]">
+		<td align="right">
+		
+		[<a href="[% gSkin.rootdir %]/admin.pl?op=edit&amp;sid=[% story.sid %]">[% story.x %]</a>]
+		
+
+		</td>
+		<td class="admin_title">
+		
+		<a href="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
+		[% IF story.in_trash == 'yes' %]<s>[% END; story.title; IF story.in_trash == 'yes' %]</s>[% END %]&nbsp;</a>
+		
+		</td>
+		<td><b>[% story.aid %]</b></td>
+
+		<td>[% story.topic.substr(0, 5) %]</td>
+
+	[% # Here we used to exclude the name of the section if this was
+	   # a section-only listing.  But now the primaryskin may indeed
+	   # differ from the section being displayed.  So list it. %]
+		<td>
+		
+		[% story.skinname = skins.${story.primaryskid}.name || "_none" %]
+		[% IF story.skinname.match("^_") %]
+			[% story.skinname.substr(0, 5) %]
+		[% ELSE %]
+			<a href="[% env.script_name %]?section=[% story.skinname %]">
+				[% story.skinname.substr(0, 5) %]</a>
+		[% END %]
+		
+		</td>
+
+		<td>
+		
+[% IF story.hits %]
+		[% story.hits %]
+[% ELSE %]
+		n/a	
+[% END %]
+		
+		</td>
+		<td>
+		[% story.commentcount %]
+		</td>
+
+		<td>[% story.td2 %]&nbsp;
+		[% story.time %]</td>
+	</tr>
+
+[% END %]
+[% ELSE %]
+<tr><td><b>No stories.</b></td></tr>
+[% END %]
+
+</table>
+
+[% IF story.x > 0 and left > 0 %]
+<p align="right">
+<b>
+<a href="[% env.script_name %]?section=[% form.section %]&amp;op=list&amp;next=[% story.x %]">[% left %] More</a></b></p>
+[% END %]
+</div>
+
+__seclev__
+500
+__version__
+$Id: listStories;admin;default,v 1.32 2006/02/01 23:00:50 pudge Exp $
