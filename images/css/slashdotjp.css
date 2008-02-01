@@ -227,11 +227,16 @@ div.adsense_468x60 {
 	padding:0;
 }
 
-#osdnnavbar ul#left {
+#osdnnavbar ul#osdn_sitename {
 	float:left;
 }
 
-#osdnnavbar ul#right {
+#osdnnavbar ul#osdn_sitename a{
+	font-weight:bold;
+}
+
+
+#osdnnavbar ul#osdn_announce {
 	text-align:right;
 }
 
