@@ -4,8 +4,9 @@ slash (2.5.0.192-1) unstable; urgency=low
   * Change bookmark_feed createdtime from NOW() to date of RSS items
   * Fix logchack ignore rules:
     - Change case of string
+    - Suppress Delete neverdisplay stories from story_dirty message
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 04 Feb 2008 13:00:56 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 04 Feb 2008 22:38:45 +0900
 
 slash (2.5.0.189-3) unstable; urgency=low
 
