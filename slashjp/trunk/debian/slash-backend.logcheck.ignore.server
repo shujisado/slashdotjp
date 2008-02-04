@@ -16,7 +16,7 @@ runtask .* (Begin|End)
 \[freshenup\.pl\] (index|article|firehose)\.pl 
 \[freshenup\.pl\] slash [a-z0-9A-Z_]+\.shtml
 \[freshenup\.pl\] setStory on [0-9]+ stories
-\[freshenup\.pl\] deleted [0-9]+ nonexistent stories from story_dirty
+\[freshenup\.pl\] Deleted [0-9]+ nonexistent stories from story_dirty
 \[freshenup\.pl\] rewrote static skin pages for
 \[freshenup\.pl\] Will process for [0-9]+ extra minutes, [0-9]+ stories
 \[freshenup\.pl\] Aborting stories at freshen, (too much elapsed time|got SIGUSR1)
