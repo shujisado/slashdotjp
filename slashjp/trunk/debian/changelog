@@ -6,8 +6,9 @@ slash (2.5.0.192-1) unstable; urgency=low
     - Change case of string
     - Suppress Delete neverdisplay stories from story_dirty message
   * Fix: delete discussion when another stories have same discussion
+  * Add "aretama" for Slashdot Japan to Firehose tab
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 06 Feb 2008 18:17:55 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 01:31:13 +0900
 
 slash (2.5.0.189-3) unstable; urgency=low
 

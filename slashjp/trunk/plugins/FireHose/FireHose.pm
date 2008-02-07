@@ -1643,7 +1643,7 @@ sub getAndSetOptions {
 	my $options 	= {};
 
 	my $types = { feed => 1, bookmark => 1, submission => 1, journal => 1, story => 1, vendor => 1, misc => 1 }; 
-	my $tabtypes = { tabsection => 1, tabpopular => 1, tabrecent => 1, tabuser => 1};
+	my $tabtypes = { tabsection => 1, tabpopular => 1, tabrecent => 1, tabuser => 1, aretama => 1 };
 	
 	my $tabtype = '';
 	$tabtype = $form->{tabtype} if $form->{tabtype} && $tabtypes->{ $form->{tabtype} };
@@ -1754,7 +1754,7 @@ sub getAndSetOptions {
 			$form->{section} = $gSkin->{skid} == $constants->{mainpage_skid} ? 0 : $gSkin->{skid};
 		}
 		if (!$tabtype) {
-			$tabtype = 'tabsection';
+			$tabtype = 'aretama';
 		}
 	}
 
@@ -1782,6 +1782,11 @@ sub getAndSetOptions {
 		$options->{color} = "black";
 		$options->{orderdir} = "DESC";
 		$options->{orderby} = "createtime";
+	} elsif ($tabtype eq 'aretama') {
+		$form->{fhfilter} = "";
+		$options->{orderdir} = "DESC";
+		$options->{orderby} = "createtime";
+		$options->{color} = "indigo";
 	}
 
 	if ($tabtype) {
@@ -1815,6 +1820,7 @@ sub getAndSetOptions {
 		$skin_prefix = "$the_skin->{name} ";
 	}
 	my $system_tabs = [ 
+		{ tabtype => 'aretama', color => 'indigo', filter => $skin_prefix},
 		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story"},
 		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story"},
 		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story"},
@@ -2530,7 +2536,7 @@ sub createSectionSelect {
 
 	foreach my $skid (keys %$skins) {
 		if ($skins->{$skid}{skid} == $constants->{mainpage_skid}) {
-			$menu->{0} = $constants->{sitename};
+			$menu->{0} = $constants->{mainpage_name} || $constants->{sitename};
 		} else {
 			$menu->{$skid} = $skins->{$skid}{title};
 		}
