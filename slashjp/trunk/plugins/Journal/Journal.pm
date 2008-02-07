@@ -252,7 +252,7 @@ sub remove {
 		# if has been submitted as story or submission, don't
 		# delete the discussion
 		if ($journal->{promotetype} eq 'publicize' || $journal->{promotetype} eq "publish") {
-			my $kind = $self->getDiscussion($journal->{discussion}, 'kind');
+			my $kind = $self->getDiscussion($journal->{discussion}, 'dkid');
 			my $kinds = $self->getDescriptions('discussion_kinds');
 			# set to disabled only if the journal has not been
 			# converted to a journal-story (it will get re-enabled

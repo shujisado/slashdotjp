@@ -2,8 +2,9 @@ slash (2.5.0.192-2) unstable; urgency=low
 
   * Fix: Undefined subroutine &Slash::Apache::User::PasswordSalt::getSalts
     called at /usr/lib/perl5/Slash/Utility/Data.pm line 872.
+  * Fix: use "dkid" instead of "kind" at plugins/Journal/Journal.pm
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 02:41:59 +0900
+ -- Taku YASUI <tach@debian.or.jp>  Fri, 08 Feb 2008 05:55:13 +0900
 
 slash (2.5.0.192-1) unstable; urgency=low
 
