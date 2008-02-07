@@ -103,6 +103,11 @@ xmp {
 	margin: 4px;
 }
 
+/* fix select item padding */
+select option {
+	margin-right: 5px;
+}
+
 /* Fix list-style image location */
 #slashboxes #slashd ul li,
 #slashboxes #future ul li
@@ -163,43 +168,20 @@ div#bookmark ul.menu {
 	margin: 0 !important;
 }
 
+/* firehose tablist */
+div#firehose div.firemenu div.submenu ul#fhtablist {
+	padding-right: 40px;
+}
+div#firehose div.firemenu div.submenu ul#fhtablist select#section {
+	margin: 0;
+}
+
 /* ads format */
 div.article div.bigbanner,
 div.adsense_468x60 {
 	overflow: hidden;
 	width: 99%;
 }
-
-/* upper osdnbar */
-#osdnbar {
-	font-weight: normal;
-	font-size: 75%;
-	border-top: 2px solid #aaa;
-	border-bottom: 2px solid #aaa;
-	background: #ddd;
-	padding: 0 1em;
-	margin: 0;
-	position: relative;
-}
-#osdnbar a:visited { color: #000; }
-#osdnbar #topsearchbox {
-	float: right;
-	color: #666;
-}
-#osdnbar #topsearchbox #topsearchbox-phrase {
-	background-color:#fff;
-	border:1px #666 solid;
-	font-size: 10px;
-	color: #000;
-}
-#osdnbar #topsearchbox #topsearchbox-go {
-	background-color: #CCC;
-	border: 1px #666 solid;
-	font-size: 10px;
-	color: #666;
-	font-weight:bold;
-}
-
 
 /* for osdnnavbar: width=0 */
 #top_parent {
