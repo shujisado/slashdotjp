@@ -1328,6 +1328,9 @@ sub deleteStoryAll {
 		$self->sqlUpdate('journal_transfer', {
 			stoid	=> 0,
 		}, 'id=' . $self->sqlQuote($story->{journal_id}));
+	} elsif ($discussion_id &&
+		$self->sqlCount('stories', "discussion=$discussion_id") > 0) {
+		# do nothing
 	} elsif ($discussion_id) {
 		$self->deleteDiscussion($discussion_id);
 	}
