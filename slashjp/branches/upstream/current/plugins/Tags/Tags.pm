@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.97 2008/01/18 21:28:17 jamiemccarthy Exp $
+# $Id: Tags.pm,v 1.98 2008/02/07 18:12:28 jamiemccarthy Exp $
 
 package Slash::Tags;
 
@@ -17,7 +17,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.97 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.98 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -1810,10 +1810,15 @@ sub getRecentTagnamesOfInterest {
 		 AND cmdtype REGEXP '#'");
 	my %tagname_bad = ( map { ($tagnameid_to_name->{$_}, 1) } @$tagnameid_bad_ar );
 
+	# Build a hash identifying topic tagnames.
+	my $topics = $self->getTopics();
+	my %tagname_topic = ( map { ($topics->{$_}{keyword}, 1) } keys %$topics );
+
 	# Using the hashes, build a list of all recent tagnames which
 	# are of interest.
 	my @tagnames_of_interest = grep {
-		!$tagname_adminok{$_}
+		   !$tagname_adminok{$_}
+		&& !$tagname_topic{$_}
 		&& (	   $tagname_bad{$_}
 			|| $tagname_startauthor{$_}
 			|| $tagname_firstrecent{$_}

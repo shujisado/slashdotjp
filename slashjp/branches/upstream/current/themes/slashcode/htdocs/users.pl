@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.344 2008/01/09 19:55:15 jamiemccarthy Exp $
+# $Id: users.pl,v 1.345 2008/02/07 00:51:23 pudge Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -1436,7 +1436,7 @@ sub _get_lastjournal {
 		# defaults to 4K) and can't have too many line-breaking
 		# tags.
 		my $art_shrunk = $lastjournal->{article};
-		my $maxsize = int($user->{maxcommentsize} / 25);
+		my $maxsize = int($constants->{default_maxcommentsize} / 25);
 		$maxsize =  80 if $maxsize <  80;
 		$maxsize = 600 if $maxsize > 600;
 		$art_shrunk = chopEntity($art_shrunk, $maxsize);
@@ -2767,7 +2767,6 @@ sub saveComm {
 		emaildisplay		=> $form->{emaildisplay} || undef,
 		fakeemail		=> $new_fakeemail,
 		highlightthresh		=> $form->{highlightthresh},
-		maxcommentsize		=> $form->{maxcommentsize},
 		mode			=> $form->{umode},
 		posttype		=> $form->{posttype},
 		threshold		=> $form->{uthreshold},
@@ -2800,7 +2799,6 @@ sub saveComm {
 	my $defaults = {
 		posttype        => 2,
 		highlightthresh => 4,
-		maxcommentsize  => 4096,
 		reparent        => 1,
 		commentlimit    => 100,
 		commentspill    => 50,

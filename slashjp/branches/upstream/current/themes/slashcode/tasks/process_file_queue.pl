@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: process_file_queue.pl,v 1.6 2007/10/31 20:27:40 tvroom Exp $
+# $Id: process_file_queue.pl,v 1.7 2008/02/05 20:15:53 tvroom Exp $
 
 use File::Path;
 use File::Temp;
@@ -145,6 +145,12 @@ sub uploadFile {
 	my @files;
 
 	my $file = $cmd->{file};
+	if ($file =~ /\.(gif|jpg)$/i) {
+		my $filepng = $file;
+		$filepng =~s /\.(gif|jpg)$/\.png/;
+		system("/usr/bin/convert $file $filepng");
+		$file = $filepng;
+	}
 
 	if ($story->{sid}) {
 		my $destpath = getStoryFileDir($story->{sid});

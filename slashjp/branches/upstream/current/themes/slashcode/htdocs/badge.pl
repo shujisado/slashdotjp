@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# $Id: badge.pl,v 1.1 2007/12/13 15:55:16 scc Exp $
+# $Id: badge.pl,v 1.2 2008/02/05 23:15:59 scc Exp $
 
 use strict;
 use Slash;
@@ -105,16 +105,25 @@ sub display {
 	my $style = 'v0';
 	
 	if ($form->{style} =~ m/^([hv][01])/i) {
-		$style = $1;
+		$style = lc($1);
 	}
 
 	my $firehose = getObject('Slash::FireHose');
 	my $fh_id = $firehose->getFireHoseIdFromUrl($form->{url});
-	my $voted = '';
 
-	if ( $fh_id && $user->{uid} ) {
+	# Set $voted to 'up' or 'down' depending on how the user
+	# voted this firehose item (if it is a firehose item, and
+	# if the user is logged-in).
+	my $voted = '';
+	my $sid = '';
+	if ( $fh_id ) {
 		my $fh_item = $firehose->getFireHose($fh_id);
-		$voted = $firehose->getUserFireHoseVotesForGlobjs($user->{uid}, [$fh_item->{globjid}])->{$fh_item->{globjid}};
+		if ( $fh_item ) {
+			$voted = $firehose->getUserFireHoseVoteForGlobjid($user->{uid}, $fh_item->{globjid})
+				if !$user->{is_anon};
+			$sid = $slashdb->getStory($fh_item->{stoid}, 'sid')
+				if $fh_item->{stoid} && $slashdb->checkStoryViewable($fh_item->{stoid});
+		}
 	}
 
 	my $reskey = getObject("Slash::ResKey");
@@ -125,7 +134,8 @@ sub display {
 		style => $style,
 		url => $url,
 		fireHoseId => $fh_id,
-		voted => $voted
+		voted => $voted,
+		sid => $sid
 	}, {Page => 'badge'});
 }
 

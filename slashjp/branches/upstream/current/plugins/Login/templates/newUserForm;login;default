@@ -31,7 +31,7 @@ __template__
 				<label>
 					Nick Name
 				</label>
-				<input type="text" name="newusernick" value="">
+				<input type="text" name="newusernick" value="" maxlength="[% constants.nick_maxlen %]">
 				<div class="note">
 					(Note: only the characters <tt>[% chars | strip_literal %]</tt>, plus space, are allowed in nicknames, and all others will be stripped out.)
 				</div>
@@ -100,4 +100,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: newUserForm;login;default,v 1.5 2005/08/24 22:21:36 pudge Exp $
+$Id: newUserForm;login;default,v 1.7 2008/02/06 13:31:29 scc Exp $

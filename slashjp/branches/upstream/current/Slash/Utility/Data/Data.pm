@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Data.pm,v 1.212 2008/01/31 15:17:45 jamiemccarthy Exp $
+# $Id: Data.pm,v 1.214 2008/02/07 00:51:21 pudge Exp $
 
 package Slash::Utility::Data;
 
@@ -62,7 +62,7 @@ BEGIN {
 	$HTML::Tagset::linkElements{slash} = ['src', 'href'];
 }
 
-($VERSION) = ' $Revision: 1.212 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.214 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	addDomainTags
 	createStoryTopicData
@@ -103,6 +103,7 @@ BEGIN {
 	noFollow
 	regexSid
 	revertQuote
+	prepareQuoteReply
 	root2abs
 	roundrand
 	set_rootdir
@@ -867,7 +868,7 @@ sub comparePassword {
 		return 1 if md5_hex($passwd) eq $md5;
 		my $slashdb = getCurrentDB();
 		my $vu = $slashdb->{virtual_user};
-		my $salt_ar = Slash::Apache::User::PasswordSalt::getSalts($vu);
+		my $salt_ar = Slash::Apache::User::PasswordSalt::getPwSalts($vu);
 		for my $salt (reverse @$salt_ar) {
 			return 1 if md5_hex("$salt$passwd") eq $md5;
 		}
@@ -1633,6 +1634,23 @@ sub revertQuote {
 		}
 	}
 	return($str);
+}
+
+
+sub prepareQuoteReply {
+	my($reply) = @_;
+	my $pid_reply = $reply->{comment} = parseDomainTags($reply->{comment}, 0, 1, 1);
+	$pid_reply = revertQuote($pid_reply);
+
+	# prep for JavaScript
+	$pid_reply =~ s|\\|\\\\|g;
+	$pid_reply =~ s|'|\\'|g;
+	$pid_reply =~ s|([\r\n])|\\n|g;
+
+	$pid_reply =~ s{<nobr> <wbr></nobr>(\s*)} {$1 || ' '}gie;
+	#my $nick = strip_literal($reply->{nickname});
+	#$pid_reply = "<div>$nick ($reply->{uid}) wrote: <quote>$pid_reply</quote></div>";
+	$pid_reply = "<quote>$pid_reply</quote>";
 }
 
 
@@ -4442,4 +4460,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Data.pm,v 1.212 2008/01/31 15:17:45 jamiemccarthy Exp $
+$Id: Data.pm,v 1.214 2008/02/07 00:51:21 pudge Exp $

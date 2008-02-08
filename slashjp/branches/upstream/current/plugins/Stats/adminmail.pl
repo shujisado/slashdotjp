@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: adminmail.pl,v 1.218 2008/01/30 22:56:18 jamiemccarthy Exp $
+# $Id: adminmail.pl,v 1.219 2008/02/07 17:55:29 jamiemccarthy Exp $
 
 use strict;
 use Slash::Constants qw( :messages :slashd );
@@ -407,6 +407,27 @@ EOT
 		$statsSave->createStatDaily("other_ipids", $uniq);
 		$statsSave->createStatDaily("other_bytes", $bytes);
 		$statsSave->createStatDaily("other_page", $pages);
+	}
+	my %combo = (
+		ind		=> [ ['index'],			[]			],
+		ind_no_art	=> [ ['index'],			['article']		],
+		ind_no_rss	=> [ ['index'],			['rss']			],
+		indart		=> [ ['index','article'],	[]			],
+		indart_no_rss	=> [ ['index','article'],	['rss']			],
+		art		=> [ ['article'],		[]			],
+		art_no_ind	=> [ ['article'],		['index']		],
+		art_no_rss	=> [ ['article'],		['rss']			],
+		rss		=> [ ['rss'],			[]			],
+		rss_no_ind	=> [ ['rss'],			['index']		],
+		rss_no_art	=> [ ['rss'],			['article']		],
+		rss_no_indart	=> [ ['rss'],			['index','article']	],
+		rssart		=> [ ['rss','article'],		[]			],
+		rssart_no_ind	=> [ ['rss','article'],		['index']		],
+	);
+	for my $key (sort keys %combo) {
+		my @args = @{ $combo{$key} };
+		$statsSave->createStatDaily("opcombo_$key",
+			$logdb->getOpCombinationStats(@args));
 	}
 	slashdLog("Page Counting End");
 

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: comments.pl,v 1.267 2008/01/31 19:24:59 pudge Exp $
+# $Id: comments.pl,v 1.268 2008/02/07 00:51:22 pudge Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -469,18 +469,7 @@ sub editComment {
 		print getError('no such parent');
 		return;
 	} elsif ($pid) {
-		$pid_reply = $reply->{comment} = parseDomainTags($reply->{comment}, 0, 1, 1);
-		$pid_reply = revertQuote($pid_reply);
-
-		# prep for JavaScript
-		$pid_reply =~ s|\\|\\\\|g;
-		$pid_reply =~ s|'|\\'|g;
-		$pid_reply =~ s|([\r\n])|\\n|g;
-
-		$pid_reply =~ s{<nobr> <wbr></nobr>(\s*)} {$1 || ' '}gie;
-		#my $nick = strip_literal($reply->{nickname});
-		#$pid_reply = "<div>$nick ($reply->{uid}) wrote: <quote>$pid_reply</quote></div>";
-		$pid_reply = "<quote>$pid_reply</quote>";
+		$pid_reply = prepareQuoteReply($reply);
 	}
 
 	# calculate proper points value ... maybe this should be a public,
@@ -748,7 +737,7 @@ sub validateComment {
 	my $kickin = $constants->{comments_min_line_len_kicks_in};
 	if ($constants->{comments_min_line_len} && length($$comm) > $kickin) {
 
-		my $max_comment_len = getCurrentAnonymousCoward('maxcommentsize');
+		my $max_comment_len = $constants->{default_maxcommentsize};
 		my $check_prefix = substr($$comm, 0, $max_comment_len);
 		my $check_prefix_len = length($check_prefix);
 		my $min_line_len_max = $constants->{comments_min_line_len_max}

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Key.pm,v 1.22 2006/12/05 00:04:59 pudge Exp $
+# $Id: Key.pm,v 1.23 2008/02/07 00:51:22 pudge Exp $
 
 package Slash::ResKey::Key;
 
@@ -118,7 +118,7 @@ use Slash::Constants ':reskey';
 use Slash::Utility;
 
 our($AUTOLOAD);
-our($VERSION) = ' $Revision: 1.22 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our($VERSION) = ' $Revision: 1.23 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 #========================================================================
 sub new {
@@ -254,7 +254,7 @@ sub AUTOLOAD {
 		goto &$sub;
 
 	} elsif (!$can) {
-		errorLog("no method $name") unless
+		errorLog("no method $name : [$AUTOLOAD @_]") unless
 			$name =~ /^(?:DESTROY)$/;
 		return;
 	}
@@ -985,4 +985,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Key.pm,v 1.22 2006/12/05 00:04:59 pudge Exp $
+$Id: Key.pm,v 1.23 2008/02/07 00:51:22 pudge Exp $

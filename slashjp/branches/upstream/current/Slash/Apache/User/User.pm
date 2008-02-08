@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: User.pm,v 1.169 2007/12/06 02:24:42 jamiemccarthy Exp $
+# $Id: User.pm,v 1.170 2008/02/07 17:21:59 entweichen Exp $
 
 package Slash::Apache::User;
 
@@ -24,7 +24,7 @@ use vars qw($REVISION $VERSION @ISA @QUOTES $USER_MATCH $request_start_time);
 
 @ISA		= qw(DynaLoader);
 $VERSION   	= '2.003000';  # v2.3.0
-($REVISION)	= ' $Revision: 1.169 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($REVISION)	= ' $Revision: 1.170 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache::User $VERSION;
 
@@ -710,7 +710,12 @@ sub userdir_handler {
 					my $filter = fixparam("user:");
 					$r->args("op=userfirehose");
 					$r->uri('users.pl');
-					$r->filename($constants->{basedir} . '/users.pl')
+					$r->filename($constants->{basedir} . '/users.pl');
+
+                                } elsif ($op eq 'preferences') {
+                                        $r->args("op=displayprefs");
+                                        $r->uri('/preferences.pl');
+                                        $r->filename($constants->{basedir} . '/preferences.pl');
 
 				} else {
 					$r->args("op=edituser");

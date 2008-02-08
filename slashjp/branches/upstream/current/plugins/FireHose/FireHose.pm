@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHose.pm,v 1.211 2008/01/31 17:57:01 jamiemccarthy Exp $
+# $Id: FireHose.pm,v 1.213 2008/02/06 21:47:48 tvroom Exp $
 
 package Slash::FireHose;
 
@@ -41,7 +41,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.211 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.213 $ ' =~ /\$Revision:\s+([^\s]+)/;
 sub createFireHose {
 	my($self, $data) = @_;
 	$data->{dept} ||= "";
@@ -1802,20 +1802,14 @@ sub getAndSetOptions {
 	$user_tabs = $self->getUserTabs();
 
 
-	
-	my $tab_compare = { 
-		color 		=> "color", 
-		filter 		=> "fhfilter" 
-	};
-
 	my $skin_prefix="";
 	if ($the_skin && $the_skin->{name} && $the_skin->{skid} != $constants->{mainpage_skid})  {
 		$skin_prefix = "$the_skin->{name} ";
 	}
 	my $system_tabs = [ 
-		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story"},
-		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story"},
-		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story"},
+		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story", orderby => 'createtime'},
+		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story", orderby => 'popularity'},
+		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story", orderby => 'createtime'},
 	];
 
 	if (!$user->{is_anon}) {
@@ -1824,12 +1818,24 @@ sub getAndSetOptions {
 
 	my $sel_tabtype;
 
+	my $tab_compare = { 
+		color 		=> "color", 
+		filter 		=> "fhfilter" 
+	};
+
 	my $tab_match = 0;
 	foreach my $tab (@$user_tabs, @$system_tabs) {
 		my $equal = 1;
-		foreach (keys %$tab_compare) {
-			$options->{$tab_compare->{$_}} ||= "";
-			if ($tab->{$_} ne $options->{$tab_compare->{$_}}) {
+
+		my $this_tab_compare;
+		%$this_tab_compare = %$tab_compare;
+
+		$this_tab_compare->{orderby} = 'orderby' if defined $tab->{tabtype};
+		
+
+		foreach (keys %$this_tab_compare) {
+			$options->{$this_tab_compare->{$_}} ||= "";
+			if ($tab->{$_} ne $options->{$this_tab_compare->{$_}}) {
 				$equal = 0;
 			}
 		}
@@ -2554,4 +2560,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: FireHose.pm,v 1.211 2008/01/31 17:57:01 jamiemccarthy Exp $
+$Id: FireHose.pm,v 1.213 2008/02/06 21:47:48 tvroom Exp $

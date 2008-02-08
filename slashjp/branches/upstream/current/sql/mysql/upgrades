@@ -10,7 +10,7 @@
 #      after X started at the same time that X was tagged.
 
 #
-# $Id: upgrades,v 1.1307 2008/01/31 20:07:02 pudge Exp $
+# $Id: upgrades,v 1.1310 2008/02/08 04:31:16 pudge Exp $
 #
 
 # BEGIN tf23's additions 
@@ -5114,10 +5114,6 @@ UPDATE blocks SET ordernum = -1 WHERE bid = 'freshmeat';
 # 2008-01-24
 UPDATE vars SET value = 'T_2_5_0_191' WHERE name = 'cvs_tag_currentcode';
 
-# SLASHCODE/USEPERL LAST UPDATED HERE
-
-# SLASHDOT LAST UPDATED HERE
-
 # for plugins/Admin
 INSERT INTO vars (name, value, description) VALUES ('topics_sectional_weight', '10', 'Minimum weight for sectional stories');
 
@@ -5129,4 +5125,11 @@ INSERT INTO ajax_ops VALUES (NULL, 'firehose_get_media', 'Slash::FireHose', 'aja
 
 # 2008-01-31
 UPDATE vars SET value = 'T_2_5_0_192' WHERE name = 'cvs_tag_currentcode';
+
+# 2008-02-07
+UPDATE vars SET value = 'T_2_5_0_193' WHERE name = 'cvs_tag_currentcode';
+
+# SLASHCODE/USEPERL LAST UPDATED HERE
+
+# SLASHDOT LAST UPDATED HERE
 

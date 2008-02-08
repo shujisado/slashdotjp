@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: subscribe.pl,v 1.33 2005/03/11 19:58:21 pudge Exp $
+# $Id: subscribe.pl,v 1.34 2008/02/06 16:27:15 entweichen Exp $
 
 use strict;
 
@@ -105,7 +105,7 @@ sub edit {
 		? $user->{hits_bought_today_max}
 		: "";
 
-	titlebar("100%", "Editing Subscription...", {
+	titlebar("100%", "Configuring Subscription", {
 		template =>		'prefs_titlebar',
 		tab_selected =>		'subscription',
 	});
@@ -170,7 +170,7 @@ sub save {
 		$hbtm;
 	$slashdb->setUser($user_edit->{uid}, $user_update);
 
-	titlebar("100%", "Editing Subscription...", {
+	titlebar("100%", "Configuring Subscription", {
 		template =>		'prefs_titlebar',
 		tab_selected =>		'subscription',
 	});

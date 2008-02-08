@@ -25,7 +25,7 @@ __template__
 	<tr>
 		<td>
 		<b>Nick Name</b><br>
-		<input type="text" name="newusernick" value="">
+		<input type="text" name="newusernick" value="" maxlength="[% constants.nick_maxlen %]">
 		</td>
 	</tr>
 	<tr>
@@ -96,4 +96,4 @@ password mailed to you</a> by entering your nickname, uid, or email address.
 __seclev__
 10000
 __version__
-$Id: newUserForm;users;default,v 1.16 2005/07/27 22:54:48 pudge Exp $
+$Id: newUserForm;users;default,v 1.18 2008/02/06 13:31:29 scc Exp $
