@@ -1,0 +1,30 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+pagination
+__template__
+	[% back = back || 0;
+	   journal_pagination_op = form.op || 'display';
+	   IF (back > -1) || forward %]
+				[% IF forward %]
+					<a href="[% gSkin.rootdir %]/journal.pl?op=[% journal_pagination_op %]&amp;uid=[% uid %]&amp;start=[% forward %]">&lt; Previous [% constants.journal_default_display %] entries</a>
+ 				[% END %]
+				[% IF (back > -1) && forward %]
+					|
+				[% END %]
+				[% IF (back > -1) %]
+					<a href="[% gSkin.rootdir %]/journal.pl?op=[% journal_pagination_op %]&amp;uid=[% uid %]&amp;start=[% back %]">Next [% constants.journal_default_display %] entries &gt;</a>
+				[% END %]
+	[% END %]
+__seclev__
+100
+__version__
+$Id: pagination;journal;default,v 1.10 2005/11/11 05:30:15 pudge Exp $

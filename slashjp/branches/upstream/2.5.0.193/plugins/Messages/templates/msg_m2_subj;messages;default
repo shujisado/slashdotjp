@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+Subject used for Metamoderation Update messages.
+__title__
+Metamoderation Results Message Subject
+__page__
+messages
+__lang__
+en_US
+__name__
+msg_m2_subj
+__template__
+[%- msg.use_subject_for_collected = 1 -%]
+Moderation Rated As Unfair
+__seclev__
+500
+__version__
+$Id: msg_m2_subj;messages;default,v 1.5 2004/05/04 16:22:40 tvroom Exp $

@@ -1,0 +1,52 @@
+__section__
+default
+__description__
+Info about what slashd has just done and what it's doing next
+
+* tasks_last = array ref of hashrefs, previous 3 completed tasks
+* tasks_inprogress = array ref of hashrefs, tasks currently executing
+	(probably empty)
+* tasks_next = array ref of hashrefs, next 3 tasks to do
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+slashd_box
+__template__
+<ul id="slashd">
+	[% FOREACH task = tasks_next %]
+		<li>
+			[% task.task %] <em>[% task.next_begin_hhmm %]</em>
+		</li>
+	[% END %]
+[% IF tasks_inprogress.size > 0 %]
+	[% FOREACH task = tasks_inprogress %]
+		<li class="highlight">
+			[% task.task %] <em>in progress</em>
+		</li>
+	[% END %]
+[% ELSE %]
+	<li>
+		no tasks in progress
+	</li>
+[% END %]
+	[% FOREACH task = tasks_last %]
+		<li>
+			[% task.task %] <em>[% task.last_completed_hhmm %]</em>
+		[% IF task.summary_trunc %]
+			<ul>
+				<li>
+					[% task.summary_trunc %]
+				</li>
+			</ul>
+		[% END %]
+		</li>
+	[% END %]
+</ul>
+__seclev__
+10000
+__version__
+$Id: slashd_box;misc;default,v 1.4 2005/07/27 22:53:54 pudge Exp $

@@ -1,0 +1,56 @@
+__section__
+default
+__description__
+Footer to be displayed on printable pages.
+
+* story = story data structure
+* time = formatted time string
+
+__title__
+
+__page__
+print
+__lang__
+en_US
+__name__
+footer
+__seclev__
+10000
+__template__
+[% IF constants.run_ads -%]
+<!-- add code. You can use your own ad system - we use one that 
+sets a env variable in apache that contains the ad itself and just put it
+in this block -->
+[% Slash.getAd(5) %]
+<!-- end ad code -->
+[% END -%]
+
+[% UNLESS form.nohtml;
+	absdir = gSkin.absolutedir;
+	url = "<a href=\"$absdir/article.pl?sid=$story.sid\">$story.title</a>";
+	sitename = "<a href=\"$absdir/\">$constants.sitename</a>";
+ELSE;
+	absdir = gSkin.absolutedir;
+	url = "$story.title ($absdir/article.pl?sid=$story.sid)";
+	sitename = "$constants.sitename ($absdir)";
+END -%]
+
+<hr>
+<center><small>&copy; Copyright [% Slash.timeCalc(Slash.db.getTime, '%Y') %]
+- [% constants.sitepublisher %], All Rights Reserved</small></center>
+<hr>
+
+<p>
+<small>printed from [% sitename %], [% url %] on [% time %]</small>
+</p>
+[% IF form.auto -%]
+<SCRIPT LANGUAGE="JavaScript1.2">
+<!--
+	if (window.print) { window.print(); }
+//-->
+</script>
+[% END -%]
+</body>
+</html>
+__version__
+$Id: footer;print;default,v 1.8 2005/07/27 22:54:12 pudge Exp $

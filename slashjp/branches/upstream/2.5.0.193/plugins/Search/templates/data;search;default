@@ -1,0 +1,98 @@
+__section__
+default
+__description__
+Repository for random data elements.
+
+* value = the name of the data element to retrieve
+
+Each data element may have any number of other variables.
+__title__
+
+__page__
+search
+__lang__
+en_US
+__name__
+data
+__template__
+[% SWITCH value %]
+
+[% CASE 'nousers' %]
+	[% returnme.data_constant = 1 %]
+	<div class="usersearch">
+		No usernames were found that match your query.
+	</div>
+</div>
+[% CASE 'nostories' %]
+	[% returnme.data_constant = 1 %]
+	<div class="storysearch">
+		No stories were found that match your query.
+	</div>
+</div>
+[% CASE 'nocomments' %]
+	[% returnme.data_constant = 1 %]
+	<div class="commentsearch">
+		No comments were found that match your query.
+	</div>
+</div>
+[% CASE 'nopolls' %]
+	[% returnme.data_constant = 1 %]
+	<div class="pollsearch">
+		No poll questions were found that match your query.
+	</div>
+</div>
+[% CASE 'nojournals' %]
+	[% returnme.data_constant = 1 %]
+	<div class="journalsearch">
+		No journals were found to match your query.
+	</div>
+</div>
+[% CASE 'nosubmissions' %]
+	[% returnme.data_constant = 1 %]
+	<div class="subsearch">
+		No submissions were found to match your query.
+	</div>
+</div>
+[% CASE 'norss' %]
+	[% returnme.data_constant = 1 %]
+	<div class="rsssearch">
+		No rss entries were found to match your query.
+	</div>
+</div>
+[% CASE 'all_sections' %]
+	[% returnme.data_constant = 1 %]
+	All Sections
+
+[% CASE 'all_topics' %]
+	[% returnme.data_constant = 1 %]
+	All Topics
+
+[% CASE 'all_authors' %]
+	[% returnme.data_constant = 1 %]
+	All Authors
+
+[% CASE 'all_subsections' %]
+	[% returnme.data_constant = 1 %]
+	All Subsections
+
+[% CASE 'search_titlebar_title' %]
+	[% IF text.length > 0 %]
+		Searching For: [% text %]
+	[% ELSE %]
+		Search [% constants.sitename %]
+	[% END %]
+
+[% CASE 'search_header_title' %]
+	[% IF text.length > 0 %]
+		Search '[% text %]'
+	[% ELSE %]
+		Search [% constants.sitename %]
+	[% END %]
+[% CASE 'search_slashboxes' # Not needed unless you have slashboxes on the search page %]
+[% END %]
+
+
+__seclev__
+10000
+__version__
+$Id: data;search;default,v 1.12 2005/09/19 02:55:47 tvroom Exp $

@@ -1,0 +1,158 @@
+__section__
+default
+__description__
+The printing of the comments
+
+* can_moderate = boolean for whether current user is eligible to moderate
+	at least one comment
+* comment = hashref of main comment to display (if cid is specified)
+* comments = big ol' arrayref of comments
+* next = hashref of next comment for "next" link
+* previous = hashref of previous comment for "previous" link
+* sid = story ID
+* cid = comment ID
+* pid = base parent ID
+* cc = number of siblings of this comment
+* lvl = what nesting level we're at
+* lcp = linkCommentPages value
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+printCommComments
+__template__
+[% moderate_form   = can_moderate || user.acl.candelcomments_always %]
+[% moderate_button = (can_moderate
+	&& user.mode != 'archive'
+	&& ( !user.state.discussion_archived || constants.comments_moddable_archived)) %]
+[% IF moderate_form %]
+	<form action="[% gSkin.rootdir %]/comments.pl" method="post">
+[% END %]
+
+[% IF discussion2 %]
+	[% IF discussion2 == "slashdot" %]
+	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
+	[%- ELSE %]
+	<script src="http://socialcomputingresearch.net/slashdot/js/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
+	[%- END %]
+	<script type="text/javascript">
+<!--
+	window.onscroll = d2act;
+	boxStatus(1);
+[% Slash.jsSelectComments(Slash.db, constants, user, { sid => sid, cid => cid }, gSkin) %]
+//-->
+	</script>
+[% END %]
+
+[% IF cid %]
+	<ul id="commentlisting" class="[% user.mode %]">
+	[% Slash.dispComment(comment) %]
+	<div class="comment_footer">
+	[% IF previous %]
+		&lt;&lt;[% Slash.linkComment(previous, 1) %]
+	[% END %]
+
+	[% IF previous && (comment.pid || next) %]
+		|
+	[% END %]
+	
+	[% IF comment.pid %]
+		[% Slash.linkComment(comment, 1) %]
+	[% END %]
+
+	[% IF next && (comment.pid || previous) %]
+		|
+	[% END %]
+
+	[% IF next %]
+		[% Slash.linkComment(next, 1) %]&gt;&gt;
+	[% END %]
+	</div>
+	[% m1_classname = "Slash::" _ constants.m1_pluginname;
+	   moddb = Slash.getObject(m1_classname);
+	   IF moddb;
+		   moddb.dispModCommentLog('cid', cid, {
+			show_m2s =>	  constants.m2 ? (form.show_m2s.defined
+							? form.show_m2s : user.m2_with_comm_mod)
+						: 0,
+			need_m2_form =>	  constants.m2 ? !moderate_form : 0,
+			need_m2_button => constants.m2,
+			title => " " });
+	   END;
+	%]
+[% END %]
+
+	[% lcp %]
+	[% IF lvl %]
+	[% END %]
+	[% thread = Slash.displayThread(sid, pid, lvl, comments) %]
+	[% IF thread || discussion2 %]
+		[% UNLESS cid %]<ul id="commentlisting">[% END %]
+			[% thread || '' %]
+			<li id="roothiddens" class="hide"></li>
+		[% UNLESS cid %]</ul>[% END %]
+	[% END %]
+	[% IF cid %]</ul>[% END %]
+	[% IF lvl %]
+	[% END %]
+	[% lcp %]
+
+[% IF discussion2 && !cid %]
+<div class="prev-next"><a href="#" onclick="ajaxFetchComments(0,1); return false"><span id="more_comments_num_a" class="hide">Check for more</span></a>
+	[% UNLESS user.state.discussion_archived || user.state.discussion_future_nopost %]
+		| [% Slash.linkComment({
+			sid          => sid,
+			cid          => cid,
+			op           => 'reply',
+			subject      => 'Reply',
+			subject_only => 1
+		});
+	END %]
+</div>
+[% END %]
+
+[% IF moderate_form %]
+	[% IF moderate_button %]
+		<div>Have you read the
+		<a href="[% gSkin.rootdir %]/moderation.shtml">Moderator Guidelines</a>
+		yet?
+		<input type="hidden" name="op" value="moderate">
+		<input type="hidden" name="sid" value="[% sid %]">
+		<input type="hidden" name="cid" value="[% cid %]">
+		<input type="hidden" name="pid" value="[% pid %]">
+		<input type="submit" value="moderate" class="button">
+		</div>
+		[% IF (constants.authors_unlimited && user.seclev >= constants.authors_unlimited)
+			|| user.acl.candelcomments_always %]
+			[% PROCESS formNote note='Checked comments will be deleted.' %]
+		[% END %]
+	[% END %]
+	</form>
+[% END %]
+
+[% IF discussion2 %]
+	<script type="text/javascript">
+<!--
+		currents['hidden']   = [% user.state.comments.totals.hidden  || 0 %];
+		currents['full']     = [% user.state.comments.totals.full    || 0 %];
+		currents['oneline']  = [% user.state.comments.totals.oneline || 0 %];
+		// currents_total = [% (user.state.comments.totals.hidden || 0 ) + (user.state.comments.totals.full || 0) + (user.state.comments.totals.oneline || 0)  %];
+
+		abbrev_comments      = {};
+		noshow_comments      = [[% user.state.comments.noshow.join(',') %]];
+		pieces_comments      = [[% user.state.comments.pieces.join(',') %]];
+		init_hiddens         = [[% user.state.comments.hiddens.join(',') %]];
+
+		[% IF discussion2 == "slashdot" %]d2act();
+		[% END -%]finishLoading();
+//-->
+	</script>
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: printCommComments;misc;default,v 1.64 2008/01/18 22:36:51 pudge Exp $
