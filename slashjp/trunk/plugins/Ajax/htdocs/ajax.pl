@@ -328,7 +328,7 @@ sub fetchComments {
 		}
 	}
 
-	my($comments) = Slash::selectComments(
+	my($comments) = selectComments(
 		$discussion,
 		$cid,
 		\%select_options,
@@ -456,7 +456,7 @@ sub fetchComments {
 	$form->{mode} = 'archive';
 
 	for my $cid (@hidden_cids) {
-		$html{'comment_' . $cid} = Slash::dispComment($comments->{$cid}, {
+		$html{'comment_' . $cid} = dispComment($comments->{$cid}, {
 			noshow_show => 1,
 			pieces      => $get_pieces_cids{$cid}
 		});
@@ -464,7 +464,7 @@ sub fetchComments {
 
 	for my $cid (@pieces_cids) {
 		@html{'comment_otherdetails_' . $cid, 'comment_sub_' . $cid} =
-			Slash::dispComment($comments->{$cid}, {
+			dispComment($comments->{$cid}, {
 				show_pieces => 1
 			});
 	}
@@ -493,6 +493,7 @@ sub fetchComments {
 		$to_dump{eval_first} ||= '';
 		$to_dump{eval_first} .= "placeholder_no_update = " . Data::JavaScript::Anon->anon_dump({ map { $_ => 1 } @placeholders }) . ';';
 	}
+	writeLog($id);
 	return Data::JavaScript::Anon->anon_dump(\%to_dump);
 }
 
@@ -549,8 +550,89 @@ sub getModalPrefs {
 			{ Return => 1 }
 		);
 	} elsif ($form->{'section'} eq 'sectional') {
+                
                getSectionPrefsHTML($slashdb, $constants, $user, $form);
+
+        } elsif ($form->{'section'} eq 'slashboxes') {
+                my $section_descref = { };
+                my $box_order;
+                my $sections_description = $slashdb->getSectionBlocks();
+                my $slashboxes_hr = { };
+                my $slashboxes_textlist = $user->{slashboxes};
+                my $userspace = $user->{mylinks} || "";
+
+                if (!$slashboxes_textlist) {
+                        my($boxes, $skinBoxes) = $slashdb->getPortalsCommon();
+                        $slashboxes_textlist = join ",", @{$skinBoxes->{$constants->{mainpage_skid}}};
+                }
+
+                for my $bid (map { /^'?([^']+)'?$/; $1 } split(/,/, $slashboxes_textlist)) {
+                        $slashboxes_hr->{$bid} = 1;
+                }
+
+                for my $ary (sort { lc $a->[1] cmp lc $b->[1]} @$sections_description) {
+                        my($bid, $title, $boldflag) = @$ary;
+                        push @$box_order, $bid;
+                        $section_descref->{$bid}{checked} = $slashboxes_hr->{$bid} ? $constants->{markup_checked_attribute} : '';
+                        $title =~ s/<(.*?)>//g;
+                        $section_descref->{$bid}{title} = $title;
+                }
+
+                return
+                        slashDisplay('prefs_slashboxes', {
+                                box_order         => $box_order,
+                                section_descref   => $section_descref,
+                                userspace         => $userspace,
+                                tabbed            => $form->{'tabbed'},
+                        },
+                        { Return => 1 }
+                );
+
+        } elsif ($form->{'section'} eq 'authors') {
+
+                my $author_hr = $slashdb->getDescriptions('authors');
+                my @aid_order = sort { lc $author_hr->{$a} cmp lc $author_hr->{$b} } keys %$author_hr;
+                my %story_never_author;
+                map { $story_never_author{$_} = 1 } keys %$author_hr;
+                map { $story_never_author{$_} = 0 } split(/,/, $user->{story_never_author});
+
+                return
+                        slashDisplay('prefs_authors', {
+                                aid_order          => \@aid_order,
+                                author_hr          => $author_hr,
+                                story_never_author => \%story_never_author,
+                                tabbed             => $form->{'tabbed'},
+                        },
+                        { Return => 1 }
+                );
+
+        } elsif ($form->{'section'} eq 'admin') {
+                return if !$user->{is_admin};
+
+                return
+                        slashDisplay('prefs_admin', {
+                                user   => $user,
+                                tabbed => $form->{'tabbed'},
+                        },
+                        { Return => 1 }
+                );
+
+        } elsif ($form->{'section'} eq 'fh') {
+
+                my $firehose = getObject("Slash::FireHose");
+                my $opts = $firehose->getAndSetOptions();
+                $opts->{firehose_usermode} = $user->{firehose_usermode} if $user->{is_admin};
+
+                return
+                        slashDisplay('fhadvprefpane', {
+                                options => $opts,
+                                user    => $user,
+                        },
+                        { Return => 1 }
+                );
+                
         } else {
+                
                 return
 			slashDisplay('prefs_' . $form->{'section'}, {
 				user   => $user,
@@ -579,7 +661,6 @@ sub saveModalPrefs {
 			nosigs            => ($params{'nosigs'}              ? 1 : 0),
 			noscores          => ($params{'noscores'}            ? 1 : 0),
 			domaintags        => ($params{'domaintags'} != 2     ? $params{'domaintags'} : undef),
-			m2_with_comm_mod  => ($params{'m2_with_mod_on_comm'} ? 1 : undef),
 		};
 	}
 
@@ -594,8 +675,6 @@ sub saveModalPrefs {
 				? $params{'textarea_rows'} : undef),
 			textarea_cols     => ($params{'textarea_cols'} != $constants->{'textarea_cols'}
 				? $params{'textarea_cols'} : undef),
-			postanon          => ($params{'postanon'} ? 1 : undef),
-			no_spell          => ($params{'no_spell'} ? 1 : undef),
 		};
 	}
 
@@ -687,7 +766,6 @@ sub saveModalPrefs {
                         aim                 => $params{aim},
                         aimdisplay          => $params{aimdisplay},
                         icq                 => $params{icq},
-                        playing             => $params{playing},
                         mobile_text_address => $params{mobile_text_address},
                 };
 
@@ -745,6 +823,101 @@ sub saveModalPrefs {
                 if (!isAnon($params{uid}) && !$params{willing}) {
                         $slashdb->setUser($params{uid}, { points => 0 });
                 }
+        }
+
+        if ($params{'formname'} eq "slashboxes") {
+                my $slashboxes = $user->{slashboxes};
+                my($boxes, $skinBoxes) = $slashdb->getPortalsCommon();
+                my $default_slashboxes_textlist = join ",",
+                        @{$skinBoxes->{$constants->{mainpage_skid}}};
+
+                $slashboxes = $default_slashboxes_textlist if !$slashboxes;
+                my @slashboxes = split /,/, $slashboxes;
+                my %slashboxes = ( );
+
+                for my $i (0..$#slashboxes) {
+                        $slashboxes{$slashboxes[$i]} = $i;
+                }
+
+                for my $key (sort grep /^showbox_/, keys %params) {
+                        my($bid) = $key =~ /^showbox_(\w+)$/;
+                        next if length($bid) < 1 || length($bid) > 30 || $bid !~ /^\w+$/;
+                        if (! exists $slashboxes{$bid}) {
+                                $slashboxes{$bid} = 999;
+                        }
+                }
+
+                for my $bid (@slashboxes) {
+                        delete $slashboxes{$bid} unless $params{"showbox_$bid"};
+                }
+
+                @slashboxes = sort { $slashboxes{$a} <=> $slashboxes{$b} || $a cmp $b } keys %slashboxes;
+                $#slashboxes = 19 if $#slashboxes > 19;
+                $slashboxes = join ",", @slashboxes;
+                $slashboxes = "" if ($slashboxes eq $default_slashboxes_textlist);
+
+                $slashboxes =~ s/[^\w,-]//g;
+                my @items = grep { $_ } split /,/, $slashboxes;
+                $slashboxes = join ",", @items;
+
+                if (length($slashboxes) > 1024) {
+                        $slashboxes = substr($slashboxes, 0, 1024);
+                        $slashboxes =~ s/,?\w*$//g;
+                } elsif (length($slashboxes) < 1) {
+                        $slashboxes = '';
+                }
+
+                $user_edits_table->{slashboxes} = $slashboxes;
+
+                $user_edits_table->{mylinks} = balanceTags(strip_html(
+                        chopEntity($params{mylinks} || '', 255)
+                ), { deep_nesting => 2, length => 255 });
+
+                $user_edits_table->{mylinks} = '' unless defined $user_edits_table->{mylinks};
+
+        }
+
+        if ($params{'formname'} eq "authors") {
+                my $author_hr = $slashdb->getDescriptions('authors');
+                my ($story_author_all, @story_never_author);
+
+                for my $aid (sort { $a <=> $b } keys %$author_hr) {
+                        my $key = "aid$aid";
+                        $story_author_all++;
+                        push(@story_never_author, $aid) if (!$params{$key});
+                }
+
+                $#story_never_author = 299 if $#story_never_author  > 299;
+
+                my $story_never_author = join(",", @story_never_author);
+                $story_never_author =~ s/[^\w,-]//g;
+                my @items = grep { $_ } split /,/, $story_never_author;
+                $story_never_author = join ",", @items;
+
+                my $len ||= $constants->{checklist_length} || 255;
+                if (length($story_never_author) > $len) {
+                        $story_never_author = substr($story_never_author, 0, $len);
+                        $story_never_author =~ s/,?\w*$//g;
+                } elsif (length($story_never_author) < 1) {
+                        $story_never_author = '';
+                }
+
+                $user_edits_table = {
+                        story_never_author => $story_never_author,
+                };
+
+        }
+
+        if ($params{'formname'} eq "admin") {
+               return if !$user->{is_admin};
+
+              $user_edits_table = {
+                     playing           => $params{playing},
+                     no_spell          => ($params{'no_spell'} ? 1 : undef),
+                     mod_with_comm     => ($params{'mod_with_comm'} ? 1 : undef),
+                     m2_with_mod       => ($params{'m2_with_mod'} ? 1 : undef),
+                     m2_with_comm_mod  => ($params{'m2_with_mod_on_comm'} ? 1 : undef),
+              };
         }
 
         # Everything but Sections is saved here.

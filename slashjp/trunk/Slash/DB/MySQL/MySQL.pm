@@ -1556,6 +1556,7 @@ sub deleteUser {
 		realemail	=> '',
 		fakeemail	=> '',
 		newpasswd	=> '',
+		newpasswd_ts	=> undef,
 		homepage	=> '',
 		passwd		=> '',
 		people		=> '',
@@ -1617,7 +1618,7 @@ sub getUserAuthenticate {
 
 		# try ENCRYPTED -> ENCRYPTED
 		if ($kind == $EITHER || $kind == $ENCRYPTED) {
-			if (comparePassword($passwd, $db_passwd, 0, ($kind == $ENCRYPTED))) {
+			if (comparePassword($passwd, $db_passwd, $uid_try, 0, ($kind == $ENCRYPTED))) {
 				$uid_verified = $db_uid;
 				# get existing logtoken, if exists, or new one
 				$cookpasswd = $self->getLogToken($uid_verified, 1);
@@ -1626,7 +1627,7 @@ sub getUserAuthenticate {
 
 		# try PLAINTEXT -> ENCRYPTED
 		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
-			if (comparePassword($passwd, $db_passwd, ($kind == $PLAIN), 0)) {
+			if (comparePassword($passwd, $db_passwd, $uid_try, ($kind == $PLAIN), 0)) {
 				$uid_verified = $db_uid;
 				# get existing logtoken, if exists, or new one
 				$cookpasswd = $self->getLogToken($uid_verified, 1);
@@ -1635,8 +1636,8 @@ sub getUserAuthenticate {
 
 		# try PLAINTEXT -> NEWPASS
 		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
-			if ($passwd eq $db_newpasswd) {
-				my $cryptpasswd = encryptPassword($passwd);
+			if (comparePassword($passwd, $db_newpasswd, $uid_try, ($kind == $PLAIN), 0)) {
+				my $cryptpasswd = encryptPassword($passwd, $uid_try);
 				$self->sqlUpdate('users', {
 					newpasswd	=> '',
 					passwd		=> $cryptpasswd
@@ -1763,7 +1764,8 @@ sub getNewPasswd {
 	my($self, $uid) = @_;
 	my $newpasswd = changePassword();
 	$self->sqlUpdate('users', {
-		newpasswd => $newpasswd
+		newpasswd     => encryptPassword($newpasswd, $uid),
+		-newpasswd_ts => 'NOW()',
 	}, 'uid=' . $self->sqlQuote($uid));
 	return $newpasswd;
 }
@@ -1774,9 +1776,11 @@ sub getNewPasswd {
 sub resetUserAccount {
 	my($self, $uid) = @_;
 	my $newpasswd = changePassword();
+	my $enc = encryptPassword($newpasswd, $uid);
 	$self->sqlUpdate('users', {
-		newpasswd => $newpasswd,
-		passwd	  => encryptPassword($newpasswd)
+		passwd       => $enc,
+		newpasswd    => $enc,
+		newpasswd_ts => undef,
 	}, 'uid=' . $self->sqlQuote($uid));
 	return $newpasswd;
 }
@@ -3447,6 +3451,14 @@ sub markStoryDirty {
 ########################################################
 sub deleteStory {
 	my($self, $id) = @_;
+	my $constants = getCurrentStatic();
+	if ($constants->{plugin}{FireHose}) {
+		my $stoid = $self->getStoidFromSidOrStoid($id);
+		my $firehose = getObject("Slash::FireHose");
+		my $globjid = $self->getGlobjidCreate("stories", $stoid);
+		my $fhid = $firehose->getFireHoseIdFromGlobjid($globjid);
+		$firehose->setFireHose($fhid, { public => "no", rejected => "yes"});
+	}
 	return $self->setStory($id, { in_trash => 'yes' });
 }
 
@@ -6177,7 +6189,7 @@ sub getCommentTextCached {
 	my $possible_chop  = !$opt->{full} && !($opt->{mode} && $opt->{mode} eq 'archive');
 	my $abbreviate_ok  = $opt->{discussion2} && $possible_chop;
 	my $abbreviate_len = 256;
-	my $max_len = $user->{maxcommentsize};
+	my $max_len = $constants->{default_maxcommentsize};
 
 	# We have to get the comment text we need (later we'll search/replace
 	# them into the text).
@@ -6194,8 +6206,7 @@ sub getCommentTextCached {
 	my $mcd = $self->getMCD();
 	$mcd = undef if
 		   $opt->{mode} && $opt->{mode} eq 'archive'
-		|| $user->{domaintags} != 2
-		|| $user->{maxcommentsize} != $constants->{default_maxcommentsize};
+		|| $user->{domaintags} != 2;
 
 	# loop here, pull what cids we can
 	my($mcd_debug, $mcdkey, $mcdkey_abbrev, $mcdkey_full, $mcdkeylen);
@@ -10325,7 +10336,8 @@ sub setUser {
 	if (exists $hashref->{passwd}) {
 		# get rid of newpasswd if defined in DB
 		$hashref->{newpasswd} = '';
-		$hashref->{passwd} = encryptPassword($hashref->{passwd});
+		$hashref->{newpasswd_ts} = undef,
+		$hashref->{passwd} = encryptPassword($hashref->{passwd}, $uid);
 	}
 	if ($hashref->{people}) {
 		$hashref->{"-people"} = "0x" . unpack("H*", freeze($hashref->{people}));
@@ -10377,7 +10389,7 @@ sub setUser {
 		my $where = "uid=$uid";
 		my %minihash = ( );
 		for my $key (@{$update_tables{$table}}) {
-			if (defined $hashref->{$key}) {
+			if (exists $hashref->{$key}) {
 				$minihash{$key} = $hashref->{$key};
 				if ($options->{and_where}) {
 					my $and_where = undef;
@@ -10855,16 +10867,28 @@ sub _getUser_do_selects {
 		for my $acl (@$acl_ar) {
 			$answer->{acl}{$acl} = 1;
 		}
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ mcd gU_ds got all " . scalar(@$acl_ar) . " acls\n";
+		}
+		# Get the clouts from users_clout.  Rows can be missing from
+		# this table and often are, in which case they are filled in
+		# with data from the clout classes' getUserClout methods.
 		my $clout_types = $self->getCloutTypes();
+		my $clout_info = $self->getCloutInfo();
 		my $clout_hr = $self->sqlSelectAllKeyValue(
 			'clid, clout',
 			'users_clout',
 			"uid = $uid_q");
-		for my $clid (keys %$clout_hr) {
-			$answer->{clout}{ $clout_types->{$clid} } = $clout_hr->{$clid};
-		}
-		if ($mcddebug > 1) {
-			print STDERR scalar(gmtime) . " $$ mcd gU_ds got all " . scalar(@$acl_ar) . " acls\n";
+		for my $clid (grep /^\d+$/, keys %$clout_types) {
+			my $this_clout;
+			if (defined($clout_hr->{$clid})) {
+				$this_clout = $clout_hr->{$clid};
+			} else {
+				my $this_info = $clout_info->{$clid};
+				my $clout_obj = getObject($this_info->{class}, { db_type => 'reader' });
+				$this_clout = $clout_obj->getUserClout($answer);
+			}
+			$answer->{clout}{ $clout_types->{$clid} } = $this_clout;
 		}
 	} elsif (ref($params) eq 'ARRAY' && @$params) {
 		my $param_list = join(",", map { $self->sqlQuote($_) } @$params);

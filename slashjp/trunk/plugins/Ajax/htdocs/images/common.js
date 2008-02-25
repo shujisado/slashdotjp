@@ -3,20 +3,27 @@
 
 // global settings, but a firehose might use a local settings object instead
 var firehose_settings = {};
-  firehose_settings.updates = Array(0);
-  firehose_settings.updates_size = 0;
-  firehose_settings.ordered = Array(0);
-  firehose_settings.before = Array(0);
-  firehose_settings.after = Array(0);
   firehose_settings.startdate = '';
   firehose_settings.duration = '';
+  firehose_settings.mode = '';
+  firehose_settings.color = '';
+  firehose_settings.orderby = '';
+  firehose_settings.orderdir = '';
+
   firehose_settings.issue = '';
-  firehose_settings.removed_first = '0';
-  firehose_settings.future = null;
-  firehose_settings.removals = null;
   firehose_settings.is_embedded = 0;
   firehose_settings.not_id = 0;
   firehose_settings.section = 0;
+
+// Settings to port out of settings object
+  firehose_updates = Array(0);
+  firehose_updates_size = 0;
+  firehose_ordered = Array(0);
+  firehose_before = Array(0);
+  firehose_after = Array(0);
+  firehose_removed_first = '0';
+  firehose_removals = null;
+  firehose_future = null;
 
 // globals we haven't yet decided to move into |firehose_settings|
 var fh_play = 0;
@@ -27,12 +34,14 @@ var fh_is_admin = 0;
 var console_updating = 0;
 var fh_colorslider; 
 var fh_ticksize;
-var fh_pageval = 0;
 var fh_colors = Array(0);
 var fh_use_jquery = 0;
 var vendor_popup_timerids = Array(0);
 var vendor_popup_id = 0;
 var fh_slider_init_set = 0;
+var ua=navigator.userAgent;
+var is_ie = ua.match("/MSIE/");
+
 
 // eventually add site specific constants like this to a separate .js
 var sitename = "Slashdot";
@@ -374,13 +383,19 @@ function reportError(request) {
 
 function createTag(tag, id, type) {
 	var params = [];
-	params['op'] = 'tags_create_tag';
-	params['reskey'] = reskey_static;
-	params['name'] = tag;
 	params['id'] = id;
 	params['type'] = type;
-	if (tag == "hold" && fh_is_admin) {
-		firehose_collapse_entry(id);
+	if ( fh_is_admin && ("_#)^*".indexOf(tag[0]) != -1) ) {
+	  params['op'] = 'tags_admin_commands';
+	  params['reskey'] = $('admin_commands-reskey-' + id).value;
+	  params['command'] = tag;
+	} else {
+	  params['op'] = 'tags_create_tag';
+	  params['reskey'] = reskey_static;
+	  params['name'] = tag;
+	  if ( fh_is_admin && (tag == "hold") ) {
+	    firehose_collapse_entry(id);
+	  }
 	}
 	ajax_update(params, '');
 }
@@ -547,16 +562,16 @@ function firehose_set_options(name, value) {
 	if (name == "fhfilter" && theForm) {
 		for (i=0; i< theForm.elements.length; i++) {
 			if (theForm.elements[i].name == "fhfilter") {
-				params['fhfilter'] = theForm.elements[i].value;
+				firehose_settings.fhfilter = theForm.elements[i].value;
 			}
 		}
-		page = 0;
+		firehose_settings.page = 0;
 	}
 	if (name != "color") {
 	for (i=0; i< pairs.length; i++) {
 		var el = pairs[i];
 		if (name == el[0] && value == el[1]) {
-			params[name] = value;
+			firehose_settings[name] = value;
 			if ($(el[2])) {
 				$(el[2]).id = el[3];
 				if($(el[3])) {
@@ -575,15 +590,18 @@ function firehose_set_options(name, value) {
 		if ($('firehoselist')) {
 			// set page
 			page = 0;
-			var attributes = { 
-				opacity: { from: 1, to: 0 }
-			};
-			var myAnim = new YAHOO.util.Anim("firehoselist", attributes); 
-			myAnim.duration = 1;
-			myAnim.onComplete.subscribe(function() {
-				$('firehoselist').style.opacity = "1";
-			});
-			myAnim.animate();
+			
+			if (!is_ie) {
+				var attributes = { 
+					opacity: { from: 1, to: 0 }
+				};
+				var myAnim = new YAHOO.util.Anim("firehoselist", attributes); 
+				myAnim.duration = 1;
+				myAnim.onComplete.subscribe(function() {
+					$('firehoselist').style.opacity = "1";
+				});
+				myAnim.animate();
+			}
 			// remove elements
 			setTimeout("firehose_remove_all_items()", 600);
 		}
@@ -601,8 +619,8 @@ function firehose_set_options(name, value) {
 		if (name == "issue") {
 			firehose_settings.issue = value;
 			firehose_settings.startdate = value;
-			duration = 1;
-			page = 0;
+			firehose_settings.duration = 1;
+			firehose_settings.page = 0;
 			var issuedate = firehose_settings.issue.substr(5,2) + "/" + firehose_settings.issue.substr(8,2) + "/" + firehose_settings.issue.substr(10,2);
 
 			if ($('fhcalendar')) {
@@ -612,8 +630,11 @@ function firehose_set_options(name, value) {
 				$('fhcalendar_pag')._widget.setDate(issuedate, "day");
 			}
 		}
+		if (name == "color") {
+			firehose_settings.color = value;
+		}
 		if (name == "pagesize") {
-			page = 0;
+			firehose_settings.page = 0;
 		}
 	}
 
@@ -634,6 +655,9 @@ function firehose_set_options(name, value) {
 	}
 
 	params['section'] = firehose_settings.section;
+	for (i in firehose_settings) {
+		params[i] = firehose_settings[i];
+	}
 	ajax_update(params, '', handlers);
 }
 
@@ -688,98 +712,6 @@ function firehose_remove_tab(tabid) {
 	params['section'] = firehose_settings.section;
 	ajax_update(params, '', handlers);
 
-}
-
-var nodmenu = null;
-var nixmenu = null;
-
-function get_nod_menu() {
-	if ( !nodmenu )
-		nodmenu = document.getElementById('nodmenu');
-	return nodmenu;
-}
-
-function get_nix_menu() {
-	if ( !nixmenu )
-		nixmenu = document.getElementById('nixmenu');
-	return nixmenu;
-}
-
-
-
-var g_elem_for_pending_showmenu = null;
-var g_menu_for_pending_showmenu = null;
-var g_id_for_pending_showmenu = null;
-var g_pending_showmenu = null;
-var g_pending_hidemenu = null;
-
-var g_nodnix_item_id = null;
-
-function nodnix_tag( tag, up_down ) {
-	createTag(tag, g_nodnix_item_id, "firehose");
-	if ( up_down !== undefined )
-		firehose_up_down(g_nodnix_item_id, up_down);
-}
-
-function hide_nod_menu() {
-	get_nod_menu().style.display = 'none';
-}
-
-function hide_nix_menu() {
-	get_nix_menu().style.display = 'none';
-}
-
-function hide_nodnix_menu( delay ) {
-	if ( delay == undefined || !delay ) {
-		hide_nod_menu();
-		hide_nix_menu();
-	} else {
-		if ( g_pending_hidemenu )
-			clearTimeout(g_pending_hidemenu);
-		g_pending_hidemenu = setTimeout("hide_nodnix_menu()", delay);
-	}
-}
-
-function dont_hide_nodnix_menu() {
-	clearTimeout(g_pending_hidemenu);
-	g_pending_hidemenu = null;
-}
-
-
-
-function show_nodnix_menu(elem, id, menu, show_delay, hide_delay) {
-	if ( show_delay == undefined || !show_delay ) {
-		var pos = YAHOO.util.Dom.getXY(elem);
-		menu.style.display = 'block';
-		YAHOO.util.Dom.setXY(menu, pos);
-		g_nodnix_item_id = id;
-	} else {
-		g_elem_for_pending_showmenu = elem;
-		g_menu_for_pending_showmenu = menu;
-		g_id_for_pending_showmenu = id;
-		if ( g_pending_showmenu )
-			clearTimeout(g_pending_showmenu);
-		g_pending_showmenu = setTimeout("show_nodnix_menu(g_elem_for_pending_showmenu, g_id_for_pending_showmenu, g_menu_for_pending_showmenu)", show_delay);
-	}
-
-	if ( hide_delay != undefined && hide_delay != 0 ) {
-		hide_nodnix_menu(hide_delay);
-	}
-}
-
-function dont_show_nodnix_menu() {
-	clearTimeout(g_pending_showmenu);
-	g_pending_showmenu = null;
-}
-
-function show_nod_menu(elem, id, show_delay, hide_delay) {
-	hide_nix_menu();
-	show_nodnix_menu(elem, id, get_nod_menu(), show_delay, hide_delay);
-}
-
-function show_nix_menu(elem, id, show_delay, hide_delay) {
-	hide_nod_menu();
-	show_nodnix_menu(elem, id, get_nix_menu(), show_delay, hide_delay);
 }
 
 
@@ -893,17 +825,17 @@ function json_update(response) {
 
 
 function firehose_handle_update() {
-	if (firehose_settings.updates.length > 0) {
-		var el = firehose_settings.updates.pop();
+	if (firehose_updates.length > 0) {
+		var el = firehose_updates.pop();
 		var fh = 'firehose-' + el[1];
 		var wait_interval = 800;
 		if(el[0] == "add") {
-			if (firehose_settings.before[el[1]] && $('firehose-' + firehose_settings.before[el[1]])) {
-				new Insertion.After('firehose-' + firehose_settings.before[el[1]], el[2]);
+			if (firehose_before[el[1]] && $('firehose-' + firehose_before[el[1]])) {
+				new Insertion.After('firehose-' + firehose_before[el[1]], el[2]);
 
 
-			} else if (firehose_settings.after[el[1]] && $('firehose-' + firehose_settings.after[el[1]])) {
-				new Insertion.Before('firehose-' + firehose_settings.after[el[1]], el[2]);
+			} else if (firehose_after[el[1]] && $('firehose-' + firehose_after[el[1]])) {
+				new Insertion.Before('firehose-' + firehose_after[el[1]], el[2]);
 			} else if (insert_new_at == "bottom") {
 				new Insertion.Bottom('firehoselist', el[2]);
 			} else {
@@ -916,22 +848,24 @@ function firehose_handle_update() {
 			}
 
 			var attributes = { 
-				opacity: { from: 0, to: 1 },
 				height: { from: 0, to: toheight }
 			};
+			if (!is_ie) {
+				attributes.opacity = { from: 0, to: 1 };
+			}
 			var myAnim = new YAHOO.util.Anim(fh, attributes); 
 			myAnim.duration = 0.7;
 
-			if (firehose_settings.updates_size > 10) {
+			if (firehose_updates_size > 10) {
 				myAnim.duration = myAnim.duration / 2;
 				wait_interval = wait_interval / 2;
 			}
-			if (firehose_settings.updates_size > 20) {
+			if (firehose_updates_size > 20) {
 				myAnim.duration = myAnim.duration / 2;
 				wait_interval = wait_interval / 2;
 
 			}
-			if (firehose_settings.updates_size > 30) {
+			if (firehose_updates_size > 30) {
 				myAnim.duration = myAnim.duration / 1.5;
 				wait_interval = wait_interval / 2;
 			}
@@ -957,23 +891,26 @@ function firehose_handle_update() {
 				// Don't delete admin looking at this in expanded view
 			} else {
 				var attributes = { 
-					height: { to: 0 },
-					opacity: { to: 0}
+					height: { to: 0 }
 				};
+				
+				if (!is_ie) {
+					attributes.opacity = { to: 0};
+				}
 				var myAnim = new YAHOO.util.Anim(fh, attributes); 
 				myAnim.duration = 0.4;
 				wait_interval = 500;
 				
-				if (firehose_settings.updates_size > 10) {
+				if (firehose_updates_size > 10) {
 					myAnim.duration = myAnim.duration * 2;
-					if (!firehose_settings.removed_first) {
+					if (!firehose_removed_first) {
 						wait_interval = wait_interval * 2;
 					} else {
 						wait_interval = 50;
 					}
 				}
-				firehose_settings.removed_first = 1;
-				if (firehose_settings.removals < 10 ) {
+				firehose_removed_first = 1;
+				if (firehose_removals < 10 ) {
 					myAnim.onComplete.subscribe(function() {
 						var elem = this.getEl();
 						if (elem && elem.parentNode) {
@@ -998,25 +935,25 @@ function firehose_handle_update() {
 }
 
 function firehose_reorder() {
-	if (firehose_settings.ordered) {
+	if (firehose_ordered) {
 		var fhlist = $('firehoselist');
 		if (fhlist) {
 			var item_count = 0;
-			for (i = 0; i < firehose_settings.ordered.length; i++) {
-				if (/^\d+$/.test(firehose_settings.ordered[i])) {
+			for (i = 0; i < firehose_ordered.length; i++) {
+				if (/^\d+$/.test(firehose_ordered[i])) {
 					item_count++;
 				}
-				var fhel = $('firehose-' + firehose_settings.ordered[i]);
+				var fhel = $('firehose-' + firehose_ordered[i]);
 				if (fhlist && fhel) {
 					fhlist.appendChild(fhel);
 				}
-				if ( firehose_settings.future[firehose_settings.ordered[i]] ) {
-					if ($("ttype-" + firehose_settings.ordered[i])) {
-						$("ttype-" + firehose_settings.ordered[i]).className = "future";	
+				if ( firehose_future[firehose_ordered[i]] ) {
+					if ($("ttype-" + firehose_ordered[i])) {
+						$("ttype-" + firehose_ordered[i]).className = "future";	
 					}
 				} else {
-					if ($("ttype-" + firehose_settings.ordered[i]) && $("ttype-" + firehose_settings.ordered[i]).className == "future") {
-						$("ttype-" + firehose_settings.ordered[i]).className = "story";	
+					if ($("ttype-" + firehose_ordered[i]) && $("ttype-" + firehose_ordered[i]).className == "future") {
+						$("ttype-" + firehose_ordered[i]).className = "story";	
 					}
 				}
 			}
@@ -1044,17 +981,17 @@ function firehose_get_updates_handler(transport) {
 	}
 	var response = eval_response(transport);
 	var processed = 0;
-	firehose_settings.removals = response.update_data.removals;
-	firehose_settings.ordered = response.ordered;
-	firehose_settings.future = response.future;
-	firehose_settings.before = Array(0);
-	firehose_settings.after = Array(0);
-	for (i = 0; i < firehose_settings.ordered.length; i++) {
+	firehose_removals = response.update_data.removals;
+	firehose_ordered = response.ordered;
+	firehose_future = response.future;
+	firehose_before = Array(0);
+	firehose_after = Array(0);
+	for (i = 0; i < firehose_ordered.length; i++) {
 		if (i > 0) {
-			firehose_settings.before[firehose_settings.ordered[i]] = firehose_settings.ordered[i - 1];
+			firehose_before[firehose_ordered[i]] = firehose_ordered[i - 1];
 		}
-		if (i < (firehose_settings.ordered.length - 1)) {
-			firehose_settings.after[firehose_settings.ordered[i]] = firehose_settings.ordered[i + 1];
+		if (i < (firehose_ordered.length - 1)) {
+			firehose_after[firehose_ordered[i]] = firehose_ordered[i + 1];
 		}
 	}
 	if (response.html) {
@@ -1062,9 +999,9 @@ function firehose_get_updates_handler(transport) {
 		processed = processed + 1;
 	}
 	if (response.updates) {
-		firehose_settings.updates = response.updates;
-		firehose_settings.updates_size = firehose_settings.updates.length;
-		firehose_settings.removed_first = 0;
+		firehose_updates = response.updates;
+		firehose_updates_size = firehose_updates.length;
+		firehose_removed_first = 0;
 		processed = processed + 1;
 		firehose_handle_update();
 	}
@@ -1112,16 +1049,15 @@ function firehose_get_updates(options) {
 	params['op'] = 'firehose_get_updates';
 	params['ids'] = firehose_get_item_idstring();
 	params['updatetime'] = update_time;
-	params['startdate'] = firehose_settings.startdate;
-	params['duration'] = firehose_settings.duration;
-	params['issue'] = firehose_settings.issue;
-	params['section'] = firehose_settings.section;
-	params['page'] = page;
-	params['not_id'] = firehose_settings.not_id;
+
+	for (i in firehose_settings) {
+		params[i] = firehose_settings[i];
+	}
+
 	if ( firehose_settings.is_embedded ) {
 		params['embed'] = 1;
 	}
-	params['fh_pageval'] = fh_pageval;
+	params['fh_pageval'] = firehose_settings.pageval;
 	if ($('busy')) {
 		$('busy').className = "";
 	}
@@ -1227,9 +1163,11 @@ function firehose_remove_entry(id) {
 	var fh = $('firehose-' + id);
 	if (fh) {
 		var attributes = { 
-			height: { to: 0 },
-			opacity: { to: 0 }
+			height: { to: 0 }
 		};
+		if (!is_ie) {
+			attributes.opacity = { to: 0 };
+		}
 		var myAnim = new YAHOO.util.Anim(fh, attributes); 
 		myAnim.duration = 0.5;
 		myAnim.onComplete.subscribe(function() {
@@ -1500,8 +1438,9 @@ function firehose_get_media_popup(id) {
 	var params = [];
 	params['op'] = 'firehose_get_media';
 	params['id'] = id;
-	var handlers = {onComplete:show_modal_box};
-	ajax_update(params, 'modal_box_content', handlers);
+	show_modal_box();
+	$('modal_box_content').innerHTML = "<h4>Loading...</h4><img src='/images/spinner_large.gif'>";
+	ajax_update(params, 'modal_box_content');
 }
 
 function saveModalPrefs() {
@@ -1544,4 +1483,30 @@ function ajaxRemoveSlashbox( id ) {
 		slashboxes.removeChild(box);
 		ajaxSaveSlashboxes();
 	}
+}
+
+function displayModalPrefHelp(element) {
+        var elem = document.getElementById(element);
+        var vis = elem.style;
+        vis.display = (!vis.display || vis.display == 'block') ? 'none' : 'block';
+}
+
+function toggle_filter_prefs() {
+	var fps = $('filter_play_status');
+	var fp  = $('filter_prefs');
+	if (fps) {
+		if (fps.className == "") {
+			fps.className = "hide";
+			if (fp) {
+				fp.className = "";
+				setTimeout("firehose_slider_init()",500);
+			} 
+		} else if (fps.className == "hide") {
+			fps.className = "";
+			if (fp) {
+				fp.className = "hide";
+			}
+		}
+	}
+
 }

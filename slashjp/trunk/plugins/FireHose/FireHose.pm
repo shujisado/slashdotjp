@@ -1011,13 +1011,19 @@ sub ajaxFireHoseSetOptions {
 	my $values = {};
 	$values->{'firehose-filter'} = $opts->{fhfilter};
 	my $eval_last = "";
-	if ($form->{tab}) {
+	if ($form->{tab} || $form->{tabtype}) {
 		$eval_last = "firehose_slider_set_color('$opts->{color}')";
+	}
+
+	my $eval_first = "";
+	for my $o (qw(startdate mode fhfilter orderdir orderby startdate duration color)) {
+		$eval_first .= Data::JavaScript::Anon->var_dump("firehose_settings.$o", $opts->{$o});
 	}
 
 	return Data::JavaScript::Anon->anon_dump({
 		html		=> $html,
 		value		=> $values,
+		eval_first	=> $eval_first,
 		eval_last	=> $eval_last
 	});
 }
@@ -1287,7 +1293,7 @@ sub ajaxFireHoseGetUpdates {
 	}, { Return => 1 });
 
 	$html->{local_last_update_time} = timeCalc($slashdb->getTime(), "%H:%M");
-	$html->{filter_text} = "Filtered to '".strip_literal($opts->{fhfilter})."'";
+	$html->{filter_text} = "Filtered to ".strip_literal($opts->{color})." '".strip_literal($opts->{fhfilter})."'";
 	$html->{gmt_update_time} = " (".timeCalc($slashdb->getTime(), "%H:%M", 0)." GMT) " if $user->{is_admin};
 	$html->{itemsreturned} = $num_items == 0 ?  getData("noitems", { options => $opts }, 'firehose') : "";
 
@@ -1758,8 +1764,7 @@ sub getAndSetOptions {
 		}
 	}
 
-	my $the_skin = $form->{section} ? $self->getSkin($form->{section}) : $gSkin;
-
+	my $the_skin = defined $form->{section} ? $self->getSkin($form->{section}) : $gSkin;
 
 	if ($tabtype eq 'tabsection') {
 		$form->{fhfilter} = "story";
@@ -1777,7 +1782,7 @@ sub getAndSetOptions {
 		$options->{orderdir} = "DESC";
 		$options->{color} = "black";
 	} elsif ($tabtype eq 'tabuser') {
-		$form->{fhfilter} = "user:";
+		$form->{fhfilter} = "\"user:$user->{nickname}\"";
 		$options->{orderby} = "popularity";
 		$options->{color} = "black";
 		$options->{orderdir} = "DESC";
@@ -1809,35 +1814,41 @@ sub getAndSetOptions {
 	$user_tabs = $self->getUserTabs();
 
 
-	
-	my $tab_compare = { 
-		color 		=> "color", 
-		filter 		=> "fhfilter" 
-	};
-
 	my $skin_prefix="";
 	if ($the_skin && $the_skin->{name} && $the_skin->{skid} != $constants->{mainpage_skid})  {
 		$skin_prefix = "$the_skin->{name} ";
 	}
 	my $system_tabs = [ 
-		{ tabtype => 'aretama', color => 'indigo', filter => $skin_prefix},
-		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story"},
-		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story"},
-		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story"},
+		{ tabtype => 'aretama', color => 'indigo', filter => $skin_prefix, orderby => 'createtime'},
+		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story", orderby => 'createtime'},
+		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story", orderby => 'popularity'},
+		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story", orderby => 'createtime'},
 	];
 
 	if (!$user->{is_anon}) {
-		push @$system_tabs, { tabtype => 'tabuser', color => 'black', filter => $skin_prefix . "user:"};
+		push @$system_tabs, { tabtype => 'tabuser', color => 'black', filter => $skin_prefix . "\"user:$user->{nickname}\""};
 	}
 
 	my $sel_tabtype;
 
+	my $tab_compare = {
+		color		=> "color",
+		filter		=> "fhfilter"
+	};
+
 	my $tab_match = 0;
 	foreach my $tab (@$user_tabs, @$system_tabs) {
 		my $equal = 1;
-		foreach (keys %$tab_compare) {
-			$options->{$tab_compare->{$_}} ||= "";
-			if ($tab->{$_} ne $options->{$tab_compare->{$_}}) {
+
+		my $this_tab_compare;
+		%$this_tab_compare = %$tab_compare;
+
+		$this_tab_compare->{orderby} = 'orderby' if defined $tab->{tabtype};
+
+
+		foreach (keys %$this_tab_compare) {
+			$options->{$this_tab_compare->{$_}} ||= "";
+			if ($tab->{$_} ne $options->{$this_tab_compare->{$_}}) {
 				$equal = 0;
 			}
 		}
@@ -2235,7 +2246,7 @@ sub listView {
 			$featured = $firehose_reader->getFireHose($res->[0]->{id});
 		}
 	}
-	my $initial = ($form->{tab} || $form->{tabtype} || $form->{fhfilter} || defined $form->{page} || $lv_opts->{fh_page} eq "console.pl" ) ? 0 : 1;
+	my $initial = ($form->{tab} || $form->{tabtype} || $form->{fhfilter} || defined $form->{page} || $lv_opts->{fh_page} eq "console.pl" || $form->{ssi} && defined $form->{fhfilter}) ? 0 : 1;
 
 	my $options = $lv_opts->{options} || $self->getAndSetOptions({ initial => $initial });
 	my $base_page = $lv_opts->{fh_page} || "firehose.pl";
@@ -2549,6 +2560,55 @@ sub createSectionSelect {
 	return createSelect("section", $menu, { default => $default, return => 1, nsort => 0, ordered => $ordered, multiple => 0, onchange => $onchange });
 
 	
+}
+
+sub linkFireHose {
+	my($self, $id_or_item) = (@_);
+	my $gSkin 	= getCurrentSkin();
+	my $constants 	= getCurrentStatic();
+	my $link_url;
+	my $item = ref($id_or_item) ? $id_or_item : $self->getFireHose($id_or_item);
+
+	if ($item->{type} eq "story") {
+		my $story = $self->getStory($item->{srcid});
+		my $story_link_ar = linkStory({
+			sid	=> $story->{sid},
+			link 	=> $story->{title},
+			tid 	=> $story->{tid},
+			skin	=> $story->{primaryskid}
+		}, 0);
+		$link_url = $story_link_ar->[0];
+	} elsif ($item->{type} eq "journal") {
+		my $the_user = $self->getUser($item->{uid});
+		$link_url = $constants->{rootdir} . "/~" . fixparam($the_user->{nickname}) . "/journal/$item->{srcid}"; 
+	} else {
+		$link_url = $gSkin->{rootdir} . '/firehose.pl?op=view&amp;id=' . $item->{id};
+	}
+
+}
+
+sub js_anon_dump {
+	my($self, $var) = @_;
+	return Data::JavaScript::Anon->anon_dump($var);
+}
+
+sub genFireHoseParams {
+	my($self, $options, $data) = @_;
+	$data ||= {};
+	my @params;
+
+	foreach my $label (qw(fhfilter color orderdir orderby startdate duration mode)) {
+	
+		my $value = defined $data->{$label} ? $data->{$label} : $options->{$label};
+		if ($label eq "startdate") {
+			$value =~s /-//g;
+		}
+		push @params, "$label=$value";
+		
+	}
+
+	my $str =  join('&amp;', @params);
+	return $str;
 }
 
 1;

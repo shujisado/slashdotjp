@@ -67,14 +67,14 @@ sub main {
 		preview => {
 			function		=> \&editComment,
 			seclev			=> 0,
-			formname 		=> $form->{newdiscussion} ? 'discussions' : 'comments',
+			formname 		=> 'comments',
 			checks			=> 
 			[ qw ( update_formkeyid max_post_check ) ], 
 		},
 		post 			=> {
 			function		=> \&editComment,
 			seclev			=> 0,
-			formname 		=> $form->{newdiscussion} ? 'discussions' : 'comments',
+			formname 		=> 'comments',
 			checks			=> 
 			[ qw ( update_formkeyid max_post_check generate_formkey	) ],
 		},
@@ -82,18 +82,13 @@ sub main {
 			function		=> \&submitComment,
 			seclev			=> 0,
 			post			=> 1,
-			formname 		=> $form->{newdiscussion} ? 'discussions' : 'comments',
+			formname 		=> 'comments',
 			checks			=> 
 			[ qw ( response_check update_formkeyid max_post_check valid_check interval_check formkey_check ) ],
 		},
 	};
 	$ops->{default} = $ops->{display};
 
-	# no user-submitted discussions any longer, except in journals
-	# newdiscussion is used to denote that we are creating a new discussion;
-	# we need to eventually remove references to it throughout the code, but
-	# for now, we just delete it so it can't be used -- pudge
-	delete $form->{newdiscussion};
 	if ($op =~ /^(?:creator_index|personal_index|user_created_index|index|create_discussion|delete_forum)/) {
 		redirect($gSkin->{rootdir} . '/journal.pl');
 		return;
@@ -469,18 +464,7 @@ sub editComment {
 		print getError('no such parent');
 		return;
 	} elsif ($pid) {
-		$pid_reply = $reply->{comment} = parseDomainTags($reply->{comment}, 0, 1, 1);
-		$pid_reply = revertQuote($pid_reply);
-
-		# prep for JavaScript
-		$pid_reply =~ s|\\|\\\\|g;
-		$pid_reply =~ s|'|\\'|g;
-		$pid_reply =~ s|([\r\n])|\\n|g;
-
-		$pid_reply =~ s{<nobr> <wbr></nobr>(\s*)} {$1 || ' '}gie;
-		#my $nick = strip_literal($reply->{nickname});
-		#$pid_reply = "<div>$nick ($reply->{uid}) wrote: <quote>$pid_reply</quote></div>";
-		$pid_reply = "<quote>$pid_reply</quote>";
+		$pid_reply = prepareQuoteReply($reply);
 	}
 
 	# calculate proper points value ... maybe this should be a public,
@@ -490,7 +474,7 @@ sub editComment {
 	# bit specific -- pudge
 	# Yeah, this API needs to be... saner. Agreed. - Jamie
 	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
-	$reply->{points} = Slash::_get_points(
+	$reply->{points} = getPoints(
 		$reply, $user,
 		$constants->{comment_minscore}, $constants->{comment_maxscore},
 		$slashdb->countUsers({ max => 1 }), $mod_reader->getReasons
@@ -511,7 +495,7 @@ sub editComment {
 	}
 
 	if (lc($form->{op}) ne 'reply' || $form->{op} eq 'preview' || ($form->{postersubj} && $form->{postercomment})) {
-		$preview = previewForm(\$error_message) or $error_flag++;
+		$preview = previewForm(\$error_message, $discussion) or $error_flag++;
 	}
 
 	if (%$reply && !$form->{postersubj}) {
@@ -542,7 +526,6 @@ sub editComment {
 		preview		=> $preview,
 		reply		=> $reply,
 		gotmodwarning	=> $gotmodwarning,
-		newdiscussion	=> $form->{newdiscussion},
 		extras		=> $extras
 	});
 }
@@ -748,7 +731,7 @@ sub validateComment {
 	my $kickin = $constants->{comments_min_line_len_kicks_in};
 	if ($constants->{comments_min_line_len} && length($$comm) > $kickin) {
 
-		my $max_comment_len = getCurrentAnonymousCoward('maxcommentsize');
+		my $max_comment_len = $constants->{default_maxcommentsize};
 		my $check_prefix = substr($$comm, 0, $max_comment_len);
 		my $check_prefix_len = length($check_prefix);
 		my $min_line_len_max = $constants->{comments_min_line_len_max}
@@ -844,87 +827,14 @@ sub validateComment {
 ##################################################################
 # Previews a comment for submission
 sub previewForm {
-	my($error_message) = @_;
+	my($error_message, $discussion) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
-	$user->{sig} = "" if $form->{postanon};
-	my $label = getData('label');
-
-	my $tempSubject = strip_notags($form->{postersubj});
-	my $tempComment = $form->{postercomment};
-
-	# The strip_mode needs to happen before the balanceTags() which is
-	# called from validateComment.  This is because strip_mode calls
-	# stripBadHtml, which calls approveTag repeatedly, which
-	# eliminates malformed tags.  balanceTags should not ever see
-	# malformed tags or it may choke.
-	#
-	# For the mode "CODE", validateComment() is called with a
-	# "whitespace factor" half what is normally used.  Code is likely
-	# to have many linebreaks and runs of whitespace; this makes the
-	# compression filter more lenient about allowing them.
-
-	if ($form->{posttype} == PLAINTEXT || $form->{posttype} == HTML) {
-		$tempComment = url2html($tempComment);
-	}
-
-	$tempComment = strip_mode($tempComment,
-		# if no posttype given, pick a default
-		$form->{posttype} || PLAINTEXT
-	);
-
-	validateComment(
-		\$tempComment, \$tempSubject, $error_message, 1,
-		($form->{posttype} == CODE
-			? $constants->{comments_codemode_wsfactor}
-			: $constants->{comments_wsfactor} || 1) )
-		or return;
-
-	$tempComment = addDomainTags($tempComment);
-
-	# XXX We really should be calling dispComment() here, rather than
-	# duplicating code.
-
-	$tempComment = parseDomainTags($tempComment,
-		!$form->{postanon} && $user->{fakeemail});
-
-	my $sig = $user->{sig};
-	if ($sig) {
-		$sig =~ s/^\s*-{1,5}\s*<(?:P|BR)>//i;
-		$sig = getData('sigdash', {}, 'comments')
-			. $sig;
-	}
-
-	my $discussion = $slashdb->getDiscussion($form->{sid}) || 0;	
-	my $extras = [];	
-	my $disc_skin = $slashdb->getSkin($discussion->{primaryskid});
-	
-	$extras = $slashdb->getNexusExtrasForChosen(
-		{ $disc_skin->{nexus} => 1 },
-		{ content_type => "comment" })
-		if $disc_skin && $disc_skin->{nexus};
-
-	my $preview = {
-		nickname		=> $form->{postanon}
-						? getCurrentAnonymousCoward('nickname')
-						: $user->{nickname},
-		pid			=> $form->{pid},
-		uid			=> $form->{postanon} ? '' : $user->{uid},
-		homepage		=> $form->{postanon} ? '' : $user->{homepage},
-		fakeemail		=> $form->{postanon} ? '' : $user->{fakeemail},
-		journal_last_entry_date	=> $user->{journal_last_entry_date} || '',
-		'time'			=> $slashdb->getTime(),
-		subject			=> $tempSubject,
-		comment			=> $tempComment,
-		sig			=> $sig,
-	};
-
-	foreach my $extra (@$extras) {
-		$preview->{$extra->[1]} = $form->{$extra->[1]};
-	}
+	my $comment = preProcessComment($form, $user, $discussion, $error_message) or return;
+	my $preview = postProcessComment({ %$comment, %$user }, 0, $discussion);
 
 	if ($constants->{plugin}{Subscribe}) {
 		$preview->{subscriber_bonus} =
@@ -933,28 +843,7 @@ sub previewForm {
 			? 1 : 0;
 	}
 
-	#####
-	# Set the user mode temporarily to 'archive' for purposes of
-	# displaying this comment.
-	my $tm = $user->{mode};
-	$user->{mode} = 'archive';
-
-	my $previewForm;
-	if ($form->{newdiscussion} && $user->{seclev} < $constants->{discussion_create_seclev}) { 
-		$previewForm = slashDisplay('newdiscussion', {
-			error => getError('seclevtoolow'),
-		});
-	} elsif ($tempSubject && $tempComment) {
-		$previewForm = slashDisplay('preview_comm', {
-			label	=> $label,
-			preview => $preview,
-		}, 1);
-	}
-
-	$user->{mode} = $tm;
-	#####
-
-	return $previewForm;
+	return prevComment($preview, $user);
 }
 
 ##################################################################
@@ -974,7 +863,6 @@ sub submitComment {
 
 	my $header_emitted = 0;
 	my $sid = $form->{sid};
-	my $label = getData('label');
 
 	# Couple of rules on how to treat the discussion depending on how mode is set -Brian
 	$discussion->{type} = isDiscussionOpen($discussion);
@@ -986,79 +874,16 @@ sub submitComment {
 	}
 
 	my $error_message;
-
-	my $tempSubject = strip_notags($form->{postersubj});
-	my $tempComment = $form->{postercomment};
-
-	# See the comment above validateComment() called from previewForm.
-	# Same thing applies here.
-
-	if ($form->{posttype} == PLAINTEXT || $form->{posttype} == HTML) {
-		$tempComment = url2html($tempComment);
-	}
-
-	$tempComment = strip_mode($tempComment,
-		# if no posttype given, pick a default
-		$form->{posttype} || PLAINTEXT
-	);
-
-	if ($constants->{anonymous_comment_interval} && ($user->{is_anon} || $form->{postanon})) {
-		my $ipid = getCurrentUser('ipid');
-		my $ipid_count = $slashdb->sqlSelect('count(*)', 'comments',
-			"sid='$form->{sid}'
-			AND uid=1
-			AND date > SUBDATE(NOW(), INTERVAL $constants->{anonymous_comment_interval} MINUTE)
-			AND ipid='$ipid'");
-		if ($ipid_count > 0) {
-			header('Comments', $discussion->{section}) or return;
-			editComment(@_, getError('anonymous_comment_interval'));
-			return 0;
-		}
-	}
-
-	unless (validateComment(
-		\$tempComment, \$tempSubject, $error_message, 1,
-		($form->{posttype} == CODE
-			? $constants->{comments_codemode_wsfactor}
-			: $constants->{comments_wsfactor} || 1) )
-	) {
+	my $comment = preProcessComment($form, $user, $discussion, $error_message);
+	if (!$comment) {
 		# The comment did not validate.  We're not actually going to
 		# post the comment this time around, we are (probaly) just
 		# going to walk through the editing cycle again.
 		header('Comments', $discussion->{section}) or return;
 		$slashdb->resetFormkey($form->{formkey});
-		if (! $form->{newdiscussion}) {
-			editComment(@_, $error_message);
-		} else {
-			if ($form->{indextype} eq 'udiscuss') {
-				commentIndexUserCreated(@_, $error_message);
-			} elsif ($form->{indextype} eq 'personal') {
-				commentIndexPersonal(@_, $error_message);
-			} elsif ($form->{indextype} eq 'creator') {
-				commentIndexCreator(@_, $error_message);
-			} else {
-				commentIndex(@_,$error_message);
-			}
-		}
-		return(0);
+		editComment(@_, $error_message);
+		return 0;
 	}
-
-	$tempComment = addDomainTags($tempComment);
-
-	if ($form->{newdiscussion}) {
-		header('Comments', $discussion->{section}) or return;
-		$header_emitted = 1;
-		$sid = _createDiscussion($form, $slashdb, $user, $constants);
-		return 1 unless $sid;
-	}
-
-#print STDERR scalar(localtime) . " $$ D header_emitted=$header_emitted\n";
-
-#	# Slash is not a file exchange system
-#	# still working on this...stay tuned for real commit
-#	# (maybe in 2.x... sigh)
-# 	# maybe during the next glacial cycle.
-#	$tempComment = distressBinaries($tempComment);
 
 	# If we want a redirect to a new URL after comment posting success,
 	# set some vars to indicate that.  Note that cleanRedirectUrlFromForm
@@ -1074,7 +899,7 @@ sub submitComment {
 		$header_emitted = 1;
 	}
 
-	if (!$form->{newdiscussion} && $header_emitted) {
+	if ($header_emitted) {
 		titlebar("100%", getData('submitted_comment'));
 	}
 
@@ -1110,17 +935,7 @@ sub submitComment {
 			&& $user->{is_subscriber}
 			&& (!$form->{nosubscriberbonus} || $form->{nosubscriberbonus} ne 'on');
 	}
-# XXX this should be in validateComment()
-	# This is here to prevent posting to discussions that don't exist/are nd -Brian
-	unless ($user->{is_admin} || $form->{newdiscussion}) {
-		unless ($slashdb->checkDiscussionPostable($sid)) {
-			if (!$header_emitted) {
-				header('Comments', $discussion->{section}) or return;
-			}
-			print getError('submission error');
-			return(0);
-		}
-	}
+
 	my $posters_uid = $user->{uid};
 	if ($form->{postanon}
 		&& $reader->checkAllowAnonymousPosting()
@@ -1134,10 +949,10 @@ sub submitComment {
 #print STDERR scalar(localtime) . " $$ F header_emitted=$header_emitted do_emit_html=$do_emit_html\n";
 
 	my $clean_comment = {
-		subject		=> $tempSubject,
-		comment		=> $tempComment,
-		sid		=> $sid, 
-		pid		=> $form->{pid},
+		subject		=> $comment->{subject},
+		comment		=> $comment->{comment},
+		sid		=> $comment->{sid},
+		pid		=> $comment->{pid},
 		ipid		=> $user->{ipid},
 		subnetid	=> $user->{subnetid},
 		uid		=> $posters_uid,
@@ -1169,10 +984,10 @@ sub submitComment {
 		}
 	}
 	if ($constants->{comment_is_troll_disable_and_log}) {
-			$slashdb->createCommentLog({
-				cid	=> $maxCid,
-				logtext	=> "ISTROLL"
-			});
+		$slashdb->createCommentLog({
+			cid	=> $maxCid,
+			logtext	=> "ISTROLL"
+		});
 	}
 
 #print STDERR scalar(localtime) . " $$ G maxCid=$maxCid\n";
@@ -1201,7 +1016,7 @@ sub submitComment {
 		return(0);
 	}
 
-	if (!$form->{newdiscussion} && $do_emit_html) {
+	if ($do_emit_html) {
 		slashDisplay('comment_submit', {
 			metamod_elig => metamod_elig($user),
 		});
@@ -1217,7 +1032,7 @@ sub submitComment {
 		print $text if $text;
 	}
 
-	if (!$form->{newdiscussion} && $do_emit_html) {
+	if ($do_emit_html) {
 		printComments($discussion, $maxCid, $maxCid,
 			{ force_read_from_master => 1, just_submitted => 1 }
 		);
@@ -1306,41 +1121,12 @@ sub submitComment {
 
 	if ($constants->{validate_html}) {
 		my $validator = getObject('Slash::Validator');
-		my $test = parseDomainTags($tempComment);
+		my $test = parseDomainTags($comment->{comment});
 		$validator->isValid($test, {
 			data_type	=> 'comment',
 			data_id		=> $maxCid,
 			message		=> 1
 		}) if $validator;
-	}
-
-	# If discussion created
-	if ($form->{newdiscussion}) {
-		if (!$header_emitted) {
-			header('Comments', $discussion->{section}) or return;
-		}
-		if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
-			slashDisplay('newdiscussion', { 
-				error 		=> $error_message, 
-				'label'		=> $label,
-				id 		=> $sid,
-			});
-		} else {
-			slashDisplay('newdiscussion', {
-				error => getError('seclevtoolow'),
-			});
-		}
-		undef $form->{postersubj};
-		undef $form->{postercomment};
-		if ($form->{indextype} eq 'udiscuss') {
-			commentIndexUserCreated(@_, $error_message);
-		} elsif ($form->{indextype} eq 'personal') {
-			commentIndexPersonal(@_, $error_message);
-		} elsif ($form->{indextype} eq 'creator') {
-			commentIndexCreator(@_, $error_message);
-		} else {
-			commentIndex(@_,$error_message);
-		}
 	}
 
 	# OK -- if we make it all the way here, and there were
@@ -1384,7 +1170,7 @@ sub _send_comment_msg {
 			: undef;
 
 	my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
-	my $newpts = Slash::_get_points($C, $otheruser,
+	my $newpts = getPoints($C, $otheruser,
 		$constants->{comment_minscore}, $constants->{comment_maxscore},
 		$reader->countUsers({ max => 1 }), $mod_reader->getReasons,
 	);
@@ -1548,34 +1334,6 @@ sub deleteThread {
 		});
 	}
 	return $count;
-}
-
-##################################################################
-# Troll Detection: checks to see if this IP or UID has been
-# abusing the system in the last 24 hours.
-# 1=Troll 0=Good Little Goober
-sub isTroll {
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-
-	return 0 if $user->{seclev} >= 100;
-
-	my $good_behavior = 0;
-	if (!$user->{is_anon} and $user->{karma} >= 1) {
-		if ($form->{postanon}) {
-			# If the user is signed in but posting anonymously,
-			# their karma helps a little bit to offset their
-			# trollishness.  But not much.
-			$good_behavior = int(log($user->{karma})+0.5);
-		} else {
-			# If the user is signed in with karma at least 1 and
-			# posts with their name, the IP ban doesn't apply.
-			return 0;
-		}
-	}
-
-	return $slashdb->getIsTroll($good_behavior);
 }
 
 
