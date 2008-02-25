@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: User.pm,v 1.170 2008/02/07 17:21:59 entweichen Exp $
+# $Id: User.pm,v 1.173 2008/02/13 16:37:18 pudge Exp $
 
 package Slash::Apache::User;
 
@@ -24,7 +24,7 @@ use vars qw($REVISION $VERSION @ISA @QUOTES $USER_MATCH $request_start_time);
 
 @ISA		= qw(DynaLoader);
 $VERSION   	= '2.003000';  # v2.3.0
-($REVISION)	= ' $Revision: 1.170 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($REVISION)	= ' $Revision: 1.173 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache::User $VERSION;
 
@@ -267,8 +267,9 @@ sub handler {
 
 		my($tmpuid, $value) = eatUserCookie($logtoken || ($cookies->{user} && $cookies->{user}->value));
 		my $cookvalue;
-		if ($tmpuid && $tmpuid > 0 && $tmpuid != $constants->{anonymous_coward_uid}) {
-			my $kind = $user_temp->{state}{login_public} eq 'yes' ? 4 : 0;
+		if ($tmpuid && $tmpuid > 0 && !isAnon($tmpuid)) {
+			# if it's not a temp logtoken it's a regular logtoken
+			my $kind = $user_temp->{state}{login_public} eq 'yes' ? 4 : 3;
 			($uid, $cookvalue) =
 				$slashdb->getUserAuthenticate($tmpuid, $value, $kind, 1);
 		}
@@ -520,9 +521,7 @@ sub userLogin {
 	# only allow plain text passwords, unless logtoken is passed,
 	# then only allow that
 	# my($EITHER, $PLAIN, $ENCRYPTED, $LOGTOKEN) = (0, 1, 2, 3);
-	## this is disabled for now; some people still using saved URLs
-	## with encrypted passwords etc. ... come back to it later -- pudge
-	my $kind = 0; #$logtoken ? 3 : 1;
+	my $kind = $logtoken ? 3 : 1;
 
 	my($uid, $cookvalue, $newpass) =
 		$slashdb->getUserAuthenticate($uid_try, $passwd, $kind);
@@ -592,6 +591,13 @@ sub userdir_handler {
 		return OK;
 	}
 
+        if ($uri =~ m[^/help (?: /([^?]*) | /? ) $]x) {
+                $r->args("op=displayhelp");
+                $r->uri('/help.pl');
+                $r->filename($constants->{basedir} . '/help.pl');
+                return OK;
+        }
+        
 	# for self-references (/~/ and /my/)
 	if (($saveuri =~ m[^/(?:%7[eE]|~)] && $uri =~ m[^/~ (?: /(.*) | /? ) $]x)
 		# /my/ or /my can match, but not /mything

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Messages.pm,v 1.42 2007/08/01 06:57:15 pudge Exp $
+# $Id: Messages.pm,v 1.43 2008/02/12 15:38:06 jamiemccarthy Exp $
 
 package Slash::Messages;
 
@@ -41,7 +41,7 @@ use Slash::Constants ':messages';
 use Slash::Display;
 use Slash::Utility;
 
-($VERSION) = ' $Revision: 1.42 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.43 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 #========================================================================
@@ -457,7 +457,8 @@ sub send {
 		}
 
                 # Email and Mobile messages are both Email modes, but use different recipients.
-                if ($msg->{user}{prefs}{$msg->{code}} == $self->getMessageDeliveryByName("Mobile")) {
+                my $mobile_code = $self->getMessageDeliveryByName('Mobile');
+                if ($mobile_code && $msg->{user}{prefs}{$msg->{code}} == $mobile_code) {
                         $addr = $msg->{user}{mobile_text_address};
                 } else {
                         $addr = $msg->{altto} || $msg->{user}{realemail};
@@ -1136,4 +1137,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Messages.pm,v 1.42 2007/08/01 06:57:15 pudge Exp $
+$Id: Messages.pm,v 1.43 2008/02/12 15:38:06 jamiemccarthy Exp $

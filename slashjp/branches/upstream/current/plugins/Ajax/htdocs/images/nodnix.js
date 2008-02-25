@@ -1,43 +1,87 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: nodnix.js,v 1.2 2008/02/06 19:14:49 scc Exp $
+// $Id: nodnix.js,v 1.9 2008/02/20 18:43:31 scc Exp $
 
-var nodmenu = null;
-var nixmenu = null;
-var nodnix_listener = null;
+var nod_completer = null;
+var nix_completer = null;
 
 function get_nod_menu() {
-	if ( !nodmenu )
-		nodmenu = document.getElementById('nodmenu');
-	return nodmenu;
+	if ( !get_nod_menu.nodmenu )
+		get_nod_menu.nodmenu = document.getElementById('nodmenu');
+	return get_nod_menu.nodmenu;
 }
 
 function get_nix_menu() {
-	if ( !nixmenu )
-		nixmenu = document.getElementById('nixmenu');
-	return nixmenu;
+	if ( !get_nix_menu.nixmenu )
+		get_nix_menu.nixmenu = document.getElementById('nixmenu');
+	return get_nix_menu.nixmenu;
+}
+
+function get_predefined_nodnix_tags() {
+  var tags = [];
+  var query = _get_nodnix('input').getAttribute("updown");
+  var listEl = query=="+" ? document.getElementById('static-nod-completions')
+                          : document.getElementById('static-nix-completions');
+  if ( listEl ) {
+    var itemEls = listEl.getElementsByTagName('li');
+    for ( var i=0; i<itemEls.length; ++i )
+      tags.push([itemEls[i].textContent]);
+  }
+  return tags;
+}
+var predefinedDS = new YAHOO.widget.DS_JSFunction(get_predefined_nodnix_tags);
+
+
+var proxyDS = new Object();
+proxyDS.__proto__ = YAHOO.slashdot.dataSources[0];
+proxyDS.doQuery = function( oCallbackFn, sQuery, oParent ) {
+  if ( sQuery && sQuery.length )
+    this.__proto__.doQuery(oCallbackFn, sQuery, oParent)
+  else
+    predefinedDS.doQuery(oCallbackFn, sQuery, oParent);
 }
 
 function get_nodnix_listener() {
-  if ( !nodnix_listener ) {
+  if ( !get_nodnix_listener.nodnix_listener ) {
     var keylist = new Array(); // must be an actual Array(), not just [], for YUI to do-the-right-thing
-    keylist.push(YAHOO.util.KeyListener.KEY.SPACE);
-    keylist.push('!'.charCodeAt(0));
+    keylist.push(YAHOO.util.KeyListener.KEY.ESCAPE);
 
     var a='A'.charCodeAt(0), z='Z'.charCodeAt(0);
     for ( var kc = a; kc <= z; ++kc )
       keylist.push(kc);
+    var extras = "!_#)^*";
+    for ( var i=0; i<extras.length; ++i )
+      keylist.push(extras.charCodeAt(i));
 
-    // allow the following when we allow admin commands as well, e.g., #sometag
-    //keylist.push('_'.charCodeAt(0));
-    //keylist.push('#'.charCodeAt(0));
-    //keylist.push('_'.charCodeAt(0));
-    //keylist.push('*'.charCodeAt(0));
-    //keylist.push('+'.charCodeAt(0));
+    get_nodnix_listener.nodnix_listener = new YAHOO.util.KeyListener(document, {keys:keylist},
+                                                           {fn:handle_nodnix_key});
 
-    nodnix_listener = new YAHOO.util.KeyListener(document, {keys:keylist},
-                                                           {fn:begin_nodnix_editing});
+
+    var keylist2 = new Array();
+    keylist2.push(YAHOO.util.KeyListener.KEY.SPACE);
+    keylist2.push(YAHOO.util.KeyListener.KEY.ESCAPE);
+    keylist2.push(YAHOO.util.KeyListener.KEY.ENTER);
+
+    var setupCompleter = function(inputEl, containerEl) {
+      var ac = new YAHOO.widget.AutoComplete(inputEl, containerEl, proxyDS);
+      //ac.typeAhead = true;
+      ac.allowBrowserAutocomplete = false;
+      ac.highlightClassName = "selected";
+      ac.minQueryLength = 0;
+
+      ac.textboxBlurEvent.subscribe(handle_nodnix_blur);
+      ac.itemSelectEvent.subscribe(handle_nodnix_select);
+      ac.unmatchedItemSelectEvent.subscribe(handle_nodnix_select);
+
+      var listener = new YAHOO.util.KeyListener(inputEl, {keys:keylist2}, {fn:handle_completer_key});
+      listener.enable();
+
+      return ac;
+    }
+
+    nod_completer = setupCompleter("nod-input", "nod-completions");
+    nix_completer = setupCompleter("nix-input", "nix-completions");
   }
-  return nodnix_listener;
+  return get_nodnix_listener.nodnix_listener;
 }
 
 
@@ -88,11 +132,11 @@ function show_nodnix_menu(elem, id, menu, show_delay, hide_delay) {
 	if ( show_delay == undefined || !show_delay ) {
 		var pos = YAHOO.util.Dom.getXY(elem);
 		menu.style.display = 'block';
+		end_nodnix_editing();
 		YAHOO.util.Dom.setXY(menu, pos);
 		g_nodnix_item_id = id;
 		menu.focus();
-		// temporarily disable listener, so live behavior won't change
-		// get_nodnix_listener().enable();
+		get_nodnix_listener().enable();
 	} else {
 		g_elem_for_pending_showmenu = elem;
 		g_menu_for_pending_showmenu = menu;
@@ -122,35 +166,101 @@ function show_nix_menu(elem, id, show_delay, hide_delay) {
 	show_nodnix_menu(elem, id, get_nix_menu(), show_delay, hide_delay);
 }
 
-function current_nodnix_input() {
+function _get_nodnix( tag ) {
   var menu;
      ((menu=get_nod_menu()).style.display != 'none')
   || ((menu=get_nix_menu()).style.display != 'none')
   ||  (menu=null);
 
-  return YAHOO.util.Dom.hasClass(menu, 'editing') ? m.getElementsByTagName('input')[0] : null;
+  if ( ! YAHOO.util.Dom.hasClass(menu, 'editing') )
+    return;
+
+  return menu.getElementsByTagName(tag)[0];
 }
 
-function begin_nodnix_editing( type, args, obj ) {
+function handle_nodnix_key( type, args, obj ) {
   if ( args ) {
     var event = args[1];
-    // swallow the space character, if that's how they initiated editing,
-    //  otherwise, let the key propogate so the newly focused text edit field can have it
-    if ( event && event.keyCode==YAHOO.util.KeyListener.KEY.SPACE ) {
-      YAHOO.util.Event.stopEvent(event);
+    if ( event ) {
+        // space key initiates editing, but _doesn't_ go into the text field (swallow it)
+        // escape key hides the menu before we even start editing (and we swallow it)
+        // any other key initiates editing and goes into the text field (don't swallow it)
+      var isSPACE = event.keyCode == YAHOO.util.KeyListener.KEY.SPACE;
+      var isESCAPE = event.keyCode == YAHOO.util.KeyListener.KEY.ESCAPE;
+
+      if ( isSPACE || isESCAPE )
+        YAHOO.util.Event.stopEvent(event);
+
+      if ( isESCAPE )
+        hide_nodnix_menu();
+      else
+        begin_nodnix_editing();
     }
   }
+}
 
+function soon_is_now() {
+  YAHOO.util.Dom.removeClass(get_nod_menu(), 'soon');
+  YAHOO.util.Dom.removeClass(get_nix_menu(), 'soon');
+}
+
+function begin_nodnix_editing() {
   get_nodnix_listener().disable();
+  YAHOO.util.Dom.addClass(get_nod_menu(), 'soon');
+  YAHOO.util.Dom.addClass(get_nix_menu(), 'soon');
   YAHOO.util.Dom.addClass(get_nod_menu(), 'editing');
   YAHOO.util.Dom.addClass(get_nix_menu(), 'editing');
   dont_hide_nodnix_menu();
 
-  var input = current_nodnix_input();
+  var input = _get_nodnix('input');
+  input.value = "";
   input.focus();
+  
+  _get_nodnix('ol').innerHTML = "";
+
+  (input.getAttribute("updown")=="+" ? nod_completer : nix_completer).sendQuery();
+  setTimeout("soon_is_now()", 225);
 }
 
 function end_nodnix_editing() {
   YAHOO.util.Dom.removeClass(get_nod_menu(), 'editing');
   YAHOO.util.Dom.removeClass(get_nix_menu(), 'editing');
 }
+
+function handle_nodnix_blur( type, args ) {
+  hide_nodnix_menu();
+}
+
+function handle_nodnix_select( type, args, stay_open ) {
+  var tagname = args[2];
+  if ( tagname !== undefined && tagname !== null ) {
+    if ( typeof tagname != 'string' )
+      tagname = tagname[0];
+    nodnix_tag(tagname);
+      // now 'harden' the tag
+    var list = _get_nodnix('ol');
+    list.innerHTML = '<li>' + tagname + '</li>' + list.innerHTML;
+    _get_nodnix('input').value = "";
+  }
+  if ( !stay_open )
+    hide_nodnix_menu();
+}
+
+function handle_completer_key( type, args ) {
+  var key = args[0];
+  var event = args[1];
+  var stay_open = false;
+  switch ( key ) {
+    case YAHOO.util.KeyListener.KEY.ESCAPE:
+      hide_nodnix_menu();
+      break;
+    case YAHOO.util.KeyListener.KEY.SPACE:
+      YAHOO.util.Event.stopEvent(event);
+      stay_open = true;
+      // fall through
+    case YAHOO.util.KeyListener.KEY.ENTER:
+      handle_nodnix_select("", [null, null, _get_nodnix('input').value], stay_open);
+      break;
+  }
+}
+

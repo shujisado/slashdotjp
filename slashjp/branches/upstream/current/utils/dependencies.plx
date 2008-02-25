@@ -2,7 +2,7 @@
 # this attempts to make sure there are no dependency conflicts.
 # run it every once in awhile if you care to.
 #
-# $Id: dependencies.plx,v 1.7 2003/09/02 18:47:21 jamie Exp $
+# $Id: dependencies.plx,v 1.8 2008/02/21 01:01:52 pudge Exp $
 #
 
 sub warner { warn @_ unless $_[0] =~ /(?:Use of uninitialized value|[Ss]ubroutine \S+ redefined)/ }
@@ -29,7 +29,9 @@ sub require {
 
 #	printf "%s called %s (%s)\n", $caller, $required, $package;
 	push @{$data{$caller}}, $package;
-	CORE::require $required;
+	eval {
+		CORE::require $required;
+	} or warn $@;
 }
 
 
@@ -50,7 +52,7 @@ package main;
 use strict;
 
 use File::Find;
-die $0;
+#die $0;
 my $path = shift @ARGV || '/usr/local/src/slash/main/slash/';
 $path .= '/' unless $path =~ m|/$|;
 
@@ -75,7 +77,9 @@ for my $f (sort keys %pms) {
 #	next unless $f eq 'Slash::DB::MySQL';
 	$SIG{__WARN__} = \&warner;
 	Slash::Test::Dependencies->export($f, 'require');
-	require $pms{$f};
+	eval {
+		require $pms{$f};
+	} or warn $@;
 }
 
 # make sure we get an error, for testing

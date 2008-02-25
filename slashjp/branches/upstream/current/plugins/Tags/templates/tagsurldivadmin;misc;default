@@ -15,15 +15,11 @@ __template__
 
 [% IF user.is_admin %]
 
-[% PROCESS ajax_reskey_tag reskey_label => 'admin_commands-reskey-' _ id, reskey_name => 'ajax_admin' %]
-<input type="text" id="tags_admin_commands-[% id %]" name="tags_admin_commands-[% id %]" value="" size=50 maxlength=150>
-<input type="button" value="Admin" onclick="adminTagsCommands('[% id %]','urls')" class="button"> <span id="taghist-[% id %]"><a href="#" onclick="tagsHistory('[% id %]','urls'); return false">[History]</a></span>
-
-<div>[% tags_admin_str %]</div>
+<span id="taghist-[% id %]"><a href="#" onclick="tagsHistory('[% id %]','urls'); return false">[History]</a></span>
 
 [% END %]
 
 __seclev__
 10000
 __version__
-$Id: tagsurldivadmin;misc;default,v 1.3 2007/10/25 15:39:07 jamiemccarthy Exp $
+$Id: tagsurldivadmin;misc;default,v 1.4 2008/02/11 20:47:23 jamiemccarthy Exp $

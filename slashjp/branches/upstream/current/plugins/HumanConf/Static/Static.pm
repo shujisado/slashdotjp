@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Static.pm,v 1.42 2008/01/18 22:36:50 pudge Exp $
+# $Id: Static.pm,v 1.43 2008/02/14 01:10:57 jamiemccarthy Exp $
 
 package Slash::HumanConf::Static;
 
@@ -19,7 +19,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.42 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.43 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -129,7 +129,7 @@ sub deleteOldFromPool {
 		# their info.
 		my $pool_hr = $self->sqlSelectAllHashref(
 			"hcpid",
-			"hcpid, hcqid, filename_img",
+			"hcpid, hcqid, filename_img, filename_mp3",
 			"humanconf_pool",
 			"inuse=2",
 			"ORDER BY hcpid ASC LIMIT $want_delete"

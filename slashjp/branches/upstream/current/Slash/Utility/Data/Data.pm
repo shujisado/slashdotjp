@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Data.pm,v 1.214 2008/02/07 00:51:21 pudge Exp $
+# $Id: Data.pm,v 1.216 2008/02/19 19:58:27 jamiemccarthy Exp $
 
 package Slash::Utility::Data;
 
@@ -62,7 +62,7 @@ BEGIN {
 	$HTML::Tagset::linkElements{slash} = ['src', 'href'];
 }
 
-($VERSION) = ' $Revision: 1.214 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.216 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	addDomainTags
 	createStoryTopicData
@@ -803,11 +803,12 @@ Encrypted password.
 =cut
 
 sub encryptPassword {
-	my($passwd) = @_;
+	my($passwd, $uid) = @_;
+	$uid ||= '';
 	my $slashdb = getCurrentDB();
 	my $vu = $slashdb->{virtual_user};
 	my $salt = Slash::Apache::User::PasswordSalt::getCurrentPwSalt($vu);
-	return md5_hex("$salt$passwd");
+	return md5_hex("$salt:$uid:$passwd");
 }
 
 #========================================================================
@@ -860,17 +861,26 @@ Encrypted correct password.
 =cut
 
 sub comparePassword {
-	my($passwd, $md5, $is_plain, $is_enc) = @_;
+	my($passwd, $md5, $uid, $is_plain, $is_enc) = @_;
 	if (!$is_plain) {
 		return 1 if $passwd eq $md5;
 	}
 	if (!$is_enc) {
+		# An old way of encrypting a user's password, which we have
+		# to check for reverse compatibility.
 		return 1 if md5_hex($passwd) eq $md5;
+
+		# No?  OK let's see if it matches any of the salts.
 		my $slashdb = getCurrentDB();
 		my $vu = $slashdb->{virtual_user};
 		my $salt_ar = Slash::Apache::User::PasswordSalt::getPwSalts($vu);
+		unshift @$salt_ar, ''; # always test the case of no salt
 		for my $salt (reverse @$salt_ar) {
-			return 1 if md5_hex("$salt$passwd") eq $md5;
+			# The current way of encrypting a user's password.
+			return 1 if md5_hex("$salt:$uid:$passwd") eq $md5;
+			# An older way, which we have to check for reverse
+			# compatibility.
+			return 1 if length($salt) && md5_hex("$salt$passwd") eq $md5;
 		}
 	}
 	return 0;
@@ -4460,4 +4470,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Data.pm,v 1.214 2008/02/07 00:51:21 pudge Exp $
+$Id: Data.pm,v 1.216 2008/02/19 19:58:27 jamiemccarthy Exp $

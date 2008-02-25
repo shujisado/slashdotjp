@@ -20,25 +20,27 @@ __template__
    negtags = tags_reader.getNegativePopupTags.sort;
 
    IF postags.size %]<div id="nodmenu">
-  <input id="nod-input" type="text">
-  <div class="menu" onmouseover="dont_hide_nodnix_menu()" onmouseout="hide_nodnix_menu(750)" onmousedown="hide_nodnix_menu()">
-    <ul>
+  <span id="nod-user-tags"><input id="nod-input" type="text" updown="+"><ol id="nod-hardened"></ol></span>
+  <div class="menu basic" onmouseover="dont_hide_nodnix_menu()" onmouseout="hide_nodnix_menu(750)" onmousedown="hide_nodnix_menu()">
+    <ul id="static-nod-completions">
     [%- FOR postag IN postags %]
       <li title="Tag this item '[% postag %]', voting it up" onmousedown="nodnix_tag('[% postag %]', '+')">[% postag %]</li>
     [%- END %]
     </ul>
   </div>
+  <div id="nod-completions" class="menu autocomplete"></div>
 </div>
 [% END; IF negtags.size %]<div id="nixmenu">
-  <input id="nix-input" type="text">
-  <div class="menu" onmouseover="dont_hide_nodnix_menu()" onmouseout="hide_nodnix_menu(750)" onmousedown="hide_nodnix_menu()">
-    <ul>
+  <span id="nix-user-tags"><input id="nix-input" type="text" updown="-"><ol id="nix-hardened"></ol></span>
+  <div class="menu basic" onmouseover="dont_hide_nodnix_menu()" onmouseout="hide_nodnix_menu(750)" onmousedown="hide_nodnix_menu()">
+    <ul id="static-nix-completions">
     [%- FOR negtag IN negtags %]
       <li title="Tag this item '[% negtag %]', voting it down" onmousedown="nodnix_tag('[% negtag %]', '-')">[% negtag %]</li>
     [%- END %]
     </ul>
   </div>
+  <div id="nix-completions" class="menu autocomplete"></div>
 </div>
 [% END %]
 __version__
-$Id: nodnix_menus;firehose;default,v 1.9 2008/02/06 19:14:49 scc Exp $
+$Id: nodnix_menus;firehose;default,v 1.12 2008/02/20 18:43:31 scc Exp $

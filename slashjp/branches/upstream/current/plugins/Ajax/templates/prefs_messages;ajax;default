@@ -23,9 +23,13 @@ __template__
                 [% IF tabbed == 1 %]
                 <div style="text-align: center;">
                 &nbsp;
-                <a href="" style="font-weight: bold; text-decoration: none; font-size: 14px;" onclick="getModalPrefs('user', 'User', 1); return false;">User</a>
+                <a href="#" style="font-weight: bold; text-decoration: none; font-size: 14px;" onclick="getModalPrefs('user', 'User', 1); return false;">User</a>
                 &nbsp;|&nbsp;
                 <span style="font-weight: bold; text-decoration: none; font-size: 14px; color: #ccc">Messages</span>
+                [% IF user.is_admin %]
+                &nbsp;|&nbsp;
+                <a href="#" style="font-weight: bold; text-decoration: none; font-size: 14px;" onclick="getModalPrefs('admin', 'Admin', 1); return false;">Admin</a>
+                [% END %]
                 </div>
                 [% END %]
 
@@ -103,4 +107,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: prefs_messages;ajax;default,v 1.6 2008/02/06 18:14:03 entweichen Exp $
+$Id: prefs_messages;ajax;default,v 1.7 2008/02/12 23:33:01 entweichen Exp $

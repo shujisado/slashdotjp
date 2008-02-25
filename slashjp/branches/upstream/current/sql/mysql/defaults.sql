@@ -3,7 +3,7 @@
 #--------------------------------------------------------
 # Server version	3.23.26-beta-log
 #
-# $Id: defaults.sql,v 1.389 2008/02/07 21:47:18 pudge Exp $
+# $Id: defaults.sql,v 1.392 2008/02/21 01:01:52 pudge Exp $
 #
 
 #
@@ -832,7 +832,7 @@ INSERT INTO vars (name, value, description) VALUES ('cur_performance_stat_ops', 
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_lastid', '0', 'accesslogid to start searching at');
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_weeks', '8', 'number of weeks back to compare current stats to');
 INSERT INTO vars (name, value, description) VALUES ('currentqid',1,'The Current Question on the homepage pollbooth');
-INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode','T_2_5_0_193','The current cvs tag that the code was updated to - this does not affect site behavior but may be useful for your records');
+INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode','T_2_5_0_195','The current cvs tag that the code was updated to - this does not affect site behavior but may be useful for your records');
 INSERT INTO vars (name, value, description) VALUES ('datadir','/usr/local/slash/www.example.com','What is the root of the install for Slash');
 INSERT INTO vars (name, value, description) VALUES ('db_auto_increment_increment','1','If your master DB uses auto_increment_increment, i.e. multiple master replication, echo its value into this var');
 INSERT INTO vars (name, value, description) VALUES ('dbsparklines_disp','0','Display dbsparklines in the currentAdminUsers box?');
@@ -954,6 +954,7 @@ INSERT INTO vars (name, value, description) VALUES ('login_temp_minutes', '10', 
 INSERT INTO vars (name, value, description) VALUES ('mailfrom','admin@example.com','All mail addressed from the site looks like it is coming from here');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_hours','48','Mailing a password only allowed mailpass_max_num times per account per this many hours');
 INSERT INTO vars (name, value, description) VALUES ('mailpass_max_num','2','Mailing a password only allowed this many times per account per mainpass_max_hours hours');
+INSERT INTO vars (name, value, description) VALUES ('mailpass_valid_days','3','A mailed newpasswd is expired after this many days');
 INSERT INTO vars (name, value, description) VALUES ('mainfontface','verdana,helvetica,arial','Fonts');
 INSERT INTO vars (name, value, description) VALUES ('mainpage_displayable_nexuses', '', 'List of nexuses that can appear on the mainpage depending on settings; if empty, getStorypickableNexusChildren is used instead');
 INSERT INTO vars (name, value, description) VALUES ('mainpage_skid','1','ID of the skin considered "mainpage", the front page, what used to be meant by "always display"');

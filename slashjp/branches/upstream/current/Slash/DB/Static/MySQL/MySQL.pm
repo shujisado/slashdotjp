@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.263 2008/01/09 18:11:10 entweichen Exp $
+# $Id: MySQL.pm,v 1.264 2008/02/12 16:48:41 jamiemccarthy Exp $
 
 package Slash::DB::Static::MySQL;
 
@@ -20,7 +20,7 @@ use URI ();
 use vars qw($VERSION);
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.263 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.264 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
@@ -601,6 +601,16 @@ sub forgetRemarks {
 	my($self) = @_;
 	return $self->sqlDelete("remarks",
 		"time < DATE_SUB(NOW(), INTERVAL 90 DAY)");
+}
+
+########################################################
+# For daily_forget.pl
+sub forgetNewPasswds {
+	my($self) = @_;
+	my $days = getCurrentStatic('mailpass_valid_days') || 3;
+	return $self->sqlUpdate('users',
+		{ newpasswd => undef, newpasswd_ts => undef },
+		"newpasswd IS NOT NULL AND newpasswd_ts < DATE_SUB(NOW(), INTERVAL $days DAY)");
 }
 
 ########################################################

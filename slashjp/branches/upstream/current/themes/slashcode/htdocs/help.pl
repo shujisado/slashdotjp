@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: preferences.pl,v 1.3 2008/02/12 23:40:20 entweichen Exp $
+# $Id: help.pl,v 1.2 2008/02/20 17:04:38 entweichen Exp $
 
 use strict;
 
@@ -19,32 +19,27 @@ sub main {
         my $op = lc($form->{op});
 
         my $ops = {
-                displayprefs   => {
-                        function        => \&display_prefs,
+                displayhelp   => {
+                        function        => \&display_help,
                         seclev          => 1,
                 },
                 default         => {
-                        function        => \&display_prefs,
+                        function        => \&display_help,
                         seclev          => 1,
                 },
         };
  
-	if ($user->{is_anon}) {
-		my $rootdir = getCurrentSkin('rootdir');
-		redirect("$rootdir/users.pl");
-		return;
-	}
-
 	if ($op ne 'pause') {
 		# "pause" is special, it does a 302 redirect so we need
 		# to not output any HTML.  Everything else gets this,
 		# header and menu.
-		header("Preferences") or return;
+                my $helptitle = ($user->{is_anon}) ? 'Help' : 'Help & Preferences';
+		header($helptitle) or return;
 		print createMenu('users', {
 			style =>	'tabbed',
 			justify =>	'right',
 			color =>	'colored',
-			tab_selected =>	'preferences',
+			tab_selected =>	'help',
 		});
 	}
 
@@ -56,10 +51,17 @@ sub main {
 	writeLog($user->{uid}, $op);
 }
 
-sub display_prefs {
-	my($form, $slashdb, $user, $constants) = @_;
+sub display_help {
+        my($form, $slashdb, $user, $constants) = @_;
+        
+        my $other;
+        if (!$user->{is_anon}) {
+                $other = slashDisplay('prefs_main', { discussion2 => $user->{discussion2}, main_help => 1}, { Return => 1, Page => "ajax" });
+        } else {
+                $other = slashDisplay('help_anon', { }, { Return => 1 });
+        }
 
-        slashDisplay('prefs_main', { discussion2 => $user->{discussion2}, is_admin => $user->{is_admin}}, { Page => "ajax" });
+        slashDisplay('help_main', { other => $other });
         
 }
 

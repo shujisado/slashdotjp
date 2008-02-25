@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.67 2008/02/06 16:13:10 entweichen Exp $
+# $Id: ajax.pl,v 1.72 2008/02/21 01:01:52 pudge Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.67 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.72 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -328,7 +328,7 @@ sub fetchComments {
 		}
 	}
 
-	my($comments) = Slash::selectComments(
+	my($comments) = selectComments(
 		$discussion,
 		$cid,
 		\%select_options,
@@ -456,7 +456,7 @@ sub fetchComments {
 	$form->{mode} = 'archive';
 
 	for my $cid (@hidden_cids) {
-		$html{'comment_' . $cid} = Slash::dispComment($comments->{$cid}, {
+		$html{'comment_' . $cid} = dispComment($comments->{$cid}, {
 			noshow_show => 1,
 			pieces      => $get_pieces_cids{$cid}
 		});
@@ -464,7 +464,7 @@ sub fetchComments {
 
 	for my $cid (@pieces_cids) {
 		@html{'comment_otherdetails_' . $cid, 'comment_sub_' . $cid} =
-			Slash::dispComment($comments->{$cid}, {
+			dispComment($comments->{$cid}, {
 				show_pieces => 1
 			});
 	}
@@ -493,6 +493,7 @@ sub fetchComments {
 		$to_dump{eval_first} ||= '';
 		$to_dump{eval_first} .= "placeholder_no_update = " . Data::JavaScript::Anon->anon_dump({ map { $_ => 1 } @placeholders }) . ';';
 	}
+	writeLog($id);
 	return Data::JavaScript::Anon->anon_dump(\%to_dump);
 }
 
@@ -604,6 +605,31 @@ sub getModalPrefs {
                         },
                         { Return => 1 }
                 );
+
+        } elsif ($form->{'section'} eq 'admin') {
+                return if !$user->{is_admin};
+
+                return
+                        slashDisplay('prefs_admin', {
+                                user   => $user,
+                                tabbed => $form->{'tabbed'},
+                        },
+                        { Return => 1 }
+                );
+
+        } elsif ($form->{'section'} eq 'fh') {
+
+                my $firehose = getObject("Slash::FireHose");
+                my $opts = $firehose->getAndSetOptions();
+                $opts->{firehose_usermode} = $user->{firehose_usermode} if $user->{is_admin};
+
+                return
+                        slashDisplay('fhadvprefpane', {
+                                options => $opts,
+                                user    => $user,
+                        },
+                        { Return => 1 }
+                );
                 
         } else {
                 
@@ -635,7 +661,6 @@ sub saveModalPrefs {
 			nosigs            => ($params{'nosigs'}              ? 1 : 0),
 			noscores          => ($params{'noscores'}            ? 1 : 0),
 			domaintags        => ($params{'domaintags'} != 2     ? $params{'domaintags'} : undef),
-			m2_with_comm_mod  => ($params{'m2_with_mod_on_comm'} ? 1 : undef),
 		};
 	}
 
@@ -650,8 +675,6 @@ sub saveModalPrefs {
 				? $params{'textarea_rows'} : undef),
 			textarea_cols     => ($params{'textarea_cols'} != $constants->{'textarea_cols'}
 				? $params{'textarea_cols'} : undef),
-			postanon          => ($params{'postanon'} ? 1 : undef),
-			no_spell          => ($params{'no_spell'} ? 1 : undef),
 		};
 	}
 
@@ -743,7 +766,6 @@ sub saveModalPrefs {
                         aim                 => $params{aim},
                         aimdisplay          => $params{aimdisplay},
                         icq                 => $params{icq},
-                        playing             => $params{playing},
                         mobile_text_address => $params{mobile_text_address},
                 };
 
@@ -885,7 +907,19 @@ sub saveModalPrefs {
                 };
 
         }
-        
+
+        if ($params{'formname'} eq "admin") {
+               return if !$user->{is_admin};
+
+              $user_edits_table = {
+                     playing           => $params{playing},
+                     no_spell          => ($params{'no_spell'} ? 1 : undef),
+                     mod_with_comm     => ($params{'mod_with_comm'} ? 1 : undef),
+                     m2_with_mod       => ($params{'m2_with_mod'} ? 1 : undef),
+                     m2_with_comm_mod  => ($params{'m2_with_mod_on_comm'} ? 1 : undef),
+              };
+        }
+
         # Everything but Sections is saved here.
         if ($params{'formname'} ne "sectional") {
                 $slashdb->setUser($params{uid}, $user_edits_table);

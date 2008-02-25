@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.1005 2008/02/07 16:52:27 tvroom Exp $
+# $Id: MySQL.pm,v 1.1008 2008/02/13 17:00:41 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.1005 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.1008 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -1531,6 +1531,7 @@ sub deleteUser {
 		realemail	=> '',
 		fakeemail	=> '',
 		newpasswd	=> '',
+		newpasswd_ts	=> undef,
 		homepage	=> '',
 		passwd		=> '',
 		people		=> '',
@@ -1591,7 +1592,7 @@ sub getUserAuthenticate {
 
 		# try ENCRYPTED -> ENCRYPTED
 		if ($kind == $EITHER || $kind == $ENCRYPTED) {
-			if (comparePassword($passwd, $db_passwd, 0, ($kind == $ENCRYPTED))) {
+			if (comparePassword($passwd, $db_passwd, $uid_try, 0, ($kind == $ENCRYPTED))) {
 				$uid_verified = $db_uid;
 				# get existing logtoken, if exists, or new one
 				$cookpasswd = $self->getLogToken($uid_verified, 1);
@@ -1600,7 +1601,7 @@ sub getUserAuthenticate {
 
 		# try PLAINTEXT -> ENCRYPTED
 		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
-			if (comparePassword($passwd, $db_passwd, ($kind == $PLAIN), 0)) {
+			if (comparePassword($passwd, $db_passwd, $uid_try, ($kind == $PLAIN), 0)) {
 				$uid_verified = $db_uid;
 				# get existing logtoken, if exists, or new one
 				$cookpasswd = $self->getLogToken($uid_verified, 1);
@@ -1609,8 +1610,8 @@ sub getUserAuthenticate {
 
 		# try PLAINTEXT -> NEWPASS
 		if (($kind == $EITHER || $kind == $PLAIN) && !$uid_verified) {
-			if ($passwd eq $db_newpasswd) {
-				my $cryptpasswd = encryptPassword($passwd);
+			if (comparePassword($passwd, $db_newpasswd, $uid_try, ($kind == $PLAIN), 0)) {
+				my $cryptpasswd = encryptPassword($passwd, $uid_try);
 				$self->sqlUpdate('users', {
 					newpasswd	=> '',
 					passwd		=> $cryptpasswd
@@ -1736,7 +1737,8 @@ sub getNewPasswd {
 	my($self, $uid) = @_;
 	my $newpasswd = changePassword();
 	$self->sqlUpdate('users', {
-		newpasswd => $newpasswd
+		newpasswd     => encryptPassword($newpasswd, $uid),
+		-newpasswd_ts => 'NOW()',
 	}, 'uid=' . $self->sqlQuote($uid));
 	return $newpasswd;
 }
@@ -1747,9 +1749,11 @@ sub getNewPasswd {
 sub resetUserAccount {
 	my($self, $uid) = @_;
 	my $newpasswd = changePassword();
+	my $enc = encryptPassword($newpasswd, $uid);
 	$self->sqlUpdate('users', {
-		newpasswd => $newpasswd,
-		passwd	  => encryptPassword($newpasswd)
+		passwd       => $enc,
+		newpasswd    => $enc,
+		newpasswd_ts => undef,
 	}, 'uid=' . $self->sqlQuote($uid));
 	return $newpasswd;
 }
@@ -10278,7 +10282,8 @@ sub setUser {
 	if (exists $hashref->{passwd}) {
 		# get rid of newpasswd if defined in DB
 		$hashref->{newpasswd} = '';
-		$hashref->{passwd} = encryptPassword($hashref->{passwd});
+		$hashref->{newpasswd_ts} = undef,
+		$hashref->{passwd} = encryptPassword($hashref->{passwd}, $uid);
 	}
 	$hashref->{people} = freeze($hashref->{people}) if $hashref->{people};
 	if (exists $hashref->{slashboxes}) {
@@ -10327,7 +10332,7 @@ sub setUser {
 		my $where = "uid=$uid";
 		my %minihash = ( );
 		for my $key (@{$update_tables{$table}}) {
-			if (defined $hashref->{$key}) {
+			if (exists $hashref->{$key}) {
 				$minihash{$key} = $hashref->{$key};
 				if ($options->{and_where}) {
 					my $and_where = undef;
@@ -10803,16 +10808,28 @@ sub _getUser_do_selects {
 		for my $acl (@$acl_ar) {
 			$answer->{acl}{$acl} = 1;
 		}
+		if ($mcddebug > 1) {
+			print STDERR scalar(gmtime) . " $$ mcd gU_ds got all " . scalar(@$acl_ar) . " acls\n";
+		}
+		# Get the clouts from users_clout.  Rows can be missing from
+		# this table and often are, in which case they are filled in
+		# with data from the clout classes' getUserClout methods.
 		my $clout_types = $self->getCloutTypes();
+		my $clout_info = $self->getCloutInfo();
 		my $clout_hr = $self->sqlSelectAllKeyValue(
 			'clid, clout',
 			'users_clout',
 			"uid = $uid_q");
-		for my $clid (keys %$clout_hr) {
-			$answer->{clout}{ $clout_types->{$clid} } = $clout_hr->{$clid};
-		}
-		if ($mcddebug > 1) {
-			print STDERR scalar(gmtime) . " $$ mcd gU_ds got all " . scalar(@$acl_ar) . " acls\n";
+		for my $clid (grep /^\d+$/, keys %$clout_types) {
+			my $this_clout;
+			if (defined($clout_hr->{$clid})) {
+				$this_clout = $clout_hr->{$clid};
+			} else {
+				my $this_info = $clout_info->{$clid};
+				my $clout_obj = getObject($this_info->{class}, { db_type => 'reader' });
+				$this_clout = $clout_obj->getUserClout($answer);
+			}
+			$answer->{clout}{ $clout_types->{$clid} } = $this_clout;
 		}
 	} elsif (ref($params) eq 'ARRAY' && @$params) {
 		my $param_list = join(",", map { $self->sqlQuote($_) } @$params);

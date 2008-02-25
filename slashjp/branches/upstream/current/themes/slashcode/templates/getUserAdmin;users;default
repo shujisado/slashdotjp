@@ -161,7 +161,9 @@ __template__
 				<b>Automated:</b>
 				[% FOREACH clout_type IN clout_types_ar %]
 				&nbsp;[% clout_type %]
-				[% useredit.clout.$clout_type.defined ? useredit.clout.$clout_type : '(none)' %]
+				[% IF useredit.clout.$clout_type.defined;
+				   FILTER format('%.4f'); useredit.clout.$clout_type; END;
+				   ELSE; '(none)'; END %]
 				[% END %]
 			[% END %]
 				<p>
@@ -302,4 +304,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: getUserAdmin;users;default,v 1.80 2008/01/09 19:55:15 jamiemccarthy Exp $
+$Id: getUserAdmin;users;default,v 1.81 2008/02/13 17:00:41 jamiemccarthy Exp $

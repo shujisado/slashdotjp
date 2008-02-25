@@ -11,10 +11,9 @@ en_US
 __name__
 firehose_pages
 __template__
-[% 
-	start_day = options.startdate.replace('-');
-	duration = options.duration;
-	param_str = "&amp;startdate=$start_day&amp;duration=$duration";
+[%
+	fh = Slash.getObject("Slash::FireHose");	
+	param_str = fh.genFireHoseParams(options);
 
 	page_extras = "";
 	IF fh_page == "users.pl";
@@ -77,4 +76,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: firehose_pages;misc;default,v 1.15 2008/01/24 15:41:02 tvroom Exp $
+$Id: firehose_pages;misc;default,v 1.16 2008/02/20 18:42:47 tvroom Exp $

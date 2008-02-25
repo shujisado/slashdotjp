@@ -104,7 +104,7 @@ L<http:E<sol>E<sol>slashcode.cvs.sourceforge.netE<sol>*checkout*E<sol>slashcodeE
 
 The version of this file that you are currently reading is:
 
-$Id: INSTALL.pod,v 1.63 2007/09/26 21:20:30 jamiemccarthy Exp $
+$Id: INSTALL.pod,v 1.64 2008/02/19 18:29:04 scc Exp $
 
 If there are more recent versions of this file, you can find a list of
 those changes at:
@@ -560,6 +560,16 @@ These are all in the vars table of your database.
 B<NOTE>: Read the message printed at the end of running install_slashsite.
 Failure to pay attention here is another common reason we see for Slash
 installations not working.
+
+B<Ubuntu NOTE>: Reported after installing on Kubuntu 7.10, a Slash install's
+idea of run-levels was not sufficient to start slashd at boot.  The following
+makes sure that all the right run-levels are covered, and that rebuilding
+Slash won't mistakenly double-start the daemon:
+
+  sudo update-rc.d -f slash remove
+  sudo update-rc.d slash defaults
+  sudo mv /etc/rc3.d/S*slash /etc/rc3.d/S99slash
+  sudo mv /etc/rc6.d/K*slash /etc/rc6.d/K99slash
 
 =item 7.
 
@@ -1747,5 +1757,5 @@ send out any notices.  You can subscribe here:
 
 =head1 VERSION
 
-$Id: INSTALL.pod,v 1.63 2007/09/26 21:20:30 jamiemccarthy Exp $
+$Id: INSTALL.pod,v 1.64 2008/02/19 18:29:04 scc Exp $
 

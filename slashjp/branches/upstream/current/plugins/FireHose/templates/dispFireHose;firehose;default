@@ -17,7 +17,7 @@ __template__
     firehose = Slash.getObject("Slash::FireHose");
     pop_val = firehose.getPopLevelForPopularity(item.userpop);
     nofollow = 1;
-    IF pop_val <= 4;
+    IF item.type == "story";
     	nofollow = 0;
     END;
 
@@ -114,26 +114,9 @@ END %]
 	<div>
 		<ul>
 			<li class="more"><b>
-			[% IF item.type == "story" %]
-				[% the_skin = Slash.db.getSkin(item.primaryskid) %]
-				[% 
-				readmore_link = "Read More";
-				
-				IF item.body_length;
-					readmore_link = "Read $item.body_length More Bytes...";
-				END;
-
-				Slash.linkStory({
-					'link' 	=> 	readmore_link,
-					sid	=>	story.sid,
-					tid	=> 	story.tid,
-					skin	=>	story.primaryskid
-				   }, 1);
-				 %]
-			[% ELSIF item.type == "journal" %]
-				<a href="[% gSkin.rootdir %]/~[% the_user.nickname | fixparam %]/journal/[% item.srcid %]/">Read More</a>
-			[% ELSIF item.discussion %]
-				<a href="[% gSkin.rootdir %]/firehose.pl?op=view&amp;id=[% item.id %]">Read More</a>
+			[% link_url = firehose.linkFireHose(item) %]
+			[% IF item.discussion %]
+				<a href="[% link_url %]">Read More</a>
 			[% ELSE %]
 				Nothing More
 			[% END %]
@@ -144,7 +127,7 @@ END %]
 			<li class="comments[% IF !disc.commentcount || options.nocommentcnt %] nocomment[% END %]">
 				[% skin = gSkin %]
 				[% IF item.type == "story"; skin = Slash.db.getSkin(item.primaryskid); END %]
-				<a href="[% skin.rootdir %]/comments.pl?sid=[% item.discussion %]">[% disc.commentcount %]</a> <span>comment[% IF disc.commentcount != 1 %]s[% END %]</span>
+				<a href="[% skin.rootdir %]/comments.pl?sid=[% item.discussion %]" id="commentcnt-[% item.id %]">[% disc.commentcount %]</a> <span>comment[% IF disc.commentcount != 1 %]s[% END %]</span>
 			</li>
 			[% END %]
 		</ul>
@@ -155,4 +138,4 @@ END %]
 [% END %]
 [% END %]
 __version__
-$Id: dispFireHose;firehose;default,v 1.70 2008/01/29 22:14:02 tvroom Exp $
+$Id: dispFireHose;firehose;default,v 1.73 2008/02/21 21:48:38 tvroom Exp $
