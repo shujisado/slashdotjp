@@ -1,0 +1,32 @@
+__section__
+default
+__description__
+You should describe stuff here.
+__title__
+Useless title to template
+__page__
+firehose
+__lang__
+en_US
+__name__
+view
+__seclev__
+10000
+__template__
+<div class="view">
+	[% PROCESS autocomplete %]
+	[% PROCESS nodnix_menus %]
+	[% IF user.is_anon;
+	   	this_fhid = form.id | fixparam;
+	   	PROCESS userlogin_cover
+   		return_url = gSkin.rootdir _ '/firehose.pl?op=view&id=' _ this_fhid;
+	END %]
+	<div class="head">
+       		<div class="yui-b">
+		<!-- block -->
+		</div>
+		[% firehosetext %]
+	</div>
+</div>
+__version__
+$Id: view;firehose;default,v 1.9 2008/01/18 21:20:37 tvroom Exp $

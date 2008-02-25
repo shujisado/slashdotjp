@@ -1,0 +1,24 @@
+__section__
+default
+__description__
+Text composing a redirect body; this will be sent after (in addition to) the HTTP 302 header request for the browser to be redirected, and should only be seen by browsers that do not understand the redirection request
+
+* url = URL to redirect to
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+html-redirect
+__template__
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head><title>302 Moved</title></head><body>
+<p>You really want to be on <a href="[% url %]">[% url %]</a> now.</p>
+</body>
+
+__seclev__
+10000
+__version__
+$Id: html-redirect;misc;default,v 1.6 2005/07/27 22:54:48 pudge Exp $

@@ -1,0 +1,50 @@
+__section__
+default
+__description__
+* type = neutral/friend/foe
+* zoo_user = nickname/uid of user making relationship
+
+__title__
+
+__page__
+zoo
+__lang__
+en_US
+__name__
+zoo_msg
+__template__
+[% IF msg.mode == Slash.MSG_MODE_WEB %]
+
+<p>
+[% IF type == 'friend' || type == 'foe' || type == 'bitch' %]
+<b><a href="[% gSkin.rootdir %]/~[% zoo_user.nickname | strip_paramattr %]/"
+>[% zoo_user.nickname | strip_literal %]</a></b> ([% zoo_user.uid %]) has made you their <b>[% type %]</b>.
+[% ELSIF type == 'neutral' %]
+<b><a href="[% gSkin.rootdir %]/~[% zoo_user.nickname | strip_paramattr %]/"
+>[% zoo_user.nickname | strip_literal %]</a></b> ([% zoo_user.uid %]) has ceased their relationship with you.
+[% END %]
+</p>
+
+If you'd like to, view or edit your
+<a href="[% gSkin.rootdir %]/my/friends">friends</a> and 
+<a href="[% gSkin.rootdir %]/my/foes">foes</a>.
+
+[% ELSE %]
+
+[% IF type == 'friend' || type == 'foe' || type == 'bitch' %]
+[% zoo_user.nickname | strip_literal %] ([% zoo_user.uid %]) has made you their [% type %].
+[% ELSIF type == 'neutral' %]
+[% zoo_user.nickname | strip_literal %] ([% zoo_user.uid %]) has ceased their relationship with you.
+[% END %]
+    [% absolutedir %]/~[% zoo_user.nickname | fixparam %]/
+
+If you'd like to view or edit any of your relationships, go to:
+    [% absolutedir %]/my/friends
+    [% absolutedir %]/my/foes
+
+[% END %]
+
+__seclev__
+500
+__version__
+$Id: zoo_msg;zoo;default,v 1.8 2006/01/23 20:42:59 pudge Exp $

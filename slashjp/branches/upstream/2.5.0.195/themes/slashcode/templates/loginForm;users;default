@@ -1,0 +1,90 @@
+__section__
+default
+__description__
+users login form
+
+* newnick = new nickname
+* title = passed to titlebar
+* msg = message to display
+* title2 = second title ?
+__title__
+
+__page__
+users
+__lang__
+en_US
+__name__
+loginForm
+__template__
+	[% PROCESS titlebar %]
+	<div class="generalbody" id="login">
+		[% IF msg2 && ! logged_in %]
+			<div class="message">
+				[% msg2 %]
+			</div>
+		[% END %]
+		[% IF form.unickname %]
+			<p>
+				You didn't log in!  You apparently put in the wrong password, or the wrong nickname.  Try again or click the mail password button if you forgot your password.
+			</p>
+			[% IF constants.allow_anonymous %]
+				<p>
+					 Logging in will allow you to post comments as yourself.  If you don't log in, you will only be able to post as [% Slash.getCurrentAnonymousCoward("nickname") %].
+				</p>
+			[% ELSE %]
+				<p>
+	     				You can only post comments if you have a valid account.
+				</p>
+			[% END %]
+		[% ELSE %]
+		[% END %]
+
+		<form action="[% env.script_name %]" method="post">
+			<fieldset>
+				<legend>
+                                      Log In
+				</legend>
+				<input type="hidden" name="op" value="userlogin">
+				<label>
+					Nickname
+				</label>
+				<input type="text" name="unickname" size="20" value="[% form.unickname | strip_attribute %]">
+				<label>
+					Password
+				</label>
+				<input type="password" name="upasswd" size="20" maxlength="20">
+				<div class="note">
+					(6-20 characters long)
+				</div>
+				<label class="checkbox">
+				<input type="checkbox" name="login_temp" value="yes">Public Terminal
+				</label>
+				<input type="submit" name="userlogin" value="Log in">
+			</fieldset>
+		[% IF msg1 %]
+			<div class="message">
+				[% msg1 %]
+			</div>
+		[% END %]
+		</form>
+
+		<div class="note">
+			Forget your password? 
+			<a href="[% env.script_name %]?op=mailpasswdform">
+				Have your password mailed to you
+			</a>
+			by entering your email address, nickname, or uid.
+			<br>
+			<a href="[% env.script_name %]?op=newuserform">
+				Create a new account
+			</a>
+			if you don't have one already.
+		</div>
+		[% IF ! logged_in %]
+		[% END %]
+	</div>
+
+__seclev__
+500
+__version__
+$Id: loginForm;users;default,v 1.9 2007/05/09 20:57:04 pudge Exp $

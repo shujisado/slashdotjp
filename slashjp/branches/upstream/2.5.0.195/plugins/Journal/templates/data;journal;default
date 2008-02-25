@@ -1,0 +1,90 @@
+__section__
+default
+__description__
+Repository for random data elements.
+
+* value = the name of the data element to retrieve
+
+Each data element may have any number of other variables.
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+data
+__template__
+[% SWITCH value %]
+
+[% CASE 'mainhead' %]
+	[% returnme.data_constant = 1 %]
+	[% constants.sitename %] Journal System
+
+[% CASE 'userhead' %]
+[% IF user.lowbandwidth %]
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/journal/">Journal</a> of <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a> ([% uid %])
+[% ELSE %]
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/journal/">Journal</a> of <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a> ([% uid %])  [% PROCESS zoo_icons person=uid implied="" %]
+[% END %]
+
+[% CASE 'friendhead' %]
+[% IF user.lowbandwidth %]
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a>'s <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/friends/">Friends</a>
+[% ELSE %]
+	<a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/">[% nickname | strip_literal %]</a>'s <a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/friends/">Friends</a>
+[% END %]
+
+[% CASE 'noedit' %]
+	You may not edit this journal entry.
+
+[% CASE 'nousers' %]
+	No users with journals found matching "[% form.nickname | strip_literal %]".
+
+[% CASE 'nojournal' %]
+	User "[% nouser.nickname | strip_literal %]" ([% nouser.uid %]) has no journal entries.
+
+[% CASE 'noentries' %]
+	[% IF nickname;
+		nickname | strip_literal %] has[%
+	   ELSE %]
+	   	You have
+	[% END %] not created any journal entries.
+
+[% CASE 'nofriends' %]
+	[% returnme.data_constant = 1 %]
+	You have not made any friends (or all of your friends are losers
+	who have not created entries in their journals).
+
+[% CASE 'noviewfriends' %]
+	[% returnme.data_constant = 1 %]
+	Either all of your friends are lame or you just have none. Either
+	way this page is blank.
+
+[% CASE 'create_failed' %]
+	[% returnme.data_constant = 1 %]
+	An unknown error occured when you tried to create a journal entry.
+	Please go back to the beginning and try again.
+
+[% CASE 'no_desc_or_article' %]
+	[% returnme.data_constant = 1 %]
+	Either the subject or the journal text was empty.  Please complete
+	the entry and try again.
+
+[% CASE 'noentries_found' %]
+	[% returnme.data_constant = 1 %]
+	Sorry, the requested journal entries were not found.
+
+[% CASE 'journalfoot' %]
+	</div></div>
+
+[% CASE 'submit_must_enable_comments' %]
+	You must enable comments for all users if you've marked your submission
+	as "publicize" or "publish."
+
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: data;journal;default,v 1.23 2006/12/13 07:49:13 pudge Exp $

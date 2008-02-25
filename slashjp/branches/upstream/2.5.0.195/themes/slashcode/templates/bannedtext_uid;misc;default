@@ -1,0 +1,37 @@
+__section__
+default
+__description__
+Text to display to users banned by UID.
+
+* uid = the banned uid (we can't trust 'user' at this stage,
+	since createCurrentUser() hasn't been called)
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+bannedtext_uid
+__template__
+<html>
+<head><title>BANNED!</title></head>
+<body bgcolor="pink">
+<h1>Your user account has been banned from [% constants.sitename %]</h1><br>
+Your user account has been banned from [% constants.sitename %],
+due to script flooding, or the posting of comments designed to break web browser
+rendering, that originated from your network or IP address.  If you feel that
+this is unwarranted, feel free to include your UID (<b>[% uid %]</b>) in the
+subject of an email to
+<a href="mailto:[% constants.adminmail_ban | strip_attribute %]">[% constants.adminmail_ban %]</a>,
+and we will examine why there is a ban. If you fail to include the UID (again,
+<em>in the subject!</em>), then your message will be deleted and ignored. I mean
+come on, we're good, we're not psychic.
+</body>
+</html>
+
+__seclev__
+500
+__version__
+$Id: bannedtext_uid;misc;default,v 1.5 2005/07/27 22:54:46 pudge Exp $
