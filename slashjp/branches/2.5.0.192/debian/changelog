@@ -1,0 +1,439 @@
+slash (2.5.0.195-1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 25 Feb 2008 19:36:31 +0900
+
+slash (2.5.0.192-4) unstable; urgency=low
+
+  * Backported from 2.5.0.194 at plugins/Stats/Stats.pm
+    to fix table accesslog_temp_uidip create error
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 14 Feb 2008 21:56:15 +0900
+
+slash (2.5.0.192-3) unstable; urgency=low
+
+  * Revert to old (before 2.5.0.190) format of index.pl comment links
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 19:04:13 +0900
+
+slash (2.5.0.192-2) unstable; urgency=low
+
+  * Fix: Undefined subroutine &Slash::Apache::User::PasswordSalt::getSalts
+    called at /usr/lib/perl5/Slash/Utility/Data.pm line 872.
+  * Fix: use "dkid" instead of "kind" at plugins/Journal/Journal.pm
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 19:01:51 +0900
+
+slash (2.5.0.192-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Change bookmark_feed createdtime from NOW() to date of RSS items
+  * Fix logchack ignore rules:
+    - Change case of string
+    - Suppress Delete neverdisplay stories from story_dirty message
+  * Fix: delete discussion when another stories have same discussion
+  * Add "aretama" for Slashdot Japan to Firehose tab
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 01:31:13 +0900
+
+slash (2.5.0.189-3) unstable; urgency=low
+
+  * Exit init.d script when slashd daemon does not exist
+  * Change to delete neverdisplay stories from story_dirty
+  * Change to delete nonexistent stories from story_dirty
+  * Fix: Use of uninitialized value at
+    /usr/lib/perl5/Slash/Utility/Display.pm line 549.
+  * Add logcheck ignore rules
+    - Suppress story deleting message
+    - Suppress Deleted nonexistent stories from story_dirty message
+  * Fix: takeover discussion failed when the story has been created from
+    submit.pl
+  * Fix: remaining firehose url at discussion table when takeover discussion
+    from firehose.
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 31 Jan 2008 09:05:59 +0000
+
+slash (2.5.0.189-2) unstable; urgency=low
+
+  * Add logcheck ignore rules
+    - Suppress harmless messages about freshenup.pl
+    - Suppress normal runtask messages
+  * Fix: duplicate key error at plugin/Stats/Stats.pm
+  * Fix: suppress _addGlobjEssentials_journals no nick for journal message by
+    tagbox.pl
+    - Do not process for deleted journals
+  * Fix: slashd daemonizes correctly
+  * Add cron.d to check and restart slashd
+  * Fix: remaining top10Comments in sbin/portald ... changed to topComments
+  * Fix: cannot authenticate using LDAP when the users has never changed their
+    password
+    - Add to change LDAP password when the user has new passwords are
+      authenticated
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jan 2008 17:15:39 +0900
+
+slash (2.5.0.189-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Suppress warning at slash-template-tool -d
+  * Suppress following warning messages:
+    - Use of uninitialized value in numeric gt (>) at
+      message_delivery.pl line 86.
+  * Add logcheck ignore rules for slashd.log to slash-backend
+  * Add to set nice value for slashd
+  * Add to load /etc/default/slash for slashd
+  * Change Email::Valid method to address() to reject wide chars
+  * Disable to change invalid email address
+  * Change binary package arch to all (slash-frontend and slash-backend)
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 18 Jan 2008 08:44:20 +0000
+
+slash (2.5.0.188-6) unstable; urgency=low
+
+  * Fix to use correct db object at
+    plugins/Moderation/process_moderation.pl line 144
+  * Add feature: sending title for badge.js
+
+ -- Taku YASUI <tach@debian.or.jp>  Fri, 11 Jan 2008 16:47:42 +0900
+
+slash (2.5.0.188-5) unstable; urgency=low
+
+  * Suppress "Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 3068"
+    - initialize $series and use it
+  * Fix warning when "HREF" has been capitalized at
+    /usr/share/perl5/Slash/Admin.pm line 177
+  * Suppress "Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 10182."
+  * Suppress "Use of uninitialized value in list assignment at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 3713."
+  * Return empty array reference when $stoid is empty at
+    getStoryTopicsRendered() function
+  * Suppress "Use of uninitialized value in string ne at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 1213"
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 20:37:39 +0900
+
+slash (2.5.0.188-4) unstable; urgency=low
+
+  * Fix memcached keyname to get/set stories for correct skin
+    *** THIS FIX IS AD-HOC AND PLEASE USE CAREFULLY ***
+  * Remove unwanted STDERR debug output at index.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 17:05:40 +0900
+
+slash (2.5.0.188-3) unstable; urgency=low
+
+  * Suppress "Use of uninitialized value" when running tasks/daemons at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 441
+  * Add slash-install-tagbox command to run
+    /usr/share/slash/bin/install-tagbox
+  * Fix: subscriber_bonus should be enabled when Subscribe plugin has been
+    installed at users.pl
+
+ -- Taku YASUI <tach@debian.or.jp>  Fri, 28 Dec 2007 01:58:40 +0900
+
+slash (2.5.0.188-2) unstable; urgency=low
+
+  * Remove unwanted code at plugins/Admin/admin.pl
+  * Fix firehose table update error: Unknown column 'media' in 'field list'
+    at /usr/share/perl5/Slash/FireHose.pm:1518
+  * Remove unwanted debug code at plugins/FireHose/FireHose.pm line 302
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 25 Dec 2007 18:49:20 +0900
+
+slash (2.5.0.188-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Suppress warning of portald
+    - Use of uninitialized value in pattern match (m//) at
+      /usr/lib/perl5/Slash/DB/Static/MySQL.pm line 1514
+    - Use of uninitialized value in numeric comparison (<=>) at
+      /usr/lib/perl5/Slash/DB/Static/MySQL.pm line 866.
+  * Fix for FireHose initial data script at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 434
+  * Add journal time to FireHose when journal is added to FireHose
+  * Enable to change "Firehose" name using constants "firehose_name"
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 25 Dec 2007 08:36:25 +0900
+
+slash (2.5.0.187-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: unwanted debug output at Slash/DB/MySQL/MySQL.pm
+  * Suppress warning at plugins/Admin/admin.pl
+  * Change slash.conf filename
+    - before: /etc/apache/conf.d/slash.conf
+    - after: /etc/apache/conf.d/00slash.conf
+  * Add libtimedate-perl-ja to Suggests: at slash-common
+  * Add libfile-type-perl and libfinance-quote-perl to Depends of slash-common
+    - Some plugin need these modules
+  * Suppress "Use of uninitialized value" at
+    plugins/FireHose/FireHose.pm line 2017
+  * Suppress "Use of uninitialized value" at
+    plugins/Tags/tags_udc.pl line 150
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 21 Dec 2007 20:38:58 +0900
+
+slash (2.5.0.186-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: [error] Can't use string ("describe") as a HASH ref while "strict
+    refs" in use at /usr/share/perl5/Slash/Tags.pm line 1514.\n
+  * Fix: Use of uninitialized value in string comparison (cmp) at
+    /usr/share/perl5/Slash/Tags.pm line 1648.
+  * Fix: cannot getSkin for empty skid='0' at firehose.pl
+  * Fix: Supress warning when $item->{link} does not exist at
+    /usr/share/slash/sbin/portald
+  * Add: takeover_discussion_from_firehose constants
+    to takeover discussions before approve.
+  * Add: select adding '?from=rss' phrase to rss link
+    with constants 'rss_no_tracking_query'
+  * Add: select enabling discussion2 or not with constants 'no_d2'
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 17 Dec 2007 17:54:08 +0900
+
+slash (2.5.0.184-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: Wide character in print warning at following tasks:
+    - new_headfoot.pl
+    - create_sidebar.pl
+  * Add set_sectionlinks.pl to themes/slashcode/tasks
+    - create recentSection template for left menu
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 19 Nov 2007 10:29:29 +0000
+
+slash (2.5.0.183-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: $uid is not defined at plugins/Journal/Journal.pm
+  * Fix: gSkin.imagedir has not been defined, change to constants.imagedir
+  * Fix: does not apply when ldap_debug_level is 0 at LDAPDB
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 09 Nov 2007 19:15:25 +0900
+
+slash (2.5.0.182-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 02 Nov 2007 17:00:48 +0900
+
+slash (2.5.0.181-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix syntax error on plugins/Admin/admin.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 16:08:34 +0900
+
+slash (2.5.0.180-0.1) unstable; urgency=low
+
+  * New upstream cvs release
+    - Read upstream changelog
+  * move Slash/LDAPDB/vars.sql contents to sql/mysql/default.sql
+  * Add enable/disable switch to agree privacy statement on create user
+  * Add libdata-javascript-anon-perl to Depends:
+    - for Ajax plugin
+  * Fix: password notification email send fail: plugins/Messages/Messages.pm
+  * Fix: remove filter failed: plugins/Admin/admin.pl
+  * Typo fix at Slash/LDAPDB/lib/Slash/LDAPDB.pm
+  * Fix warning: Wide character in print at plugins/Admin/admin.pl
+  * Fix warning: Use of uninitialized value in substitution iterator at
+    fixparam() in Slash/Utility/Data/Data.pm
+  * Fix warning: Use of uninitialized value and hash key at
+    templateEdit() in plugins/Admin/admin.pl
+  * Allow to change LDAPDB DEBUG_LEVEL using vars "ldap_debug_level"
+  * Fix warning: Use of uninitialized value at
+    getDescForTopicsRendered() at plugins/Admin/admin.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 14:53:53 +0900
+
+slash (2.5.0.119-17) unstable; urgency=low
+
+  * Merged from OTP
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 16 Oct 2007 13:29:13 +0900
+
+slash (2.5.0.119-otp-12) unstable; urgency=low
+
+  * Add: hide stories of specfied tid at admin story list
+    - use constant "admin_hide_tids" like "17,24,32" ...
+
+ -- Taku YASUI <tach@debian.or.jp>  Wed,  3 Oct 2007 09:49:09 +0900
+
+slash (2.5.0.119-otp-11) unstable; urgency=low
+
+  * add dependency (libgd-gd2-perl libgd-text-perl) for humanconf plugin.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 15 Aug 2007 17:31:56 +0900
+
+slash (2.5.0.119-otp-10) unstable; urgency=low
+
+  * Blob.pm: revert to upsatrem for increase max_allowed_packet.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 27 Jul 2007 15:23:46 +0900
+
+slash (2.5.0.119-otp-9) unstable; urgency=low
+
+  [ Taku YASUI ]
+  * Fix: sql syntax error when "$skid_list" is empty
+
+  [ Tatsuki Sugiura ]
+  * Blob.pm: fix calculation of packet length when entering chunked mode
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 27 Jul 2007 14:02:42 +0900
+
+slash (2.5.0.119-otp-8) unstable; urgency=low
+
+  [ Tatsuki Sugiura ]
+  * search plugin: check total hits
+  * search plugin: fetch dept column
+
+  [ Taku YASUI ]
+  * Change debian/changelog time
+  * Make to get "Content-Transfer-Encoding" value from vars
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 19 Jun 2007 20:01:40 +0900
+
+slash (2.5.0.119-otp-5) unstable; urgency=low
+
+  * Search plugin: senna full query support
+  * Search plugin: add '*D+' pragma in default
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 25 May 2007 05:23:46 +0000
+
+slash (2.5.0.119-otp-4) unstable; urgency=low
+
+  * plugin/Search/Search.pm: search query was forced IN BOOLEAN MODE
+  * Utility::Data.pm: encode URL each single byte
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 25 May 2007 14:08:12 +0900
+
+slash (2.5.0.119-otp-3) unstable; urgency=low
+
+  * change query string filter to enable japanese search.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu, 24 May 2007 14:18:47 +0900
+
+slash (2.5.0.119-otp-2) unstable; urgency=low
+
+  * Fix for binary data mangle: escape blob column as hex
+    before sending to SQL server.
+  * reverse order of related stories.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 09 May 2007 18:37:56 +0900
+
+slash (2.5.0.119-16) unstable; urgency=low
+
+  * Hex encoding was applied for all binary columns.
+  * Some fix and merge from otp for etch.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 23 Jul 2007 13:59:15 +0900
+
+slash (2.5.0.119-15) unstable; urgency=low
+
+  * admin.pl: fix regex to pick up related stories and comments, again.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 20 Jul 2007 18:33:11 +0900
+
+slash (2.5.0.119-14) unstable; urgency=low
+
+  * admin.pl: fix regex to pick up related stories and comments.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 20 Jul 2007 17:19:06 +0900
+
+slash (2.5.0.119-13) unstable; urgency=low
+
+  * task/open_backend.pl: change RSS version from 0.9 to 0.91
+  * remove description from RSS0.91
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 27 Jun 2007 17:28:19 +0900
+
+slash (2.5.0.119-12) unstable; urgency=low
+
+  * add uri_encode_safe filter
+  * add content:encoded in RSS1.0 of journal
+    (enabled by rdfitem_content variable.)
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  8 Nov 2006 12:57:03 +0900
+
+slash (2.5.0.119-11) unstable; urgency=low
+
+  * support dirskin in adminmail and counthits.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  1 Nov 2006 12:19:44 +0900
+
+slash (2.5.0.119-10) unstable; urgency=low
+
+  * remove obsolete light mode code
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 30 Oct 2006 17:29:37 +0900
+
+slash (2.5.0.119-9) unstable; urgency=low
+
+  * remove 'SET NAMES utf8' from MySQL.pm.
+    So need to mysql_read_default_file in dbix-password.conf
+    and default-character-set in my.cnf
+  * change schedule of adminmail.pl to 4:50 AM (JST)
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  4 Oct 2006 17:23:16 +0900
+
+slash (2.5.0.119-8) unstable; urgency=low
+
+  * login.pl: fix condition for checking LDAP user when accout creation
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu, 14 Sep 2006 22:14:37 +0900
+
+slash (2.5.0.119-7) unstable; urgency=low
+
+  * fix in chopEntity() (may return reversed string...)
+  * stop messaging for journal-story
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 11 Sep 2006 14:02:32 +0900
+
+slash (2.5.0.119-6) unstable; urgency=low
+
+  * login.pl: fix condition for duplicate user error when create user.
+  * article.pl: make enable and strict check in skin redirection for dirskin.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri,  8 Sep 2006 14:46:33 +0900
+
+slash (2.5.0.119-5) unstable; urgency=low
+
+  * make disable skin redirection forcely in article.pl
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu,  7 Sep 2006 18:55:30 +0900
+
+slash (2.5.0.119-4) unstable; urgency=low
+
+  * change link of stories submitted by journal to article.pl in search.pl
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu,  7 Sep 2006 14:44:14 +0900
+
+slash (2.5.0.119-3) unstable; urgency=low
+
+  * fix <ecode> processing to avoid perl bug?
+  * cut off long URL (partial, a tag only)
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  6 Sep 2006 21:48:50 +0900
+
+slash (2.5.0.119-2) unstable; urgency=low
+
+  * change title link of discussion to article.pl instead of
+    ~/user/journal/nnnn.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon,  4 Sep 2006 21:15:55 +0900
+
+slash (2.5.0.119-1) unstable; urgency=low
+
+  * catchup upstream CVS.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  9 Aug 2006 16:44:50 +0900
+
+slash (2.5.0.94-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Tue,  9 May 2006 16:15:50 +0900
+
