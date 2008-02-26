@@ -1,8 +1,9 @@
 slash (2.5.0.195-1) unstable; urgency=low
 
   * New upstream CVS release
+  * Fix adimin topic select window to change tree/alpabetical
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 25 Feb 2008 19:36:31 +0900
+ -- Taku YASUI <tach@osdn.jp>  Tue, 26 Feb 2008 10:37:23 +0000
 
 slash (2.5.0.192-4) unstable; urgency=low
 
