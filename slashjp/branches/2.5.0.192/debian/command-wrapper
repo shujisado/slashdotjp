@@ -1,6 +1,0 @@
-#!/bin/bash
-
-myname=`basename $0`
-myname=${myname#slash-}
-
-exec /usr/share/slash/bin/$myname "$@"
