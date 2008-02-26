@@ -1,0 +1,48 @@
+(Exiting|Starting) (slashd|runtask)
+Starting up Slashd
+first task will be
+sent SIGUSR1 to running tasks:
+Subroutine [-a-zA-Z0-9_]+ redefined at
+processed [^;]; [0-9] successful \([-a-z0-9A-Z_. ]+\); 0 failed
+Begin reap-and-sleep-for-
+Finishing sleep:
+:[0-9]{2} [0-9]{4} [-a-z0-9A-Z_]+\.pl forked;
+\[?[-a-z0-9A-Z_]+\.pl\]? (begin|end|reaped) \([0-9.]+s?\)
+[-a-z0-9A-Z_]+\.pl set resource_info '[a-z0-9_]+' to (0|1)
+runtask [-a-z0-9A-Z_]+\.pl (begin|end)
+runtask .* (Begin|End)
+\[adminmail\.pl\] [-a-z0-9A-Z_. ]+ (Begin|End)
+\[freshenup\.pl\] (Updating|updated|Deleting) [0-9/]+
+\[freshenup\.pl\] (index|article|firehose)\.pl 
+\[freshenup\.pl\] slash [a-z0-9A-Z_]+\.shtml
+\[freshenup\.pl\] setStory on [0-9]+ stories
+\[freshenup\.pl\] Deleted [0-9]+ (nonexistent|neverdisplay) stories from story_dirty
+\[freshenup\.pl\] rewrote static skin pages for
+\[freshenup\.pl\] Will process for [0-9]+ extra minutes, [0-9]+ stories
+\[freshenup\.pl\] Aborting stories at freshen, (too much elapsed time|got SIGUSR1)
+\[p2f_hof_topics\.pl\] (hof|topics|authors)\.pl 
+\[reskey_purge\.pl\] Purged [0-9]+ reskeys
+\[delete_accesslog\.pl\] deleted so far [0-9]+ of [0-9]+ rows
+\[firehose_get_thumbnails\.pl\] Last id: [0-9]+
+\[firehose_backend\.pl\] gen firehose (firehose|firehose_nostories)
+\[set_cids\.pl\] min_cid_last_
+\[refresh_authors_cache\.pl\] (R|End of r)efreshing authors_cache
+\[process_metamod\.pl\] m2_oldzone was [0-9]+
+\[process_moderation\.pl\] Giving points to [0-9]+ users:
+\[daily\.pl\] Daily Mail \(daily(headlines|news)\) (begin|end)
+\[daily\.pl\] Sending [0-9]+ bytes to [0-9]+ users:
+\[daily_archive\.pl\] (Begin|End) Daily Comment Recycle
+\[daily_archive\.pl\] Daily (Archival|Deleting) (Begin|End)
+\[daily_archive\.pl\] (Updat|Decay)ing User (Login|Token)s
+\[daily_archive\.pl\] (Archiving|archived) [0-9/]+
+\[daily_archive\.pl\] (article\.pl|prog2file):?
+\[counthits\.pl\] [0-9]+ of [0-9]+ sids updated for
+\[zoo_run_people_log\.pl\] Zoo fof/eof (Begin|Processing|End)
+(BEGIN|END) MODERATORD EXECUTION
+^Eligible: [0-9]+
+^First [0-9.]+ accounts available\.
+^Incrementing token-count on [0-9]+ users\.
+^Stirred out [0-9]+ points, recycle [0-9]+ tokens, so total tokens=[0-9]+
+^So total tokens=[0-9]+
+newcomments: [0-9]+
+[0-9]+ comments becomes [0-9]+ tokens\.
