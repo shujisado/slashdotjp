@@ -278,6 +278,7 @@ sub _sendMailPasswd {
 	my $newpasswd = $slashdb->getNewPasswd($uid);
 	my $tempnick  = $user_send->{nickname};
 	my $subject   = getData('mail_subject', { nickname => $user_send->{nickname} });
+	my $mail_template = $form->{op} eq "newuser" ? "mail_msg_newuser" : "mail_msg";
 
 	# Pull out some data passed in with the request.  Only the IP
 	# number is actually trustworthy, the others could be forged.
@@ -295,7 +296,7 @@ sub _sendMailPasswd {
 	$ua =~ s/\s+/ /g;
 	$ua = substr(strip_attribute($ua), 0, 60);
 
-	my $msg = getData('mail_msg', {
+	my $msg = getData($mail_template, {
 		newpasswd	=> $newpasswd,
 		tempnick	=> $tempnick,
 		remote_ip	=> $remote_ip,
