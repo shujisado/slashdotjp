@@ -2065,18 +2065,16 @@ sub updateStory {
 	}
 
 	$data->{neverdisplay} = $form->{display} ? '' : 1;
+#	if ($data->{neverdisplay}) {
+#		print STDERR "Setting sid: $form->{sid} to neverdisplay\n";
+#		use Data::Dumper;
+#		print STDERR Dumper($form);
+#		print STDERR Dumper($data);
+#	}
 
-	# If brief_sectional_mainpage is set, and this story has only
-	# nexuses in getMainpageDisplayableNexuses(), all below
-	# the sectional weight, and not the mainpage nexus itself,
-	# then the current getStoriesEssentials code will pick up
-	# this story (for one-liner display) even though we don't
-	# want it picked up.  The kludge is to mark the story, in
-	# that case, as 'offmainpage'. - Jamie 2008-01-28
-	$data->{offmainpage} = 0 if ($story->{offmainpage});
 	if ($constants->{brief_sectional_mainpage}) {
+		$data->{offmainpage} = undef;
 		my $sectional_weight = $constants->{topics_sectional_weight} || 10;
-		my $rendered_hr = $slashdb->renderTopics($chosen_hr);
 		if (!$rendered_hr->{ $constants->{mainpage_nexus_tid} }) {
 			my $mdn_ar = $slashdb->getMainpageDisplayableNexuses();
 			my $mdn_hr = { map { ($_, 1) } @$mdn_ar };
@@ -2092,12 +2090,6 @@ sub updateStory {
 	}
 
 #print STDERR "admin.pl before updateStory data: " . Dumper($data);
-#	if ($data->{neverdisplay}) {
-#		print STDERR "Setting sid: $form->{sid} to neverdisplay\n";
-#		use Data::Dumper;
-#		print STDERR Dumper($form);
-#		print STDERR Dumper($data);
-#	}
 	if (!$slashdb->updateStory($form->{sid}, $data)) {
 		titlebar('100%', getTitle('story_update_failed'));
 		editStory(@_);
