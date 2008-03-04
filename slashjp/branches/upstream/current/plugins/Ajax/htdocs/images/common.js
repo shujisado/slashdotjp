@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.172 2008/02/22 03:38:41 tvroom Exp $
+// $Id: common.js,v 1.174 2008/02/28 19:26:58 pudge Exp $
 
 // global settings, but a firehose might use a local settings object instead
 var firehose_settings = {};
@@ -1211,6 +1211,10 @@ function firehose_slider_end(offsetFromStart) {
 	}
 }
 
+function firehose_slider_set_color(color) {
+	fh_colorslider.setValue(fh_ticksize * fh_colors_hash[color] , 1);
+}
+
 function firehose_change_section_anon(section) {
 	window.location.href= window.location.protocol + "//" + window.location.host + "/firehose.pl?section=" + encodeURIComponent(section) + "&tabtype=tabsection";
 }
@@ -1227,7 +1231,7 @@ function clearVendorPopupTimers() {
 
 function vendorStoryPopup() {
 	id = vendor_popup_id;
-	var title = "<a href='//intel.vendors.slashdot.org' onclick=\"javascript:urchinTracker('/vendor_intel-popup/intel_popup_title');\">Intel's Opinion Center</a>";
+	var title = "<a href='//intel.vendors.slashdot.org' onclick=\"javascript:pageTracker._trackPageview('/vendor_intel-popup/intel_popup_title');\">Intel's Opinion Center</a>";
 	var buttons = createPopupButtons("<a href=\"#\" onclick=\"closePopup('vendorStory-" + id + "-popup')\">[X]</a>");
 	title = title + buttons;
 	var closepopup = function (e) {
@@ -1252,7 +1256,7 @@ function pausePopVendorStory2(id) {
 
 function vendorStoryPopup2() {
 	id = vendor_popup_id;
-	var title = "<a href='//intel.vendors.slashdot.org' onclick=\"javascript:urchinTracker('/vendor_intel-popup/intel_popup_title');\">Intel's Opinion Center</a>";
+	var title = "<a href='//intel.vendors.slashdot.org' onclick=\"javascript:pageTracker._trackPageview('/vendor_intel-popup/intel_popup_title');\">Intel's Opinion Center</a>";
 	var buttons = createPopupButtons("<a href=\"#\" onclick=\"closePopup('vendorStory-" + id + "-popup')\">[X]</a>");
 	title = title + buttons;
 	var closepopup = function (e) {

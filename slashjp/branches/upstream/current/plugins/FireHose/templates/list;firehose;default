@@ -157,7 +157,7 @@ cmdrtaco dot net but be forgiving of beta code!
 <script type="text/javascript">
 	[% FOR opt = [ 'startdate', 'mode', 'fhfilter', 'orderdir', 'orderby', 'startdate', 'duration', 'color'] %]
 		[%- opt_value = options.$opt -%]
-		[% IF opt == startdate %]
+		[% IF opt == 'startdate' %]
 			[% opt_value = opt_value.replace('-',''); %]
 		[%- END -%]
 		firehose_settings.[% opt %] = [% firehose.js_anon_dump(opt_value) %];
@@ -204,4 +204,4 @@ firehose_slider_init();
 </script>
 
 __version__
-$Id: list;firehose;default,v 1.111 2008/02/20 21:12:38 entweichen Exp $
+$Id: list;firehose;default,v 1.112 2008/02/27 02:35:28 tvroom Exp $

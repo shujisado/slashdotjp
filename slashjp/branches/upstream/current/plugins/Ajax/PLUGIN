@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.39 2008/02/20 16:30:47 entweichen Exp $
+# $Id: PLUGIN,v 1.40 2008/02/28 19:26:58 pudge Exp $
 name=Ajax
 description="Ajax (Asynchronous Javascript and XML)"
 mysql_dump=mysql_dump.sql
@@ -35,6 +35,7 @@ template=templates/ajax_reskey_signoff;misc;default
 template=templates/ajax_reskey_tag;misc;default
 template=templates/data;ajax;default
 template=templates/datewidget;misc;default
+template=templates/edit_comment;ajax;default
 template=templates/modal_footer;misc;default
 template=templates/prefs_d2;ajax;default
 template=templates/prefs_d2_posting;ajax;default

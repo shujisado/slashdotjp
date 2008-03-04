@@ -3,17 +3,24 @@
 <html>
 <head>
         <title>Slashdot FAQ - Editorial</title>
-<!-- $Id: editorial.shtml,v 1.19 2007/10/04 16:42:37 scc Exp $ -->
+<!-- $Id: editorial.shtml,v 1.20 2008/02/27 18:39:47 entweichen Exp $ -->
 <!--#include virtual="/slashcssbase.inc"-->
 <!--#include virtual="/slashhead-gen-full.inc"-->
 
-        <ul class="menu">
-                 <li><a href="faq-meta.shtml">Previous Section</a></li>
-                 <li><a href="UI.shtml">Next section</a></li>
-                 <li><a href="index.shtml">Index</a></li>
-       	</ul>
-        
-        <hr>
+        <div class="generaltitle">
+                <div class="title">
+                        <h3>Editorial</h3>
+                </div>
+        </div>
+
+        <div id="usermenu">
+                <ul class="menu" style="padding: 5px 10px 5px 10px;">
+                <li><span class="begin"><a href="/help" class="begin">Return to Help & Preferences</a></span></li>
+                <li><span class="begin"><a href="/faq" class="begin">Return to the FAQ</a></span></li>
+                <li><span class="begin"><a href="faq-meta.shtml" class="begin">Previous Section</a></span></li>
+                <li><span class="begin"><a href="UI.shtml" class="begin">Next Section</a></span></li>
+                </ul>
+        </div>
 
 <h2><a name="ed100" id="ed100">How do I submit stories to Slashdot?</a></h2>
         <p>You can submit a story by using the <a href="/submit.pl">Submissions Bin</a>. When you submit a story, please remember to include appropriate links. Also, you'll have a better chance of getting our attention if you use a clear and specific subject line.</p>

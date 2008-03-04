@@ -28,7 +28,7 @@ __template__
 				op	=> 'Reply',
 				subject	=> 'Reply to This',
 				subject_only => 1,
-				#onclick	=> (discussion2 ? "return replyTo($cid)" : '')
+				onclick	=> ((discussion2 && user.test_code) ? "replyTo($cid); return false;" : '')
 			}) %]
 		[% END %]
 
@@ -68,4 +68,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: dispLinkComment;misc;default,v 1.39 2007/07/10 19:02:44 pudge Exp $
+$Id: dispLinkComment;misc;default,v 1.40 2008/02/28 19:26:58 pudge Exp $

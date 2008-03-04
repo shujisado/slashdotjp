@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Environment.pm,v 1.233 2008/02/08 04:27:03 jamiemccarthy Exp $
+# $Id: Environment.pm,v 1.234 2008/02/28 19:26:58 pudge Exp $
 
 package Slash::Utility::Environment;
 
@@ -33,7 +33,7 @@ use Socket qw( inet_aton inet_ntoa );
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.233 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.234 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 
 	dbAvailable
@@ -1692,6 +1692,8 @@ print STDERR scalar(localtime) . " Env.pm $$ userHasDaypass uid=$user->{uid} cs=
 		$user->{seclev} = 1;
 		$user->{state}{lostprivs} = 1;
 	}
+
+	$user->{test_code} ||= $constants->{test_code};
 
 	if ($constants->{plugin}{Tags}) {
 		my $max_uid;
@@ -3524,4 +3526,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Environment.pm,v 1.233 2008/02/08 04:27:03 jamiemccarthy Exp $
+$Id: Environment.pm,v 1.234 2008/02/28 19:26:58 pudge Exp $
