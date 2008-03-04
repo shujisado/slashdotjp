@@ -1,0 +1,22 @@
+__section__
+default
+__description__
+This block is displayed right before moderation occurs.
+
+No specially passed variables.
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+mod_header
+__template__
+<ul>
+
+
+__seclev__
+1000
+__version__
+$Id: mod_header;comments;default,v 1.6 2005/07/27 22:54:48 pudge Exp $

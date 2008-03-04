@@ -1,0 +1,28 @@
+__section__
+default
+__description__
+Print header for server-parsed static pages
+
+* dir = virtual root directory to get file
+* section = extra path for section
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+ssihead
+__template__
+[%- IF page -%]
+<!--#include virtual="[% dir %]/[% skin %]slashhead-[% page %].inc"-->
+[%- ELSE -%]
+<!--#include virtual="[% dir %]/[% skin %]slashhead.inc"-->
+[%- END %]
+[% id_page = user.currentPage || "general" %]
+<div id="[% id_page %]">
+__seclev__
+10000
+__version__
+$Id: ssihead;misc;default,v 1.9 2005/07/27 22:54:48 pudge Exp $

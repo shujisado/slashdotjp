@@ -1,0 +1,33 @@
+__section__
+default
+__description__
+This is the header for the admin section
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+header-admin
+__template__
+[% INCLUDE linkrel %]
+</head>
+<body class="admin">
+[% UNLESS form.nowrapper %]
+<div id="adminmenu">
+	<small>
+		<b>
+			<a href="[% constants.real_rootdir %]">[% constants.sitename %]</a>
+		</b>
+		Admin: 
+	</small>
+	[% Slash.createMenu(adminmenu, { color => 'white' } ) %]
+</div>	
+<div class="contentsadmin">
+[% END %]
+
+__seclev__
+10000
+__version__
+$Id: header-admin;misc;default,v 1.21 2006/02/28 18:07:24 tvroom Exp $

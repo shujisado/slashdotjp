@@ -1,0 +1,21 @@
+__section__
+default
+__description__
+Display an image using Slash::Blob
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+imageLink
+__template__
+[% IF id %]
+	<img src="[% constants.real_rootdir %]/blob.pl?id=[% id | strip_attribute %]" title="[% title | strip_attribute %]" alt="[% title | strip_attribute %]" [% IF width %] width="[% width | strip_attribute %]"[% END %] [% IF height %] height="[% height | strip_attribute %]"[% END %] [% IF align %] align="[% align | strip_attribute %]"[% END %]>
+[% END %]
+__seclev__
+10000
+__version__
+$Id: imageLink;misc;default,v 1.7 2005/07/27 22:54:48 pudge Exp $
