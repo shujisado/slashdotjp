@@ -1,3 +1,9 @@
+slash (2.5.0.192-7) unstable; urgency=low
+
+  * Add to forbid Moderation for user doing bad moderation
+
+ -- Taku YASUI <tach@osdn.jp>  Wed,  5 Mar 2008 11:13:24 +0000
+
 slash (2.5.0.192-6) unstable; urgency=low
 
   * Fix email message for new user creation
