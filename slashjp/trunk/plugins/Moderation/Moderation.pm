@@ -1359,6 +1359,13 @@ sub convert_tokens_to_points {
 
 	for my $uid (@$uids) {
 		next unless $uid;
+		if ($self->checkAL2({ uid => $uid }, 'nom1')) {
+			my $rows = $self->setUser($uid, {
+				-tokens	=> 0,
+				-points => 0,
+			});
+			next;
+		}
 		my $rows = $self->setUser($uid, {
 			-lastgranted    => 'NOW()',
 			-tokens         => "GREATEST(0, tokens - $tokentrade)",
