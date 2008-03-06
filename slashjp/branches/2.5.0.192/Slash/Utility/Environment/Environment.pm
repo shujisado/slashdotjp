@@ -466,6 +466,7 @@ sub getCurrentForm {
 	} else {
 		$form = $static_form;
 	}
+	map { $form->{$_} =~ s/\p{BidiControl}|\p{Unassigned}|\p{JoinControl}//g } keys(%$form);
 
 	return defined $value ? $form->{$value} : $form;
 }
