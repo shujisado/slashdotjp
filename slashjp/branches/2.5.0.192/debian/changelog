@@ -2,8 +2,10 @@ slash (2.5.0.192-7) unstable; urgency=low
 
   * Add to forbid Moderation for user doing bad moderation
   * Fix to remove some unicode control characters from form
+  * Fix to attach discussion to another story when duplicate stories are
+    removed
 
- -- Taku YASUI <tach@osdn.jp>  Thu,  6 Mar 2008 07:47:56 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu,  6 Mar 2008 09:20:58 +0000
 
 slash (2.5.0.192-6) unstable; urgency=low
 

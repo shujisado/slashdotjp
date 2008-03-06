@@ -1328,9 +1328,13 @@ sub deleteStoryAll {
 		$self->sqlUpdate('journal_transfer', {
 			stoid	=> 0,
 		}, 'id=' . $self->sqlQuote($story->{journal_id}));
-	} elsif ($discussion_id &&
-		$self->sqlCount('stories', "discussion=$discussion_id") > 0) {
-		# do nothing
+	} elsif ($discussion_id and
+		my $sid = $self->sqlSelect('sid', 'stories', "discussion=$discussion_id")) {
+		my $constants = getCurrentStatic();
+		$self->sqlUpdate('discussions', {
+			sid	=> $sid,
+			url	=> $constants->{rootdir} . "/article.pl?sid=$sid",
+		}, "id=$discussion_id");
 	} elsif ($discussion_id) {
 		$self->deleteDiscussion($discussion_id);
 	}
