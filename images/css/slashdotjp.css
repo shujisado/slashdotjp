@@ -22,8 +22,8 @@ div#user-section {
 	font-size: 82%;
 }
 div#links {
-	margin-right: 10px;
 	font-size: 88%;
+	margin-right: 0;
 }
 div#links div.block div.content ul * {
 	line-height: 1.2;
