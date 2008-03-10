@@ -1,3 +1,10 @@
+slash (2.5.0.192-8) unstable; urgency=low
+
+  * Enable to select using shtml links at site RSS/RDF by
+    $constants->{rss_use_story_shtml}
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 10 Mar 2008 06:14:44 +0000
+
 slash (2.5.0.192-7) unstable; urgency=low
 
   * Add to forbid Moderation for user doing bad moderation

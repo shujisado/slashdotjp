@@ -1139,6 +1139,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('year','','string of 
 INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_no_tracking_query','0','When "1", the code does not add rss tracking code like "?from=rss".');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('no_d2','0','When "1", disable using discussion2.');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_name','Firehose','The name of "Firehose" function');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_use_story_shtml','0','Use ${sid}.shtml for RSS/RDF link');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';

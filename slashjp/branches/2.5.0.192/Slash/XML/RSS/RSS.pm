@@ -425,11 +425,11 @@ sub rss_story {
 				$reader->getSkin($story->{primaryskid})->{rootdir},
 				$channel->{'link'}
 			);
-			$encoded_item->{'link'} = _tag_link("$dir/article.pl?sid=$story->{sid}");
+			$encoded_item->{'link'} = $constants->{rss_use_story_shtml} ? _tag_link("$dir/$story->{sid}.shtml") : _tag_link("$dir/article.pl?sid=$story->{sid}");
 			$edit = "$dir/$edit";
 			$action = "$dir/$action";
 		} else {
-			$encoded_item->{'link'} = _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
+			$encoded_item->{'link'} = $constants->{rss_use_story_shtml} ? _tag_link("$channel->{'link'}$story->{sid}.shtml") : _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
 			$edit = "$channel->{'link'}$edit";
 			$action = "$channel->{'link'}$action";
 		}
