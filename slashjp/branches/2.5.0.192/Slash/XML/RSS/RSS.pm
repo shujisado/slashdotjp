@@ -577,8 +577,7 @@ sub rss_item_description {
 sub _tag_link {
 	my($link) = @_;
 	my $uri = URI->new($link);
-	my $constants = getCurrentStatic();
-	if (!$constants->{rss_no_tracking_query}) {
+	if (!getCurrentStatic('rss_no_tracking_query')) {
 		if (my $orig_query = $uri->query) {
 			$uri->query("$orig_query&from=rss");
 		} else {
