@@ -56,3 +56,7 @@ div#users-blocks,
 #slashboxes div.block div.content {
   word-break: break-all;
 }
+
+div.quote {
+	position: static;
+}
