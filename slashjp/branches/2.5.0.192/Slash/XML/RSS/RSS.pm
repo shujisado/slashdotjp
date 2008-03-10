@@ -425,6 +425,7 @@ sub rss_story {
 				$reader->getSkin($story->{primaryskid})->{rootdir},
 				$channel->{'link'}
 			);
+			$dir .= "/articles" if ($story->{primaryskid} == $constants->{mainpage_skid});
 			$encoded_item->{'link'} = $constants->{rss_use_story_shtml} ? _tag_link("$dir/$story->{sid}.shtml") : _tag_link("$dir/article.pl?sid=$story->{sid}");
 			$edit = "$dir/$edit";
 			$action = "$dir/$action";
