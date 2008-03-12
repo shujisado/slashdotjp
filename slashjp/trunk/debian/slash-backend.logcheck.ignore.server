@@ -23,6 +23,10 @@ runtask .* (Begin|End)
 \[p2f_hof_topics\.pl\] (hof|topics|authors)\.pl 
 \[reskey_purge\.pl\] Purged [0-9]+ reskeys
 \[delete_accesslog\.pl\] deleted so far [0-9]+ of [0-9]+ rows
+\[fetch_rss_bookmarks\.pl\] Feed:
+\[fetch_rss_bookmarks\.pl\] [0-9A-Za-z ]+ [0-9]+
+\[fetch_rss_bookmarks\.pl\] [0-9]+ https?://
+\[fetch_rss_bookmarks\.pl\] after creating bookmark
 \[firehose_get_thumbnails\.pl\] Last id: [0-9]+
 \[firehose_backend\.pl\] gen firehose (firehose|firehose_nostories)
 \[set_cids\.pl\] min_cid_last_

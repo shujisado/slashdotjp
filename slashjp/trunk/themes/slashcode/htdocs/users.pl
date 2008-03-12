@@ -1781,7 +1781,7 @@ sub tildeEd {
 
 	# Set up $nexus_hr, @nexustid_order, and $story023_default{nexus}.
 	my $topic_tree = $reader->getTopicTree();
-	my $nexus_tids_ar = $reader->getStorypickableNexusChildren($constants->{mainpage_nexus_tid}, 1);
+	my $nexus_tids_ar = [ sort grep {$topic_tree->{$_}{storypickable}} $reader->getNexusTids() ];
 	my $nexus_hr = { };
 	
 	for my $tid (@$nexus_tids_ar) {

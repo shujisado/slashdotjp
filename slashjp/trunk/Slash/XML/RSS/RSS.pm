@@ -425,11 +425,12 @@ sub rss_story {
 				$reader->getSkin($story->{primaryskid})->{rootdir},
 				$channel->{'link'}
 			);
-			$encoded_item->{'link'} = _tag_link("$dir/article.pl?sid=$story->{sid}");
+			$dir .= "/articles" if ($constants->{rss_use_story_shtml} && $story->{primaryskid} == $constants->{mainpage_skid});
+			$encoded_item->{'link'} = $constants->{rss_use_story_shtml} ? _tag_link("$dir/$story->{sid}.shtml") : _tag_link("$dir/article.pl?sid=$story->{sid}");
 			$edit = "$dir/$edit";
 			$action = "$dir/$action";
 		} else {
-			$encoded_item->{'link'} = _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
+			$encoded_item->{'link'} = $constants->{rss_use_story_shtml} ? _tag_link("$channel->{'link'}$story->{sid}.shtml") : _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
 			$edit = "$channel->{'link'}$edit";
 			$action = "$channel->{'link'}$action";
 		}
@@ -576,8 +577,7 @@ sub rss_item_description {
 sub _tag_link {
 	my($link) = @_;
 	my $uri = URI->new($link);
-	my $constants = getCurrentStatic();
-	if (!$constants->{rss_no_tracking_query}) {
+	if (!getCurrentStatic('rss_no_tracking_query')) {
 		if (my $orig_query = $uri->query) {
 			$uri->query("$orig_query&from=rss");
 		} else {
