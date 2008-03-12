@@ -4,8 +4,9 @@ slash (2.5.0.192-8) unstable; urgency=low
     $constants->{rss_use_story_shtml}
   * Change method to pick up nexus topics for section selection on
     editHome at users.pl (for slashdot.jp)
+  * Add logcheck ignore rules for fetch_rss_bookmarks.pl
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 11 Mar 2008 12:49:11 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 12 Mar 2008 14:58:43 +0900
 
 slash (2.5.0.192-7) unstable; urgency=low
 
