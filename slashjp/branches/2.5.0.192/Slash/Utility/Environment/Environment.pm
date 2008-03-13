@@ -1960,8 +1960,6 @@ sub filter_param {
 		$data = fixint($data);
 	} elsif (exists $alphas{$key}) {
 		$data =~ s|[^a-zA-Z0-9_]+||g;
-	} elsif (exists $special{$key}) {
-		$special{$key}->($data);
 	} else {
 		for my $ri (@regints) {
 			$data = fixint($data) if $ri =~ $key;
@@ -1978,6 +1976,9 @@ sub filter_param {
 				pop( @candencs );
 			}
 		}
+	}
+	if (exists $special{$key}) {
+		$special{$key}->($data);
 	}
 
 	return $data;
