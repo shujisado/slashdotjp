@@ -5,8 +5,10 @@ slash (2.5.0.192-8) unstable; urgency=low
   * Change method to pick up nexus topics for section selection on
     editHome at users.pl (for slashdot.jp)
   * Add logcheck ignore rules for fetch_rss_bookmarks.pl
+  * Move processing %special keys to after encode changing at filter_params
+    at Slash/Utility/Environment/Environment.pm
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 12 Mar 2008 14:58:43 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 13 Mar 2008 07:56:31 +0000
 
 slash (2.5.0.192-7) unstable; urgency=low
 
