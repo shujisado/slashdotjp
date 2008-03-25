@@ -176,6 +176,23 @@ div#firehose div.firemenu div.submenu ul#fhtablist select#section {
 	margin: 0;
 }
 
+/* search top bar */
+div#search-result-top {
+	font-size: 88%;
+	border-top: 2px #044 solid;
+	background: #EEE;
+	padding: 5px;
+	margin-bottom: 5px;
+}
+div#search-result-topleft {
+	float: left;
+	text-align: left;
+}
+div#search-result-topright {
+	text-align: right;
+}
+
+
 /* ads format */
 div.article div.bigbanner,
 div.adsense_468x60 {
