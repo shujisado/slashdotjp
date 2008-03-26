@@ -7,8 +7,9 @@ slash (2.5.0.192-8) unstable; urgency=low
   * Add logcheck ignore rules for fetch_rss_bookmarks.pl
   * Move processing %special keys to after encode changing at filter_params
     at Slash/Utility/Environment/Environment.pm
+  * Fix firehose color for bookmark feed to same as normal bookmarks
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 13 Mar 2008 07:56:31 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 26 Mar 2008 04:25:49 +0000
 
 slash (2.5.0.192-7) unstable; urgency=low
 
