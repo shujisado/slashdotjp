@@ -466,7 +466,6 @@ sub getCurrentForm {
 	} else {
 		$form = $static_form;
 	}
-	map { $form->{$_} =~ s/\p{BidiControl}|\p{Unassigned}|\p{JoinControl}//g } keys(%$form);
 
 	return defined $value ? $form->{$value} : $form;
 }
@@ -1875,7 +1874,9 @@ Hashref of cleaned-up data.
 		sid		=> sub { $_[0] = '' unless
 					 $_[0] =~ Slash::Utility::Data::regexSid()	},
 		flags		=> sub { $_[0] =~ s|[^a-z0-9_,]||g			},
-		query		=> sub { $_[0] =~ s|[\000-\040<>\177-\377]+| |g;
+		query		=> sub { $_[0] =~ s|[\000-\040<>\177\p{BidiControl}\p{Unassigned}\p{JoinControl}]+| |g;
+			        	 $_[0] =~ s|\s+| |g;				},
+		q		=> sub { $_[0] =~ s|[\000-\040<>\177\p{BidiControl}\p{Unassigned}\p{JoinControl}]+| |g;
 			        	 $_[0] =~ s|\s+| |g;				},
 		colorblock	=> sub { $_[0] =~ s|[^\w#,]+||g				},
 # What I actually want to do for userfield is allow it to match
@@ -1980,6 +1981,7 @@ sub filter_param {
 	if (exists $special{$key}) {
 		$special{$key}->($data);
 	}
+	$data =~ s/\p{BidiControl}|\p{Unassigned}|\p{JoinControl}//g;
 
 	return $data;
 }
