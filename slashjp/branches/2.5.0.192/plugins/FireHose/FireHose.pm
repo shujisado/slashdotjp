@@ -188,7 +188,7 @@ sub createUpdateItemFromBookmark {
 	my $popularity = defined $options->{popularity}
 		? $options->{popularity}
 		: $type eq "feed"
-			? $self->getEntryPopularityForColorLevel(6)
+			? $self->getEntryPopularityForColorLevel(7)
 			: $self->getEntryPopularityForColorLevel(7);
 	my $activity   = defined $options->{activity} ? $options->{activity} : 1;
 
