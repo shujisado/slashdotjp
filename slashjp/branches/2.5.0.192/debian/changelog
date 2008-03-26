@@ -8,8 +8,9 @@ slash (2.5.0.192-8) unstable; urgency=low
   * Move processing %special keys to after encode changing at filter_params
     at Slash/Utility/Environment/Environment.pm
   * Fix firehose color for bookmark feed to same as normal bookmarks
+  * Fix Use of uninitialized value at tagbox.pl line 285
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 26 Mar 2008 04:25:49 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 26 Mar 2008 05:00:59 +0000
 
 slash (2.5.0.192-7) unstable; urgency=low
 
