@@ -1,3 +1,10 @@
+slash (2.5.0.192-9) unstable; urgency=low
+
+  * Fix continue: firehose color for bookmark feed to same as normal bookmarks
+    at tagboxes
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 27 Mar 2008 06:46:20 +0000
+
 slash (2.5.0.192-8) unstable; urgency=low
 
   * Enable to select using shtml links at site RSS/RDF by
