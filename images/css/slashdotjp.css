@@ -192,6 +192,17 @@ div#search-result-topright {
 	text-align: right;
 }
 
+div.search-results {
+	margin: 5px;
+}
+
+.search-results .intro {
+	font-size: 80%;
+}
+.search-results .data {
+	font-size: 80%;
+	color: #666;
+};
 
 /* ads format */
 div.article div.bigbanner,
