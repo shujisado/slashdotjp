@@ -3,7 +3,7 @@
 # $Id$
 
 use strict;
-use Slash::Constants qw( :messages :slashd :people );
+use Slash::Constants qw( :messages :slashd );
 use Slash::Display;
 
 use vars qw( %task $me );
