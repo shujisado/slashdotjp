@@ -282,7 +282,8 @@ main::tagboxLog("update_feederlog name=$tagbox->{name} inserting " . ($feeder_ar
 sub insert_feederlog {
 	my($tagbox, $feeder_ar) = @_;
 	for my $feeder_hr (@$feeder_ar) {
-main::tagboxLog("addFeederInfo: tbid=$tagbox->{tbid} tagid=$feeder_hr->{tagid} affected_id=$feeder_hr->{affected_id} imp=$feeder_hr->{importance}");
+main::tagboxLog("addFeederInfo: tbid=$tagbox->{tbid} tagid=$feeder_hr->{tagid} affected_id=$feeder_hr->{affected_id} imp=$feeder_hr->{importance}")
+	if (defined($feeder_hr->{tagid}));
 		$tagboxdb->addFeederInfo($tagbox->{tbid}, $feeder_hr);
 	}
 }

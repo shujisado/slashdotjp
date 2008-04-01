@@ -268,7 +268,7 @@ sub getStartingColorLevel {
 		# XXX should modify next line by users' vote clout
 		$extra_pop = $self->sqlCount('bookmarks', "url_id=$target_id_q") || 0;
 		$color_level = $self->sqlCount("firehose", "type='feed' AND url_id=$target_id")
-			? 6  # feed
+			? 7  # feed
 			: 7; # nonfeed
 	} elsif ($type eq "stories") {
 		my $story = $self->getStory($target_id);
