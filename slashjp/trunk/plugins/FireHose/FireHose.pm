@@ -563,7 +563,7 @@ sub getFireHoseEssentials {
 				push @where, "popularity >= $pop_q";
 			}
 		}
-		if ($user->{is_admin}) {
+		if ($user->{is_admin} || $user->{acl}{signoff_allowed}) {
 			my $signoff_label = 'sign' . $user->{uid} . 'ed';
 
 			if ($options->{unsigned}) {
@@ -1126,7 +1126,7 @@ sub ajaxGetUserFirehose {
 	my $newtagspreloadtext = join ' ', @newtagspreload;
 	#print STDERR "ajaxGetUserFirehose $newtagspreloadtext\n\n";
 
-	return slashDisplay('tagsfirehosedivuser', {
+	return slashDisplay($form->{nodnix} ? 'tagsnodnixuser' : 'tagsfirehosedivuser', {
 		id =>		$id,
 		newtagspreloadtext =>	$newtagspreloadtext,
 	}, { Return => 1 });
@@ -1518,9 +1518,13 @@ sub setSectionTopicsFromTagstring {
 
 }
 
+# Return a positive number if data was altered, 0 if it was not,
+# or undef on error.
+
 sub setFireHose {
 	my($self, $id, $data) = @_;
-	return unless $id && $data;
+	return undef unless $id && $data;
+	return 0 if !%$data;
 	my $id_q = $self->sqlQuote($id);
 	
 	my $mcd = $self->getMCD();
@@ -1549,7 +1553,7 @@ sub setFireHose {
 		$self->setGlobjAdminnote($globjid, $note);
 	}
 
-	return if !keys %$data;
+	return 0 if !keys %$data;
 
 	my $text_data = {};
 
@@ -1558,9 +1562,11 @@ sub setFireHose {
 	$text_data->{bodytext} = delete $data->{bodytext} if exists $data->{bodytext};
 	$text_data->{media} = delete $data->{media} if exists $data->{media};
 
-	$self->sqlUpdate('firehose', $data, "id=$id_q");
-	$self->sqlUpdate('firehose_text', $text_data, "id=$id_q") if keys %$text_data;
-	
+	my $rows = $self->sqlUpdate('firehose', $data, "id=$id_q");
+#{ use Data::Dumper; my $dstr = Dumper($data); $dstr =~ s/\s+/ /g; print STDERR "setFireHose A rows=$rows for id=$id_q data: $dstr\n"; }
+	$rows += $self->sqlUpdate('firehose_text', $text_data, "id=$id_q") if keys %$text_data;
+#{ use Data::Dumper; my $dstr = Dumper($text_data); $dstr =~ s/\s+/ /g; print STDERR "setFireHose B rows=$rows for id=$id_q data: $dstr\n"; }
+
 	if ($mcd) {
 		 $mcd->delete("$mcdkey:$id", 3);
 	}
@@ -1572,6 +1578,8 @@ sub setFireHose {
 #		$status = 'deleted' if $data->{accepted} eq 'yes' || $data->{rejected} eq 'yes';
 		$searchtoo->storeRecords(firehose => $id, { $status => 1 });
 	}
+
+	return $rows;
 }
 
 sub dispFireHose {
@@ -1597,6 +1605,9 @@ sub getMemoryForItem {
 	return [] unless $item && $user->{is_admin};
 	my $subnotes_ref = [];
 	my $sub_memory = $self->getSubmissionMemory();
+	my $url = "";
+	$url = $self->getUrl($item->{url_id}) if $item->{url_id};
+
 	foreach my $memory (@$sub_memory) {
 		my $match = $memory->{submatch};
 
@@ -1604,7 +1615,8 @@ sub getMemoryForItem {
 		    $item->{name}  =~ m/$match/i ||
 		    $item->{title}  =~ m/$match/i ||
 		    $item->{ipid}  =~ m/$match/i ||
-		    $item->{introtext} =~ m/$match/i) {
+		    $item->{introtext} =~ m/$match/i ||
+		    $url =~ m/$match/i) {
 			push @$subnotes_ref, $memory;
 		}
 	}

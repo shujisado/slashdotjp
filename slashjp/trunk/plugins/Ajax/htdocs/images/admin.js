@@ -1,7 +1,7 @@
 // $Id$
 
 function um_ajax(the_behaviors, the_events) {
-	var params =[];
+	var params = {};
 	params['op'] = 'um_ajax';
 	params['behaviors'] = the_behaviors;
 	params['events'] = the_events;
@@ -9,32 +9,20 @@ function um_ajax(the_behaviors, the_events) {
 }
 
 function um_fetch_settings() {
-	var params =[];
+	var params = {};
 	params['op'] = 'um_fetch_settings';
 	ajax_update(params, 'links-vendors-content');
 }
 
 function um_set_settings(behavior) {
-	var params =[];
+	var params = {};
 	params['op'] = 'um_set_settings';
 	params['behavior'] = behavior;
 	ajax_update(params, 'links-vendors-content');
 }
 
-function admin_signoff(stoid, type, id) {
-	var params = [];
-	var reskeyel = $('signoff-reskey-' + stoid);
-	params['op'] = 'admin_signoff';
-	params['stoid'] = stoid;
-	params['reskey'] = reskeyel.value;
-	ajax_update(params, 'signoff_' + stoid);
-	if (type == "firehose") {
-		firehose_collapse_entry(id);
-	}
-}
-
 function admin_neverdisplay(stoid, type, fhid) {
-	var params = [];
+	var params = {};
 	params['op'] = 'admin_neverdisplay';
 	params['reskey'] = reskey_static;
 	params['stoid'] = stoid;
@@ -48,22 +36,22 @@ function admin_neverdisplay(stoid, type, fhid) {
 }
 
 function admin_submit_memory(fhid) {
-	var params = [];
+	var params = {};
 	params['op'] = 'admin_submit_memory';
 	params['reskey'] = reskey_static;
-	params['submatch'] = $('submatch-'+fhid).value;
-	params['subnote'] = $('subnote-'+fhid).value;
+	params['submatch'] = $dom('submatch-'+fhid).value;
+	params['subnote'] = $dom('subnote-'+fhid).value;
 	ajax_update(params, 'sub_mem_message-'+fhid);
 }
 
 function adminTagsCommands(id, type) {
-	var toggletags_message_id = 'toggletags-message-' + id;
-	var toggletags_message_el = $(toggletags_message_id);
+	var toggletags_message_id = '#toggletags-message-' + id;
+	var toggletags_message_el = jQuery(toggletags_message_id)[0];
 	if (toggletags_message_el) {
 		toggletags_message_el.innerHTML = 'Executing commands...';
 	}
 
-	var params = [];
+	var params = {};
 	type = type || "stories";
 	params['op'] = 'tags_admin_commands';
 	if (type == "stories") {
@@ -74,9 +62,9 @@ function adminTagsCommands(id, type) {
 		params['id'] = id;
 	}
 	params['type'] = type;
-	var tags_admin_commands_el = $('tags_admin_commands-' + id);
+	var tags_admin_commands_el = $dom('tags_admin_commands-' + id);
 	params['commands'] = tags_admin_commands_el.value;
-	var reskeyel = $('admin_commands-reskey-' + id);
+	var reskeyel = $dom('admin_commands-reskey-' + id);
 	params['reskey'] = reskeyel.value;
 	ajax_update(params, 'tags-admin-' + id);
 
@@ -84,7 +72,7 @@ function adminTagsCommands(id, type) {
 }
 
 function tagsHistory(id, type) {
-	var params = [];
+	var params = {};
 	type = type || "stories";
 	params['type'] = type;
 	params['op'] = 'tags_history';
@@ -103,17 +91,17 @@ function tagsHistory(id, type) {
 }
 
 function remarks_create() {
-	var reskey = $('remarks_reskey');
-	var remark = $('remarks_new');
+	var reskey = $dom('remarks_reskey');
+	var remark = $dom('remarks_new');
 	if (!remark || !remark.value || !reskey || !reskey.value) {
 		return false;
 	}
 
-	var params = [];
+	var params = {};
 	params['op']     = 'remarks_create';
 	params['remark'] = remark.value;
 	params['reskey'] = reskey.value;
-	remarks_max = $('remarks_max');
+	remarks_max = $dom('remarks_max');
 	if (remarks_max && remarks_max.value) {
 		params['limit'] = remarks_max.value;
 	}
@@ -121,7 +109,7 @@ function remarks_create() {
 }
 
 function remarks_fetch(secs, limit) {
-	var params = [];
+	var params = {};
 	params['op'] = 'remarks_fetch';
 	params['limit'] = limit;
 	// run it every 30 seconds; don't need to call again
@@ -129,7 +117,7 @@ function remarks_fetch(secs, limit) {
 }
 
 function remarks_popup() {
-	var params = [];
+	var params = {};
 	params['op'] = 'remarks_config';
 	var title = "Remarks Config ";
 	var buttons = createPopupButtons('<a href="#" onclick="closePopup(\'remarksconfig-popup\', 1); return false">[X]</a>');
@@ -140,11 +128,11 @@ function remarks_popup() {
 }
 
 function remarks_config_save() {
-	var params = [];
-	var reskey = $('remarks_reskey');
-	var min_priority = $('remarks_min_priority');
-	var limit = $('remarks_limit');
-	var filter = $('remarks_filter');
+	var params = {};
+	var reskey = $dom('remarks_reskey');
+	var min_priority = $dom('remarks_min_priority');
+	var limit = $dom('remarks_limit');
+	var filter = $dom('remarks_filter');
 	params['op'] = 'remarks_config_save';
 	if (!reskey && !reskey.value) {
 		return false;
@@ -158,7 +146,7 @@ function remarks_config_save() {
 	if (filter) {
 		params['filter'] = filter.value;
 	}
-	var message = $('remarksconfig-message');
+	var message = $dom('remarksconfig-message');
 	if (message) {
 		message.innerHTML = "Saving...";
 	}
@@ -166,31 +154,31 @@ function remarks_config_save() {
 }
 
 function admin_slashdbox_fetch(secs) {
-	var params = [];
+	var params = {};
 	params['op'] = 'admin_slashdbox';
 	ajax_periodic_update(secs, params, "slashdbox-content");
 }
 
 function admin_perfbox_fetch(secs) {
-	var params = [];
+	var params = {};
 	params['op'] = 'admin_perfbox';
 	ajax_periodic_update(secs, params, "performancebox-content");
 }
 
 function admin_authorbox_fetch(secs) {
-	var params = [];
+	var params = {};
 	params['op'] = 'admin_authorbox';
 	ajax_periodic_update(secs, params, "authoractivity-content");
 }
 
 function admin_storyadminbox_fetch(secs) {
-	var params = [];
+	var params = {};
 	params['op'] = 'admin_storyadminbox';
 	ajax_periodic_update(secs, params, "storyadmin-content");
 }
 
 function admin_recenttagnamesbox_fetch(secs) {
-	var params = [];
+	var params = {};
 	params['op'] = 'admin_recenttagnamesbox';
 	ajax_periodic_update(secs, params, "recenttagnames-content");
 }
@@ -202,7 +190,7 @@ function console_update(use_fh_interval, require_fh_timeout) {
 		return;
 	}
 
-	var params = [];
+	var params = {};
 	params['op'] = 'console_update'
 	var handlers = {
 		onComplete: json_handler
@@ -216,11 +204,11 @@ function console_update(use_fh_interval, require_fh_timeout) {
 }
 
 function firehose_usage() {
-	var params = [];
+	var params = {};
 	params['op'] = 'firehose_usage'
 	var interval = 300000;
 	ajax_update(params, 'firehose_usage-content');
-	setTimeout("firehose_usage()", interval);
+	setTimeout(firehose_usage, interval);
 }
 
 function make_spelling_correction(misspelled_word, form_element) {
@@ -234,7 +222,7 @@ function make_spelling_correction(misspelled_word, form_element) {
 	// Either learning a word or making a correction.
 	if (selected_index >= 1) {
 		if (selected_index == 1) {
-			var params = [];
+			var params = {};
 			params['op'] = 'admin_learnword';
 			params['word'] = misspelled_word;
 			ajax_update(params);
@@ -265,8 +253,8 @@ function make_spelling_correction(misspelled_word, form_element) {
 }
 
 function firehose_reject (el) {
-	var params = [];
-	var fh = $('firehose-' + el.value);
+	var params = {};
+	var fh = $dom('firehose-' + el.value);
 	params['op'] = 'firehose_reject';
 	params['id'] = el.value;
 	params['reskey'] = reskey_static;
@@ -275,19 +263,19 @@ function firehose_reject (el) {
 }
 
 function firehose_open_note(id) {
-	var nf = $('note-form-'+id);
-	var nt = $('note-text-'+id);
-	var ni = $('note-input-'+id);
+	var nf = $dom('note-form-'+id);
+	var nt = $dom('note-text-'+id);
+	var ni = $dom('note-input-'+id);
 	nf.className="";
 	ni.focus();
 	nt.className="hide";
 }
 
 function firehose_save_note(id) {
-	var nf = $('note-form-'+id);
-	var nt = $('note-text-'+id);
-	var ni = $('note-input-'+id);
-	var params = [];
+	var nf = $dom('note-form-'+id);
+	var nt = $dom('note-text-'+id);
+	var ni = $dom('note-input-'+id);
+	var params = {};
 	params['op'] = 'firehose_save_note';
 	params['note'] = ni.value;
 	params['id'] = id;
@@ -297,28 +285,41 @@ function firehose_save_note(id) {
 }
 
 function firehose_get_admin_extras(id) {
-	var params=[];
+	var params = {};
 	params['id'] = id;
 	params['op'] = 'firehose_get_admin_extras';
 	var handlers = {
-		onComplete: json_handler
+		onComplete: function(transport) {
+			json_handler(transport);
+			if (firehoseIsInWindow(id)) {
+				scrollToWindowFirehose(id);
+			}
+		}
 	};
 	ajax_update(params, '', handlers);
 }
 
 function firehose_get_and_post(id) {
-	var params=[];
+	var params = {};
 	params['id']  = id;
 	params['op'] = 'firehose_get_form';
 	firehose_collapse_entry(id);
 	var handlers = {
-		onComplete: function() { $('postform-'+id).submit();}
+		onComplete: function() { $dom('postform-'+id).submit();}
 	};
 	ajax_update(params, 'postform-'+id, handlers); 
 }
 
 function appendToBodytext(text) {
-	var obj = $('admin-bodytext');
+	var obj = $dom('admin-bodytext');
+	if (obj) {
+		obj.className = "show";
+		obj.value = obj.value  + text;
+	}
+}
+
+function appendToMedia(text) {
+	var obj = $dom('admin-media');
 	if (obj) {
 		obj.className = "show";
 		obj.value = obj.value  + text;

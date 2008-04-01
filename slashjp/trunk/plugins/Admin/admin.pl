@@ -1888,7 +1888,7 @@ sub listStories {
 	}
 
 	my $usersignoffs 	= $slashdb->getUserSignoffHashForStoids($user->{uid}, $stoid_list);
-	my $storysignoffcnt	= $slashdb->getSignoffCountHashForStoids($stoid_list);
+	my $storysignoffcnt	= $slashdb->getSignoffCountHashForStoids($stoid_list, 1);
 
 	my $needed_signoffs = $slashdb->getActiveAdminCount;
 
@@ -2607,15 +2607,22 @@ sub displaySignoffStats {
 		my $signoff_info = $admin->getSignoffData($days);
 		foreach (@$signoff_info) {
 			$author_info->{$_->{uid}}{nickname} = $_->{nickname};
+			$author_info->{$_->{uid}}{uid} = $_->{uid};
 			$author_info->{$_->{uid}}{$days}{cnt}++;	
 			$author_info->{$_->{uid}}{$days}{tot_time} += $_->{min_to_sign};
+			$author_info->{$_->{uid}}{seclev} = $_->{seclev};
 			$stoids_for_days{$days}{$_->{stoid}}++;
 			push @{$author_info->{$_->{uid}}{$days}{mins}}, $_->{min_to_sign};
 		}
 	}
 
+	my @author_array = values %$author_info;
+
+	@author_array = sort { $b->{seclev} <=> $a->{seclev} } @author_array;
+
 	slashDisplay("signoff_stats", {
 		author_info	=> $author_info,
+		author_array    => \@author_array,
 		stoids_for_days	=> \%stoids_for_days,
 		num_days	=> $num_days
 	});

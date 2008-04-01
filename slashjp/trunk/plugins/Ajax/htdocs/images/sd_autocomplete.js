@@ -79,6 +79,7 @@ YAHOO.slashdot.sectionTags = [ "apache",
 "books",
 "bsd",
 "developers",
+"entertainment",
 "features",
 "games",
 "hardware",
@@ -86,12 +87,14 @@ YAHOO.slashdot.sectionTags = [ "apache",
 "it",
 "linux",
 "mainpage",
+"news",
 "politics",
 "polls",
 "radio",
 "science",
 "search",
 "tacohell",
+"technology",
 "vendors",
 "vendor_amd",
 "yro" ];
@@ -126,7 +129,6 @@ YAHOO.slashdot.topicTags = ["keyword",
 "links",
 "movies",
 "money",
-"news",
 "pilot",
 "starwars",
 "sun",
@@ -201,7 +203,6 @@ YAHOO.slashdot.topicTags = ["keyword",
 "osnine",
 "osx",
 "portables",
-"technology",
 "utilities",
 "wireless",
 "portables",
@@ -380,9 +381,9 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._show = function( obj, callbackParam
           this._completer.autoHighlight = false;
           
 
-	  // widget must be visible to move
+    // widget must be visible to move
         YAHOO.util.Dom.removeClass(this._widget, "hidden");
-	  // move widget to be near the 'source'
+    // move widget to be near the 'source'
         var pos = YAHOO.util.Dom.getXY(this._sourceEl);
         pos[1] += this._sourceEl.offsetHeight;
         YAHOO.util.Dom.setXY(this._widget, pos);
@@ -394,7 +395,7 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._show = function( obj, callbackParam
             YAHOO.util.Dom.removeClass(this._spareInput, "hidden");
             this._spareInput.value = "";
             this._spareInput.focus();
-            this._pending_hide = setTimeout("YAHOO.slashdot.gCompleterWidget._hide()", 15000);
+            this._pending_hide = setTimeout(YAHOO.slashdot.gCompleterWidget._hide, 15000);
           }
         else
           YAHOO.util.Dom.addClass(this._spareInput, "hidden");
@@ -507,9 +508,9 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._onSdTextboxKeyDown = function( e, m
           me._hide();
           break;
         case 13:
-        	// I'm sorry to say we have to test first, something somehow somewhere can still leave
-        	//	leave this listener dangling; want to look deeper into this, as this would _still_
-        	//	leave the listener dangling
+          // I'm sorry to say we have to test first, something somehow somewhere can still
+          //  leave this listener dangling; want to look deeper into this, as this would _still_
+          //  leave the listener dangling
           if ( me._completer )
             me._completer.unmatchedItemSelectEvent.fire(me._completer, me, me._completer._sCurQuery);
           break;
@@ -517,6 +518,6 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._onSdTextboxKeyDown = function( e, m
           if ( me._pending_hide )
             clearTimeout(me._pending_hide);
           if ( me._needsSpareInput() )
-          me._pending_hide = setTimeout("YAHOO.slashdot.gCompleterWidget._hide()", 15000);
+          me._pending_hide = setTimeout(YAHOO.slashdot.gCompleterWidget._hide, 15000);
       }
   }

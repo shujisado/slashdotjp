@@ -38,7 +38,7 @@ use vars qw($VERSION @EXPORT);
 @EXPORT		= qw(
 	constrain_score dispComment displayThread printComments
 	jsSelectComments commentCountThreshold commentThresholds discussion2
-	tempUofmLinkGenerate tempUofmCipherObj selectComments
+	tempUofmLinkGenerate tempUofmCipherObj selectComments preProcessReplyForm
 	getPoints preProcessComment postProcessComment prevComment saveComment
 );
 
@@ -405,8 +405,9 @@ sub jsSelectComments {
 	my $anon_thresh   = Data::JavaScript::Anon->anon_dump($thresh_totals || {});
 	s/\s+//g for ($anon_thresh, $anon_roots, $anon_rootsh);
 
-	$user->{is_anon}  ||= 0;
-	$user->{is_admin} ||= 0;
+	$user->{is_anon}       ||= 0;
+	$user->{is_admin}      ||= 0;
+	$user->{is_subscriber} ||= 0;
 
 	my $extra = '';
 	if ($d2_seen_0) {
@@ -442,6 +443,7 @@ max_cid = $max_cid;
 user_uid = $user->{uid};
 user_is_anon = $user->{is_anon};
 user_is_admin = $user->{is_admin};
+user_is_subscriber = $user->{is_subscriber};
 user_threshold = $threshold;
 user_highlightthresh = $highlightthresh;
 
@@ -534,6 +536,17 @@ sub getError {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
+
+	# this is a cheap hack to NOT print titlebar in getError if we
+	# are calling from ajax.pl ... easier than reorganizing the code
+	# for now -- pudge 2008/03/04
+	for (0..9) {
+		if ((caller($_))[1] =~ /\bajax\.pl$/) {
+			$hashref->{no_titlebar} = 1;
+			last;
+		}
+	}
+
 	return slashDisplay('errors', $hashref,
 		{ Return => 1, Nocomm => $nocomm, Page => 'comments' });
 }
@@ -587,7 +600,7 @@ sub getPoints {
 
 	# Adjust reasons. Do we need a reason?
 	# Are you threatening me?
-	if ($reasons) {
+	if ($reasons && $C->{reason}) {
 		my $reason_id = $reasons->{$C->{reason}}{id};
 		if ($reason_id && $user->{"reason_alter_$reason_id"}) {
 			$hr->{reason_bonus} =
@@ -599,7 +612,7 @@ sub getPoints {
 
 	# Keep your friends close but your enemies closer.
 	# Or ignore them, we don't care.
-	if ($user->{uid} != $C->{uid}) {
+	if ($user->{people} && $user->{uid} != $C->{uid}) {
 		if ($user->{people}{FRIEND()}{$C->{uid}}) {
 			$hr->{people_bonus_friend} =
 				$user->{people_bonus_friend};
@@ -1325,6 +1338,18 @@ sub displayThread {
 
 #========================================================================
 
+sub preProcessReplyForm {
+	my($form, $reply) = @_;
+	return if !$form->{pid} || !$reply->{subject} || $form->{postersubj};
+
+	$form->{postersubj} = decode_entities($reply->{subject});
+	$form->{postersubj} =~ s/^Re://i;
+	$form->{postersubj} =~ s/\s\s/ /g;
+	$form->{postersubj} = "Re:$form->{postersubj}";
+}
+
+#========================================================================
+
 sub preProcessComment {
 	my($comm, $user, $discussion, $error_message) = @_; # probably $comm = $form
 	my $constants = getCurrentStatic();
@@ -1339,7 +1364,7 @@ sub preProcessComment {
 	my $tempSubject = strip_notags($comm->{postersubj});
 	my $tempComment = $comm->{postercomment};
 
-	$comm->{anon} = 0;
+	$comm->{anon} = $user->{is_anon};
 	if ($comm->{postanon}
 		&& $reader->checkAllowAnonymousPosting
 		&& $user->{karma} > -1
@@ -1424,22 +1449,23 @@ sub postProcessComment {
 		$comm->{comment} = parseDomainTags($comm->{comment},
 			!$comm->{anon} && $comm->{fakeemail});
 
-#		my $discussion = $slashdb->getDiscussion($comm->{sid}) || 0;	
 		my $extras = [];
 		my $disc_skin = $slashdb->getSkin($discussion->{primaryskid});
 		$extras = $slashdb->getNexusExtrasForChosen(
 			{ $disc_skin->{nexus} => 1 },
 			{ content_type => "comment" })
 			if $disc_skin && $disc_skin->{nexus};
-			
+
 		my $preview = {
-			nickname		=> $comm->{postanon}
+			nickname		=> $comm->{anon}
 							? getCurrentAnonymousCoward('nickname')
 							: $comm->{nickname},
+			uid			=> $comm->{anon}
+							? getCurrentAnonymousCoward('uid')
+							: $comm->{uid},
 			pid			=> $comm->{pid},
-			uid			=> $comm->{postanon} ? '' : $comm->{uid},
-			homepage		=> $comm->{postanon} ? '' : $comm->{homepage},
-			fakeemail		=> $comm->{postanon} ? '' : $comm->{fakeemail},
+			homepage		=> $comm->{anon} ? '' : $comm->{homepage},
+			fakeemail		=> $comm->{anon} ? '' : $comm->{fakeemail},
 			journal_last_entry_date	=> $comm->{journal_last_entry_date} || '',
 			'time'			=> $slashdb->getTime,
 			subject			=> $comm->{subject},
@@ -1584,7 +1610,7 @@ sub saveComment {
 	my $moddb = getObject("Slash::$constants->{m1_pluginname}");
 	if ($moddb) {
 		my $text = $moddb->checkDiscussionForUndoModeration($comm->{sid});
-		# XXX
+		# XXX doesn't work for D2
 		print $text if $text;
 	}
 
@@ -1617,13 +1643,16 @@ sub saveComment {
 		my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
 		if (_send_comment_msg($users->[0], \%users, $pts, $clean_comment)) {
 			my $data  = {
-				template_name	=> 'reply_msg',
-				subject		=> { template_name => 'reply_msg_subj' },
-				reply		=> $reply,
-				parent		=> $parent,
-				discussion	=> $discussion,
+				template_name   => 'reply_msg',
+				template_page   => 'comments',
+				subject         => {
+					template_name => 'reply_msg_subj',
+					template_page => 'comments',
+				},
+				reply           => $reply,
+				parent          => $parent,
+				discussion      => $discussion,
 			};
-
 			$messages->create($users->[0], MSG_CODE_COMMENT_REPLY, $data);
 			$users{$users->[0]}++;
 		}
@@ -1634,10 +1663,14 @@ sub saveComment {
 		my $users  = $messages->checkMessageCodes(MSG_CODE_JOURNAL_REPLY, [$discussion->{uid}]);
 		if (_send_comment_msg($users->[0], \%users, $pts, $clean_comment)) {
 			my $data  = {
-				template_name	=> 'journrep',
-				subject		=> { template_name => 'journrep_subj' },
-				reply		=> $reply,
-				discussion	=> $discussion,
+				template_name   => 'journrep',
+				template_page   => 'comments',
+				subject         => {
+					template_name => 'journrep_subj',
+					template_page => 'comments',
+				},
+				reply           => $reply,
+				discussion      => $discussion,
 			};
 
 			$messages->create($users->[0], MSG_CODE_JOURNAL_REPLY, $data);
@@ -1650,10 +1683,14 @@ sub saveComment {
 		my $users = $messages->getMessageUsers(MSG_CODE_NEW_COMMENT);
 
 		my $data  = {
-			template_name	=> 'commnew',
-			subject		=> { template_name => 'commnew_subj' },
-			reply		=> $reply,
-			discussion	=> $discussion,
+			template_name   => 'commnew',
+			template_page   => 'comments',
+			subject         => {
+				template_name => 'commnew_subj',
+				template_page => 'comments',
+			},
+			reply           => $reply,
+			discussion      => $discussion,
 		};
 
 		my @users_send;
@@ -1862,12 +1899,18 @@ sub _hard_dispComment {
 
 	$time_to_display = timeCalc($comment->{date});
 	unless ($user->{noscores}) {
-		$score_to_display .= " (Score:";
-		$score_to_display .= length($comment->{points}) ? $comment->{points} : "?";
+		$score_to_display .= "Score:";
+		if (length $comment->{points}) {
+			$score_to_display .= $comment->{points};
+			$score_to_display = qq[<a href="#" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', $comment->{cid}); return false">$score_to_display</a>]
+				if $constants->{modal_prefs_active} && !$user->{is_anon};
+		} else {
+			$score_to_display .= '?';
+		}
 		if ($reasons && $comment->{reason}) {
 			$score_to_display .= ", $reasons->{$comment->{reason}}{name}";
 		}
-		$score_to_display .= ")";
+		$score_to_display = " ($score_to_display)";
 	}
 
 	if ($comment->{sid} && $comment->{cid}) {
@@ -1948,14 +1991,14 @@ EOT
 		&& $comment->{nickname} ne "-") { # this last test probably useless
 		my @link = ( );
 
-		push @link, linkComment({
+		push @link, (qq'<span id="reply_link_$comment->{cid}">' . linkComment({
 			sid	=> $comment->{sid},
 			pid	=> $comment->{cid},
 			op	=> 'Reply',
 			subject	=> 'Reply to This',
 			subject_only => 1,
-			onclick	=> (($discussion2 && $user->{test_code}) ? "replyTo($comment->{cid}); return false;" : '')
-		}) unless $user->{state}{discussion_archived};
+			onclick	=> (($discussion2 && (!$constants->{subscribe} || $user->{is_subscriber})) ? "replyTo($comment->{cid}); return false;" : '')
+		}) . '</span>') unless $user->{state}{discussion_archived};
 
 		push @link, linkComment({
 			sid	=> $comment->{sid},
@@ -2155,6 +2198,7 @@ sub validateComment {
 	# some commonly-used proxy ports to access our own site.
 	# If we can, they're coming from an open HTTP proxy, which
 	# we don't want to allow to post.
+	# XXX : this can become a reskey check -- pudge 2008-03
 	if ($constants->{comments_portscan}
 		&& ( $constants->{comments_portscan} == 2
 			|| $constants->{comments_portscan} == 1 && $user->{is_anon} )

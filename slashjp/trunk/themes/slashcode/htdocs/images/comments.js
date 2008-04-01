@@ -14,6 +14,7 @@ var update_comments = {};
 var root_comments_hash = {};
 var last_updated_comments = [];
 var last_updated_comments_index = 0;
+var reply_link_html = {};
 var comments_started = 0;
 var current_cid = 0;
 var more_comments_num;
@@ -35,6 +36,7 @@ var boxStatusQueue = [];
 var comment_body_reply = [];
 var root_comment = 0;
 var discussion_id = 0;
+var user_is_subscriber = 0;
 var user_is_admin = 0;
 var user_is_anon = 0;
 var user_uid = 0;
@@ -179,7 +181,7 @@ function setFocusComment(cid, alone, mods) {
 
 
 // this doesn't work
-//	var statusdiv = $('comment_status_' + abscid);
+//	var statusdiv = $dom('comment_status_' + abscid);
 //	statusdiv.innerHTML = 'Working ...';
 
 //	doModifiers();
@@ -219,7 +221,7 @@ function setFocusComment(cid, alone, mods) {
 
 //	statusdiv.innerHTML = '';
 
-	if (!commentIsInWindow(abscid))
+	if (!commentIsInWindow(abscid, (cid != abscid)))
 		scrollWindowTo(abscid);
 
 	if (was_hidden)
@@ -415,7 +417,7 @@ function setShortSubject(cid, mode, cl) {
 // Firefox (see ajaxFetchComments) ... we may make that into a separate
 // call later, as it has to be properly called AFTER addComment calls are
 // all done -- pudge
-function addComment(cid, comment, html) {
+function addComment(cid, comment, html, front) {
 	if (!loaded || !cid || !comment)
 		return false;
 
@@ -432,7 +434,7 @@ function addComment(cid, comment, html) {
 	}
 	var pid = comment['pid'];
 
-	if ($('tree_' + cid)) {
+	if ($dom('tree_' + cid)) {
 		if (pid) {
 			var parent = comments[pid];
 			var seen = 0;
@@ -460,22 +462,28 @@ function addComment(cid, comment, html) {
 	html = html || dummyComment(cid);
 
 	if (pid) {
-		var tree = $('tree_' + pid);
+		var tree = $dom('tree_' + pid);
 		if (tree) {
 			setDefaultDisplayMode(pid);
 			var parent = comments[pid];
-			parent['kids'].push(cid);
+			if (front)
+				parent['kids'].unshift(cid);
+			else
+				parent['kids'].push(cid);
 
-			var commtree = $('commtree_' + pid);
+			var commtree = $dom('commtree_' + pid);
 			if (commtree) {
-				commtree.innerHTML = commtree.innerHTML + html;
+				if (front)
+					commtree.innerHTML = html + commtree.innerHTML;
+				else
+					commtree.innerHTML = commtree.innerHTML + html;
 			} else {
 				tree.innerHTML = tree.innerHTML + '<ul id="commtree_' + pid + '">' + html + '</ul>';
 			}
 		}
 
 	} else {
-		var commlist = $('commentlisting');
+		var commlist = $dom('commentlisting');
 		if (commlist) {
 			root_comments.push(cid);
 			root_comments_hash[cid] = 1;
@@ -655,10 +663,10 @@ function refreshCommentDisplays() {
 	finishCommentUpdates();
 
 	if (roothiddens) {
-		$('roothiddens').innerHTML = roothiddens + ' comments are beneath your threshhold';
-		$('roothiddens').className = 'show';
+		$dom('roothiddens').innerHTML = roothiddens + ' comments are beneath your threshhold';
+		$dom('roothiddens').className = 'show';
 	} else {
-		$('roothiddens').className = 'hide';
+		$dom('roothiddens').className = 'hide';
 	}
 	/* NOTE need to display note for hidden root comments */
 	return void(0);
@@ -669,9 +677,17 @@ function refreshCommentDisplays() {
 /*******************/
 function numsort (a, b) { return (a - b) }
 
+function map_hash( hash, f ) {
+	var result = [];
+	jQuery.each(hash, function(k, v) {
+		result.push(f([k, v]));
+	});
+	return result;
+}
+
 function toHash(thisobject) {
-	return thisobject.map(function (pair) {
-		return pair.map(encodeURIComponent).join(',');
+	return map_hash(thisobject, function (pair) {
+		return jQuery.map(pair, encodeURIComponent).join(',');
 	}).join(';');
 }
 
@@ -685,7 +701,7 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 	if (option)
 		thresh = 1;
 
-	var params = [];
+	var params = {};
 	params['op']              = 'comments_fetch';
 
 	var newoldstuff = cids ? 0 : 1;
@@ -713,11 +729,9 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 		if (abbrev_comments[cids[i]] >= 0)
 			abbrev[cids[i]] = abbrev_comments[cids[i]];
 	}
-	params['abbreviated'] = $H(abbrev);
-	params['abbreviated'] = toHash(params['abbreviated']);
+	params['abbreviated'] = toHash(abbrev);
 
-	params['pieces'] = $H(cids ? fetch_comments_pieces : pieces_comments);
-	params['pieces'] = toHash(params['pieces']);
+	params['pieces'] = toHash(cids ? fetch_comments_pieces : pieces_comments);
 
 	if (placeholder_comments.length) {
 		params['placeholders'] = placeholder_comments;
@@ -813,30 +827,29 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 						}
 					}
 				}
-				$('titlecountnum').innerHTML = thresh_totals[6][6][1]; // total
+				$dom('titlecountnum').innerHTML = thresh_totals[6][6][1]; // total
 				updateTotals();
 			}
 
 			updateHiddens(cids);
 			if (do_update && highlight && last_updated_comments.length) {
-				for (var i = last_updated_comments_index + 1; i < last_updated_comments.length; i++) {
-					last_updated_comments_index = i;
-					if (highlight > 1 && last_updated_comments.length > i && !isUnread(last_updated_comments[i]))
-						continue;
-					setFocusComment(last_updated_comments[i], 1);
-					break;
+				var next_cid = commTreeNextComm(0, 0, 1);
+				if (next_cid) {
+					if (highlight > 1)
+						setFocusComment('-' + current_cid, 1);
+					setCurrentComment(next_cid);
+					setFocusComment(next_cid, 1);
 				}
-						
 			}
 			ajaxCommentsStatus(0);
 
 			if (adTimerInsert) {
-				var tree = $('tree_' + adTimerInsert);
+				var tree = $dom('tree_' + adTimerInsert);
 				if (tree) {
 					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740" frameborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
 					var html = '<li id="comment_ad_' + adTimerInsert + '" class="inlinead"> ' + adcall +'  </li>';
 
-					var commtree = $('commtree_' + adTimerInsert);
+					var commtree = $dom('commtree_' + adTimerInsert);
 					if (commtree) {
 						commtree.innerHTML = html + commtree.innerHTML;
 					} else {
@@ -888,7 +901,7 @@ function savePrefs() {
 		||
 	    (user_highlightthresh_orig != user_highlightthresh))
 	) {
-		var params = [];
+		var params = {};
 		params['op'] = 'comments_set_prefs';
 		params['threshold'] = user_threshold;
 		params['highlightthresh'] = user_highlightthresh;
@@ -907,7 +920,7 @@ function readRest(cid) {
 	if (!shrunkdiv)
 		return false; // seems we shouldn't be here ...
 
-	var params = [];
+	var params = {};
 	params['op']  = 'comments_read_rest';
 	params['cid'] = cid;
 	params['sid'] = discussion_id;
@@ -940,7 +953,7 @@ function doModerate(el) {
 		return true;
 
 	el.disabled = 'true';
-	var params = [];
+	var params = {};
 	params['op']  = 'comments_moderate_cid';
 	params['cid'] = cid;
 	params['sid'] = discussion_id;
@@ -957,64 +970,110 @@ function doModerate(el) {
 	return false;
 }
 
+function cancelReply(pid) {
+	var replydiv = $dom('replyto_' + pid);
+	replydiv.innerHTML = '';
+	if (pid) { // XXX
+		var reply_link = $dom('reply_link_' + pid);
+		reply_link.innerHTML = reply_link_html[pid];
+		reply_link_html[pid] = '';
+	}
+}
+
 function editReply(pid) {
-	var replydiv = fetchEl('replyto_' + pid);
-	var reply = fetchEl('replyto_reply_' + pid);
-	var preview = fetchEl('replyto_preview_' + pid);
+	var replydiv = $dom('replyto_' + pid);
+	var reply = $dom('replyto_reply_' + pid);
+	var preview = $dom('replyto_preview_' + pid);
 	if (!replydiv || !reply || !preview)
 		return false;
 
 	preview.style.display = 'none';
 	reply.style.display   = 'block';
-	fetchEl('submit_' + pid).style.display  = 'none';
-	fetchEl('preview_' + pid).style.display = 'inline';
+
+	$dom('replyto_buttons_2_' + pid).style.display  = 'none';
+	$dom('replyto_buttons_1_' + pid).style.display = 'inline';
+}
+
+function replyPreviewOrSubmit (pid, op, handlers) {
+	var replydiv = $dom('replyto_' + pid);
+	var reply = $dom('replyto_reply_' + pid);
+	var preview = $dom('replyto_preview_' + pid);
+	var this_reskey = $dom('reskey_reply_' + pid);
+	var msgdiv = 'replyto_msg_' + pid;
+	var msg = $dom(msgdiv);
+
+	if (!replydiv || !reply || !preview || !this_reskey || !msg)
+		return false;
+
+	var params = {};
+	params['op']  = op;
+	params['pid'] = pid;
+	params['sid'] = discussion_id;
+	params['reskey'] = this_reskey.value;
+	params['msgdiv'] = msgdiv;
+	params['gotmodwarning'] = $dom('gotmodwarning_' + pid).value;
+	params['postersubj'] = $dom('postersubj_' + pid).value;
+	params['postercomment'] = $dom('postercomment_' + pid).value;
+
+	var postanon = $dom('postanon_' + pid);
+	if (postanon && postanon.checked)
+		params['postanon'] = postanon.value;
+
+	msg.innerHTML = 'Loading...';
+	ajax_update(params, '', handlers);
+}
+
+function submitReply(pid) {
+	return replyPreviewOrSubmit(pid, 'comments_submit_reply', {
+		onComplete: function(transport) {
+			var msg = $dom('replyto_msg_' + pid);
+			msg.innerHTML = '';
+			var response = json_handler(transport);
+
+			var cid = response.cid;
+			if (response.error)
+				msg.innerHTML = response.error;
+			else if (cid) {
+				cancelReply(pid);
+				addComment(cid, { pid: pid, kids: [] }, '', 1);
+				setFocusComment(cid, 1);
+			}
+		}
+	});
+
 }
 
 function previewReply(pid) {
-	var replydiv = fetchEl('replyto_' + pid);
-	var reply = fetchEl('replyto_reply_' + pid);
-	var preview = fetchEl('replyto_preview_' + pid);
-	var msg = fetchEl('replyto_msg_' + pid);
-	var this_reskey = fetchEl('reskey_reply_' + pid);
-	var postercomment = fetchEl('postercomment_' + pid);
-	var postersubj = fetchEl('postersubj_' + pid);
-
-	if (!replydiv || !reply || !preview || !msg || !this_reskey)
-		return false;
-
-	var params = [];
-	params['op']  = 'comments_preview_reply';
-	params['pid'] = pid;
-	params['sid'] = discussion_id;
-	params['postersubj'] = postersubj.value;
-	params['postercomment'] = postercomment.value;
-	params['reskey'] = this_reskey.value;
-
-	// XXX disable Reply to This link 
-	msg.innerHTML = 'Loading...';
-
-	var handlers = {
+	return replyPreviewOrSubmit(pid, 'comments_preview_reply', {
 		onComplete: function(transport) {
+			var msg = $dom('replyto_msg_' + pid);
 			msg.innerHTML = '';
-			json_handler(transport);
-			reply.style.display   = 'none';
-			preview.style.display = 'block';
-			// depends on error result
-			fetchEl('submit_' + pid).style.display  = 'inline';
-			fetchEl('preview_' + pid).style.display = 'none';
+			var response = json_handler(transport);
+
+			if (response.error)
+				msg.innerHTML = response.error;
+			if (response.html) {
+				$dom('replyto_reply_' + pid).style.display   = 'none';
+				$dom('replyto_preview_' + pid).style.display = 'block';
+				$dom('replyto_buttons_1_' + pid).style.display  = 'none';
+				$dom('replyto_buttons_2_' + pid).style.display = 'inline';
+			}
 		}
-	};
-
-	ajax_update(params, '', handlers);
-
+	});
 }
 
 function replyTo(pid) {
-	var replydiv = fetchEl('replyto_' + pid);
+	var replydiv = $dom('replyto_' + pid);
 	if (!replydiv)
 		return false; // seems we shouldn't be here ...
 
-	var params = [];
+	var postercomment = $dom('postercomment_' + pid);
+	if (postercomment) {
+		postercomment.focus(); // already have one, bail
+		return false;
+	}
+
+	var params = {};
 	params['op']  = 'comments_reply_form';
 	params['pid'] = pid;
 	params['sid'] = discussion_id;
@@ -1022,7 +1081,15 @@ function replyTo(pid) {
 	replydiv.innerHTML = 'Loading...';
 
 	var handlers = {
-		onComplete: json_handler
+		onComplete: function(transport) {
+			json_handler(transport);
+			if (pid) { // XXX
+				var reply_link = $dom('reply_link_' + pid);
+				reply_link_html[pid] = reply_link.innerHTML;
+				reply_link.innerHTML = '<a href="#" onclick="cancelReply(' + pid + '); return false;">Cancel Reply</a>';
+			}
+			$dom('postercomment_' + pid).focus();
+		}
 	};
 
 	ajax_update(params, '', handlers);
@@ -1032,7 +1099,7 @@ function replyTo(pid) {
 
 function quoteReply(pid) {
 	var this_reply = getQuotedText(comment_body_reply[pid]);
-	var postercomment = $('postercomment_' + pid) || $('postercomment');
+	var postercomment = $dom('postercomment_' + pid) || $dom('postercomment');
 	if (postercomment)
 		postercomment.value = this_reply + postercomment.value;
 	return false;
@@ -1040,7 +1107,7 @@ function quoteReply(pid) {
 
 function getQuotedText(this_reply) {
 	// tailor whitespace to postmode
-	if (!$('posttype') || $('posttype').value != 2) {
+	if (!$dom('posttype') || $dom('posttype').value != 2) {
 		this_reply = this_reply.replace(/<br>/g, "\n");
 	} else {
 		this_reply = this_reply.replace(/<br>\n*/g, "<br>\n");
@@ -1075,7 +1142,7 @@ function loadAllElements(tagname, parent) {
 
 function reloadForFirefox(obj_name) {
 	if (is_firefox) {
-		var obj = $(obj_name);
+		var obj = $dom(obj_name);
 		loadAllElements('span', obj);
 		loadAllElements('div', obj);
 		loadAllElements('li', obj);
@@ -1095,7 +1162,7 @@ function reloadCommentForFirefox(cid) {
 }
 
 function loadNamedElement(name) {
-	commentelements[name] = $(name);
+	commentelements[name] = $dom(name);
 	return;
 }
 
@@ -1107,9 +1174,9 @@ function fetchEl(str) {
 		// any other special cases to ignore? -- pudge
 		if (!str.match(/^hidestring_/))
 			if (!obj || !grepCommentNode(obj, str))
-				obj = commentelements[str] = $(str);
+				obj = commentelements[str] = $dom(str);
 	} else {
-		obj = $(str);
+		obj = $dom(str);
 	}
 
 	return obj;
@@ -1255,7 +1322,7 @@ function ajaxCommentsStatus(bool) {
 }
 
 function boxStatus(bool) {
-	var box = $('commentControlBoxStatus');
+	var box = $dom('commentControlBoxStatus');
 	if (bool) {
 		boxStatusQueue.push(1);
 		box.className = '';
@@ -1268,7 +1335,7 @@ function boxStatus(bool) {
 
 function enableControls() {
 	boxStatus(0);
-	var morelink = $('more_comments_num_a');
+	var morelink = $dom('more_comments_num_a');
 	if (morelink)
 		morelink.className = 'show';
 
@@ -1277,11 +1344,11 @@ function enableControls() {
 }
 
 function floatButtons () {
-	$('gods').className='thor';
+	$dom('gods').className='thor';
 }
 
 function d2act () {
-	var gd = $('d2act'); 
+	var gd = $dom('d2act');
 	if (gd) {
 		var targetTop = YAHOO.util.Dom.getY('commentwrap');
 		var vOffset = 0;
@@ -1294,7 +1361,7 @@ function d2act () {
   
 		var oldpos = gd.style.position;
 
-		var mode = $('d2out').className;
+		var mode = $dom('d2out').className;
 		if (mode=='horizontal rooted' || targetTop>vOffset) {
 			gd.style.position = 'absolute';
 			gd.className      = 'rooted';
@@ -1308,15 +1375,15 @@ function d2act () {
 		// for Safari and maybe others, force redraw on change
 		if ( oldpos != gd.style.position ) {
 			gd.style.display = 'none';
-			setTimeout("$('d2act').style.display = 'inline'", 1);
+			setTimeout("$dom('d2act').style.display = 'inline'", 1);
 			// gd.style.display = 'inline';
 		}
 	}
 }
 
 function toggleDisplayOptions() {
-	var gods  = $('gods');
-	var d2out = $('d2out');
+	var gods  = $dom('gods');
+	var d2out = $dom('d2out');
 
 	// update user prefs
 	var newMode = '';
@@ -1345,7 +1412,7 @@ function toggleDisplayOptions() {
 	gods.style.display = 'block';
 
 	if (!user_is_anon) {
-		var params = [];
+		var params = {};
 		params['comments_control'] = newMode;
 		params['op'] = 'comments_set_prefs';
 		params['reskey'] = reskey_static;
@@ -1357,9 +1424,9 @@ function toggleDisplayOptions() {
 
 
 function updateTotals() {
-	$('currentHidden' ).innerHTML = currents['hidden'];
-	$('currentFull'   ).innerHTML = currents['full'];
-	$('currentOneline').innerHTML = currents['oneline'];
+	$dom('currentHidden' ).innerHTML = currents['hidden'];
+	$dom('currentFull'   ).innerHTML = currents['full'];
+	$dom('currentOneline').innerHTML = currents['oneline'];
 }
 
 function updateMoreNum(num) { // should be an integer, or empty string
@@ -1376,9 +1443,9 @@ function updateMoreNum(num) { // should be an integer, or empty string
 			num_a = 'Retrieve more of the ' + num + ' remaining comments';
 	}
 
-	var a = $('more_comments_num_a');
-	var b = $('more_comments_num_b');
-	var c = $('more_comments_num_c');
+	var a = $dom('more_comments_num_a');
+	var b = $dom('more_comments_num_b');
+	var c = $dom('more_comments_num_c');
 
 	if (a)
 		a.innerHTML = num_a;
@@ -1391,7 +1458,7 @@ function updateMoreNum(num) { // should be an integer, or empty string
 
 function scrollWindowTo(cid) {
 	var comment_y = getOffsetTop(fetchEl('comment_' + cid));
-	if ($('d2out').className == 'horizontal')
+	if ($dom('d2out').className == 'horizontal')
 		comment_y -= 60;
 	scroll(viewWindowLeft(), comment_y);
 }
@@ -1405,70 +1472,15 @@ function getOffsetLeft (el) {
 	return ol;
 }
 
-function getOffsetTop (el) {
-	if (!el)
-		return false;
-	var ot = el.offsetTop;
-	while((el = el.offsetParent) != null)
-		ot += el.offsetTop;
-	return ot;
-}
-
-function viewWindowLeft() {
-	if (self.pageXOffset) // all except Explorer
-	{
-		return self.pageXOffset;
-	}
-	else if (document.documentElement && document.documentElement.scrollTop)
-		// Explorer 6 Strict
-	{
-		return document.documentElement.scrollLeft;
-	}
-	else if (document.body) // all other Explorers
-	{
-		return document.body.scrollLeft;
-	}
-}
-
-function viewWindowTop() {
-	if (self.pageYOffset) // all except Explorer
-	{
-		return self.pageYOffset;
-	}
-	else if (document.documentElement && document.documentElement.scrollTop)
-		// Explorer 6 Strict
-	{
-		return document.documentElement.scrollTop;
-	}
-	else if (document.body) // all other Explorers
-	{
-		return document.body.scrollTop;
-	}
-	return;
-}
-
 function viewWindowRight() {
 	return viewWindowLeft() + (window.innerWidth || document.documentElement.clientWidth);
 }
 
-function viewWindowBottom() {
-	return viewWindowTop() + (window.innerHeight || document.documentElement.clientHeight);
-}
-
-function commentIsInWindow(cid) {
+function commentIsInWindow(cid, just_head) {
 	var in_window = isInWindow(fetchEl('comment_' + cid));
-	if (in_window && fetchEl('comment_sub_' + cid))
+	if (in_window && !just_head && fetchEl('comment_sub_' + cid))
 		in_window = isInWindow(fetchEl('comment_sub_' + cid));
 	return in_window;
-}
-
-function isInWindow(obj) {
-	var y = getOffsetTop(obj);
-
-	if (y > viewWindowTop() && y < viewWindowBottom()) {
-		return 1;
-	}
-	return 0;
 }
 
 
@@ -1820,6 +1832,9 @@ function getSeconds () {
 
 
 function setCurrentComment (cid) {
+	if (!cid)
+		return false;
+
 	var this_id;
 	if (current_cid) {
 		if (cid == current_cid)
@@ -1851,6 +1866,7 @@ next thread: S, K
 prev comm chrono: Q
 next comm chrono: E
 next unread comm: F
+reply: R
 */
 
 var validkeys = {
@@ -1861,6 +1877,7 @@ var validkeys = {
 	Q: { chrono : 1, prev: 1, comment: 1 },
 	E: { chrono : 1, next: 1, comment: 1 },
 	F: { thread : 1, next: 1, comment: 1, unread: 1 },
+	R: { reply  : 1 },
 };
 
 validkeys['H'] = validkeys['A'];
@@ -1897,8 +1914,11 @@ function keyHandler(e, k) {
 			var next_cid = 0;
 			var key = k || String.fromCharCode(c);
 			var keyo = validkeys[key];
+			if (keyo && keyo['reply'] && user_is_subscriber && current_cid) { // XXX
+				replyTo(current_cid);
+
 			// forward and back between comments, in order of how they were loaded
-			if (keyo && keyo['chrono']) {
+			} else if (keyo && keyo['chrono']) {
 				var i = last_updated_comments_index;
 				var l = last_updated_comments.length - 1;
 				update = 1;
@@ -1940,11 +1960,11 @@ function keyHandler(e, k) {
 							getNextUnread = 1;
 						if (keyo['comment']) {
 							next_cid = commTreeNextComm(current_cid, 0, getNextUnread);
-							if (!next_cid) {
+							if (!next_cid) { // && getNextUnread) {
 								if (ajaxCommentsWait())
 									return;
 								update = 2;
-								var highlight = 1 + getNextUnread;
+								var highlight = 1 + collapseCurrent;
 								ajaxFetchComments(0, 1, '', highlight);
 							}
 						} else
@@ -1988,12 +2008,15 @@ function commTreeNextComm (cid, old_cid, getNextUnread) {
 	else
 		kids = rootSort();
 
+	var seen = 0;
 	for (var i = 0; i < kids.length; i++) {
 		var this_cid;
-		if (!old_cid)
+		if (!old_cid) {
 			this_cid = kids[i];
-		else if (kids[i] >= old_cid)
+		} else if ((kids[i] == old_cid) || seen) {
 			this_cid = kids[i+1];
+			seen = 1;
+		}
 
 		if (this_cid) {
 			if (!getNextUnread || (this_cid = getNextUnreadCid(this_cid)))
