@@ -1,0 +1,34 @@
+__section__
+default
+__description__
+Renders the form which admins can use to remove an address from the
+opt-out list for Slash::Email.
+
+	* No extra parameters
+__title__
+Email Remove Opt-Out Form
+__page__
+email
+__lang__
+en_US
+__name__
+removeOptoutForm
+__seclev__
+5000
+__template__
+
+[% INCLUDE titlebar 
+	width="99%"
+	title="Remove an Email Address from Opt-out List" -%]
+
+<form action="[% gSkin.rootdir %]/email.pl" method="post">
+<input type="hidden" name="op" value="optoutrem">
+
+Enter email address to be removed from the opt-out list:<br>
+<input type="text" name="email" size="50">
+<br><br>
+<input type="submit" value="Remove from Opt-out List">
+</form>
+
+__version__
+$Id: removeOptoutForm;email;default,v 1.5 2005/07/27 22:53:54 pudge Exp $

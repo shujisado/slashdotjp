@@ -1,0 +1,7 @@
+# $Id: PLUGIN,v 1.2 2003/08/29 15:21:07 jamie Exp $
+name=HumanConf
+description="Human Confirmation"
+mysql_dump=mysql_dump
+mysql_schema=mysql_schema
+task=hc_maintain_pool.pl
+template=templates/data;humanconf;default

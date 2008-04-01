@@ -1,0 +1,26 @@
+__section__
+default
+__description__
+
+* tids = array of the story's topic ids
+* uid = uid of the author of the story
+* aid = getAuthor() for the author of the story
+* topics = getTopics()
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+otherLinks
+__template__
+	[% FOR tid = tids %]
+		<li><a href="[% gSkin.rootdir %]/search.pl?tid=[% tid | strip_paramattr %]">More [% topics.$tid.textname %] stories</a></li>
+	[% END %]
+	<li><a href="[% gSkin.rootdir %]/search.pl?op=stories&amp;author=[% uid | strip_paramattr %]">Also by [% aid %]</a></li>
+__seclev__
+500
+__version__
+$Id: otherLinks;admin;default,v 1.13 2006/01/23 20:42:59 pudge Exp $

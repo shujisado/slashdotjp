@@ -1,0 +1,74 @@
+__section__
+default
+__description__
+Lists polls
+
+* questions = arrayref of questions (qid = 0, question = 1, date = 2)
+* startat = where in list of polls to begin
+* admin = boolean for whether current user is admin
+* title = passed to titlebar
+* width = passed to titlebar
+
+__title__
+
+__page__
+pollBooth
+__lang__
+en_US
+__name__
+listpolls
+__template__
+<div id="slashboxes">
+[% Slash.sidebox(
+	Slash.db.getBlock('poll', 'title'),
+	Slash.pollbooth('_currentqid', 1, 0),
+	'poll',
+        1);
+%]
+</div>
+<div id="polls">
+	[% PROCESS titlebar %]
+	<div class="generalbody">
+		[% skins = Slash.db.getSkins %]
+		<ul>
+		[% FOREACH question = questions %]
+			<li><b><a href="[% skins.${question.8}.rootdir || gSkin.rootdir %]/pollBooth.pl?qid=[% question.0 %]">[% question.1 %]</a></b> on [% Slash.timeCalc(question.2, '%B %o, %Y') %]<br>
+			<small>[% question.3 %] votes and [% question.4 %] comments.
+				[% IF user.is_admin %]
+					[% SWITCH question.5 %]
+						[% CASE 'story' %]
+						(<i>story</i>)
+						[% CASE 'section' %]
+						(<i>section</i>)
+						[% CASE 'nodisplay' %]
+						(<i>nd</i>)
+					[% END %]
+					[% IF question.6 %]
+						(<i>future</i>)
+					[% END %]
+					(<a href="[% gSkin.rootdir %]/pollBooth.pl?op=edit&amp;qid=[% question.0 %]">Edit</a>)
+					(<a href="[% gSkin.rootdir %]/pollBooth.pl?op=delete&amp;qid=[% question.0 %]">Delete</a>)
+				[% END %]
+				</small>
+			</li>
+			[% IF type == "story" %]
+				<li>
+					<a href="[% gSkin.rootdir %]/article.pl?sid=[% question.9 | strip_paramattr %]">[% question.8 %]</a>
+				</li>
+			[% END %]
+		[% END %]
+		</ul>
+
+		<p>
+			<b>
+				<a href="[% gSkin.rootdir %]/search.pl?op=polls">More Polls</a><br>
+				<a href="[% gSkin.rootdir %]/submit.pl">Submit Poll</a>
+			</b>
+		</p>
+	</div>
+</div>
+
+__seclev__
+10000
+__version__
+$Id: listpolls;pollBooth;default,v 1.14 2006/01/23 20:42:59 pudge Exp $

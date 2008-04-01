@@ -1,0 +1,5 @@
+#
+# $Id: dump,v 1.2 2003/08/29 16:18:44 jamie Exp $
+#
+
+INSERT INTO vars (name, value, description) VALUES ('story_files', '1', 'Allow stories to use files from Slash::Blob');
