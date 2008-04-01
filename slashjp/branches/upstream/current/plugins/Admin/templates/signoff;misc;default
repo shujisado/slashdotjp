@@ -18,10 +18,9 @@ __template__
 [% IF storylink %]
 <li class="signoff">[% END %]
 , <span id="signoff_[% stoid %]" onclick="admin_signoff([% stoid %][% IF fhid; ",'firehose',"; fhid; END %])">[% UNLESS signed %]unsigned[% END %]</span>
-[% PROCESS ajax_reskey_signoff reskey_label => 'signoff-reskey-' _ stoid, reskey_name => 'ajax_admin' %]
 [% IF storylink %]</li>[% END %]
 [% END %]
 __seclev__
 10000
 __version__
-$Id: signoff;misc;default,v 1.15 2007/07/30 18:46:15 tvroom Exp $
+$Id: signoff;misc;default,v 1.16 2008/03/18 16:13:45 tvroom Exp $

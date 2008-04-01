@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: nodnix.js,v 1.9 2008/02/20 18:43:31 scc Exp $
+// $Id: nodnix.js,v 1.17 2008/03/14 15:48:06 scc Exp $
 
 var nod_completer = null;
 var nix_completer = null;
@@ -100,6 +100,17 @@ function nodnix_tag( tag, up_down ) {
 		firehose_up_down(g_nodnix_item_id, up_down);
 }
 
+function nodnix_not_tag( old_tag ) {
+  var new_tag = old_tag[0]=='!' ? old_tag.slice(1) : '!'+old_tag;
+	createTag(new_tag, g_nodnix_item_id, "firehose");
+	var tag_list = _get_nodnix('ol');
+	  // XXX not a good idea if the tag happens to be 'span' or 'li', etc
+	tag_list.innerHTML = tag_list.innerHTML.replace(old_tag, new_tag, "g");
+}
+
+function nodnix_del_tag( tag ) {
+}
+
 function hide_nod_menu() {
 	get_nod_menu().style.display = 'none';
 }
@@ -117,7 +128,7 @@ function hide_nodnix_menu( delay ) {
 	} else {
 		if ( g_pending_hidemenu )
 			clearTimeout(g_pending_hidemenu);
-		g_pending_hidemenu = setTimeout("hide_nodnix_menu()", delay);
+		g_pending_hidemenu = setTimeout(hide_nodnix_menu, delay);
 	}
 }
 
@@ -204,7 +215,21 @@ function soon_is_now() {
   YAHOO.util.Dom.removeClass(get_nix_menu(), 'soon');
 }
 
+function refresh_tag_bar( tag_list ) {
+  // ajax request to fill the user tags list
+  var params = {};
+  params['op'] = 'tags_get_user_firehose';
+  params['id'] = g_nodnix_item_id;
+  params['nodnix'] = 1;
+  ajax_update(params, tag_list, {});
+}
+
 function begin_nodnix_editing() {
+  if ( is_firehose_playing() ) {
+    firehose_pause();
+    end_nodnix_editing.restore_firehose_state = firehose_play;
+  }
+
   get_nodnix_listener().disable();
   YAHOO.util.Dom.addClass(get_nod_menu(), 'soon');
   YAHOO.util.Dom.addClass(get_nix_menu(), 'soon');
@@ -215,17 +240,22 @@ function begin_nodnix_editing() {
   var input = _get_nodnix('input');
   input.value = "";
   input.focus();
-  
-  _get_nodnix('ol').innerHTML = "";
+
+  var tag_list = _get_nodnix('ol');
+  tag_list.innerHTML = "";
+  refresh_tag_bar(tag_list);
 
   (input.getAttribute("updown")=="+" ? nod_completer : nix_completer).sendQuery();
-  setTimeout("soon_is_now()", 225);
+  setTimeout(soon_is_now, 225);
 }
 
 function end_nodnix_editing() {
   YAHOO.util.Dom.removeClass(get_nod_menu(), 'editing');
   YAHOO.util.Dom.removeClass(get_nix_menu(), 'editing');
+  end_nodnix_editing.restore_firehose_state();
+  end_nodnix_editing.restore_firehose_state = function(){}
 }
+end_nodnix_editing.restore_firehose_state = function(){}
 
 function handle_nodnix_blur( type, args ) {
   hide_nodnix_menu();
@@ -239,12 +269,15 @@ function handle_nodnix_select( type, args, stay_open ) {
     nodnix_tag(tagname);
       // now 'harden' the tag
     var list = _get_nodnix('ol');
-    list.innerHTML = '<li>' + tagname + '</li>' + list.innerHTML;
+    list.innerHTML = handle_nodnix_select.template_string.split('$').join(tagname) + list.innerHTML;
     _get_nodnix('input').value = "";
   }
   if ( !stay_open )
     hide_nodnix_menu();
 }
+
+  // WARNING: keep this string in sync with tagsnodnixuser;misc;default
+handle_nodnix_select.template_string = '<li>$<span class="tag-actions"><a class="not-tag" onmousedown="nodnix_not_tag(\'$\'); return false" href="#">!</a> <a class="del-tag" onmousedown="nodnix_del_tag(\'$\'); return false" href="#">x</a></span></li>';
 
 function handle_completer_key( type, args ) {
   var key = args[0];

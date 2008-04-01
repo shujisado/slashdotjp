@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.1008 2008/02/13 17:00:41 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.1010 2008/03/21 03:05:35 pudge Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.1008 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.1010 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -513,7 +513,7 @@ sub getCSS {
 	my $page = $user->{currentPage};
 	my $skin = getCurrentSkin('name');
 	my $admin = $user->{is_admin};
-	my $theme = $user->{simpledesign} ? "light" : $user->{css_theme};
+	my $theme = ($user->{simpledesign} || $user->{pda}) ? "light" : $user->{css_theme};
 	my $constants = getCurrentStatic();
 
 	my $expire_time = $constants->{css_expire} || 3600;
@@ -532,7 +532,7 @@ sub getCSS {
 	$css_skins_ref = $self->getCSSValuesHashForCol('skin')   if !$css_skins_ref;
 	$css_themes_ref= $self->getCSSValuesHashForCol('theme') if !$css_themes_ref;
 
-	my $lowbandwidth = $user->{lowbandwidth} ? "yes" : "no";
+	my $lowbandwidth = ($user->{lowbandwidth} || $user->{pda}) ? "yes" : "no";
 
 	$page   = '' if !$css_pages_ref->{$page};
 	$skin   = '' if !$css_skins_ref->{$skin};
@@ -7914,15 +7914,16 @@ sub getUserSignoffHashForStoids {
 }
 
 sub getSignoffCountHashForStoids {
-	my($self, $stoids) = @_;
+	my($self, $stoids, $adminsonly) = @_;
 	return {} if !@$stoids;	
 	my $stoid_list = join ',', @$stoids;
+	my $user_limit_clause = $adminsonly ? ' AND seclev >= 100' : '';
 
 	my $signoff_hash = $self->sqlSelectAllHashref(
 		"stoid", 
-		"stoid, COUNT(DISTINCT uid) AS cnt",
-		"signoff",
-		"stoid in ($stoid_list)",
+		"stoid, COUNT(DISTINCT signoff.uid) AS cnt",
+		"signoff, users",
+		"users.uid = signoff.uid AND stoid IN ($stoid_list) $user_limit_clause",
 		"GROUP BY stoid"
 	);
 	

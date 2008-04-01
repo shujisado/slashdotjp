@@ -52,9 +52,9 @@ END %]
 
 
 [% END %]
-Copyright 1997-2006 [% constants.sitepublisher %].  All rights reserved.
+Copyright 1997-2008 [% constants.sitepublisher %].  All rights reserved.
 
 __seclev__
 500
 __version__
-$Id: dailynews;messages;default,v 1.14 2006/01/25 16:11:42 cowboyneal Exp $
+$Id: dailynews;messages;default,v 1.15 2008/03/13 14:14:08 entweichen Exp $

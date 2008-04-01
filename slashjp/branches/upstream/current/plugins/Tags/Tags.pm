@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.101 2008/02/28 19:51:01 jamiemccarthy Exp $
+# $Id: Tags.pm,v 1.107 2008/03/19 14:49:35 jamiemccarthy Exp $
 
 package Slash::Tags;
 
@@ -17,7 +17,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.101 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.107 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -603,6 +603,9 @@ sub getTagnameidClid {
 	}
 
 	# Is it descriptive?
+	# XXX this should be optimized by retrieving the list of _all_
+	# descriptive tagnames in memcached or the local closure and
+	# doing a lookup on that.
 	if ($types->{describe} && !$clid) {
 		$tn_data = $self->getTagnameDataFromId($tagnameid);
 		$clid = $types->{describe} if $tn_data->{descriptive};
@@ -685,7 +688,8 @@ sub addCloutsToTagArrayref {
 	for my $uid (keys %uid) {
 		# XXX getUser($foo, 'clout') does not work at the moment,
 		# so getUser($foo)->{clout} is used instead
-		$user_clout_hr->{$uid} = $self->getUser($uid)->{clout};
+		my $user = $self->getUser($uid);
+		$user_clout_hr->{$uid} = $self->getUser($uid)->{clout} if $user;
 	}
 
 
@@ -704,7 +708,9 @@ sub addCloutsToTagArrayref {
 			$tagname_clid = $default_clout_clid;
 		}
 		my $tagname_clout_name = $clout_types->{ $tagname_clid };
-		$tag_hr->{user_clout}    = $mult * $user_clout_hr   ->{$tag_hr->{uid}}{$tagname_clout_name};
+		my $clout = $user_clout_hr->{$tag_hr->{uid}};
+		my $clout_specific = $clout ? $clout->{$tagname_clout_name} : 0;
+		$tag_hr->{user_clout}    = $mult * $clout_specific;
 		$tag_hr->{total_clout} = $tag_hr->{tag_clout} * $tag_hr->{tagname_clout} * $tag_hr->{user_clout};
 	}
 }
@@ -849,7 +855,7 @@ sub getAllObjectsTagname {
 #		my $value = $mcd->get("$mcdkey$name");
 #		return $value if defined $value;
 #	}
-	my $private_clause = $options->{include_private} ? '' : " AND private='no'";
+	my $private_clause = ref($options) && $options->{include_private} ? '' : " AND private='no'";
 	my $id = $self->getTagnameidFromNameIfExists($name);
 	return [ ] if !$id;
 	my $hr_ar = $self->sqlSelectAllHashrefArray(
@@ -965,7 +971,7 @@ sub ajaxGetUserStory {
 	my($self, $constants, $user, $form) = @_;
 
 	my $sidenc = $form->{sidenc};
-	my $sid = $sidenc; $sid =~ tr{:}{/};
+	my $sid = $sidenc; $sid =~ tr{-}{/};
 	my $stoid = $self->getStoidFromSid($sid);
 	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
 #print STDERR scalar(localtime) . " ajaxGetUserStory for stoid=$stoid sidenc=$sidenc tr=$tags_reader\n";
@@ -1023,7 +1029,7 @@ sub ajaxGetUserUrls {
 sub ajaxGetAdminStory {
 	my($slashdb, $constants, $user, $form) = @_;
 	my $sidenc = $form->{sidenc};
-	my $sid = $sidenc; $sid =~ tr{:}{/};
+	my $sid = $sidenc; $sid =~ tr{-}{/};
 
 	if (!$sid || $sid !~ regexSid() || !$user->{is_admin}) {
 		return getData('error', {}, 'tags');
@@ -1155,7 +1161,7 @@ sub ajaxCreateForUrl {
 sub ajaxCreateForStory {
 	my($slashdb, $constants, $user, $form) = @_;
 	my $sidenc = $form->{sidenc};
-	my $sid = $sidenc; $sid =~ tr{:}{/};
+	my $sid = $sidenc; $sid =~ tr{-}{/};
 	my $tags = getObject('Slash::Tags');
 	my $tagsstring = $form->{tags};
 	if (!$sid || $sid !~ regexSid() || $user->{is_anon} || !$tags) {
@@ -1189,6 +1195,30 @@ sub ajaxCreateForStory {
 	return $retval;
 }
 
+sub ajaxDeactivateTag {
+	my($self, $constants, $user, $form) = @_;
+	my $type = $form->{type} || "stories";
+	my $tags = getObject('Slash::Tags'); # XXX isn't this the same as $self? -Jamie
+
+	my ($table, $id);
+
+	if ($type eq "firehose") {
+		my $firehose = getObject("Slash::FireHose");
+		my $item = $firehose->getFireHose($form->{id});
+		($table, $id) = $tags->getGlobjTarget($item->{globjid});
+	} else {
+		# XXX doesn't work yet for stories or urls
+		return;
+	}
+
+	$tags->deactivateTag({
+		uid =>		$user->{uid},
+		name =>		$form->{tag},
+		table =>	$table,
+		id =>		$id,
+	});
+}
+
 sub ajaxProcessAdminTags {
 	my($slashdb, $constants, $user, $form) = @_;
 #print STDERR "ajaxProcessAdminTags\n";
@@ -1197,7 +1227,7 @@ sub ajaxProcessAdminTags {
 	my($id, $table, $sid, $sidenc, $itemid);
 	if ($type eq "stories") {
 		$sidenc = $form->{sidenc};
-		$sid = $sidenc; $sid =~ tr{:}{/};
+		$sid = $sidenc; $sid =~ tr{-}{/};
 		$id = $slashdb->getStoidFromSid($sid);
 		$table = "stories";
 	} elsif ($type eq "urls") {
@@ -1293,7 +1323,7 @@ sub ajaxTagHistory {
 	my $table;
 	if ($form->{type} eq "stories") {
 		my $sidenc = $form->{sidenc};
-		my $sid = $sidenc; $sid =~ tr{:}{/};
+		my $sid = $sidenc; $sid =~ tr{-}{/};
 		$id = $slashdb->getStoidFromSid($sid);
 		$table = "stories"
 	} elsif ($form->{type} eq "urls") {
@@ -1379,6 +1409,13 @@ sub ajaxListTagnames {
 	$prefix = lc($1) if $form->{prefix} =~ /([A-Za-z0-9]{1,20})/;
 	my $len = length($prefix);
 	my $notize = $form->{prefix} =~ /^([-!])/ ? $1 : '';
+
+	my $minlen = $constants->{tags_prefixlist_minlen} || 3;
+	if ($len < $minlen) {
+		# Too short to give a meaningful suggestion, and the
+		# shorter the prefix the longer the DB query takes.
+		return '';
+	}
 
 	my $tnhr = $tags_reader->listTagnamesByPrefix($prefix);
 
@@ -1683,10 +1720,10 @@ sub listTagnamesAll {
 sub listTagnamesActive {
 	my($self, $options) = @_;
 	my $constants = getCurrentStatic();
-	my $max_num =         $options->{max_num}         || 100;
-	my $seconds =         $options->{seconds}         || (3600*6);
-	my $include_private = $options->{include_private} || 0;
-	my $min_slice =       $options->{min_slice}       || 0;
+	my $max_num =         ref($options) && $options->{max_num}         || 100;
+	my $seconds =         ref($options) && $options->{seconds}         || (3600*6);
+	my $include_private = ref($options) && $options->{include_private} || 0;
+	my $min_slice =       ref($options) && $options->{min_slice}       || 0;
 	$min_slice = 0 if !$constants->{plugin}{FireHose};
 
 	# This seems like a horrendous query, but I _think_ it will run
@@ -1791,8 +1828,8 @@ sub listTagnamesActive {
 sub listTagnamesRecent {
 	my($self, $options) = @_;
 	my $constants = getCurrentStatic();
-	my $seconds =         $options->{seconds}         || (3600*6);
-	my $include_private = $options->{include_private} || 0;
+	my $seconds =         ref($options) && $options->{seconds}         || (3600*6);
+	my $include_private = ref($options) && $options->{include_private} || 0;
 	my $private_clause = $include_private ? '' : " AND private='no'";
 	my $recent_ar = $self->sqlSelectColArrayref(
 		'DISTINCT tagnames.tagname',
@@ -1820,24 +1857,65 @@ sub tagnameorder {
 	$a2 cmp $b2 || $a1 cmp $b1;
 }
 
+{ # closure
+my $tagname_cache_lastcheck = 1;
 sub listTagnamesByPrefix {
 	my($self, $prefix_str, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $ret_hr;
+
+	my $mcd = undef;
+	$mcd = $self->getMCD() unless $options;
+	my $mcdkey = "$self->{_mcd_keyprefix}:tag_prefx:";
+	if ($mcd) {
+		$ret_hr = $mcd->get("$mcdkey$prefix_str");
+		return $ret_hr if $ret_hr;
+	}
+
+	# If the tagname_cache table has been filled, use it.
+	# Otherwise, perform an expensive query directly.
+	# The logic is that $tagname_cache_lastcheck stays a
+	# large positive number (a timestamp) until we determine
+	# that the table _does_ have rows, at which point that
+	# number drops to 0.  Once its value hits 0, it is never
+	# checked again.
+	if ($tagname_cache_lastcheck > 0 && $tagname_cache_lastcheck < time()-3600) {
+		my $rows = $reader->sqlCount('tagname_cache');
+		$tagname_cache_lastcheck = $rows ? 0 : time;
+	}
+	my $use_cache_table = $tagname_cache_lastcheck ? 0 : 1;
+	if ($use_cache_table) {
+		$ret_hr = $self->listTagnamesByPrefix_cache($prefix_str, $options);
+	} else {
+		$ret_hr = $self->listTagnamesByPrefix_direct($prefix_str, $options);
+	}
+
+	if ($mcd) {
+		# The expiration we use is much longer than the tags_cache_expire
+		# var since the cache data changes only once a day.
+		$mcd->set("$mcdkey$prefix_str", $ret_hr, 3600);
+	}
+
+	return $ret_hr;
+}
+}
+
+# This is a quick-and-dirty (and not very accurate) estimate which
+# is only performed for a site which has not built its tagname_cache
+# table yet.  Hopefully most sites will use this the first day the
+# Tags plugin is installed and then never again.
+
+sub listTagnamesByPrefix_direct {
+	my($self, $prefix_str, $options) = @_;
+	my $constants = getCurrentStatic();
 	my $like_str = $self->sqlQuote("$prefix_str%");
 	my $minc = $self->sqlQuote($options->{minc} || $constants->{tags_prefixlist_minc} ||  4);
 	my $mins = $self->sqlQuote($options->{mins} || $constants->{tags_prefixlist_mins} ||  3);
 	my $num  = $options->{num}  || $constants->{tags_prefixlist_num};
 	$num = 10 if !$num || $num !~ /^(\d+)$/ || $num < 1;
 
-	my $mcd = undef;
-	$mcd = $self->getMCD() unless $options;
-	my $mcdkey = "$self->{_mcd_keyprefix}:tag_prefx:";
-	if ($mcd) {
-		my $ret_str = $mcd->get("$mcdkey$prefix_str");
-		return $ret_str if $ret_str;
-	}
-
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my $ar = $reader->sqlSelectAllHashrefArray(
 		'tagname,
 		 COUNT(DISTINCT tags.uid) AS c,
@@ -1856,10 +1934,22 @@ sub listTagnamesByPrefix {
 	for my $hr (@$ar) {
 		$ret_hr->{ $hr->{tagname} } = $hr->{sc};
 	}
-	if ($mcd) {
-		my $mcdexp = $constants->{tags_cache_expire} || 180;
-		$mcd->set("$mcdkey$prefix_str", $ret_hr, $mcdexp)
-	}
+	return $ret_hr;
+}
+
+sub listTagnamesByPrefix_cache {
+	my($self, $prefix_str, $options) = @_;
+	my $constants = getCurrentStatic();
+	my $like_str = $self->sqlQuote("$prefix_str%");
+	my $num  = $options->{num}  || $constants->{tags_prefixlist_num};
+	$num = 10 if !$num || $num !~ /^(\d+)$/ || $num < 1;
+
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $ret_hr = $reader->sqlSelectAllKeyValue(
+		'tagname, weight',
+		'tagname_cache',
+		"tagname LIKE $like_str",
+		"ORDER BY weight DESC LIMIT $num");
 	return $ret_hr;
 }
 

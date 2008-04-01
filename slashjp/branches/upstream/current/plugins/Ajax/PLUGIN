@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.40 2008/02/28 19:26:58 pudge Exp $
+# $Id: PLUGIN,v 1.41 2008/03/14 15:48:06 scc Exp $
 name=Ajax
 description="Ajax (Asynchronous Javascript and XML)"
 mysql_dump=mysql_dump.sql
@@ -28,7 +28,7 @@ htdoc=htdocs/images/sd_calendar.js
 htdoc=htdocs/images/slashbox.js
 htdoc=htdocs/images/common.js
 htdoc=htdocs/images/nodnix.js
-htdoc=htdocs/images/prototype.js
+htdoc=htdocs/images/jquery-1.2.3.js
 htdoc=htdocs/images/sectionprefs.js
 requiresplugin=ResKey
 template=templates/ajax_reskey_signoff;misc;default

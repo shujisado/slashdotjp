@@ -26,7 +26,7 @@ __template__
 		[%- END -%]
 		[%- tags_seen.${parts.0} = 1 -%]
 	[%- END -%]
-	[%- IF item.type == "story" -%][% IF user.is_admin %][% PROCESS signoff stoid=item.srcid fhid = item.id %][% END %][% END %]
+	[%- IF item.type == "story" -%][% IF user.is_admin || user.acl.signoff_allowed %][% PROCESS signoff stoid=item.srcid fhid = item.id %][% END %][% END %]
 	[% IF item.type == "feed" && user.is_admin %]
 		[% feed_user = Slash.db.getUser(item.uid, "nickname"); %]
 		[% feed_user | strip_literal %]
@@ -35,4 +35,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: firehose_tags_top;misc;default,v 1.22 2007/08/22 20:26:14 scc Exp $
+$Id: firehose_tags_top;misc;default,v 1.23 2008/03/18 16:16:02 tvroom Exp $

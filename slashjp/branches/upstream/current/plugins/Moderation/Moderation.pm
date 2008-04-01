@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Moderation.pm,v 1.4 2008/02/21 01:01:52 pudge Exp $
+# $Id: Moderation.pm,v 1.9 2008/03/19 08:25:31 pudge Exp $
 
 package Slash::Moderation;
 
@@ -17,7 +17,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.9 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -91,10 +91,12 @@ sub ajaxModerateCid {
 				$self->countUsers({ max => 1 }), $self->getReasons
 			);
 
-			$html->{$score}  = "(Score:$points";
+			$html->{$score}  = "Score:$points";
+			$html->{$score} = qq[<a href="#" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', $cid); return false">$html->{$score}</a>]
+				if $constants->{modal_prefs_active} && !$user->{is_anon};
 			$html->{$score} .= ", $reasons->{$comment->{reason}}{name}"
 				if $comment->{reason} && $reasons->{$comment->{reason}};
-			$html->{$score} .= ")";
+			$html->{$score} = "($html->{$score})";
 
 			my $ptstr = $user->{points} == 1 ? 'point' : 'points';
 			$html->{$select} = "Moderated '$reasons->{$reason}{name}.'  $user->{points} $ptstr left.";

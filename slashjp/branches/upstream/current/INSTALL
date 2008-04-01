@@ -71,7 +71,7 @@ SYNOPSIS
 
     The version of this file that you are currently reading is:
 
-    $Id: INSTALL,v 1.55 2008/02/20 17:46:57 jamiemccarthy Exp $
+    $Id: INSTALL,v 1.56 2008/03/12 17:02:02 jamiemccarthy Exp $
 
     If there are more recent versions of this file, you can find a list of
     those changes at:
@@ -260,6 +260,14 @@ INSTALLATION
 
                         cpan> o conf prerequisites_policy follow
                         cpan> o conf commit
+
+            Data::JavaScript::Anon
+                There are bugs in versions earlier than 1.00 that break our
+                JS. Unfortunately, CPAN seems to prefer version 0.9 even
+                though 1.00 is available. You may have to install a better
+                version in CPAN by hand:
+
+                  cpan> install A/AD/ADAMK/Data-JavaScript-Anon-1.00.tar.gz
 
             Additional Libraries
                 You must have certain libraries existing on your system
@@ -1475,5 +1483,5 @@ SECURITY NOTES
                 https://lists.sourceforge.net/lists/listinfo/slashcode-announce
 
 VERSION
-    $Id: INSTALL,v 1.55 2008/02/20 17:46:57 jamiemccarthy Exp $
+    $Id: INSTALL,v 1.56 2008/03/12 17:02:02 jamiemccarthy Exp $
 

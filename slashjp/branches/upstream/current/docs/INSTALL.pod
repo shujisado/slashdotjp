@@ -104,7 +104,7 @@ L<http:E<sol>E<sol>slashcode.cvs.sourceforge.netE<sol>*checkout*E<sol>slashcodeE
 
 The version of this file that you are currently reading is:
 
-$Id: INSTALL.pod,v 1.64 2008/02/19 18:29:04 scc Exp $
+$Id: INSTALL.pod,v 1.65 2008/03/12 15:16:09 scc Exp $
 
 If there are more recent versions of this file, you can find a list of
 those changes at:
@@ -310,6 +310,14 @@ automatically follow dependencies and commit the change:
 
 	cpan> o conf prerequisites_policy follow
 	cpan> o conf commit
+
+=item B<Data::JavaScript::Anon>
+
+There are bugs in versions earlier than 1.00 that break our JS.  Unfortunately,
+CPAN seems to prefer version 0.9 even though 1.00 is available.  You may
+have to install a better version in CPAN by hand:
+
+  cpan> install A/AD/ADAMK/Data-JavaScript-Anon-1.00.tar.gz
 
 =item B<Additional Libraries>
 
@@ -1757,5 +1765,5 @@ send out any notices.  You can subscribe here:
 
 =head1 VERSION
 
-$Id: INSTALL.pod,v 1.64 2008/02/19 18:29:04 scc Exp $
+$Id: INSTALL.pod,v 1.65 2008/03/12 15:16:09 scc Exp $
 

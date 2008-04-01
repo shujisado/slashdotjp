@@ -201,7 +201,8 @@ __template__
 				cid          => cid,
 				op           => 'reply',
 				subject      => 'Reply',
-				subject_only => 1
+				subject_only => 1,
+				onclick      => ((discussion2 && (!constants.subscribe || user.is_subscriber)) ? "replyTo(0); return false;" : '')
 			}) %]
 		[% END %]
 		</span>
@@ -285,7 +286,8 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 				cid          => cid,
 				op           => 'reply',
 				subject      => 'Reply',
-				subject_only => 1
+				subject_only => 1,
+				onclick      => ((discussion2 && (!constants.subscribe || user.is_subscriber)) ? "replyTo(0); return false;" : '')
 			}) %]
 		[% END %]
 			<div id="bindings-legend">Keybindings Beta<br>
@@ -308,4 +310,4 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 __seclev__
 10000
 __version__
-$Id: printCommentsMain;misc;default,v 1.103 2008/01/31 19:24:59 pudge Exp $
+$Id: printCommentsMain;misc;default,v 1.106 2008/03/19 21:09:47 pudge Exp $

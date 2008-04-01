@@ -1,4 +1,4 @@
-# $Id: THEME,v 1.129 2008/02/21 01:01:52 pudge Exp $
+# $Id: THEME,v 1.131 2008/03/14 17:57:33 scc Exp $
 name=slashcode
 description="Slashcode.com theme"
 topic=htdocs/images/topics/topicbug.jpg
@@ -127,7 +127,6 @@ htdoc=htdocs/robots.txt
 htdoc=htdocs/topics.pl
 htdoc=htdocs/users.pl
 htdoc=htdocs/images/comments.js
-htdoc=htdocs/images/comments2.js
 htdoc=htdocs/images/dumper.js
 htdoc=htdocs/badge.pl
 htdoc=htdocs/help.pl
@@ -340,6 +339,7 @@ plugin=Journal
 plugin=Login
 plugin=Hof
 plugin=Messages
+plugin=Moderation
 plugin=PollBooth
 plugin=Print
 plugin=PubKey

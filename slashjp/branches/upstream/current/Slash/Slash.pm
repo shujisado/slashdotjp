@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Slash.pm,v 1.348 2008/02/21 01:01:52 pudge Exp $
+# $Id: Slash.pm,v 1.349 2008/03/18 20:40:15 tvroom Exp $
 
 package Slash;
 
@@ -217,6 +217,7 @@ sub displayStory {
 		&& $story->{rendered} && !$options->{force_cache_freshen}
 		&& !$form->{simpledesign} && !$user->{simpledesign}
 		&& !$form->{lowbandwidth} && !$user->{lowbandwidth}
+		&& !$form->{pda} && !$user->{pda} 
 		&& (!$form->{ssi} || $form->{ssi} ne 'yes')
 		&& !$user->{noicons}
 		&& !$form->{issue}

@@ -1,5 +1,9 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.174 2008/02/28 19:26:58 pudge Exp $
+// $Id: common.js,v 1.183 2008/03/18 16:28:44 tvroom Exp $
+
+function $dom( id ) {
+	return document.getElementById(id);
+}
 
 // global settings, but a firehose might use a local settings object instead
 var firehose_settings = {};
@@ -25,6 +29,8 @@ var firehose_settings = {};
   firehose_removals = null;
   firehose_future = null;
 
+  var firehose_cur = 0;
+
 // globals we haven't yet decided to move into |firehose_settings|
 var fh_play = 0;
 var fh_is_timed_out = 0;
@@ -42,9 +48,6 @@ var fh_slider_init_set = 0;
 var ua=navigator.userAgent;
 var is_ie = ua.match("/MSIE/");
 
-
-// eventually add site specific constants like this to a separate .js
-var sitename = "Slashdot";
 
 function createPopup(xy, titlebar, name, contents, message, onmouseout) {
 	var body = document.getElementsByTagName("body")[0]; 
@@ -88,7 +91,7 @@ function createPopupButtons() {
 }
 
 function closePopup(id, refresh) {
-	var el = $(id);
+	var el = $dom(id);
 	if (el) {
 		el.parentNode.removeChild(el);
 	}
@@ -131,8 +134,9 @@ function moveByXY(div, x, y) {
 }
 
 function getXYForId(id, addWidth, addHeight) {
-	var div = $(id);
-	var xy = Position.cumulativeOffset(div);
+	var div = $dom(id);
+	var offset = jQuery(div).offset();
+	var xy = [ offset.left, offset.top ];
 	if (addWidth) {
 		xy[0] = xy[0] + div.offsetWidth;
 	}
@@ -143,7 +147,7 @@ function getXYForId(id, addWidth, addHeight) {
 }
 
 function firehose_toggle_advpref() {
-	var obj = $('fh_advprefs');
+	var obj = $dom('fh_advprefs');
 	if (obj.className == 'hide') {
 		obj.className = "";
 	} else {
@@ -152,12 +156,12 @@ function firehose_toggle_advpref() {
 }
 
 function firehose_open_prefs() {
-	var obj = $('fh_advprefs');
+	var obj = $dom('fh_advprefs');
 	obj.className = "";
 }
 
 function toggleId(id, first, second) {
-	var obj =$(id);
+	var obj = $dom(id);
 	if (obj.className == first) {
 		obj.className = second;
 	} else if (obj.className == second) {
@@ -168,8 +172,8 @@ function toggleId(id, first, second) {
 }
 
 function toggleIntro(id, toggleid) {
-	var obj = $(id);
-	var toggle = $(toggleid);
+	var obj = $dom(id);
+	var toggle = $dom(toggleid);
 	if (obj.className == 'introhide') {
 		obj.className = "intro"
 		toggle.innerHTML = "[-]";
@@ -183,7 +187,7 @@ function toggleIntro(id, toggleid) {
 
 function tagsToggleStoryDiv(id, is_admin, type) {
 	var bodyid = 'toggletags-body-' + id;
-	var tagsbody = $(bodyid);
+	var tagsbody = $dom(bodyid);
 	if (tagsbody.className == 'tagshide') {
 		tagsShowBody(id, is_admin, '', type);
 	} else {
@@ -194,22 +198,22 @@ function tagsToggleStoryDiv(id, is_admin, type) {
 function tagsHideBody(id) {
 	// Make the body of the tagbox vanish
 	var tagsbodyid = 'toggletags-body-' + id;
-	var tagsbody = $(tagsbodyid);
+	var tagsbody = $dom(tagsbodyid);
 	tagsbody.className = "tagshide"
 
 	// Make the title of the tagbox change back to regular
 	var titleid = 'tagbox-title-' + id;
-	var title = $(titleid);
+	var title = $dom(titleid);
 	title.className = "tagtitleclosed";
 
 	// Make the tagbox change back to regular.
 	var tagboxid = 'tagbox-' + id;
-	var tagbox = $(tagboxid);
+	var tagbox = $dom(tagboxid);
 	tagbox.className = "tags";
 
 	// Toggle the button back.
 	var tagsbuttonid = 'toggletags-button-' + id;
-	var tagsbutton = $(tagsbuttonid);
+	var tagsbutton = $dom(tagsbuttonid);
 	tagsbutton.innerHTML = "[+]";
 }
 
@@ -228,35 +232,35 @@ function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
 	
 	// Toggle the button to show the click was received
 	var tagsbuttonid = 'toggletags-button-' + id;
-	var tagsbutton = $(tagsbuttonid);
+	var tagsbutton = $dom(tagsbuttonid);
 	tagsbutton.innerHTML = "[-]";
 
 	// Make the tagbox change to the slashbox class
 	var tagboxid = 'tagbox-' + id;
-	var tagbox = $(tagboxid);
+	var tagbox = $dom(tagboxid);
 	tagbox.className = "tags";
 
 	// Make the title of the tagbox change to white-on-green
 	var titleid = 'tagbox-title-' + id;
-	var title = $(titleid);
+	var title = $dom(titleid);
 	title.className = "tagtitleopen";
 
 	// Make the body of the tagbox visible
 	var tagsbodyid = 'toggletags-body-' + id;
-	var tagsbody = $(tagsbodyid);
+	var tagsbody = $dom(tagsbodyid);
 	
 	tagsbody.className = "tagbody";
 	
 	// If the tags-user div hasn't been filled, fill it.
 	var tagsuserid = 'tags-user-' + id;
-	var tagsuser = $(tagsuserid);
+	var tagsuser = $dom(tagsuserid);
 	if (tagsuser.innerHTML == "") {
 		// The tags-user-123 div is empty, and needs to be
 		// filled with the tags this user has already
 		// specified for this story, and a reskey to allow
 		// the user to enter more tags.
 		tagsuser.innerHTML = "Retrieving...";
-		var params = [];
+		var params = {};
 		if (type == "stories") {
 			params['op'] = 'tags_get_user_story';
 			params['sidenc'] = id;
@@ -272,7 +276,7 @@ function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
 		var handlers = {
 			onComplete: function() { 
 				var textid = 'newtags-' + id;
-				var input = $(textid);
+				var input = $dom(textid);
 				input.focus();
 			}
 		}
@@ -287,7 +291,7 @@ function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
 		// user is not actually an admin.
 		if (is_admin) {
 			var tagsadminid = 'tags-admin-' + id;
-			params = [];
+			params = {};
 			if (type == "stories") {
 				params['op'] = 'tags_get_admin_story';
 				params['sidenc'] = id;
@@ -308,7 +312,7 @@ function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
 			// We can't do that by passing it in, so do it
 			// manually now.
 			var textinputid = 'newtags-' + id;
-			var textinput = $(textinputid);
+			var textinput = $dom(textinputid);
 			textinput.value = textinput.value + ' ' + newtagspreloadtext;
 			textinput.focus();
 		}
@@ -382,12 +386,12 @@ function reportError(request) {
 }
 
 function createTag(tag, id, type) {
-	var params = [];
+	var params = {};
 	params['id'] = id;
 	params['type'] = type;
 	if ( fh_is_admin && ("_#)^*".indexOf(tag[0]) != -1) ) {
 	  params['op'] = 'tags_admin_commands';
-	  params['reskey'] = $('admin_commands-reskey-' + id).value;
+	  params['reskey'] = $dom('admin_commands-reskey-' + id).value;
 	  params['command'] = tag;
 	} else {
 	  params['op'] = 'tags_create_tag';
@@ -402,15 +406,15 @@ function createTag(tag, id, type) {
 
 function tagsCreateForStory(id) {
 	var toggletags_message_id = 'toggletags-message-' + id;
-	var toggletags_message_el = $(toggletags_message_id);
+	var toggletags_message_el = $dom(toggletags_message_id);
 	toggletags_message_el.innerHTML = 'Saving tags...';
 
-	var params = [];
+	var params = {};
 	params['op'] = 'tags_create_for_story';
 	params['sidenc'] = id;
-	var newtagsel = $('newtags-' + id);
+	var newtagsel = $dom('newtags-' + id);
 	params['tags'] = newtagsel.value;
-	var reskeyel = $('newtags-reskey-' + id);
+	var reskeyel = $dom('newtags-reskey-' + id);
 	params['reskey'] = reskeyel.value;
 
 	ajax_update(params, 'tags-user-' + id);
@@ -421,15 +425,15 @@ function tagsCreateForStory(id) {
 
 function tagsCreateForUrl(id) {
 	var toggletags_message_id = 'toggletags-message-' + id;
-	var toggletags_message_el = $(toggletags_message_id);
+	var toggletags_message_el = $dom(toggletags_message_id);
 	toggletags_message_el.innerHTML = 'Saving tags...';
 
-	var params = [];
+	var params = {};
 	params['op'] = 'tags_create_for_url';
 	params['id'] = id;
-	var newtagsel = $('newtags-' + id);
+	var newtagsel = $dom('newtags-' + id);
 	params['tags'] = newtagsel.value;
-	var reskeyel = $('newtags-reskey-' + id);
+	var reskeyel = $dom('newtags-reskey-' + id);
 	params['reskey'] = reskeyel.value;
 
 	ajax_update(params, 'tags-user-' + id);
@@ -440,7 +444,7 @@ function tagsCreateForUrl(id) {
 
 //Firehose functions begin
 function setOneTopTagForFirehose(id, newtag) {
-	var params = [];
+	var params = {};
 	params['op'] = 'firehose_update_one_tag';
 	params['id'] = id;
 	params['tags'] = newtag;
@@ -450,15 +454,15 @@ function setOneTopTagForFirehose(id, newtag) {
 
 function tagsCreateForFirehose(id) {
 	var toggletags_message_id = 'toggletags-message-' + id;
-	var toggletags_message_el = $(toggletags_message_id);
+	var toggletags_message_el = $dom(toggletags_message_id);
 	toggletags_message_el.innerHTML = 'Saving tags...';
 	
-	var params = [];
+	var params = {};
 	params['op'] = 'tags_create_for_firehose';
 	params['id'] = id;
-	var newtagsel = $('newtags-' + id);
+	var newtagsel = $dom('newtags-' + id);
 	params['tags'] = newtagsel.value; 
-	var reskeyel = $('newtags-reskey-' + id);
+	var reskeyel = $dom('newtags-reskey-' + id);
 	params['reskey'] = reskeyel.value;
 
 	ajax_update(params, 'tags-user-' + id);
@@ -466,16 +470,19 @@ function tagsCreateForFirehose(id) {
 }
 
 function toggle_firehose_body(id, is_admin) {
-	var params = [];
+	var params = {};
 	setFirehoseAction();
 	params['op'] = 'firehose_fetch_text';
 	params['id'] = id;
-	var fhbody = $('fhbody-'+id);
-	var fh = $('firehose-'+id);
+	var fhbody = $dom('fhbody-'+id);
+	var fh = $dom('firehose-'+id);
 	var usertype = fh_is_admin ? " adminmode" : " usermode";
 	if (fhbody.className == "empty") {
 		var handlers = {
-			onComplete: function() { 
+			onComplete: function() {
+				if(firehoseIsInWindow(id)) { 
+					scrollToWindowFirehose(id); 
+				}
 				firehose_get_admin_extras(id); 
 			}
 		};
@@ -503,7 +510,7 @@ function toggle_firehose_body(id, is_admin) {
 }
 
 function toggleFirehoseTagbox(id) {
-	var fhtb = $('fhtagbox-'+id);
+	var fhtb = $dom('fhtagbox-'+id);
 	if (fhtb.className == "hide") {
 		fhtb.className = "tagbox";
 	} else {
@@ -521,7 +528,7 @@ function firehose_set_options(name, value) {
 		["mode", 	"full", 	"abbrev",	"full",		"fulltitle"],
 		["mode", 	"fulltitle", 	"full",		"abbrev",	"full"]
 	];
-	var params = [];
+	var params = {};
 	params['op'] = 'firehose_set_options';
 	params['reskey'] = reskey_static;
 	var theForm = document.forms["firehoseform"];
@@ -548,7 +555,7 @@ function firehose_set_options(name, value) {
 		}
 
 		if (classname) {
-			var els = document.getElementsByClassName(classname, $('firehoselist'));
+			var els = document.getElementsByClassName(classname, $dom('firehoselist'));
 			var classval = classname;
 			if (value) {
 				classval = classval + " hide";
@@ -572,12 +579,12 @@ function firehose_set_options(name, value) {
 		var el = pairs[i];
 		if (name == el[0] && value == el[1]) {
 			firehose_settings[name] = value;
-			if ($(el[2])) {
-				$(el[2]).id = el[3];
-				if($(el[3])) {
+			if ($dom(el[2])) {
+				$dom(el[2]).id = el[3];
+				if($dom(el[3])) {
 					var namenew = el[0];
 					var valuenew = el[4];
-					$(el[3]).firstChild.onclick = function() { firehose_set_options(namenew, valuenew); return false;}
+					$dom(el[3]).firstChild.onclick = function() { firehose_set_options(namenew, valuenew); return false;}
 				}
 			}
 		}
@@ -587,7 +594,7 @@ function firehose_set_options(name, value) {
 		if (name == "mode") {
 			fh_view_mode = value;
 		}
-		if ($('firehoselist')) {
+		if ($dom('firehoselist')) {
 			// set page
 			page = 0;
 			
@@ -598,12 +605,12 @@ function firehose_set_options(name, value) {
 				var myAnim = new YAHOO.util.Anim("firehoselist", attributes); 
 				myAnim.duration = 1;
 				myAnim.onComplete.subscribe(function() {
-					$('firehoselist').style.opacity = "1";
+					$dom('firehoselist').style.opacity = "1";
 				});
 				myAnim.animate();
 			}
 			// remove elements
-			setTimeout("firehose_remove_all_items()", 600);
+			setTimeout(firehose_remove_all_items, 600);
 		}
 	}
 	}
@@ -623,11 +630,11 @@ function firehose_set_options(name, value) {
 			firehose_settings.page = 0;
 			var issuedate = firehose_settings.issue.substr(5,2) + "/" + firehose_settings.issue.substr(8,2) + "/" + firehose_settings.issue.substr(10,2);
 
-			if ($('fhcalendar')) {
-				$('fhcalendar')._widget.setDate(issuedate, "day");
+			if ($dom('fhcalendar')) {
+				$dom('fhcalendar')._widget.setDate(issuedate, "day");
 			}
-			if ($('fhcalendar_pag')) {
-				$('fhcalendar_pag')._widget.setDate(issuedate, "day");
+			if ($dom('fhcalendar_pag')) {
+				$dom('fhcalendar_pag')._widget.setDate(issuedate, "day");
 			}
 		}
 		if (name == "color") {
@@ -662,7 +669,7 @@ function firehose_set_options(name, value) {
 }
 
 function firehose_remove_all_items() {
-	var fhl = $('firehoselist');
+	var fhl = $dom('firehoselist');
 	var children = fhl.childNodes;
 	for (var i = children.length -1 ; i >= 0; i--) {
 		var el = children[i];
@@ -677,7 +684,7 @@ function firehose_up_down(id, dir) {
 	if (!check_logged_in()) return;
 
 	setFirehoseAction();
-	var params = [];
+	var params = {};
 	var handlers = {
 		onComplete: json_handler
 	};
@@ -685,7 +692,7 @@ function firehose_up_down(id, dir) {
 	params['id'] = id;
 	params['reskey'] = reskey_static;
 	params['dir'] = dir;
-	var updown = $('updown-' + id);
+	var updown = $dom('updown-' + id);
 	ajax_update(params, '', handlers);
 	if (updown) {
 		if (dir == "+") {
@@ -702,7 +709,7 @@ function firehose_up_down(id, dir) {
 
 function firehose_remove_tab(tabid) {
 	setFirehoseAction();
-	var params = [];
+	var params = {};
 	var handlers = {
 		onComplete:  json_handler
 	};
@@ -718,39 +725,34 @@ function firehose_remove_tab(tabid) {
 // firehose functions end
 
 // helper functions
-function ajax_update(params, onsucc, options, url) {
-	var h = $H(params);
+function ajax_update(request_params, id, handlers, request_url) {
+	// make an ajax request to request_url with request_params, on success,
+	//  update the innerHTML of the element with id
 
-	if (!url)
-		url = '/ajax.pl';
+	var opts = {
+		url: request_url || '/ajax.pl',
+		data: request_params,
+		type: 'POST',
+		contentType: 'application/x-www-form-urlencoded',
+	};
 
-	if (!options)
-		options = {};
+	if ( id ) {
+		opts['success'] = function(html){
+			jQuery('#'+id).html(html);
+		}
+	}
 
-	options.method = 'post';
-	options.parameters = h.toQueryString();
+	if ( handlers && handlers.onComplete ) {
+		opts['complete'] = handlers.onComplete;
+	}
 
-	var ajax = new Ajax.Updater(
-		{ success: onsucc },
-		url,
-		options
-	);
+	jQuery.ajax(opts);
 }
 
-function ajax_periodic_update(secs, params, onsucc, options, url) {
-	var h = $H(params);
-	
-	if (!url) 
-		url = '/ajax.pl';
-		
-	if (!options)
-		options = {};
-
-	options.frequency = secs;
-	options.method = 'post';
-	options.parameters = h.toQueryString();
-
-	var ajax = new Ajax.PeriodicalUpdater({ success: onsucc }, url, options);
+function ajax_periodic_update(interval_in_seconds, request_params, id, handlers, request_url) {
+	setInterval(function(){
+		ajax_update(request_params, id, handlers, request_url);
+	}, interval_in_seconds*1000);
 }
 
 function eval_response(transport) {
@@ -766,6 +768,7 @@ function eval_response(transport) {
 function json_handler(transport) {
 	var response = eval_response(transport);
 	json_update(response);
+	return response;
 }
 
 function json_update(response) {
@@ -779,35 +782,35 @@ function json_update(response) {
 
 	if (response.html) {
 		for (el in response.html) {
-			if ($(el))
-				$(el).innerHTML = response.html[el];
+			if ($dom(el))
+				$dom(el).innerHTML = response.html[el];
 		}
 		
 	} 
 
 	if (response.value) {
 		for (el in response.value) {
-			if ($(el))
-				$(el).value = response.value[el];
+			if ($dom(el))
+				$dom(el).value = response.value[el];
 		}
 	}
 
 	if (response.html_append) {
 		for (el in response.html_append) {
-			if ($(el))
-				$(el).innerHTML = $(el).innerHTML + response.html_append[el];
+			if ($dom(el))
+				$dom(el).innerHTML = $dom(el).innerHTML + response.html_append[el];
 		}
 	}
 
 	if (response.html_append_substr) {
 		for (el in response.html_append_substr) {
-			if ($(el)) {
-				var this_html = $(el).innerHTML;
-				var i = $(el).innerHTML.search(/<span class="?substr"?> ?<\/span>[\s\S]*$/i);
+			if ($dom(el)) {
+				var this_html = $dom(el).innerHTML;
+				var i = $dom(el).innerHTML.search(/<span class="?substr"?> ?<\/span>[\s\S]*$/i);
 				if (i == -1) {
-					$(el).innerHTML += response.html_append_substr[el];
+					$dom(el).innerHTML += response.html_append_substr[el];
 				} else {
-					$(el).innerHTML = $(el).innerHTML.substr(0, i) +
+					$dom(el).innerHTML = $dom(el).innerHTML.substr(0, i) +
 						response.html_append_substr[el];
 				}
 			}
@@ -830,16 +833,14 @@ function firehose_handle_update() {
 		var fh = 'firehose-' + el[1];
 		var wait_interval = 800;
 		if(el[0] == "add") {
-			if (firehose_before[el[1]] && $('firehose-' + firehose_before[el[1]])) {
-				new Insertion.After('firehose-' + firehose_before[el[1]], el[2]);
-
-
-			} else if (firehose_after[el[1]] && $('firehose-' + firehose_after[el[1]])) {
-				new Insertion.Before('firehose-' + firehose_after[el[1]], el[2]);
+			if (firehose_before[el[1]] && jQuery('#firehose-' + firehose_before[el[1]]).size()) {
+				jQuery('#firehose-' + firehose_before[el[1]]).after(el[2]);
+			} else if (firehose_after[el[1]] && jQuery('#firehose-' + firehose_after[el[1]]).size()) {
+				jQuery('#firehose-' + firehose_after[el[1]]).before(el[2]);
 			} else if (insert_new_at == "bottom") {
-				new Insertion.Bottom('firehoselist', el[2]);
+				jQuery('#firehoselist').append(el[2]);
 			} else {
-				new Insertion.Top('firehoselist', el[2]);
+				jQuery('#firehoselist').prepend(el[2]);
 			}
 		
 			var toheight = 50;
@@ -871,8 +872,8 @@ function firehose_handle_update() {
 			}
 
 			myAnim.onComplete.subscribe(function() {
-				if ($(fh)) {
-					$(fh).style.height = "";
+				if ($dom(fh)) {
+					$dom(fh).style.height = "";
 					if (fh_use_jquery) {
 						jQuery("#" + fh + " h3 a[class!='skin']").click(
 				                	function(){
@@ -886,7 +887,7 @@ function firehose_handle_update() {
 			});
 			myAnim.animate();
 		} else if (el[0] == "remove") {
-			var fh_node = $(fh);
+			var fh_node = $dom(fh);
 			if (fh_is_admin && fh_view_mode == "fulltitle" && fh_node && fh_node.className == "article" ) {
 				// Don't delete admin looking at this in expanded view
 			} else {
@@ -919,7 +920,7 @@ function firehose_handle_update() {
 					});
 					myAnim.animate(); 
 				} else {
-					var elem = $(fh);
+					var elem = $dom(fh);
 					wait_interval = 25;
 					if (elem && elem.parentNode) {
 						elem.parentNode.removeChild(elem);
@@ -927,7 +928,7 @@ function firehose_handle_update() {
 				}
 			}
 		}
-		setTimeout("firehose_handle_update()", wait_interval);
+		setTimeout(firehose_handle_update, wait_interval);
 	} else {
 		firehose_reorder();
 		firehose_get_next_updates();
@@ -936,32 +937,28 @@ function firehose_handle_update() {
 
 function firehose_reorder() {
 	if (firehose_ordered) {
-		var fhlist = $('firehoselist');
+		var fhlist = $dom('firehoselist');
 		if (fhlist) {
 			var item_count = 0;
 			for (i = 0; i < firehose_ordered.length; i++) {
 				if (/^\d+$/.test(firehose_ordered[i])) {
 					item_count++;
 				}
-				var fhel = $('firehose-' + firehose_ordered[i]);
+				var fhel = $dom('firehose-' + firehose_ordered[i]);
 				if (fhlist && fhel) {
 					fhlist.appendChild(fhel);
 				}
 				if ( firehose_future[firehose_ordered[i]] ) {
-					if ($("ttype-" + firehose_ordered[i])) {
-						$("ttype-" + firehose_ordered[i]).className = "future";	
+					if ($dom("ttype-" + firehose_ordered[i])) {
+						$dom("ttype-" + firehose_ordered[i]).className = "future";
 					}
 				} else {
-					if ($("ttype-" + firehose_ordered[i]) && $("ttype-" + firehose_ordered[i]).className == "future") {
-						$("ttype-" + firehose_ordered[i]).className = "story";	
+					if ($dom("ttype-" + firehose_ordered[i]) && $dom("ttype-" + firehose_ordered[i]).className == "future") {
+						$dom("ttype-" + firehose_ordered[i]).className = "story";
 					}
 				}
 			}
-			if (console_updating) {
-				document.title = sitename + " - Console (" + item_count + ")";
-			} else {
-				document.title = sitename + " - Firehose (" + item_count + ")";
-			}
+			document.title = "[% sitename %] - " + (console_updating ? "Console" : "Firehose") + " (" + item_count + ")";
 		}
 	}
 
@@ -971,13 +968,13 @@ function firehose_get_next_updates() {
 	var interval = getFirehoseUpdateInterval();
 	//alert("fh_get_next_updates");
 	fh_is_updating = 0;
-	firehose_add_update_timerid(setTimeout("firehose_get_updates()", interval));
+	firehose_add_update_timerid(setTimeout(firehose_get_updates, interval));
 }
 
 
 function firehose_get_updates_handler(transport) {
-	if ($('busy')) {
-		$('busy').className = "hide";
+	if ($dom('busy')) {
+		$dom('busy').className = "hide";
 	}
 	var response = eval_response(transport);
 	var processed = 0;
@@ -1008,7 +1005,7 @@ function firehose_get_updates_handler(transport) {
 }
 
 function firehose_get_item_idstring() {
-	var fhl = $('firehoselist');
+	var fhl = $dom('firehoselist');
 	var str = "";
 	var children;
 	if (fhl) {
@@ -1033,7 +1030,7 @@ function firehose_get_updates(options) {
 	options = options || {};
 	run_before_update();
 	if ((fh_play == 0 && !options.oneupdate) || fh_is_updating == 1) {
-		firehose_add_update_timerid(setTimeout("firehose_get_updates()", 2000));
+		firehose_add_update_timerid(setTimeout(firehose_get_updates, 2000));
 	//	alert("wait loop: " + fh_is_updating);
 		return;
 	}
@@ -1042,7 +1039,7 @@ function firehose_get_updates(options) {
 		while(id = fh_update_timerids.pop()) { clearTimeout(id) };
 	}
 	fh_is_updating = 1
-	var params = [];
+	var params = {};
 	var handlers = {
 		onComplete: firehose_get_updates_handler
 	};
@@ -1058,8 +1055,8 @@ function firehose_get_updates(options) {
 		params['embed'] = 1;
 	}
 	params['fh_pageval'] = firehose_settings.pageval;
-	if ($('busy')) {
-		$('busy').className = "";
+	if ($dom('busy')) {
+		$dom('busy').className = "";
 	}
 	ajax_update(params, '', handlers);
 }
@@ -1103,8 +1100,8 @@ function run_before_update() {
 	var secs = getSecsSinceLastFirehoseAction();
 	if (secs > inactivity_timeout) {
 		fh_is_timed_out = 1;
-		if ($('message_area'))
-			$('message_area').innerHTML = "Automatic updates have been slowed due to inactivity";
+		if ($dom('message_area'))
+			$dom('message_area').innerHTML = "Automatic updates have been slowed due to inactivity";
 		//firehose_pause();
 	}
 }
@@ -1113,15 +1110,15 @@ function firehose_play() {
 	fh_play = 1;
 	setFirehoseAction();
 	firehose_set_options('pause', '0');
-	var pausepanel = $('pauseorplay');
-	if ($('message_area'))
-		$('message_area').innerHTML = "";
+	var pausepanel = $dom('pauseorplay');
+	if ($dom('message_area'))
+		$dom('message_area').innerHTML = "";
 	if (pausepanel) {
 		pausepanel.innerHTML = "Updated";
 	}
-	var pause = $('pause');
+	var pause = $dom('pause');
 	
-	var play_div = $('play');
+	var play_div = $dom('play');
 	if (play_div) {
 		play_div.className = "hide";
 	}
@@ -1130,14 +1127,18 @@ function firehose_play() {
 	}
 }
 
+function is_firehose_playing() {
+  return YAHOO.util.Dom.hasClass('play', 'hide');
+}
+
 function firehose_pause() {
 	fh_play = 0;
-	var pause = $('pause');
-	var play_div = $('play');
+	var pause = $dom('pause');
+	var play_div = $dom('play');
 	pause.className = "hide";
 	play_div.className = "show";
-	if ($('pauseorplay')) {
-		$('pauseorplay').innerHTML = "Paused";
+	if ($dom('pauseorplay')) {
+		$dom('pauseorplay').innerHTML = "Paused";
 	}
 	firehose_set_options('pause', '1');
 }
@@ -1147,8 +1148,8 @@ function firehose_add_update_timerid(timerid) {
 }
 
 function firehose_collapse_entry(id) {
-	var fhbody = $('fhbody-'+id);
-	var fh = $('firehose-'+id);
+	var fhbody = $dom('fhbody-'+id);
+	var fh = $dom('firehose-'+id);
 	if (fhbody && fhbody.className == "body") {
 		fhbody.className = "hide";
 	}
@@ -1160,7 +1161,7 @@ function firehose_collapse_entry(id) {
 }
 
 function firehose_remove_entry(id) {
-	var fh = $('firehose-' + id);
+	var fh = $dom('firehose-' + id);
 	if (fh) {
 		var attributes = { 
 			height: { to: 0 }
@@ -1205,7 +1206,7 @@ function firehose_slider_end(offsetFromStart) {
 		fh_slider_init_set = 1;
 	}
 	var color = fh_colors[ newVal / fh_ticksize ];
-	$('fh_slider_img').title = "Firehose filtered to " + color;
+	$dom('fh_slider_img').title = "Firehose filtered to " + color;
 	if (fh_slider_init_set) {
 		firehose_set_options("color", color)
 	}
@@ -1222,7 +1223,7 @@ function firehose_change_section_anon(section) {
 function pausePopVendorStory(id) {
 	vendor_popup_id=id;
 	closePopup('vendorStory-26-popup');
-	vendor_popup_timerids[id] = setTimeout("vendorStoryPopup()", 500);
+	vendor_popup_timerids[id] = setTimeout(vendorStoryPopup, 500);
 }
 
 function clearVendorPopupTimers() {
@@ -1242,7 +1243,7 @@ function vendorStoryPopup() {
 	}
 	};
 	createPopup(getXYForId('sponsorlinks', 0, 0), title, "vendorStory-" + id, "Loading", "", closepopup );
-	var params = [];
+	var params = {};
 	params['op'] = 'getTopVendorStory';
 	params['skid'] = id;
 	ajax_update(params, "vendorStory-" + id + "-contents");
@@ -1251,7 +1252,7 @@ function vendorStoryPopup() {
 function pausePopVendorStory2(id) {
 	vendor_popup_id=id;
 	closePopup('vendorStory-26-popup');
-	vendor_popup_timerids[id] = setTimeout("vendorStoryPopup2()", 500);
+	vendor_popup_timerids[id] = setTimeout(vendorStoryPopup2, 500);
 }
 
 function vendorStoryPopup2() {
@@ -1267,14 +1268,14 @@ function vendorStoryPopup2() {
 		}
 	};
 	createPopup(getXYForId('sponsorlinks2', 0, 0), title, "vendorStory-" + id, "Loading", "", closepopup );
-	var params = [];
+	var params = {};
 	params['op'] = 'getTopVendorStory';
 	params['skid'] = id;
 	ajax_update(params, "vendorStory-" + id + "-contents");
 }
 
 function logToDiv(id, message) {
-	var div = $(id);
+	var div = $dom(id);
 	if (div) {
 	div.innerHTML = div.innerHTML + message + "<br>";
 	}
@@ -1282,19 +1283,19 @@ function logToDiv(id, message) {
 
 
 function firehose_open_tab(id) {
-	var tf = $('tab-form-'+id);
-	var tt = $('tab-text-'+id);
-	var ti = $('tab-input-'+id);
+	var tf = $dom('tab-form-'+id);
+	var tt = $dom('tab-text-'+id);
+	var ti = $dom('tab-input-'+id);
 	tf.className="";
 	ti.focus();
 	tt.className="hide";
 }
 
 function firehose_save_tab(id) {
-	var tf = $('tab-form-'+id);
-	var tt = $('tab-text-'+id);
-	var ti = $('tab-input-'+id);
-	var params = [];
+	var tf = $dom('tab-form-'+id);
+	var tt = $dom('tab-text-'+id);
+	var ti = $dom('tab-input-'+id);
+	var params = {};
 	var handlers = {
 		onComplete: json_handler 
 	};
@@ -1375,8 +1376,8 @@ var modal_box   = 0;
 var modal_inst  = 0;
 
 function init_modal_divs() {
-	modal_cover = $('modal_cover');
-	modal_box   = $('modal_box');
+	modal_cover = $dom('modal_cover');
+	modal_box   = $dom('modal_box');
 }
 
 function install_modal() {
@@ -1392,7 +1393,7 @@ function install_modal() {
 	modal_cover.parentNode.removeChild(modal_cover);
 	modal_box.parentNode.removeChild(modal_box);
 
-	var modal_parent = $('top_parent');
+	var modal_parent = $dom('top_parent');
 	modal_parent.parentNode.insertBefore(modal_cover, modal_parent);
 	modal_parent.parentNode.insertBefore(modal_box, modal_parent);
 	modal_inst = 1;
@@ -1423,12 +1424,12 @@ function hide_modal_box() {
 }
 
 function getModalPrefs(section, title, tabbed) {
-        document.getElementById('preference_title').innerHTML = title;
-	var params = [];
+	document.getElementById('preference_title').innerHTML = title;
+	var params = {};
 	params['op'] = 'getModalPrefs';
 	params['section'] = section;
 	params['reskey'] = reskey_static;
-        params['tabbed'] = tabbed;
+	params['tabbed'] = tabbed;
 	var handlers = {onComplete:show_modal_box};
 	ajax_update(params, 'modal_box_content', handlers);
 
@@ -1436,21 +1437,21 @@ function getModalPrefs(section, title, tabbed) {
 }
 
 function firehose_get_media_popup(id) {
-	if ($('preference_title')) {
-		$('preference_title').innerHTML = "Media";
+	if ($dom('preference_title')) {
+		$dom('preference_title').innerHTML = "Media";
 	}
-	var params = [];
+	var params = {};
 	params['op'] = 'firehose_get_media';
 	params['id'] = id;
 	show_modal_box();
-	$('modal_box_content').innerHTML = "<h4>Loading...</h4><img src='/images/spinner_large.gif'>";
+	$dom('modal_box_content').innerHTML = "<h4>Loading...</h4><img src='/images/spinner_large.gif'>";
 	ajax_update(params, 'modal_box_content');
 }
 
 function saveModalPrefs() {
-	var params = [];
+	var params = {};
 	params['op'] = 'saveModalPrefs';
-	params['data'] = Form.serialize(document.forms['modal_prefs']);
+	params['data'] = jQuery("#modal_prefs").serialize();
 	params['reskey'] = reskey_static;
 	var handlers = {
 		onComplete: function() {
@@ -1473,7 +1474,7 @@ function ajaxSaveSlashboxes() {
 		sep = ",";
 	}
 
-	var params = [];
+	var params = {};
 	params['op'] = 'page_save_user_boxes';
 	params['reskey'] = reskey_static;
 	params['bids'] = all;
@@ -1496,14 +1497,14 @@ function displayModalPrefHelp(element) {
 }
 
 function toggle_filter_prefs() {
-	var fps = $('filter_play_status');
-	var fp  = $('filter_prefs');
+	var fps = $dom('filter_play_status');
+	var fp  = $dom('filter_prefs');
 	if (fps) {
 		if (fps.className == "") {
 			fps.className = "hide";
 			if (fp) {
 				fp.className = "";
-				setTimeout("firehose_slider_init()",500);
+				setTimeout(firehose_slider_init,500);
 			} 
 		} else if (fps.className == "hide") {
 			fps.className = "";
@@ -1514,3 +1515,126 @@ function toggle_filter_prefs() {
 	}
 
 }
+
+function admin_signoff(stoid, type, id) {
+	var params = [];
+	params['op'] = 'admin_signoff';
+	params['stoid'] = stoid;
+	params['reskey'] = reskey_static;
+	ajax_update(params, 'signoff_' + stoid);
+	if (type == "firehose") {
+		firehose_collapse_entry(id);
+	}
+}
+
+
+function scrollWindowToFirehose(fhid) {
+	var firehose_y = getOffsetTop($('firehose-' + fhid));
+	console.log(firehose_y);
+	scroll(viewWindowLeft(), firehose_y);
+}
+
+function viewWindowLeft() {
+	if (self.pageXOffset) // all except Explorer
+	{
+		return self.pageXOffset;
+	}
+	else if (document.documentElement && document.documentElement.scrollTop)
+		// Explorer 6 Strict
+	{
+		return document.documentElement.scrollLeft;
+	}
+	else if (document.body) // all other Explorers
+	{
+		return document.body.scrollLeft;
+	}
+}
+
+function getOffsetTop (el) {
+	if (!el)
+		return false;
+	var ot = el.offsetTop;
+	while((el = el.offsetParent) != null)
+		ot += el.offsetTop;
+	return ot;
+}
+
+function firehoseIsInWindow(fhid, just_head) {
+	var in_window = isInWindow($('firehose-' + fhid));
+	return in_window;
+}
+
+function isInWindow(obj) {
+	var y = getOffsetTop(obj);
+
+	if (y > viewWindowTop() && y < viewWindowBottom()) {
+		return 1;
+	}
+	return 0;
+}
+
+function viewWindowTop() {
+	if (self.pageYOffset) // all except Explorer
+	{
+		return self.pageYOffset;
+	}
+	else if (document.documentElement && document.documentElement.scrollTop)
+		// Explorer 6 Strict
+	{
+		return document.documentElement.scrollTop;
+	}
+	else if (document.body) // all other Explorers
+	{
+		return document.body.scrollTop;
+	}
+	return;
+}
+
+function viewWindowBottom() {
+	return viewWindowTop() + (window.innerHeight || document.documentElement.clientHeight);
+}
+
+function firehose_get_cur() {
+	if (!firehose_cur) {
+		firehose_cur = firehose_ordered[0];
+		firehose_set_cur(firehose_cur);
+	}
+	return firehose_cur;
+}
+
+function firehose_set_cur(id) {
+	firehose_cur = id;
+}
+
+function firehose_get_pos_of_id(id) {
+	var ret;
+	for (var i=0; i< firehose_ordered.length; i++) {
+		if (firehose_ordered[i] == id) {
+			ret = i;
+		}
+	}
+	return ret;
+}
+
+function firehose_go_next() {
+	var cur = firehose_get_cur();
+	var pos = firehose_get_pos_of_id(cur);
+	if (pos < (firehose_ordered.length - 1)) {
+		pos++;
+	}
+	firehose_set_cur(firehose_ordered[pos]);
+	scrollWindowToFirehose(firehose_cur);
+}
+
+function firehose_go_prev() {
+	var cur = firehose_get_cur();
+	var pos = firehose_get_pos_of_id(cur);
+	if (pos>0) {
+		pos--;
+	}
+	firehose_set_cur(firehose_ordered[pos]);
+	scrollWindowToFirehose(firehose_cur);
+
+}
+
+

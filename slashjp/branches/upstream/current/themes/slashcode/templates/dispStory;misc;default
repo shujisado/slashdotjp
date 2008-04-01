@@ -71,7 +71,7 @@ END %]
 		[% mypagemenu = PROCESS pagemenu; IF mypagemenu %]<br>[% mypagemenu %][% END %] 
 		<div class="topic">
 			[% seen_topics.${topic.tid} = 1 %]
-			[% IF user.noicons || user.simpledesign || user.lowbandwidth %]
+			[% IF user.noicons || user.simpledesign || user.lowbandwidth || user.pda %]
 				[ <a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]">[% topic.textname %]</a> ]
 			[% ELSIF topic.image %]
 				<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]">
@@ -95,7 +95,17 @@ END %]
 			[% story.introtext %]
 		</div>
 
-[% IF full && user.is_admin && !preview && env.script_name != '/admin.pl' %]<br><a href="[% gSkin.rootdir -%]/admin.pl?op=edit&amp;sid=[% story.sid %]">[ Edit ]</a>&nbsp;[% IF constants.plugin.Ajax %][% PROCESS signoff stoid = story.stoid %] [% PROCESS neverdisplay stoid = stoid %][% END %][% END %]
+[% IF full && user.is_admin && !preview && env.script_name != '/admin.pl' %]<br><a href="[% gSkin.rootdir -%]/admin.pl?op=edit&amp;sid=[% story.sid %]">[ Edit ]</a>&nbsp;[% END %]
+[% IF full && !preview && env.script_name != '/admin.pl' %]
+	[% IF constants.plugin.Ajax %]
+		[% IF user.is_admin || user.acl.signoff_allowed %]
+			[% PROCESS signoff stoid = story.stoid %]
+		[% END %]
+		[% IF user.is_admin %]
+			[% PROCESS neverdisplay stoid = stoid %]
+		[% END %]
+	[% END %]
+[% END %]
 
 [% IF story.is_future && !user.is_admin %]<p>See any serious problems with this story?
 [% IF constants.ircslash_remarks %]
@@ -164,4 +174,4 @@ END;
 __seclev__
 10000
 __version__
-$Id: dispStory;misc;default,v 1.67 2007/10/24 00:30:08 scc Exp $
+$Id: dispStory;misc;default,v 1.69 2008/03/18 20:33:39 tvroom Exp $

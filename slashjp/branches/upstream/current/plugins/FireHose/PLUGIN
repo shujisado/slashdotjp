@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.29 2008/02/19 14:45:30 scc Exp $
+# $Id: PLUGIN,v 1.30 2008/03/03 14:11:11 scc Exp $
 name=FireHose
 description="FireHose"
 css=firehose.css
@@ -32,6 +32,7 @@ template=templates/reject_firehose;misc;default
 template=templates/tagsfirehosedivadmin;misc;default
 template=templates/tagsfirehosedivtagbox;misc;default
 template=templates/tagsfirehosedivuser;misc;default
+template=templates/tagsnodnixuser;misc;default
 task=firehose_reject_old.pl
 task=firehose_backend.pl
 task=firehose_get_thumbnails.pl

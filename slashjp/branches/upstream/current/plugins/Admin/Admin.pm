@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Admin.pm,v 1.38 2007/12/13 21:22:53 pudge Exp $
+# $Id: Admin.pm,v 1.39 2008/03/18 16:13:45 tvroom Exp $
 
 package Slash::Admin;
 
@@ -16,7 +16,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.38 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.39 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -221,7 +221,7 @@ sub ajax_signoff {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
-	return unless $user->{is_admin};
+	return unless $user->{is_admin} || $user->{acl}{signoff_allowed};
 	
 	my $stoid = $form->{stoid};
 	my $uid   = $user->{uid};
@@ -326,11 +326,11 @@ sub getSignoffData {
 	my($self, $days) = @_;
 	my $days_q = $self->sqlQuote($days);
 	my $signoff_info = $self->sqlSelectAllHashrefArray(
-		"stories.stoid, users.uid, (unix_timestamp(min(signoff_time)) - unix_timestamp(stories.time)) / 60 AS min_to_sign, users.nickname",
+		"stories.stoid, users.uid, (unix_timestamp(min(signoff_time)) - unix_timestamp(stories.time)) / 60 AS min_to_sign, users.nickname, users.seclev",
 		"stories, story_topics_rendered, signoff, users",
 		"stories.stoid = story_topics_rendered.stoid AND signoff.stoid=stories.stoid AND users.uid = signoff.uid
 	         AND stories.time <= NOW() AND stories.time > DATE_SUB(NOW(), INTERVAL $days_q DAY)",
-		"GROUP BY signoff.uid, signoff.stoid"
+		"GROUP BY signoff.uid, signoff.stoid ORDER BY users.seclev DESC"
 	);
 	return $signoff_info;
 

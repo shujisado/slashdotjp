@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.14 2007/12/06 02:49:31 jamiemccarthy Exp $
+# $Id: PLUGIN,v 1.15 2008/03/19 14:49:35 jamiemccarthy Exp $
 name=Tags
 description="Tags"
 htdoc=tags.pl
@@ -6,6 +6,7 @@ mysql_dump=mysql_dump.sql
 mysql_schema=mysql_schema.sql
 requiresplugin=Ajax
 task=tagbox.pl
+task=tags_tagnamecache.pl
 task=tags_udc.pl
 task=tags_updateclouts.pl
 template=templates/data;tags;default

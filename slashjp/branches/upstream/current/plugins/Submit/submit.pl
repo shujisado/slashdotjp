@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: submit.pl,v 1.144 2007/10/23 20:56:46 tvroom Exp $
+# $Id: submit.pl,v 1.145 2008/03/18 16:45:13 tvroom Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -265,6 +265,9 @@ sub previewForm {
 		}
 	}
 
+	my $url = "";
+	$url = $slashdb->getUrl($sub->{url_id}) if $sub->{url_id};
+
         foreach my $memory (@$sub_memory) {
                 my $match = $memory->{submatch};
 
@@ -272,7 +275,8 @@ sub previewForm {
                     $sub->{name}  =~ m/$match/i ||
                     $sub->{subj}  =~ m/$match/i ||
                     $sub->{ipid}  =~ m/$match/i ||
-                    $sub->{story} =~ m/$match/i) {
+                    $sub->{story} =~ m/$match/i ||
+		    $url =~ m/$match/i ) {
                         push @$subnotes_ref, $memory;
                 }
         }

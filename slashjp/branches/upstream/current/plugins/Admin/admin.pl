@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: admin.pl,v 1.331 2008/02/27 19:00:15 jamiemccarthy Exp $
+# $Id: admin.pl,v 1.332 2008/03/18 16:13:45 tvroom Exp $
 
 use strict;
 use File::Temp 'tempfile';
@@ -1882,7 +1882,7 @@ sub listStories {
 	}
 
 	my $usersignoffs 	= $slashdb->getUserSignoffHashForStoids($user->{uid}, $stoid_list);
-	my $storysignoffcnt	= $slashdb->getSignoffCountHashForStoids($stoid_list);
+	my $storysignoffcnt	= $slashdb->getSignoffCountHashForStoids($stoid_list, 1);
 
 	my $needed_signoffs = $slashdb->getActiveAdminCount;
 
@@ -2601,15 +2601,22 @@ sub displaySignoffStats {
 		my $signoff_info = $admin->getSignoffData($days);
 		foreach (@$signoff_info) {
 			$author_info->{$_->{uid}}{nickname} = $_->{nickname};
+			$author_info->{$_->{uid}}{uid} = $_->{uid};
 			$author_info->{$_->{uid}}{$days}{cnt}++;	
 			$author_info->{$_->{uid}}{$days}{tot_time} += $_->{min_to_sign};
+			$author_info->{$_->{uid}}{seclev} = $_->{seclev};
 			$stoids_for_days{$days}{$_->{stoid}}++;
 			push @{$author_info->{$_->{uid}}{$days}{mins}}, $_->{min_to_sign};
 		}
 	}
 
+	my @author_array = values %$author_info;
+
+	@author_array = sort { $b->{seclev} <=> $a->{seclev} } @author_array;
+
 	slashDisplay("signoff_stats", {
 		author_info	=> $author_info,
+		author_array    => \@author_array,
 		stoids_for_days	=> \%stoids_for_days,
 		num_days	=> $num_days
 	});

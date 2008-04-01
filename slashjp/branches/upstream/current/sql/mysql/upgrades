@@ -10,7 +10,7 @@
 #      after X started at the same time that X was tagged.
 
 #
-# $Id: upgrades,v 1.1318 2008/02/28 20:44:48 pudge Exp $
+# $Id: upgrades,v 1.1328 2008/03/21 02:44:47 pudge Exp $
 #
 
 # BEGIN tf23's additions 
@@ -5049,8 +5049,6 @@ UPDATE vars SET value = 'T_2_5_0_184' WHERE name = 'cvs_tag_currentcode';
 # not for slashdot
 UPDATE vars SET value = 'yes no binspam dupe notthebest offtopic stupid slownewsday interesting funny insightful' WHERE name = 'tagbox_top_excludetagnames';
 
-# PUDGE LAST UPDATED HERE
-
 # 2007-12-05
 UPDATE vars SET value = 'T_2_5_0_185' WHERE name = 'cvs_tag_currentcode';
 
@@ -5136,8 +5134,6 @@ INSERT INTO vars (name, value, description) VALUES ('mailpass_valid_days','3','A
 # 2008-02-13
 UPDATE vars SET value = 'T_2_5_0_194' WHERE name = 'cvs_tag_currentcode';
 
-# SLASHDOT LAST UPDATED HERE
-
 # For sites *without* plugins/Tags
 DELETE FROM clout_types;
 
@@ -5147,8 +5143,6 @@ DELETE FROM templates WHERE page = "comments" AND skin = "default" AND name IN (
 # 2008-02-20
 UPDATE vars SET value = 'T_2_5_0_195' WHERE name = 'cvs_tag_currentcode';
 
-# SLASHCODE/USEPERL LAST UPDATED HERE
-
 # for plugins/Tags
 INSERT INTO vars (name, value, description) VALUES ('tags_unknowntype_default_clid', '1', 'For tags of unknown type, which clout id do we pretend they are?');
 INSERT INTO vars (name, value, description) VALUES ('tags_unknowntype_default_mult', '0.3', 'For tags of unknown type, what multiplier do we give to the tagging user clout or type tags_unknowntype_default_clid?');
@@ -5156,3 +5150,50 @@ INSERT INTO vars (name, value, description) VALUES ('tags_unknowntype_default_mu
 # 2008-02-28
 UPDATE vars SET value = 'T_2_5_0_196' WHERE name = 'cvs_tag_currentcode';
 
+# for plugins/Tags
+INSERT INTO ajax_ops VALUES (NULL, 'tags_deactivate', 'Slash::Tags', 'ajaxDeactivateTag', 'ajax_tags_write', 'use');
+INSERT INTO vars (name, value, description) VALUES ('tags_prefixlist_minlen', '3', 'Minimum length of a tag prefix to bother looking up suggestions for');
+
+# 2008-03-12
+UPDATE vars SET value = 'T_2_5_0_197' WHERE name = 'cvs_tag_currentcode';
+
+# SLASHDOT LAST UPDATED HERE
+
+# for plugins/Ajax
+UPDATE ajax_ops set reskey_name = 'ajax_user_static', reskey_type='createuse' WHERE op='admin_signoff';
+
+# comments
+DELETE FROM reskey_resource_checks WHERE rkrid = 1;
+INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::User',                101);
+INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::ACL',                 201);
+INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::AL2::AnonNoPost',     301);
+INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::AL2::NoPostAnon',     401);
+INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::AL2::NoPost',         501);
+INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::AL2::Spammer',        531);
+INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::Duration',            601);
+
+DELETE FROM reskey_vars WHERE rkrid = 1;
+INSERT INTO reskey_vars VALUES (1, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');
+INSERT INTO reskey_vars VALUES (1, 'acl_no', 'reskey_no_comments', 'If this ACL present, can\'t use resource');
+INSERT INTO reskey_vars VALUES (1, 'user_seclev', 0, 'Minimum seclev to use resource');
+INSERT INTO reskey_vars VALUES (1, 'duration_max-uses',      30, 'how many uses per timeframe');
+INSERT INTO reskey_vars VALUES (1, 'duration_max-failures',  10, 'how many failures per reskey');
+INSERT INTO reskey_vars VALUES (1, 'duration_uses',          60, 'min duration (in seconds) between uses');
+INSERT INTO reskey_vars VALUES (1, 'duration_creation-use',  10, 'min duration between (in seconds) creation and use');
+
+# for plugins/Tags
+CREATE TABLE tagname_cache (
+   tagnameid   int UNSIGNED NOT NULL,
+   tagname     VARCHAR(64) NOT NULL,
+   weight      FLOAT UNSIGNED DEFAULT 0.0 NOT NULL,
+   PRIMARY KEY tagnameid (tagnameid),
+   UNIQUE tagname (tagname)
+) TYPE=InnoDB;
+
+
+# 2008-03-19
+UPDATE vars SET value = 'T_2_5_0_198' WHERE name = 'cvs_tag_currentcode';
+
+# SLASHCODE/USEPERL LAST UPDATED HERE
+
+# PUDGE LAST UPDATED HERE
