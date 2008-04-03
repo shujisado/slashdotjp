@@ -1397,10 +1397,10 @@ sub preProcessComment {
 		$comm->{posttype} || PLAINTEXT
 	);
 
-	if ($constants->{anonymous_comment_interval} && ($user->{is_anon} || $form->{postanon})) {
+	if ($constants->{anonymous_comment_interval} && ($user->{is_anon} || $comm->{postanon})) {
 		my $ipid = getCurrentUser('ipid');
-		my $ipid_count = $slashdb->sqlSelect('count(*)', 'comments',
-			"sid='$form->{sid}'
+		my $ipid_count = $reader->sqlSelect('count(*)', 'comments',
+			"sid='$comm->{sid}'
 			AND uid=1
 			AND date > SUBDATE(NOW(), INTERVAL $constants->{anonymous_comment_interval} MINUTE)
 			AND ipid='$ipid'");

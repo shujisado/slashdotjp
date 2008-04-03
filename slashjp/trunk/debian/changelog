@@ -1,8 +1,9 @@
 slash (2.5.0.198-1) unstable; urgency=low
 
   * New upstream CVS release
+  * Fix variable name for new Slash/Utility/Comments/Comments.pm
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 01 Apr 2008 13:02:56 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 03 Apr 2008 20:58:51 +0900
 
 slash (2.5.0.196-1) unstable; urgency=low
 
