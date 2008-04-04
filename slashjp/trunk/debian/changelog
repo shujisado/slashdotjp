@@ -4,8 +4,10 @@ slash (2.5.0.198-1) unstable; urgency=low
   * Fix variable name for new Slash/Utility/Comments/Comments.pm
   * Add imagemagick to Depends: for slash-backend package
     - task process_file_queue.pl uses /usr/bin/convert command
+  * Change from Apache::PerlRun to Apache::Registry in
+    Slash/Apache/User/PasswordSalt/PasswordSalt.pm
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 04 Apr 2008 14:09:27 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 04 Apr 2008 15:45:45 +0900
 
 slash (2.5.0.196-1) unstable; urgency=low
 
