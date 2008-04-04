@@ -2,8 +2,10 @@ slash (2.5.0.198-1) unstable; urgency=low
 
   * New upstream CVS release
   * Fix variable name for new Slash/Utility/Comments/Comments.pm
+  * Add imagemagick to Depends: for slash-backend package
+    - task process_file_queue.pl uses /usr/bin/convert command
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 03 Apr 2008 20:58:51 +0900
+ -- Taku YASUI <tach@osdn.jp>  Fri, 04 Apr 2008 14:09:27 +0900
 
 slash (2.5.0.196-1) unstable; urgency=low
 
