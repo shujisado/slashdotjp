@@ -283,7 +283,6 @@ sub insert_feederlog {
 	my($tagbox, $feeder_ar) = @_;
 	for my $feeder_hr (@$feeder_ar) {
 { my $fstr = Dumper($feeder_hr); $fstr =~ s/\s+/ /g; main::tagboxLog("addFeederInfo: tbid=$tagbox->{tbid} f: $fstr"); }
-	if (defined($feeder_hr->{tagid}));
 		$tagboxdb->addFeederInfo($tagbox->{tbid}, $feeder_hr);
 	}
 }
