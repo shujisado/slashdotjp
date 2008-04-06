@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: TagModeration.pm,v 1.10 2008/03/19 08:25:31 pudge Exp $
+# $Id: TagModeration.pm,v 1.11 2008/03/27 00:44:21 pudge Exp $
 
 package Slash::TagModeration;
 
@@ -17,7 +17,7 @@ use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.10 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.11 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user) = @_;
@@ -955,7 +955,7 @@ sub checkDiscussionForUndoModeration {
 		}
 	}
 
-	my $removed_text = slashDisplay('undo_mod', { removed => $removed }, { Return => 1 });
+	my $removed_text = slashDisplay('undo_mod', { removed => $removed }, { Return => 1, Page => 'comments' });
 	return $removed_text;
 }
 

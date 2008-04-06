@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.107 2008/03/19 14:49:35 jamiemccarthy Exp $
+# $Id: Tags.pm,v 1.112 2008/04/03 22:01:38 pudge Exp $
 
 package Slash::Tags;
 
@@ -17,7 +17,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.107 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.112 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -728,6 +728,8 @@ sub getAllTagsFromUser {
 	my $orderdir = uc($options->{orderdir}) eq "DESC" ? "DESC" : "ASC";
 	my $inact_clause =   $options->{include_inactive} ? '' : ' AND inactivated IS NULL';
 	my $private_clause = $options->{include_private}  ? '' : " AND private='no'";
+	my $tagname_clause = $options->{tagnameid}
+		? ' AND tags.tagnameid=' . $self->sqlQuote($options->{tagnameid}) : '';
 
 	my($table_extra, $where_extra) = ("","");
 	my $uid_q = $self->sqlQuote($uid);
@@ -752,7 +754,7 @@ sub getAllTagsFromUser {
 		'tags.*',
 		"tags $table_extra",
 		"tags.uid = $uid_q
-		 $inact_clause $private_clause $where_extra",
+		 $inact_clause $private_clause $tagname_clause $where_extra",
 		"ORDER BY $orderby $orderdir $limit");
 	return [ ] unless $ar && @$ar;
 	$self->dataConversionForHashrefArray($ar);
@@ -845,6 +847,7 @@ sub getUidsUsingTagname {
 
 sub getAllObjectsTagname {
 	my($self, $name, $options) = @_;
+	my $constants = getCurrentStatic();
 #	my $mcd = undef;
 #	my $mcdkey = undef;
 #	if (!$options->{include_private}) {
@@ -855,15 +858,24 @@ sub getAllObjectsTagname {
 #		my $value = $mcd->get("$mcdkey$name");
 #		return $value if defined $value;
 #	}
-	my $private_clause = ref($options) && $options->{include_private} ? '' : " AND private='no'";
+	$options = { } if !$options || !ref $options;
+	my $private_clause = $options->{include_private} ? '' : " AND private='no'";
 	my $id = $self->getTagnameidFromNameIfExists($name);
 	return [ ] if !$id;
+	# XXX make this degrade gracefully if plugins/FireHose not installed
+	my $firehose_db = getObject('Slash::FireHose');
+	my $min_pop = $options->{min_pop}
+		|| $firehose_db->getMinPopularityForColorLevel( $constants->{tags_active_mincare} || 5 );
+	# 117K rows unjoined, 7 seconds ; 10K rows unjoined, 3 seconds ; 10K rows joined, 18 seconds
 	my $hr_ar = $self->sqlSelectAllHashrefArray(
 		'*, UNIX_TIMESTAMP(created_at) AS created_at_ut',
-		'tags',
-		"tagnameid=$id AND inactivated IS NULL $private_clause",
-		'ORDER BY tagid');
+		'tags, firehose',
+		"tags.globjid=firehose.globjid AND popularity >= $min_pop
+		 AND tagnameid=$id AND inactivated IS NULL $private_clause",
+		'ORDER BY tagid DESC LIMIT 5000');
+	# 117K rows, 6 minutes ; 10K rows, 30 seconds
 	$self->addGlobjEssentialsToHashrefArray($hr_ar);
+	# 117K rows, 8 minutes ; 10K rows, 60 seconds
 	$self->addCloutsToTagArrayref($hr_ar);
 #	if ($mcd) {
 #		my $constants = getCurrentStatic();
@@ -1701,6 +1713,7 @@ sub setLastscanned {
 
 sub listTagnamesAll {
 	my($self, $options) = @_;
+	$options = { } if !$options || !ref $options;
 	my $tagname_ar;
 	if ($options->{really_all}) {
 		$tagname_ar = $self->sqlSelectColArrayref('tagname', 'tagnames',
@@ -1720,10 +1733,12 @@ sub listTagnamesAll {
 sub listTagnamesActive {
 	my($self, $options) = @_;
 	my $constants = getCurrentStatic();
-	my $max_num =         ref($options) && $options->{max_num}         || 100;
-	my $seconds =         ref($options) && $options->{seconds}         || (3600*6);
-	my $include_private = ref($options) && $options->{include_private} || 0;
-	my $min_slice =       ref($options) && $options->{min_slice}       || 0;
+	$options = { } if !$options || !ref $options;
+	my $max_num =         defined($options->{max_num})	   ? $options->{max_num} : 100;
+	my $seconds =         defined($options->{seconds})	   ? $options->{seconds} : (3600*6);
+	my $include_private = defined($options->{include_private}) ? $options->{include_private} : 0;
+	my $min_slice =       defined($options->{min_slice})	   ? $options->{min_slice} : 0;
+	my $min_clout =       defined($options->{min_clout})	   ? $options->{min_clout} : $constants->{tags_stories_top_minscore} || 0;
 	$min_slice = 0 if !$constants->{plugin}{FireHose};
 
 	# This seems like a horrendous query, but I _think_ it will run
@@ -1809,7 +1824,7 @@ sub listTagnamesActive {
 
 	# List all tags with at least a minimum clout.
 	my @tagnames = grep
-		{ $tagname_clout{$_} >= $constants->{tags_stories_top_minscore} }
+		{ $tagname_clout{$_} >= $min_clout }
 		keys %tagname_clout;
 
 	# Sort by sum of normalized clout and (opposite of) last-seen time.
@@ -1828,8 +1843,9 @@ sub listTagnamesActive {
 sub listTagnamesRecent {
 	my($self, $options) = @_;
 	my $constants = getCurrentStatic();
-	my $seconds =         ref($options) && $options->{seconds}         || (3600*6);
-	my $include_private = ref($options) && $options->{include_private} || 0;
+	$options = { } if !$options || !ref $options;
+	my $seconds =         $options->{seconds}         || (3600*6);
+	my $include_private = $options->{include_private} || 0;
 	my $private_clause = $include_private ? '' : " AND private='no'";
 	my $recent_ar = $self->sqlSelectColArrayref(
 		'DISTINCT tagnames.tagname',
@@ -2015,19 +2031,48 @@ sub getRecentTagnamesOfInterest {
 		'tagnameid, tagname',
 		'tagnames',
 		"tagname IN ($tagname_str)");
-	my $tagnameid_str = join(',', map { $self->sqlQuote($_) } sort keys %$tagnameid_to_name);
+	my $tagnameid_recent_ar = [ sort { $a <=> $b } keys %$tagnameid_to_name ];
 	my $tagname_to_id = { reverse %$tagnameid_to_name };
 
-	# Next, build a hash identifying which of those are new tagnames,
-	# i.e. which were used for the first time within the same recent
-	# time interval we're looking at.
-	my $tagname_firstrecent_ar = $self->sqlSelectColArrayref(
-		'tagname, MIN(created_at) AS firstuse',
-		'tagnames, tags',
-		"tagnames.tagnameid IN ($tagnameid_str)
-		 AND tagnames.tagnameid=tags.tagnameid",
-		"GROUP BY tagname
-		 HAVING firstuse >= DATE_SUB(NOW(), INTERVAL $secsback SECOND)");
+	# Heuristic to optimize the selection process.  Right now we have
+	# a list of many tagnameids (say, around 1000), most of which are
+	# not new (were used prior to the time interval in question).
+	# We eliminate those known not to be new by finding the newest
+	# tagnameid for the day prior to the time interval, then grepping
+	# out tagnameids in our list less than that.
+	#
+	# That should leave us with a much shorter list which will be
+	# processed much faster.  On a non-busy site or during a
+	# pathological case where nobody types in any new tagnames for an
+	# entire day, the worst case here is that the processing is as
+	# slow as it was prior to this optimization (up to a minute or so
+	# on Slashdot).
+	my $tagid_secsback = $self->sqlSelect('MIN(tagid)', 'tags',
+		"created_at >= DATE_SUB(NOW(), INTERVAL $secsback SECOND)")
+		|| 0;
+	my $secsback_1moreday = $secsback + 86400;
+	my $tagid_secsback_1moreday = $self->sqlSelect('MIN(tagid)', 'tags',
+		"created_at >= DATE_SUB(NOW(), INTERVAL $secsback_1moreday SECOND)")
+		|| 0;
+	my $max_previously_known_tagnameid = $self->sqlSelect('MAX(tagnameid)', 'tags',
+		"tagid BETWEEN $tagid_secsback_1moreday AND $tagid_secsback")
+		|| 0;
+	$tagnameid_recent_ar = [
+		grep { $_ > $max_previously_known_tagnameid }
+		@$tagnameid_recent_ar ]
+		if $max_previously_known_tagnameid > 0;
+	my $tagnameid_str = join(',', map { $self->sqlQuote($_) } @$tagnameid_recent_ar);
+
+	# Now do the select to find the actually-new tagnameids.
+	my $tagnameid_firstrecent_ar = $self->sqlSelectColArrayref(
+		'DISTINCT tagnameid',
+		'tags',
+		"tagid >= $tagid_secsback AND tagnameid IN ($tagnameid_str)");
+
+	# Run through the hash we built earlier to convert ids back to names.
+	my $tagname_firstrecent_ar = [
+		map { $tagnameid_to_name->{$_} }
+		@$tagnameid_firstrecent_ar ];
 	my %tagname_firstrecent = ( map { ($_, 1) } @$tagname_firstrecent_ar );
 
 	# Build a regex that will identify tagnames that begin with an
@@ -2081,7 +2126,7 @@ sub getRecentTagnamesOfInterest {
 		'*',
 		'tags',
 		"tagnameid IN ($tagnameids_of_interest_str)
-		 AND created_at >= DATE_SUB(NOW(), INTERVAL $secsback SECOND)");
+		 AND tagid >= $tagid_secsback");
 	$self->addCloutsToTagArrayref($tags_ar);
 	my %tagnameid_weightsum = ( );
 	my %t_globjid_weightsum = ( );
@@ -2154,11 +2199,16 @@ sub getRecentTagnamesOfInterest {
 
 sub showRecentTagnamesBox {
 	my($self, $options) = @_;
-	my $rtoi_ar = $self->getRecentTagnamesOfInterest($options);
+	$options ||= {};
 
-	my $text = slashDisplay('recenttagnamesbox', {
-		rtoi => $rtoi_ar,
-	}, { Return => 1 });
+	my $text = " ";
+	
+	unless ($options->{box_only}) {
+		my $rtoi_ar = $self->getRecentTagnamesOfInterest();
+		$text = slashDisplay('recenttagnamesbox', {
+			rtoi => $rtoi_ar,
+		}, { Return => 1 });
+	}
 
 	return $text if $options->{contents_only};
 

@@ -1,4 +1,4 @@
-// $Id: comments.js,v 1.119 2008/03/19 21:09:47 pudge Exp $
+// $Id: comments.js,v 1.128 2008/04/02 22:52:19 pudge Exp $
 
 var comments;
 var root_comments;
@@ -84,7 +84,7 @@ function updateComment(cid, mode) {
 				if (!cd.innerHTML) {
 					var cs = fetchEl('comment_sub_' + cid);
 					if (cs)
-						cs.innerHTML = '<span class="commentload">Loading ...</span>';
+						cs.innerHTML = '<span class="commentload">Loading...</span>';
 					fetch_comments.push(cid);
 					fetch_comments_pieces[cid] = 1;
 					doshort = 1;
@@ -93,7 +93,14 @@ function updateComment(cid, mode) {
 		}
 //		if (doshort)
 		setShortSubject(cid, mode, cl);
-		existingdiv.className = existingdiv.className.replace(/full|hidden|oneline/, mode);
+		var new_class = existingdiv.className.replace(/full|hidden|oneline/, mode);
+		if (new_class != existingdiv.className) {
+			existingdiv.className = new_class;
+			var parentdiv = fetchEl('tree_' + cid);
+			parentdiv.className = parentdiv.className.replace(' contain', '');
+			if (mode == 'full')
+				parentdiv.className = parentdiv.className + ' contain';
+		}
 		if (adTimerUrl) {
 			var addiv = fetchEl('comment_ad_' + cid);
 			if (addiv) {
@@ -262,7 +269,7 @@ function changeHT(delta) {
 	changeThreshold(user_threshold + ''); // needs to be a string value
 }
 
-function changeT(delta) {
+function changeT(delta, skip_ht) {
 	if (!delta)
 		return void(0);
 
@@ -271,14 +278,19 @@ function changeT(delta) {
 	threshold = Math.min(Math.max(threshold, -1), 6);
 
 	// HT moves with T, but that is taken care of by changeThreshold()
-	changeThreshold(threshold + ''); // needs to be a string value
+	changeThreshold(threshold + '', skip_ht); // needs to be a string value
 }
 
-function changeThreshold(threshold) {
+function changeThreshold(threshold, skip_ht) {
 	var threshold_num = parseInt(threshold);
 	var t_delta = threshold_num + (user_highlightthresh - user_threshold);
-	user_highlightthresh = Math.min(Math.max(t_delta, -1), 6);
 	user_threshold = threshold_num;
+	if (skip_ht) { // don't move highlightthresh with thresh
+		if (user_threshold > user_highlightthresh)
+			user_highlightthresh = user_threshold;
+	} else {
+		user_highlightthresh = Math.min(Math.max(t_delta, -1), 6);
+	}
 
 	for (var root = 0; root < root_comments.length; root++) {
 		updateCommentTree(root_comments[root], threshold);
@@ -389,10 +401,17 @@ function selectParent(cid, collapse) {
 	return false;
 }
 
-function vertBarClick (pid) {
-	comments_started = 1;
-	setCurrentComment(pid);
-	return selectParent(pid, 2);
+function vertBarClick() {
+	if (this && this.id) {
+		var pid = this.id.match(/_(\d+)/);
+		pid = pid[1];
+
+		if (pid) {
+			comments_started = 1;
+			setCurrentComment(pid);
+			return selectParent(pid, 2);
+		}
+	}
 }
 
 function setShortSubject(cid, mode, cl) {
@@ -569,9 +588,9 @@ function setDefaultDisplayMode(cid) {
 	if (!comment) { return }
 
 	var defmode = comment.className.match(/full|hidden|oneline/);
-	if (!defmode) { return }
+	if (!defmode || !defmode.length || !defmode[0]) { return }
 
-	futuredisplaymode[cid] = prehiddendisplaymode[cid] = displaymode[cid] = defmode;
+	futuredisplaymode[cid] = prehiddendisplaymode[cid] = displaymode[cid] = defmode[0];
 }
 
 function updateDisplayMode(cid, mode, newdefault) {
@@ -720,9 +739,11 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 		params['highlightthresh'] = user_highlightthresh;
 	}
 
-	params['cid']             = root_comment;
+// we could use this in future if we want to restrict "More" to
+// the cid's thread when possible
+//	if (root_comment)
+//		params['cid']     = root_comment;
 	params['discussion_id']   = discussion_id;
-//	params['reskey']          = reskey_static;
 
 	var abbrev = {};
 	for (var i = 0; i < cids.length; i++) {
@@ -798,7 +819,7 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 
 				for (var i = 0; i < update.new_cids_order.length; i++) {
 					var this_cid = update.new_cids_order[i];
-					if (!placeholder_no_update[this_cid]) {
+					if (!placeholder_no_update[this_cid] && comments[this_cid]['points'] >= -1) {
 						var mode = determineMode(this_cid);
 						updateDisplayMode(this_cid, mode, 1);
 						currents[displaymode[this_cid]]++;
@@ -936,7 +957,7 @@ function readRest(cid) {
 		}
 	};
 
-	shrunkdiv.innerHTML = 'Loading...';
+	shrunkdiv.innerHTML = '<span class="loading">Loading...</span>';
 	ajax_update(params, 'comment_body_' + cid, handlers);
 
 	return false;
@@ -975,8 +996,12 @@ function cancelReply(pid) {
 	replydiv.innerHTML = '';
 	if (pid) { // XXX
 		var reply_link = $dom('reply_link_' + pid);
-		reply_link.innerHTML = reply_link_html[pid];
-		reply_link_html[pid] = '';
+		// in some cases this won't exist; if not, fine, we
+		// just don't do it
+		if (reply_link || !reply_link_html[pid]) {
+			reply_link.innerHTML = reply_link_html[pid];
+			reply_link_html[pid] = '';
+		}
 	}
 }
 
@@ -987,11 +1012,24 @@ function editReply(pid) {
 	if (!replydiv || !reply || !preview)
 		return false;
 
+	setReplyMsg(pid, '');
 	preview.style.display = 'none';
 	reply.style.display   = 'block';
 
 	$dom('replyto_buttons_2_' + pid).style.display  = 'none';
 	$dom('replyto_buttons_1_' + pid).style.display = 'inline';
+}
+
+function setReplyMsg(pid, msg) {
+	var msgdiv = $('#replyto_msg_' + (pid || 0));
+	if (!msgdiv)
+		return;
+
+	msgdiv.html(msg);
+	if (msg)
+		msgdiv.show();
+	else
+		msgdiv.hide();
 }
 
 function replyPreviewOrSubmit (pid, op, handlers) {
@@ -1000,9 +1038,8 @@ function replyPreviewOrSubmit (pid, op, handlers) {
 	var preview = $dom('replyto_preview_' + pid);
 	var this_reskey = $dom('reskey_reply_' + pid);
 	var msgdiv = 'replyto_msg_' + pid;
-	var msg = $dom(msgdiv);
 
-	if (!replydiv || !reply || !preview || !this_reskey || !msg)
+	if (!replydiv || !reply || !preview || !this_reskey)
 		return false;
 
 	var params = {};
@@ -1015,24 +1052,26 @@ function replyPreviewOrSubmit (pid, op, handlers) {
 	params['postersubj'] = $dom('postersubj_' + pid).value;
 	params['postercomment'] = $dom('postercomment_' + pid).value;
 
+	var hcanswer = $dom('hcanswer_' + pid);
+	if (hcanswer)
+		params['hcanswer'] = hcanswer.value;
+
 	var postanon = $dom('postanon_' + pid);
 	if (postanon && postanon.checked)
 		params['postanon'] = postanon.value;
 
-	msg.innerHTML = 'Loading...';
+	setReplyMsg(pid, '<span class="loading">Loading...</span>');
 	ajax_update(params, '', handlers);
 }
 
 function submitReply(pid) {
 	return replyPreviewOrSubmit(pid, 'comments_submit_reply', {
 		onComplete: function(transport) {
-			var msg = $dom('replyto_msg_' + pid);
-			msg.innerHTML = '';
+			setReplyMsg(pid, '');
 			var response = json_handler(transport);
-
 			var cid = response.cid;
 			if (response.error)
-				msg.innerHTML = response.error;
+				setReplyMsg(pid, response.error);
 			else if (cid) {
 				cancelReply(pid);
 				addComment(cid, { pid: pid, kids: [] }, '', 1);
@@ -1046,17 +1085,15 @@ function submitReply(pid) {
 function previewReply(pid) {
 	return replyPreviewOrSubmit(pid, 'comments_preview_reply', {
 		onComplete: function(transport) {
-			var msg = $dom('replyto_msg_' + pid);
-			msg.innerHTML = '';
+			setReplyMsg(pid, '');
 			var response = json_handler(transport);
-
 			if (response.error)
-				msg.innerHTML = response.error;
+				setReplyMsg(pid, response.error);
 			if (response.html) {
-				$dom('replyto_reply_' + pid).style.display   = 'none';
-				$dom('replyto_preview_' + pid).style.display = 'block';
-				$dom('replyto_buttons_1_' + pid).style.display  = 'none';
-				$dom('replyto_buttons_2_' + pid).style.display = 'inline';
+				$('#replyto_reply_' + pid).hide();
+				$('#replyto_preview_' + pid).show();
+				$('#replyto_buttons_1_' + pid).hide();
+				$('#replyto_buttons_2_' + pid).show();
 			}
 		}
 	});
@@ -1078,15 +1115,19 @@ function replyTo(pid) {
 	params['pid'] = pid;
 	params['sid'] = discussion_id;
 
-	replydiv.innerHTML = 'Loading...';
+	replydiv.innerHTML = '<span class="loading">Loading...</span>';
 
 	var handlers = {
 		onComplete: function(transport) {
 			json_handler(transport);
 			if (pid) { // XXX
 				var reply_link = $dom('reply_link_' + pid);
-				reply_link_html[pid] = reply_link.innerHTML;
-				reply_link.innerHTML = '<a href="#" onclick="cancelReply(' + pid + '); return false;">Cancel Reply</a>';
+				// in some cases this won't exist; if not, fine, we
+				// just don't do it
+				if (reply_link) {
+					reply_link_html[pid] = reply_link.innerHTML;
+					reply_link.innerHTML = '<p><b><a href="#" onclick="cancelReply(' + pid + '); return false;">Cancel Reply</a></b></p>';
+				}
 			}
 			$dom('postercomment_' + pid).focus();
 		}
@@ -1213,9 +1254,6 @@ function finishLoading() {
 		loadAllElements('a');
 	}
 
-	if (root_comment)
-		currents['full'] += 1;
-
 	for (var i = 0; i < root_comments.length; i++) {
 		root_comments_hash[ root_comments[i] ] = 1;
 	}
@@ -1248,11 +1286,12 @@ function finishLoading() {
 			document.body.onkeydown = keyHandler;
 	}
 
-	setCurrentComment(last_updated_comments[last_updated_comments_index]);
+	setCurrentComment(root_comment || last_updated_comments[last_updated_comments_index]);
+
+	//$('.contain').click(vertBarClick);
 
 	if (more_comments_num)
 		updateMoreNum(more_comments_num);
-	updateTotals();
 	enableControls();
 
 	//setTimeout('ajaxFetchComments()', 10*1000);
@@ -1487,13 +1526,13 @@ function commentIsInWindow(cid, just_head) {
 /* code for the draggable threshold widget */
 
 function showPrefs( category ) {
-	var panel = document.getElementById("d2prefs");
+	var panel = $dom("d2prefs");
 	panel.className = category;
 	panel.style.display = "block";
 }
 
 function hidePrefs() {
-	var panel = document.getElementById("d2prefs");
+	var panel = $dom("d2prefs");
 	panel.className = "";
 	panel.style.display = "none";
 }
@@ -1590,6 +1629,7 @@ YAHOO.slashdot.ThresholdWidget.prototype._getEl = function( id ) {
 
 YAHOO.slashdot.ThresholdWidget.prototype.setTHT = function( T, HT ) {
 	this._setTs(pinToRange(this.constraintRange, [HT, T]));
+	updateTotals();
 }
 
 YAHOO.slashdot.ThresholdWidget.prototype.getTHT = function() {
@@ -1600,6 +1640,7 @@ YAHOO.slashdot.ThresholdWidget.prototype.stepTHT = function( threshold, step ) {
 	var ts = this.displayedTs.slice();
 	ts[threshold] += step;
 	this._setTs(pinToRange(this.constraintRange, ts));
+	updateTotals();
 }
 
 YAHOO.slashdot.ThresholdWidget.prototype.setCounts = function( counts ) {
@@ -1645,6 +1686,10 @@ YAHOO.slashdot.ThresholdWidget.prototype.setOrientation = function( newAxis ) {
 			this._getEl(prefix+"-count-pos").style.top = 0;
 		}
 		this._setTs();
+		// setOrientation can rewrite our totals for us, even if they
+		// are different from defaults, so let's set them again
+		// sure they are correct
+		updateTotals();
 	}
 }
 
@@ -1771,6 +1816,7 @@ YAHOO.slashdot.ThresholdBar.prototype.onDrag = function( e ) {
 
 YAHOO.slashdot.ThresholdBar.prototype.endDrag = function( e ) {
 	this.parentWidget._onBarEndDrag(this.whichBar);
+	updateTotals();
 }
 
 YAHOO.slashdot.ThresholdBar.prototype.alignElWithMouse = function( el, iPageX, iPageY ) {
@@ -1840,19 +1886,19 @@ function setCurrentComment (cid) {
 		if (cid == current_cid)
 			return;
 
-		this_id  = fetchEl('comment_top_' + current_cid);
-		if (this_id)
-			this_id.className = this_id.className.replace(' newcomment', ' oldcomment');
+		this_id = $('#comment_top_' + current_cid);
+		this_id.removeClass('newcomment');
+		this_id.addClass('oldcomment');
 
-		this_id  = fetchEl('comment_' + current_cid);
-		if (this_id)
-			this_id.className = this_id.className.replace(' currcomment', '');
+		this_id = $('#comment_' + current_cid);
+		this_id.removeClass('currcomment');
+		$('.current').remove();
 	}
 
 
-	this_id  = fetchEl('comment_' + cid);
-	if (this_id)
-		this_id.className = this_id.className + ' currcomment';
+	this_id = $('#comment_' + cid);
+	this_id.addClass('currcomment');
+	this_id.before('<span class="current">&rsaquo;</span>');
 
 	current_cid = cid;
 }
@@ -1866,7 +1912,18 @@ next thread: S, K
 prev comm chrono: Q
 next comm chrono: E
 next unread comm: F
-reply: R
+reply to current comment: R
+parent of current comment: P
+history (modlog) of current comment: M
+skip to end (last): V
+skip to top (first): T
+get more comments: G
+lower top threshold: [
+raise top threshold: ]
+lower bottom threshold: ,
+raise bottom threshold: .
+toggle d2 widget: /
+hide_modal_box(): esc XXX
 */
 
 var validkeys = {
@@ -1877,13 +1934,34 @@ var validkeys = {
 	Q: { chrono : 1, prev: 1, comment: 1 },
 	E: { chrono : 1, next: 1, comment: 1 },
 	F: { thread : 1, next: 1, comment: 1, unread: 1 },
-	R: { reply  : 1 },
+
+	R: { current : 1, reply   : 1 },
+	P: { current : 1, parent  : 1 },
+	M: { current : 1, history : 1 },
+
+	G: { nav: 1, more : 1 },
+	T: { nav: 1, skip : 1, top    : 1 }, 
+	V: { nav: 1, skip : 1, bottom : 1 }, 
+
+	219 : { chr: '[', thresh : 1, top    : 1, down: 1 },
+	221 : { chr: ']', thresh : 1, top    : 1, up  : 1 },
+	188 : { chr: ',', thresh : 1, bottom : 1, down: 1 },
+	190 : { chr: '.', thresh : 1, bottom : 1, up  : 1 },
+
+	191 : { chr: '/', toggle : 1, widget : 1 }
 };
 
 validkeys['H'] = validkeys['A'];
 validkeys['L'] = validkeys['D'];
 validkeys['J'] = validkeys['S'];
 validkeys['K'] = validkeys['W'];
+
+//testing
+//validkeys['1'] = validkeys['['];
+//validkeys['2'] = validkeys[']'];
+//validkeys['3'] = validkeys[','];
+//validkeys['4'] = validkeys['.'];
+
 
 function keyHandler(e, k) {
 	if (!k)
@@ -1912,71 +1990,112 @@ function keyHandler(e, k) {
 
 			var update = 0;
 			var next_cid = 0;
-			var key = k || String.fromCharCode(c);
+			var key = k || validkeys[c] ? c : String.fromCharCode(c);
 			var keyo = validkeys[key];
-			if (keyo && keyo['reply'] && user_is_subscriber && current_cid) { // XXX
-				replyTo(current_cid);
+			if (keyo) {
+				if (keyo['toggle']) {
+					if (keyo['widget'])
+						toggleDisplayOptions();
 
-			// forward and back between comments, in order of how they were loaded
-			} else if (keyo && keyo['chrono']) {
-				var i = last_updated_comments_index;
-				var l = last_updated_comments.length - 1;
-				update = 1;
+				// keys that rely on current comment
+				} else if (keyo['current'] && current_cid) {
+					if (keyo['reply'] && !user_is_anon) // XXX will be anon too
+						replyTo(current_cid);
 
-				if (keyo['prev']) {
-					if (i <= 0) {
-						// this did go back to end; nothing, for now
-						//i = l;
-					} else
-						i = i - 1;
-				} else if (keyo['next']) {
-					if (i >= l) {
-						if (ajaxCommentsWait())
-							return;
-						update = 2;
-						ajaxFetchComments(0, 1, '', 1);
-					} else {
-						if (!i && noSeeFirstComment(last_updated_comments[i]))
-							comments_started = 1; // only come here once
-						else
-							i = i + 1;
+					else if (keyo['history'])
+						getModalPrefs('modcommentlog', 'Moderation Comment Log', current_cid);
+
+					else if (keyo['parent']) {
+						if (current_cid && comments[current_cid] && comments[current_cid]['pid'])
+							selectParent(comments[current_cid]['pid']);
 					}
-				}
 
-				if (update == 1) {
-					last_updated_comments_index = i;
-					next_cid = last_updated_comments[i];
-				}
-			}
 
-			// forward and back between threads, and comments within each thread
-			else if (keyo && keyo['thread']) {
-				update = 1;
-				if (keyo['next']) {
-					if (noSeeFirstComment(current_cid))
-						next_cid = current_cid;
-					else {
-						if (keyo['unread'])
-							getNextUnread = 1;
-						if (keyo['comment']) {
-							next_cid = commTreeNextComm(current_cid, 0, getNextUnread);
-							if (!next_cid) { // && getNextUnread) {
-								if (ajaxCommentsWait())
-									return;
-								update = 2;
-								var highlight = 1 + collapseCurrent;
-								ajaxFetchComments(0, 1, '', highlight);
-							}
+				// misc. navigation keys
+				} else if (keyo['nav']) {
+					if (keyo['more'])
+						ajaxFetchComments(0, 1);
+
+					else if (keyo['skip']) { // XXX how to find top/bottom?
+						if (keyo['top']) {
+							next_cid = commTreeFirstComm();
+							update = 1;
+						} else if (keyo['bottom']) {
+							next_cid = commTreeLastComm();
+							update = 1;
+						}
+					}
+
+				// threshold keys keys
+				} else if (keyo['thresh']) {
+					if (keyo['top'])
+						changeHT(keyo['up'] ? 1 : -1);
+					if (keyo['bottom'])
+						changeT((keyo['up'] ? 1 : -1), 1);
+					gCommentControlWidget.setTHT(user_threshold, user_highlightthresh);
+
+
+				// forward and back between comments, in order of how they were loaded
+				} else if (keyo['chrono']) {
+					var i = last_updated_comments_index;
+					var l = last_updated_comments.length - 1;
+					update = 1;
+
+					if (keyo['prev']) {
+						if (i <= 0) {
+							// this did go back to end; nothing, for now
+							//i = l;
 						} else
-							next_cid = commTreeNextComm(comments[current_cid].pid, current_cid, getNextUnread);
+							i = i - 1;
+					} else if (keyo['next']) {
+						if (i >= l) {
+							if (ajaxCommentsWait())
+								return;
+							update = 2;
+							ajaxFetchComments(0, 1, '', 1);
+						} else {
+							if (!i && noSeeFirstComment(last_updated_comments[i]))
+								comments_started = 1; // only come here once
+							else
+								i = i + 1;
+						}
+					}
+
+					if (update == 1) {
+						last_updated_comments_index = i;
+						next_cid = last_updated_comments[i];
 					}
 				}
 
-				else if (keyo['prev'] && keyo['comment'])
-					next_cid = commTreePrevComm(current_cid);
-
-				else if (keyo['prev'])
-					next_cid = commTreePrevComm(current_cid, 1);
+				// forward and back between threads, and comments within each thread
+				else if (keyo['thread']) {
+					update = 1;
+					if (keyo['next']) {
+						if (noSeeFirstComment(current_cid))
+							next_cid = current_cid;
+						else {
+							if (keyo['unread'])
+								getNextUnread = 1;
+							if (keyo['comment']) {
+								next_cid = commTreeNextComm(current_cid, 0, getNextUnread);
+								if (!next_cid) { // && getNextUnread) {
+									if (ajaxCommentsWait())
+										return;
+									update = 2;
+									var highlight = 1 + collapseCurrent;
+									ajaxFetchComments(0, 1, '', highlight);
+								}
+							} else
+								next_cid = commTreeNextComm(comments[current_cid].pid, current_cid, getNextUnread);
+						}
+					}
+	
+					else if (keyo['prev'] && keyo['comment'])
+						next_cid = commTreePrevComm(current_cid);
+	
+					else if (keyo['prev'])
+						next_cid = commTreePrevComm(current_cid, 1);
+				}
 			}
 
 			if (update && next_cid) {
@@ -2030,6 +2149,30 @@ function commTreeNextComm (cid, old_cid, getNextUnread) {
 
 	// we can't continue here, go back up a level
 	return commTreeNextComm(comments[cid].pid, cid, getNextUnread);
+}
+
+function commTreeLastComm () {
+	var this_cid = current_cid;
+	if (!current_cid)
+		this_cid = last_updated_comments[0];
+	for (;;) {
+		var new_cid = commTreeNextComm(this_cid);
+		if (!new_cid)
+			return this_cid;
+		this_cid = new_cid;
+	}
+}
+
+function commTreeFirstComm () {
+	var this_cid = current_cid;
+	if (!current_cid)
+		this_cid = last_updated_comments[0];
+	for (;;) {
+		var new_cid = commTreePrevComm(this_cid, 2);
+		if (!new_cid)
+			return this_cid;
+		this_cid = new_cid;
+	}
 }
 
 function commTreePrevComm (cid, to_parent) {

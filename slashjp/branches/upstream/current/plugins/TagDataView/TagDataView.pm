@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: TagDataView.pm,v 1.2 2007/12/18 23:40:03 pudge Exp $
+# $Id: TagDataView.pm,v 1.3 2008/03/25 18:42:17 pudge Exp $
 
 package Slash::TagDataView;
 
@@ -33,7 +33,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub getGlobjidsMissingHistory {
 	my($self, $max_mins, $max_min_incrs, $max_globjids) = @_;
@@ -105,7 +105,6 @@ sub getMostNonnegativeTaggedGlobjs {
 	my $tagsdb = getObject('Slash::Tags');
 	my $tagnames = $tagsdb->getNegativeTags;
 	$tagnames = ['nix'] unless @$tagnames;
-	#$constants->{tags_negative_tagnames} || $constants->{tags_downvote_tagname} || 'nix';
 	my $tagnameids = join ',', grep $_, map {
 		s/\s+//g;
 		$tagsdb->getTagnameidFromNameIfExists($_)
@@ -134,5 +133,5 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: TagDataView.pm,v 1.2 2007/12/18 23:40:03 pudge Exp $
+$Id: TagDataView.pm,v 1.3 2008/03/25 18:42:17 pudge Exp $
 

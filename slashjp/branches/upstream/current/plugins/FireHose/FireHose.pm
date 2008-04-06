@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHose.pm,v 1.226 2008/03/18 16:16:02 tvroom Exp $
+# $Id: FireHose.pm,v 1.231 2008/04/03 19:16:05 tvroom Exp $
 
 package Slash::FireHose;
 
@@ -41,7 +41,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.226 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.231 $ ' =~ /\$Revision:\s+([^\s]+)/;
 sub createFireHose {
 	my($self, $data) = @_;
 	$data->{dept} ||= "";
@@ -378,6 +378,9 @@ sub getFireHoseEssentials {
 
 	$options ||= {};
 	$options->{limit} ||= 50;
+	my $ps = $options->{limit};
+	
+	$options->{limit} += $options->{more_num} if $options->{more_num};
 
 	my $pop;
 	$pop = $self->getMinPopularityForColorLevel($colors->{$options->{color}})
@@ -607,9 +610,10 @@ sub getFireHoseEssentials {
 	$other = 'GROUP BY firehose.id' if $options->{tagged_by_uid};
 
 	my $count_other = $other;
+	my $offset;
 
 	if (1 || !$doublecheck) { # do always for now
-		my $offset = defined $options->{offset} ? $options->{offset} : '';
+		$offset = defined $options->{offset} ? $options->{offset} : '';
 		$offset = '' if $offset !~ /^\d+$/;
 		$offset = "$offset, " if length $offset;
 		$limit_str = "LIMIT $offset $options->{limit}" unless $options->{nolimit};
@@ -628,10 +632,11 @@ sub getFireHoseEssentials {
 	}
 
 
-	my $page_size = $options->{limit} || 1;
+	my $page_size = $ps || 1;
 	$results->{records_pages} ||= ceil($count / $page_size);
 	$results->{records_page}  ||= (int(($options->{offset} || 0) / $options->{limit}) + 1) || 1;
 
+	my $future_count = $count - $options->{limit} - ($options->{offset} || 0);
 
 	if (keys %$filter_globjids) {
 		for my $i (0 .. $#{$hr_ar}) {
@@ -662,7 +667,7 @@ sub getFireHoseEssentials {
 
 		$items = $hr_ar;
 	}
-	return($items, $results, $count);
+	return($items, $results, $count, $future_count);
 }
 
 # A single-globjid wrapper around getUserFireHoseVotesForGlobjs.
@@ -1015,13 +1020,16 @@ sub ajaxFireHoseSetOptions {
 	}
 
 	my $eval_first = "";
-	for my $o (qw(startdate mode fhfilter orderdir orderby startdate duration color)) {
+	for my $o (qw(startdate mode fhfilter orderdir orderby startdate duration color more_num)) {
 		my $value = $opts->{$o};
 		if ($o eq 'orderby' && $value eq 'editorpop') {
 			$value = 'popularity';
 		}
 		if ($o eq 'startdate') {
 			$value =~ s/-//g;
+		}
+		if ($o eq 'more_num') {
+			$value ||= 0;
 		}
 		$eval_first .= "firehose_settings.$o = " . Data::JavaScript::Anon->anon_dump("$value") . "; ";
 	}
@@ -1160,7 +1168,7 @@ sub ajaxFireHoseGetUpdates {
 	my %ids = map { $_ => 1 } @ids;
 	my %ids_orig = ( %ids ) ;
 	my $opts = $firehose->getAndSetOptions({ no_set => 1 });
-	my($items, $results) = $firehose_reader->getFireHoseEssentials($opts);
+	my($items, $results, $count, $future_count) = $firehose_reader->getFireHoseEssentials($opts);
 	my $num_items = scalar @$items;
 	my $future = {};
 	my $globjs = [];
@@ -1302,6 +1310,7 @@ sub ajaxFireHoseGetUpdates {
 	$html->{filter_text} = "Filtered to ".strip_literal($opts->{color})." '".strip_literal($opts->{fhfilter})."'";
 	$html->{gmt_update_time} = " (".timeCalc($slashdb->getTime(), "%H:%M", 0)." GMT) " if $user->{is_admin};
 	$html->{itemsreturned} = $num_items == 0 ?  getData("noitems", { options => $opts }, 'firehose') : "";
+	$html->{firehose_more} = getData("firehose_more_link", { options => $opts, future_count => $future_count, contentsonly => 1}, 'firehose');
 
 	my $data_dump =  Data::JavaScript::Anon->anon_dump({
 		html		=> $html,
@@ -2145,6 +2154,15 @@ sub getAndSetOptions {
 	if ($form->{not_id} && $form->{not_id} =~ /^\d+$/) {
 		$options->{not_id} = $form->{not_id};
 	}
+
+
+	if ($form->{more_num} && $form->{more_num} =~ /^\d+$/) {
+		$options->{more_num} = $form->{more_num};
+		if (!$user->{is_admin} && (($options->{limit} + $options->{more_num}) > 200)) {
+			$options->{more_num} = 200 - $options->{limit} ;
+		}
+	}
+
 	return $options;
 }
 
@@ -2269,7 +2287,7 @@ sub listView {
 	if ($featured && $featured->{id}) {
 		$options->{not_id} = $featured->{id};
 	}
-	my($items, $results) = $firehose_reader->getFireHoseEssentials($options);
+	my($items, $results, $count, $future_count) = $firehose_reader->getFireHoseEssentials($options);
 
 	my $itemnum = scalar @$items;
 
@@ -2338,6 +2356,8 @@ sub listView {
 		$section = $gSkin->{skid};
 	}
 
+	my $firehose_more = getData('firehose_more_link', { future_count => $future_count, options => $options }, 'firehose');
+
 	slashDisplay("list", {
 		itemstext	=> $itemstext, 
 		itemnum		=> $itemnum,
@@ -2353,7 +2373,8 @@ sub listView {
 		fh_page		=> $base_page,
 		search_results	=> $results,
 		featured	=> $featured,
-		section		=> $section
+		section		=> $section,
+		firehose_more 	=> $firehose_more
 	}, { Page => "firehose", Return => 1 });
 }
 
@@ -2637,4 +2658,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: FireHose.pm,v 1.226 2008/03/18 16:16:02 tvroom Exp $
+$Id: FireHose.pm,v 1.231 2008/04/03 19:16:05 tvroom Exp $

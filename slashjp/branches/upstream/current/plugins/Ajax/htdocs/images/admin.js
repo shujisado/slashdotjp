@@ -1,4 +1,4 @@
-// $Id: admin.js,v 1.48 2008/03/18 16:28:44 tvroom Exp $
+// $Id: admin.js,v 1.49 2008/03/27 20:12:17 tvroom Exp $
 
 function um_ajax(the_behaviors, the_events) {
 	var params = {};
@@ -200,7 +200,7 @@ function console_update(use_fh_interval, require_fh_timeout) {
 	if(use_fh_interval) {
 		interval = getFirehoseUpdateInterval(); 
 	}
-	setTimeout("console_update(" + use_fh_interval + "," + fh_is_timed_out +")", interval);
+	setTimeout("console_update(" + use_fh_interval + "," + fh_is_timed_out +")", interval * 2);
 }
 
 function firehose_usage() {

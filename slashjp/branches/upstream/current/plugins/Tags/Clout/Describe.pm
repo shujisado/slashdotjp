@@ -8,7 +8,7 @@ use base 'Slash::Clout';
 
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.9 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub init {
 	my($self) = @_;
@@ -19,19 +19,36 @@ sub init {
 	# propagate up to 50% of the weight, the second another 25%, the
 	# third another 12.5% etc.
 	$self->{cumfrac} = 0.5;
-	$self->{debug_uids} = { };
+	my $constants = getCurrentStatic();
+	$self->{debug_uids} = { map { ($_, 1) } split / /,
+		($constants->{tags_updateclouts_debuguids} || '')
+	};
 	$self->{debug} = 0;
 	1;
 }
 
 sub getUserClout {
 	my($self, $user_stub) = @_;
-	my $clout = $user_stub->{karma} >= -3
-		? log($user_stub->{karma}+10)
-		: 0;
+	my $clout;
+	my $karma = $user_stub->{karma};
+	if ($karma >= 1) {
+		# Full graduated clout for positive karma.
+		$clout = log($karma+5); # karma 1 clout 1.8 ; karma 50 clout 4.0
+	} elsif ($karma == 0) {
+		# Karma of 0 means low clout.
+		$clout = 0.2;
+	} elsif ($karma >= -2) {
+		# Mild negative karma means extremely low clout.
+		$clout = ($karma+3)*0.01;
+	} else {
+		# Significant negative karma means no clout.
+		$clout = 0;
+	}
 	$clout += 5 if $user_stub->{seclev} > 1;
 	$clout *= $user_stub->{tag_clout};
 
+	# An account created within the past 3 days has low clout.
+	# Once an account reaches 30 days old, it gets full clout.
 	my $created_at_ut;
 	if (defined($user_stub->{created_at_ut})) {
 		$created_at_ut = $user_stub->{created_at_ut};

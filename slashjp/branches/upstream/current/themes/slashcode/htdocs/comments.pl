@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: comments.pl,v 1.272 2008/03/20 07:30:29 pudge Exp $
+# $Id: comments.pl,v 1.273 2008/04/02 14:14:10 entweichen Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -608,6 +608,46 @@ sub submitComment {
 			{ force_read_from_master => 1, just_submitted => 1 }
 		);
 	}
+
+        # Add user2 event. This will eventually live in its own method.
+        if (!$user->{is_anon}) {
+                my $uid = $user->{uid};
+                my $cid = $saved_comment->{cid};
+                my $events = $slashdb->sqlSelectAllHashref(
+                        'eid', 'eid, date', 'user_events', "uid = $uid and code = 1");
+
+                if ((scalar keys %$events) == 5) {
+                        my $eid = [sort keys %$events]->[0];
+                        $slashdb->sqlDelete('user_events', "uid = $uid and code = 1 and eid = $eid");
+                }
+
+                $slashdb->sqlInsert('user_events', {
+                        code  => 1,
+                        uid   => $uid,
+                        event => $cid,
+                        -date  => 'NOW()',
+                });
+
+                my $event_blocks = $slashdb->sqlSelectAllHashref(
+                        'uid', 'bid, uid, block', 'user_event_blocks', "uid = $uid and code = 1");
+
+                if (!%$event_blocks) {
+                        $slashdb->sqlInsert('user_event_blocks', {
+                                code  => 1,
+                                uid   => $uid,
+                                block => $cid,
+                        });
+                } else {
+                        my @blocks = split(/,/, $event_blocks->{$uid}->{block});
+                        @blocks = @blocks[1 .. 4] if (scalar @blocks == 5);
+                        $blocks[$#blocks + 1] = $cid;
+                        my $new_blocks = join(",", @blocks);
+
+                        $slashdb->sqlUpdate('user_event_blocks', { block => $new_blocks }, "uid = $uid and code = 1");
+                }
+        }
+                        
+
 
 	# OK -- if we make it all the way here, and there were
 	# no errors so no header has been emitted, and we were

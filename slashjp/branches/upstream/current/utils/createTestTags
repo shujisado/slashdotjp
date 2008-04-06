@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: createTestTags,v 1.6 2007/07/31 17:04:05 jamiemccarthy Exp $
+# $Id: createTestTags,v 1.7 2008/03/24 19:03:14 jamiemccarthy Exp $
 
 BEGIN {
 	{
@@ -22,7 +22,7 @@ use Benchmark;
 
 use vars qw( $slashdb $werder $constants $junk $tagsdb );
 
-(my $VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my %opts;
@@ -63,7 +63,7 @@ srand;
 
 	my $stories = $slashdb->getStoriesEssentials({ future_secs => 0, limit => 10, limit_extra => 0,
 		sectioncollapse => (rand(1) < 0.3) ? 1 : 0 });
-
+	my $priv_tagnames = $tagsdb->getPrivateTagnames();
 	my $firehose = getObject('Slash::FireHose');
 	my $minfhcolor = (rand(1) < 0.4 ? 5 : 7);
 	my($firehose_items, $firehose_results) =
@@ -88,11 +88,14 @@ srand;
 			$uid = _get_uid($tagsdb, $stoid);
 
 			$tagnameid = _get_tagnameid($tagsdb, $tagnameid, $stoid, $uid);
+			my $tagname = $tagsdb->getTagnameDataFromId($tagnameid)->{tagname};
+			my $is_private = $priv_tagnames->{$tagname};
 			my $tagid = $tagsdb->createTag({
 				uid => $uid,
 				tagnameid => $tagnameid,
 				table => 'stories',
 				id => $stoid,
+				private => $is_private,
 			});
 			print "tagid=$tagid tagnameid=$tagnameid uid=$uid stoid=$stoid\n";
 		} else {
@@ -103,10 +106,13 @@ srand;
 				"karma BETWEEN $kmin AND $kmax",
 				'ORDER BY RAND() LIMIT 1') if !$uid || rand(1) > 0.2;
 			$tagnameid = _get_tagnameid($tagsdb, $tagnameid, $globjid, $uid);
+			my $tagname = $tagsdb->getTagnameDataFromId($tagnameid)->{tagname};
+			my $is_private = $priv_tagnames->{$tagname};
 			my $tagid = $tagsdb->createTag({
 				uid => $uid,
 				tagnameid => $tagnameid,
 				globjid => $globjid,
+				private => $is_private,
 			});
 			print "tagid=$tagid tagnameid=$tagnameid uid=$uid globjid=$globjid\n";
 		}

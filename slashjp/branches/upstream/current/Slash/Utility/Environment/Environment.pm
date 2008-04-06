@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Environment.pm,v 1.235 2008/03/18 20:39:17 tvroom Exp $
+# $Id: Environment.pm,v 1.236 2008/03/24 20:18:00 jamiemccarthy Exp $
 
 package Slash::Utility::Environment;
 
@@ -33,7 +33,7 @@ use Socket qw( inet_aton inet_ntoa );
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.235 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.236 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 
 	dbAvailable
@@ -1879,10 +1879,12 @@ Hashref of cleaned-up data.
 		colorblock	=> sub { $_[0] =~ s|[^\w#,]+||g				},
 # What I actually want to do for userfield is allow it to match
 # [\w.]+, or pass emailValid(), or be changed to the return value
-# from nickFix().  For technical reasons I'm putting that off
-# until probably next week.  Until then this breaks some very
-# minor functionality. - Jamie 2008-01-09
+# from nickFix().  But nickFix() uses constants, which might not
+# be set up at this point. - Jamie 2008-01-09
 		userfield	=> sub { $_[0] =~ s|[^\w.@ -]||g			},
+# Ditto here, really - Jamie 2008-03-24
+		tagname		=> sub { $_[0] = '' unless
+					 $_[0] =~ /^\!?[a-z][a-z0-9]{0,62}$/		},
 	);
 
 
@@ -3526,4 +3528,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Environment.pm,v 1.235 2008/03/18 20:39:17 tvroom Exp $
+$Id: Environment.pm,v 1.236 2008/03/24 20:18:00 jamiemccarthy Exp $

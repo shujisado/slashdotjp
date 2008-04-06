@@ -48,8 +48,8 @@ __template__
 [% END %]
 [% IF needjssubmit %]
 <script type="text/javascript">
-	$('postform-[% item.id %]').submit();
+	$dom('postform-[% item.id %]').submit();
 </script>
 [% END %]
 __version__
-$Id: fireHoseForm;misc;default,v 1.9 2006/12/19 22:17:55 tvroom Exp $
+$Id: fireHoseForm;misc;default,v 1.10 2008/03/21 14:30:58 tvroom Exp $

@@ -1,4 +1,4 @@
-# $Id: THEME,v 1.131 2008/03/14 17:57:33 scc Exp $
+# $Id: THEME,v 1.134 2008/04/02 14:43:55 entweichen Exp $
 name=slashcode
 description="Slashcode.com theme"
 topic=htdocs/images/topics/topicbug.jpg
@@ -59,6 +59,10 @@ image=htdocs/images/cl.gif
 image=htdocs/images/comm-minus.gif
 image=htdocs/images/comm-plus.gif
 image=htdocs/images/contract.gif
+image=htdocs/images/corner_w_br.png
+image=htdocs/images/corner_w_bl.png
+image=htdocs/images/corner_w_tr.png
+image=htdocs/images/corner_w_tl.png
 image=htdocs/images/cr.gif
 image=htdocs/images/ctl_grey.gif
 image=htdocs/images/ctl_red.gif
@@ -126,6 +130,7 @@ htdoc=htdocs/ok.txt
 htdoc=htdocs/robots.txt
 htdoc=htdocs/topics.pl
 htdoc=htdocs/users.pl
+htdoc=htdocs/users2.pl
 htdoc=htdocs/images/comments.js
 htdoc=htdocs/images/dumper.js
 htdoc=htdocs/badge.pl
@@ -317,9 +322,11 @@ template=templates/topics;menu;default
 template=templates/undo_mod;comments;default
 template=templates/url_related;misc;default
 template=templates/userboxes;misc;default
+template=templates/userboxes2;misc;default
 template=templates/userCom;users;default
 template=templates/userFireHose;users;default
 template=templates/userInfo;users;default
+template=templates/userInfo2;users;default
 template=templates/userSub;users;default
 template=templates/user_titlebar;misc;default
 template=templates/userlogin;misc;default

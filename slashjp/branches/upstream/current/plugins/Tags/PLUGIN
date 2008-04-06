@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.15 2008/03/19 14:49:35 jamiemccarthy Exp $
+# $Id: PLUGIN,v 1.16 2008/03/24 20:18:01 jamiemccarthy Exp $
 name=Tags
 description="Tags"
 htdoc=tags.pl
@@ -20,4 +20,6 @@ template=templates/tagsurldivuser;misc;default
 template=templates/tagsurldivadmin;misc;default
 template=templates/taghistory;misc;default
 template=templates/usertaghistory;users;default
+template=templates/usertagnames;users;default
 template=templates/usertags;users;default
+template=templates/usertagsforname;users;default

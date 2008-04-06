@@ -54,10 +54,7 @@ __template__
 		<td valign="middle">
         	<p><b>Discussion Style</b><p>
 		<blockquote><div>
-        	<input type="radio" name="discussion2" value="none"[% constants.markup_checked_attribute IF !user_edit.discussion2 || (user_edit.discussion2 && user_edit.discussion2 != "uofm" && user_edit.discussion2 != "slashdot") %]> Slashdot Classic Discussion System<br>
-		[% IF user.is_admin || user.acl.discussion2_uofm %]
-        	<input type="radio" name="discussion2" value="uofm"[% constants.markup_checked_attribute IF user_edit.discussion2 == "uofm" %]> University of Michigan Testing<br>
-		[% END %]
+        	<input type="radio" name="discussion2" value="none"[% constants.markup_checked_attribute IF !user_edit.discussion2 || (user_edit.discussion2 && user_edit.discussion2 != "slashdot") %]> Slashdot Classic Discussion System<br>
         	<input type="radio" name="discussion2" value="slashdot"[% constants.markup_checked_attribute IF user_edit.discussion2 == "slashdot" %]> Slashdot Interactive Discussion System (a.k.a. D2)<br>
 		</div></blockquote>
 
@@ -302,4 +299,4 @@ __template__
 __seclev__
 500
 __version__
-$Id: editComm;users;default,v 1.67 2008/02/07 00:51:23 pudge Exp $
+$Id: editComm;users;default,v 1.68 2008/03/25 18:43:56 pudge Exp $

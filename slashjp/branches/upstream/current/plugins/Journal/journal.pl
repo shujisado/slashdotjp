@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: journal.pl,v 1.143 2007/04/05 21:44:36 pudge Exp $
+# $Id: journal.pl,v 1.144 2008/04/02 14:20:23 entweichen Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -13,7 +13,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.143 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.144 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
 	my $journal   = getObject('Slash::Journal');
@@ -583,6 +583,7 @@ sub doSaveArticle {
 	}
 
 	my $slashdb = getCurrentDB();
+        my $event_id;
 	if ($form->{id}) {
 		my %update;
 		my $article = $journal_reader->get($form->{id});
@@ -614,6 +615,7 @@ sub doSaveArticle {
 				url	=> "$rootdir/~" . fixparam($user->{nickname}) . "/journal/$form->{id}",
 			});
 			$update{discussion}  = $did;
+                        $event_id = $did;
 
 		# update description if changed
 		} elsif (!$form->{comments_on} && $article->{discussion} && $article->{description} ne $description) {
@@ -655,6 +657,7 @@ sub doSaveArticle {
 				url	=> "$rootdir/~" . fixparam($user->{nickname}) . "/journal/$id",
 			});
 			$journal->set($id, { discussion => $did });
+                        $event_id = $did;
 		}
 
 		slashHook('journal_save_success', { id => $id });
@@ -694,6 +697,44 @@ sub doSaveArticle {
 			message		=> 1
 		}) if $validator;
 	}
+
+        # Add the User2 event.
+        my $events = $slashdb->sqlSelectAllHashref(
+                'eid', 'eid, date', 'user_events', "uid = " . $user->{uid} . " and code = 2");
+
+        if ((scalar keys %$events) == 5) {
+                my $eid = [sort keys %$events]->[0];
+                $slashdb->sqlDelete('user_events', "uid = " . $user->{uid} . " and code = 2 and eid = $eid");
+        }
+
+        $slashdb->sqlInsert('user_events', {
+                code  => 2,
+                uid   => $user->{uid},
+                event => $event_id,
+                -date  => 'NOW()',
+        });
+
+        my $event_blocks = $slashdb->sqlSelectAllHashref(
+                'uid', 'bid, uid, block', 'user_event_blocks', "uid = " . $user->{uid} . " and code = 2");
+
+        if (!%$event_blocks) {
+                $slashdb->sqlInsert('user_event_blocks', {
+                        code  => 2,
+                        uid   => $user->{uid},
+                        block => $event_id,
+                });
+        } else {
+                my @blocks = split(/,/, $event_blocks->{$user->{uid}}->{block});
+
+                if (scalar @blocks == 5) {
+                        @blocks = @blocks[1 .. 4];
+                }
+
+                $blocks[$#blocks + 1] = $event_id;
+                my $new_blocks = join(",", @blocks);
+
+                $slashdb->sqlUpdate('user_event_blocks', { block => $new_blocks }, "uid = " . $user->{uid} . " and code = 2");
+        }
 
 	return 0;
 }

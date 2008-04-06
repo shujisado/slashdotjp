@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.77 2008/03/19 08:25:31 pudge Exp $
+# $Id: ajax.pl,v 1.84 2008/03/31 21:43:56 pudge Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.77 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.84 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -40,8 +40,6 @@ sub main {
 	);
 #	print STDERR "AJAX3 $$: $user->{uid}, $op\n";
 
-#$Slash::ResKey::DEBUG = 2;
-
 	$ops->{$op}{function} ||= loadCoderef($ops->{$op}{class}, $ops->{$op}{subroutine});
 	$op = 'default' unless $ops->{$op}{function};
 
@@ -58,7 +56,7 @@ sub main {
 
 	if ($reskey_name ne 'NA') {
 		my $reskey = getObject('Slash::ResKey');
-		my $rkey = $reskey->key($reskey_name);
+		my $rkey = $reskey->key($reskey_name); #, { debug => 1 });
 		if (!$rkey) {
 			print STDERR scalar(localtime) . " ajax.pl main no rkey for op='$op' name='$reskey_name'\n";
 			return;
@@ -72,17 +70,17 @@ sub main {
 			$rkey->use;
 		}
 		if (!$rkey->success) {
+			# feel free to send msgdiv => 'thisdivhere' to the ajax call,
+			# and any reskey error messages will be sent to it
 			if ($form->{msgdiv}) {
 				header_ajax({ content_type => 'application/json' });
 				(my $msgdiv = $form->{msgdiv}) =~ s/[^\w-]+//g;
 				print Data::JavaScript::Anon->anon_dump({
-					html	=> { $msgdiv => $rkey->errstr },
+					html	  => { $msgdiv => $rkey->errstr },
+					eval_last => "\$('#$msgdiv').show()"
 				});
 			}
-			printf STDERR "AJAXE %d: UID:%d, op:%s: %s (%s:%s:%s:%s:%s:%s:%s)\n",
-				$$, $user->{uid}, $op, $rkey->errstr, $rkey->reskey,
-				$rkey->type, $rkey->resname, $rkey->rkrid, $rkey->code, $rkey->static,
-				$user->{srcids}{ 24 };
+			$rkey->ERROR($op);
 			return;
 		}
 	}
@@ -281,11 +279,20 @@ sub submitReply {
 	my $discussion = $slashdb->getDiscussion($sid);
 	my $comment = preProcessComment($form, $user, $discussion, \$error_message);
 	if (!$error_message) {
-		$options->{rkey}->use or $error_message = $options->{rkey}->errstr;
+		unless ($options->{rkey}->use) {
+			$error_message = $options->{rkey}->errstr;
+		}
 	}
 	$saved_comment = saveComment($form, $comment, $user, $discussion, \$error_message)
 		unless $error_message;
 	my $cid = $saved_comment && $saved_comment ne '-1' ? $saved_comment->{cid} : 0;
+
+	if ($error_message) {
+		$error_message = getData('inline preview warning') . $error_message
+			unless $options->{rkey}->death;
+		# go back to HumanConf if we still have errors left to display
+		$error_message .= slashDisplay('hc_comment', { pid => $pid }, { Return => 1 });
+	}
 
 	$options->{content_type} = 'application/json';
 	my %to_dump = ( cid => $cid, error => $error_message );
@@ -301,15 +308,18 @@ sub previewReply {
 
 	$user->{state}{ajax_accesslog_op} = 'comments_preview_reply';
 
-	my($error_message, $preview, $html);
+	my $html = my $error_message = '';
 	my $discussion = $slashdb->getDiscussion($sid);
 	my $comment = preProcessComment($form, $user, $discussion, \$error_message);
 	if ($comment && $comment ne '-1') {
-		$preview = postProcessComment({ %$comment, %$form, %$user }, 0, $discussion);
+		my $preview = postProcessComment({ %$comment, %$form, %$user }, 0, $discussion);
 		$html = prevComment($preview, $user);
 	}
 
-	$error_message ||= 'This comment will not be saved until you click the Submit button below.';
+	if ($html) {
+		$error_message = getData('inline preview warning') . $error_message;
+		$error_message .= slashDisplay('hc_comment', { pid => $pid }, { Return => 1 });
+	}
 	$options->{content_type} = 'application/json';
 	my %to_dump = (
 		error => $error_message,
@@ -339,7 +349,7 @@ sub replyForm {
 	preProcessReplyForm($form, $reply);
 
 	my $reskey = getObject('Slash::ResKey');
-	my $rkey = $reskey->key('comments', { nostate => 1 });
+	my $rkey = $reskey->key('comments', { nostate => 1 }); #, debug => 1 });
 	$rkey->create;
 
 	my %to_dump;
@@ -386,15 +396,14 @@ sub readRest {
 sub fetchComments {
 	my($slashdb, $constants, $user, $form, $options) = @_;
 
-	my $cids         = [ grep /^\d+$/, split /,/, ($form->{cids} || '') ];
+	my $cids         = [ grep { defined && /^\d+$/ } ($form->{_multi}{cids} ? @{$form->{_multi}{cids}} : $form->{cids}) ];
 	my $id           = $form->{discussion_id} || 0;
 	my $cid          = $form->{cid} || 0; # root id
 	my $d2_seen      = $form->{d2_seen};
-	my $placeholders = $form->{placeholders};
-	my @placeholders;
+	my $placeholders = [ grep { defined && /^\d+$/ } ($form->{_multi}{placeholders} ? @{$form->{_multi}{placeholders}} : $form->{placeholders}) ];
 
 	$user->{state}{ajax_accesslog_op} = "ajax_comments_fetch";
-#use Data::Dumper; print STDERR Dumper [ $cids, $id, $cid, $d2_seen ];
+#use Data::Dumper; print STDERR Dumper [ $form, $cids, $id, $cid, $d2_seen ];
 	# XXX error?
 	return unless $id && (@$cids || $d2_seen);
 
@@ -439,17 +448,16 @@ sub fetchComments {
 	#delete $comments->{0}; # non-comment data
 
 	my %data;
-	if ($d2_seen || $placeholders) {
+	if ($d2_seen || @$placeholders) {
 		my $special_cids;
 		if ($d2_seen) {
 			$special_cids = $cids = [ sort { $a <=> $b } grep { $_ && !$seen{$_} } keys %$comments ];
-		} elsif ($placeholders) {
-			@placeholders = split /[,;]/, $placeholders;
-			$special_cids = [ sort { $a <=> $b } @placeholders ];
+		} elsif (@$placeholders) {
+			$special_cids = [ sort { $a <=> $b } @$placeholders ];
 			if ($form->{d2_seen_ex}) {
 				my @seen;
 				my $lastcid = 0;
-				my %check = (%seen, map { $_ => 1 } @placeholders);
+				my %check = (%seen, map { $_ => 1 } @$placeholders);
 				for my $cid (sort { $a <=> $b } keys(%check)) {
 					push @seen, $lastcid ? $cid - $lastcid : $cid;
 					$lastcid = $cid;
@@ -587,9 +595,9 @@ sub fetchComments {
 		$to_dump{eval_first} ||= '';
 		$to_dump{eval_first} .= "d2_seen = '$d2_seen_0'; updateMoreNum($total);";
 	}
-	if ($placeholders) {
+	if (@$placeholders) {
 		$to_dump{eval_first} ||= '';
-		$to_dump{eval_first} .= "placeholder_no_update = " . Data::JavaScript::Anon->anon_dump({ map { $_ => 1 } @placeholders }) . ';';
+		$to_dump{eval_first} .= "placeholder_no_update = " . Data::JavaScript::Anon->anon_dump({ map { $_ => 1 } @$placeholders }) . ';';
 	}
 	writeLog($id);
 	return Data::JavaScript::Anon->anon_dump(\%to_dump);
@@ -746,7 +754,7 @@ sub getModalPrefs {
 		my $moddb = getObject("Slash::$constants->{m1_pluginname}");
 		if ($moddb) {
 			# we hijack "tabbed" as our cid -- pudge
-			return $moddb->dispModCommentLog('cid', $form->{'tabbed'}, {
+			my $return = $moddb->dispModCommentLog('cid', $form->{'tabbed'}, {
 				show_m2s        => ($constants->{m2}
 					? (defined($form->{show_m2s})
 						? $form->{show_m2s}
@@ -756,6 +764,8 @@ sub getModalPrefs {
 				need_m2_button  => $constants->{m2},
 				title           => " "
 			});
+			$return ||= getData('no modcommentlog');
+			return $return;
 		}
 
 	} else {

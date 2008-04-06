@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: console.pl,v 1.7 2007/12/11 12:53:04 jamiemccarthy Exp $
+# $Id: console.pl,v 1.8 2008/03/21 16:53:32 tvroom Exp $
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -65,8 +65,7 @@ sub display {
 	my $tagnamesbox = '';
 	my $tags = getObject('Slash::Tags');
 	if ($tags) {
-		my $rtoi_ar = $tags->getRecentTagnamesOfInterest();
-		$tagnamesbox = $tags->showRecentTagnamesBox();
+		$tagnamesbox = $tags->showRecentTagnamesBox({ box_only => 1});
 	}
 
 	slashDisplay('display', {
