@@ -1,0 +1,39 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+journaloptions
+__template__
+	
+<form action="[% gSkin.rootdir %]/journal.pl" method="post" enctype="application/x-www-form-urlencoded">
+	<fieldset>
+		<legend>
+			Journal Preferences
+		</legend>
+		<input type="hidden" name="op" value="setprefs">
+		[%- IF themes.size > 1 %]
+			[% PROCESS formLabel value => "Theme" %]
+			[% Slash.createSelect("journal_theme", themes, default, 1) %]
+			[% PROCESS formNote note => "Select how your journal will be viewed" %]
+		[%- END %]
+		[% PROCESS formLabel value => "Comments" %]
+		[% jdcodename = (user.is_subscriber || user.is_admin) ? 'commentcodes_extended' : 'commentcodes';
+		   jds = Slash.db.getDescriptions(jdcodename);
+		   def_jd = user.journal_discuss || constants.defaultcommentmode;
+		   Slash.createSelect("journal_discuss", jds, def_jd, 1) %]
+		 [% PROCESS formNote note => "Select default for new entries" %]
+		<input type="submit" name="submit" value="change" class="button">
+	</fieldset>
+</form>
+
+__seclev__
+100
+__version__
+$Id: journaloptions;journal;default,v 1.7 2005/07/27 22:54:10 pudge Exp $

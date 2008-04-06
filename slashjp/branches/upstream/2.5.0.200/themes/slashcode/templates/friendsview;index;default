@@ -1,0 +1,26 @@
+__section__
+default
+__description__
+Repository for random data elements.
+
+* value = the name of the data element to retrieve
+
+Each data element may have any number of other variables.
+__title__
+
+__page__
+index
+__lang__
+en_US
+__name__
+friendsview
+__template__
+<ul>
+[% FOR article = articles %]
+	<li><a href="[% gSkin.rootdir %]/~[% article.nickname | strip_paramattr %]/journal/[% article.id %]">[% article.description %]</a> - <a href="[% gSkin.rootdir %]/~[% article.nickname | strip_paramattr %]">[% article.nickname | strip_literal %]</a>
+[% END %]
+</ul>
+__seclev__
+10000
+__version__
+$Id: friendsview;index;default,v 1.6 2006/01/23 20:42:59 pudge Exp $

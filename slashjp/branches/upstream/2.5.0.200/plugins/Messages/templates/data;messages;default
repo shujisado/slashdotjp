@@ -1,0 +1,70 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+data
+__template__
+[% USE date %]
+[% SWITCH value %]
+
+[% CASE 'header' %]
+	[% returnme.data_constant = 1 %]
+	[% constants.sitename %] Message Center
+
+[% CASE 'prefs saved' %]
+	[% returnme.data_constant = 1 %]
+	Preferences Saved
+
+[% CASE 'type not found' %]
+	Message type [% type %] not found
+
+[% CASE 'user not found' %]
+	User [% uid %] not found
+
+[% CASE 'message not found' %]
+	Message [% id %] not found
+
+[% CASE 'no template' %]
+	[% returnme.data_constant = 1 %]
+	No template name
+
+[% CASE 'wrong type' %]
+	Cannot accept data of type [% type %]
+
+[% CASE 'no delivery mode' %]
+	No delivery mode for user [% uid %]
+
+[% CASE 'no message code' %]
+	Not allowed to send message type [% code %] to user [% uid %]
+
+[% CASE 'send_mail false' %]
+	[% returnme.data_constant = 1 %]
+	Not allowed to send mail; send_mail variable is false
+
+[% CASE 'send mail error' %]
+	Error sending to '[% addr %]' for user [% uid %]: [% error %]
+
+[% CASE 'newsletter subject' %]
+	Stories for [% date.format(date.now, '%Y-%m-%d') %]
+
+[% CASE 'headlines subject' %]
+	Headlines for [% date.format(date.now, '%Y-%m-%d') %]
+
+[% CASE 'unknown mode' %]
+	Unknown delivery mode '[% mode %]' for user [% uid %]
+
+[% CASE 'messages_div_begin' %]
+	<div id="users">
+
+[% END %]
+__seclev__
+500
+__version__
+$Id: data;messages;default,v 1.8 2005/07/27 22:54:11 pudge Exp $

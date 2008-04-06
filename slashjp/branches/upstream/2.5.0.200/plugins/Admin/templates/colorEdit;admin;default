@@ -1,0 +1,131 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+colorEdit
+__template__
+[% IF form.colorpreview %]
+<br>
+<a href="[% gSkin.rootdir %]/index.pl?colorblock=[% colorblock_clean %]">
+<p><b>Click here to see the site in these colors!</a></b>
+(Hit the <b>"back"</b> button to get back to this page.)</p>
+[% END %]
+
+<p>You may need to reload the page a couple of times to see a
+change in the color scheme. <br>
+If you can restart the webserver, that's the quickest way to
+see your changes.</p>
+
+[% PROCESS titlebar width="100%" %]
+
+<form action="[% env.script_name %]" method="post">
+<input type="hidden" name="op" value="colors">
+<p>Shown are the site colors. If you make a change to any one of them,
+you will need to restart the webserver for the change(s) to show up.</p>
+<p>Note: make sure you use a valid color value, or the color will not
+work properly.</p>
+
+Select the color block to edit:
+
+[% color_select %]
+
+<input type="submit" name="colored" value="Edit Colors">
+
+[% IF form.color_block %]
+
+<table border="0">
+	<tr>
+		<td>Foreground color 0</td>
+		 <td><input type="text" name="fg0" value="[% colors.0 %]" size=7></td>
+		<td>Foreground color 0</td>
+		<td bgcolor="[% colors.0 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Foreground color 1</td>
+		<td><input type="text" name="fg1" value="[% colors.1 %]" size=7></td>
+		<td>Foreground color 1 </td>
+		<td bgcolor="[% colors.1 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Foreground color 2</td>
+		<td><input type="text" name="fg2" value="[% colors.2 %]" size=7></td>
+		<td>Foreground color 2 </td>
+		<td bgcolor="[% colors.2 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Foreground color 3</td>
+		<td><input type="text" name="fg3" value="[% colors.3 %]" size=7></td>
+		<td>Foreground color 3 </td>
+		<td bgcolor="[% colors.3 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Foreground color 4</td>
+		<td><input type="text" name="fg4" value="[% colors.4 %]" size=7></td>
+		<td>Foreground color 4</td>
+		<td bgcolor="[% colors.4 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Foreground color 5</td>
+		<td><input type="text" name="fg5" value="[% colors.5 %]" size=7></td>
+		<td>Foreground color 5</td>
+		<td bgcolor="[% colors.5 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Background color 0</td>
+		<td><input type="text" name="bg0" value="[% colors.6 %]" size=7></td>
+		<td>Background color 0 </td>
+		<td bgcolor="[% colors.6 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Background color 1</td>
+		<td><input type="text" name="bg1" value="[% colors.7 %]" size=7></td>
+		<td>Background color 1 </td>
+		<td bgcolor="[% colors.7 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Background color 2</td>
+		<td><input type="text" name="bg2" value="[% colors.8 %]" size=7></td>
+		<td>Background color 2 </td>
+		<td bgcolor="[% colors.8 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Background color 3</td>
+		<td><input type="text" name="bg3" value="[% colors.9 %]" size=7></td>
+		<td>Background color 3 </td>
+		<td bgcolor="[% colors.9 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Background color 4</td>
+		<td><input type="text" name="bg4" value="[% colors.10 %]" size=7></td>
+		<td>Background color 4 </td>
+		<td bgcolor="[% colors.10 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	</tr>
+	<tr>
+                <td>Background color 5</td>
+                <td><input type="text" name="bg5" value="[% colors.11 %]" size=7></td>
+                <td>Background color 5 </td>
+                <td bgcolor="[% colors.11 %]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+        </tr>
+	<tr>
+		<td><input type="submit" name="colorpreview" value="Preview"></td>
+		<td><input type="submit" name="colorsave" value="Save Colors"></td>
+		<td><input type="submit" name="colorrevert" value="Revert to saved"></td>
+		<td><input type="submit" name="colororig" value="Revert to default">
+		<br><input type="submit" name="colorsavedef" value="Save as default">
+		(Make sure this is what you want!)
+		</td>
+	</tr>
+</table>
+</form>
+[% END %]
+__seclev__
+500
+__version__
+$Id: colorEdit;admin;default,v 1.10 2005/07/27 22:53:54 pudge Exp $

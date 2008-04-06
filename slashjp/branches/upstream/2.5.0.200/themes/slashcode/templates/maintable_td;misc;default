@@ -1,0 +1,58 @@
+__section__
+default
+__description__
+Template to drop in a TD for the maintable (and update state vars).
+
+* mt_valign
+* mt_align
+* mt_rowspan
+* mt_colspan
+* mt_width
+* mt_height
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+maintable_td
+__template__
+
+<TD[%
+IF mt_align %] align="[% mt_align %]"[% END;
+IF mt_valign %] valign="[% mt_valign %]"[% END;
+IF mt_rowspan %] rowspan="[% mt_rowspan %]"[% END;
+IF mt_colspan %] colspan="[% mt_colspan %]"[% END;
+IF mt_width %] width="[% mt_width %]"[% END;
+IF mt_height %] height="[% mt_height %]"[% END %]>
+
+[%
+IF !mt_rowspan; mt_rowspan = 1; END;
+IF !mt_colspan; mt_colspan = 1; END;
+UNLESS user.state.mt.cols; user.state.mt.cols = []; END;
+curcol = user.state.mt.curcol || 0;
+WHILE mt_colspan > 0;
+	curcol = curcol + 1;
+	WHILE curcol > user.state.mt.cols.max;
+		user.state.mt.cols.push(0);
+	END;
+	newvalue = user.state.mt.cols.$curcol + mt_rowspan;
+	user.state.mt.cols.$curcol = newvalue;
+	mt_colspan = mt_colspan - 1;
+END;
+currow = user.state.mt.currow || 0;
+curcol = curcol + 1;
+WHILE user.state.mt.cols.$curcol && user.state.mt.cols.$curcol >= currow;
+	curcol = curcol + 1;
+END;
+curcol = curcol - 1;
+user.state.mt.curcol = curcol;
+mt_align=""; mt_valign=""; mt_rowspan = 0; mt_colspan=0; mt_width=""; mt_height=""
+%]
+
+__seclev__
+10000
+__version__
+$Id: maintable_td;misc;default,v 1.12 2005/07/27 22:54:48 pudge Exp $

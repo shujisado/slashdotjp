@@ -1,0 +1,5 @@
+# $Id: TAGBOX,v 1.1 2006/10/10 20:37:22 jamiemccarthy Exp $
+name=FHEditorPop
+description=Keep track of popularity of firehose entries for editors
+mysql_dump=mysql_dump.sql
+requiresplugin=FireHose
