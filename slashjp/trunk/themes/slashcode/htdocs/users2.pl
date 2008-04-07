@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
+# $Id: users2.pl,v 1.1 2008/04/02 14:38:23 entweichen Exp $
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -28,6 +28,8 @@ sub main {
 	my $postflag = $user->{state}{post};
 	my $op = lc($form->{op});
 
+        return if (!$user->{is_admin});
+
 	# savepasswd is a special case, because once it's called, you
 	# have to reload the form, and you don't want to do any checks if
 	# you've just saved.
@@ -45,13 +47,6 @@ sub main {
 			# just in case we need it for something else, we have it ...
 			checks		=> [ qw (generate_formkey) ],
 		},
-#		userlogin	=>  {
-#			function	=> \&showInfo,
-#			seclev		=> 1,
-#			formname	=> $formname,
-#			checks		=> [],
-#			tab_selected_1	=> 'me',
-#		},
 		no_user	=>  {
 			function	=> \&noUser,
 			seclev		=> 0,
@@ -573,7 +568,7 @@ sub newUser {
 	$form->{newusernick} = nickFix($form->{newusernick});
 	my $matchname = nick2matchname($form->{newusernick});
 
-	if (!$form->{email} || !emailValid($form->{email})) {
+	if (!$form->{email} || $form->{email} !~ /\@/) {
 		print getError('email_invalid', 0, 1);
 		return;
 	} elsif ($form->{email} ne $form->{email2}) {
@@ -696,8 +691,7 @@ sub mailPasswd {
 		# user, to determine whether this IP is OK'd to
 		# send the mail to the target user.
 		# XXXSRCID This should check a separate field like
-		# 'openproxy' instead of piggybacking off of the
-		# existing nopost and spammer
+		# 'openproxy' instead of piggybacking off of 'nopost'
 		my $srcids_to_check = $user->{srcids};
 		$err_name = 'mailpasswd_readonly_err'
 			if $reader->checkAL2($srcids_to_check, 'nopost');
@@ -906,7 +900,7 @@ sub showFireHose {
 	$form->{mode} = "full";
 	$form->{color} = "black";
 	$form->{orderby} = "createtime";
-	$form->{orderdir} = "DESC";
+	$form->{orderdidr} = "DESC";
 	$form->{skipmenu} = 1;
 	$form->{duration} = -1;
 	$form->{fhfilter} = "\"user:$user_edit->{nickname}\"";
@@ -1006,12 +1000,12 @@ sub showInfo {
 				$uid = $requested_user->{uid};
 				$nick = $requested_user->{nickname};
 				if ((my $conflict_id = $reader->getUserUID($id)) && $form->{userinfo}) {
-					slashDisplay('showInfoConflict', {
-						op		=> 'userinfo',
-						id		=> $uid,
-						nick		=> $nick,
-						conflict_id	=> $conflict_id
-					});
+					#slashDisplay('showInfoConflict', {
+						#op		=> 'userinfo',
+						#id		=> $uid,
+						#nick		=> $nick,
+						#conflict_id	=> $conflict_id
+					#});
 					return 1;
 				}
 			}
@@ -1235,9 +1229,9 @@ sub showInfo {
 		}
 
 		$comment->{points} += $user->{karma_bonus}
-			if defined($user->{karma_bonus}) && $comment->{karma_bonus} eq 'yes';
+			if $user->{karma_bonus} && $comment->{karma_bonus} eq 'yes';
 		$comment->{points} += $user->{subscriber_bonus}
-			if $constants->{plugin}{Subscribe} && defined($user->{subscriber_bonus}) && $comment->{subscriber_bonus} eq 'yes';
+			if $user->{subscriber_bonus} && $comment->{subscriber_bonus} eq 'yes';
 
 		# fix points in case they are out of bounds
 		$comment->{points} = $constants->{comment_minscore} if $comment->{points} < $constants->{comment_minscore};
@@ -1310,24 +1304,24 @@ sub showInfo {
 	my $uid_hoursback = $constants->{istroll_uid_hours} || 72;
 
 	if ($requested_user->{nonuid}) {
-		slashDisplay('netIDInfo', {
-			title			=> $title,
-			id			=> $id,
-			useredit		=> $requested_user,
-			commentstruct		=> $commentstruct || [],
-			commentcount		=> $commentcount,
-			min_comment		=> $min_comment,
-			admin_flag		=> $admin_flag,
-			admin_block		=> $admin_block,
-			netid			=> $netid,
-			netid_vis		=> $netid_vis,
-			reasons			=> $mod_reader->getReasons(),
-			subcount		=> $subcount,
-			submissions		=> $submissions,
-			hr_hours_back		=> $ipid_hoursback,
-			cids_to_mods		=> $cids_to_mods,
-			comment_time		=> $comment_time
-		});
+		#slashDisplay('netIDInfo', {
+			#title			=> $title,
+			#id			=> $id,
+			#useredit		=> $requested_user,
+			#commentstruct		=> $commentstruct || [],
+			#commentcount		=> $commentcount,
+			#min_comment		=> $min_comment,
+			#admin_flag		=> $admin_flag,
+			#admin_block		=> $admin_block,
+			#netid			=> $netid,
+			#netid_vis		=> $netid_vis,
+			#reasons			=> $mod_reader->getReasons(),
+			#subcount		=> $subcount,
+			#submissions		=> $submissions,
+			#hr_hours_back		=> $ipid_hoursback,
+			#cids_to_mods		=> $cids_to_mods,
+			#comment_time		=> $comment_time
+		#});
 
 	} else {
 		if (! $requested_user->{uid}) {
@@ -1369,7 +1363,29 @@ sub showInfo {
 			$tagshist = $tags_reader->getAllTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', limit => 30, include_private => 1 });
 		}
 
-		slashDisplay('userInfo', {
+                my $comment_blocks = $reader->sqlSelectAllHashref(
+                        'uid', 'bid, uid, block', 'user_event_blocks', "uid = $uid and code = 1");
+
+                my @block_ids = split(/,/, $comment_blocks->{$uid}->{block});
+
+                my %latest_comments;
+                foreach my $comment_block (@block_ids) {
+                        ($latest_comments{$comment_block}->{sid}, $latest_comments{$comment_block}->{subject})
+                                = $reader->sqlSelect("sid, subject", "comments", "cid = $comment_block");
+                        #$latest_comments{$comment_block}->{text} = $reader->sqlSelect("comment", "comment_text", "cid = $comment_block");
+                }
+
+                my $journal_blocks = $reader->sqlSelectAllHashref(
+                        'uid', 'bid, uid, block', 'user_event_blocks', "uid = $uid and code = 2");
+
+                @block_ids = split(/,/, $journal_blocks->{$uid}->{block});
+                my %latest_journals;
+                foreach my $journal_block (@block_ids) {
+                        ($latest_journals{$journal_block}->{id}, $latest_journals{$journal_block}->{desc})
+                                = $reader->sqlSelect("id, description", "journals", "discussion = $journal_block");
+                }
+
+		slashDisplay('userInfo2', {
 			title			=> $title,
 			uid			=> $uid,
 			useredit		=> $requested_user,
@@ -1390,8 +1406,10 @@ sub showInfo {
 			submissions		=> $submissions,
 			subcount		=> $subcount,
 			metamods		=> $metamods,
-			tagshist		=> $tagshist
-		});
+			tagshist		=> $tagshist,
+                        latest_comments         => \%latest_comments,
+                        latest_journals         => \%latest_journals,
+		}, { Page => 'users', Skin => 'default'});
 	}
 
 	if ($user_change && %$user_change) {
@@ -1436,7 +1454,7 @@ sub _get_lastjournal {
 		# defaults to 4K) and can't have too many line-breaking
 		# tags.
 		my $art_shrunk = $lastjournal->{article};
-		my $maxsize = int($constants->{default_maxcommentsize} / 25);
+		my $maxsize = int($user->{maxcommentsize} / 25);
 		$maxsize =  80 if $maxsize <  80;
 		$maxsize = 600 if $maxsize > 600;
 		$art_shrunk = chopEntity($art_shrunk, $maxsize);
@@ -1611,11 +1629,6 @@ sub showTags {
 	my $constants = getCurrentStatic();
 	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
 
-	# XXX if $user_edit->{acl}{spammer}, either abort or put ref=nofollow in all links
-
-	my $tagname = $form->{tagname} || '';
-	$tagname = '' if !$tags_reader->tagnameSyntaxOK($tagname);
-
 	my($uid, $user_edit);
 	if ($form->{uid} || $form->{nick}) {
 		$uid = $form->{uid} || $tags_reader->getUserUID($form->{nick});
@@ -1632,41 +1645,11 @@ sub showTags {
 		return;
 	}
 
-	my $tagnameid = $tags_reader->getTagnameidFromNameIfExists($tagname);
-	if ($tagnameid) {
-		# Show all user's tags for one particular tagname.
-		my $tags_hr = $tags_reader->getGroupedTagsFromUser($user_edit->{uid},
-			{ tagnameid => $tagnameid });
-		my $tags_ar = $tags_hr->{$tagname} || [ ];
-		slashDisplay('usertagsforname', {
-			useredit	=> $user_edit,
-			tagname		=> $tagname,
-			tags		=> $tags_ar,
-		});
-		
-	} else {
-		my $tags_hr = $tags_reader->getGroupedTagsFromUser($user_edit->{uid});
-		my $num_tags = 0;
-		for my $tn (keys %$tags_hr) {
-			$num_tags += scalar @{ $tags_hr->{$tn} };
-		}
-		my $cutoff = $constants->{tags_usershow_cutoff} || 200;
-		if ($num_tags <= $cutoff) {
-			# Show all user's tags, grouped by tagname.
-			slashDisplay('usertags', {
-				useredit	=> $user_edit,
-				tags_grouped	=> $tags_hr,
-			});
-		} else {
-			# Show all user's tagnames, with links to show all
-			# tags for each particular tagname.
-			my $tagname_ar = [ sort keys %$tags_hr ];
-			slashDisplay('usertagnames', {
-				useredit	=> $user_edit,
-				tagnames	=> $tagname_ar,
-			});
-		}
-	}
+	my $tags_ar = $tags_reader->getGroupedTagsFromUser($user_edit->{uid});
+	slashDisplay('usertags', {
+		useredit	=> $user_edit,
+		tags_grouped	=> $tags_ar,
+	});
 }
 
 #################################################################
@@ -1816,7 +1799,7 @@ sub tildeEd {
 
 	# Set up $nexus_hr, @nexustid_order, and $story023_default{nexus}.
 	my $topic_tree = $reader->getTopicTree();
-	my $nexus_tids_ar = [ sort grep {$topic_tree->{$_}{storypickable}} $reader->getNexusTids() ];
+	my $nexus_tids_ar = $reader->getStorypickableNexusChildren($constants->{mainpage_nexus_tid}, 1);
 	my $nexus_hr = { };
 	
 	for my $tid (@$nexus_tids_ar) {
@@ -2304,7 +2287,6 @@ sub editComm {
 		highlightthresh_select	=> $highlightthresh_select,
 		uthreshold_select	=> $uthreshold_select,
 		posttype_select		=> $posttype_select,
-		range			=> \@range,
 		reasons			=> \@reasons,
 		reason_select		=> \%reason_select,
 		people			=> \@people,
@@ -2593,9 +2575,6 @@ sub saveUser {
 		if ($slashdb->existsEmail($form->{realemail})) {
 			$note .= getError('emailexists_err', 0, 1);
 			$form->{realemail} = $user_edit->{realemail}; # can't change!
-		} elsif (!emailValid($form->{realemail})) {
-			$note .= getError('email_invalid', 0, 1);
-			$form->{realemail} = $user_edit->{realemail}; # can't change!
 		}
 	}
 
@@ -2783,13 +2762,6 @@ sub saveComm {
 	my $clsmall_bonus = ($form->{clsmall_bonus} !~ /^[\-+]?\d+$/) ? 0 : $form->{clsmall_bonus};
 	my $clbig_bonus = ($form->{clbig_bonus} !~ /^[\-+]?\d+$/) ? 0 : $form->{clbig_bonus};
 
-	# plum
-	$form->{d2_comment_q} = (isSubscriber($user_edit) || $user_edit->{seclev} >= 100)
-		? $form->{d2_comment_q}
-		: ($form->{d2_comment_q} eq '0')
-			? 1
-			: $form->{d2_comment_q};
-
 	my $user_edits_table = {
 		discussion2		=> $form->{discussion2} || undef,
 		d2_comment_q		=> $form->{d2_comment_q} || undef,
@@ -2806,6 +2778,7 @@ sub saveComm {
 		emaildisplay		=> $form->{emaildisplay} || undef,
 		fakeemail		=> $new_fakeemail,
 		highlightthresh		=> $form->{highlightthresh},
+		maxcommentsize		=> $form->{maxcommentsize},
 		mode			=> $form->{umode},
 		posttype		=> $form->{posttype},
 		threshold		=> $form->{uthreshold},
@@ -2838,6 +2811,7 @@ sub saveComm {
 	my $defaults = {
 		posttype        => 2,
 		highlightthresh => 4,
+		maxcommentsize  => 4096,
 		reparent        => 1,
 		commentlimit    => 100,
 		commentspill    => 50,
@@ -2851,9 +2825,8 @@ sub saveComm {
 		push @reasons, $reasons->{$id}{name};
 	}
 
-	for my $reason_id (%$reasons) {
-		next unless $reasons->{$reason_id}{listable};
-		my $key = "reason_alter_$reason_id";
+	for my $reason_name (@reasons) {
+		my $key = "reason_alter_$reason_name";
 		my $answer = $form->{$key} || 0;
 		$answer = 0 if !$answer || $answer !~ /^[\-+]?\d+$/;
 		$user_edits_table->{$key} = ($answer == 0) ? '' : $answer;
@@ -2878,7 +2851,6 @@ sub saveHome {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
-	my $gSkin = getCurrentSkin();
 	my($uid, $error);
 
 	if ($user->{is_admin}) {
@@ -3047,7 +3019,7 @@ sub saveHome {
 
 		slashboxes	=> checkList($slashboxes, 1024),
 
-		maxstories	=> (($form->{maxstories} > 0 && $form->{maxstories} <= 90) ? $form->{maxstories} : ($gSkin->{artcount_max} || 30)),
+		maxstories	=> 30, # XXXSKIN fix this later
 		noboxes		=> ($form->{useslashboxes} ? 0 : 1),
 		lowbandwidth	=> ($form->{lowbandwidth} ? 1 : 0),
 		simpledesign	=> ($form->{simpledesign} ? 1 : 0),
@@ -3101,9 +3073,8 @@ sub saveHome {
 		getOtherUserParams($user_edits_table);
 		if ($form->{restore_defaults}) {
 			setToDefaults($user_edits_table, {}, {
-				maxstories	=> $gSkin->{artcount_max} || 30,
-				tzcode		=> $constants->{default_tzcode} || "EST",
-				dfid		=> $constants->{default_dfid} || 0,
+				maxstories	=> 30,
+				tzcode		=> "EST",
 				# XXX shouldn't this reset ALL the defaults,
 				# not just these two?
 			});
@@ -3634,8 +3605,6 @@ sub getUserAdmin {
 		$ipid_karma = $reader->getNetIDKarma("ipid", $ipid) if $ipid;
 	}
 
-	my $clout_types_ar = [ sort grep /\D/, keys %{$slashdb->getCloutTypes} ];
-
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
 		useredit		=> $user_edit,
@@ -3665,9 +3634,7 @@ sub getUserAdmin {
 		proxy_check		=> $proxy_check,
 		subnet_karma		=> $subnet_karma,
 		ipid_karma		=> $ipid_karma,
-		post_restrictions	=> $post_restrictions,
-
-		clout_types_ar		=> $clout_types_ar,
+		post_restrictions	=> $post_restrictions
 	}, 1);
 }
 

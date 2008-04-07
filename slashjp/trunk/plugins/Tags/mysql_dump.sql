@@ -4,6 +4,7 @@
 
 INSERT INTO vars (name, value, description) VALUES ('memcached_exptime_tags', '3600', 'Seconds to cache tag data in memcached');
 INSERT INTO vars (name, value, description) VALUES ('memcached_exptime_tags_brief', '300', 'Seconds to cache tag data that only needs brief caching, in memcached');
+INSERT INTO vars (name, value, description) VALUES ('tags_active_maxshow', '200', 'Maximum number of tagged objects to display on /tags/foo');
 INSERT INTO vars (name, value, description) VALUES ('tags_active_mincare', '5', 'Minimum color slice number to "care" about tags for the Slashdot Recent Tags box (only matters if FireHose installed and if you are Slashdot)');
 INSERT INTO vars (name, value, description) VALUES ('tags_admin_private_tags', '', 'List of tags separated by | that are private for admins');
 INSERT INTO vars (name, value, description) VALUES ('tags_admin_autoaddstorytopics', '1', 'Auto-add tags for story topic keywords?');
@@ -34,10 +35,11 @@ INSERT INTO vars (name, value, description) VALUES ('tags_urls_pos_tags', 'plus'
 INSERT INTO vars (name, value, description) VALUES ('tags_urls_neg_tags', 'minus|binspam', '| separated list of tags applied which negatively affect url popularity');
 INSERT INTO vars (name, value, description) VALUES ('tags_userfrac_read', '1', 'Fraction (0.0-1.0) of user UIDs which are allowed to read tags, if tags_*_allow* is set that way');
 INSERT INTO vars (name, value, description) VALUES ('tags_userfrac_write', '0.95', 'Fraction (0.0-1.0) of user UIDs which are allowed to tag, if tags_*_allow* is set that way');
+INSERT INTO vars (name, value, description) VALUES ('tags_usershow_cutoff', '200', 'More tags than this, and instead of showing the full taglist /~user/tags will show the list of tagnames');
 INSERT INTO vars (name, value, description) VALUES ('tags_tagname_regex', '^\!?[a-z][a-z0-9/]{0,63}$', 'Regex that tag names must conform to');
+INSERT INTO vars (name, value, description) VALUES ('tags_updateclouts_debuguids', '', 'UIDs to print debug info on during clout recalculation');
 INSERT INTO vars (name, value, description) VALUES ('tags_upvote_tagname', 'nod', 'Tag for upvote');
 INSERT INTO vars (name, value, description) VALUES ('tags_downvote_tagname', 'nix', 'Tag for downvote');
-INSERT INTO vars (name, value, description) VALUES ('tags_negative_tagnames', 'nix,dupe,whocares', 'Negative tags (comma separated)');
 INSERT INTO vars (name, value, description) VALUES ('tags_viewed_tagname', 'viewed', 'Tagname to assign to stories and other items a user has viewed');
 
 INSERT INTO ajax_ops VALUES (NULL, 'tags_get_user_story', 'Slash::Tags', 'ajaxGetUserStory', 'ajax_tags_write', 'createuse');

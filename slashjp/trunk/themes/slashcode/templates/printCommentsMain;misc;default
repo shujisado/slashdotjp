@@ -44,7 +44,7 @@ __template__
 
 <a name="acomments"></a>
 <div class="commentwrap" id="commentwrap">
-[% IF (!user.is_anon && !user.acl.discussion2_uofm) || user.is_admin %]
+[% IF !user.is_anon %]
 <div class="commentBox" style="font-size: 120%">
 	<form method="GET" action="[% gSkin.rootdir %]/comments.pl">
 	<div>
@@ -61,10 +61,6 @@ __template__
 
 	</div>
 	</form>
-</div>
-[% END; IF (user.acl.discussion2_uofm_signup && !user.acl.discussion2_uofm && (user.is_admin || !user.is_subscriber)) && constants.uofm_key && constants.uofm_iv && env.http_user_agent.search('Firefox/1\.5') %]
-<div class="commentBox" style="font-size: 120%">
-<a href="[% Slash.tempUofmLinkGenerate() %]">Want to test an experimental interface for comments?</a>
 </div>
 [% END %]
 
@@ -183,7 +179,7 @@ __template__
 				}) %]
 				[% END %]
 		<span class="ccw-header-links">
-    [% IF discussion2 && !cid && !pid %]
+    [% IF discussion2 %]
         <a href="#" onclick="ajaxFetchComments(0,1); return false"><span id="more_comments_num_b"></span> More</a> | 
     [% END; IF user.is_admin && user.d2prefs_debug %]
         <a href="#" onclick="showPrefs('reading'); return false">Prefs</a>
@@ -202,7 +198,7 @@ __template__
 				op           => 'reply',
 				subject      => 'Reply',
 				subject_only => 1,
-				onclick      => ((discussion2 && (!constants.subscribe || user.is_subscriber)) ? "replyTo(0); return false;" : '')
+				onclick      => ((discussion2 && !user.is_anon) ? "replyTo(0); return false;" : '')
 			}) %]
 		[% END %]
 		</span>
@@ -218,6 +214,7 @@ YAHOO.slashdot.ThresholdApp = function() {
     init: function() {
       gCommentControlWidget = new YAHOO.slashdot.ThresholdWidget([% "'X'" IF horiz %]);
       gCommentControlWidget.setTHT(user_threshold, user_highlightthresh);
+      updateTotals();
     }
   };
 }();
@@ -269,7 +266,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
       </div>
 		</div>
 		<div class="commentControlFooter">
-    [% IF discussion2 && !cid && !pid %]
+    [% IF discussion2 %]
         <a href="#" onclick="ajaxFetchComments(0,1); return false"><span id="more_comments_num_c"></span> More</a> | 
     [% END; IF user.is_admin && user.d2prefs_debug %]
         <a href="#" onclick="showPrefs('reading'); return false">Prefs</a>
@@ -287,7 +284,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 				op           => 'reply',
 				subject      => 'Reply',
 				subject_only => 1,
-				onclick      => ((discussion2 && (!constants.subscribe || user.is_subscriber)) ? "replyTo(0); return false;" : '')
+				onclick      => ((discussion2 && !user.is_anon) ? "replyTo(0); return false;" : '')
 			}) %]
 		[% END %]
 			<div id="bindings-legend">Keybindings Beta<br>
@@ -296,10 +293,16 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 <a href="#" onclick="keyHandler('','E'); return false" title="next comment by load order"    >E</a><br>
 <a href="#" onclick="keyHandler('','A'); return false" title="previous comment in thread"    >A</a>
 <a href="#" onclick="keyHandler('','S'); return false" title="next thread"                   >S</a>
-<a href="#" onclick="keyHandler('','D'); return false" title="next comment in thread"        >D</a>
+<a href="#" onclick="keyHandler('','D'); return false" title="next comment in thread"        >D</a><br>
+<a href="#" onclick="keyHandler('','R'); return false" title="reply to current comment"      >R</a>
+<a href="#" onclick="keyHandler('','P'); return false" title="parent of current comment"     >P</a>
+<a href="#" onclick="keyHandler('','M'); return false" title="history of current comment"    >M</a><br>
+<a href="#" onclick="keyHandler('','T'); return false" title="first comment"                 >T</a>
+<a href="#" onclick="keyHandler('','G'); return false" title="get more comments"             >G</a>
+<a href="#" onclick="keyHandler('','V'); return false" title="last comment"                  >V</a>
 			</div>
 		</div>
-		<div id="commentControlBoxStatus" class="hide"><b>Loading ... Please wait.</b></div>
+		<div id="commentControlBoxStatus" class="hide"><b>Loading... please wait.</b></div>
 	</div>
 </div>
 		</div>

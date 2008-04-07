@@ -35,11 +35,11 @@ sub main {
 				: 'active';
 
 		if ($type eq 'all') {
-			$index_hr->{tagnames} = $tags_reader->listTagnamesAll('describe');
+			$index_hr->{tagnames} = $tags_reader->listTagnamesAll();
 		} elsif ($type eq 'active') {
-			$index_hr->{tagnames} = $tags_reader->listTagnamesActive('describe');
+			$index_hr->{tagnames} = $tags_reader->listTagnamesActive();
 		} else { # recent
-			$index_hr->{tagnames} = $tags_reader->listTagnamesRecent('describe');
+			$index_hr->{tagnames} = $tags_reader->listTagnamesRecent();
 		}
 
 		$title = getData('head1');
@@ -61,7 +61,7 @@ sub main {
 			@objects = @$value;
 #print STDERR "tags.pl got '$mcdkey$tagname' as " . scalar(@objects) . " objects\n";
 		} else {
-			my $objects = $tags_reader->getAllObjectsTagname($tagname, 'describe');
+			my $objects = $tags_reader->getAllObjectsTagname($tagname);
 			my %globjids = ( map { ( $_->{globjid}, 1 ) } @$objects );
 			my $mintc = defined($constants->{tags_list_mintc}) ? $constants->{tags_list_mintc} : 4;
 			for my $globjid (keys %globjids) {
@@ -73,12 +73,18 @@ sub main {
 				push @objects, {
 					url	=> $objs[0]{url},
 					title	=> $objs[0]{title},
-					count	=> $sum_tc,
+					clout	=> $sum_tc,
 				} if $sum_tc >= $mintc;
 			}
-			@objects = sort { $b->{count} <=> $a->{count} || ($a->{title}||'') cmp ($b->{title}||'') } @objects;
+			@objects = sort {
+				    $b->{clout}      <=>  $a->{clout}
+				|| ($a->{title}||'') cmp ($b->{title}||'')
+			} @objects;
+			my $max_display = $constants->{tags_active_maxshow} || 200;
+			if (scalar @objects > $max_display) {
+				$#objects = $max_display-1;
+			}
 			if ($mcd) {
-				my $constants = getCurrentStatic();
 				my $secs = $constants->{memcached_exptime_tags_brief} || 300;
 				$mcd->set("$mcdkey$tagname", \@objects, $secs);
 #print STDERR "tags.pl set '$mcdkey$tagname' to " . scalar(@objects) . " objects\n";

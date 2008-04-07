@@ -23,7 +23,7 @@ __name__
 dispComment
 __template__
 [% IF !options.noshow_show %]
-<li id="tree_[% cid %]" class="comment">
+<li id="tree_[% cid %]" class="comment[% IF class == 'full' %] contain[% END %]">
 <div id="comment_status_[% cid %]" class="commentstatus"></div>
 <div id="comment_[% cid %]"[% IF discussion2 %] class="[% class %]"[% END %]>
 [% END; IF !options.noshow %]
@@ -34,7 +34,7 @@ __template__
 			[% ELSE %]
 			<h4><a name="[% cid %]">[% subject %]</a>
 			[%- END %]
-			[% UNLESS user.noscores %]<span id="comment_score_[% cid %]" class="score">([% IF constants.modal_prefs_active && !user.is_anon %]<a href="#" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', [% cid %]); return false">[% END %]Score:[% points.length ? points : "?" %][% IF constants.modal_prefs_active && !user.is_anon %]</a>[% END %][% IF reasons && reason %], [% reasons.$reason.name %][% END %])</span>[% END %]</h4>
+			[% UNLESS user.noscores %]<span id="comment_score_[% cid %]" class="score">([% IF constants.modal_prefs_active %]<a href="#" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', [% cid %]); return false">[% END %]Score:[% points.length ? points : "?" %][% IF constants.modal_prefs_active %]</a>[% END %][% IF reasons && reason %], [% reasons.$reason.name %][% END %])</span>[% END %]</h4>
 		</div>
 		<div class="details">
 			by
