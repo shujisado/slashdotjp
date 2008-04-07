@@ -50,7 +50,7 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 force: clean default
 
 clean:
-	rm -f css/*.css.orig *.js.orig image-stamp \
+	rm -f css/*.css.orig *.js.orig images-stamp \
 		$(patsubst %,css/%.css, $(csses)) \
 		$(patsubst %,css/slashdot_%.css, $(sections)) \
 		$(patsubst %,%.js, $(jses))
