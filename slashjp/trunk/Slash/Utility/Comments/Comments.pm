@@ -1448,9 +1448,8 @@ sub preProcessComment {
 			AND date > SUBDATE(NOW(), INTERVAL $constants->{anonymous_comment_interval} MINUTE)
 			AND ipid='$ipid'");
 		if ($ipid_count > 0) {
-			header('Comments', $discussion->{section}) or return;
-			editComment(@_, getError('anonymous_comment_interval'));
-			return 0;
+			$$error_message = getError('anonymous_comment_interval');
+			return -1;
 		}
 	}
 
