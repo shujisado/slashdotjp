@@ -1,0 +1,36 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+adminLoginForm
+__template__
+<center>
+<form method="post" action="[% env.script_name %]" enctype="application/x-www-form-urlencoded">
+<input type="hidden" name="op" value="adminlogin">
+<table>
+	<tr>
+		<td align="right">Log In</td>
+		<td><input type="text" name="aaid"></td>
+	</tr>
+	<tr>
+		<td align="right">Password</td>
+		<td><input type="password" name="apasswd"></td>
+	</tr>
+		<td> </td>
+		<td><input type="submit" value="Login"></td>
+	</tr>
+</table>
+</form>
+</center>
+
+__seclev__
+500
+__version__
+$Id: adminLoginForm;admin;default,v 1.7 2005/07/27 22:53:54 pudge Exp $

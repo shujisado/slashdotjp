@@ -1,0 +1,7 @@
+# $Id: PLUGIN,v 1.3 2003/08/29 15:21:08 jamie Exp $
+name=Stock
+description="stockquotes block"
+mysql_schema=mysql_schema.sql
+mysql_dump=mysql_dump.sql
+task=stockquotes.pl
+template=templates/stockquotes;misc;default

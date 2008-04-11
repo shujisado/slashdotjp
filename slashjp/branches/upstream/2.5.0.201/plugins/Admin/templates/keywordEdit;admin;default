@@ -1,0 +1,48 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+admin
+__lang__
+en_US
+__name__
+keywordEdit
+__template__
+[% PROCESS titlebar width='100%' %]
+<table>
+	<tr>
+		<form action="[% env.script_name %]" method="post">
+			<td valign="top">
+				[% PROCESS formLabel value => "Select a keyword" comment => "fill in the blanks and hit the create button to create a new keyword" %]
+				[% keywords_select %]
+
+				<input type="submit" name="keyworded" value="Select keyword"><br>
+
+				<br><input type="hidden" name="op" value="edit_keyword"><br>
+
+				[% PROCESS formLabel value => "Keyword" comment => "this is what we will match against" %]
+				<input type="text" name="keyword" value="[% FILTER strip_attribute %][% keyword.keyword %][% END %]">
+
+				[% PROCESS formLabel value => "Name" comment => "this will be the label used in the related links box" %]
+				<input type="text" name="name" value="[% FILTER strip_attribute %][% keyword.name %][% END %]">
+
+				[% PROCESS formLabel value => "Link" comment => "this url is added to the related links box" %]
+				<input type="text" name="link" value="[% FILTER strip_attribute %][% keyword.link %][% END %]">
+				<br>
+
+				<input type="submit" name="keywordnew" value="Create Keyword">
+				<input type="submit" name="keywordsave" value="Save Keyword">
+				<input type="submit" name="keyworddelete" value="Delete Keyword">
+
+			</td>
+		</form>
+	</tr>
+</table>
+
+__seclev__
+500
+__version__
+$Id: keywordEdit;admin;default,v 1.4 2005/07/27 22:53:54 pudge Exp $

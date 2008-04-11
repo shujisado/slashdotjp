@@ -1,0 +1,47 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+unmod_msg
+__template__
+[% 
+	cur_score = comment.points + comment.tweak;
+	cur_score = Slash.constrain_score(cur_score);
+%]
+[% IF msg.mode == 1 %]
+
+<p>
+A user <i>had</i> given a moderation of <b>[% reasons.${moderation.reason}.name %] ([% moderation.value %])</b> to
+your comment, <b><a href="[% gSkin.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid
+%]">[% comment.subject %]</a></b>, attached to
+<b><a href="[% gSkin.rootdir %][% discussion.realurl %]">[% discussion.title %]</a></b>.  That moderation has now been undone,
+probably due to the user posting in the discussion after moderating in it.
+Your comment is currently scored <b>[% reasons.${comment.reason}.name %] ([% cur_score %])</b>.
+</p>
+
+[% ELSE %]
+
+A user had given a moderation of "[% reasons.${moderation.reason}.name %]" ([% moderation.value %]) to your comment.
+    [% comment.subject | decode_entities %]
+    [% absolutedir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]
+
+Attached to:
+    [% discussion.title | decode_entities %]
+    [% absolutedir %][% discussion.realurl %]
+
+That moderation has now been undone, probably due to the user posting
+in the discussion after moderating in it. Your comment is currently
+scored [% reasons.${comment.reason}.name %] ([% cur_score %]).
+[% END %]
+
+__seclev__
+500
+__version__
+$Id: unmod_msg;comments;default,v 1.10 2005/07/27 22:54:11 pudge Exp $

@@ -1,0 +1,10 @@
+# $Id: PLUGIN,v 1.3 2003/08/29 15:21:08 jamie Exp $
+description="Sections Editor"
+name=Sections
+htdoc=sections.pl
+template=templates/data;sections;default
+template=templates/delSectCancel;sections;default
+template=templates/delSectConfirm;sections;default
+template=templates/delSection;sections;default
+template=templates/editSection;sections;default
+template=templates/listSections;sections;default

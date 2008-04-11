@@ -1,0 +1,35 @@
+__section__
+default
+__description__
+Template to drop in a TR for the maintable (and update state vars).
+
+* mt_valign
+
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+maintable_tr_end
+__template__
+
+[%
+WHILE user.state.mt.curcol < user.state.mt.cols.max;
+	nextcurcol = user.state.mt.curcol + 1;
+	IF user.state.mt.cols.$nextcurcol < user.state.mt.currow;
+		PROCESS maintable_td; "&nbsp;</td>";
+	ELSE;
+		user.state.mt.curcol = nextcurcol;
+	END;
+END;
+user.state.mt.curcol = 0;
+%]
+
+</tr>
+
+__seclev__
+10000
+__version__
+$Id: maintable_tr_end;misc;default,v 1.5 2005/07/27 22:54:48 pudge Exp $

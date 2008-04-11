@@ -1,0 +1,37 @@
+__section__
+default
+__description__
+Renders the form which users will use to opt-out of further emailings from
+Slash::Email.
+
+	* No extra parameters
+__title__
+Email Opt-Out Form
+__page__
+email
+__lang__
+en_US
+__name__
+emailOptoutForm
+__seclev__
+5000
+__template__
+
+[% INCLUDE titlebar 
+	width="99%"
+	title="Opt-Out of Story Mailings" -%]
+
+<form action="[% gSkin.rootdir %]/email.pl" method="post">
+[% IF form.formkey -%]
+<input type="hidden" name="formkey" value="[% form.formkey %]">
+[% END -%]
+<input type="hidden" name="op" value="optout_save">
+
+Enter email address to be removed from further story mailings:<br>
+<input type="text" name="email" size="50">
+<br><br>
+<input type="submit" value="Opt Out">
+</form>
+
+__version__
+$Id: emailOptoutForm;email;default,v 1.5 2005/07/27 22:53:54 pudge Exp $
