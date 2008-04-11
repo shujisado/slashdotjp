@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: comments.pl,v 1.273 2008/04/02 14:14:10 entweichen Exp $
+# $Id: comments.pl,v 1.274 2008/04/10 18:43:44 pudge Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -604,6 +604,8 @@ sub submitComment {
 
  		print $error_message if $error_message;
 
+		# so other code thinks we are viewing this comment from a link -- pudge
+		$form->{cid} = $saved_comment->{cid};
 		printComments($discussion, $saved_comment->{cid}, $saved_comment->{cid},
 			{ force_read_from_master => 1, just_submitted => 1 }
 		);

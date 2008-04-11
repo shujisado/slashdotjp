@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: journal.pl,v 1.144 2008/04/02 14:20:23 entweichen Exp $
+# $Id: journal.pl,v 1.145 2008/04/03 22:44:02 pudge Exp $
 
 use strict;
 use Slash 2.003;	# require Slash 2.3.x
@@ -13,7 +13,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.144 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.145 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
 	my $journal   = getObject('Slash::Journal');
@@ -699,6 +699,7 @@ sub doSaveArticle {
 	}
 
         # Add the User2 event.
+        if ($event_id) {
         my $events = $slashdb->sqlSelectAllHashref(
                 'eid', 'eid, date', 'user_events', "uid = " . $user->{uid} . " and code = 2");
 
@@ -735,6 +736,7 @@ sub doSaveArticle {
 
                 $slashdb->sqlUpdate('user_event_blocks', { block => $new_blocks }, "uid = " . $user->{uid} . " and code = 2");
         }
+        } # $event_id
 
 	return 0;
 }

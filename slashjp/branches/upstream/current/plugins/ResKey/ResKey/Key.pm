@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Key.pm,v 1.28 2008/04/03 21:20:56 pudge Exp $
+# $Id: Key.pm,v 1.29 2008/04/10 05:22:29 pudge Exp $
 
 package Slash::ResKey::Key;
 
@@ -118,7 +118,7 @@ use Slash::Constants ':reskey';
 use Slash::Utility;
 
 our($AUTOLOAD);
-our($VERSION) = ' $Revision: 1.28 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our($VERSION) = ' $Revision: 1.29 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 #========================================================================
 sub new {
@@ -241,7 +241,7 @@ sub AUTOLOAD {
 	if ($name =~ /^(?:noop|success|failure|death)$/) {
 		$sub = _createStatusAccessor($name, \@_);
 
-	} elsif ($name =~ /^(?:error|reskey|debug|rkrid|resname|origtype|type|code|opts|static|unsaved)$/) {
+	} elsif ($name =~ /^(?:error|reskey|debug|rkrid|resname|origtype|type|code|opts|static|unsaved|max_duration)$/) {
 		$sub = _createAccessor($name, \@_);
 
 	} elsif ($name =~ /^(?:create|touch|use|createuse)$/) {
@@ -795,7 +795,7 @@ sub get {
 		$reskey_obj = $slashdb->sqlSelectHashref('*', 'reskeys', "reskey=$reskey_q");
 	}
 
-	if (!$reskey_obj) {
+	if (!$reskey_obj && !$self->unsaved) {
 		$self->death(1);
 		$self->error(['reskey not found']);
 	}
@@ -1015,4 +1015,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Key.pm,v 1.28 2008/04/03 21:20:56 pudge Exp $
+$Id: Key.pm,v 1.29 2008/04/10 05:22:29 pudge Exp $

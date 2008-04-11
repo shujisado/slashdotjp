@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.25 2007/11/08 21:50:30 jamiemccarthy Exp $
+# $Id: mysql_schema.sql,v 1.26 2008/04/09 19:24:18 tvroom Exp $
 #
 DROP TABLE IF EXISTS firehose;
 CREATE TABLE firehose (
@@ -73,3 +73,28 @@ CREATE TABLE firehose_tab(
 	PRIMARY KEY (tabid),
 	UNIQUE uid_tabname(uid,tabname)
 ) TYPE=InnoDB;
+
+DROP TABLE IF EXISTS firehose_update_log;
+CREATE TABLE firehose_update_log(
+	id mediumint(8) unsigned NOT NULL auto_increment,
+	uid MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	new_count SMALLINT UNSIGNED NOT NULL DEFAULT '0', 
+	update_count SMALLINT UNSIGNED NOT NULL DEFAULT '0',
+	total_num SMALLINT UNSIGNED NOT NULL DEFAULT '0',
+	more_num SMALLINT UNSIGNED NOT NULL DEFAULT '0',
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+	duration FLOAT DEFAULT 0.0 NOT NULL,
+	bytes mediumint UNSIGNED DEFAULT 0 NOT NULL,
+	PRIMARY KEY (id)
+) TYPE=InnoDB;
+
+DROP TABLE IF EXISTS firehose_setting_log;
+CREATE TABLE firehose_setting_log(
+	id mediumint(8) unsigned NOT NULL auto_increment,
+	uid MEDIUMINT UNSIGNED NOT NULL DEFAULT '0',
+	name VARCHAR(32) NOT NULL DEFAULT '',
+	value VARCHAR(64) NOT NULL DEFAULT '',
+	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+	PRIMARY KEY (id)
+);
+

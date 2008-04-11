@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.36 2008/01/31 17:37:12 tvroom Exp $
+# $Id: mysql_dump.sql,v 1.37 2008/04/09 19:24:18 tvroom Exp $
 #
 INSERT INTO ajax_ops VALUES (NULL, 'firehose_fetch_text', 'Slash::FireHose', 'fetchItemText', 'ajax_user_static', 'createuse');
 INSERT INTO ajax_ops VALUES (NULL, 'firehose_reject', 'Slash::FireHose', 'rejectItem', 'ajax_admin_static', 'use');
@@ -31,6 +31,7 @@ INSERT INTO vars (name, value, description) VALUES ('firehose_slice_points', '29
 INSERT INTO vars (name, value, description) VALUES ('firehose_spam_score', '-50', 'Popularity score assigned to all firehose items with is_spam=yes');
 INSERT INTO vars (name, value, description) VALUES ('firehose_color_labels', 'red|orange|yellow|green|blue|purple|violet|black', 'Firehose color labels');
 INSERT INTO vars (name, value, description) VALUES ('firehose_anonval_param', '', 'String needed to be passed in anonval form param to validate requests, set to a string to enforce this validation');
+INSERT INTO vars (name, value, description) VALUES ('firehose_logging', '0', 'Log firehose usage info?');
 
 INSERT INTO firehose_tab VALUES (1,0,'Firehose','','createtime','DESC','indigo','fulltitle');
 INSERT INTO firehose_tab VALUES (2,0,'Slashdot','story','createtime','DESC','black','full');

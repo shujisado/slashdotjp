@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Anchor.pm,v 1.89 2007/06/27 00:12:14 jamiemccarthy Exp $
+# $Id: Anchor.pm,v 1.91 2008/04/10 21:23:38 pudge Exp $
 
 package Slash::Utility::Anchor;
 
@@ -36,9 +36,10 @@ use Slash::Utility::Environment;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.89 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.91 $ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	http_send
+	get_etag
 	header
 	footer
 	redirect
@@ -268,7 +269,7 @@ sub http_send {
 
 	if ($opt->{etag} || $opt->{do_etag}) {
 		if ($opt->{do_etag} && $opt->{content}) {
-			$opt->{etag} = md5_hex($opt->{content});
+			$opt->{etag} = get_etag($opt->{content});
 		}
 		$r->header_out('ETag', $opt->{etag});
 
@@ -305,7 +306,10 @@ sub http_send {
 	return 1;
 }
 
-
+sub get_etag {
+	my($content) = @_;
+	return md5_hex($content);
+}
 
 #========================================================================
 
@@ -749,4 +753,4 @@ Slash(3), Slash::Utility(3).
 
 =head1 VERSION
 
-$Id: Anchor.pm,v 1.89 2007/06/27 00:12:14 jamiemccarthy Exp $
+$Id: Anchor.pm,v 1.91 2008/04/10 21:23:38 pudge Exp $

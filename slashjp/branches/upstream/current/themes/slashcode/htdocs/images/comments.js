@@ -1,4 +1,4 @@
-// $Id: comments.js,v 1.128 2008/04/02 22:52:19 pudge Exp $
+// $Id: comments.js,v 1.131 2008/04/11 01:12:38 pudge Exp $
 
 var comments;
 var root_comments;
@@ -30,7 +30,9 @@ var viewmodevalue = { full: 3, oneline: 2, hidden: 1};
 var currents = { full: 0, oneline: 0, hidden: 0 };
 var commentelements = {};
 var thresh_totals = {};
+var d2_keybindings_off = 0;
 
+var submitCountdowns = {};
 var ajaxCommentsWaitQueue = [];
 var boxStatusQueue = [];
 var comment_body_reply = [];
@@ -172,7 +174,7 @@ function updateCommentTree(cid, threshold, subexpand) {
 	return kidHiddens(cid, kidhiddens);
 }
 
-function setFocusComment(cid, alone, mods) {
+function setFocusComment(cid, alone, no_ads) {
 	if (!loaded)
 		return false;
 
@@ -183,7 +185,8 @@ function setFocusComment(cid, alone, mods) {
 
 	if (abscid == cid) { // expanding == selecting
 		setCurrentComment(cid);
-		checkAdTimer(cid);
+		if (!no_ads)
+			checkAdTimer(cid);
 	}
 
 
@@ -388,7 +391,7 @@ function updateHiddens(cids) {
 }
 
 function selectParent(cid, collapse) {
-	if (!loaded)
+	if (!loaded || !cid)
 		return false;
 
 	var comment = comments[cid];
@@ -1075,7 +1078,7 @@ function submitReply(pid) {
 			else if (cid) {
 				cancelReply(pid);
 				addComment(cid, { pid: pid, kids: [] }, '', 1);
-				setFocusComment(cid, 1);
+				setFocusComment(cid, 1, 1);
 			}
 		}
 	});
@@ -1136,6 +1139,42 @@ function replyTo(pid) {
 	ajax_update(params, '', handlers);
 
 	return false;
+}
+
+function submitCountdown(pid, countSecs) {
+	var count = $('#submit_countdown_' + pid);
+	if (!count.length)
+		return;
+
+	var counter = submitCountdowns[pid];
+	if (counter) {
+		if (countSecs == counter['countSecs'])
+			return;
+		clearInterval(counter['counter']); // just in case
+	}
+
+	if (!countSecs || countSecs < 1) { // we're at 0, so let's go home
+		count.html('');
+		return;
+	}
+
+	counter = submitCountdowns[pid] = [];
+	var date = new Date;
+	counter['targetSecs'] = countSecs + (date.getTime() / 1000);
+	counter['countSecs']  = countSecs;
+
+	count.html(' (' + countSecs + ')');
+
+	counter['counter'] = window.setInterval(function() {
+		var date = new Date;
+		var nowSecs = Math.ceil(counter['targetSecs'] - (date.getTime() / 1000));
+		if (nowSecs > 0)
+			count.html(' (' + nowSecs + ')');
+		else {
+			count.html('');
+			clearInterval(counter['counter']);
+		}
+	}, 1000);
 }
 
 function quoteReply(pid) {
@@ -1293,6 +1332,20 @@ function finishLoading() {
 	if (more_comments_num)
 		updateMoreNum(more_comments_num);
 	enableControls();
+
+	// if deep in a thread, scroll to fifth grandparent, so we can see
+	// some of thread, and the comment requested
+	if (root_comment) {
+		var this_cid = root_comment;
+		for (var i = 0; i < 5; i++) {
+			var comm = comments[this_cid];
+			var pid = comm.opid || comm.pid;
+			if (pid == 0)
+				break;
+			this_cid = pid;
+		}
+		scrollWindowTo(this_cid);
+	}
 
 	//setTimeout('ajaxFetchComments()', 10*1000);
 }
@@ -1477,14 +1530,15 @@ function updateMoreNum(num) { // should be an integer, or empty string
 		num_a = 'Check for more';
 	else {
 		if (num == 1)
-			num_a = 'Retrieve the 1 remaining comment';
+			num_a = 'Get 1 More Comment';
 		else
-			num_a = 'Retrieve more of the ' + num + ' remaining comments';
+			num_a = 'Get ' + num + ' More Comments';
 	}
 
 	var a = $dom('more_comments_num_a');
 	var b = $dom('more_comments_num_b');
 	var c = $dom('more_comments_num_c');
+	var d = $dom('more_comments_num_d');
 
 	if (a)
 		a.innerHTML = num_a;
@@ -1492,6 +1546,8 @@ function updateMoreNum(num) { // should be an integer, or empty string
 		b.innerHTML = num;
 	if (c)
 		c.innerHTML = num;
+	if (d)
+		d.innerHTML = num;
 }
 
 
@@ -1524,18 +1580,6 @@ function commentIsInWindow(cid, just_head) {
 
 
 /* code for the draggable threshold widget */
-
-function showPrefs( category ) {
-	var panel = $dom("d2prefs");
-	panel.className = category;
-	panel.style.display = "block";
-}
-
-function hidePrefs() {
-	var panel = $dom("d2prefs");
-	panel.className = "";
-	panel.style.display = "none";
-}
 
 function partitionedRange( range, partitions ) {
 	return [].concat(range[0], partitions, range[1]);
@@ -1836,18 +1880,19 @@ YAHOO.slashdot.ThresholdBar.prototype.alignElWithMouse = function( el, iPageX, i
 
 
 function checkAdTimer (cid) {
-	if (!adTimerUrl)
+	if (!adTimerUrl || !cid)
 		return;
 
-	clickAdTimer();
-
-	if (cid && adTimerSeen[cid])
+	if (adTimerSeen[cid] && adTimerSeen[cid] == 2)
 		return 0;
 
+	if (!adTimerSeen[cid])
+		clickAdTimer(cid);
+
 	var ad = 0;
-	if (adTimerClicks >= adTimerClicksMax) {
+	if (adTimerClicks >= adTimerClicksMax)
 		ad = 1;
-	} else {
+	else {
 		var secs = getSeconds() - adTimerSecs;
 		if (secs >= adTimerSecsMax)
 			ad = 1;
@@ -1860,15 +1905,15 @@ function checkAdTimer (cid) {
 }
 
 function resetAdTimer () {
-	if (adTimerInsert) {
-		adTimerSeen[adTimerInsert] = 1;
-	}
+	if (adTimerInsert)
+		adTimerSeen[adTimerInsert] = 2;
 	adTimerInsert = 0;
 	adTimerSecs   = getSeconds();
 	adTimerClicks = 0;
 }
 
-function clickAdTimer () {
+function clickAdTimer (cid) {
+	adTimerSeen[cid] = adTimerSeen[cid] || 1;
 	adTimerClicks = adTimerClicks + 1;
 }
 
@@ -1915,6 +1960,7 @@ next unread comm: F
 reply to current comment: R
 parent of current comment: P
 history (modlog) of current comment: M
+hide history: X
 skip to end (last): V
 skip to top (first): T
 get more comments: G
@@ -1923,7 +1969,6 @@ raise top threshold: ]
 lower bottom threshold: ,
 raise bottom threshold: .
 toggle d2 widget: /
-hide_modal_box(): esc XXX
 */
 
 var validkeys = {
@@ -1938,6 +1983,7 @@ var validkeys = {
 	R: { current : 1, reply   : 1 },
 	P: { current : 1, parent  : 1 },
 	M: { current : 1, history : 1 },
+	X: { current : 1, history : 1, hide : 1 },
 
 	G: { nav: 1, more : 1 },
 	T: { nav: 1, skip : 1, top    : 1 }, 
@@ -1964,6 +2010,9 @@ validkeys['K'] = validkeys['W'];
 
 
 function keyHandler(e, k) {
+	if (d2_keybindings_off)
+		return;
+
 	if (!k)
 		e = e || window.event;
 
@@ -1999,15 +2048,18 @@ function keyHandler(e, k) {
 
 				// keys that rely on current comment
 				} else if (keyo['current'] && current_cid) {
-					if (keyo['reply'] && !user_is_anon) // XXX will be anon too
+					if (keyo['reply'])
 						replyTo(current_cid);
 
-					else if (keyo['history'])
-						getModalPrefs('modcommentlog', 'Moderation Comment Log', current_cid);
+					else if (keyo['history']) {
+						if (keyo['hide'])
+							hide_modal_box(); // this works for ALL modal boxes
+						else
+							getModalPrefs('modcommentlog', 'Moderation Comment Log', current_cid);
 
-					else if (keyo['parent']) {
+					} else if (keyo['parent']) {
 						if (current_cid && comments[current_cid] && comments[current_cid]['pid'])
-							selectParent(comments[current_cid]['pid']);
+							selectParent(comments[current_cid]['opid'] || comments[current_cid]['pid']);
 					}
 
 

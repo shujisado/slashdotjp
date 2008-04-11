@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.1012 2008/03/27 16:56:27 tvroom Exp $
+# $Id: MySQL.pm,v 1.1013 2008/04/09 22:01:06 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.1012 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.1013 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -1753,7 +1753,7 @@ sub resetUserAccount {
 	$self->sqlUpdate('users', {
 		passwd       => $enc,
 		newpasswd    => $enc,
-		newpasswd_ts => undef,
+		newpasswd_ts => undef, # should this be NOW() ?
 	}, 'uid=' . $self->sqlQuote($uid));
 	return $newpasswd;
 }
@@ -5071,7 +5071,10 @@ sub _load_al2_type_aliases {
 	my @aliases = grep { $_ } split /\s+/, $alias_text;
 	for my $alias (@aliases) {
 		my($src, $implied) = $alias =~ /^(\w+)->(\w+)$/;
-		$_al2_type_aliases->{$src} = $implied if $src && $implied;
+		if ($src && $implied) {
+			$_al2_type_aliases->{$src} ||= [ ];
+			push @{ $_al2_type_aliases->{$src} }, $implied;
+		}
 	}
 }
 sub getAL2TypeAliases {
@@ -5295,8 +5298,10 @@ sub getAL2 {
 	my $aliases = $self->getAL2TypeAliases();
 	for my $src (keys %$aliases) {
 		if ($retval->{$src}) {
-			my $implied = $aliases->{$src};
-			$retval->{$implied} = { implied_by => $src };
+			my $implied_ar = $aliases->{$src};
+			for my $imp (@$implied_ar) {
+				$retval->{$imp} ||= { implied_by => $src };
+			}
 		}
 	}
 
