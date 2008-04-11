@@ -40,6 +40,7 @@ use vars qw($VERSION @EXPORT);
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	http_send
+	get_etag
 	header
 	footer
 	redirect
@@ -272,7 +273,7 @@ sub http_send {
 
 	if ($opt->{etag} || $opt->{do_etag}) {
 		if ($opt->{do_etag} && $opt->{content}) {
-			$opt->{etag} = md5_hex(encode_utf8($opt->{content})); 
+			$opt->{etag} = get_etag(encode_utf8($opt->{content}));
 		}
 		$r->header_out('ETag', $opt->{etag});
 
@@ -309,7 +310,10 @@ sub http_send {
 	return 1;
 }
 
-
+sub get_etag {
+	my($content) = @_;
+	return md5_hex($content);
+}
 
 #========================================================================
 
