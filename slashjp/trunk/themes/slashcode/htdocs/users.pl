@@ -1060,7 +1060,7 @@ sub showInfo {
 	}
 
 	# Can't get user data for the anonymous user.
-	if ($fieldkey eq 'uid' && isAnon($uid)) {
+	if (!$user->{is_admin} && $fieldkey eq 'uid' && isAnon($uid)) {
 		header(getMessage('user_header')) or return;
 		return displayForm();
 	}
