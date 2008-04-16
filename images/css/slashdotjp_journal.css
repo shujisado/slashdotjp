@@ -3,6 +3,9 @@
 /*-Common stteing--------------------------------*/
 div.journalmain {
   padding-left: 0.5em;
+	overflow-x: auto;
+	overflow-y: hidden;
+	word-break: break-all;
 }
 
 div.journalmain ul {
@@ -27,13 +30,21 @@ div.journal .journaltopic {
 }
 
 div.journal .journaltext {
-  padding-top: 0.6em;
-  margin: 0.5em;
+	padding-top: 0.6em;
+	margin: 0.5em;
+	overflow-x: auto;
+	overflow-y: hidden;
+	word-break: break-all;
 }
 div.journal .journalnav {
   text-align: right;
   font-size: 90%;
   margin-top: 1em;
+}
+div.journal td {
+	overflow-x: auto;
+	overflow-y: hidden;
+	word-break: break-all;
 }
 
 
