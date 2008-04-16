@@ -7,8 +7,9 @@ slash (2.5.0.192-9) unstable; urgency=low
   * Allow to show AC info for admin user
   * Fix: user karma_bonus settings are vanished...
   * Fix: comment count fail when user hardthresh setting is enabled
+  * Remove "tid=" from story link at stories
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 16 Apr 2008 08:25:38 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 16 Apr 2008 12:01:35 +0000
 
 slash (2.5.0.192-8) unstable; urgency=low
 
