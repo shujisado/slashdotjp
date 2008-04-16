@@ -3,9 +3,6 @@
 /*-Common stteing--------------------------------*/
 div.journalmain {
   padding-left: 0.5em;
-	overflow-x: auto;
-	overflow-y: hidden;
-	word-break: break-all;
 }
 
 div.journalmain ul {
