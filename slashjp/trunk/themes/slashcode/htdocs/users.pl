@@ -2224,6 +2224,7 @@ sub editComm {
 			  60, 65, 70, 75, 80, 85, 90, 95 )], 
 			$user_edit->{new_user_percent} || 100, 1, 1);
 	# Karma modifier
+	$user_edit->{karma_bonus} = '+1' unless (defined($user_edit->{karma_bonus}));
 	my $karma_bonus = createSelect('karma_bonus', \@range, 
 			$user_edit->{karma_bonus} || 0, 1, 1);
 	# Subscriber modifier

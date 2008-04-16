@@ -2,8 +2,9 @@ slash (2.5.0.201-1) unstable; urgency=low
 
   * New upstream CVS release
   * Allow to show AC info for admin user
+  * Fix: user karma_bonus settings are vanished...
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 16 Apr 2008 06:31:19 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 16 Apr 2008 07:32:44 +0000
 
 slash (2.5.0.200-1) unstable; urgency=low
 
