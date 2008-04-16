@@ -3256,6 +3256,7 @@ sub _slashlink_to_link {
 			->as_string;
 	}
 	my $frag = delete $attr{frag} || '';
+	delete $attr{tid}; # do not add "tid=" to url
 	# Generate the return value.
 	my $url = '';
 	if ($sn eq 'comments') {
