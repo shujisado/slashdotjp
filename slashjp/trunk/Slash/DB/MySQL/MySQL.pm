@@ -6128,7 +6128,7 @@ sub getCommentsForUser {
 
 	if ($cid && $one_cid_only) {
 		$where .= "AND cid=$cid";
-	} elsif ($user->{hardthresh} && !$options->{discussion2}) {
+	} elsif (0 && $user->{hardthresh} && !$options->{discussion2}) {
 		my $threshold_q = $self->sqlQuote($user->{threshold});
 		$where .= "AND (comments.points >= $threshold_q";
 		$where .= "  OR comments.uid=$user->{uid}"	unless $user->{is_anon};
