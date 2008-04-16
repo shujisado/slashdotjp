@@ -1060,7 +1060,7 @@ sub showInfo {
 	}
 
 	# Can't get user data for the anonymous user.
-	if ($fieldkey eq 'uid' && isAnon($uid)) {
+	if (!$user->{is_admin} && $fieldkey eq 'uid' && isAnon($uid)) {
 		header(getMessage('user_header')) or return;
 		return displayForm();
 	}
@@ -2189,6 +2189,7 @@ sub editComm {
 			  60, 65, 70, 75, 80, 85, 90, 95 )], 
 			$user_edit->{new_user_percent} || 100, 1, 1);
 	# Karma modifier
+	$user_edit->{karma_bonus} = '+1' unless (defined($user_edit->{karma_bonus}));
 	my $karma_bonus = createSelect('karma_bonus', \@range, 
 			$user_edit->{karma_bonus} || 0, 1, 1);
 	# Subscriber modifier
