@@ -5,8 +5,10 @@ slash (2.5.0.201-1) unstable; urgency=low
   * Fix: user karma_bonus settings are vanished...
   * Fix: comment count fail when user hardthresh setting is enabled
   * Remove "tid=" from story link at stories
+  * Update journal-story discussions' title/url to story title/url when vars
+    update_journal_story_discussion_to_story has been enabled.
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 16 Apr 2008 12:01:35 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 21 Apr 2008 21:58:15 +0900
 
 slash (2.5.0.200-1) unstable; urgency=low
 

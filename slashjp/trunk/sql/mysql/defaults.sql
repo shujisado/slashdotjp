@@ -1119,7 +1119,7 @@ INSERT INTO vars (name, value, description) VALUES ('users_speed_limit','20','Ho
 INSERT INTO vars (name, value, description) VALUES ('writestatus','dirty','Simple Boolean to determine if homepage needs rewriting');
 INSERT INTO vars (name, value, description) VALUES ('xhtml','0','Boolean for whether we are using XHTML');
 
-# add constants for OSDN Japan
+-- add constants for OSDN Japan
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_attrib_prefix','','attribute prefix for LDAP migration');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_base_dn','','base dn for LDAP migration');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_dn','','binddn for LDAP migration');
@@ -1141,6 +1141,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_no_tracking_quer
 INSERT IGNORE INTO vars (name, value, description) VALUES ('no_d2','0','When "1", disable using discussion2.');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_name','Firehose','The name of "Firehose" function');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_use_story_shtml','0','Use ${sid}.shtml for RSS/RDF link');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('update_journal_story_discussion_to_story','0','Update discussion of journal-story title/url to story title/url');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';
