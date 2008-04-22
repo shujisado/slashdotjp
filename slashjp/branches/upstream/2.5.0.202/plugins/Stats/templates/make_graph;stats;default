@@ -1,0 +1,62 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+stats
+__lang__
+en_US
+__name__
+make_graph
+__template__
+[% UNLESS (days);
+      days = form.stats_days;
+   END;
+
+   IF (gtitle);
+      gtitle = gtitle | strip_paramattr;
+      gtitle = '&amp;title=' _ gtitle;
+   END;
+
+   UNLESS skid.defined;
+      skid = form.stats_skid;
+   END;
+   skid = skid | strip_paramattr;
+   statstring = '';
+
+   FOREACH stat = statdata;
+       IF (stat.0);
+          nstat = stat.0 | strip_paramattr;
+
+          nskid = stat.1 | strip_paramattr;
+          IF (!nskid);
+             nskid = skid;
+          END;
+
+          nlabel = stat.2 | strip_paramattr;
+          IF (!nlabel);
+             nlabel = '';
+          END;
+
+       ELSE;
+          nstat = stat | strip_paramattr;
+          nskid = skid;
+          nlabel = '';
+       END;
+
+       statstring = statstring _ '&amp;stats_graph_multiple=' _ nstat _ ',' _ nskid _ ',' _ nlabel;
+   END;
+   statstring = BLOCK -%]
+&amp;type=[% type | strip_paramattr %]&amp;stats_days=[% days | strip_paramattr %]&amp;byweekavg=[% byweekavg | strip_paramattr %]&amp;showtotal=[% showtotal | strip_paramattr %][% statstring %][% gtitle %]
+[%- END %]
+
+<p>
+<a href="[% gSkin.rootdir %]/stats.pl?op=table[% statstring %]"
+><img src="[% gSkin.rootdir %]/stats.pl?op=graph[% statstring %]"></a>
+</p>
+__seclev__
+1000
+__version__
+$Id: make_graph;stats;default,v 1.13 2006/01/23 20:42:59 pudge Exp $

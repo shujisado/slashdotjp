@@ -1,0 +1,32 @@
+__section__
+default
+__description__
+Create links to the story (see data/index template for formatting of each link)
+
+* links = arrayref of links
+__title__
+
+__page__
+index
+__lang__
+en_US
+__name__
+storylink
+__template__
+<div class="storylinks">
+	<div>
+	<ul>
+	[% FOREACH storylinks = links; IF storylinks.ref == 'ARRAY' %]
+	<li [% IF storylinks.3 %]class="[% storylinks.3 %]"[% END %]>
+		<a href="[% storylinks.0 | strip_attribute %]"[% IF storylinks.2 %] title="[% storylinks.2 | strip_attribute %]"[% END %]>[% storylinks.1 | strip_html %]</a>
+	</li>
+	[% ELSE; storylinks; END %]
+	[% END %]
+	</ul>
+	</div>
+</div>
+
+__seclev__
+10000
+__version__
+$Id: storylink;index;default,v 1.11 2005/07/27 22:54:48 pudge Exp $

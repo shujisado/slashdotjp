@@ -1,0 +1,7 @@
+# $Id: PLUGIN,v 1.4 2003/08/29 15:21:08 jamie Exp $
+name=YASS
+description="YASS lets you keep url lists from links in stories"
+htdoc=sites.pl
+mysql_schema=mysql_schema
+mysql_dump=dump
+template=templates/index;sites;default

@@ -1,0 +1,20 @@
+__section__
+default
+__description__
+Subject of confirmation message sent when a user opts out of the 
+Email-a-Story feature.
+
+__title__
+Email-a-Story Optout Confirmation Subject
+__page__
+email
+__lang__
+en_US
+__name__
+optout_subj
+__seclev__
+5000
+__template__
+Story Mailing Opt-out Confirmation
+__version__
+$Id: optout_subj;email;default,v 1.3 2003/08/12 21:35:38 pudge Exp $
