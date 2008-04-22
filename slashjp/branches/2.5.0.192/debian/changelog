@@ -1,3 +1,9 @@
+slash (2.5.0.192-10) unstable; urgency=low
+
+  * Fix to take discussion id from journal-submission
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Apr 2008 18:49:08 +0900
+
 slash (2.5.0.192-9) unstable; urgency=low
 
   * Fix continue: firehose color for bookmark feed to same as normal bookmarks
