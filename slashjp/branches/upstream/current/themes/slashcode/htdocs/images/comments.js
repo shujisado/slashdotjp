@@ -1,4 +1,4 @@
-// $Id: comments.js,v 1.131 2008/04/11 01:12:38 pudge Exp $
+// $Id: comments.js,v 1.135 2008/04/17 20:01:07 pudge Exp $
 
 var comments;
 var root_comments;
@@ -31,6 +31,7 @@ var currents = { full: 0, oneline: 0, hidden: 0 };
 var commentelements = {};
 var thresh_totals = {};
 var d2_keybindings_off = 0;
+var d2_keybindings_disable = {};
 
 var submitCountdowns = {};
 var ajaxCommentsWaitQueue = [];
@@ -46,6 +47,7 @@ var user_threshold = 0;
 var user_highlightthresh = 0;
 var user_threshold_orig = -9;
 var user_highlightthresh_orig = -9;
+var user_d2asp = 0;
 var loaded = 0;
 var shift_down = 0;
 var alt_down = 0;
@@ -1078,6 +1080,9 @@ function submitReply(pid) {
 			else if (cid) {
 				cancelReply(pid);
 				addComment(cid, { pid: pid, kids: [] }, '', 1);
+				setDefaultDisplayMode(cid);
+				// add it to the totals (for subtraction in updateComment())
+				currents[displaymode[cid]]++;
 				setFocusComment(cid, 1, 1);
 			}
 		}
@@ -1147,11 +1152,8 @@ function submitCountdown(pid, countSecs) {
 		return;
 
 	var counter = submitCountdowns[pid];
-	if (counter) {
-		if (countSecs == counter['countSecs'])
-			return;
+	if (counter)
 		clearInterval(counter['counter']); // just in case
-	}
 
 	if (!countSecs || countSecs < 1) { // we're at 0, so let's go home
 		count.html('');
@@ -1454,7 +1456,7 @@ function d2act () {
 		var oldpos = gd.style.position;
 
 		var mode = $dom('d2out').className;
-		if (mode=='horizontal rooted' || targetTop>vOffset) {
+		if (!user_d2asp && (mode=='horizontal rooted' || targetTop>vOffset)) {
 			gd.style.position = 'absolute';
 			gd.className      = 'rooted';
 			gd.style.top      = '0px';
@@ -1484,7 +1486,7 @@ function toggleDisplayOptions() {
 	gods.style.display = 'none';
 
 	// none -> ( vertical -> horizontal -> rooted )
-	if ( d2out.className == 'vertical' ) { // vertical->horizontal
+	if ( user_d2asp || d2out.className == 'vertical' ) { // vertical->horizontal
 		newMode = d2out.className = 'horizontal';
 		gCommentControlWidget.setOrientation('X');
 	} else if ( d2out.className == 'horizontal' ) { // horizontal->rooted
@@ -1527,7 +1529,7 @@ function updateMoreNum(num) { // should be an integer, or empty string
 
 	var num_a;
 	if (!num)
-		num_a = 'Check for more';
+		num_a = 'Get More Comments';
 	else {
 		if (num == 1)
 			num_a = 'Get 1 More Comment';
@@ -2039,7 +2041,10 @@ function keyHandler(e, k) {
 
 			var update = 0;
 			var next_cid = 0;
-			var key = k || validkeys[c] ? c : String.fromCharCode(c);
+			var key = k || (validkeys[c] ? c : String.fromCharCode(c));
+			if (d2_keybindings_disable[key])
+				return;
+
 			var keyo = validkeys[key];
 			if (keyo) {
 				if (keyo['toggle']) {

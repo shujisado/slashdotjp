@@ -151,10 +151,18 @@ For [% section.skin_name %]
 
 -----------------------
 
-[% FOREACH item = lazy -%]
+Top stories viewed by article.pl:
+[% FOREACH item = lazy_article -%]
 [% item %]
 [% END %]
 
+[% IF lazy_rss.size %]
+Top stories viewed in RSS:
+[% FOREACH item = lazy_rss -%]
+[% item %]
+[% END %]
+
+[% END %]
 [% IF top_referers.size %]
 -----------------------      
 
@@ -231,4 +239,4 @@ Tags Report
 __seclev__
 100
 __version__
-$Id: display;adminmail;default,v 1.86 2008/01/18 01:55:16 jamiemccarthy Exp $
+$Id: display;adminmail;default,v 1.87 2008/04/16 00:15:35 scc Exp $

@@ -10,7 +10,7 @@
 #      after X started at the same time that X was tagged.
 
 #
-# $Id: upgrades,v 1.1343 2008/04/10 05:23:53 pudge Exp $
+# $Id: upgrades,v 1.1348 2008/04/17 17:59:41 pudge Exp $
 #
 
 # BEGIN tf23's additions 
@@ -5191,8 +5191,6 @@ CREATE TABLE tagname_cache (
 # 2008-03-19
 UPDATE vars SET value = 'T_2_5_0_198' WHERE name = 'cvs_tag_currentcode';
 
-# PUDGE LAST UPDATED HERE
-
 # for plugins/ResKey
 INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::HumanConf', 701);
 INSERT INTO reskey_vars VALUES (1, 'duration_uses-anon',         300, 'duration_uses for anon');
@@ -5247,8 +5245,6 @@ INSERT INTO vars (name, value, description) VALUES ('tags_updateclouts_debuguids
 # 2008-04-03
 UPDATE vars SET value = 'T_2_5_0_200' WHERE name = 'cvs_tag_currentcode';
 
-# SLASHCODE/USEPERL LAST UPDATED HERE
-
 # SLASHDOT LAST UPDATED HERE
 
 # For plugins/FireHose
@@ -5281,3 +5277,23 @@ INSERT INTO reskey_vars VALUES (1, 'max_duration', 1, 'boolean for whether to st
 
 # 2008-04-09
 UPDATE vars SET value = 'T_2_5_0_201' WHERE name = 'cvs_tag_currentcode';
+
+# for plugins/ResKey (submit)
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::HumanConf',           701);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::ProxyScan',           801);
+
+# for plugins/ResKey (comments)
+DELETE FROM reskey_vars WHERE rkrid = 1 AND name = 'max_duration';
+INSERT INTO reskey_vars VALUES (1, 'max_duration_touch', 1, 'boolean for whether to store max duration in reskey object on touch');
+
+# for plugins/FireHose
+ALTER TABLE firehose_update_log ADD bytes mediumint UNSIGNED DEFAULT 0 NOT NULL;
+ALTER TABLE firehose_setting_log DROP column bytes; 
+
+# 2008-04-16
+UPDATE vars SET value = 'T_2_5_0_202' WHERE name = 'cvs_tag_currentcode';
+
+# PUDGE LAST UPDATED HERE
+
+# SLASHCODE/USEPERL LAST UPDATED HERE
+

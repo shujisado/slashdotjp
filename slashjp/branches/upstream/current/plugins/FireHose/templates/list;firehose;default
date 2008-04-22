@@ -83,7 +83,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 [% theupdatetime = Slash.timeCalc(Slash.db.getTime(), "%H:%M"); %]
 [% refresh_text = "";
    IF !user.is_anon;
-   	refresh_text = '<span style="font-size:60%">(<span id="pauseorplay">Paused</span> <span id="local_last_update_time">' _ theupdatetime _ '</span><span id="gmt_update_time"></span>)</span><span id="busy" class="hide"><img src="' _ constants.imagedir _ '/spinner.gif" alt="*"></span>';
+	refresh_text = '<span style="font-size:60%">(<span id="pauseorplay">Paused</span> <span id="local_last_update_time">' _ theupdatetime _ '</span><span id="gmt_update_time"></span>)</span><span class="busy" style="display:none"><img src="' _ constants.imagedir _ '/spinner.gif" alt="*"></span>';
    END;
 %]
 [% PROCESS titlebar title="$constants.sitename Firehose $refresh_text" %]
@@ -171,6 +171,9 @@ cmdrtaco dot net but be forgiving of beta code!
 	[% END %]
 
 	var firehose_action_time = 0;
+	[% IF options.pagesize == "large" %]
+	firehose_more_increment = 15;
+	[% END %]
 	[% options_color = (options.color || user.firehose_color || "indigo") %]
 	var fh_color = [% firehose.js_anon_dump(options_color) %];
 	fh_colors = [% firehose.js_anon_dump(colors) %];
@@ -204,4 +207,4 @@ firehose_slider_init();
 </script>
 
 __version__
-$Id: list;firehose;default,v 1.114 2008/04/09 19:23:18 tvroom Exp $
+$Id: list;firehose;default,v 1.116 2008/04/16 19:00:54 scc Exp $

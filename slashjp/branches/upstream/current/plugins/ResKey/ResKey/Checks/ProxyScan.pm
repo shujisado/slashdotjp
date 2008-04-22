@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ProxyScan.pm,v 1.5 2005/10/21 17:27:22 jamiemccarthy Exp $
+# $Id: ProxyScan.pm,v 1.6 2008/04/11 22:29:16 pudge Exp $
 
 package Slash::ResKey::Checks::ProxyScan;
 
@@ -13,7 +13,7 @@ use Slash::Constants ':reskey';
 
 use base 'Slash::ResKey::Key';
 
-our($VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our($VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub doCheck {
 	my($self) = @_;
@@ -30,7 +30,7 @@ sub doCheck {
 		return RESKEY_SUCCESS;
 	}
 
-	if (!$reader->getAL2($user->{srcids}, 'trusted')) {
+	unless ($reader->checkAL2($user->{srcids}, 'trusted')) {
 		my $is_proxy = $reader->checkForOpenProxy($user->{srcids}{ip});
 		if ($is_proxy) {
 			return(RESKEY_DEATH, ['open proxy', {

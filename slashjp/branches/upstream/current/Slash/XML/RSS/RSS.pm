@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: RSS.pm,v 1.41 2008/04/10 17:01:52 scc Exp $
+# $Id: RSS.pm,v 1.42 2008/04/14 18:49:06 pudge Exp $
 
 package Slash::XML::RSS;
 
@@ -32,7 +32,7 @@ use XML::RSS;
 use base 'Slash::XML';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.41 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.42 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 #========================================================================
@@ -433,10 +433,15 @@ sub rss_story {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
 		if ($desc) {
 			$encoded_item->{description} = $desc;
-			$encoded_item->{description} .= qq{<p><a href="$action"><img src="$channel->{'link'}slashdot-it.pl?from=rss&amp;op=image&amp;style=h0&amp;sid=$story->{sid}"></a></p>};
-			$encoded_item->{description} .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>" if $action;
+
+			my $extra = '';
+			$extra .= qq{<p><a href="$action"><img src="$channel->{'link'}slashdot-it.pl?from=rss&amp;op=image&amp;style=h0&amp;sid=$story->{sid}"></a></p>}
+				if $constants->{rdfbadge};
+			$extra .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>"
+				if $action;
 			# add poll if any
-			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+			$extra .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+			$encoded_item->{description} .= $self->encode($extra) if $extra;
 		}
 	}
 
@@ -576,4 +581,4 @@ Slash(3), Slash::XML(3).
 
 =head1 VERSION
 
-$Id: RSS.pm,v 1.41 2008/04/10 17:01:52 scc Exp $
+$Id: RSS.pm,v 1.42 2008/04/14 18:49:06 pudge Exp $

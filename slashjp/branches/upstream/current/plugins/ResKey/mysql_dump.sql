@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.23 2008/04/10 05:22:29 pudge Exp $
+# $Id: mysql_dump.sql,v 1.25 2008/04/15 00:27:12 pudge Exp $
 #
 
 ### NOTE: reserved reskey IDs:
@@ -73,7 +73,7 @@ INSERT INTO reskey_vars VALUES (1, 'duration_uses-anon',         300, 'duration_
 INSERT INTO reskey_vars VALUES (1, 'duration_uses-anon-trolla', 3600, 'duration_uses for anon + trolla AL2');
 INSERT INTO reskey_vars VALUES (1, 'duration_uses-trolla',       300, 'duration_uses for tolla AL2');
 INSERT INTO reskey_vars VALUES (1, 'duration_uses-anon-mult',    1.5, 'multiply by this amount for each comment previously posted in the past 24 hours');
-INSERT INTO reskey_vars VALUES (1, 'max_duration', 1, 'boolean for whether to store max duration in reskey object on creation');
+INSERT INTO reskey_vars VALUES (1, 'max_duration_touch', 1, 'boolean for whether to store max duration in reskey object on touch');
 
 
 
@@ -191,6 +191,8 @@ INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Check
 INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::AL2::Spammer',        531);
 INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::AL2::NoSubmit',       551);
 INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::Duration',            601);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::HumanConf',           701);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::ProxyScan',           801);
 
 ### vars
 INSERT INTO reskey_vars VALUES (6, 'adminbypass', 1, 'If admin, bypass checks for duration, proxy, and user');

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: HumanConf.pm,v 1.3 2008/04/02 15:15:45 pudge Exp $
+# $Id: HumanConf.pm,v 1.4 2008/04/11 22:29:16 pudge Exp $
 
 package Slash::ResKey::Checks::HumanConf;
 
@@ -13,7 +13,7 @@ use Slash::Constants ':reskey';
 
 use base 'Slash::ResKey::Key';
 
-our($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub updateResKey {
 	my($self) = @_;
@@ -30,7 +30,6 @@ sub updateResKey {
 
 sub doCheckCreate {
 	my($self) = @_;
-
 	return RESKEY_SUCCESS unless useHumanConf($self);
 
 	my $hc = getObject('Slash::HumanConf');
@@ -89,14 +88,20 @@ sub useHumanConf {
 			   $constants->{hc_sw_comments} == 0
 				# ...or it's turned off for logged-in users
 				# and this user is logged-in...
-			|| $constants->{hc_sw_comments} == 1
-			   && !$user->{is_anon}
+			|| ($constants->{hc_sw_comments} == 1
+			   && !$user->{is_anon})
 				# ...or it's turned off for logged-in users
 				# with high enough karma, and this user
 				# qualifies.
-			|| $constants->{hc_sw_comments} == 2
+			|| ($constants->{hc_sw_comments} == 2
 			   && !$user->{is_anon}
-		   	&&  $user->{karma} > $constants->{hc_maxkarma};
+		   	   &&  $user->{karma} > $constants->{hc_maxkarma});
+
+	# default
+	} else {
+		return 0 if $user->{is_admin}
+			 || (!$user->{is_anon}
+		   	 &&  $user->{karma} > $constants->{hc_maxkarma});
 	}
 
 	return 1;

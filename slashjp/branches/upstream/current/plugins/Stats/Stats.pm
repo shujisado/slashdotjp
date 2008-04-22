@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Stats.pm,v 1.195 2008/04/09 21:15:23 jamiemccarthy Exp $
+# $Id: Stats.pm,v 1.197 2008/04/17 00:30:39 pudge Exp $
 
 package Slash::Stats;
 
@@ -22,7 +22,7 @@ use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.195 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.197 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my($class, $user, $options) = @_;
@@ -1337,20 +1337,29 @@ sub countDailyByPageDistinctIPIDs {
 
 
 ########################################################
-sub countDailyStoriesAccess {
+sub countDailyStoriesAccessArticle {
 	my($self) = @_;
-	my $qlid = $self->_querylog_start('SELECT', 'accesslog_temp');
-	my $c = $self->sqlSelectMany("dat, COUNT(*), op", "accesslog_temp",
-		"op='article'",
-		"GROUP BY dat");
+	return $self->sqlSelectAllKeyValue('dat, COUNT(*)',
+		'accesslog_temp', "op='article'", 'GROUP BY dat');
+}
 
-	my %articles; 
-	while (my($sid, $cnt) = $c->fetchrow) {
-		$articles{$sid} = $cnt;
+########################################################
+sub countDailyStoriesAccessRSS {
+	my($self) = @_;
+	my $qs_hr = $self->sqlSelectAllKeyValue(
+		'query_string, COUNT(*)',
+		'accesslog_temp',
+		"op='slashdot-it' AND query_string LIKE '%from=rssbadge'",
+		'GROUP BY query_string');
+	my $sid_hr = { };
+	my $regex_sid = regexSid();
+	for my $qs (keys %$qs_hr) {
+		my($sid) = $qs =~ m{sid=\b([\d/]+)\b};
+		next unless $sid =~ $regex_sid;
+		$sid_hr->{$sid} ||= 0;
+		$sid_hr->{$sid} += $qs_hr->{$qs};
 	}
-	$c->finish;
-	$self->_querylog_finish($qlid);
-	return \%articles;
+	return $sid_hr;
 }
 
 ########################################################
@@ -2218,4 +2227,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: Stats.pm,v 1.195 2008/04/09 21:15:23 jamiemccarthy Exp $
+$Id: Stats.pm,v 1.197 2008/04/17 00:30:39 pudge Exp $

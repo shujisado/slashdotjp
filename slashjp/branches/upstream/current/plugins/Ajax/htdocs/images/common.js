@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: common.js,v 1.195 2008/04/08 17:52:30 scc Exp $
+// $Id: common.js,v 1.199 2008/04/16 18:35:17 scc Exp $
 
 function $dom( id ) {
 	return document.getElementById(id);
@@ -66,6 +66,7 @@ var firehose_settings = {};
   firehose_removed_first = '0';
   firehose_removals = null;
   firehose_future = null;
+  firehose_more_increment = 10;
 
   var firehose_cur = 0;
 
@@ -457,6 +458,7 @@ function toggleFirehoseTagbox(id) {
 }
 
 function firehose_set_options(name, value) {
+	
 	var pairs = [
 		// name		value		curid		newid		newvalue 	title 
 		["orderby", 	"createtime", 	"popularity",	"time",		"popularity"	],
@@ -467,6 +469,7 @@ function firehose_set_options(name, value) {
 		["mode", 	"fulltitle", 	"full",		"abbrev",	"full"]
 	];
 	var params = {};
+	params['setting_name'] = name;
 	params['op'] = 'firehose_set_options';
 	params['reskey'] = reskey_static;
 	var theForm = document.forms["firehoseform"];
@@ -590,6 +593,10 @@ function firehose_set_options(name, value) {
 
 	if (name == 'tabtype') {
 		params['tabtype'] = value;
+	}
+
+	if (name == 'more_num') {
+		params['ask_more'] = 1;
 	}
 
 	params['section'] = firehose_settings.section;
@@ -875,7 +882,7 @@ function firehose_get_next_updates() {
 
 
 function firehose_get_updates_handler(transport) {
-	$('#busy').setClass('hide');
+	$('.busy').hide();
 	var response = eval_response(transport);
 	var processed = 0;
 	firehose_removals = response.update_data.removals;
@@ -936,7 +943,7 @@ function firehose_get_updates(options) {
 		params[i] = firehose_settings[i];
 	}
 
-	$('#busy').removeClass();
+	$('.busy').show();
 	ajax_update(params, '', { onComplete: firehose_get_updates_handler });
 }
 
@@ -1467,10 +1474,9 @@ function firehose_go_prev() {
 }
 
 function firehose_more() {
-	var increment_by = 10;
-	firehose_settings.more_num = firehose_settings.more_num + increment_by;
+	firehose_settings.more_num = firehose_settings.more_num + firehose_more_increment;
 	
-	if (((firehose_item_count + increment_by) >= 200) && !fh_is_admin) {
+	if (((firehose_item_count + firehose_more_increment) >= 200) && !fh_is_admin) {
 		$('#firehose_more').hide();
 	}
 	firehose_set_options('more_num', firehose_settings.more_num);

@@ -15,9 +15,7 @@ printCommentsLinks
 __template__
 [% IF discussion2 %]
 	<a href="#" onclick="ajaxFetchComments(0,1); return false"><span id="more_comments_num_[% commentslinks_id %]"></span> More</a> | 
-[% END; IF user.is_anon;
-	PROCESS userlogin_cover
-		return_url = gSkin.rootdir _ '/comments.pl?sid=' _ sid %]
+[% END; IF user.is_anon %]
 	<a href="[% gSkin.rootdir %]/login.pl" onclick="show_login_box(); return false">Login</a>
 [% ELSE %]
 	<a href="[% gSkin.rootdir %]/my/comments"[% IF constants.modal_prefs_active %] onclick="getModalPrefs('d2', 'Discussion 2'); return false"[% END %]>Prefs</a>
@@ -36,4 +34,4 @@ END %]
 __seclev__
 10000
 __version__
-$Id: printCommentsLinks;misc;default,v 1.1 2008/04/10 05:22:29 pudge Exp $
+$Id: printCommentsLinks;misc;default,v 1.2 2008/04/15 20:57:46 pudge Exp $

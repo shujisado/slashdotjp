@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHose.pm,v 1.233 2008/04/10 05:22:29 pudge Exp $
+# $Id: FireHose.pm,v 1.235 2008/04/16 17:52:28 scc Exp $
 
 package Slash::FireHose;
 
@@ -42,7 +42,7 @@ use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.233 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.235 $ ' =~ /\$Revision:\s+([^\s]+)/;
 sub createFireHose {
 	my($self, $data) = @_;
 	$data->{dept} ||= "";
@@ -533,10 +533,16 @@ sub getFireHoseEssentials {
 		my $st_q  = $self->sqlQuote(timeCalc($options->{startdate}, '%Y-%m-%d %T', -$user->{off_set}));
 
 		if ($options->{startdate}) {
-			push @where, "createtime >= $st_q";
 
 			if ($options->{duration} && $options->{duration} >= 0 ) {
+				push @where, "createtime >= $st_q";
 				push @where, "createtime <= DATE_ADD($st_q, INTERVAL $dur_q DAY)";
+			} elsif ($options->{duration} == -1) {
+				if ($options->{orderdir} eq "ASC") {
+					push @where, "createtime >= $st_q";
+				} else {
+					my $end_q = $self->sqlQuote(timeCalc("$options->{startdate} 23:59:59", '%Y-%m-%d %T', -$user->{off_set}));				   push @where, "createtime <= $end_q";
+				}
 			}
 		} elsif (defined $options->{duration} && $options->{duration} >= 0) {
 			push @where, "createtime >= DATE_SUB(NOW(), INTERVAL $dur_q DAY)";
@@ -2743,6 +2749,9 @@ sub createUpdateLog {
 sub createSettingLog {
 	my($self, $data) = @_;
 	return if !getCurrentStatic("firehose_logging");
+	return if !$data->{name};
+
+	$data->{value} ||= "";
 	$data->{uid} ||= getCurrentUser('uid');
 	$self->sqlInsert("firehose_setting_log", $data);
 }
@@ -2757,4 +2766,4 @@ Slash(3).
 
 =head1 VERSION
 
-$Id: FireHose.pm,v 1.233 2008/04/10 05:22:29 pudge Exp $
+$Id: FireHose.pm,v 1.235 2008/04/16 17:52:28 scc Exp $

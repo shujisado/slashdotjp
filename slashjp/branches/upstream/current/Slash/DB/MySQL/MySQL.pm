@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.1013 2008/04/09 22:01:06 jamiemccarthy Exp $
+# $Id: MySQL.pm,v 1.1015 2008/04/18 00:51:28 jamiemccarthy Exp $
 
 package Slash::DB::MySQL;
 use strict;
@@ -20,7 +20,7 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 
-($VERSION) = ' $Revision: 1.1013 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision: 1.1015 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Fry: How can I live my life if I can't tell good from evil?
 
@@ -1332,6 +1332,11 @@ sub createAccessLog {
 		return unless $uri =~ $constants->{accesslog_imageregex};
 		$dat ||= $uri;
 	}
+
+	return if $op eq 'slashdot-it'
+		&& !$constants->{slashdotit_accesslog}
+			|| ( $constants->{slashdotit_accesslog} < 1
+				&& rand() > $constants->{slashdotit_accesslog} );
 
 	my $uid = $user->{uid} || $constants->{anonymous_coward_uid};
 	my $skin_name = getCurrentSkin('name');
