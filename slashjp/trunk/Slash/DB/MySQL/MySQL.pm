@@ -1258,7 +1258,7 @@ sub createSubmission {
 		my $firehose_id = $firehose->createItemFromSubmission($subid);
 
 		if ($firehose_id) {
-			my $discussion_id = $self->createDiscussion({
+			my $discussion_id = $submission->{discussion} || $self->createDiscussion({
 				uid		=> 0,
 				kind		=> 'submission',
 				title		=> $data->{subj},
