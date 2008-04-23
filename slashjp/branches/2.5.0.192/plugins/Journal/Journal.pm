@@ -657,6 +657,7 @@ sub updateTransferredJournalDiscussions {
 			url		=> $url,
 			ts		=> $journal_story->{'time'}
 		};
+		delete @{$discussion}{qw(title url)} if ($constants->{update_journal_story_discussion_to_story});
 
 		if ($self->setDiscussion($journal_story->{discussion}, $discussion)) {
 			$self->sqlUpdate('journal_transfer', {

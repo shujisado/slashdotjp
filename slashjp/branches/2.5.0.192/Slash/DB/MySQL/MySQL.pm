@@ -7674,7 +7674,8 @@ sub createStory {
 			# of these changes, if we need to make them -- pudge
 
 			# update later in task
-			delete @{$discussion}{qw(title url ts)};
+			delete @{$discussion}{qw(ts)};
+			delete @{$discussion}{qw(title url)} unless ($constants->{update_journal_story_discussion_to_story});
 			delete $discussion->{uid}; # leave it "owned" by poster
 
 			$id = $story->{discussion};
@@ -7843,7 +7844,8 @@ sub updateStory {
 		my $story = $self->getStory($stoid);
 		# will be updated later by journal_fix.pl
 		if ($story->{journal_id}) {
-			delete @{$dis_data}{qw(title url ts)};
+			delete @{$dis_data}{qw(ts)};
+			delete @{$discussion}{qw(title url)} unless ($constants->{update_journal_story_discussion_to_story});
 		}
 
 		if (!$error) {
