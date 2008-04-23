@@ -1,6 +1,8 @@
 slash (2.5.0.192-10) unstable; urgency=low
 
   * Fix to take discussion id from journal-submission
+  * Update journal-story discussions' title/url to story title/url when vars
+    update_journal_story_discussion_to_story has been enabled.
 
  -- Taku YASUI <tach@osdn.jp>  Tue, 22 Apr 2008 18:49:08 +0900
 
@@ -14,8 +16,6 @@ slash (2.5.0.192-9) unstable; urgency=low
   * Fix: user karma_bonus settings are vanished...
   * Fix: comment count fail when user hardthresh setting is enabled
   * Remove "tid=" from story link at stories
-  * Update journal-story discussions' title/url to story title/url when vars
-    update_journal_story_discussion_to_story has been enabled.
 
  -- Taku YASUI <tach@osdn.jp>  Mon, 21 Apr 2008 21:58:15 +0900
 
