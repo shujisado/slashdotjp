@@ -109,7 +109,7 @@ sub createUpdateItemFromJournal {
 				discussion => $journal->{discussion}, 
 				word_count => countWords($introtext) 
 			});
-
+			$self->setFireHose($itemid, { public => "no" }) if (getCurrentStatic("firehose_disable_to_show_publicized_journals") && $journal->{promotetype} eq "publicize");
 		} else {
 			$self->createItemFromJournal($id);
 		}
