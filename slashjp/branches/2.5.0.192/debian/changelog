@@ -4,8 +4,9 @@ slash (2.5.0.192-10) unstable; urgency=low
   * Update journal-story discussions' title/url to story title/url when vars
     update_journal_story_discussion_to_story has been enabled.
   * Fix not to show contents when the skin does not exist
+  * Fix to create/update firehose item from Journal correctly
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 24 Apr 2008 13:00:34 +0900
+ -- Taku YASUI <tach@osdn.jp>  Thu, 24 Apr 2008 17:15:12 +0900
 
 slash (2.5.0.192-9) unstable; urgency=low
 
