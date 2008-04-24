@@ -354,6 +354,12 @@ sub IndexHandler {
 	#	$uri =~ s/^\Q$path//;
 	#}
 
+	# DECLINED if the skin does not exist
+	if ($uri =~ m|^/\w+/\w+\.pl$| &&
+	    determineCurrentSkin() == getCurrentStatic('mainpage_skid')) {
+		return DECLINED;
+	}
+
 	# Comment this in if you want to try having this do the right
 	# thing dynamically
 	# my $slashdb = getCurrentDB();
