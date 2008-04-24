@@ -584,7 +584,7 @@ sub doSaveArticle {
 	# don't allow submission if user can't submit stories
 	# note: this may not work properly with SOAP, but submissions
 	# not enabled with SOAP now anyway
-	if ($constants->{journal_create_submission} && $form->{promotetype} eq 'publicize') {
+	if (!$form->{id} && $constants->{journal_create_submission} && $form->{promotetype} eq 'publicize') {
 		my $reskey = getObject('Slash::ResKey');
 		my $submit_rkey = $reskey->key('submit', { nostate => 1 });
 		unless ($submit_rkey->createuse) {
