@@ -11,7 +11,7 @@
 <title>Slashdot Japan のコードについて</title>
 
 <!--#include virtual="/slashhead.inc"-->
-<div class="generalbody">
+<div class="general_contents">
 <h2>Slashdot Japanヘッドラインの利用</h2>
 <p>
 スラッシュドットジャパンでは記事のタイトル一覧を<a href="http://web.resource.org/rss/1.0/">RDF Site Summary (RSS) 1.0</a> と呼ばれる形式で提供しています。XMLな形式で、ソフトウェアで解析するのに適しています。RSSリーダと呼ばれるツールを使うことで、他のウェブページにヘッドラインを埋め込んだり、はたまたデスクトップに表示できたりします。スラッシュドットジャパンのトップページ右側に表示される「スラッシュボックス」もいろんなサイトのRSSを利用したものです。
