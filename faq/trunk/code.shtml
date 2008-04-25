@@ -1,0 +1,91 @@
+<html lang="ja">
+<head>
+<link rel="shortcut icon" rel="/favicon.ico" TYPE="image/x-icon">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Content-Language" content="ja">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<link rel="INDEX" href="http://slashdot.jp/">
+<link rel="CONTENTS" href="http://slashdot.jp/">
+<!--#include virtual="slashcssbase.inc" -->
+<title>Slashdot Japan のコードについて</title>
+
+<!--#include virtual="/slashhead.inc"-->
+<div class="generalbody">
+<h2>Slashdot Japanヘッドラインの利用</h2>
+<p>
+スラッシュドットジャパンでは記事のタイトル一覧を<a href="http://web.resource.org/rss/1.0/">RDF Site Summary (RSS) 1.0</a> と呼ばれる形式で提供しています。XMLな形式で、ソフトウェアで解析するのに適しています。RSSリーダと呼ばれるツールを使うことで、他のウェブページにヘッドラインを埋め込んだり、はたまたデスクトップに表示できたりします。スラッシュドットジャパンのトップページ右側に表示される「スラッシュボックス」もいろんなサイトのRSSを利用したものです。
+</p>
+
+<p>スラッシュドットジャパンで提供しているヘッドラインRSS：</p>
+<!--#include virtual="/section-rss-list.inc"-->
+<p>
+これらは30分に一度の間隔で更新されるので、それよりも頻繁にアクセスしても無駄です。みんなの資源を有効活用するためにも更新間隔は最低でも30分以上空けてお願いします。   
+</p>   
+<p>
+また、RSS 1.0の<a href="http://web.resource.org/rss/1.0/modules/slash/">Slashモジュール</a>を使って、記事のコメント数やセクション名、部門名といった情報も追加してあります。
+</p>
+<p>
+<strong>注意：</strong>上記のRSSについては何らかの形態で広告が入る可能性があり、実際の
+配信元へリダイレクトされることもあります。我々が広告パートナーを随時
+変更する可能性は低くはありませんし、RSS広告を廃止する可能性もあります
+ので、RSSリーダーではリダイレクト先のURLを登録するのではなく上記のURLを
+使用してください。
+</p>
+
+
+<h2>その他のRSSフィード</h2>
+<p>ヘッドライン以外にも、各種ページの呼び出しに content_type=rss をつけることによって、結果をRSS形式で得ることができます。</p>
+<p>例えば日記では特定ユーザのエントリ一覧が得られます。</p>
+<ul>
+<li>特定ユーザのエントリ一覧：http://slashdot.jp/~<strong>Nickname</strong>/journal/rss (<a href="http://slashdot.jp/~Oliver/journal/rss">例</a>)</li>
+<li>特定ユーザの友達の日記エントリ一覧：http://slashdot.jp/~<strong>Nickname</strong>/journal/friends/rss (<a href="http://slashdot.jp/~Oliver/journal/friends/rss">例</a>)</li>
+<li>最新の日記エントリ：<a href="http://slashdot.jp/journal.pl?op=top&content_type=rss">http://slashdot.jp/journal.pl?op=top&content_type=rss</a></li>
+<!--
+<li>友達数トップ30の日記書き：<a href="http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss">http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss</a></li>
+<li>エントリ数トップ30の日記書き：<a href="http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss">http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss</a></li>
+-->
+</ul>
+<p>いろいろな情報を検索できるsearch.plでは検索結果をRSSで得られます。</p>
+<ul>
+<li>最新のコメント一覧：<a href="http://slashdot.jp/search.pl?op=comments&content_type=rss">http://slashdot.jp/search.pl?op=comments&content_type=rss</a></li>
+<li>ユーザ名検索：http://slashdot.jp/search.pl?op=users&query=<strong>Nickname</strong>&content_type=rss (<a href="http://slashdot.jp/search.pl?op=users&query=Oliver&content_type=rss">例)</a></li>
+<li>コメント検索(半角アルファベットのみ)：http://slashdot.jp/search.pl?op=comments&query=<strong>Keyword</strong>&content_type=rss (<a href="http://slashdot.jp/search.pl?op=comments&query=RSS&content_type=rss">例</a>)</li>
+</ul>
+
+<p>これらはいずれもかなり重い処理なので、最低でも30分間隔でお願いします。</p>
+
+<h2>小技</h2>
+<p>他にもいざという時に便利な小技がふたつある。ひとつは、ほぼ全てのページで有効な技で、ページのパラメタにsimpledesign=1またはlowbandwidth=1を追加することでそのページだけ、強制的に異なるモードで表示させることができる(両方を指定することもできる)。普段は通常モードだが、出先でAirH''で回線が細い時などに便利だ(<a href="http://slashdot.jp/index.pl?simpledesign=1&amp;lowbandwidth=1">例</a>)。もうひとつは日記でtheme=liquidみたいにテーマ名を指定することで、読み手が自由にテーマ選べる(<a href="http://slashdot.jp/journal.pl?op=display&nick=Oliver&theme=liquid">例</a>)。liquidテーマの縞々が見づらいと思った時や日記解析スクリプトを各テーマに対応させたくない時に便利だ。もともとはどちらもデバッグ用の小技なので、機能拡張とか設定保存の予定はない。</p>
+
+<h2>Mozilla サイドバー</h2>
+<p>スラッシュドットジャパンでは、 Mozilla ユーザのために便利なサイドバーを作成
+し、公開しています。このサイドバーを使うことで、どんなときでも最新記事にアク
+セスすることができます。(<a href="/sidebar.shtml">Mozilla サイドバーのページ</a>)
+</p>
+
+<h2>Slashdot Japanを便利にするツールやサイト</h2>
+<p>いろんな人がスラッシュドットジャパンを便利に使うためのソフトやツールを作成・公開してます。下のリストのツールは各作者のものなので、質問は作者にお願いします。もし、新しいモノを作ったり、Slashdot Japanに対応したモノを見付けたら、リストに加えるので、ぜひ連絡ください。</p>
+<ul>
+<li><a href="http://konfabulator.deskmod.com/?show=showskin&skin_id=26689">Konfabulator用SlashdotJP Widget</a><br>
+    tmizuさん作。</li>
+<li><a href="http://www.geocities.co.jp/SiliconValley/9899/">えまのん</a><br>
+    本来は２ちゃんねるブラウザだが、/.-Jにも対応しているらしい。</li>
+<li><a href="http://sourceforge.jp/projects/hsw/">hsw</a><br>
+    Silphireさんが開発中のRubyとGTK+を用いたSlashdot Japan専用ブラウザ。
+    現在、初の公開スナップショットがCVSレポジトリに含まれている。</li>
+<li><a href="http://slashwatch.mtlab.jp/">/.J コメントうぉっち</a><br>
+    witchさん作のウェブサイト。最新のコメントをリストアップするだけでなく、特定ユーザの日記へのち過去8日分のコメントを表示できたりする。</li>
+<li><a href="http://slashdot.jp/journal.pl?op=display&uid=6046&id=182902">Slashdot-Japan Journal Reader for i-mode</a><br>
+    Silphireさん作の/.-J日記をi-modeむけに変換するゲートウェイ。<a href="http://slashdot.jp/i/">携帯版/.-J</a>と組み合わせれば最強！？</li>
+<li><a href="http://slashdot.jp/journal.pl?op=display&uid=3370&id=177605">偽/.日記</a><br>
+    fslashtさん作の/.-J日記をフレーム表示にするPHPスクリプト。</li>
+<li><a href="http://slashdot.jp/journal.pl?op=display&uid=12391&id=184066">Slashdot Journal Statistics 1.0</a><br>    
+    int20さん作の特定日記ユーザがいつ日記を記入したのか統計を表示するCGI。</li>
+<li><a href="http://jadore.jp/~torly/view_test3.php">/.日記ビューアー</a><br>
+    torlyさん作の最近更新した日記ユーザを適宜取得し続けることで、一日に日記を更新したユーザを明らかにするもの。</li>
+</ul>
+
+</div>
+
+<!--#include virtual="/slashfoot.inc"-->
