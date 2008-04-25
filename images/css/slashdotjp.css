@@ -202,7 +202,13 @@ div.search-results {
 .search-results .data {
 	font-size: 80%;
 	color: #666;
-};
+}
+
+/* code.shtml rss link */
+a.feed {
+	background: url(//images.slashdot.jp/feed-14x14.png) left no-repeat;
+	padding-left: 16px;
+}
 
 /* ads format */
 div.article div.bigbanner,
