@@ -1523,7 +1523,7 @@ function appendToBodytext(text){var obj=$('admin-bodytext');if(obj){obj.classNam
 
 /* remove left menu content-height value */
 (function(){
-  var content_height_version = "20080428";
+  var content_height_version = "20080428a";
   var append = "";
 
   /* ignore if the version is latest */
