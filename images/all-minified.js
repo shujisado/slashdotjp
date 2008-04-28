@@ -1519,3 +1519,29 @@ function firehose_save_note(id){var nf=$('note-form-'+id);var nt=$('note-text-'+
 function firehose_get_admin_extras(id){var params=[];params['id']=id;params['op']='firehose_get_admin_extras';var handlers={onComplete:json_handler};ajax_update(params,'',handlers);}
 function firehose_get_and_post(id){var params=[];params['id']=id;params['op']='firehose_get_form';firehose_collapse_entry(id);var handlers={onComplete:function(){$('postform-'+id).submit();}};ajax_update(params,'postform-'+id,handlers);}
 function appendToBodytext(text){var obj=$('admin-bodytext');if(obj){obj.className="show";obj.value=obj.value+text;}}
+/* append for slashdot.jp */
+
+/* remove left menu content-height value */
+(function(){
+  var content_height_version = "20080428";
+  var append = "";
+
+  /* ignore if the version is latest */
+  if ( document.cookie.indexOf("content-height-version=" + content_height_version) > 0 )
+    return null;
+
+  /* check domain */
+  get_domain();
+  if (!isdomain)
+    append = "; domain=." + domainname
+
+  /* delete cookie if exists and non-zero */
+  $A(document.cookie.split("; ")).each(function(cookie) {
+    var c = cookie.split("=", 2);
+    if ( blocks.indexOf(c[0].replace("-content-height$", "")) && c[1] > 0 )
+      document.cookie = c[0] + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + append;
+  });
+
+  /* remember content-height-version */
+  document.cookie = "content-height-version=" + content_height_version + "; path=/" + append;
+})();
