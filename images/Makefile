@@ -31,11 +31,13 @@ $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections))
 		sed -e 's/#commentwrap {clear: both;}/* html #commentwrap {clear: both;}/' | \
 		perl -npe 's/\bfont-family:[^;]+;//' | \
 		perl -npe 's/\bsans-serif\b//' > $@
+	echo >> $@
 	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
 
 css/%.css.orig:
 	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
 
+all-minified.js: %: %.orig %.jp
 $(jses): %: %.js
 $(patsubst %, %.js, $(jses)): %: %.orig
 	cat $@.orig | \
@@ -43,6 +45,8 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/innerHTML="Paused"/innerHTML="停止中"/' | \
 		sed -e 's/innerHTML="Updated"/innerHTML="更新中"/' | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' > $@
+	echo >> $@
+	test -f $@.jp && cat $@.jp >> $@
 
 %.js.orig:
 	wget --no-proxy --no-verbose http://slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
