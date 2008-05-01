@@ -27,4 +27,4 @@ div.commentSub { border-bottom: 1px solid #666; }
 #firehose .story .generaltitle .title a { color: #fff !important; }
 
 
-a { text-decoration: none; }
+a[name] { text-decoration: none; }

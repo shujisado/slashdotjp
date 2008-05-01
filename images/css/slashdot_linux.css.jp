@@ -1,1 +1,1 @@
-a { text-decoration: none; }
+a[name] { text-decoration: none; }
