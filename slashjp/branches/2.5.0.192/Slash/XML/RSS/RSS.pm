@@ -28,6 +28,7 @@ LONG DESCRIPTION.
 use strict;
 use Slash;
 use Slash::Utility;
+use Slash::Display;
 use XML::RSS;
 use base 'Slash::XML';
 use vars qw($VERSION);
@@ -453,8 +454,11 @@ sub rss_story {
 	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
 		if ($desc) {
-			$encoded_item->{description} = $desc;
-			$encoded_item->{description} .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>" if $action;
+			$encoded_item->{description} = slashDisplay("rss_item_description", {
+				desc		=> $desc,
+				more		=> $story->{bodytext},
+				link		=> $action,
+			}, { Return => 1, Nocomm => 1 });
 			# add poll if any
 			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
 		}

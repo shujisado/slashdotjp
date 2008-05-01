@@ -1,3 +1,10 @@
+slash (2.5.0.192-11) unstable; urgency=low
+
+  * Change RSS item description suffix
+    - use template "rss_item_description;misc;default" to change description
+
+ -- Taku YASUI <tach@osdn.jp>  Thu,  1 May 2008 09:33:34 +0000
+
 slash (2.5.0.192-10) unstable; urgency=low
 
   * Fix to take discussion id from journal-submission
