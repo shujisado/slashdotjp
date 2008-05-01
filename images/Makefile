@@ -20,7 +20,7 @@ images-stamp:
 		wget --no-proxy --no-host-directories --mirror --no-verbose -i -
 	touch images-stamp
 
-css/slashcode_lite.css css/iestyles.css css/admin.css: %: %.orig %.jp
+css/slashcode_lite.css css/iestyles.css css/admin.css css/slashdot_linux.css: %: %.orig %.jp
 $(csses): %: css/%.css
 $(sections): %: css/slashdot_%.css
 $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections)): %: %.orig
@@ -30,6 +30,7 @@ $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections))
 		sed -e 's/#articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100;/#articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100; }/' | \
 		sed -e 's/#commentwrap {clear: both;}/* html #commentwrap {clear: both;}/' | \
 		perl -npe 's/\bfont-family:[^;]+;//' | \
+		perl -npe "s/^\/\/.*$$//" | \
 		perl -npe 's/\bsans-serif\b//' > $@
 	echo >> $@
 	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
