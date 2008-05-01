@@ -2,8 +2,11 @@ slash (2.5.0.192-11) unstable; urgency=low
 
   * Change RSS item description suffix
     - use template "rss_item_description;misc;default" to change description
+  * Add feature to change whether nexus topics will be shown or not on topic
+    list
+    - use $constants->{topiclist_dont_show_nexuses}
 
- -- Taku YASUI <tach@osdn.jp>  Thu,  1 May 2008 09:33:34 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu,  1 May 2008 12:05:31 +0000
 
 slash (2.5.0.192-10) unstable; urgency=low
 

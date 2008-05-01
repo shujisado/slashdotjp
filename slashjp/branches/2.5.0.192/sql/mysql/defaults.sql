@@ -1142,6 +1142,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_name','Fire
 INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_use_story_shtml','0','Use ${sid}.shtml for RSS/RDF link');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('update_journal_story_discussion_to_story','0','Update discussion of journal-story title/url to story title/url');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_disable_to_show_publicized_journals','1','Do not show publicized(story-submitted) journals as firehose item');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('topiclist_dont_show_nexuses','1','Do not show nexus topics on topic list');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';

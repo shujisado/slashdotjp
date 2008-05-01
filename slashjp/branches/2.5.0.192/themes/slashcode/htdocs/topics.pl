@@ -67,6 +67,10 @@ sub listTopics {
 		$topics = \%new_topics;
 	}
 
+	foreach my $id ($reader->getNexusTids()) {
+		delete($topics->{$id}) if ($constants->{topiclist_dont_show_nexuses});
+	}
+
 	slashDisplay('listTopics', {
 		title		=> getData('current_topics'),
 		width		=> '90%',
