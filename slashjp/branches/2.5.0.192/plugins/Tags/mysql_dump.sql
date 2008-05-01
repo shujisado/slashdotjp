@@ -53,3 +53,5 @@ INSERT INTO menus VALUES (NULL, 'tagszg', 'All',    'all',    '[% gSkin.rootdir 
 
 #INSERT INTO tagboxes VALUES (NULL, 'tag_count', 'user', '1.0', 0, NULL);
 
+-- for slashdot.jp
+INSERT IGNORE INTO vars (name, value, description) VALUES ('autoaddstorytopics_use_textname', '1', 'Use "textname" instead of "keyword" for Auto-add tags for story topic');

@@ -5,8 +5,11 @@ slash (2.5.0.192-11) unstable; urgency=low
   * Add feature to change whether nexus topics will be shown or not on topic
     list
     - use $constants->{topiclist_dont_show_nexuses}
+  * Add feature to change automatic tag stories to use topic.textname instead
+    of topic.keyword
+    - use $constants->{autoaddstorytopics_use_textname}
 
- -- Taku YASUI <tach@osdn.jp>  Thu,  1 May 2008 12:05:31 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu,  1 May 2008 14:27:42 +0000
 
 slash (2.5.0.192-10) unstable; urgency=low
 

@@ -2542,7 +2542,7 @@ sub saveStory {
 			for my $tid (keys %$chosen_hr) {
 				next unless $chosen_hr->{$tid} > 0;	# must have weight
 				next unless $tree->{$tid}{image};	# must have an image
-				my $kw = $tree->{$tid}{keyword};
+				my $kw = $constants->{autoaddstorytopics_use_textname} ? $tree->{$tid}{textname} : $tree->{$tid}{keyword};
 				next unless $tagsdb->tagnameSyntaxOK($kw); # must be a valid tagname
 				$tt{$kw} = 1;
 			}
