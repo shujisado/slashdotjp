@@ -1,4 +1,4 @@
-li.comment .title h4 a,
-a[name] {
+li.comment .title h4 a
+{
 	text-decoration: none;
 }
