@@ -18,12 +18,13 @@ div#slashboxes div.block div.content { background: #eee; }
 .comment > .oneline .commentTop .title h4 a { color: #369; }
 div.commentSub { border-bottom: 1px solid #369; }
 
-//firehose related css begin
+
 .story, .story a  {color: #fff !important;}
 .story .date, .story a.skin {color: #ffffff !important;}
 #firehose .article div.tagtitleclosed span span, #firehose .article div.tagtitleopen span span, #firehose div.tags div.tagtitleclosed a, #firehose div.tags div.tagtitleclosed,  #firehose div.tags div.tagtitleopen a,  #firehose div.tags div.tagtitleopen  {color: #369 !important}
 div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.article .story div.title h3, div.article .story div.title, .firemenu div.title, .firemenu div.title h3
 { background: #369 url(//images.slashdot.jp/article-title-bg-dev.png) repeat-x left top !important}
 .story .generaltitle .title a { color: #fff !important; }
-// firehose related css end
+
+
 

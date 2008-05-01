@@ -32,11 +32,12 @@ div#slashboxes div.block div.title h4 {
 div.commentSub { border-bottom: 1px solid #898163; }
 
 
-//firehose related css begin
+
 .story, .story a  {color: #fff !important;}
 .story .date, .story a.skin {color: #ffffff !important;}
 #firehose .article div.tagtitleclosed span span, #firehose .article div.tagtitleopen span span, #firehose .generaltitle h3 a, #firehose div.tags div.tagtitleclosed a, #firehose div.tags div.tagtitleclosed, #firehose div.tags div.tagtitleopen a, #firehose div.tags div.tagtitleopen {color: #898163 !important}
 #firehose div.briefarticle .story div.title h3, #firehose div.briefarticle .story div.title, #firehose div.article .story div.title h3, #firehose div.article .story div.title, .firemenu div.title, .firemenu div.title h3
 { background: #004 url(//images.slashdot.jp/article-title-bg-it.png) repeat-x left top !important}
 #firehose .story .generaltitle .title a { color: #fff !important; }
-// firehose related css end
+
+

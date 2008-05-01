@@ -15,9 +15,10 @@ div.article div.title span,
 div.article div.title span a { color: #eee; }
 .comment > .oneline .commentTop .title h4 a { color: #666; }
 
-//firehose related css begin
+
 .story, .story a  {color: #fff !important;}
 .story .date, .story a.skin {color: #ffffff !important;}
 div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.article .story div.title h3, div.article .story div.title, .firemenu div.title, .firemenu div.title h3
 { background: #666 url(//images.slashdot.jp/block-title-bg.pnh) repeat-x left top !important}
-// firehose related css end
+
+
