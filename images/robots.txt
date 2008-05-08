@@ -1,0 +1,64 @@
+# robots.txt for slashdot.jp
+# $Id: robots.txt,v 1.5 2003/08/29 15:21:08 jamie Exp $
+#
+# "Any empty [Disallow] value, indicates that all URLs can be retrieved.
+# At least one Disallow field needs to be present in a record."
+
+User-agent: Mediapartners-Google
+Disallow:
+
+User-agent: Googlebot
+Crawl-delay: 100
+Disallow: /firehose.pl
+Disallow: /submit.pl
+Disallow: /users.pl
+Disallow: /zoo.pl
+Disallow: firehose.pl
+Disallow: submit.pl
+Disallow: users.pl
+Disallow: zoo.pl
+
+User-agent: Slurp
+Crawl-delay: 100
+Disallow:
+
+User-agent: Yahoo-NewsCrawler
+Disallow:
+
+User-Agent: msnbot
+Crawl-delay: 100
+Disallow:
+
+User-agent: *
+Crawl-delay: 100
+Disallow: /authors.pl
+Disallow: /index.pl
+Disallow: /article.pl
+Disallow: /comments.pl
+Disallow: /firehose.pl
+Disallow: /journal.pl
+Disallow: /messages.pl
+Disallow: /metamod.pl
+Disallow: /users.pl
+Disallow: /search.pl
+Disallow: /submit.pl
+Disallow: /pollBooth.pl
+Disallow: /pubkey.pl
+Disallow: /topics.pl
+Disallow: /zoo.pl
+Disallow: authors.pl
+Disallow: index.pl
+Disallow: article.pl
+Disallow: comments.pl
+Disallow: firehose.pl
+Disallow: journal.pl
+Disallow: messages.pl
+Disallow: metamod.pl
+Disallow: users.pl
+Disallow: search.pl
+Disallow: submit.pl
+Disallow: pollBooth.pl
+Disallow: pubkey.pl
+Disallow: topics.pl
+Disallow: zoo.pl
+Disallow: /i
