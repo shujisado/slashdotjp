@@ -541,6 +541,9 @@ sub getCSS {
 	my $theme = $user->{simpledesign} ? "light" : $user->{css_theme};
 	my $constants = getCurrentStatic();
 
+	# force mobile theme
+	$theme = 'mobile' if ($user->{mobile});
+
 	my $expire_time = $constants->{css_expire} || 3600;
 	$expire_time += int(rand(60)) if $expire_time;
 	_genericCacheRefresh($self, 'css', $expire_time);
@@ -9485,6 +9488,9 @@ sub getTemplateByName {
 		$skin ||= getCurrentSkin('name');
 		$skin ||= 'default';
 	}
+
+	# change to mobile skin
+	$skin = 'm' if (getCurrentUser('mobile'));
 
 	#Now, lets figure out the id
 	#name|page|skin => name|page|default => name|misc|skin => name|misc|default

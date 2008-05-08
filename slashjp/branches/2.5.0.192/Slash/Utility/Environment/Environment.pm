@@ -1624,6 +1624,19 @@ sub prepareUser {
 	}
 	$constants->{tweak_japanese} and $user->{aton} = '';
 
+	# mobile theme for slashdot.jp
+	if ($constants->{mobile_enabled}) {
+#print STDERR $r->header_in('user-agent') . " =~ $constants->{mobile_useragent_regex}\n";
+		if ($constants->{mobile_useragent_regex} &&
+		    $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) {
+			$user->{mobile} = 1;
+#print STDERR "MOBILE SKIN MATCH: " . $r->header_in('user-agent') . "\n";
+		} elsif ($r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+			$user->{mobile} = 1;
+#print STDERR "FORCE MOBILE MODE: " . $r->args() . "\n";
+		}
+	}
+
 	if ($uri =~ m[^/$]) {
 		$user->{currentPage} = 'index';
 	} elsif ($uri =~ m{\b([^/]+)\.pl\b}) {

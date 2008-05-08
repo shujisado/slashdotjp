@@ -227,6 +227,7 @@ sub slashDisplay {
 
 	my $show_comm = $constants->{template_show_comments} ? 1 : 0;
 	$show_comm &&= 0 if $opt->{Nocomm} && $constants->{template_show_comments} < 2;
+	$show_comm &&= 0 if $user->{mobile} && $constants->{template_show_comments} < 2;
 	$out = "\n\n<!-- start template: $TEMPNAME -->\n\n$out\n\n<!-- end template: $TEMPNAME -->\n\n"
 		if $show_comm;
 

@@ -1143,6 +1143,8 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_use_story_shtml'
 INSERT IGNORE INTO vars (name, value, description) VALUES ('update_journal_story_discussion_to_story','0','Update discussion of journal-story title/url to story title/url');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_disable_to_show_publicized_journals','1','Do not show publicized(story-submitted) journals as firehose item');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('topiclist_dont_show_nexuses','1','Do not show nexus topics on topic list');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_enabled','0','Use mobile mode (1: enable, 0: disable)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_useragent_regex','','User-Agent regex to force mobile mode');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';
