@@ -1,5 +1,5 @@
 # robots.txt for slashdot.jp
-# $Id: robots.txt,v 1.5 2003/08/29 15:21:08 jamie Exp $
+# $Id$
 #
 # "Any empty [Disallow] value, indicates that all URLs can be retrieved.
 # At least one Disallow field needs to be present in a record."
@@ -20,14 +20,35 @@ Disallow: zoo.pl
 
 User-agent: Slurp
 Crawl-delay: 100
-Disallow:
+Disallow: /firehose.pl
+Disallow: /submit.pl
+Disallow: /users.pl
+Disallow: /zoo.pl
+Disallow: firehose.pl
+Disallow: submit.pl
+Disallow: users.pl
+Disallow: zoo.pl
 
 User-agent: Yahoo-NewsCrawler
-Disallow:
+Disallow: /firehose.pl
+Disallow: /submit.pl
+Disallow: /users.pl
+Disallow: /zoo.pl
+Disallow: firehose.pl
+Disallow: submit.pl
+Disallow: users.pl
+Disallow: zoo.pl
 
 User-Agent: msnbot
 Crawl-delay: 100
-Disallow:
+Disallow: /firehose.pl
+Disallow: /submit.pl
+Disallow: /users.pl
+Disallow: /zoo.pl
+Disallow: firehose.pl
+Disallow: submit.pl
+Disallow: users.pl
+Disallow: zoo.pl
 
 User-agent: *
 Crawl-delay: 100
