@@ -46,14 +46,27 @@
 <li>エントリ数トップ30の日記書き：<a href="http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss">http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss</a></li>
 -->
 </ul>
-<p>いろいろな情報を検索できるsearch.plでは検索結果をRSSで得られます。</p>
+<p>いろいろな情報を検索できる<a href="http://slashdot.jp/search.pl">search.pl</a>では検索結果をRSSで得られます。
+検索キーワードを入力しなければ、最新のアイテムをRSSで取得できます。
+検索キーワードを指定した場合、「<code>&amp;order=order=%40cdate+NUMD</code>」を付けることで、新しい順になります。</p>
 <ul>
-<li>最新のコメント一覧：<a href="http://slashdot.jp/search.pl?op=comments&content_type=rss">http://slashdot.jp/search.pl?op=comments&content_type=rss</a></li>
-<li>ユーザ名検索：http://slashdot.jp/search.pl?op=users&query=<strong>Nickname</strong>&content_type=rss (<a href="http://slashdot.jp/search.pl?op=users&query=Oliver&content_type=rss">例)</a></li>
-<li>コメント検索(半角アルファベットのみ)：http://slashdot.jp/search.pl?op=comments&query=<strong>Keyword</strong>&content_type=rss (<a href="http://slashdot.jp/search.pl?op=comments&query=RSS&content_type=rss">例</a>)</li>
+<li>ストーリー検索：http://slashdot.jp/search.pl?op=stories&amp;q=<strong>キーワード</strong>&amp;content_type=rss
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=stories">「スラッシュドット」でストーリーを検索、新着順</a>）</li>
+<li>日記検索：http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=journals">「スラッシュドット」で日記を検索、新着順</a>）</li>
+<li>ユーザ名検索：http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=users">「スラッシュドット」でユーザを検索、新着順</a>）</li>
+<li>コメント検索：http://slashdot.jp/search.pl?op=comments&amp;q=<strong>キーワード</strong>&amp;content_type=rss
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&threshold=1&op=comments">「スラッシュドット」でコメントを検索、新着順</a>）</li>
+<li>国民投票検索：http://slashdot.jp/search.pl?op=polls&amp;q=<strong>キーワード</strong>&amp;content_type=rss
+（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=polls">「職場」で国民投票を検索、新着順</a>）</li>
+<li>RSS検索：http://slashdot.jp/search.pl?op=rss&amp;q=<strong>キーワード</strong>&amp;content_type=rss
+（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=rss">「職場」でRSSを検索、新着順</a>）</li>
 </ul>
 
-<p>これらはいずれもかなり重い処理なので、最低でも30分間隔でお願いします。</p>
+<p>キーワードはURLエンコードする必要があるため、初めに <a href="http://slashdot.jp/search.pl">search.pl</a>
+で検索結果を作ってから、「<code>&amp;content_type=rss</code>」を付けるとよいでしょう。
+これらはいずれもかなり重い処理なので、<strong>最低でも30分間隔でお願いします。</strong></p>
 
 <h2>小技</h2>
 <p>他にもいざという時に便利な小技がふたつある。ひとつは、ほぼ全てのページで有効な技で、ページのパラメタにsimpledesign=1またはlowbandwidth=1を追加することでそのページだけ、強制的に異なるモードで表示させることができる(両方を指定することもできる)。普段は通常モードだが、出先でAirH''で回線が細い時などに便利だ(<a href="http://slashdot.jp/index.pl?simpledesign=1&amp;lowbandwidth=1">例</a>)。もうひとつは日記でtheme=liquidみたいにテーマ名を指定することで、読み手が自由にテーマ選べる(<a href="http://slashdot.jp/journal.pl?op=display&nick=Oliver&theme=liquid">例</a>)。liquidテーマの縞々が見づらいと思った時や日記解析スクリプトを各テーマに対応させたくない時に便利だ。もともとはどちらもデバッグ用の小技なので、機能拡張とか設定保存の予定はない。</p>
