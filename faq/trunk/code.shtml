@@ -42,7 +42,7 @@
 （例：<a href="http://slashdot.jp/~Oliver/journal/rss" class="feed">Oliver の日記一覧</a>）</li>
 <li>特定ユーザの友達の日記エントリ一覧：<code>http://slashdot.jp/~<strong>Nickname</strong>/journal/friends/rss</code><br>
 （例：<a href="http://slashdot.jp/~Oliver/journal/friends/rss" class="feed">Oliver のトモダチの日記一覧</a>）</li>
-<li>最新の日記エントリ：<code><a href="http://slashdot.jp/journal.pl?op=top&amp;content_type=rss" type="feed">http://slashdot.jp/journal.pl?op=top&amp;content_type=rss</a></code></li>
+<li>最新の日記エントリ：<code><a href="http://slashdot.jp/journal.pl?op=top&amp;content_type=rss" class="feed">http://slashdot.jp/journal.pl?op=top&amp;content_type=rss</a></code></li>
 <!--
 <li>友達数トップ30の日記書き：<a href="http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss">http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss</a></li>
 <li>エントリ数トップ30の日記書き：<a href="http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss">http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss</a></li>
@@ -50,7 +50,7 @@
 </ul>
 <p>いろいろな情報を検索できる<a href="http://slashdot.jp/search.pl">search.pl</a>では検索結果をRSSで得られます。
 検索キーワードを入力しなければ、最新のアイテムをRSSで取得できます。
-検索キーワードを指定した場合、「<code>&amp;order=order=%40cdate+NUMD</code>」を付けることで、新しい順になります。</p>
+検索キーワードを指定した場合、「<code>&amp;order=%40cdate+NUMD</code>」を付けることで、新しい順になります。</p>
 <ul>
 <li>ストーリー検索：<code>http://slashdot.jp/search.pl?op=stories&amp;q=<strong>キーワード</strong>&amp;content_type=rss</code><br>
 （例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&amp;order=%40cdate+NUMD&amp;op=stories&amp;content_type=rss" class="feed">「スラッシュドット」でストーリーを検索、新着順</a>）</li>
