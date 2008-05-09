@@ -35,12 +35,14 @@
 
 
 <h2>その他のRSSフィード</h2>
-<p>ヘッドライン以外にも、各種ページの呼び出しに content_type=rss をつけることによって、結果をRSS形式で得ることができます。</p>
+<p>ヘッドライン以外にも、各種ページの呼び出しに「<code>&amp;content_type=rss</code>」をつけることによって、結果をRSS形式で得ることができます。</p>
 <p>例えば日記では特定ユーザのエントリ一覧が得られます。</p>
 <ul>
-<li>特定ユーザのエントリ一覧：http://slashdot.jp/~<strong>Nickname</strong>/journal/rss (<a href="http://slashdot.jp/~Oliver/journal/rss">例</a>)</li>
-<li>特定ユーザの友達の日記エントリ一覧：http://slashdot.jp/~<strong>Nickname</strong>/journal/friends/rss (<a href="http://slashdot.jp/~Oliver/journal/friends/rss">例</a>)</li>
-<li>最新の日記エントリ：<a href="http://slashdot.jp/journal.pl?op=top&content_type=rss">http://slashdot.jp/journal.pl?op=top&content_type=rss</a></li>
+<li>特定ユーザのエントリ一覧：<code>http://slashdot.jp/~<strong>Nickname</strong>/journal/rss</code><br>
+（例：<a href="http://slashdot.jp/~Oliver/journal/rss" class="feed">Oliver の日記一覧</a>）</li>
+<li>特定ユーザの友達の日記エントリ一覧：<code>http://slashdot.jp/~<strong>Nickname</strong>/journal/friends/rss</code><br>
+（例：<a href="http://slashdot.jp/~Oliver/journal/friends/rss" class="feed">Oliver のトモダチの日記一覧</a>）</li>
+<li>最新の日記エントリ：<code><a href="http://slashdot.jp/journal.pl?op=top&amp;content_type=rss" type="feed">http://slashdot.jp/journal.pl?op=top&amp;content_type=rss</a></code></li>
 <!--
 <li>友達数トップ30の日記書き：<a href="http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss">http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss</a></li>
 <li>エントリ数トップ30の日記書き：<a href="http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss">http://slashdot.jp/journal.pl?op=top&type=count&content_type=rss</a></li>
@@ -50,26 +52,26 @@
 検索キーワードを入力しなければ、最新のアイテムをRSSで取得できます。
 検索キーワードを指定した場合、「<code>&amp;order=order=%40cdate+NUMD</code>」を付けることで、新しい順になります。</p>
 <ul>
-<li>ストーリー検索：http://slashdot.jp/search.pl?op=stories&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=stories" class="feed">「スラッシュドット」でストーリーを検索、新着順</a>）</li>
-<li>日記検索：http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=journals" class="feed">「スラッシュドット」で日記を検索、新着順</a>）</li>
-<li>ユーザ名検索：http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=users" class="feed">「スラッシュドット」でユーザを検索、新着順</a>）</li>
-<li>コメント検索：http://slashdot.jp/search.pl?op=comments&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&threshold=1&op=comments" class="feed">「スラッシュドット」でコメントを検索、新着順</a>）</li>
-<li>国民投票検索：http://slashdot.jp/search.pl?op=polls&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=polls" class="feed">「職場」で国民投票を検索、新着順</a>）</li>
-<li>RSS検索：http://slashdot.jp/search.pl?op=rss&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=rss" class="feed">「職場」でRSSを検索、新着順</a>）</li>
+<li>ストーリー検索：<code>http://slashdot.jp/search.pl?op=stories&amp;q=<strong>キーワード</strong>&amp;content_type=rss</code><br>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&amp;order=%40cdate+NUMD&amp;op=stories&amp;content_type=rss" class="feed">「スラッシュドット」でストーリーを検索、新着順</a>）</li>
+<li>日記検索：<code>http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss</code><br>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&amp;order=%40cdate+NUMD&amp;op=journals&amp;content_type=rss" class="feed">「スラッシュドット」で日記を検索、新着順</a>）</li>
+<li>ユーザ名検索：<code>http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss</code><br>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&amp;order=%40cdate+NUMD&amp;op=users&amp;content_type=rss" class="feed">「スラッシュドット」でユーザを検索、新着順</a>）</li>
+<li>コメント検索：<code>http://slashdot.jp/search.pl?op=comments&amp;q=<strong>キーワード</strong>&amp;content_type=rss</code><br>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&amp;order=%40cdate+NUMD&amp;threshold=1&amp;op=comments&amp;content_type=rss" class="feed">「スラッシュドット」でコメントを検索、新着順</a>）</li>
+<li>国民投票検索：<code>http://slashdot.jp/search.pl?op=polls&amp;q=<strong>キーワード</strong>&amp;content_type=rss</code><br>
+（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&amp;order=%40cdate+NUMD&amp;op=polls&amp;content_type=rss" class="feed">「職場」で国民投票を検索、新着順</a>）</li>
+<li>RSS検索：<code>http://slashdot.jp/search.pl?op=rss&amp;q=<strong>キーワード</strong>&amp;content_type=rss</code><br>
+（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&amp;order=%40cdate+NUMD&amp;op=rss&amp;content_type=rss" class="feed">「職場」でRSSを検索、新着順</a>）</li>
 </ul>
 
 <p>キーワードはURLエンコードする必要があるため、初めに <a href="http://slashdot.jp/search.pl">search.pl</a>
 で検索結果を作ってから、「<code>&amp;content_type=rss</code>」を付けるとよいでしょう。
-これらはいずれもかなり重い処理なので、<strong>最低でも30分間隔でお願いします。</strong></p>
+これらはいずれもかなり重い処理なので、<strong>最短でも30分間隔でお願いします。</strong></p>
 
 <h2>小技</h2>
-<p>他にもいざという時に便利な小技がふたつある。ひとつは、ほぼ全てのページで有効な技で、ページのパラメタにsimpledesign=1またはlowbandwidth=1を追加することでそのページだけ、強制的に異なるモードで表示させることができる(両方を指定することもできる)。普段は通常モードだが、出先でAirH''で回線が細い時などに便利だ(<a href="http://slashdot.jp/index.pl?simpledesign=1&amp;lowbandwidth=1">例</a>)。もうひとつは日記でtheme=liquidみたいにテーマ名を指定することで、読み手が自由にテーマ選べる(<a href="http://slashdot.jp/journal.pl?op=display&nick=Oliver&theme=liquid">例</a>)。liquidテーマの縞々が見づらいと思った時や日記解析スクリプトを各テーマに対応させたくない時に便利だ。もともとはどちらもデバッグ用の小技なので、機能拡張とか設定保存の予定はない。</p>
+<p>他にもいざという時に便利な小技がふたつある。ひとつは、ほぼ全てのページで有効な技で、ページのパラメタにsimpledesign=1またはlowbandwidth=1を追加することでそのページだけ、強制的に異なるモードで表示させることができる(両方を指定することもできる)。普段は通常モードだが、出先でAirH''で回線が細い時などに便利だ(<a href="http://slashdot.jp/index.pl?simpledesign=1&amp;lowbandwidth=1">例</a>)。もうひとつは日記でtheme=liquidみたいにテーマ名を指定することで、読み手が自由にテーマ選べる(<a href="http://slashdot.jp/journal.pl?op=display&amp;nick=Oliver&amp;theme=liquid">例</a>)。liquidテーマの縞々が見づらいと思った時や日記解析スクリプトを各テーマに対応させたくない時に便利だ。もともとはどちらもデバッグ用の小技なので、機能拡張とか設定保存の予定はない。</p>
 
 <h2>Mozilla サイドバー</h2>
 <p>スラッシュドットジャパンでは、 Mozilla ユーザのために便利なサイドバーを作成
@@ -80,7 +82,7 @@
 <h2>Slashdot Japanを便利にするツールやサイト</h2>
 <p>いろんな人がスラッシュドットジャパンを便利に使うためのソフトやツールを作成・公開してます。下のリストのツールは各作者のものなので、質問は作者にお願いします。もし、新しいモノを作ったり、Slashdot Japanに対応したモノを見付けたら、リストに加えるので、ぜひ連絡ください。</p>
 <ul>
-<li><a href="http://konfabulator.deskmod.com/?show=showskin&skin_id=26689">Konfabulator用SlashdotJP Widget</a><br>
+<li><a href="http://konfabulator.deskmod.com/?show=showskin&amp;skin_id=26689">Konfabulator用SlashdotJP Widget</a><br>
     tmizuさん作。</li>
 <li><a href="http://www.geocities.co.jp/SiliconValley/9899/">えまのん</a><br>
     本来は２ちゃんねるブラウザだが、/.-Jにも対応しているらしい。</li>
@@ -89,11 +91,11 @@
     現在、初の公開スナップショットがCVSレポジトリに含まれている。</li>
 <li><a href="http://slashwatch.mtlab.jp/">/.J コメントうぉっち</a><br>
     witchさん作のウェブサイト。最新のコメントをリストアップするだけでなく、特定ユーザの日記へのち過去8日分のコメントを表示できたりする。</li>
-<li><a href="http://slashdot.jp/journal.pl?op=display&uid=6046&id=182902">Slashdot-Japan Journal Reader for i-mode</a><br>
+<li><a href="http://slashdot.jp/journal.pl?op=display&amp;uid=6046&amp;id=182902">Slashdot-Japan Journal Reader for i-mode</a><br>
     Silphireさん作の/.-J日記をi-modeむけに変換するゲートウェイ。<a href="http://slashdot.jp/i/">携帯版/.-J</a>と組み合わせれば最強！？</li>
-<li><a href="http://slashdot.jp/journal.pl?op=display&uid=3370&id=177605">偽/.日記</a><br>
+<li><a href="http://slashdot.jp/journal.pl?op=display&amp;uid=3370&amp;id=177605">偽/.日記</a><br>
     fslashtさん作の/.-J日記をフレーム表示にするPHPスクリプト。</li>
-<li><a href="http://slashdot.jp/journal.pl?op=display&uid=12391&id=184066">Slashdot Journal Statistics 1.0</a><br>    
+<li><a href="http://slashdot.jp/journal.pl?op=display&amp;uid=12391&amp;id=184066">Slashdot Journal Statistics 1.0</a><br>    
     int20さん作の特定日記ユーザがいつ日記を記入したのか統計を表示するCGI。</li>
 <li><a href="http://jadore.jp/~torly/view_test3.php">/.日記ビューアー</a><br>
     torlyさん作の最近更新した日記ユーザを適宜取得し続けることで、一日に日記を更新したユーザを明らかにするもの。</li>
