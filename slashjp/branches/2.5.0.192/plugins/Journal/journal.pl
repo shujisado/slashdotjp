@@ -463,6 +463,7 @@ sub displayArticle {
 	if (@$articles == 1) {
 	    $head_data->{html_title} = $articles->[0]->[2];
 	}
+	$head_data->{jcount} = scalar(@$articles);
 	_printHead('userhead', $head_data, 1) or return;
 
 	# check for extra articles ... we request one more than we need

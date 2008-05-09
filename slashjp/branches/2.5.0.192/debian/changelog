@@ -5,8 +5,10 @@ slash (2.5.0.192-12) unstable; urgency=low
     - force mobile mode when the user-agent matches "mobile_useragent_regex"
       or URL arg includes "m=1"
     - getCurrentUser('mobile') is true when mobile mode has been enabled
+  * Add number of display journal count to _printHead() on Journal.pm
+    - You can use 'jcount' variable journalhead;journal template
 
- -- Taku YASUI <tach@osdn.jp>  Thu,  8 May 2008 09:30:11 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri,  9 May 2008 06:13:59 +0000
 
 slash (2.5.0.192-11) unstable; urgency=low
 
