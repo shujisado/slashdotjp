@@ -51,17 +51,17 @@
 検索キーワードを指定した場合、「<code>&amp;order=order=%40cdate+NUMD</code>」を付けることで、新しい順になります。</p>
 <ul>
 <li>ストーリー検索：http://slashdot.jp/search.pl?op=stories&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=stories">「スラッシュドット」でストーリーを検索、新着順</a>）</li>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=stories" class="feed">「スラッシュドット」でストーリーを検索、新着順</a>）</li>
 <li>日記検索：http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=journals">「スラッシュドット」で日記を検索、新着順</a>）</li>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=journals" class="feed">「スラッシュドット」で日記を検索、新着順</a>）</li>
 <li>ユーザ名検索：http://slashdot.jp/search.pl?op=users&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=users">「スラッシュドット」でユーザを検索、新着順</a>）</li>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&op=users" class="feed">「スラッシュドット」でユーザを検索、新着順</a>）</li>
 <li>コメント検索：http://slashdot.jp/search.pl?op=comments&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&threshold=1&op=comments">「スラッシュドット」でコメントを検索、新着順</a>）</li>
+（例：<a href="http://slashdot.jp/search.pl?q=%E3%82%B9%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%89%E3%83%83%E3%83%88&order=%40cdate+NUMD&threshold=1&op=comments" class="feed">「スラッシュドット」でコメントを検索、新着順</a>）</li>
 <li>国民投票検索：http://slashdot.jp/search.pl?op=polls&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=polls">「職場」で国民投票を検索、新着順</a>）</li>
+（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=polls" class="feed">「職場」で国民投票を検索、新着順</a>）</li>
 <li>RSS検索：http://slashdot.jp/search.pl?op=rss&amp;q=<strong>キーワード</strong>&amp;content_type=rss
-（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=rss">「職場」でRSSを検索、新着順</a>）</li>
+（例：<a href="http://slashdot.jp/search.pl?q=%E8%81%B7%E5%A0%B4&order=%40cdate+NUMD&op=rss" class="feed">「職場」でRSSを検索、新着順</a>）</li>
 </ul>
 
 <p>キーワードはURLエンコードする必要があるため、初めに <a href="http://slashdot.jp/search.pl">search.pl</a>
