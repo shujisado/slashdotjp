@@ -1625,7 +1625,7 @@ sub prepareUser {
 	$constants->{tweak_japanese} and $user->{aton} = '';
 
 	# mobile theme for slashdot.jp
-	if ($constants->{mobile_enabled}) {
+	if ($constants->{mobile_enabled} && $ENV{GATEWAY_INTERFACE}) {
 #print STDERR $r->header_in('user-agent') . " =~ $constants->{mobile_useragent_regex}\n";
 		if ($constants->{mobile_useragent_regex} &&
 		    $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) {
