@@ -7,8 +7,10 @@ slash (2.5.0.192-12) unstable; urgency=low
     - getCurrentUser('mobile') is true when mobile mode has been enabled
   * Add number of display journal count to _printHead() on Journal.pm
     - You can use 'jcount' variable journalhead;journal template
+  * Fix: Use of uninitialized value in length at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 2054.
 
- -- Taku YASUI <tach@osdn.jp>  Fri,  9 May 2008 06:13:59 +0000
+ -- Taku YASUI <tach@osdn.jp>  Sun, 11 May 2008 03:52:48 +0900
 
 slash (2.5.0.192-11) unstable; urgency=low
 

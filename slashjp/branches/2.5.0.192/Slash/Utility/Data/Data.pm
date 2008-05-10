@@ -2050,7 +2050,7 @@ sub approveTag {
 			my $a_lc = lc $a;
 			next unless $allowed{$a_lc};
 			my $data = $attr_data{$a_lc} || '';
-			$data = fudgeurl($data) if $allowed{$a_lc}{url};
+			$data = fudgeurl($data) || '' if $allowed{$a_lc}{url};
 			next unless length $data;
 			$wholetag .= qq{ $a_lc="$data"};
 			++$found{$a_lc} if $required{$a_lc};
