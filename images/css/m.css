@@ -1,0 +1,47 @@
+body {
+	margin: 0;
+	padding: 0;
+}
+div {
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	color: #055;
+}
+
+a:visited {
+	color: #555;
+}
+
+div#logo {
+	border-bottom: solid 1px #000;
+	height: 25px;
+	background: url(http://images.sd-test.osdn.jp/m/logo-bg.gif) repeat-x;
+}
+
+div#sitename,
+div#index,
+div#article {
+	margin: 0 0.2em;
+}
+
+div#footer {
+	margin: 0.5em 0.2em;
+}
+
+div.story {
+	margin: 0.5em 0;
+}
+
+div#topnav,
+div#wrapper,
+div#wrapper div#contents,
+div#wrapper div#articles,
+div#topnav div#logo {
+	margin: 0;
+	padding: 0;
+	height: auto;
+	width: auto;
+}
