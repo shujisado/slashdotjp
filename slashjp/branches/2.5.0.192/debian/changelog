@@ -9,8 +9,9 @@ slash (2.5.0.192-12) unstable; urgency=low
     - You can use 'jcount' variable journalhead;journal template
   * Fix: Use of uninitialized value in length at
     /usr/lib/perl5/Slash/Utility/Data.pm line 2054.
+  * Do not show any comments on article.pl when mobile mode
 
- -- Taku YASUI <tach@osdn.jp>  Sun, 11 May 2008 03:52:48 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 12 May 2008 15:25:30 +0000
 
 slash (2.5.0.192-11) unstable; urgency=low
 

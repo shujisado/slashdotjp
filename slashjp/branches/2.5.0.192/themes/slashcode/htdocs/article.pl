@@ -204,7 +204,7 @@ sub main {
 			}
 			# If no comments ever have existed and commentstatus is disabled,
 			# just skip the display of the comment header bar -Brian
-			if ($discussion && ! (
+			if ($discussion && !$user->{mobile} && ! (
 				   !$discussion->{commentcount}
 				&&  $discussion->{commentstatus} eq 'disabled'
 			)) {
