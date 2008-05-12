@@ -16,9 +16,9 @@ a:visited {
 }
 
 div#logo {
-	border-bottom: solid 1px #000;
+	border-bottom: solid 1px #055;
 	height: 25px;
-	background: url(http://images.sd-test.osdn.jp/m/logo-bg.gif) repeat-x;
+	background: url(http://images.slashdot.jp/m/logo-bg.gif) repeat-x;
 }
 
 div#sitename,
