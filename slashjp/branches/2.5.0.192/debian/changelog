@@ -2,16 +2,20 @@ slash (2.5.0.192-12) unstable; urgency=low
 
   * Add mobile mode
     - Use "mobile_enabled" constant to use mobile mode
-    - force mobile mode when the user-agent matches "mobile_useragent_regex"
+    - Force mobile mode when the user-agent matches "mobile_useragent_regex"
       or URL arg includes "m=1"
     - getCurrentUser('mobile') is true when mobile mode has been enabled
+    - Do not show any comments on article.pl when mobile mode
+    - Force some settings
+      o Show comments as flat
+      o Comments are sorted by date desc
+      o Show only 5 comments per page
   * Add number of display journal count to _printHead() on Journal.pm
     - You can use 'jcount' variable journalhead;journal template
   * Fix: Use of uninitialized value in length at
     /usr/lib/perl5/Slash/Utility/Data.pm line 2054.
-  * Do not show any comments on article.pl when mobile mode
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 12 May 2008 15:25:30 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 12 May 2008 18:00:12 +0000
 
 slash (2.5.0.192-11) unstable; urgency=low
 

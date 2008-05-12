@@ -1635,6 +1635,13 @@ sub prepareUser {
 			$user->{mobile} = 1;
 #print STDERR "FORCE MOBILE MODE: " . $r->args() . "\n";
 		}
+
+		# settings for mobile mode
+		if ($user->{mobile}) {
+			$user->{mode} = 'flat'; # show flat
+			$user->{commentsort} = 5; # sorted by date desc
+			$user->{commentlimit} = 5; # comments per page
+		}
 	}
 
 	if ($uri =~ m[^/$]) {
