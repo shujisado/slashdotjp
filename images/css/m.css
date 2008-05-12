@@ -23,7 +23,8 @@ div#logo {
 
 div#sitename,
 div#index,
-div#article {
+div#article,
+div#comments {
 	margin: 0 0.2em;
 }
 
