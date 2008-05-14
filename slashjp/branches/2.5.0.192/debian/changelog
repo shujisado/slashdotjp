@@ -1,3 +1,9 @@
+slash (2.5.0.192-13) unstable; urgency=low
+
+  * Fix: linkStory() add '?m=1'
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 14 May 2008 05:57:47 +0000
+
 slash (2.5.0.192-12) unstable; urgency=low
 
   * Add mobile mode

@@ -474,6 +474,7 @@ sub linkStory {
 	$params{sid} = $story_link->{sid};
 	$params{mode} = $story_link->{mode} if $story_link->{mode};
 	$params{threshold} = $story_link->{threshold} if exists $story_link->{threshold};
+	$params{m} = '1' if (getCurrentForm('m'));
 
 	# Setting $dynamic properly is important.  When generating the
 	# AC index.shtml, it's a big win if we link to other
