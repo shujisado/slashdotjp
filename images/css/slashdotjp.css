@@ -156,6 +156,7 @@ div#slashdotjp-site-announce {
 div.general_contents ul,
 div.faq ul,
 div#search div.sectiontitle table td ul,
+div#search div.search-help ul,
 div#polls div.generalbody ul,
 div#submit div.generalbody ul,
 div#commentBody ul,
@@ -193,7 +194,8 @@ div#search-result-topright {
 	text-align: right;
 }
 
-div.search-results {
+div.search-results,
+div.search-help {
 	margin: 1.2em 5px;
 	line-height: 1.5;
 }
@@ -204,6 +206,10 @@ div.search-results {
 .search-results .data {
 	font-size: 80%;
 	color: #666;
+}
+
+.search-help h3 {
+	font-weight: bold;
 }
 
 /* code.shtml rss link */
