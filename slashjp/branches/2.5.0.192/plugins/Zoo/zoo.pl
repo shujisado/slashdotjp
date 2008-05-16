@@ -54,7 +54,7 @@ sub main {
 	if ($r = Apache->request) {
 		return if $r->header_only;
 	}
-	footer() unless $form->{content_type} && $form->{content_type} =~ $constants->{feed_types};
+	footer() unless $op eq 'foaf' || $form->{content_type} && $form->{content_type} =~ $constants->{feed_types};
 }
 
 sub people {
