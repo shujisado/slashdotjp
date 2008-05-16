@@ -10181,7 +10181,7 @@ sub getSkin {
 	my($self, $skid, $options) = @_;
 	if (!$skid) {
 		if ($ENV{GATEWAY_INTERFACE}) {
-			errorLog("cannot getSkin for empty skid='$skid'");
+			errorLog("cannot getSkin for empty skid");
 		}
 		$skid = getCurrentStatic('mainpage_skid');
 	}
