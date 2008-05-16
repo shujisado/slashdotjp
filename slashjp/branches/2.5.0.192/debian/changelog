@@ -13,8 +13,10 @@ slash (2.5.0.192-13) unstable; urgency=low
   * Do not show footer when show foaf at plugins/Zoo/zoo.pl
   * Fix: Use of uninitialized value in concatenation (.) or string at
     /usr/lib/perl5/Slash/DB/MySQL.pm line 10184
+  * Enable to specify encoding for prog2file
+    - use 'encoding' to option
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 16 May 2008 06:43:17 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 16 May 2008 07:23:02 +0000
 
 slash (2.5.0.192-12) unstable; urgency=low
 
