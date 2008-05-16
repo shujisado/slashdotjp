@@ -489,7 +489,7 @@ sub prog2file {
 			if (!open $fh, "> $filename\0") {
 				$err_str .= " could not write to '$filename': '$!'";
 			} else {
-				binmode $fh, ":encoding($options->{encoding})" if ($options->{encoding});
+				binmode $fh, ":encoding($options->{encoding})" if (defined($options->{encoding}));
 				print $fh $data;
 				close $fh;
 				$success = 1;
