@@ -424,8 +424,8 @@ sub _foaf {
 
 	# add various field is defined
 	# email address depending on display setting
-	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail} && $user->{emaildisplay} >= 1;
-        $person->{mbox} = "mailto:" . $user->{realemail} if $user->{realemail} && $user->{emaildisplay} >= 2; 
+	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail} && ($user->{emaildisplay} && int($user->{emaildisplay}) >= 1);
+        $person->{mbox} = "mailto:" . $user->{realemail} if $user->{realemail} && ($user->{emaildisplay} && int($user->{emaildisplay}) >= 2); 
 	$person->{homepage} = $user->{homepage} if $user->{homepage};
 	$person->{weblog} = $userpage . "journal/" if $user->{journal_last_entry_date};
 
