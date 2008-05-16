@@ -437,7 +437,7 @@ sub _foaf {
 			nick		=> $p->{nickname},
 			seeAlso		=> "$constants->{rootdir}/~" . fixparam($p->{nickname}) . "/$type.rdf",
 		}};
-		$other->{Person}{mbox_sha1sum} = Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}) if $p->{emaildisplay} >= 1;
+		$other->{Person}{mbox_sha1sum} = Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}) if ($p->{emaildisplay} && int($p->{emaildisplay}) >= 1);
 		push @knows, $other;
 	
 	}
