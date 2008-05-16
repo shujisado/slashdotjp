@@ -1145,6 +1145,8 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_disable_to_
 INSERT IGNORE INTO vars (name, value, description) VALUES ('topiclist_dont_show_nexuses','1','Do not show nexus topics on topic list');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_enabled','0','Use mobile mode (1: enable, 0: disable)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_useragent_regex','','User-Agent regex to force mobile mode');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_encoding','Shift_JIS','Content encoding for mobile webpages (static html files)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_staticdir','','Path for mobile static html files (disabled if empty)');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';

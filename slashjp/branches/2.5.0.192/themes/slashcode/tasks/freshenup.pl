@@ -321,6 +321,34 @@ $task{$me}{code} = sub {
 			}
 		}
 
+		# mobile mode
+		if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
+			my $filename_m = "$constants->{mobile_staticdir}/$sid.html";
+			my $args_m = "$vu ssi=yes m=1 sid='$sid'$cchp_param";
+			my ($success_m, $stderr_text_m) = prog2file(
+				"$basedir/article.pl",
+				$filename_m,
+				{
+					args =>		$args_m,
+					verbosity =>	verbosity(),
+					handle_err =>	1,
+					encoding =>	$constants->{mobile_encoding},
+				}
+			);
+			if (!$success_m) {
+				$logmsg .= " success='$success_m'";
+				$do_log ||= (verbosity() >= 1);
+			}
+			if ($stderr_text_m) {
+				$stderr_text_m =~ s/\s+/ /g;
+				$logmsg .= " stderr: '$stderr_text_m'";
+				if ($stderr_text_m =~ /\b(ID \d+, \w+;\w+;\w+) :/) {
+					# template error, skip
+					slashdErrnote("template error updating $sid: $stderr_text_m");
+				}
+			}
+		}
+
 		# Now we extract what we need from the file we created
 		my($cc, $hp) = _read_and_unlink_cchp_file($cchp_file, $cchp_param);
 		if (defined($cc)) {
@@ -428,6 +456,22 @@ $task{$me}{code} = sub {
 				handle_err =>	0
 		});
 
+		# mobile mode
+		if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
+			my $filename_m = "$constants->{mobile_staticdir}/$base.html";
+			my $args_m = "$vu ssi=yes m=1";
+			prog2file(
+				"$basedir/$gSkin->{index_handler}",
+				$filename_m,
+				{
+					args =>		"$args_m section='$gSkin->{name}'$extra_args",
+					verbosity =>	verbosity(),
+					handle_err =>	0,
+					encoding =>	$constants->{mobile_encoding},
+				}
+			);
+		}
+
 		if ($constants->{plugin}{FireHose}) {
 			gen_firehose_static($virtual_user, "index_firehose.shtml", $gSkin->{name}, "", {  skipmenu => 1, skippop => 1, fhfilter => "story", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => 1  });
 			if ($base ne "firehose") {
@@ -467,6 +511,23 @@ $task{$me}{code} = sub {
 					verbosity =>	verbosity(),
 					handle_err =>	0
 			});
+
+			# mobile mode
+			if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
+				my $filename_m = "$constants->{mobile_staticdir}/$skinname.html";
+				my $args_m = "$vu ssi=yes m=1";
+				prog2file(
+					"$basedir/$gSkin->{index_handler}",
+					$filename_m,
+					{
+						args =>		"$args_m section='$skin->{name}'$extra_args",
+						verbosity =>	verbosity(),
+						handle_err =>	0,
+						encoding =>	$constants->{mobile_encoding},
+					}
+				);
+			}
+
 			if ($constants->{plugin}{FireHose}) {
 				gen_firehose_static($virtual_user, "index_firehose.shtml", $skin->{name}, $skinname, { skipmenu => 1, skippop => 1, fhfilter => "'story $skin->{name}'", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => "1"  });
 				if ($base ne "firehose") {
