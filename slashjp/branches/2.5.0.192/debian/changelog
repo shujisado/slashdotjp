@@ -2,8 +2,10 @@ slash (2.5.0.192-13) unstable; urgency=low
 
   * Fix: linkStory() add '?m=1'
   * Fix: force mobile mode when ssi=yes and m=1 for prog2file
+  * Fix: Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/XML/FOAF.pm line 170.
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 14 May 2008 09:27:31 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 16 May 2008 06:21:34 +0000
 
 slash (2.5.0.192-12) unstable; urgency=low
 
