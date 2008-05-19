@@ -16,8 +16,10 @@ slash (2.5.0.192-13) unstable; urgency=low
   * Enable to specify encoding for prog2file
     - use 'encoding' to option
   * Add feature to write static html file for mobile mode
+  * Add feature to enable/disable PERL / RAWPERL directives on Template
+    - use constant 'enable_template_evalperl'
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 16 May 2008 08:00:52 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 19 May 2008 10:05:33 +0000
 
 slash (2.5.0.192-12) unstable; urgency=low
 
