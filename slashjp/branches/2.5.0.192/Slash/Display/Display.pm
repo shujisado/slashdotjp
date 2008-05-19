@@ -401,9 +401,9 @@ sub get_template {
 			POST_CHOMP	=> $constants->{template_post_chomp},
 			CACHE_SIZE	=> $cache_size,
 			%$cfg2,
-			EVAL_PERL	=> ($constants->{enable_template_evalperl} : 1 ? 0),
+			EVAL_PERL	=> ($constants->{enable_template_evalperl} ? 1 : 0),
 		})],
-		EVAL_PERL	=> ($constants->{enable_template_evalperl} : 1 ? 0),
+		EVAL_PERL	=> ($constants->{enable_template_evalperl} ? 1 : 0),
 	});
 
 	$cfg->{template}	= $template if ref $cfg;
