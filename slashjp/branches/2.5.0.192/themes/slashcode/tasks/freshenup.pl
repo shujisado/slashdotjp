@@ -323,7 +323,7 @@ $task{$me}{code} = sub {
 
 		# mobile mode
 		if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
-			my $filename_m = "$constants->{mobile_staticdir}/$sid.html";
+			my $filename_m = "$constants->{mobile_staticdir}/$sid.shtml";
 			my $args_m = "$vu ssi=yes m=1 sid='$sid'$cchp_param";
 			my ($success_m, $stderr_text_m) = prog2file(
 				"$basedir/article.pl",
@@ -458,7 +458,7 @@ $task{$me}{code} = sub {
 
 		# mobile mode
 		if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
-			my $filename_m = "$constants->{mobile_staticdir}/$base.html";
+			my $filename_m = "$constants->{mobile_staticdir}/$base.shtml";
 			my $args_m = "$vu ssi=yes m=1";
 			prog2file(
 				"$basedir/$gSkin->{index_handler}",
@@ -514,7 +514,7 @@ $task{$me}{code} = sub {
 
 			# mobile mode
 			if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
-				my $filename_m = "$constants->{mobile_staticdir}/$skinname.html";
+				my $filename_m = "$constants->{mobile_staticdir}/$skinname.shtml";
 				my $args_m = "$vu ssi=yes m=1";
 				prog2file(
 					"$basedir/$gSkin->{index_handler}",
