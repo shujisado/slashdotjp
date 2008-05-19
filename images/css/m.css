@@ -15,6 +15,14 @@ a:visited {
 	color: #555;
 }
 
+blockquote,
+.quote {
+	border-left: 3px solid #DDD;
+	padding-left: 0.3em;
+	margin-left: 0.5em;
+	display: block;
+}
+
 div#logo {
 	border-bottom: solid 1px #055;
 	height: 25px;
@@ -32,7 +40,8 @@ div#footer {
 	margin: 0.5em 0.2em;
 }
 
-div.story {
+div.story,
+div.newcomment {
 	margin: 0.5em 0;
 }
 
