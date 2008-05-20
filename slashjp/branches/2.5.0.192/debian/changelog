@@ -18,8 +18,9 @@ slash (2.5.0.192-13) unstable; urgency=low
   * Add feature to write static html file for mobile mode
   * Add feature to enable/disable PERL / RAWPERL directives on Template
     - use constant 'enable_template_evalperl'
+  * Add feature to create slashhead/slashfoot file for mobile mode
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 19 May 2008 10:05:33 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 20 May 2008 01:11:50 +0000
 
 slash (2.5.0.192-12) unstable; urgency=low
 

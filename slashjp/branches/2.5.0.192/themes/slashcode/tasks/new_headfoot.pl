@@ -38,6 +38,31 @@ $task{$me}{code} = sub {
 	my $cssbase = slashDisplay("html-header", { only_css => 1}, { Return => 1 });
 	print $fh $cssbase;
 
+	# mobile mode
+	if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
+		$file = "$constants->{mobile_staticdir}/slashhead.inc";
+		open $fh, ">$file" or die "Can't open $file : $!";
+		binmode $fh, ':utf8';
+		setCurrentForm('ssi', 1);
+		setCurrentUser("mobile", 1);
+		$header = header("", "", { noheader => 1, Return => 1 });
+		setCurrentUser("mobile", 0);
+		setCurrentForm('ssi', 0);
+		print $fh $header;
+		close $fh;
+
+		$file = "$constants->{mobile_staticdir}/slashfoot.inc";
+		open $fh, ">$file" or die "Can't open $file : $!";
+		binmode $fh, ':utf8';
+		setCurrentForm('ssi', 1);
+		setCurrentUser("mobile", 1);
+		$header = footer({ noheader => 1, Return => 1, });
+		setCurrentUser("mobile", 0);
+		setCurrentForm('ssi', 0);
+		print $fh $header;
+		close $fh;
+	}
+
 	return;
 };
 
