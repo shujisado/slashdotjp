@@ -19,8 +19,12 @@ slash (2.5.0.192-13) unstable; urgency=low
   * Add feature to enable/disable PERL / RAWPERL directives on Template
     - use constant 'enable_template_evalperl'
   * Add feature to create slashhead/slashfoot file for mobile mode
+  * Fix: Automatic adding related stories and comments
+    - Check sid existance
+    - Select enable/disable to add related comments using variable
+      "related_cid_disabled"
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 20 May 2008 01:11:50 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 16 Jun 2008 07:07:32 +0000
 
 slash (2.5.0.192-12) unstable; urgency=low
 

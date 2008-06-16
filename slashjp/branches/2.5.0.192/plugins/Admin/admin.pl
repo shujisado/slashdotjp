@@ -1589,7 +1589,11 @@ sub extractRelatedStoriesFromForm {
 	# Extract sids from urls in introtext and bodytext
 	foreach ($form->{introtext}, $form->{bodytext}) {
 		next unless ($_);
-		push @$related, $1 while /$match/g;
+		while (/$match/g) {
+			next unless $slashdb->getStory($1);
+			push @$related, $1;
+		}
+		next if ($constants->{related_cid_disabled});
 		push @$related_cids, $1 while /$match_cid/g;
 	}
 
