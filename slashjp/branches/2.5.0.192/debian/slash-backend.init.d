@@ -145,6 +145,18 @@ case "$1" in
 		;;
 
 	keepalive)
+		# kill orphaned slashd child process
+		pids=`pidof -x slashd`
+		for pid in $pids; do
+			ppid=`egrep '^PPid:' /proc/$pid/status 2>/dev/null | awk '{print $2}'`
+			pname=`cat /proc/$pid/cmdline 2>/dev/null`
+			pcmd=`echo $pname | awk '{print $3}'`
+			test "$ppid" != "1" && continue
+			test -z "$pcmd" && continue
+			echo Orphaned slashd procces is found: $pid $ppid $pname
+			kill -USR1 $pid
+		done
+
 		for server_name in $GRAB_CONFIG; do
 			break_parts;
 			if [ ! -f $RUNNINGPID ] ;then
