@@ -5859,6 +5859,16 @@ sub getStoryByTime {
 		my $nexus_clause = join ',', @$nexuses, $mp_tid;
 		$where .= " AND story_topics_rendered.tid IN ($nexus_clause)";
 		$key .= '|>=';
+	} elsif (!$section && !$topic) {
+		# suppress stories never seen
+		$where .= " AND story_topics_rendered.stoid NOT IN (SELECT stoid FROM story_topics_rendered WHERE tid IN ($user->{story_never_nexus}))"
+			if ($user->{story_never_nexus});
+		my $nexuses = [];
+		push @$nexuses, $user->{story_full_best_nexus} if ($user->{story_full_best_nexus});
+		push @$nexuses, $user->{story_brief_best_nexus} if ($user->{story_brief_best_nexus});
+		my $nexus_clause .= join ',', @$nexuses;
+		$where .= " AND (story_topics_rendered.stoid NOT IN (SELECT stoid FROM story_topics_rendered WHERE tid IN ($nexus_clause)) OR story_topics_rendered.tid = $mp_tid)"
+			if ($nexus_clause);
 	} else {
 		$where .= " AND story_topics_rendered.tid = $mp_tid";
 		$key .= '|=';
@@ -5878,6 +5888,8 @@ sub getStoryByTime {
 		$key = $user->{story_never_topic}
 			|| $user->{story_never_author}
 			|| $user->{story_never_nexus}
+			|| $user->{story_full_best_nexus}
+			|| $user->{story_brief_best_nexus}
 			? ''
 			: "$key|";
 	} elsif ($topic) {

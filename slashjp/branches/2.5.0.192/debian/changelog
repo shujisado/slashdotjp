@@ -24,8 +24,10 @@ slash (2.5.0.192-13) unstable; urgency=low
     - Select enable/disable to add related comments using variable
       "related_cid_disabled"
   * Add to killing orphaned slashd child process when keepalive
+  * Fix next_prev_stories selection code
+    - Make same as mainpage story list
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 16 Jun 2008 10:52:31 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 18 Jun 2008 12:00:34 +0000
 
 slash (2.5.0.192-12) unstable; urgency=low
 
