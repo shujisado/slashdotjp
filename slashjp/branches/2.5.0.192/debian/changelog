@@ -29,8 +29,9 @@ slash (2.5.0.192-13) unstable; urgency=low
   * Change mobile mode default charset from Shift_JIS to UTF-8
   * Fix to specify correct ssi include file for mobile mode
   * Fix linkStory() for mobile mode
+  * Show mobile mode page when useragent matches "mobile_useragent_regex"
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 19 Jun 2008 08:11:19 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 19 Jun 2008 08:59:14 +0000
 
 slash (2.5.0.192-12) unstable; urgency=low
 

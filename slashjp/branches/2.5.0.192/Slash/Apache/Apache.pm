@@ -394,6 +394,13 @@ sub IndexHandler {
 			if ($gSkin->{skid} == $constants->{mainpage_skid}) {
 				$r->filename("$basedir/$base.shtml");
 				$r->uri("/$base.shtml");
+				if ($constants->{mobile_enabled}) {
+					if (($constants->{mobile_useragent_regex} &&
+					     $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) ||
+				            $r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+						$r->uri($constants->{mobile_urlpath}."/$base.shtml");
+					}
+				}
 			} else {
 				$r->filename("$basedir/$gSkin->{name}/$base.shtml");
 				$r->uri("/$gSkin->{name}/$base.shtml");
