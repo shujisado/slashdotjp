@@ -1145,8 +1145,9 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_disable_to_
 INSERT IGNORE INTO vars (name, value, description) VALUES ('topiclist_dont_show_nexuses','1','Do not show nexus topics on topic list');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_enabled','0','Use mobile mode (1: enable, 0: disable)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_useragent_regex','','User-Agent regex to force mobile mode');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_encoding','Shift_JIS','Content encoding for mobile webpages (static html files)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_encoding','utf8','Content encoding for mobile webpages (static html files)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_staticdir','','Path for mobile static html files (disabled if empty)');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_urlpath','/m','URL path for mobile static html files');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('enable_template_evalperl','0','Add "EVAL_PERL" to Template option to be able to use "PERL" and "RAWPERL" directives');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('related_cid_disabled','0','If set, then disable inserting cid to related story list');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';

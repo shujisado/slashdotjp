@@ -437,6 +437,7 @@ sub ssiHeadFoot {
 	(my $dir = $gSkin->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
 	my $hostname = $gSkin->{hostname};
 	my $page = $options->{Page} || $user->{currentPage} || 'misc';
+	$dir = $constants->{mobile_urlpath} if ($user->{mobile});
 
 	# if there's a special .inc header for this page, use it, else it's
 	# business as usual.
