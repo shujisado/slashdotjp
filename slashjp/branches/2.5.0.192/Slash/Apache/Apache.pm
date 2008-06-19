@@ -360,6 +360,20 @@ sub IndexHandler {
 		return DECLINED;
 	}
 
+	# REDIRECT article page shtml for mobile mode
+	if ($uri !~ m|^$constants->{mobile_urlpath}/| && $uri =~ m|^/\w+/(\d{2}/\d{2}/\d{2}/\d{6,})\.shtml|) {
+		my $sid = $1;
+		if ($constants->{mobile_enabled}) {
+			if (($constants->{mobile_useragent_regex} &&
+			     $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) ||
+			     $r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+				my $newuri = $constants->{real_rootdir}.$constants->{mobile_urlpath}."/$sid.shtml";
+				redirect($newuri);
+				return DONE;
+			}
+		}
+	}
+
 	# Comment this in if you want to try having this do the right
 	# thing dynamically
 	# my $slashdb = getCurrentDB();
