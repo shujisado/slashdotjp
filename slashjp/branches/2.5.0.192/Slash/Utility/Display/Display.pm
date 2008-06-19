@@ -526,6 +526,7 @@ sub linkStory {
 
 	my $skin = $reader->getSkin($story_link->{skin});
 	$url = $skin->{rootdir} || $constants->{real_rootdir} || $gSkin->{rootdir};
+	$url = $constants->{real_rootdir} if ($user->{mobile});
 
 	if (!$static && $dynamic) {
 		$url .= "/$script?";
@@ -546,7 +547,11 @@ sub linkStory {
 		# but we would need to `mv articles mainpage`, or ln -s, and it just seems better
 		# to me to keep the same URL scheme if possible
 		my $skinname = $skin->{name} eq 'mainpage' ? 'articles' : $skin->{name};
-		$url .= "/$skinname" unless ($url =~ /\/${skinname}$/);
+		if ($user->{mobile}) {
+			$skinname = $constants->{mobile_urlpath};
+			$skinname =~ s/^\/*//;
+		}
+		$url .= "/$skinname" if ($skinname && $url !~ /\/${skinname}$/);
 		$url .= "/" . ($story_link->{sid} || $story_ref->{sid}) . ".shtml";
 		# manually add the tid(s), if wanted
 		if ($constants->{tids_in_urls} && $params{tids}) {
