@@ -324,7 +324,7 @@ $task{$me}{code} = sub {
 		# mobile mode
 		if ($constants->{mobile_enabled} && $constants->{mobile_staticdir}) {
 			my $filename_m = "$constants->{mobile_staticdir}/$sid.shtml";
-			my $args_m = "$vu ssi=yes m=1 sid='$sid'$cchp_param";
+			my $args_m = "$vu ssi=yes m=1 sid='$sid'";
 			my ($success_m, $stderr_text_m) = prog2file(
 				"$basedir/article.pl",
 				$filename_m,
