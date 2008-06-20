@@ -1148,6 +1148,9 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_useragent_reg
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_encoding','utf8','Content encoding for mobile webpages (static html files)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_staticdir','','Path for mobile static html files (disabled if empty)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_urlpath','/m','URL path for mobile static html files');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_commentsort','4','comment sort for mobile mode');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_commentlimit','5','comment limit for mobile mode');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_commentmode','flat','comment mode for mobile mode');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('enable_template_evalperl','0','Add "EVAL_PERL" to Template option to be able to use "PERL" and "RAWPERL" directives');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('related_cid_disabled','0','If set, then disable inserting cid to related story list');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';

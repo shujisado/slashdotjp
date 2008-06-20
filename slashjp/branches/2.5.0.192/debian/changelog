@@ -1,3 +1,14 @@
+slash (2.5.0.192-14) unstable; urgency=low
+
+  * Fix to change commentsort for mobile mode from 5 to 4
+  * Make to change commentsort, commentmode and commentlimitfor mobile mode
+    using constants
+    - commentsort = mobile_commentsort
+    - commentlimit = mobile_commentlimit
+    - mode = mobile_commentmode
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 20 Jun 2008 13:06:35 +0000
+
 slash (2.5.0.192-13) unstable; urgency=low
 
   * Fix: linkStory() add '?m=1'
