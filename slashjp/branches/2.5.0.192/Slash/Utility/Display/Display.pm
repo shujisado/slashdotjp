@@ -565,7 +565,7 @@ sub linkStory {
 		}
 	}
 
-	my @extra_attrs_allowed = qw( title class id );
+	my @extra_attrs_allowed = qw( title class id accesskey );
 	if ($render) {
 		my $rendered = '<a href="' . strip_attribute($url) . '"';
 		for my $attr (@extra_attrs_allowed) {
