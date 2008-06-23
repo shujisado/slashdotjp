@@ -414,12 +414,15 @@ Fixed URL.
 sub cleanRedirectUrl {
 	my($redirect) = @_;
 	my $gSkin = getCurrentSkin();
+	my $form = getCurrentForm();
+	my $rurl = $gSkin->{rootdir};
+	$rurl .= '?m=1' if ($form->{m});
 
 	if (urlFromSite($redirect)) {
 		my $base = root2abs();
-		return URI->new_abs($redirect || $gSkin->{rootdir}, $base);
+		return URI->new_abs($redirect || $rurl, $base);
 	} else {
-		return url2abs($gSkin->{rootdir});
+		return url2abs($rurl);
 	}
 }
 

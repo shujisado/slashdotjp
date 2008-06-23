@@ -6,8 +6,9 @@ slash (2.5.0.192-14) unstable; urgency=low
     - commentsort = mobile_commentsort
     - commentlimit = mobile_commentlimit
     - mode = mobile_commentmode
+  * Fix: redirect url when ('?m=1') has been appended
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 20 Jun 2008 13:06:35 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Jun 2008 04:04:52 +0000
 
 slash (2.5.0.192-13) unstable; urgency=low
 
