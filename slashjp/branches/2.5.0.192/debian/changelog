@@ -7,8 +7,9 @@ slash (2.5.0.192-14) unstable; urgency=low
     - commentlimit = mobile_commentlimit
     - mode = mobile_commentmode
   * Fix: redirect url when ('?m=1') has been appended
+  * Add "discussion" variable for printCommComments template
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 23 Jun 2008 04:04:52 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Jun 2008 07:45:17 +0000
 
 slash (2.5.0.192-13) unstable; urgency=low
 

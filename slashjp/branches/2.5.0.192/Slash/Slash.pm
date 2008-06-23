@@ -1065,6 +1065,7 @@ sub printComments {
 		lvl		=> $lvl,
 		discussion2	=> $discussion2,
 		anon_dump	=> $anon_dump,
+		discussion	=> $discussion,
 	}, { Return => 1 });
 
 	# We have to get the comment text we need (later we'll search/replace
