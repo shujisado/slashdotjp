@@ -121,19 +121,29 @@ sub displayTop {
 
 	_printHead('mainhead') or return;
 	my $start = $form->{start} || 0;
+	my $limit = $user->{mobile} ? $constants->{mobile_top_journal_count} || 10
+	                            : $constants->{'journal_top'} || 10;
 
 	# this should probably be in a separate template, so the site admins
 	# can select the order themselves -- pudge
 	if ($constants->{journal_top_recent} && $form->{op} =~ /^top(_recent)?$/) {
-		$journals = $user->{mobile} ? $journal_reader->topRecent($constants->{mobile_top_journal_count} || 10, $start)
-		                            : $journal_reader->topRecent;
-		slashDisplay('journaltop', { journals => $journals, type => 'recent' });
+		$journals = $journal_reader->topRecent($limit, $start);
+		slashDisplay('journaltop', {
+			journals	=> $journals,
+			type		=> 'recent',
+			start		=> $start,
+			limit		=> $limit,
+		});
 	}
 
 	if ($constants->{journal_top_posters} && $form->{op} =~ /^top(_posters)?$/) {
-		$journals = $user->{mobile} ? $journal_reader->top($constants->{mobile_top_journal_count} || 10, $start)
-		                            : $journal_reader->top;
-		slashDisplay('journaltop', { journals => $journals, type => 'top' });
+		$journals = $journal_reader->top($limit, $start);
+		slashDisplay('journaltop', {
+			journals	=> $journals,
+			type		=> 'top',
+			start		=> $start,
+			limit		=> $limit,
+		});
 	}
 
 	if ($constants->{journal_top_friend} && $form->{op} =~ /^top(_friend)?$/) {
