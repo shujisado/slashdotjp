@@ -592,6 +592,18 @@ sub userdir_handler {
 		return OK;
 	}
 
+	# journals for slashdot.jp
+	if ($uri =~ m[^/journals (?: /([^?]*) | /? ) (?: \?(.*) )? $]x) {
+		my($word, $query) = ($1, $2);
+		my @args = ($query);
+		$word =~ s{/}{_}g;
+		push @args, "op=$word" if ($word);
+		$r->args(join('&', @args));
+		$r->uri('/journal.pl');
+		$r->filename($constants->{basedir} . '/journal.pl');
+		return OK;
+	}
+
 	# for self-references (/~/ and /my/)
 	if (($saveuri =~ m[^/(?:%7[eE]|~)] && $uri =~ m[^/~ (?: /(.*) | /? ) $]x)
 		# /my/ or /my can match, but not /mything
