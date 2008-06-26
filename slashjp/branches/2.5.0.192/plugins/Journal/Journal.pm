@@ -295,15 +295,16 @@ sub updateUsersJournal {
 }
 
 sub top {
-	my($self, $limit) = @_;
+	my($self, $limit, $start) = @_;
 	$limit ||= getCurrentStatic('journal_top') || 10;
+	$start ||= 0;
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
 SELECT count AS c,nickname,users_journal.uid,date,jid AS id
 FROM users_journal JOIN users USING (uid)
 ORDER BY count DESC
-LIMIT $limit
+LIMIT $start, $limit
 EOT
 
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);
@@ -323,8 +324,9 @@ EOT
 }
 
 sub topRecent {
-	my($self, $limit) = @_;
+	my($self, $limit, $start) = @_;
 	$limit ||= getCurrentStatic('journal_top') || 10;
+	$start ||= 0;
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
@@ -333,7 +335,7 @@ FROM users_journal JOIN users USING (uid)
 JOIN journals ON jid=journals.id
 JOIN journals_text ON jid=journals_text.id
 ORDER BY date DESC
-LIMIT $limit
+LIMIT $start, $limit
 EOT
 
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);

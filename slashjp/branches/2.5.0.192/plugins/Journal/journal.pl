@@ -68,6 +68,9 @@ sub main {
 		list		=> [ 1,			\&listArticle		],
 		display		=> [ 1,			\&displayArticle	],
 		top		=> [ $top_ok,		\&displayTop		],
+		top_posters	=> [ $top_ok,		\&displayTop		],
+		top_friend	=> [ $top_ok,		\&displayTop		],
+		top_recent	=> [ $top_ok,		\&displayTop		],
 		searchusers	=> [ 1,			\&searchUsers		],
 		friends		=> [ 1,			\&displayFriends	],
 		friendview	=> [ 1,			\&displayArticleFriends	],
@@ -117,20 +120,23 @@ sub displayTop {
 	my $journals;
 
 	_printHead('mainhead') or return;
+	my $start = $form->{start} || 0;
 
 	# this should probably be in a separate template, so the site admins
 	# can select the order themselves -- pudge
-	if ($constants->{journal_top_recent}) {
-		$journals = $journal_reader->topRecent;
+	if ($constants->{journal_top_recent} && $form->{op} =~ /^top(_recent)?$/) {
+		$journals = $user->{mobile} ? $journal_reader->topRecent($constants->{mobile_top_journal_count} || 10, $start)
+		                            : $journal_reader->topRecent;
 		slashDisplay('journaltop', { journals => $journals, type => 'recent' });
 	}
 
-	if ($constants->{journal_top_posters}) {
-		$journals = $journal_reader->top;
+	if ($constants->{journal_top_posters} && $form->{op} =~ /^top(_posters)?$/) {
+		$journals = $user->{mobile} ? $journal_reader->top($constants->{mobile_top_journal_count} || 10, $start)
+		                            : $journal_reader->top;
 		slashDisplay('journaltop', { journals => $journals, type => 'top' });
 	}
 
-	if ($constants->{journal_top_friend}) {
+	if ($constants->{journal_top_friend} && $form->{op} =~ /^top(_friend)?$/) {
 		my $zoo   = getObject('Slash::Zoo');
 		$journals = $zoo->topFriends;
 		slashDisplay('journaltop', { journals => $journals, type => 'friend' });
@@ -526,6 +532,7 @@ sub displayArticle {
 
 	push @sorted_articles, $collection;
 	my $theme = _checkTheme($form->{theme} || $journal_reader->getUser($uid, 'journal_theme'));
+	$theme = 'mobile' if ($user->{mobile});
 
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');
