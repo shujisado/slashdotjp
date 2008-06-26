@@ -20,6 +20,9 @@ blockquote,
 	border-left: 3px solid #DDD;
 	padding-left: 0.3em;
 	margin-left: 0.5em;
+	margin-right: 0;
+	margin-top: 0.2em;
+	margin-bottom: 0.2em;
 	display: block;
 }
 
@@ -54,4 +57,52 @@ div#topnav div#logo {
 	padding: 0;
 	height: auto;
 	width: auto;
+}
+
+div.contentsbody {
+	margin: 0.2em;
+}
+
+div.article {
+	margin: 0.5em 0;
+}
+
+div.toptitle,
+div.article div.title {
+	margin: 0;
+	padding: 0;
+	border-bottom: 1px solid #fff;
+	background: #044 url(//images.slashdot.jp/article-title-bg.png) repeat-x left top;
+	color: #FFF;
+}
+div.toptitle div.tt,
+div.article div.title div.tt {
+	color: #fff;
+	padding-left: 6px;
+	padding-top: 0.1em;
+	padding-bottom: 0.1em;
+	font-weight: bold;
+	background: url(//images.slashdot.jp/article-title-left.png) no-repeat left top;
+}
+div.article div.title div.tt a,
+div.article div.title div.tt a:visited {
+	color: #fff;
+}
+div.article div.title div.details {
+	background: #DDD;
+	color: #000;
+	padding-left: 6px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+div.storylinks {
+	padding-left: 6px;
+	margin: 0.5em 0;
+	background: url(//images.slashdot.jp/storylinks-bg.png) repeat-x left bottom;
+}
+div.storylinks div.links {
+	background: url(//images.slashdot.jp/storylinks-right.png) no-repeat right bottom;
+	padding-top: 5px;
+	padding-bottom: 3px;
+	padding-right: 6px;
 }
