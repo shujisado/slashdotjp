@@ -719,7 +719,7 @@ sub getJournalByTime {
 		$where .= " AND uid=$uid";
 	}
 
-	my $returnable = $self->sqlSelectArrayRef(
+	my $returnable = $self->sqlSelectHashref(
 		'date, article, description, id, posttype, tid, discussion',
 		'journals JOIN journals_text USING (id)',
 		"date $sign '$journal->[0]'

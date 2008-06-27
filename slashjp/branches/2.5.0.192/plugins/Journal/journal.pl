@@ -519,8 +519,8 @@ sub displayArticle {
 			$commentcount = $article->[6]
 				? $discussion->{commentcount}
 				: 0;
-			$next = $journal_reader->getJournalByTime('>', $article, { uid => $uid });
-			$prev = $journal_reader->getJournalByTime('<', $article, { uid => $uid });
+			$prev = $journal_reader->getJournalByTime('>', $article, { uid => $uid });
+			$next = $journal_reader->getJournalByTime('<', $article, { uid => $uid });
 		} else {
 			$commentcount = $article->[6]
 				? $journal_reader->getDiscussion($article->[6], 'commentcount')
