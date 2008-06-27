@@ -16,8 +16,11 @@ slash (2.5.0.192-14) unstable; urgency=low
     - for enabling pagination for top journals
   * Add new url for userdir_handler
     - Add "/journals" URL
+  * Add next and previous journal data to journal
+    - use $journal_reader->getJournalByTime()
+  * Disable to show comments when mobile mode
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 26 Jun 2008 09:45:09 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 27 Jun 2008 07:03:00 +0000
 
 slash (2.5.0.192-13) unstable; urgency=low
 

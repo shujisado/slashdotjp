@@ -428,6 +428,7 @@ sub displayArticle {
 	my $collection = {};
 	my $user_change = {};
 	my $head_data = {};
+	my ($prev, $next);
 
 	my $slashdb = getCurrentDB();
 
@@ -518,6 +519,8 @@ sub displayArticle {
 			$commentcount = $article->[6]
 				? $discussion->{commentcount}
 				: 0;
+			$next = $journal_reader->getJournalByTime('>', $article, { uid => $uid });
+			$prev = $journal_reader->getJournalByTime('<', $article, { uid => $uid });
 		} else {
 			$commentcount = $article->[6]
 				? $journal_reader->getDiscussion($article->[6], 'commentcount')
@@ -537,6 +540,8 @@ sub displayArticle {
 			discussion	=> $article->[6],
 			id		=> $article->[3],
 			commentcount	=> $commentcount,
+			prev		=> $prev,
+			next		=> $next,
 		};
 	}
 
@@ -558,7 +563,7 @@ sub displayArticle {
 
 	print getData('journalfoot');
 
-	if ($show_discussion) {
+	if (!$user->{mobile} && $show_discussion) {
 		printComments($discussion);
 	}
 

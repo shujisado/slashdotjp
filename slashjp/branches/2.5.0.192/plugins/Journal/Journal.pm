@@ -697,6 +697,38 @@ sub updateTransferredJournalDiscussions {
 	}
 }
 
+sub getJournalByTime {
+	my($self, $sign, $journal, $options) = @_;
+	my $constants = getCurrentStatic();
+	$options = {} if !$options || ref($options) ne 'HASH';
+	my $limit = $options->{limit} || 1;
+	my $uid = int($options->{uid}) || undef;
+	my $where = "";
+	my $name  = 'journal_by_time';
+	my $order = $sign eq '<' ? 'DESC' : 'ASC';
+
+	# $journal->[0]: datetime string
+	# $journal->{1]: journaltext
+	# $journal->{2]: journaltitle
+	# $journal->[3]: journal_id
+	# $journal->[4]: format_id
+	# $journal->[5]: topic_id
+	# $journal->[6]: discussion_id
+
+	if ($uid) {
+		$where .= " AND uid=$uid";
+	}
+
+	my $returnable = $self->sqlSelectArrayRef(
+		'date, article, description, id, posttype, tid, discussion',
+		'journals JOIN journals_text USING (id)',
+		"date $sign '$journal->[0]'
+		 AND date <= NOW()
+		 $where",
+		 "ORDER by date $order LIMIT $limit"
+	);
+	return $returnable;
+}
 
 sub DESTROY {
 	my($self) = @_;
