@@ -1,0 +1,12 @@
+/var/lib/slash/site/*/logs/*.log {
+	weekly
+	missingok
+	rotate 12
+	compress
+	delaycompress
+	notifempty
+	sharedscripts
+	postrotate
+		/etc/init.d/slash restart > /dev/null
+	endscript
+}
