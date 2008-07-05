@@ -1,3 +1,9 @@
+slash (2.5.0.192-15) unstable; urgency=low
+
+  * Add vars "modreasons_disabled" to insert "disabled => 1" for getReasons()
+
+ -- Taku YASUI <tach@osdn.jp>  Sat,  5 Jul 2008 04:11:24 +0000
+
 slash (2.5.0.192-14) unstable; urgency=low
 
   * Fix to change commentsort for mobile mode from 5 to 4
