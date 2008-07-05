@@ -188,6 +188,7 @@ sub createSelect {
 		if ($all_name) {
 			$hashref = {
 				map { ($_, $hashref->{$_}{name}) }
+				grep { !$hashref->{$_}{select_disabled} }
 				keys %$hashref
 			};
 		}

@@ -46,10 +46,10 @@ sub getReasons {
 	$self->{$table_cache} = $self->sqlSelectAllHashref(
 		"id", "*", "modreasons"
 	);
-	my $mrd = getCurrentStatic('modreasons_disabled') || '';
+	my $mrd = getCurrentStatic('modreasons_select_disabled') || '';
 	foreach my $d (split(/,/, $mrd)) {
 		$d = int($d);
-		$self->{$table_cache}{$d}{disabled} = 1;
+		$self->{$table_cache}{$d}{select_disabled} = 1;
 	}
 	return {( %{$self->{$table_cache}} )};
 }

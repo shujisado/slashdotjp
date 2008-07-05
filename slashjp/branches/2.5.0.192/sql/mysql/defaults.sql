@@ -1153,7 +1153,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_commentlimit'
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mobile_commentmode','flat','comment mode for mobile mode');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('enable_template_evalperl','0','Add "EVAL_PERL" to Template option to be able to use "PERL" and "RAWPERL" directives');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('related_cid_disabled','0','If set, then disable inserting cid to related story list');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('modreasons_disabled','','Comma separated "modreasons.id"s disable to select when moderation');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('modreasons_select_disabled','','Comma separated "modreasons.id"s disable to select when moderation');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';
