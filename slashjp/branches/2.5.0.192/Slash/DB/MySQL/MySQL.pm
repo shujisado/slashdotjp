@@ -8068,6 +8068,9 @@ sub getSlashConf {
 		$conf{reasons} = $self->sqlSelectAllHashref(
 			"id", "*", "modreasons"
 		);
+		foreach my $d (split(/,/, $conf{modreasons_select_disabled} || '')) {
+			$conf{reasons}{int($d)}{select_disabled} = 1;
+		}
 	}
 
 	$conf{rootdir}		||= "//$conf{basedomain}";
