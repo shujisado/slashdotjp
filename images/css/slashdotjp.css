@@ -212,6 +212,18 @@ div.search-help {
 	font-weight: bold;
 }
 
+/* users.pl modifiers */
+div#users table#reason_modifiers table.reason_modifiers {
+	padding-left: 1.5em;
+}
+div#users table#reason_modifiers td {
+	vertical-align: top;
+}
+div#users table#reasons_plus td,
+div#users table#reasons_minus td {
+	vertical-align: middle;
+}
+
 /* code.shtml rss link */
 a.feed {
 	background: url(//images.slashdot.jp/feed-14x14.png) left no-repeat;
