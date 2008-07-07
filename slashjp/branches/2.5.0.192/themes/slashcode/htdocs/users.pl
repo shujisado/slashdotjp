@@ -2155,6 +2155,8 @@ sub editComm {
 
 	my @reasons = ( );
 	my %reason_select = ( );
+	my $reasons_plus = {};
+	my $reasons_minus = {};
 	if ($constants->{m1}) {
 		my $mod_reader = getObject("Slash::$constants->{m1_pluginname}", { db_type => 'reader' });
 		my $reasons = $mod_reader->getReasons();
@@ -2162,12 +2164,20 @@ sub editComm {
 			push @reasons, $reasons->{$id}{name};
 		}
 		# Reason modifiers
-		for my $reason_name (@reasons) {
-			my $key = "reason_alter_$reason_name";
-			$reason_select{$reason_name} = createSelect(
+		for my $id (sort { $a <=> $b } keys %$reasons) {
+			next unless ($reasons->{$id}{listable});
+			my $key = "reason_alter_$id";
+			$reasons->{$id}{reason_select} = createSelect(
 				$key, \@range, 
 				$user_edit->{$key} || 0, 1, 1
 			);
+			if ($reasons->{$id}{val} > 0) {
+				$reasons_plus->{$id} = $reasons->{$id};
+			} elsif ($reasons->{$id}{val} < 0) {
+				$reasons_minus->{$id} = $reasons->{$id};
+			} else {
+				next;
+			}
 		}
 	}
 
@@ -2273,6 +2283,8 @@ sub editComm {
 		range			=> \@range,
 		reasons			=> \@reasons,
 		reason_select		=> \%reason_select,
+		reasons_minus		=> $reasons_minus,
+		reasons_plus		=> $reasons_plus,
 		people			=> \@people,
 		people_select		=> \%people_select,
 		new_user_percent_select	=> $new_user_percent_select,
@@ -2819,9 +2831,9 @@ sub saveComm {
 		push @reasons, $reasons->{$id}{name};
 	}
 
-	for my $reason_id (%$reasons) {
-		next unless $reasons->{$reason_id}{listable};
-		my $key = "reason_alter_$reason_id";
+	for my $id (sort { $a <=> $b } keys %$reasons) {
+		next unless $reasons->{$id}{listable};
+		my $key = "reason_alter_$id";
 		my $answer = $form->{$key} || 0;
 		$answer = 0 if !$answer || $answer !~ /^[\-+]?\d+$/;
 		$user_edits_table->{$key} = ($answer == 0) ? '' : $answer;
