@@ -329,6 +329,7 @@ sub displayTopRSS {
 			story	=> {
 				'time'	=> $entry->[3],
 				uid	=> $entry->[2],
+				tid	=> $entry->[8],
 			},
 			title	=> $title,
 			link	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/$entry->[4]",

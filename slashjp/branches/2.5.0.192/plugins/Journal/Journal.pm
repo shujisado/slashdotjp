@@ -301,24 +301,16 @@ sub top {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count AS c,nickname,users_journal.uid,date,jid AS id
+SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article,posttype,tid
 FROM users_journal JOIN users USING (uid)
+JOIN journals ON jid=journals.id
+JOIN journals_text ON jid=journals_text.id
 ORDER BY count DESC
 LIMIT $start, $limit
 EOT
 
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);
-
-	my $sql2 = sprintf <<EOT, join (',', map { $_->[4] } @$losers);
-SELECT id, description
-FROM journals
-WHERE id IN (%s)
-EOT
-	my $losers2 = $self->{_dbh}->selectall_hashref($sql2, 'id');
-
-	for (@$losers) {
-		$_->[5] = $losers2->{$_->[4]}{description};
-	}
+	return [ ] if !$losers || !@$losers;
 
 	return $losers;
 }
@@ -330,7 +322,7 @@ sub topRecent {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article,posttype
+SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article,posttype,tid
 FROM users_journal JOIN users USING (uid)
 JOIN journals ON jid=journals.id
 JOIN journals_text ON jid=journals_text.id
