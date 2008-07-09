@@ -326,9 +326,15 @@ sub displayTopRSS {
 		$title =~ s/s$// if $entry->[0] == 1 && ($type eq 'count' || $type eq 'friends');
 
 		push @items, {
+			story	=> {
+				'time'	=> $entry->[3],
+				uid	=> $entry->[2],
+			},
 			title	=> $title,
-			link	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/",
+			link	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/$entry->[4]",
+			'content:encoded' => balanceTags(strip_mode($entry->[6], $entry->[7]), { deep_nesting => 1 }),
 			description => strip_notags($entry->[6]),
+			relation		=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/",
 		};
 	}
 
@@ -339,7 +345,8 @@ sub displayTopRSS {
 			'link'		=> "$gSkin->{absolutedir}/journal.pl?op=top",
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc		=> $constants->{journal_rdfitemdesc},
 	});
 }
 

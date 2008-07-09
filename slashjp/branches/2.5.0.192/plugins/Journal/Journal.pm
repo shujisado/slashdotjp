@@ -330,7 +330,7 @@ sub topRecent {
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article
+SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article,posttype
 FROM users_journal JOIN users USING (uid)
 JOIN journals ON jid=journals.id
 JOIN journals_text ON jid=journals_text.id
