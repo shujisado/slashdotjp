@@ -4,8 +4,10 @@ slash (2.5.0.192-16) unstable; urgency=low
     - Use reason_id as key instead of name
   * Add workaround for unicode WAVE DASH problem
   * Add "dc:source" and "dc:relation" to RSS output
+  * Change "sitename.(rss|ref|xml|atom)" to including all stories even if
+    section local
 
- -- Taku YASUI <tach@osdn.jp>  Wed,  9 Jul 2008 07:53:55 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed,  9 Jul 2008 09:33:04 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 
