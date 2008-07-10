@@ -10,8 +10,9 @@ slash (2.5.0.192-16) unstable; urgency=low
     journal id
   * Add new journal top rss url: "/journals/top/rss" and
     "/journals/top/recent/rss"
+  * Add "readmore" link for journal top rss
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 10 Jul 2008 04:07:53 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 10 Jul 2008 04:52:56 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

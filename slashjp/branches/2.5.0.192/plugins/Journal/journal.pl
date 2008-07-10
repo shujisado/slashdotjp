@@ -325,25 +325,34 @@ sub displayTopRSS {
 
 		$title =~ s/s$// if $entry->[0] == 1 && ($type eq 'count' || $type eq 'friends');
 
+		my $link = "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/$entry->[4]";
+		my $journalurl = "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/";
+		my $text = strip_mode($entry->[6], $entry->[7]);
+		$text .= getData('rss_readmore', {
+			link		=> $link,
+			journalurl	=> $journalurl,
+			nickname	=> $entry->[1],
+		});
+
 		push @items, {
 			story	=> {
 				'time'	=> $entry->[3],
 				uid	=> $entry->[2],
 				tid	=> $entry->[8],
 			},
-			title	=> $title,
-			link	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/$entry->[4]",
-			'content:encoded' => balanceTags(strip_mode($entry->[6], $entry->[7]), { deep_nesting => 1 }),
-			description => strip_notags($entry->[6]),
-			relation		=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/",
+			title			=> $title,
+			link			=> $link,
+			'content:encoded'	=> balanceTags($text, { deep_nesting => 1 }),
+			description		=> strip_notags($entry->[6]),
+			relation		=> $journalurl,
 		};
 	}
 
 	xmlDisplay($form->{content_type} => {
 		channel => {
-			title		=> "$constants->{sitename} Journals",
-			description	=> "Top $constants->{journal_top} Journals",
-			'link'		=> "$gSkin->{absolutedir}/journal.pl?op=top",
+			title		=> getData('rss_top_recent_title'),
+			description	=> getData('rss_top_recent_desc'),
+			'link'		=> "$gSkin->{absolutedir}/journals/top/",
 		},
 		image	=> 1,
 		items	=> \@items,
