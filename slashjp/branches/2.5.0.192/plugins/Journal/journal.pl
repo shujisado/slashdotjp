@@ -100,7 +100,7 @@ sub main {
 
 	# hijack feeds
 	if ($form->{content_type} && $form->{content_type} =~ $constants->{feed_types}) {
-		if ($op eq 'top' && $top_ok) {
+		if ($op =~ /^top/ && $top_ok) {
 			displayTopRSS($journal, $constants, $user, $form, $journal_reader, $gSkin);
 		} else {
 			displayRSS($journal, $constants, $user, $form, $journal_reader, $gSkin);

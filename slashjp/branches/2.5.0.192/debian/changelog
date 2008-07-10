@@ -8,8 +8,10 @@ slash (2.5.0.192-16) unstable; urgency=low
     section local
   * Change journal top rss including html description and change URL adding
     journal id
+  * Add new journal top rss url: "/journals/top/rss" and
+    "/journals/top/recent/rss"
 
- -- Taku YASUI <tach@osdn.jp>  Wed,  9 Jul 2008 16:42:42 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 10 Jul 2008 04:07:53 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

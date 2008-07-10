@@ -597,6 +597,10 @@ sub userdir_handler {
 		my($word, $query) = ($1, $2);
 		my @args = ($query);
 		$word =~ s{/}{_}g;
+		if ($word =~ /^(.+)_rss$/) {
+			$word = $1;
+			push @args, "content_type=rss";
+		}
 		push @args, "op=$word" if ($word);
 		$r->args(join('&', @args));
 		$r->uri('/journal.pl');
