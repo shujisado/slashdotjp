@@ -252,6 +252,15 @@ sub displayRSS {
 			$juid     = $juser->{uid};
 		}
 
+		my $link = "$gSkin->{absolutedir}/~" . fixparam($nickname) . "/journal/$article->[3]";
+		my $journalurl = "$gSkin->{absolutedir}/~" . fixparam($nickname) . "/journal/";
+		my $text = strip_mode($article->[1], $article->[4]);
+		$text .= getData('rss_readmore', {
+			link		=> $link,
+			journalurl	=> $journalurl,
+			nickname	=> $nickname,
+		});
+
 		push @items, {
 			story		=> {
 				'time'		=> $article->[0],
@@ -260,8 +269,9 @@ sub displayRSS {
 			},
 			title		=> $article->[2],
 			description	=> strip_notags($article->[1]),
-			'content:encoded' =>  balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 }),
+			'content:encoded' =>  balanceTags($text, { deep_nesting => 1 }),
 			'link'		=> root2abs() . '/~' . fixparam($nickname) . "/journal/$article->[3]",
+			relation		=> $journalurl,
 		};
 	}
 
