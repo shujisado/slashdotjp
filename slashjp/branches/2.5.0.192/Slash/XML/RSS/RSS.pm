@@ -191,7 +191,7 @@ sub create {
 		subject		=> $constants->{rdfsubject},
 		language	=> $constants->{rdflanguage},
 		creator		=> $constants->{adminmail},
-		publisher	=> $constants->{rdfpublisher},
+		publisher	=> $constants->{rdfpublisher} || $constants->{sitepublisher},
 		rights		=> $constants->{rdfrights},
 
 		# syn
