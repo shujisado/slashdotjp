@@ -457,6 +457,10 @@ sub rss_story {
 
 	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
+		$item->{'content:encoded'} = ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
+			link	=> $encoded_item->{link},
+			discussion	=> $story->{discussion},
+		}, 'index');
 		if ($desc) {
 			$encoded_item->{description} = slashDisplay("rss_item_description", {
 				desc		=> $desc,

@@ -86,7 +86,7 @@ sub getBackendStories {
 	my $topic = $options->{topic};
 
 	my $select = "stories.stoid AS stoid, sid, title, stories.tid AS tid, primaryskid, time,
-		dept, stories.uid AS uid, commentcount, hitparade, introtext, bodytext, stories.qid as qid";
+		dept, stories.uid AS uid, commentcount, hitparade, introtext, bodytext, stories.qid as qid, discussion";
 
 	my $from = "stories, story_text, story_topics_rendered";
 
