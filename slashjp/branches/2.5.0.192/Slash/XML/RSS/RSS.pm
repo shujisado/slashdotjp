@@ -466,7 +466,7 @@ sub rss_story {
 			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
 
 			# add content:encoded for slashdot.jp
-			$item->{'content:encoded'} = ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
+			$item->{'content:encoded'} ||= ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
 				'link'		=> $encoded_item->{link},
 				discussion	=> $story->{discussion},
 			}, 'index');
