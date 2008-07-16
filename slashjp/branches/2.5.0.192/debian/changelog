@@ -14,8 +14,9 @@ slash (2.5.0.192-16) unstable; urgency=low
   * use $constants->{sitepublisher} when $constants->{rdfpublisher} does not
     exist on creating RSS
   * Add content:encoded for story main rss
+  * Add "mainpage" title to "index.rss"
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 15 Jul 2008 13:04:00 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 16 Jul 2008 04:30:46 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

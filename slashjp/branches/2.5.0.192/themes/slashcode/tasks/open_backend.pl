@@ -67,7 +67,7 @@ sub _do_rss {
 	my $link    = ($skin->{url}  || $gSkin->{absolutedir}) . '/';
 	my $title   = $constants->{sitename};
 	$title = "$title: $skin->{title}"
-		if $skin->{skid} && $skin->{skid} != $constants->{mainpage_skid} && $skin->{title};
+		if $skin->{skid} && $skin->{title};
 
 	my $description = $constants->{slogan};
 
