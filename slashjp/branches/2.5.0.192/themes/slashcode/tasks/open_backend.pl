@@ -65,6 +65,7 @@ sub _do_rss {
 	my $skin    = { };
 	$skin       = $slashdb->getSkin($name) if $name;
 	my $link    = ($skin->{url}  || $gSkin->{absolutedir}) . '/';
+	$link =~ s!/+$!/!;
 	my $title   = $constants->{sitename};
 	$title = "$title: $skin->{title}"
 		if $skin->{skid} && $skin->{title};
@@ -119,6 +120,7 @@ sub _do_rss {
 		version		=> $version,
 		textinput	=> 1,
 		image		=> 1,
+		skin		=> $skin,
 		items		=> \@items,
 	}, 1);
 

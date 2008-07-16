@@ -285,8 +285,8 @@ sub create {
 	if ($param->{textinput}) {
 		# set defaults
 		my %textinput = (
-			title		=> 'Search ' . $constants->{sitename},
-			description	=> 'Search ' . $constants->{sitename} . ' stories',
+			title		=> getData('search_header_title', {}, 'search'),
+			description	=> getData('search_header_descr', { section => $param->{skin} ? $param->{skin}{title} : undef }, 'search'),
 			name		=> 'query',
 			'link'		=> $channel{'link'} . 'search.pl',
 		);
