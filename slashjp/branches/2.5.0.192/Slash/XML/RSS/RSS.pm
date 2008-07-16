@@ -287,12 +287,12 @@ sub create {
 		my %textinput = (
 			title		=> getData('search_header_title', {}, 'search'),
 			description	=> getData('search_header_descr', { section => $param->{skin} ? $param->{skin}{title} : undef }, 'search'),
-			name		=> 'query',
+			name		=> 'q',
 			'link'		=> $channel{'link'} . 'search.pl',
 		);
 
 		# let $param->{textinput} override
-		if (ref($param->{image}) eq 'HASH') {
+		if (ref($param->{textinput}) eq 'HASH') {
 			for (keys %textinput) {
 				my $value = defined $param->{textinput}{$_}
 					? $param->{textinput}{$_}
