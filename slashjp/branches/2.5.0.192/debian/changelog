@@ -16,8 +16,11 @@ slash (2.5.0.192-16) unstable; urgency=low
   * Add content:encoded for story main rss
   * Add "mainpage" title to "index.rss"
   * Fix RSS "textinput" handling on Slash/XML/RSS/RSS.pm
+  * Add simple pollBooth URL
+    - "/polls" and "/polls/{qid}"
+  * Add feature: display pollBooth RSS on "/polls/rss"
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 16 Jul 2008 13:26:14 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 16 Jul 2008 13:28:06 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

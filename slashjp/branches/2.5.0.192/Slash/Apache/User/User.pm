@@ -577,7 +577,7 @@ sub userdir_handler {
 	}
 
 	# URIs like /tags and /tags/foo and /tags/foo?type=bar are special cases.
-	if ($uri =~ m[^/tags (?: /([^?]*) | /? ) (?: \?(.*) )? $]x) {
+	if ($uri =~ m!^/tags (?: /([^?]*) | /? ) (?: \?(.*) )? $!x) {
 		my($word, $query) = ($1, $2);
 		my @args = ( );
 		if ($word =~ /^(active|recent|all)$/) {
@@ -593,7 +593,7 @@ sub userdir_handler {
 	}
 
 	# journals for slashdot.jp
-	if ($uri =~ m[^/journals (?: /([^?]*) | /? ) (?: \?(.*) )? $]x) {
+	if ($uri =~ m!^/journals (?: /([^?]*) | /? ) (?: \?(.*) )? $!x) {
 		my($word, $query) = ($1, $2);
 		my @args = ($query);
 		$word =~ s{/}{_}g;
@@ -607,6 +607,23 @@ sub userdir_handler {
 		$r->filename($constants->{basedir} . '/journal.pl');
 		return OK;
 	}
+
+	# polls for slashdot.jp
+	if ($uri =~ m!^/polls (?: /([^?]*) | /? ) (?: \?(.*) )? $!x) {
+		my($word, $query) = ($1, $2);
+		my @args = ($query);
+		if ($word =~ /^rss$/) {
+			push @args, "content_type=rss";
+		} elsif ($word =~ /^(\d+)$/) {
+			push @args, "qid=$1";
+		}
+		push @args, "op=$word" if ($word);
+		$r->args(join('&', @args));
+		$r->uri('/pollBooth.pl');
+		$r->filename($constants->{basedir} . '/pollBooth.pl');
+		return OK;
+	}
+
 
 	# for self-references (/~/ and /my/)
 	if (($saveuri =~ m[^/(?:%7[eE]|~)] && $uri =~ m[^/~ (?: /(.*) | /? ) $]x)
