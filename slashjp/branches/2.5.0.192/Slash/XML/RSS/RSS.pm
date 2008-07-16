@@ -457,18 +457,19 @@ sub rss_story {
 
 	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
-		$item->{'content:encoded'} = ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
-			link	=> $encoded_item->{link},
-			discussion	=> $story->{discussion},
-		}, 'index');
 		if ($desc) {
-			$encoded_item->{description} = slashDisplay("rss_item_description", {
-				desc		=> $desc,
-				more		=> $story->{bodytext},
-				link		=> $action,
-			}, { Return => 1, Nocomm => 1 });
+			$encoded_item->{description} = $desc . getData('rss_story_readmore', {
+				'link'		=> $encoded_item->{link},
+				discussion	=> $story->{discussion},
+			}, 'index');
 			# add poll if any
 			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+
+			# add content:encoded for slashdot.jp
+			$item->{'content:encoded'} = ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
+				'link'		=> $encoded_item->{link},
+				discussion	=> $story->{discussion},
+			}, 'index');
 		}
 	}
 
