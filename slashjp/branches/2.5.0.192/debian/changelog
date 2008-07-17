@@ -19,8 +19,10 @@ slash (2.5.0.192-16) unstable; urgency=low
   * Add simple pollBooth URL
     - "/polls" and "/polls/{qid}"
   * Add feature: display pollBooth RSS on "/polls/rss"
+  * Improve article.pl performance when non-user access
+    - redirect to shtml internally
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 16 Jul 2008 13:28:06 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 17 Jul 2008 07:03:47 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

@@ -450,6 +450,30 @@ sub IndexHandler {
 		return OK;
 	}
 
+	# return shtml internally when AC
+	# for slashdot.jp (2008-07-17)
+	if ($uri =~ m!^/(\w+/)?article\.pl$! && !$is_user) {
+		my $section = $1 || 'articles';
+		my $the_request = $r->the_request;
+		my $qs = {$the_request =~ m!\b(sid|threshold|mode|commentsort|lowbandwidth|simpledesign|light)=([-\w/]+)!g};
+
+		if ((defined($qs->{sid}) && $qs->{sid} =~ m|^\d{2}/\d{2}/\d{2}/\d{6,}$|) &&
+		    (!defined($qs->{threshold}) || $qs->{threshold} == 1) &&
+		    (!defined($qs->{mode}) || $qs->{mode} eq 'thread' ) &&
+		    (!defined($qs->{commentsort}) || $qs->{commentsort} == 3) &&
+		    !$qs->{lowbandwidth} &&
+		    !$qs->{simpledesign} &&
+		    !$qs->{light}) {
+			my $file = "$constants->{basedir}/$section/$qs->{sid}.shtml";
+			if (-r $file) {
+				$r->uri("/$section/$qs->{sid}.shtml");
+				$r->filename("$constants->{basedir}/$section/$qs->{sid}.shtml");
+				writeLog('shtml');
+				return OK;
+			}
+		}
+	}
+
 	# redirect to static if
 	# * not a user, nor a daypass holder,
 	# and
