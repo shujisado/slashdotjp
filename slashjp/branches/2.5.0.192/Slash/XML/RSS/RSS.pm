@@ -287,7 +287,7 @@ sub create {
 		my %textinput = (
 			title		=> getData('search_header_title', {}, 'search'),
 			description	=> getData('search_header_descr', { section => $param->{skin} ? $param->{skin}{title} : undef }, 'search'),
-			name		=> 'q',
+			name		=> $constants->{search_query_name} || 'query',
 			'link'		=> $channel{'link'} . 'search.pl',
 		);
 
