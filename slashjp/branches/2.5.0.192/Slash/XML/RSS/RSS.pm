@@ -173,10 +173,10 @@ sub create {
 	);
 
 	my $dynamic = 0;
-	my $absolutedir = $gSkin->{absolutedir};
+	my $absolutedir = $gSkin->{absolutedir} || $constants->{absolutedir};
 	if (defined &Slash::Apache::ConnectionIsSSL) {
 		$dynamic = 1;
-		$absolutedir = $gSkin->{absolutedir_secure} if Slash::Apache::ConnectionIsSSL();
+		$absolutedir = ($gSkin->{absolutedir_secure} || $constants->{absolutedir_secure}) if Slash::Apache::ConnectionIsSSL();
 	}
 
 	# set defaults
