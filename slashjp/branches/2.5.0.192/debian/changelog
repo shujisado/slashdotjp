@@ -23,8 +23,11 @@ slash (2.5.0.192-16) unstable; urgency=low
     - redirect to shtml internally
   * Add feature to change query string form name for search.pl
     - Use variable "search_query_name"
+  * Improve "polls/rss" performance using rss cache
+    - Use variable "rss_cachedir"
+    - cache creating task is not included in slash distribution
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 17 Jul 2008 11:29:47 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 18 Jul 2008 04:16:34 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

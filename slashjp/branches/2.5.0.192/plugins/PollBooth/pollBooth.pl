@@ -563,7 +563,7 @@ sub listpollsRSS {
 		items			=> $items,
 		rdfitemdesc		=> $constants->{dfitemdesc},
 		rdfitemdesc_html	=> $constants->{dfitemdesc_html} || 1,
-	}, $form->{ssi});
+	}, $form->{ssi} ? 1 : 0);
 	print "$ret\n" if ($form->{ssi});
 }
 
