@@ -354,10 +354,35 @@ sub IndexHandler {
 	#	$uri =~ s/^\Q$path//;
 	#}
 
-	# DECLINED if the skin does not exist
-	if ($uri =~ m|^/\w+/\w+\.pl$| &&
-	    determineCurrentSkin() == getCurrentStatic('mainpage_skid')) {
-		return DECLINED;
+	# return shtml internally when AC
+	# for slashdot.jp (2008-07-17)
+	if ($uri =~ m!^/(\w+/)?article\.pl$! && !$is_user) {
+		my $section = $1 || 'articles';
+		my $the_request = $r->the_request;
+		my $qs = {$the_request =~ m!\b(sid|threshold|mode|commentsort|lowbandwidth|simpledesign|light)=([-\w/]+)!g};
+
+		if ((defined($qs->{sid}) && $qs->{sid} =~ m|^\d{2}/\d{2}/\d{2}/\d{6,}$|) &&
+		    (!defined($qs->{threshold}) || $qs->{threshold} == 1) &&
+		    (!defined($qs->{mode}) || $qs->{mode} eq 'thread' ) &&
+		    (!defined($qs->{commentsort}) || $qs->{commentsort} == 3) &&
+		    !$qs->{lowbandwidth} &&
+		    !$qs->{simpledesign} &&
+		    !$qs->{light}) {
+			my $file = "$constants->{basedir}/$section/$qs->{sid}.shtml";
+			if ($constants->{mobile_enabled} &&
+			    ($constants->{mobile_useragent_regex} &&
+			     $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) ||
+			    $r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+				$section = $constants->{mobile_urlpath};
+				$file = "$constants->{basedir}/$section/$qs->{sid}.shtml";
+			}
+			if (-r $file) {
+				$r->uri("/$section/$qs->{sid}.shtml");
+				$r->filename($file);
+				writeLog('shtml');
+				return OK;
+			}
+		}
 	}
 
 	# REDIRECT article page shtml for mobile mode
@@ -372,6 +397,12 @@ sub IndexHandler {
 				return DONE;
 			}
 		}
+	}
+
+	# DECLINED if the skin does not exist
+	if ($uri =~ m|^/\w+/\w+\.pl$| &&
+	    determineCurrentSkin() == getCurrentStatic('mainpage_skid')) {
+		return DECLINED;
 	}
 
 	# Comment this in if you want to try having this do the right
@@ -448,30 +479,6 @@ sub IndexHandler {
 		$r->filename("$basedir/hof.shtml");
 		writeLog('shtml');
 		return OK;
-	}
-
-	# return shtml internally when AC
-	# for slashdot.jp (2008-07-17)
-	if ($uri =~ m!^/(\w+/)?article\.pl$! && !$is_user) {
-		my $section = $1 || 'articles';
-		my $the_request = $r->the_request;
-		my $qs = {$the_request =~ m!\b(sid|threshold|mode|commentsort|lowbandwidth|simpledesign|light)=([-\w/]+)!g};
-
-		if ((defined($qs->{sid}) && $qs->{sid} =~ m|^\d{2}/\d{2}/\d{2}/\d{6,}$|) &&
-		    (!defined($qs->{threshold}) || $qs->{threshold} == 1) &&
-		    (!defined($qs->{mode}) || $qs->{mode} eq 'thread' ) &&
-		    (!defined($qs->{commentsort}) || $qs->{commentsort} == 3) &&
-		    !$qs->{lowbandwidth} &&
-		    !$qs->{simpledesign} &&
-		    !$qs->{light}) {
-			my $file = "$constants->{basedir}/$section/$qs->{sid}.shtml";
-			if (-r $file) {
-				$r->uri("/$section/$qs->{sid}.shtml");
-				$r->filename("$constants->{basedir}/$section/$qs->{sid}.shtml");
-				writeLog('shtml');
-				return OK;
-			}
-		}
 	}
 
 	# redirect to static if
