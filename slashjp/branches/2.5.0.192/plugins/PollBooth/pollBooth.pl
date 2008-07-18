@@ -524,18 +524,14 @@ sub listpollsRSS {
 	my $polls = getObject('Slash::PollBooth', { db_type => 'reader' });
 	my $offset = 0;
 	my $limit = 10;
-	my $gSkin = getCurrentSkin();
-	my $user = getCurrentUser();
 
 	my $columns = "*";
 	my $tables = "pollquestions";
 	my $where = "";
 	my $other = "ORDER BY date DESC LIMIT $offset, $limit";
-
 	my $questions = $polls->sqlSelectAllHashrefArray($columns, $tables, $where, $other);
 
 	my $items = [];
-
 	foreach my $entry (@$questions) {
 		my $poll = $polls->getPoll($entry->{qid});
 		my $pollbooth = getData('rss_pollbooth', { poll	=> $poll });
@@ -545,7 +541,7 @@ sub listpollsRSS {
 				uid	=> $entry->{uid},
 				'time'	=> $entry->{date},
 			},
-			'link'			=> "$gSkin->{absolutedir}/polls/$entry->{qid}",
+			'link'			=> "$constants->{absolutedir}/polls/$entry->{qid}",
 			title			=> $entry->{question},
 			'time'			=> $entry->{date},
 			description		=> $entry->{question} . $readmore,
@@ -553,21 +549,22 @@ sub listpollsRSS {
 		});
 	}
 
-	xmlDisplay($form->{content_type} => {
+	my $ret = xmlDisplay($form->{content_type} => {
 		channel			=> {
 			title		=> getData('rss_title'),
 			description	=> getData('rss_descr'),
-			'link'		=> "$gSkin->{absolutedir}/polls/",
+			'link'		=> "$constants->{absolutedir}/polls/",
 		},
 		image			=> 1,
 		textinput		=> {
 			title	=> getData('search_header_title', { op => getData('polls', {}, 'search') }, 'search'),
-			'link'	=> "$gSkin->{absolutedir}/search.pl?op=polls",
+			'link'	=> "$constants->{absolutedir}/search.pl?op=polls",
 		},
 		items			=> $items,
 		rdfitemdesc		=> $constants->{dfitemdesc},
 		rdfitemdesc_html	=> $constants->{dfitemdesc_html} || 1,
-	});
+	}, $form->{ssi});
+	print "$ret\n" if ($form->{ssi});
 }
 
 #################################################################
