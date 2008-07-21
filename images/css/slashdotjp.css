@@ -237,6 +237,12 @@ div.adsense_468x60 {
 	width: 99%;
 }
 
+.generalbody #ads-login-336x280 {
+	float: right;
+	background: #EEE;
+	margin-left: 1em;
+}
+
 /* for osdnnavbar: width=0 */
 #top_parent {
   border: 0px solid transparent;
