@@ -26,8 +26,9 @@ slash (2.5.0.192-16) unstable; urgency=low
   * Improve "polls/rss" performance using rss cache
     - Use variable "rss_cachedir"
     - cache creating task is not included in slash distribution
+  * Allow firehose.pl for AC when the "id" is specified
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 18 Jul 2008 04:16:34 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jul 2008 07:03:37 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

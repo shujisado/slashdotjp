@@ -456,7 +456,7 @@ sub IndexHandler {
 	}
 
 	if ($uri eq '/firehose.pl') {
-		$r->uri($is_user ? '/firehose.pl' : '/firehose.shtml');
+		$r->uri($is_user || $r->the_request =~ /\bid=\d+\b/ ? '/firehose.pl' : '/firehose.shtml');
 		return OK;
 	}
 
