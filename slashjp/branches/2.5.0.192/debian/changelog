@@ -28,8 +28,9 @@ slash (2.5.0.192-16) unstable; urgency=low
     - cache creating task is not included in slash distribution
   * Allow firehose.pl for AC when the "id" is specified
   * move createMenu() into hierarchy and listTopics templates
+  * Redirect topics.pl to topics.shtml internally when when AC access
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jul 2008 07:47:47 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jul 2008 07:57:22 +0000
 
 slash (2.5.0.192-15) unstable; urgency=low
 

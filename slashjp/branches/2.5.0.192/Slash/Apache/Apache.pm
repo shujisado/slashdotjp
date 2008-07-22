@@ -481,6 +481,15 @@ sub IndexHandler {
 		return OK;
 	}
 
+	if ($uri eq '/topics.pl') {
+		if (!$is_user && $r->the_request !~ /\bop=\w+\b/) {
+			$r->uri('/topics.shtml');
+			$r->filename("$constants->{basedir}/topics.shtml");
+			writeLog('shtml');
+			return OK;
+		}
+	}
+
 	# redirect to static if
 	# * not a user, nor a daypass holder,
 	# and
