@@ -16,7 +16,7 @@ sub main {
 
 	my $hierarchy_op = $form->{op} && $form->{op} eq 'hierarchy';
 	my $data = $hierarchy_op
-		? { admin => 1, adminmenu => 'info', tab_selected => 'hierarchy' }
+		? { tab_selected => 'hierarchy' }
 		: { };
 	header(getData('head'), $form->{section}, $data) or return;
 
