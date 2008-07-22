@@ -20,7 +20,8 @@ sub main {
 		: { };
 	header(getData('head'), $form->{section}, $data) or return;
 
-	print createMenu('topics');
+	# move createMenu() into hierarchy and listTopics templates for slashdot.jp (2008-07-22)
+	#print createMenu('topics');
 
 	if ($hierarchy_op) {
 		hierarchy();
