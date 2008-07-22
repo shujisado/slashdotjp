@@ -52,6 +52,7 @@ div#slashboxes {
 #firehose #itemsreturned,
 #firehose .firemenu,
 #firehose .paginate,
+#pollBooth #wide,
 div#users-blocks {
 	margin-right: 212px;
 }
@@ -140,6 +141,30 @@ div#links {
 div.commentBody {
 	overflow-x: auto;
 	work-break: break-all;
+}
+
+/* Fix pollBooth graph */
+#pollBooth .generalbody table {
+	margin: 0;
+	width: 100%;
+}
+#pollBooth .generalbody caption {
+	margin-left: 0;
+}
+#pollBooth .totalVotes {
+	display: block;
+	margin: 0.2em 0;
+	text-align: right;
+	float: none;
+}
+#pollBooth #resultgraph {
+	margin: 0 1em;
+}
+#pollBooth .polllinks {
+	margin: 1em 0;
+}
+#pollBooth #listpolls li {
+	margin-bottom: 0.4em;
 }
 
 /* slashdot.jp announce area */
