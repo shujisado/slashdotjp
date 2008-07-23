@@ -362,7 +362,7 @@ sub displayTopRSS {
 		channel => {
 			title		=> getData('rss_top_recent_title'),
 			description	=> getData('rss_top_recent_desc'),
-			'link'		=> "$gSkin->{absolutedir}/journals/top/",
+			'link'		=> "$gSkin->{absolutedir}/journals/",
 		},
 		image	=> 1,
 		items	=> \@items,
