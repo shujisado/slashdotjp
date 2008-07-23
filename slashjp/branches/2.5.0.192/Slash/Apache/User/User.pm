@@ -597,6 +597,11 @@ sub userdir_handler {
 		my($word, $query) = ($1, $2);
 		my @args = ($query);
 		$word =~ s{/}{_}g;
+		if ($word =~ /^(recent|friends|posters)/) {
+			$word = "top_$word";
+		} elsif ($word eq "rss") {
+			$word = "top_recent_rss";
+		}
 		if ($word =~ /^(.+)_rss$/) {
 			$word = $1;
 			push @args, "content_type=rss";

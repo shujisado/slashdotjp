@@ -324,6 +324,10 @@ sub create {
 					if $item->{'time'};
 				$encoded_item->{dc}{creator} = $self->encode($item->{creator})
 					if $item->{creator};
+				$encoded_item->{dc}{source} = $self->encode($item->{source})
+					if $item->{source};
+				$encoded_item->{dc}{relation} = $self->encode($item->{relation})
+					if $item->{relation};
 			}
 			$encoded_item->{dc}{source} = $item->{source}
 				if $item->{source};
