@@ -1,3 +1,12 @@
+slash (2.5.0.192-17) unstable; urgency=low
+
+  * Fix journals URL (remove "top")
+    - top recent: /journals/top/recent -> /journals/recent
+    - top posters: /journals/top/posters -> /journals/posters
+    - you can access old URL
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 23 Jul 2008 12:07:54 +0000
+
 slash (2.5.0.192-16) unstable; urgency=low
 
   * Fix for reason_modifier setting for users.pl

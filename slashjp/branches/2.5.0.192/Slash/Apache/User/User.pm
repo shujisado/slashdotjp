@@ -596,11 +596,14 @@ sub userdir_handler {
 	if ($uri =~ m!^/journals (?: /([^?]*) | /? ) (?: \?(.*) )? $!x) {
 		my($word, $query) = ($1, $2);
 		my @args = ($query);
+		$word =~ s!/+$!!;
 		$word =~ s{/}{_}g;
 		if ($word =~ /^(recent|friends|posters)/) {
 			$word = "top_$word";
 		} elsif ($word eq "rss") {
 			$word = "top_recent_rss";
+		} elsif ($word eq "") {
+			$word = "top";
 		}
 		if ($word =~ /^(.+)_rss$/) {
 			$word = $1;
