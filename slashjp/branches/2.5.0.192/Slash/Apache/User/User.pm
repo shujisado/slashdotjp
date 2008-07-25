@@ -598,9 +598,9 @@ sub userdir_handler {
 		my @args = ($query);
 		$word =~ s!/+$!!;
 		$word =~ s{/}{_}g;
-		if ($word =~ /^(recent|friends|posters)/) {
-			$word = "top_$word";
-		} elsif ($word eq "rss") {
+		$word =~ s/^top(recent|friends|posters)(.*)$/top_$1$2/;
+		$word =~ s/^topcount(.*)$/top_posters$1/;
+		if ($word eq "rss") {
 			$word = "top_recent_rss";
 		} elsif ($word eq "") {
 			$word = "top";
