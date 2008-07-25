@@ -637,8 +637,9 @@ sub userdir_handler {
 	}
 
 	# faq for slashdot.jp
-	if ($uri =~ m!^/faq (?: /([^?]*) | /? ) (?: \?(.*) )? $!x) {
+	if ($uri =~ m!^/faq (?: (/[^?]*) | /? ) (?: \?(.*) )? $!x) {
 		my($word, $query) = ($1, $2);
+		$word ? $word =~ s!^/!! : redirect("$constants->{absolutedir}/faq/");
 		my @args = ($query);
 		if ($word) {
 			$word = "-$word";
