@@ -490,6 +490,33 @@ sub IndexHandler {
 		}
 	}
 
+	# faq for slashdot.jp
+	if ($uri =~ m!^/faq (?: (/[^?]*) | /? ) (?: \?(.*) )? $!x) {
+		my($word, $query) = ($1, $2);
+		$word ? $word =~ s!^/!! : redirect("$constants->{absolutedir}/faq/");
+		my @args = ($query);
+		if ($word) {
+			$word = "-$word";
+		}
+		$word = "faq$word";
+		my $fpath = "/$constants->{sfjp_wikicontents_path}/$word.shtml";
+		my $file = "$constants->{basedir}$fpath";
+		unless (-r $file) {
+			return NOT_FOUND;
+		}
+		if ($is_user) {
+			push @args, "name=$word";
+			$r->args(join('&', @args));
+			$r->uri('/wikicontents.pl');
+			$r->filename($constants->{basedir} . '/wikicontents.pl');
+			return OK;
+		} else {
+			$r->uri($fpath);
+			$r->filename($file);
+			return OK;
+		}
+	}
+
 	# redirect to static if
 	# * not a user, nor a daypass holder,
 	# and
@@ -567,3 +594,4 @@ in the httpd.conf file.
 Slash(3).
 
 =cut
+        
