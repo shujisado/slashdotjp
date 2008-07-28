@@ -187,6 +187,7 @@ div#submit div.generalbody ul,
 div#commentBody ul,
 div#metamod ul,
 div#bookmark ul,
+div#topics .generalbody ul,
 form#createuserform ul {
 	margin: 1em 0pt 1em 2em !important;
 }
