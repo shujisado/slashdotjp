@@ -493,6 +493,7 @@ sub IndexHandler {
 	# faq for slashdot.jp
 	if ($uri =~ m!^/faq (?: (/[^?]*) | /? ) (?: \?(.*) )? $!x) {
 		my($word, $query) = ($1, $2);
+		$word =~ m!^/(.+)\.shtml$! && redirect("$constants->{absolutedir}/faq/$1");
 		$word ? $word =~ s!^/!! : redirect("$constants->{absolutedir}/faq/");
 		my @args = ($query);
 		if ($word) {
