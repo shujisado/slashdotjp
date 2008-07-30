@@ -194,15 +194,15 @@ div.commentBody {
 	text-decoration: underline;
 }
 #wikicontents .pagenavi .up a {
-	background: transparent url(//images.sd-test.osdn.jp/pagenavi_up.gif) no-repeat scroll left center;
+	background: transparent url(//images.slashdot.jp/pagenavi_up.gif) no-repeat scroll left center;
 	padding-left: 12px;
 }
 #wikicontents .pagenavi .prev a {
-	background: transparent url(//images.sd-test.osdn.jp/pagenavi_left.gif) no-repeat scroll left center;
+	background: transparent url(//images.slashdot.jp/pagenavi_left.gif) no-repeat scroll left center;
 	padding-left: 12px;
 }
 #wikicontents .pagenavi .next a {
-	background: transparent url(//images.sd-test.osdn.jp/pagenavi_right.gif) no-repeat scroll right center;
+	background: transparent url(//images.slashdot.jp/pagenavi_right.gif) no-repeat scroll right center;
 	padding-right: 12px;
 }
 
