@@ -180,6 +180,7 @@ div.commentBody {
 }
 #wikicontents .pagenavi .next {
 	text-align: right;
+	height: 1.3em;
 }
 #wikicontents .pagenavi .label {
 	display: none;
