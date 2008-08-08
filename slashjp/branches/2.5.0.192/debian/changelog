@@ -6,8 +6,9 @@ slash (2.5.0.192-17) unstable; urgency=low
     - you can access old URL
   * Add /faq/ internal redirection at Slash/Apache/Apache.pm
     - This code is for slash-plugin-wikicontents
+  * Fix LDAP.pm DEBUG_LEVEL warning
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 25 Jul 2008 14:36:41 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Aug 2008 14:49:59 +0900
 
 slash (2.5.0.192-16) unstable; urgency=low
 
