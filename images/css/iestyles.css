@@ -155,6 +155,10 @@ ul.menu li {
 	float: none;
 }
 
+div#contents div#message p {
+	border-bottom: none;
+}
+
 /* journal fix */
 #editjournal-description {
 	width: 90%;
