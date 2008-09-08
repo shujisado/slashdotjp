@@ -50,3 +50,4 @@ runtask .* (Begin|End)
 ^So total tokens=[0-9]+
 newcomments: [0-9]+
 [0-9]+ comments becomes [0-9]+ tokens\.
+Updated the data for estmaster:

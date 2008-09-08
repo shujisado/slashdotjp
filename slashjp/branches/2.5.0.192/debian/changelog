@@ -9,8 +9,9 @@ slash (2.5.0.192-17) unstable; urgency=low
   * Fix LDAP.pm DEBUG_LEVEL warning
   * Use $user->{currentSkin} at $slashdb->getTemplateByName()
     - Fix: slashDisplay() option 'Skin' does not applied
+  * Add logcheck ignore rule for SearchEst
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 18 Aug 2008 07:58:07 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon,  8 Sep 2008 11:58:09 +0000
 
 slash (2.5.0.192-16) unstable; urgency=low
 
