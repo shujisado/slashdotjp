@@ -7,8 +7,10 @@ slash (2.5.0.192-17) unstable; urgency=low
   * Add /faq/ internal redirection at Slash/Apache/Apache.pm
     - This code is for slash-plugin-wikicontents
   * Fix LDAP.pm DEBUG_LEVEL warning
+  * Use $user->{currentSkin} at $slashdb->getTemplateByName()
+    - Fix: slashDisplay() option 'Skin' does not applied
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 08 Aug 2008 14:49:59 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 18 Aug 2008 07:58:07 +0000
 
 slash (2.5.0.192-16) unstable; urgency=low
 

@@ -9500,6 +9500,7 @@ sub getTemplateByName {
 		$page ||= 'misc';
 	}
 	unless ($skin) {
+		$skin = getCurrentUser('currentSkin');
 		$skin ||= getCurrentSkin('name');
 		$skin ||= 'default';
 	}
