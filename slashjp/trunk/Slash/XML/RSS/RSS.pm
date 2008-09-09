@@ -28,6 +28,7 @@ LONG DESCRIPTION.
 use strict;
 use Slash;
 use Slash::Utility;
+use Slash::Display;
 use XML::RSS;
 use base 'Slash::XML';
 use vars qw($VERSION);
@@ -172,10 +173,10 @@ sub create {
 	);
 
 	my $dynamic = 0;
-	my $absolutedir = $gSkin->{absolutedir};
+	my $absolutedir = $gSkin->{absolutedir} || $constants->{absolutedir};
 	if (defined &Slash::Apache::ConnectionIsSSL) {
 		$dynamic = 1;
-		$absolutedir = $gSkin->{absolutedir_secure} if Slash::Apache::ConnectionIsSSL();
+		$absolutedir = ($gSkin->{absolutedir_secure} || $constants->{absolutedir_secure}) if Slash::Apache::ConnectionIsSSL();
 	}
 
 	# set defaults
@@ -190,7 +191,7 @@ sub create {
 		subject		=> $constants->{rdfsubject},
 		language	=> $constants->{rdflanguage},
 		creator		=> $constants->{adminmail},
-		publisher	=> $constants->{rdfpublisher},
+		publisher	=> $constants->{rdfpublisher} || $constants->{sitepublisher},
 		rights		=> $constants->{rdfrights},
 
 		# syn
@@ -284,14 +285,14 @@ sub create {
 	if ($param->{textinput}) {
 		# set defaults
 		my %textinput = (
-			title		=> 'Search ' . $constants->{sitename},
-			description	=> 'Search ' . $constants->{sitename} . ' stories',
-			name		=> 'query',
+			title		=> getData('search_header_title', {}, 'search'),
+			description	=> getData('search_header_descr', { section => $param->{skin} ? $param->{skin}{title} : undef }, 'search'),
+			name		=> $constants->{search_query_name} || 'query',
 			'link'		=> $channel{'link'} . 'search.pl',
 		);
 
 		# let $param->{textinput} override
-		if (ref($param->{image}) eq 'HASH') {
+		if (ref($param->{textinput}) eq 'HASH') {
 			for (keys %textinput) {
 				my $value = defined $param->{textinput}{$_}
 					? $param->{textinput}{$_}
@@ -324,6 +325,10 @@ sub create {
 				$encoded_item->{dc}{creator} = $self->encode($item->{creator})
 					if $item->{creator};
 			}
+			$encoded_item->{dc}{source} = $item->{source}
+				if $item->{source};
+			$encoded_item->{dc}{relation} = $item->{relation}
+				if $item->{relation};
 
 			for my $key (keys %$item) {
 				if ($key eq 'description') {
@@ -454,10 +459,21 @@ sub rss_story {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
 		if ($desc) {
 			$encoded_item->{description} = $desc;
-			$encoded_item->{description} .= qq{<p><a href="$action"><img src="$channel->{'link'}slashdot-it.pl?from=rss&amp;op=image&amp;style=h0&amp;sid=$story->{sid}"></a></p>};
-			$encoded_item->{description} .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>" if $action;
+			$encoded_item->{description} = $desc . getData('rss_story_readmore', {
+				'link'		=> $encoded_item->{link},
+				discussion	=> $story->{discussion},
+			}, 'index');
+			# disabled on slashdot.jp (2008-09-09, tach)
+			#$encoded_item->{description} .= qq{<p><a href="$action"><img src="$channel->{'link'}slashdot-it.pl?from=rss&amp;op=image&amp;style=h0&amp;sid=$story->{sid}"></a></p>};
+			#$encoded_item->{description} .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>" if $action;
 			# add poll if any
 			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+
+			# add content:encoded for slashdot.jp
+			$item->{'content:encoded'} ||= ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
+				'link'		=> $encoded_item->{link},
+				discussion	=> $story->{discussion},
+			}, 'index');
 		}
 	}
 

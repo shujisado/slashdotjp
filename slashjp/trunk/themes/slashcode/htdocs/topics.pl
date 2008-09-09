@@ -16,11 +16,12 @@ sub main {
 
 	my $hierarchy_op = $form->{op} && $form->{op} eq 'hierarchy';
 	my $data = $hierarchy_op
-		? { admin => 1, adminmenu => 'info', tab_selected => 'hierarchy' }
+		? { tab_selected => 'hierarchy' }
 		: { };
 	header(getData('head'), $form->{section}, $data) or return;
 
-	print createMenu('topics');
+	# move createMenu() into hierarchy and listTopics templates for slashdot.jp (2008-07-22)
+	#print createMenu('topics');
 
 	if ($hierarchy_op) {
 		hierarchy();
@@ -65,6 +66,10 @@ sub listTopics {
 			$new_topics{$_} = $topics->{$_} if $ids->{$_};
 		}
 		$topics = \%new_topics;
+	}
+
+	foreach my $id ($reader->getNexusTids()) {
+		delete($topics->{$id}) if ($constants->{topiclist_dont_show_nexuses});
 	}
 
 	slashDisplay('listTopics', {

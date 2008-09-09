@@ -415,12 +415,15 @@ Fixed URL.
 sub cleanRedirectUrl {
 	my($redirect) = @_;
 	my $gSkin = getCurrentSkin();
+	my $form = getCurrentForm();
+	my $rurl = $gSkin->{rootdir};
+	$rurl .= '?m=1' if ($form->{m});
 
 	if (urlFromSite($redirect)) {
 		my $base = root2abs();
-		return URI->new_abs($redirect || $gSkin->{rootdir}, $base);
+		return URI->new_abs($redirect || $rurl, $base);
 	} else {
-		return url2abs($gSkin->{rootdir});
+		return url2abs($rurl);
 	}
 }
 
@@ -2078,7 +2081,7 @@ sub approveTag {
 			my $a_lc = lc $a;
 			next unless $allowed{$a_lc};
 			my $data = $attr_data{$a_lc} || '';
-			$data = fudgeurl($data) if $allowed{$a_lc}{url};
+			$data = fudgeurl($data) || '' if $allowed{$a_lc}{url};
 			next unless length $data;
 			$wholetag .= qq{ $a_lc="$data"};
 			++$found{$a_lc} if $required{$a_lc};

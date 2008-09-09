@@ -68,6 +68,9 @@ sub main {
 		list		=> [ 1,			\&listArticle		],
 		display		=> [ 1,			\&displayArticle	],
 		top		=> [ $top_ok,		\&displayTop		],
+		top_posters	=> [ $top_ok,		\&displayTop		],
+		top_friend	=> [ $top_ok,		\&displayTop		],
+		top_recent	=> [ $top_ok,		\&displayTop		],
 		searchusers	=> [ 1,			\&searchUsers		],
 		friends		=> [ 1,			\&displayFriends	],
 		friendview	=> [ 1,			\&displayArticleFriends	],
@@ -97,7 +100,7 @@ sub main {
 
 	# hijack feeds
 	if ($form->{content_type} && $form->{content_type} =~ $constants->{feed_types}) {
-		if ($op eq 'top' && $top_ok) {
+		if ($op =~ /^top/ && $top_ok) {
 			displayTopRSS($journal, $constants, $user, $form, $journal_reader, $gSkin);
 		} else {
 			displayRSS($journal, $constants, $user, $form, $journal_reader, $gSkin);
@@ -117,20 +120,33 @@ sub displayTop {
 	my $journals;
 
 	_printHead('mainhead') or return;
+	my $start = $form->{start} || 0;
+	my $limit = $user->{mobile} ? $constants->{mobile_top_journal_count} || 10
+	                            : $constants->{'journal_top'} || 10;
 
 	# this should probably be in a separate template, so the site admins
 	# can select the order themselves -- pudge
-	if ($constants->{journal_top_recent}) {
-		$journals = $journal_reader->topRecent;
-		slashDisplay('journaltop', { journals => $journals, type => 'recent' });
+	if ($constants->{journal_top_recent} && $form->{op} =~ /^top(_recent)?$/) {
+		$journals = $journal_reader->topRecent($limit, $start);
+		slashDisplay('journaltop', {
+			journals	=> $journals,
+			type		=> 'recent',
+			start		=> $start,
+			limit		=> $limit,
+		});
 	}
 
-	if ($constants->{journal_top_posters}) {
-		$journals = $journal_reader->top;
-		slashDisplay('journaltop', { journals => $journals, type => 'top' });
+	if ($constants->{journal_top_posters} && $form->{op} =~ /^top(_posters)?$/) {
+		$journals = $journal_reader->top($limit, $start);
+		slashDisplay('journaltop', {
+			journals	=> $journals,
+			type		=> 'top',
+			start		=> $start,
+			limit		=> $limit,
+		});
 	}
 
-	if ($constants->{journal_top_friend}) {
+	if ($constants->{journal_top_friend} && $form->{op} =~ /^top(_friend)?$/) {
 		my $zoo   = getObject('Slash::Zoo');
 		$journals = $zoo->topFriends;
 		slashDisplay('journaltop', { journals => $journals, type => 'friend' });
@@ -236,6 +252,15 @@ sub displayRSS {
 			$juid     = $juser->{uid};
 		}
 
+		my $link = "$gSkin->{absolutedir}/~" . fixparam($nickname) . "/journal/$article->[3]";
+		my $journalurl = "$gSkin->{absolutedir}/~" . fixparam($nickname) . "/journal/";
+		my $text = strip_mode($article->[1], $article->[4]);
+		$text .= getData('rss_readmore', {
+			link		=> $link,
+			journalurl	=> $journalurl,
+			nickname	=> $nickname,
+		});
+
 		push @items, {
 			story		=> {
 				'time'		=> $article->[0],
@@ -244,8 +269,9 @@ sub displayRSS {
 			},
 			title		=> $article->[2],
 			description	=> strip_notags($article->[1]),
-			'content:encoded' =>  balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 }),
+			'content:encoded' =>  balanceTags($text, { deep_nesting => 1 }),
 			'link'		=> root2abs() . '/~' . fixparam($nickname) . "/journal/$article->[3]",
+			relation		=> $journalurl,
 		};
 	}
 
@@ -309,21 +335,38 @@ sub displayTopRSS {
 
 		$title =~ s/s$// if $entry->[0] == 1 && ($type eq 'count' || $type eq 'friends');
 
+		my $link = "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/$entry->[4]";
+		my $journalurl = "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/";
+		my $text = strip_mode($entry->[6], $entry->[7]);
+		$text .= getData('rss_readmore', {
+			link		=> $link,
+			journalurl	=> $journalurl,
+			nickname	=> $entry->[1],
+		});
+
 		push @items, {
-			title	=> $title,
-			link	=> "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/",
-			description => strip_notags($entry->[6]),
+			story	=> {
+				'time'	=> $entry->[3],
+				uid	=> $entry->[2],
+				tid	=> $entry->[8],
+			},
+			title			=> $title,
+			link			=> $link,
+			'content:encoded'	=> balanceTags($text, { deep_nesting => 1 }),
+			description		=> strip_notags($entry->[6]),
+			relation		=> $journalurl,
 		};
 	}
 
 	xmlDisplay($form->{content_type} => {
 		channel => {
-			title		=> "$constants->{sitename} Journals",
-			description	=> "Top $constants->{journal_top} Journals",
-			'link'		=> "$gSkin->{absolutedir}/journal.pl?op=top",
+			title		=> getData('rss_top_recent_title'),
+			description	=> getData('rss_top_recent_desc'),
+			'link'		=> "$gSkin->{absolutedir}/journals/",
 		},
 		image	=> 1,
-		items	=> \@items
+		items	=> \@items,
+		rdfitemdesc		=> $constants->{journal_rdfitemdesc},
 	});
 }
 
@@ -412,6 +455,7 @@ sub displayArticle {
 	my $collection = {};
 	my $user_change = {};
 	my $head_data = {};
+	my ($prev, $next);
 
 	my $slashdb = getCurrentDB();
 
@@ -463,6 +507,7 @@ sub displayArticle {
 	if (@$articles == 1) {
 	    $head_data->{html_title} = $articles->[0]->[2];
 	}
+	$head_data->{jcount} = scalar(@$articles);
 	_printHead('userhead', $head_data, 1) or return;
 
 	# check for extra articles ... we request one more than we need
@@ -501,6 +546,8 @@ sub displayArticle {
 			$commentcount = $article->[6]
 				? $discussion->{commentcount}
 				: 0;
+			$prev = $journal_reader->getJournalByTime('>', $article, { uid => $uid });
+			$next = $journal_reader->getJournalByTime('<', $article, { uid => $uid });
 		} else {
 			$commentcount = $article->[6]
 				? $journal_reader->getDiscussion($article->[6], 'commentcount')
@@ -520,11 +567,14 @@ sub displayArticle {
 			discussion	=> $article->[6],
 			id		=> $article->[3],
 			commentcount	=> $commentcount,
+			prev		=> $prev,
+			next		=> $next,
 		};
 	}
 
 	push @sorted_articles, $collection;
 	my $theme = _checkTheme($form->{theme} || $journal_reader->getUser($uid, 'journal_theme'));
+	$theme = 'mobile' if ($user->{mobile});
 
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');
@@ -540,7 +590,7 @@ sub displayArticle {
 
 	print getData('journalfoot');
 
-	if ($show_discussion) {
+	if (!$user->{mobile} && $show_discussion) {
 		printComments($discussion);
 	}
 
@@ -584,7 +634,7 @@ sub doSaveArticle {
 	# don't allow submission if user can't submit stories
 	# note: this may not work properly with SOAP, but submissions
 	# not enabled with SOAP now anyway
-	if ($constants->{journal_create_submission} && $form->{promotetype} eq 'publicize') {
+	if (!$form->{id} && $constants->{journal_create_submission} && $form->{promotetype} eq 'publicize') {
 		my $reskey = getObject('Slash::ResKey');
 		my $submit_rkey = $reskey->key('submit', { nostate => 1 });
 		unless ($submit_rkey->createuse) {

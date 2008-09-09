@@ -1625,6 +1625,31 @@ sub prepareUser {
 	}
 	$constants->{tweak_japanese} and $user->{aton} = '';
 
+	# mobile theme for slashdot.jp
+	if ($constants->{mobile_enabled}) {
+		if ($ENV{GATEWAY_INTERFACE}) {
+#print STDERR $r->header_in('user-agent') . " =~ $constants->{mobile_useragent_regex}\n";
+			if ($constants->{mobile_useragent_regex} &&
+			    $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) {
+				$user->{mobile} = 1;
+#print STDERR "MOBILE SKIN MATCH: " . $r->header_in('user-agent') . "\n";
+			} elsif ($r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+				$user->{mobile} = 1;
+#print STDERR "FORCE MOBILE MODE: " . $r->args() . "\n";
+			}
+		} else {
+			$user->{mobile} = 1 if (getCurrentForm('m'));
+			setCurrentForm('m', undef);
+		}
+
+		# settings for mobile mode
+		if ($user->{mobile}) {
+			$user->{mode} = $constants->{mobile_commentmode} || 'flat'; # show flat
+			$user->{commentsort} = $constants->{mobile_commentsort} || 4; # sorted by date asc
+			$user->{commentlimit} = $constants->{mobile_commentlimit} || 5; # comments per page
+		}
+	}
+
 	if ($uri =~ m[^/$]) {
 		$user->{currentPage} = 'index';
 	} elsif ($uri =~ m{\b([^/]+)\.pl\b}) {

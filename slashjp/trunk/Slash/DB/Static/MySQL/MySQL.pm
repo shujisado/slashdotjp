@@ -83,19 +83,21 @@ sub getBackendStories {
 	my $constants = getCurrentStatic();
 
 	my $limit = $options->{limit} || 10;
-	my $topic = $options->{topic} || getCurrentStatic('mainpage_nexus_tid');
+	my $topic = $options->{topic};
 
 	my $select = "stories.stoid AS stoid, sid, title, stories.tid AS tid, primaryskid, time,
-		dept, stories.uid AS uid, commentcount, hitparade, introtext, bodytext, stories.qid as qid";
+		dept, stories.uid AS uid, commentcount, hitparade, introtext, bodytext, stories.qid as qid, discussion";
 
 	my $from = "stories, story_text, story_topics_rendered";
 
 	my $where = "stories.stoid = story_text.stoid
 		AND time < NOW() AND in_trash = 'no'
-		AND stories.stoid = story_topics_rendered.stoid
-		AND story_topics_rendered.tid=$topic";
+		AND stories.stoid = story_topics_rendered.stoid";
+	if ($topic) {
+		$where .= " AND story_topics_rendered.tid=$topic";
+	}
 
-	my $other = "ORDER BY time DESC LIMIT $limit";
+	my $other = "GROUP BY sid ORDER BY time DESC LIMIT $limit";
 
 	my $returnable = $self->sqlSelectAllHashrefArray($select, $from, $where, $other);
 

@@ -541,6 +541,9 @@ sub getCSS {
 	my $theme = ($user->{simpledesign} || $user->{pda}) ? "light" : $user->{css_theme};
 	my $constants = getCurrentStatic();
 
+	# force mobile theme
+	$theme = 'mobile' if ($user->{mobile});
+
 	my $expire_time = $constants->{css_expire} || 3600;
 	$expire_time += int(rand(60)) if $expire_time;
 	_genericCacheRefresh($self, 'css', $expire_time);
@@ -5879,6 +5882,16 @@ sub getStoryByTime {
 		my $nexus_clause = join ',', @$nexuses, $mp_tid;
 		$where .= " AND story_topics_rendered.tid IN ($nexus_clause)";
 		$key .= '|>=';
+	} elsif (!$section && !$topic) {
+		# suppress stories never seen
+		$where .= " AND story_topics_rendered.stoid NOT IN (SELECT stoid FROM story_topics_rendered WHERE tid IN ($user->{story_never_nexus}))"
+			if ($user->{story_never_nexus});
+		my $nexuses = [];
+		push @$nexuses, $user->{story_full_best_nexus} if ($user->{story_full_best_nexus});
+		push @$nexuses, $user->{story_brief_best_nexus} if ($user->{story_brief_best_nexus});
+		my $nexus_clause .= join ',', @$nexuses;
+		$where .= " AND (story_topics_rendered.stoid NOT IN (SELECT stoid FROM story_topics_rendered WHERE tid IN ($nexus_clause)) OR story_topics_rendered.tid = $mp_tid)"
+			if ($nexus_clause);
 	} else {
 		$where .= " AND story_topics_rendered.tid = $mp_tid";
 		$key .= '|=';
@@ -5898,6 +5911,8 @@ sub getStoryByTime {
 		$key = $user->{story_never_topic}
 			|| $user->{story_never_author}
 			|| $user->{story_never_nexus}
+			|| $user->{story_full_best_nexus}
+			|| $user->{story_brief_best_nexus}
 			? ''
 			: "$key|";
 	} elsif ($topic) {
@@ -7867,7 +7882,7 @@ sub updateStory {
 		# will be updated later by journal_fix.pl
 		if ($story->{journal_id}) {
 			delete @{$dis_data}{qw(ts)};
-			delete @{$discussion}{qw(title url)} unless ($constants->{update_journal_story_discussion_to_story});
+			delete @{$dis_data}{qw(title url)} unless ($constants->{update_journal_story_discussion_to_story});
 		}
 
 		if (!$error) {
@@ -8090,6 +8105,9 @@ sub getSlashConf {
 		$conf{reasons} = $self->sqlSelectAllHashref(
 			"id", "*", "modreasons"
 		);
+		foreach my $d (split(/,/, $conf{modreasons_select_disabled} || '')) {
+			$conf{reasons}{int($d)}{select_disabled} = 1;
+		}
 	}
 
 	$conf{rootdir}		||= "//$conf{basedomain}";
@@ -9519,9 +9537,13 @@ sub getTemplateByName {
 		$page ||= 'misc';
 	}
 	unless ($skin) {
+		$skin = getCurrentUser('currentSkin');
 		$skin ||= getCurrentSkin('name');
 		$skin ||= 'default';
 	}
+
+	# change to mobile skin
+	$skin = 'm' if (getCurrentUser('mobile'));
 
 	#Now, lets figure out the id
 	#name|page|skin => name|page|default => name|misc|skin => name|misc|default
@@ -10212,7 +10234,7 @@ sub getSkin {
 	my($self, $skid, $options) = @_;
 	if (!$skid) {
 		if ($ENV{GATEWAY_INTERFACE}) {
-			errorLog("cannot getSkin for empty skid='$skid'");
+			errorLog("cannot getSkin for empty skid");
 		}
 		$skid = getCurrentStatic('mainpage_skid');
 	}

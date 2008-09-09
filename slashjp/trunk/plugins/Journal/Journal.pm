@@ -60,14 +60,10 @@ sub set {
 	$self->sqlUpdate('journals', \%j1, "id=$id") if keys %j1;
 	$self->sqlUpdate('journals_text', \%j2, "id=$id") if $j2{article};
 	if ($constants->{plugin}{FireHose}) {
-		my $reskey = getObject('Slash::ResKey');
-		my $rkey = $reskey->key('submit', { nostate => 1 });
-		if ($rkey && $rkey->createuse) {
-			my $journal_item = $self->get($id);
-			my $firehose = getObject("Slash::FireHose");
-			if ($journal_item->{promotetype} eq "publicize" || $journal_item->{promotetype} eq "publish") {
-				$firehose->createUpdateItemFromJournal($id);
-			}
+		my $journal_item = $self->get($id);
+		my $firehose = getObject("Slash::FireHose");
+		if ($journal_item->{promotetype} eq "publicize" || $journal_item->{promotetype} eq "publish") {
+			$firehose->createUpdateItemFromJournal($id);
 		}
 	}
 }
@@ -215,15 +211,11 @@ sub create {
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($user->{uid}, { journal_last_entry_date => $date });
 	if ($constants->{plugin}{FireHose}) {
-		my $reskey = getObject('Slash::ResKey');
-		my $rkey = $reskey->key('submit', { nostate => 1 });
-		if ($rkey && $rkey->createuse) {
-			my $firehose = getObject("Slash::FireHose");
-			my $journal = getObject("Slash::Journal");
-			my $j = $journal->get($id);
-			if ($j->{promotetype} eq "publicize" || $j->{promotetype} eq "publish") {
-				$firehose->createItemFromJournal($id);
-			}
+		my $firehose = getObject("Slash::FireHose");
+		my $journal = getObject("Slash::Journal");
+		my $j = $journal->get($id);
+		if ($j->{promotetype} eq "publicize" || $j->{promotetype} eq "publish") {
+			$firehose->createItemFromJournal($id);
 		}
 	}
 
@@ -303,45 +295,39 @@ sub updateUsersJournal {
 }
 
 sub top {
-	my($self, $limit) = @_;
+	my($self, $limit, $start) = @_;
 	$limit ||= getCurrentStatic('journal_top') || 10;
+	$start ||= 0;
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count AS c,nickname,users_journal.uid,date,jid AS id
+SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article,posttype,tid
 FROM users_journal JOIN users USING (uid)
+JOIN journals ON jid=journals.id
+JOIN journals_text ON jid=journals_text.id
 ORDER BY count DESC
-LIMIT $limit
+LIMIT $start, $limit
 EOT
 
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);
-
-	my $sql2 = sprintf <<EOT, join (',', map { $_->[4] } @$losers);
-SELECT id, description
-FROM journals
-WHERE id IN (%s)
-EOT
-	my $losers2 = $self->{_dbh}->selectall_hashref($sql2, 'id');
-
-	for (@$losers) {
-		$_->[5] = $losers2->{$_->[4]}{description};
-	}
+	return [ ] if !$losers || !@$losers;
 
 	return $losers;
 }
 
 sub topRecent {
-	my($self, $limit) = @_;
+	my($self, $limit, $start) = @_;
 	$limit ||= getCurrentStatic('journal_top') || 10;
+	$start ||= 0;
 	$self->sqlConnect;
 
 	my $sql = <<EOT;
-SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article
+SELECT count AS c,nickname,users_journal.uid,users_journal.date,jid AS id,description,journals_text.article,posttype,tid
 FROM users_journal JOIN users USING (uid)
 JOIN journals ON jid=journals.id
 JOIN journals_text ON jid=journals_text.id
 ORDER BY date DESC
-LIMIT $limit
+LIMIT $start, $limit
 EOT
 
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);
@@ -657,7 +643,7 @@ sub updateTransferredJournalDiscussions {
 			url		=> $url,
 			ts		=> $journal_story->{'time'}
 		};
-		delete @{$discussion}{qw(title url)} if ($constants->{update_journal_story_discussion_to_story});
+		delete @{$discussion}{qw(title url)} if (getCurrentStatic("update_journal_story_discussion_to_story"));
 
 		if ($self->setDiscussion($journal_story->{discussion}, $discussion)) {
 			$self->sqlUpdate('journal_transfer', {
@@ -703,6 +689,38 @@ sub updateTransferredJournalDiscussions {
 	}
 }
 
+sub getJournalByTime {
+	my($self, $sign, $journal, $options) = @_;
+	my $constants = getCurrentStatic();
+	$options = {} if !$options || ref($options) ne 'HASH';
+	my $limit = $options->{limit} || 1;
+	my $uid = int($options->{uid}) || undef;
+	my $where = "";
+	my $name  = 'journal_by_time';
+	my $order = $sign eq '<' ? 'DESC' : 'ASC';
+
+	# $journal->[0]: datetime string
+	# $journal->{1]: journaltext
+	# $journal->{2]: journaltitle
+	# $journal->[3]: journal_id
+	# $journal->[4]: format_id
+	# $journal->[5]: topic_id
+	# $journal->[6]: discussion_id
+
+	if ($uid) {
+		$where .= " AND uid=$uid";
+	}
+
+	my $returnable = $self->sqlSelectHashref(
+		'date, article, description, id, posttype, tid, discussion',
+		'journals JOIN journals_text USING (id)',
+		"date $sign '$journal->[0]'
+		 AND date <= NOW()
+		 $where",
+		 "ORDER by date $order LIMIT $limit"
+	);
+	return $returnable;
+}
 
 sub DESTROY {
 	my($self) = @_;

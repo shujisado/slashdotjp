@@ -1589,7 +1589,11 @@ sub extractRelatedStoriesFromForm {
 	# Extract sids from urls in introtext and bodytext
 	foreach ($form->{introtext}, $form->{bodytext}) {
 		next unless ($_);
-		push @$related, $1 while /$match/g;
+		while (/$match/g) {
+			next unless $slashdb->getStory($1);
+			push @$related, $1;
+		}
+		next if ($constants->{related_cid_disabled});
 		push @$related_cids, $1 while /$match_cid/g;
 	}
 
@@ -2534,7 +2538,7 @@ sub saveStory {
 			for my $tid (keys %$chosen_hr) {
 				next unless $chosen_hr->{$tid} > 0;	# must have weight
 				next unless $tree->{$tid}{image};	# must have an image
-				my $kw = $tree->{$tid}{keyword};
+				my $kw = $constants->{autoaddstorytopics_use_textname} ? $tree->{$tid}{textname} : $tree->{$tid}{keyword};
 				next unless $tagsdb->tagnameSyntaxOK($kw); # must be a valid tagname
 				$tt{$kw} = 1;
 			}

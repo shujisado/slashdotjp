@@ -354,6 +354,57 @@ sub IndexHandler {
 	#	$uri =~ s/^\Q$path//;
 	#}
 
+	# return shtml internally when AC
+	# for slashdot.jp (2008-07-17)
+	if ($uri =~ m!^/(\w+/)?article\.pl$! && !$is_user) {
+		my $section = $1 || 'articles';
+		my $the_request = $r->the_request;
+		my $qs = {$the_request =~ m!\b(sid|threshold|mode|commentsort|lowbandwidth|simpledesign|light)=([-\w/]+)!g};
+
+		if ((defined($qs->{sid}) && $qs->{sid} =~ m|^\d{2}/\d{2}/\d{2}/\d{6,}$|) &&
+		    (!defined($qs->{threshold}) || $qs->{threshold} == 1) &&
+		    (!defined($qs->{mode}) || $qs->{mode} eq 'thread' ) &&
+		    (!defined($qs->{commentsort}) || $qs->{commentsort} == 3) &&
+		    !$qs->{lowbandwidth} &&
+		    !$qs->{simpledesign} &&
+		    !$qs->{light}) {
+			my $file = "$constants->{basedir}/$section/$qs->{sid}.shtml";
+			if ($constants->{mobile_enabled} &&
+			    ($constants->{mobile_useragent_regex} &&
+			     $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) ||
+			    $r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+				$section = $constants->{mobile_urlpath};
+				$file = "$constants->{basedir}/$section/$qs->{sid}.shtml";
+			}
+			if (-r $file) {
+				$r->uri("/$section/$qs->{sid}.shtml");
+				$r->filename($file);
+				writeLog('shtml');
+				return OK;
+			}
+		}
+	}
+
+	# REDIRECT article page shtml for mobile mode
+	if ($uri !~ m|^$constants->{mobile_urlpath}/| && $uri =~ m|^/\w+/(\d{2}/\d{2}/\d{2}/\d{6,})\.shtml|) {
+		my $sid = $1;
+		if ($constants->{mobile_enabled}) {
+			if (($constants->{mobile_useragent_regex} &&
+			     $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) ||
+			     $r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+				my $newuri = $constants->{real_rootdir}.$constants->{mobile_urlpath}."/$sid.shtml";
+				redirect($newuri);
+				return DONE;
+			}
+		}
+	}
+
+	# DECLINED if the skin does not exist
+	if ($uri =~ m|^/\w+/\w+\.pl$| &&
+	    determineCurrentSkin() == getCurrentStatic('mainpage_skid')) {
+		return DECLINED;
+	}
+
 	# Comment this in if you want to try having this do the right
 	# thing dynamically
 	# my $slashdb = getCurrentDB();
@@ -388,6 +439,13 @@ sub IndexHandler {
 			if ($gSkin->{skid} == $constants->{mainpage_skid}) {
 				$r->filename("$basedir/$base.shtml");
 				$r->uri("/$base.shtml");
+				if ($constants->{mobile_enabled}) {
+					if (($constants->{mobile_useragent_regex} &&
+					     $r->header_in('user-agent') =~ $constants->{mobile_useragent_regex}) ||
+				            $r->args() =~ m{\bm=[1-9a-zA-Z]}) {
+						$r->uri($constants->{mobile_urlpath}."/$base.shtml");
+					}
+				}
 			} else {
 				$r->filename("$basedir/$gSkin->{name}/$base.shtml");
 				$r->uri("/$gSkin->{name}/$base.shtml");
@@ -398,7 +456,7 @@ sub IndexHandler {
 	}
 
 	if ($uri eq '/firehose.pl') {
-		$r->uri($is_user ? '/firehose.pl' : '/firehose.shtml');
+		$r->uri($is_user || $r->the_request =~ /\bid=\d+\b/ ? '/firehose.pl' : '/firehose.shtml');
 		return OK;
 	}
 
@@ -421,6 +479,43 @@ sub IndexHandler {
 		$r->filename("$basedir/hof.shtml");
 		writeLog('shtml');
 		return OK;
+	}
+
+	if ($uri eq '/topics.pl') {
+		if (!$is_user && $r->the_request !~ /\bop=\w+\b/) {
+			$r->uri('/topics.shtml');
+			$r->filename("$constants->{basedir}/topics.shtml");
+			writeLog('shtml');
+			return OK;
+		}
+	}
+
+	# faq for slashdot.jp
+	if ($uri =~ m!^/faq (?: (/[^?]*) | /? ) (?: \?(.*) )? $!x) {
+		my($word, $query) = ($1, $2);
+		$word =~ m!^/(.+)\.shtml$! && redirect("$constants->{absolutedir}/faq/$1");
+		$word ? $word =~ s!^/!! : redirect("$constants->{absolutedir}/faq/");
+		my @args = ($query);
+		if ($word) {
+			$word = "-$word";
+		}
+		$word = "faq$word";
+		my $fpath = "/$constants->{sfjp_wikicontents_path}/$word.shtml";
+		my $file = "$constants->{basedir}$fpath";
+		unless (-r $file) {
+			return NOT_FOUND;
+		}
+		if ($is_user) {
+			push @args, "name=$word";
+			$r->args(join('&', @args));
+			$r->uri('/wikicontents.pl');
+			$r->filename($constants->{basedir} . '/wikicontents.pl');
+			return OK;
+		} else {
+			$r->uri($fpath);
+			$r->filename($file);
+			return OK;
+		}
 	}
 
 	# redirect to static if
@@ -500,3 +595,4 @@ in the httpd.conf file.
 Slash(3).
 
 =cut
+        

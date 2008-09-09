@@ -8,6 +8,7 @@ use strict;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
+use Slash::XML;
 
 #################################################################
 sub main {
@@ -27,6 +28,12 @@ sub main {
 		detach		=> \&detachpoll,
 		linkstory	=> \&link_story_to_poll
 	);
+
+        # hijack feeds
+	if ($form->{content_type} && $form->{content_type} =~ $constants->{feed_types}) {
+		listpollsRSS($form, $slashdb, $constants);
+		return;
+	}
 
 	my $op = $form->{op} && $ops{$form->{op}} ? $form->{op} : 'default';
 
@@ -509,6 +516,55 @@ sub listpolls {
                 curtime         => $pollbooth_reader->getTime(),
 		type		=> $type 
 	});
+}
+
+#################################################################
+sub listpollsRSS {
+	my ($form, $slashdb, $constants) = @_;
+	my $polls = getObject('Slash::PollBooth', { db_type => 'reader' });
+	my $offset = 0;
+	my $limit = 10;
+
+	my $columns = "*";
+	my $tables = "pollquestions";
+	my $where = "";
+	my $other = "ORDER BY date DESC LIMIT $offset, $limit";
+	my $questions = $polls->sqlSelectAllHashrefArray($columns, $tables, $where, $other);
+
+	my $items = [];
+	foreach my $entry (@$questions) {
+		my $poll = $polls->getPoll($entry->{qid});
+		my $pollbooth = getData('rss_pollbooth', { poll	=> $poll });
+		my $readmore = getData('rss_readmore', { poll => $poll });
+		push(@$items, {
+			story	=> {
+				uid	=> $entry->{uid},
+				'time'	=> $entry->{date},
+			},
+			'link'			=> "$constants->{absolutedir}/polls/$entry->{qid}",
+			title			=> $entry->{question},
+			'time'			=> $entry->{date},
+			description		=> $entry->{question} . $readmore,
+			'content:encoded'	=> $pollbooth . $readmore,
+		});
+	}
+
+	my $ret = xmlDisplay($form->{content_type} => {
+		channel			=> {
+			title		=> getData('rss_title'),
+			description	=> getData('rss_descr'),
+			'link'		=> "$constants->{absolutedir}/polls/",
+		},
+		image			=> 1,
+		textinput		=> {
+			title	=> getData('search_header_title', { op => getData('polls', {}, 'search') }, 'search'),
+			'link'	=> "$constants->{absolutedir}/search.pl?op=polls",
+		},
+		items			=> $items,
+		rdfitemdesc		=> $constants->{dfitemdesc},
+		rdfitemdesc_html	=> $constants->{dfitemdesc_html} || 1,
+	}, $form->{ssi} ? 1 : 0);
+	print "$ret\n" if ($form->{ssi});
 }
 
 #################################################################

@@ -122,6 +122,12 @@ sub sendEmail {
 		return 0;
 	}
 
+	# workaround for unicode WAVE DASH problem...
+	if ($constants->{tweak_japanese}) {
+		$content =~ tr/\x{ff5e}/\x{301c}/;
+		$subject =~ tr/\x{ff5e}/\x{301c}/;
+	}
+
 	# Character Code Conversion; target encoding must be valid name
 	# Characters not representable in the destination character set
 	# and encoding will be replaced with \x{HHHH} place-holders
@@ -489,6 +495,7 @@ sub prog2file {
 			if (!open $fh, "> $filename\0") {
 				$err_str .= " could not write to '$filename': '$!'";
 			} else {
+				binmode $fh, ":encoding($options->{encoding})" if (defined($options->{encoding}));
 				print $fh $data;
 				close $fh;
 				$success = 1;

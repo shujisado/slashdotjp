@@ -227,6 +227,7 @@ sub slashDisplay {
 
 	my $show_comm = $constants->{template_show_comments} ? 1 : 0;
 	$show_comm &&= 0 if $opt->{Nocomm} && $constants->{template_show_comments} < 2;
+	$show_comm &&= 0 if $user->{mobile} && $constants->{template_show_comments} < 2;
 	$out = "\n\n<!-- start template: $TEMPNAME -->\n\n$out\n\n<!-- end template: $TEMPNAME -->\n\n"
 		if $show_comm;
 
@@ -400,7 +401,9 @@ sub get_template {
 			POST_CHOMP	=> $constants->{template_post_chomp},
 			CACHE_SIZE	=> $cache_size,
 			%$cfg2,
+			EVAL_PERL	=> ($constants->{enable_template_evalperl} ? 1 : 0),
 		})],
+		EVAL_PERL	=> ($constants->{enable_template_evalperl} ? 1 : 0),
 	});
 
 	$cfg->{template}	= $template if ref $cfg;

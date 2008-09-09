@@ -167,7 +167,7 @@ sub _processFoaf{
 			$ret .= $self->_processFoaf( $name, $_ );
 		}
         }else{
-		if ($foaf_elements{$name} eq "resource"){
+		if ($foaf_elements{$name} && $foaf_elements{$name} eq "resource"){
 			$ret .= "<foaf:$name rdf:resource=\"$node\" />\n";
 		}elsif ($name eq "seeAlso"){
 			$ret .= "<rdfs:seeAlso rdf:resource=\"$node\" />\n";

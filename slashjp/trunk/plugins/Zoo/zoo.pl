@@ -54,7 +54,7 @@ sub main {
 	if ($r = Apache->request) {
 		return if $r->header_only;
 	}
-	footer() unless $form->{content_type} && $form->{content_type} =~ $constants->{feed_types};
+	footer() unless $op eq 'foaf' || $form->{content_type} && $form->{content_type} =~ $constants->{feed_types};
 }
 
 sub people {
@@ -424,8 +424,8 @@ sub _foaf {
 
 	# add various field is defined
 	# email address depending on display setting
-	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail} && $user->{emaildisplay} >= 1;
-        $person->{mbox} = "mailto:" . $user->{realemail} if $user->{realemail} && $user->{emaildisplay} >= 2; 
+	$person->{mbox_sha1sum} = Digest::SHA1::sha1_hex('mailto:' . $user->{realemail}) if $user->{realemail} && ($user->{emaildisplay} && int($user->{emaildisplay}) >= 1);
+        $person->{mbox} = "mailto:" . $user->{realemail} if $user->{realemail} && ($user->{emaildisplay} && int($user->{emaildisplay}) >= 2); 
 	$person->{homepage} = $user->{homepage} if $user->{homepage};
 	$person->{weblog} = $userpage . "journal/" if $user->{journal_last_entry_date};
 
@@ -437,7 +437,7 @@ sub _foaf {
 			nick		=> $p->{nickname},
 			seeAlso		=> "$constants->{rootdir}/~" . fixparam($p->{nickname}) . "/$type.rdf",
 		}};
-		$other->{Person}{mbox_sha1sum} = Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}) if $p->{emaildisplay} >= 1;
+		$other->{Person}{mbox_sha1sum} = Digest::SHA1::sha1_hex("mailto:" . $p->{realemail}) if ($p->{emaildisplay} && int($p->{emaildisplay}) >= 1);
 		push @knows, $other;
 	
 	}

@@ -1,12 +1,6 @@
 slash (2.5.0.201-1) unstable; urgency=low
 
   * New upstream CVS release
-  * Allow to show AC info for admin user
-  * Fix: user karma_bonus settings are vanished...
-  * Fix: comment count fail when user hardthresh setting is enabled
-  * Remove "tid=" from story link at stories
-  * Update journal-story discussions' title/url to story title/url when vars
-    update_journal_story_discussion_to_story has been enabled.
 
  -- Taku YASUI <tach@osdn.jp>  Mon, 21 Apr 2008 21:58:15 +0900
 
@@ -36,10 +30,223 @@ slash (2.5.0.196-1) unstable; urgency=low
 slash (2.5.0.195-1) unstable; urgency=low
 
   * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 26 Feb 2008 11:54:28 +0000
+
+slash (2.5.0.192-17) unstable; urgency=low
+
+  * Fix journals URL (remove "top")
+    - top recent: /journals/top/recent -> /journals/recent
+    - top posters: /journals/top/posters -> /journals/posters
+    - you can access old URL
+  * Add /faq/ internal redirection at Slash/Apache/Apache.pm
+    - This code is for slash-plugin-wikicontents
+  * Fix LDAP.pm DEBUG_LEVEL warning
+  * Use $user->{currentSkin} at $slashdb->getTemplateByName()
+    - Fix: slashDisplay() option 'Skin' does not applied
+  * Add logcheck ignore rule for SearchEst
+
+ -- Taku YASUI <tach@osdn.jp>  Mon,  8 Sep 2008 11:58:09 +0000
+
+slash (2.5.0.192-16) unstable; urgency=low
+
+  * Fix for reason_modifier setting for users.pl
+    - Use reason_id as key instead of name
+  * Add workaround for unicode WAVE DASH problem
+  * Add "dc:source" and "dc:relation" to RSS output
+  * Change "sitename.(rss|ref|xml|atom)" to including all stories even if
+    section local
+  * Change journal top rss including html description and change URL adding
+    journal id
+  * Add new journal top rss url: "/journals/top/rss" and
+    "/journals/top/recent/rss"
+  * Add "readmore" link for journal top rss and journal rss
+  * use $constants->{sitepublisher} when $constants->{rdfpublisher} does not
+    exist on creating RSS
+  * Add content:encoded for story main rss
+  * Add "mainpage" title to "index.rss"
+  * Fix RSS "textinput" handling on Slash/XML/RSS/RSS.pm
+  * Add simple pollBooth URL
+    - "/polls" and "/polls/{qid}"
+  * Add feature: display pollBooth RSS on "/polls/rss"
+  * Improve article.pl performance when non-user access
+    - redirect to shtml internally
+  * Add feature to change query string form name for search.pl
+    - Use variable "search_query_name"
+  * Improve "polls/rss" performance using rss cache
+    - Use variable "rss_cachedir"
+    - cache creating task is not included in slash distribution
+  * Allow firehose.pl for AC when the "id" is specified
+  * move createMenu() into hierarchy and listTopics templates
+  * Redirect topics.pl to topics.shtml internally when when AC access
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jul 2008 07:57:22 +0000
+
+slash (2.5.0.192-15) unstable; urgency=low
+
+  * Add vars "modreasons_select_disabled" to insert "disabled => 1" for getReasons()
+
+ -- Taku YASUI <tach@osdn.jp>  Sat,  5 Jul 2008 12:30:25 +0000
+
+slash (2.5.0.192-14) unstable; urgency=low
+
+  * Fix to change commentsort for mobile mode from 5 to 4
+  * Make to change commentsort, commentmode and commentlimitfor mobile mode
+    using constants
+    - commentsort = mobile_commentsort
+    - commentlimit = mobile_commentlimit
+    - mode = mobile_commentmode
+  * Fix: redirect url when ('?m=1') has been appended
+  * Add "discussion" variable for printCommComments template
+  * enable to show divided top journal pages
+    - top_recent
+    - top_posters
+    - top_friends
+  * add "start" parameter for $journal->top() and $journal->topRecent()
+    - for enabling pagination for top journals
+  * Add new url for userdir_handler
+    - Add "/journals" URL
+  * Add next and previous journal data to journal
+    - use $journal_reader->getJournalByTime()
+  * Disable to show comments when mobile mode
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 27 Jun 2008 07:03:00 +0000
+
+slash (2.5.0.192-13) unstable; urgency=low
+
+  * Fix: linkStory() add '?m=1'
+  * Fix: force mobile mode when ssi=yes and m=1 for prog2file
+  * Fix: Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/XML/FOAF.pm line 170.
+  * Fix: Use of uninitialized value in numeric ge (>=) at
+    /var/lib/slash/site/slashdot.jp/htdocs/zoo.pl line 440.
+  * Fix: Use of uninitialized value in numeric ge (>=) at
+    /var/lib/slash/site/slashdot.jp/htdocs/zoo.pl line 427.
+  * Fix: Use of uninitialized value in numeric ge (>=) at
+    /var/lib/slash/site/slashdot.jp/htdocs/zoo.pl line 428.
+  * Do not show footer when show foaf at plugins/Zoo/zoo.pl
+  * Fix: Use of uninitialized value in concatenation (.) or string at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 10184
+  * Enable to specify encoding for prog2file
+    - use 'encoding' to option
+  * Add feature to write static html file for mobile mode
+  * Add feature to enable/disable PERL / RAWPERL directives on Template
+    - use constant 'enable_template_evalperl'
+  * Add feature to create slashhead/slashfoot file for mobile mode
+  * Fix: Automatic adding related stories and comments
+    - Check sid existance
+    - Select enable/disable to add related comments using variable
+      "related_cid_disabled"
+  * Add to killing orphaned slashd child process when keepalive
+  * Fix next_prev_stories selection code
+    - Make same as mainpage story list
+  * Change mobile mode default charset from Shift_JIS to UTF-8
+  * Fix to specify correct ssi include file for mobile mode
+  * Fix linkStory() for mobile mode
+  * Show mobile mode page when useragent matches "mobile_useragent_regex"
+  * Redirect to mobile story page when mobile clients come to normal shtml
+  * Allow "accesskey" attribute at linkStory()
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 20 Jun 2008 08:10:20 +0000
+
+slash (2.5.0.192-12) unstable; urgency=low
+
+  * Add mobile mode
+    - Use "mobile_enabled" constant to use mobile mode
+    - Force mobile mode when the user-agent matches "mobile_useragent_regex"
+      or URL arg includes "m=1"
+    - getCurrentUser('mobile') is true when mobile mode has been enabled
+    - Do not show any comments on article.pl when mobile mode
+    - Force some settings
+      o Show comments as flat
+      o Comments are sorted by date desc
+      o Show only 5 comments per page
+  * Add number of display journal count to _printHead() on Journal.pm
+    - You can use 'jcount' variable journalhead;journal template
+  * Fix: Use of uninitialized value in length at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 2054.
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 12 May 2008 18:00:12 +0000
+
+slash (2.5.0.192-11) unstable; urgency=low
+
+  * Change RSS item description suffix
+    - use template "rss_item_description;misc;default" to change description
+  * Add feature to change whether nexus topics will be shown or not on topic
+    list
+    - use $constants->{topiclist_dont_show_nexuses}
+  * Add feature to change automatic tag stories to use topic.textname instead
+    of topic.keyword
+    - use $constants->{autoaddstorytopics_use_textname}
+
+ -- Taku YASUI <tach@osdn.jp>  Thu,  1 May 2008 14:27:42 +0000
+
+slash (2.5.0.192-10) unstable; urgency=low
+
+  * Fix to take discussion id from journal-submission
+  * Update journal-story discussions' title/url to story title/url when vars
+    update_journal_story_discussion_to_story has been enabled.
+  * Fix not to show contents when the skin does not exist
+  * Fix to create/update firehose item from Journal correctly
+    - Do not use "submit" reskey
+  * Fix to update story-submitted journal correctly
+    - Do not use "submit" reskey
+  * Add to enable/disable to show publicized(story-submitted) journals to
+    firehose as journal firehose item
+    - Using "update_journal_story_discussion_to_story" variable
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 24 Apr 2008 18:36:57 +0900
+
+slash (2.5.0.192-9) unstable; urgency=low
+
+  * Fix continue: firehose color for bookmark feed to same as normal bookmarks
+    at tagboxes
+  * Fix Prototype mismatch: sub main::EOF: none vs () at
+    /var/lib/slash/site/slashdot.jp/tasks/zoo_run_people_log.pl
+  * Allow to show AC info for admin user
+  * Fix: user karma_bonus settings are vanished...
+  * Fix: comment count fail when user hardthresh setting is enabled
+  * Remove "tid=" from story link at stories
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 21 Apr 2008 21:58:15 +0900
+
+slash (2.5.0.192-8) unstable; urgency=low
+
+  * Enable to select using shtml links at site RSS/RDF by
+    $constants->{rss_use_story_shtml}
+  * Change method to pick up nexus topics for section selection on
+    editHome at users.pl (for slashdot.jp)
+  * Add logcheck ignore rules for fetch_rss_bookmarks.pl
+  * Move processing %special keys to after encode changing at filter_params
+    at Slash/Utility/Environment/Environment.pm
+  * Fix firehose color for bookmark feed to same as normal bookmarks
+  * Fix Use of uninitialized value at tagbox.pl line 285
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 26 Mar 2008 05:00:59 +0000
+
+slash (2.5.0.192-7) unstable; urgency=low
+
+  * Add to forbid Moderation for user doing bad moderation
+  * Fix to remove some unicode control characters from form
+  * Fix to attach discussion to another story when duplicate stories are
+    removed
+
+ -- Taku YASUI <tach@osdn.jp>  Thu,  6 Mar 2008 09:20:58 +0000
+
+slash (2.5.0.192-6) unstable; urgency=low
+
+  * Fix email message for new user creation
+    - You should create "mail_msg_newuser" data to template
+      "data;login;default"
+
+ -- Taku YASUI <tach@osdn.jp>  Mon,  3 Mar 2008 10:06:08 +0000
+
+slash (2.5.0.192-5) unstable; urgency=low
+
   * Fix admin topic select window to change tree/alpabetical
   * Fix to show stories that should display
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 26 Feb 2008 11:54:28 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 26 Feb 2008 20:13:25 +0900
 
 slash (2.5.0.192-4) unstable; urgency=low
 

@@ -188,6 +188,7 @@ sub createSelect {
 		if ($all_name) {
 			$hashref = {
 				map { ($_, $hashref->{$_}{name}) }
+				grep { !$hashref->{$_}{select_disabled} }
 				keys %$hashref
 			};
 		}
@@ -474,6 +475,7 @@ sub linkStory {
 	$params{sid} = $story_link->{sid};
 	$params{mode} = $story_link->{mode} if $story_link->{mode};
 	$params{threshold} = $story_link->{threshold} if exists $story_link->{threshold};
+	$params{m} = '1' if (getCurrentForm('m'));
 
 	# Setting $dynamic properly is important.  When generating the
 	# AC index.shtml, it's a big win if we link to other
@@ -525,6 +527,7 @@ sub linkStory {
 
 	my $skin = $reader->getSkin($story_link->{skin});
 	$url = $skin->{rootdir} || $constants->{real_rootdir} || $gSkin->{rootdir};
+	$url = $constants->{real_rootdir} if ($user->{mobile});
 
 	if (!$static && $dynamic) {
 		$url .= "/$script?";
@@ -545,7 +548,11 @@ sub linkStory {
 		# but we would need to `mv articles mainpage`, or ln -s, and it just seems better
 		# to me to keep the same URL scheme if possible
 		my $skinname = $skin->{name} eq 'mainpage' ? 'articles' : $skin->{name};
-		$url .= "/$skinname" unless ($url =~ /\/${skinname}$/);
+		if ($user->{mobile}) {
+			$skinname = $constants->{mobile_urlpath};
+			$skinname =~ s/^\/*//;
+		}
+		$url .= "/$skinname" if ($skinname && $url !~ /\/${skinname}$/);
 		$url .= "/" . ($story_link->{sid} || $story_ref->{sid}) . ".shtml";
 		# manually add the tid(s), if wanted
 		if ($constants->{tids_in_urls} && $params{tids}) {
@@ -559,7 +566,7 @@ sub linkStory {
 		}
 	}
 
-	my @extra_attrs_allowed = qw( title class id );
+	my @extra_attrs_allowed = qw( title class id accesskey );
 	if ($render) {
 		my $rendered = '<a href="' . strip_attribute($url) . '"';
 		for my $attr (@extra_attrs_allowed) {
