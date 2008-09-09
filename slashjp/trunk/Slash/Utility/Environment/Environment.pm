@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Utility::Environment;
 
@@ -28,15 +27,15 @@ use strict;
 use Apache::ModuleConfig;
 use Digest::MD5 'md5_hex';
 use Time::HiRes;
+use Slash::Constants ();
 use Socket qw( inet_aton inet_ntoa );
 use Encode;
 use Encode::Guess;
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT	   = qw(
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(
 
 	dbAvailable
 
@@ -1347,9 +1346,13 @@ sub setCookie {
 	# ".slashdot.org" is OK.  the only way to set a cookie
 	# to a *host* is to leave the domain blank, which is
 	# why we set the first cookie with no domain. -- pudge
+	# unless domain does not match the root domain -- pudge
 
 	# domain must start with a '.' and have one more '.'
-	# embedded in it, else we ignore it
+	# embedded in it, else we ignore it, so you can
+	# enter an *invalid* value in skins.cookiedomain to
+	# override constants.cookiedomain, and *not* have
+	# any domain cookie set -- pudge
 	my $domain = ($cookiedomain && $cookiedomain =~ /^\..+\./)
 		? $cookiedomain
 		: '';
@@ -1365,8 +1368,6 @@ sub setCookie {
 
 	my $cookie = Apache::Cookie->new($r, %cookiehash);
 
-	# this should be fine, but if there is a problem, comment the following
-	# lines, and uncomment the one right above "bake"
 	if (!$val) {
 		$cookie->expires('-1y');  # delete
 	} elsif ($session && $session =~ /^\+\d+[mhdy]$/) {
@@ -1589,7 +1590,7 @@ sub prepareUser {
 			@headers{map lc, keys %headers} = values %headers;
 			my $ua = $r->headers_in->{'user-agent'};
 			if ($ua =~ /MSIE (\d+)/) {
-				$d2 = 'none';# if $1 < 7;
+				$d2 = 'none' if $1 < 7;
 			}
 		}
 		$user->{discussion2} = $d2;
@@ -1900,7 +1901,7 @@ Hashref of cleaned-up data.
 		logtoken	=> sub { $_[0] = '' unless
 					 $_[0] =~ m|^\d+::[A-Za-z0-9]{22}$|		},
 		sid		=> sub { $_[0] = '' unless
-					 $_[0] =~ Slash::Utility::Data::regexSid()	},
+					 $_[0] =~ Slash::Utility::Data::regexSid(1)	},
 		flags		=> sub { $_[0] =~ s|[^a-z0-9_,]||g			},
 		query		=> sub { $_[0] =~ s|[\000-\040<>\177\p{BidiControl}\p{Unassigned}\p{JoinControl}]+| |g;
 			        	 $_[0] =~ s|\s+| |g;				},
@@ -1993,7 +1994,7 @@ sub filter_param {
 		$data =~ s|[^a-zA-Z0-9_]+||g;
 	} else {
 		for my $ri (@regints) {
-			$data = fixint($data) if $ri =~ $key;
+			$data = fixint($data) if $key =~ /$ri/;
 		}
 
 		# convert input to internal character encoding
@@ -2521,8 +2522,8 @@ sub errorLog {
 
 	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		$errors[0] = $ENV{SCRIPT_NAME} . $errors[0];
-		$errors[-1] .= "\n";
-		$r->log_error($_) for @errors;
+		#$errors[-1] .= "\n";
+		$r->log_error(join ' ;; ', @errors); # for @errors;
 	} else {
 		$errors[0] = 'Error' . $errors[0];
 		print STDERR $_, "\n" for @errors;
@@ -3584,7 +3585,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::Utility(3).
-
-=head1 VERSION
-
-$Id$

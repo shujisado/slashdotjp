@@ -1,5 +1,5 @@
 #
-# $Id: $
+# $Id$
 #
 
 CREATE TABLE IF NOT EXISTS moderatorlog (

@@ -1,4 +1,4 @@
-# $Id: mysql_dump.sql,v 1.2 2008/04/03 20:30:24 jamiemccarthy Exp $
+# $Id$
 INSERT INTO tagboxes (tbid, name, affected_type, clid, weight, last_run_completed, last_tagid_logged, last_tdid_logged, last_tuid_logged) VALUES (NULL, 'RecentTags', 'globj', 1, 1, '2000-01-01 00:00:00', 0, 0, 0);
 
 INSERT IGNORE INTO vars (name, value, description) VALUES ('tagbox_recenttags_secondsback', '7200', 'Number of seconds to look back');

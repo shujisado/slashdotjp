@@ -1,5 +1,5 @@
 #
-# $Id: $
+# $Id$
 #
 
 DROP TABLE IF EXISTS firehose_history;

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Utility::Access;
 
@@ -33,10 +32,9 @@ use Slash::Utility::System;
 use Slash::Constants qw(:web :people :messages);
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT	   = qw(
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT	   = qw(
 	checkFormPost
 	formkeyError
 	formkeyHandler
@@ -463,7 +461,11 @@ sub filterOk {
 		if ($minimum_match) {
 			$number_match = "{$minimum_match,}";
 		} elsif ($ratio > 0) {
-			$number_match = "{" . int(length($text_to_test)*$ratio + 1) . ",}";
+			my $num = int(length($text_to_test)*$ratio + 1);
+			my $max = 2**15-1;
+			# temporary fix 2008-05-23
+			$num = $max if $num >= $max;
+			$number_match = "{$num,}";
 		} else {
 			$number_match = "";
 		}
@@ -594,6 +596,13 @@ sub compressOk {
 		# modified slice of the text.
 		$length = length($content_slice);
 		next if $length < 10;
+
+		# compress doesn't like wide characters.  this could in theory
+		# make it easier to run into a filter, with too many '_'
+		# characters being in a comment, but no one should be using
+		# that many wide characters in the standard English
+		# alphabet.  we can adjust filters if necessary. -- pudge
+		$content_slice =~ s/(.)/ord($1) > 2**8-1 ? '_' : $1/ge;
 
 		for (sort { $a <=> $b } keys %$limits) {
 			next unless $length >= $limits->{$_}->[0]
@@ -822,7 +831,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::Utility(3).
-
-=head1 VERSION
-
-$Id$

@@ -13,7 +13,7 @@ __name__
 tagsfirehosedivadmin
 __template__
 
-[% IF user.is_admin && !user.firehose_usermode %]
+[% IF 0 && user.is_admin && !user.firehose_usermode %]
 
 [% PROCESS ajax_reskey_tag reskey_label => 'admin_commands-reskey-' _ id, reskey_name => 'ajax_admin' %]
 <input type="text" id="tags_admin_commands-[% id %]" name="tags_admin_commands-[% id %]" value="" size=50 maxlength=60 onkeyup="handleEnter(event, adminTagsCommands, '[% id %]','firehose')">
@@ -26,4 +26,4 @@ __template__
 __seclev__
 10000
 __version__
-$Id: tagsfirehosedivadmin;misc;default,v 1.2 2006/10/31 17:05:38 tvroom Exp $
+$Id$

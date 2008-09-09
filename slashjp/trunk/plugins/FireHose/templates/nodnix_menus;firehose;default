@@ -42,5 +42,6 @@ __template__
   <div id="nix-completions" class="menu autocomplete"></div>
 </div>
 [% END %]
+
 __version__
-$Id: nodnix_menus;firehose;default,v 1.3 2007/07/18 18:22:21 scc Exp $
+$Id$

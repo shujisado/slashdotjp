@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: $
 
 package Slash::Utility::Comments;
 
@@ -32,13 +31,12 @@ use Slash::Hook;
 use Slash::Constants qw(:strip :people :messages);
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: $ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT		= qw(
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(
 	constrain_score dispComment displayThread printComments
 	jsSelectComments commentCountThreshold commentThresholds discussion2
-	selectComments preProcessReplyForm
+	selectComments preProcessReplyForm makeCommentBitmap parseCommentBitmap
 	getPoints preProcessComment postProcessComment prevComment saveComment
 );
 
@@ -75,6 +73,10 @@ sub selectComments {
 		$shtml = 1;
 		delete $form->{cchp};
 	}
+
+	my $comments_read = !$user->{is_anon}
+		? $slashdb->getCommentReadLog($discussion->{id}, $user->{uid})
+		: {};
 
 	my $commentsort = defined $options->{commentsort}
 		? $options->{commentsort}
@@ -207,14 +209,9 @@ sub selectComments {
 			}
 		}
 
-		my @seen;
-		my $lastcid = 0;
-		my %check = (%{$options->{existing}}, map { $_->{cid} => 1 } @new_comments);
-		for my $this_cid (sort { $a <=> $b } keys(%check)) {
-			push @seen, $lastcid ? $this_cid - $lastcid : $this_cid;
-			$lastcid = $this_cid;
-		}
-		$comments->{0}{d2_seen} = join ',', @seen;
+		$comments->{0}{d2_seen} = makeCommentBitmap({
+			%{$options->{existing}}, map { $_->{cid} => 1 } @new_comments
+		});
 
 		@new_comments = sort { $a->{cid} <=> $b->{cid} } @new_comments;
 		($oldComment, $thisComment) = ($thisComment, \@new_comments);
@@ -259,6 +256,10 @@ sub selectComments {
 		# Kids is what displayThread will actually use.
 		$comments->{$C->{cid}}{kids} = $tmpkids || [];
 		$comments->{$C->{cid}}{visiblekids} = $tmpvkids || 0;
+
+		$comments->{$C->{cid}}{has_read} = $comments_read->{$C->{cid}};
+		$user->{state}{d2_defaultclass}{$C->{cid}} = 'oneline'
+			if $user->{d2_reverse_switch} && $comments_read->{$C->{cid}};
 
 		# The comment pushes itself onto its parent's
 		# kids array.
@@ -321,16 +322,18 @@ sub selectComments {
 					if ($cid && $C->{pid} < $cid) {
 						$user->{state}{d2_defaultclass}{$C->{pid}} = 'oneline';
 						$parent = $old_comments{ $C->{pid} };
+						$parent->{has_read} = $comments_read->{$C->{pid}};
 						push @new_seen, $C->{pid};
 						$count++;
 					} else {
 						$parent = {
-							cid    => $C->{pid},
-							pid    => ($old_comments{ $C->{pid} } && $old_comments{ $C->{pid} }{ pid }) || 0,
-							opid   => ($old_comments{ $C->{pid} } && $old_comments{ $C->{pid} }{ original_pid }) || 0,
-							kids   => [ ],
-							points => -2,
-							dummy  => 1,
+							cid      => $C->{pid},
+							pid      => ($old_comments{ $C->{pid} } && $old_comments{ $C->{pid} }{ pid }) || 0,
+							opid     => ($old_comments{ $C->{pid} } && $old_comments{ $C->{pid} }{ original_pid }) || 0,
+							kids     => [ ],
+							points   => -2,
+							dummy    => 1,
+							has_read => $comments_read->{$C->{pid}},
 							%$parent,
 						};
 						$parent->{opid} ||= $parent->{pid};
@@ -351,18 +354,9 @@ sub selectComments {
 			}
 		}
 
-		# fix d2_seen
-		my @seen;
-		my $lastcid = 0;
-		for my $this_cid (sort { $a <=> $b } @new_seen) {
-			push @seen, $lastcid ? $this_cid - $lastcid : $this_cid;
-			$lastcid = $this_cid;
-		}
-		my @old_seen = split /,/, $comments->{0}{d2_seen};
-		if (@seen && @old_seen) {
-			$old_seen[0] = $old_seen[0] - $lastcid;
-		}
-		$comments->{0}{d2_seen} = join ',', @seen, @old_seen;
+		# fix d2_seen to include new cids ... these will all be after
+		# the last element in seen, which makes this simpler
+		$comments->{0}{d2_seen} = makeCommentBitmap(\@new_seen, $comments->{0}{d2_seen});
 	}
 
 ##slashProf("", "sC d2 fudging");
@@ -421,6 +415,7 @@ sub jsSelectComments {
 		my @keys = qw(pid points uid);
 		for my $cid (grep $_, keys %$comments) {
 			@{$comments_new->{$cid}}{@keys} = @{$comments->{$cid}}{@keys};
+			$comments_new->{$cid}{read} = $comments->{$cid}{has_read} ? 1 : 0;
 			$comments_new->{$cid}{opid} = $comments->{$cid}{original_pid};
 			$comments_new->{$cid}{kids} = [sort { $a <=> $b } @{$comments->{$cid}{kids}}];
 
@@ -445,9 +440,11 @@ sub jsSelectComments {
 	my $anon_thresh   = Data::JavaScript::Anon->anon_dump($thresh_totals || {});
 	s/\s+//g for ($anon_thresh, $anon_roots, $anon_rootsh);
 
-	$user->{is_anon}       ||= 0;
-	$user->{is_admin}      ||= 0;
-	$user->{is_subscriber} ||= 0;
+	$user->{is_anon}          ||= 0;
+	$user->{is_admin}         ||= 0;
+	$user->{is_subscriber}    ||= 0;
+	$user->{state}{d2asp}     ||= 0;
+	$user->{d2_comment_order} ||= 0;
 	my $root_comment = $user->{state}{selectComments}{cidorpid} || 0;
 
 	my $extra = '';
@@ -459,6 +456,9 @@ sub jsSelectComments {
 	}
 	if ($user->{d2_keybindings_switch}) {
 		$extra .= "d2_keybindings_off = 1;\n";
+	}
+	if ($user->{d2_reverse_switch}) {
+		$extra .= "d2_reverse_shift = 1;\n";
 	}
 
 	# maybe also check if this ad should be running with some other var?
@@ -484,12 +484,14 @@ root_comments = $anon_roots;
 root_comments_hash = $anon_rootsh;
 max_cid = $max_cid;
 
+d2_comment_order = $user->{d2_comment_order};
 user_uid = $user->{uid};
 user_is_anon = $user->{is_anon};
 user_is_admin = $user->{is_admin};
 user_is_subscriber = $user->{is_subscriber};
 user_threshold = $threshold;
 user_highlightthresh = $highlightthresh;
+user_d2asp = $user->{state}{d2asp};
 
 discussion_id = $id;
 
@@ -574,6 +576,45 @@ sub _get_thread {
 	return $newcomments;
 }
 
+sub parseCommentBitmap {
+	my($bitmap) = @_;
+	return {} unless $bitmap;
+	my $lastcid = 0;
+	my %comments;
+	for my $cid (split /,/, $bitmap) {
+		$cid = $lastcid ? $lastcid + $cid : $cid;
+		$comments{$cid} = 1;
+		$lastcid = $cid;
+	}
+	return \%comments;
+}
+
+sub makeCommentBitmap {
+	my($comments, $old) = @_;
+	my $lastcid = 0;
+	my @bitmap;
+	for my $cid (sort { $a <=> $b } ((ref($comments) eq 'HASH')
+			? keys %$comments
+			: @$comments
+		)
+	) {
+		push @bitmap, $lastcid ? $cid - $lastcid : $cid;
+		$lastcid = $cid;
+	}
+
+	my $bitmap = join ',', @bitmap;
+
+	if ($old) {
+		return $old unless $bitmap;
+
+		my @old = split /,/, $old, 2;
+		$old[0] = $old[0] - $lastcid;
+		return join ',', $bitmap, @old;
+	}
+
+	return $bitmap;
+}
+
 
 # this really should have been getData all along
 sub getError {
@@ -614,8 +655,7 @@ sub getPoints {
 	my $points = $hr->{score_start} || 0;
 
 	# User can setup to give points based on size.
-#	my $len = length($C->{comment});
-	my $len = $C->{len};
+	my $len = $C->{len} || length($C->{comment});
 	if ($len) {
 		# comments.len should always be > 0, because Slash doesn't
 		# accept zero-length comments.  If it is = 0, something is
@@ -1066,6 +1106,7 @@ sub printComments {
 		cid		=> $cid,
 		pid		=> $pid,
 		lvl		=> $lvl,
+		options		=> $options,
 	});
 #slashProf("", "printCommentsMain");
 
@@ -1658,8 +1699,7 @@ sub saveComment {
 	my $moddb = getObject("Slash::$constants->{m1_pluginname}");
 	if ($moddb) {
 		my $text = $moddb->checkDiscussionForUndoModeration($comm->{sid});
-		# XXX doesn't work for D2
-		print $text if $text;
+		print $text if $text && !discussion2($user);
 	}
 
 	my $tc = $slashdb->getVar('totalComments', 'value', 1);
@@ -2147,8 +2187,10 @@ EOT2
 <div id="comment_$comment->{cid}"$classattr>
 EOT
 
+	my $new_old_comment = $comment->{has_read} ? 'oldcomment' : 'newcomment';
+
 	$return .= <<EOT if !$options->{noshow};
-	<div id="comment_top_$comment->{cid}" class="commentTop newcomment">
+	<div id="comment_top_$comment->{cid}" class="commentTop $new_old_comment">
 		<div class="title">
 $head
 $comment_links
@@ -2568,7 +2610,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id: $

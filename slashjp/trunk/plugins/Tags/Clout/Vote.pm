@@ -6,9 +6,7 @@ use Date::Parse qw( str2time );
 use Slash::Utility;
 use base 'Slash::Clout';
 
-use vars qw($VERSION);
-
-($VERSION) = ' $Revision: $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub init {
         my($self) = @_;
@@ -18,7 +16,7 @@ sub init {
         # for each matching tag.  E.g. if $cumfrac is 0.5, the first match may
         # propagate up to 50% of the weight, the second another 25%, the
         # third another 12.5% etc.
-        $self->{cumfrac} = 0.45;
+        $self->{cumfrac} = 0.6;
 	my $constants = getCurrentStatic();
 	$self->{debug_uids} = { map { ($_, 1) } split / /,
 		($constants->{tags_updateclouts_debuguids} || '')
@@ -46,7 +44,11 @@ sub getUserClout {
 		$clout = 0;
 	}
 
-	$clout *= $user_stub->{tag_clout};
+	my $clout_mult = 1;
+	if (defined($user_stub->{tag_clout})) {
+		$clout_mult = $user_stub->{tag_clout};
+	}
+	$clout *= $clout_mult;
 
 	my $created_at_ut;
 	if (defined($user_stub->{created_at_ut})) {
@@ -99,6 +101,8 @@ sub get_nextgen {
 	sleep 10;
 
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $mintagid = $reader->sqlSelect('MIN(tagid)', 'tags',
+		"created_at >= DATE_SUB(NOW(), INTERVAL $self->{months_back} MONTH)");
 	my $hr_ar = $reader->sqlSelectAllHashrefArray(
 		"sourcetag.uid AS sourcetag_uid,
 		 UNIX_TIMESTAMP(newtag.created_at)-UNIX_TIMESTAMP(sourcetag.created_at)
@@ -111,19 +115,20 @@ sub get_nextgen {
 			AS duration,
 		 newtag.uid AS newtag_uid,
 		 simil,
-		 users_info.tag_clout AS clout,
-		 UNIX_TIMESTAMP(users_info.created_at) AS created_at_ut,
+		 users_info.tag_clout,
 		 IF(firehose_ogaspt.pubtime IS NULL,
 			NULL,
 			UNIX_TIMESTAMP(firehose_ogaspt.pubtime)-UNIX_TIMESTAMP(newtag.created_at))
 			AS timebeforepub,
-		 karma, tokens,
+		 seclev,
+		 karma, tokens, UNIX_TIMESTAMP(users_info.created_at) AS created_at_ut,
 		 sourcetag.tagnameid AS sourcetag_tagnameid,
 		 newtag.tagnameid AS newtag_tagnameid,
 		 sourcetag.globjid,
 		 gtid",
 		"tags AS sourcetag LEFT JOIN firehose_ogaspt USING (globjid),
-		 tags_peerclout AS sourcetpc, users_info,
+		 tags_peerclout AS sourcetpc,
+		 users, users_info,
 		 tagnames_similar, globjs,
 		 tags AS newtag LEFT JOIN tags_peerclout AS newtpc USING (uid)",
 		"sourcetag.inactivated IS NULL
@@ -134,8 +139,10 @@ sub get_nextgen {
 			 AND sourcetag.tagnameid=tagnames_similar.src_tnid
 			 AND tagnames_similar.dest_tnid=newtag.tagnameid
 		 AND simil != 0
+		 AND sourcetag.tagid >= $mintagid
 		 AND sourcetag.tagid != newtag.tagid
-		 AND newtag.created_at >= DATE_SUB(NOW(), INTERVAL $self->{months_back} MONTH)
+		 AND newtag.tagid >= $mintagid
+		 AND newtag.uid=users.uid
 		 AND newtag.uid=users_info.uid
 		 AND newtpc.uid IS NULL
 		 AND sourcetpc.gen=$g
@@ -157,7 +164,7 @@ sub process_nextgen {
 	my $insert_ar = [ ];
 	my $i = 0;
 	for my $newtag_uid (@newtag_uid) {
-		++$self->{debug} if $self->{debug_uids}{$newtag_uid};
+		my $start_time = Time::HiRes::time;
 		my $user_nodnixes_count = ($self->{nodc}{$newtag_uid} || 0) + ($self->{nixc}{$newtag_uid} || 0);
 		my $user_nodnixes_mult = 0;
 		if ($user_nodnixes_count >= $user_nodnixes_full) {
@@ -166,40 +173,53 @@ sub process_nextgen {
 			$user_nodnixes_mult = ($user_nodnixes_count+1-$user_nodnixes_min) /
 				($user_nodnixes_full+1-$user_nodnixes_min);
 		}
-		my $weight = 0;
-		my(@match, $clout, $created_at, $karma, $tokens, $uid_mults);
-		if ($self->{debug}) {
-			print STDERR ref($self) . sprintf(" starting uid=%d user_nodnixes_mult=%.3f\n",
-				$newtag_uid, $user_nodnixes_mult);
+		if ($self->{debug_uids}{$newtag_uid}) {
+			print STDERR sprintf("%s tags_updateclouts %s process_nextgen starting uid=%d user_nodnixes_count=%d _mult=%.6f\n",
+				scalar(gmtime), ref($self), $newtag_uid, $user_nodnixes_count, $user_nodnixes_mult);
+			++$self->{debug};
 		}
+
+		my $peer_weight = 0;
+		my(@match, $tag_clout, $created_at, $karma, $tokens, $uid_mults);
+		@match = grep { $_->{newtag_uid} == $newtag_uid } @$hr_ar;
+		my $match0 = $match[0];
 		if ($user_nodnixes_mult > 0) {
-			@match = grep { $_->{newtag_uid} == $newtag_uid } @$hr_ar;
-			my $match0 = $match[0];
-			($clout, $created_at, $karma, $tokens) =
-				($match0->{clout}, $match0->{created_at_ut}, $match0->{karma}, $match0->{tokens});
+			($tag_clout, $created_at, $karma, $tokens) =
+				($match0->{tag_clout}, $match0->{created_at_ut}, $match0->{karma}, $match0->{tokens});
 			$uid_mults = $self->get_mults(\@match);
 			$uid_mults->{'-1'} = $self->get_mult_timebeforepub(\@match);
-			$weight = $self->get_total_weight($tags_peerclout, $uid_mults,
-				$clout, $created_at, $karma, $tokens, $newtag_uid)
+			$peer_weight = $self->get_total_weight($tags_peerclout, $uid_mults,
+				$tag_clout, $created_at, $karma, $tokens, $newtag_uid)
 				* $user_nodnixes_mult;
 		}
+
+		my $base_weight = $self->getUserClout($match0);
+
+		my $total_weight = $peer_weight + $base_weight;
+
 		push @$insert_ar, {
 			uid =>		$newtag_uid,
-			clout =>	$weight,
+			clout =>	$total_weight,
 		};
+		my $elapsed = Time::HiRes::time - $start_time;
+
 		if ($self->{debug}) {
-			use Data::Dumper;
-			print STDERR sprintf("%s uid=%d user_nodnixes_mult=%.3f weight=%.6f mults: %s\n",
-				ref($self),
-				$newtag_uid, $user_nodnixes_mult,
-				$weight,
-				Dumper($uid_mults));
+			use Data::Dumper; my $umd = Dumper($uid_mults); $umd =~ s/\s+/ /g;
+			print STDERR sprintf("%s tags_updateclouts %s process_nextgen uid=%d peer_weight=%.6f base_=%.6f total_weight=%.6f in %.6f secs, mults: %s\n",
+				scalar(gmtime), ref($self), $newtag_uid,
+                                $peer_weight, $base_weight, $total_weight,
+                                $elapsed, $umd);
 		}
 		++$i;
-		if ($i % 100 == 0) {
-			print STDERR scalar(localtime) . " " . ref($self) . " process_nextgen processed $i (uid $newtag_uid, matched " . scalar(@match) . ")\n";
+		if ($i % 100 == 0 || $self->{debug}) {
+			print STDERR sprintf("%s tags_updateclouts %s process_nextgen processed %d uid=%d matched=%d in %.6f secs\n",
+				scalar(gmtime), ref($self), $i, $newtag_uid, scalar(@match), $elapsed);
 		}
-		--$self->{debug} if $self->{debug_uids}{$newtag_uid};
+		if ($self->{debug_uids}{$newtag_uid}) {
+			print STDERR sprintf("%s tags_updateclouts %s process_nextgen done uid=%d\n",
+				scalar(gmtime), ref($self), $newtag_uid);
+			--$self->{debug};
+		}
 		Time::HiRes::sleep(0.01);
 	}
 
@@ -219,7 +239,7 @@ sub count_uid_nodnix {
 	return unless keys %uid_needed;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
 	my @uids_needed = sort { $a <=> $b } keys %uid_needed;
-	my $splice_count = 2000;
+	my $splice_count = 20;
 	while (@uids_needed) {
 		my @uid_chunk = splice @uids_needed, 0, $splice_count;
 		my $uid_str = join(",", @uid_chunk);
@@ -235,9 +255,22 @@ sub count_uid_nodnix {
 			"tagnameid='$self->{nixid}' AND uid IN ($uid_str)
 			 AND created_at >= DATE_SUB(NOW(), INTERVAL $self->{months_back} MONTH)",
 			'GROUP BY uid');
+		if (grep { $self->{debug_uids}{$_} } @uid_chunk) {
+			my $nod_d = Dumper($nod_hr); $nod_d =~ s/\s+/ /g;
+			my $nix_d = Dumper($nix_hr); $nix_d =~ s/\s+/ /g;
+			print STDERR sprintf("%s tags_updateclouts %s count_uid_nodnix splice nod_d=%s nix_d=%s\n",
+				scalar(gmtime), ref($self),
+				$nod_d, $nix_d);
+		}
 		for my $uid (@uid_chunk) {
 			$self->{nodc}{$uid} = $nod_hr->{$uid} || 0;
 			$self->{nixc}{$uid} = $nix_hr->{$uid} || 0;
+			if ($self->{debug_uids}{$uid}) {
+				print STDERR sprintf("%s tags_updateclouts %s count_uid_nodnix uid=%d nod=%s nix=%s nodc=%s nixc=%s\n",
+					scalar(gmtime), ref($self), $uid,
+					$nod_hr->{$uid}, $nix_hr->{$uid},
+					$self->{nodc}{$uid}, $self->{nixc}{$uid});
+			}
 		}
 		sleep 1 if @uids_needed;
 	}
@@ -334,9 +367,14 @@ sub get_mult {
 		my $sfrac = ($stn == $nodid ? $snix : $snod) / ($snod+$snix+1);
 		my $nfrac = ($ntn == $nodid ? $nnix : $nnod) / ($nnod+$nnix+1);
 		if ($self->{debug}) {
-			print STDERR ref($self) . " get_mult su='$su' nu='$nu' sfrac='$sfrac' nfrac='$nfrac'\n";
+			print STDERR sprintf("%s tags_updateclouts %s get_mult su=%d nu=%d sfrac=%.6f nfrac=%.6f\n",
+				scalar(gmtime), ref($self), $su, $nu, $sfrac, $nfrac);
 		}
 		$mult *= $sfrac * $nfrac;
+	}
+	if ($self->{debug}) {
+		print STDERR sprintf("%s tags_updateclouts %s get_mult returning %.6f\n",
+			scalar(gmtime), ref($self), $mult);
 	}
 
 	return $mult;
@@ -392,17 +430,24 @@ sub get_total_weight {
 	# correlations with other users' tags.
 	if ($uid_mults->{'-1'}) {
 		if (@{$uid_mults->{'-1'}}) {
-			print STDERR "get_total_weight for $new_uid calling balance_weight_vectors -1\n" if $self->{debug};
 			my @balanced = $self->balance_weight_vectors(@{$uid_mults->{'-1'}});
-			push @total_mults, $constants->{tags_tagpeerval_postingbonus}
+			my $m = $constants->{tags_tagpeerval_postingbonus}
 				* $self->sum_weight_vectors(@balanced);
+			push @total_mults, $m;
 			$any_weight = 1;
+			if ($self->{debug}) {
+				print STDERR sprintf("%s tags_updateclouts %s get_total_weight uid=%d balance_weight_vectors(-1)=%.6f\n",
+					scalar(gmtime), ref($self), $new_uid, $m);
+			}
 		}
 		delete $uid_mults->{'-1'};
 	}
 	
 	# Start by sorting source uids by decreasing weight.
-	my @nodef = grep { !defined $tags_peerclout->{$_} } keys %$uid_mults; $#nodef = 20 if $#nodef > 20; print STDERR "get_total_weight for $new_uid nodef: '@nodef'\n" if @nodef;
+	my @nodef = grep { !defined $tags_peerclout->{$_} } keys %$uid_mults; $#nodef = 20 if $#nodef > 20;
+	print STDERR sprintf("%s tags_updateclouts %s get_total_weight for uid=%d nodef: '%s'\n",
+		scalar(gmtime), ref($self), $new_uid, join(' ', @nodef))
+		if @nodef;
 	my @source_uids = sort { $tags_peerclout->{$b} <=> $tags_peerclout->{$a} } keys %$uid_mults;
 
 	# If all source uids have weight 0, we know the answer quickly.
@@ -412,25 +457,39 @@ sub get_total_weight {
 			last;
 		}
 	}
+	if ($self->{debug}) {
+		my $src_count = scalar(@source_uids);
+		my @src_abridged = @source_uids;
+		$#src_abridged = 19 if $#src_abridged >= 19;
+		my $src_min = $uid_mults->{ $src_abridged[-1] };
+		my $src_max = $uid_mults->{ $src_abridged[ 0] };
+		my $abridged_str = join(' ', @src_abridged);
+		print STDERR sprintf("%s tags_updateclouts %s get_total_weight uid=%d any_weight=%d count=%d min=%.6f max=%.6f uids: '%d'\n",
+			scalar(gmtime), ref($self), $new_uid, $any_weight,
+			$src_count, $src_min, $src_max, $abridged_str);
+	}
 	return 0 if !$any_weight;
 
 	# Get the mult for each of those
 	for my $uid (@source_uids) {
-	print STDERR "get_total_weight for $new_uid calling balance_weight_vectors $uid\n" if $self->{debug};
 		my @balanced = $self->balance_weight_vectors(@{$uid_mults->{$uid}});
-		push @total_mults, $tags_peerclout->{$uid} * $self->sum_weight_vectors(@balanced);
+		my $m = $tags_peerclout->{$uid} * $self->sum_weight_vectors(@balanced);
+		push @total_mults, $m;
 		if ($self->{debug}) {
-			my @t2 = map { sprintf("%.6g", $_) } @total_mults;
-			print STDERR "get_total_weight for $new_uid source_uid=$uid (clout $tags_peerclout->{$uid}), total_mults='@t2' from balanced '@balanced'\n";
+			print STDERR sprintf("%s tags_updateclouts %s get_total_weight uid=%d source_uid=%d (clout %.6f) mult: %.6f for balanced: %s\n",
+				scalar(gmtime), ref($self), $new_uid, $uid, $m,
+				join(' ', map { sprintf("%.6f", $_) } @balanced));
 		}
 	}
 
 	# Then (using the same decreasing-multipliers algorithm) get the
 	# total of all those mults.
-	print STDERR "get_total_weight for $new_uid calling balance_weight_vectors total\n" if $self->{debug};
 	my @balanced = $self->balance_weight_vectors(@total_mults);
 	my $total = $self->sum_weight_vectors(@balanced);
-	print STDERR ref($self) . " total=$total for uid $new_uid\n" if $self->{debug};
+	if ($self->{debug}) {
+		print STDERR sprintf("%s tags_updateclouts %s get_total_weight uid=%d initial total=%.6f\n",
+			scalar(gmtime), ref($self), $new_uid, $total);
+	}
 	
 	# If this user was created recently, less weight for them.
 	my $daysold = (time - $created_at)/86400;
@@ -462,6 +521,11 @@ sub get_total_weight {
 	
 	# If the user has low clout, less weight for them.
 	$total *= $clout;
+
+	if ($self->{debug}) {
+		print STDERR sprintf("%s tags_updateclouts %s get_total_weight uid=%d final total=%.6f\n",
+			scalar(gmtime), ref($self), $new_uid, $total);
+	}
 	
 	# If the result is _very_ low, just count it as 0 (this may allow
 	# optimizations later).
@@ -494,8 +558,10 @@ sub balance_weight_vectors {
 	if ($self->{debug} || $w_pos_mag > 10_000 || $w_neg_mag > 10_000) {
 		my @w2 = @w;   $#w2 = 4 if $#w2 > 4;
 		my @r2 = @ret; $#r2 = 4 if $#r2 > 4;
-		print STDERR sprintf("%s balance_weight_vectors posmag=%0.5g negmag=%0.5g from '%s' to '%s'\n",
-			ref($self), $w_pos_mag, $w_neg_mag, join(' ', @w2), join(' ', @r2));
+		print STDERR sprintf("%s tags_updateclouts %s balance_weight_vectors posmag=%0.5g negmag=%0.5g from '%s' to '%s'\n",
+			scalar(gmtime), ref($self), $w_pos_mag, $w_neg_mag,
+			join(' ', map { sprintf("%.6f", $_) } @w2),
+			join(' ', map { sprintf("%.6f", $_) } @r2));
 	}
 	return @ret;
 }
@@ -512,7 +578,8 @@ sub sum_weight_vectors {
 	}
 	$weight = 0 if $weight < 0;
 	if ($self->{debug}) {
-		print STDERR ref($self) . " sum_weight_vectors weight='$weight' w='@w'\n";
+		print STDERR sprintf("%s tags_updateclouts %s sum_weight_vectors weight=%.6f w='%s'\n",
+			scalar(gmtime), ref($self), $weight, join(' ', map { sprintf("%.6f", $_) } @w));
 	}
 	return $weight;
 }

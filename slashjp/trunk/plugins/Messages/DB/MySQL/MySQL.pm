@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Messages::DB::MySQL;
 
@@ -24,14 +23,13 @@ use strict;
 use Slash::DB;
 use Slash::Constants qw(:messages);
 use Slash::Utility;
-use Storable qw(freeze thaw);
+use Storable qw(nfreeze thaw);
 
-use vars '$VERSION';
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 my %descriptions = (
 	'deliverymodes'
@@ -195,7 +193,7 @@ sub _create {
 	my $prime = $self->{_drop_prime};
 
 	# fix scalar to be a ref for freezing
-	my $frozen = freeze(ref $message ? $message : \$message);
+	my $frozen = nfreeze(ref $message ? $message : \$message);
 	$self->sqlInsert($table, {
 		user	=> $user,
 		fuser	=> $fuser,

@@ -13,6 +13,10 @@ list
 __seclev__
 10000
 __template__
+[% IF form.metamod %]
+<div id="metamodwrap">
+[% END %]
+[% PROCESS init_tagui -%]
 [% firehose = Slash.getObject("Slash::FireHose"); %]
 [% IF env.script_name == "/firehose.pl" || form.ssi %]
 <script type="text/javascript">
@@ -45,11 +49,10 @@ __template__
 YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 </script>
 [% ua = env.HTTP_USER_AGENT %]
-
 <div id="slashboxes">
 [% Slash.getAd(2) %]
 [% UNLESS user.noboxes %]
-  [% IF slashboxes && !(form.smalldevices || form.embed || (constants.smalldevices_ua_regex && ua.match(constants.smalldevices_ua_regex)));
+  [% IF slashboxes && !(form.smalldevices || form.embed || form.metamod || (constants.smalldevices_ua_regex && ua.match(constants.smalldevices_ua_regex)));
     slashboxes %]
   [% END %]
 [% END %]
@@ -57,12 +60,17 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 <div id="message">
 	<div class="content">
 		<p>
-		[% PROCESS rand_mesg %]
+		[% IF form.metamod %]
+			Meta-Moderation
+		[% ELSE %]
+			[% PROCESS rand_mesg %]
+		[% END %]
 		</p>
 	</div>
 </div>
 [% END %]
 <div id="messagearea"></div>
+[% IF form.metamod %][% Slash.getData('metamod_msg') %][% END %]
 [% login_block = BLOCK;
    this_fhfilter = form.fhfilter | fixparam;
    PROCESS userlogin_cover
@@ -83,7 +91,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 [% theupdatetime = Slash.timeCalc(Slash.db.getTime(), "%H:%M"); %]
 [% refresh_text = "";
    IF !user.is_anon;
-   	refresh_text = '<span style="font-size:60%">(<span id="pauseorplay">Paused</span> <span id="local_last_update_time">' _ theupdatetime _ '</span><span id="gmt_update_time"></span>)</span><span id="busy" class="hide"><img src="' _ constants.imagedir _ '/spinner.gif" alt="*"></span>';
+	refresh_text = '<span style="font-size:60%">(<span id="pauseorplay">Paused</span> <span id="local_last_update_time">' _ theupdatetime _ '</span><span id="gmt_update_time"></span>)</span><span class="busy" style="display:none"><img src="' _ constants.imagedir _ '/spinner.gif" alt="*"></span>';
    END;
 %]
 [% PROCESS titlebar title="$constants.sitename Firehose $refresh_text" %]
@@ -164,6 +172,7 @@ cmdrtaco dot net but be forgiving of beta code!
 	[% END %]
 	firehose_settings.issue = [% firehose.js_anon_dump(options.issue) %];
 	firehose_settings.section = [% firehose.js_anon_dump(section) %];
+	firehose_settings.metamod = [% form.metamod ? 1 : 0 %];
 	[% IF fh_page == "console.pl" %]
 		firehose_settings.pageval = 1;
 	[% ELSIF fh_page == "users.pl" %]
@@ -171,6 +180,9 @@ cmdrtaco dot net but be forgiving of beta code!
 	[% END %]
 
 	var firehose_action_time = 0;
+	[% IF options.pagesize == "large" && !form.metamod %]
+	firehose_more_increment = 15;
+	[% END %]
 	[% options_color = (options.color || user.firehose_color || "indigo") %]
 	var fh_color = [% firehose.js_anon_dump(options_color) %];
 	fh_colors = [% firehose.js_anon_dump(colors) %];
@@ -180,7 +192,7 @@ cmdrtaco dot net but be forgiving of beta code!
 	}
 	var fh_view_mode = [% firehose.js_anon_dump(options.mode) %];
 	firehose_settings.page = [% firehose.js_anon_dump(page) %];
-	[% IF form.embed %]
+	[% IF form.embed || form.tabtype == "1" %]
 	firehose_settings.is_embedded = 1; // defined in common.js
 	[% END %]
 	fh_is_admin = [% IF user.is_admin && !user.firehose_usermode %]1[% ELSE %]0[% END %];
@@ -197,11 +209,18 @@ cmdrtaco dot net but be forgiving of beta code!
 
 fh_ticksize = 15;
 firehose_slider_init();
+$(function(){
+	$('#firehoselist').click(firehose_click_tag);
+	firehose_init_tagui();
+});
 
 
 
 [% END %]
 </script>
+[% IF form.metamod %]
+</div>
+[% END %]
 
 __version__
-$Id: list;firehose;default,v 1.103 2007/10/11 22:14:06 pudge Exp $
+$Id$

@@ -1,5 +1,5 @@
 #
-
+# $Id$
 #
 
 DROP TABLE IF EXISTS submissions_notes;

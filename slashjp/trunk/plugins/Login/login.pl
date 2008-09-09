@@ -239,6 +239,11 @@ sub mailPasswd {
 
 	my $user_send = $reader->getUser($uid);
 
+	if ($user->{acl}{nopasswd}) {
+		push @note, getData('mail_acl_nopasswd');
+		$error = 1;
+	}
+
 	if (!$error) {
 		# A user coming from a srcid that's been marked as not
 		# acceptable for posting from also does not get to
@@ -250,7 +255,7 @@ sub mailPasswd {
 		@srcids{keys %{$user->{srcids}}} = values %{$user->{srcids}};
 		delete $srcids{uid};
 
-		if ($reader->checkAL2(\%srcids, [qw( nopost nopostanon spammer )])) {
+		if ($reader->checkAL2(\%srcids, [qw( nopost nopostanon spammer openproxy )])) {
 			push @note, getData('mail_readonly');
 			$error = 1;
 

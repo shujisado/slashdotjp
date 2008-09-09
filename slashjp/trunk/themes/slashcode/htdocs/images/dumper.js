@@ -1,4 +1,4 @@
-// $Id: dumper.js,v 1.2 2006/05/26 22:51:36 pudge Exp $
+// $Id$
 
 // javascript:$dom('commentControlBox').innerHTML = Dumper(displaymode)
 

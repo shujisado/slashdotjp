@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: set_color_ranges.pl,v 1.7 2007/04/25 18:25:16 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 

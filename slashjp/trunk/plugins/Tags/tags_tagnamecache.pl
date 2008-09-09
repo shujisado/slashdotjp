@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tags_tagnamecache.pl,v 1.1 2008/03/21 04:10:35 jamiemccarthy Exp $
+# $Id$
 
 # Once a day, rewrite the tags_tagnamecache table, used for finding
 # tagname suggestions based on prefixes.
@@ -14,7 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.1 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = "30 6 * * *";
 $task{$me}{timespec_panic_1} = ''; # not that important

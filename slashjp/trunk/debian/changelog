@@ -1,3 +1,11 @@
+slash (2.5.0.218-1) unstable; urgency=low
+
+  * New upstream git release
+    - Upstream SCM has been changed to git
+      (git://github.com/scc/slash.git)
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 09 Sep 2008 22:05:52 +0900
+
 slash (2.5.0.201-1) unstable; urgency=low
 
   * New upstream CVS release

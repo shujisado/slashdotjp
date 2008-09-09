@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: PasswordSalt.pm,v 1.2 2008/01/31 15:17:45 jamiemccarthy Exp $
 
 package Slash::Apache::User::PasswordSalt;
 
@@ -9,10 +8,8 @@ use strict;
 use Carp;
 use File::Spec::Functions;
 use Slash::Utility::Environment;
-use vars qw($REVISION $VERSION);
 
-$VERSION   	= '2.003000';  # v2.3.0
-($REVISION)	= ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 
 #
@@ -106,7 +103,7 @@ sub abortIfSuspiciousCaller() {
 		my($package, $filename, $line, $subroutine) = @c;
 		# If we go back up the call chain to a package we know we can
 		# trust, then we can stop looking.
-		last if $package =~ /^(main|Apache::Registry|Apache::ROOT::.*)$/;
+		last if $package =~ /^(main|Apache::PerlRun|Apache::Registry|Apache::ROOT.*)$/;
 		if ($package =~ /^Template/ || $subroutine eq '(eval)') {
 			# This exits the entire script immediately.
 			confess(scalar(gmtime) . " $$ SuspiciousCaller for salt at package '$package'");

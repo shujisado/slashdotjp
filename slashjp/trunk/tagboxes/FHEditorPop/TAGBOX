@@ -1,4 +1,4 @@
-# $Id: $
+# $Id$
 name=FHEditorPop
 description=Keep track of popularity of firehose entries for editors
 mysql_dump=mysql_dump.sql

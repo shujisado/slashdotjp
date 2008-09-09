@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Moderate.pm,v 1.4 2006/10/26 17:33:04 jamiemccarthy Exp $
 
 # XXX right now we have checks for moderation in many places.
 # we must consolidate as much as possible. -- pudge
@@ -25,7 +24,7 @@ use Slash::Constants ':reskey';
 
 use base 'Slash::ResKey::Key';
 
-our($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub doCheck {
 	my($self) = @_;

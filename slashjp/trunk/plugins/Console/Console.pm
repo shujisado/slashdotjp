@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Console;
 
@@ -32,9 +31,8 @@ use Slash::Utility;
 
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Utility::VERSION;
 
 
 sub ajaxConsoleUpdate {
@@ -45,6 +43,7 @@ sub ajaxConsoleUpdate {
 	$html->{'storyadmin-content'}	= $admindb->showStoryAdminBox("", { contents_only => 1});
 	$html->{'performancebox-content'}	= $admindb->showPerformanceBox({ contents_only => 1});
 	$html->{'authoractivity-content'}	= $admindb->showAuthorActivityBox({ contents_only => 1});
+	$html->{'admintodo-wrap'}		= $admindb->showAdminTodo();
 	if (my $tagsdb = getObject('Slash::Tags')) {
 		$html->{'recenttagnames-content'} = $tagsdb->showRecentTagnamesBox({ contents_only => 1 });
 	}
@@ -61,7 +60,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id$

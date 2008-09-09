@@ -27,4 +27,4 @@ pref = msg.user.prefs.$code;
 __seclev__
 500
 __version__
-$Id: storynew;messages;default,v 1.2 2007/07/31 17:28:24 entweichen Exp $
+$Id$

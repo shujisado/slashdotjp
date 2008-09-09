@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Tagbox::TagCountUser;
 
@@ -27,8 +26,7 @@ use Slash::Tagbox;
 
 use Data::Dumper;
 
-use vars qw( $VERSION );
-$VERSION = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -113,10 +111,9 @@ sub feed_userchanges {
 
 sub run {
 	my($self, $affected_id) = @_;
-	my $tagboxdb = getObject('Slash::Tagbox');
-	my $user_tags_ar = $tagboxdb->getTagboxTags($self->{tbid}, $affected_id, 0);
-	main::tagboxLog("TagCountUser->run called for $affected_id, ar count " . scalar(@$user_tags_ar));
-	my $count = grep { !defined $_->{inactivated} } @$user_tags_ar;
+	my $tagboxdb = getObject('Slash::Tagbox', { db_type => 'reader' });
+	my $count = $tagboxdb->sqlCount('tags', "uid=$affected_id AND inactivated IS NULL");
+	main::tagboxLog("TagCountUser->run called for $affected_id, count $count");
 	$self->setUser($affected_id, { tag_count => $count });
 }
 

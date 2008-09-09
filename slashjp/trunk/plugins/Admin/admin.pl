@@ -1191,10 +1191,12 @@ sub editStory {
 
 		$storyref->{uid} ||= $user->{uid};
 		if ($constants->{use_dept_space2dash} && $storyref->{dept}){
+			$storyref->{dept} ||= '';
 			$storyref->{dept} =~ s/[-\s]+/-/g;
 			$storyref->{dept} =~ s/^-//;
 			$storyref->{dept} =~ s/-$//;
 		}
+
 
 		my($related_sids_hr, $related_urls_hr, $related_cids_hr, $related_firehose_hr) = extractRelatedStoriesFromForm($form, $storyref->{sid});
 		$storyref->{related_sids_hr} = $related_sids_hr;
@@ -1405,6 +1407,7 @@ sub editStory {
 		last_sid	=> $sid,
 		last_subid	=> '',
 		last_fhid	=> '',
+		last_action	=> 'editing',
 	});
 
 	# Run a spellcheck on introtext, bodytext, and title if they're set.

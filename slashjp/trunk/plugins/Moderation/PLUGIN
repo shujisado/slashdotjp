@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.2 2006/10/26 17:28:44 jamiemccarthy Exp $
+# $Id$
 name=Moderation
 description="Moderation (Classic)"
 mysql_dump=mysql_dump.sql

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::PollBooth;
 
@@ -12,11 +11,10 @@ use Slash::Constants qw(:people :messages);
 use Slash::Utility;
 use Slash::DB::Utility;
 
-use vars qw($VERSION @EXPORT);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub new {
 	my($class, $user) = @_;
@@ -391,6 +389,12 @@ sub getPollVotesMax {
 	my($answer) = $self->sqlSelect("MAX(votes)", "pollanswers",
 		"qid=$qid_quoted");
 	return $answer;
+}
+
+sub getPollDaysOld {
+	my($self) = @_;
+	return $self->sqlSelect('to_days(now()) - to_days(max(date))','pollquestions');
+	
 }
 
 sub DESTROY {

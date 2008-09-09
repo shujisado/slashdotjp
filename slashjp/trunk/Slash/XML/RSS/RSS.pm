@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::XML::RSS;
 
@@ -31,9 +30,8 @@ use Slash::Utility;
 use Slash::Display;
 use XML::RSS;
 use base 'Slash::XML';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 
 #========================================================================
@@ -458,16 +456,22 @@ sub rss_story {
 	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
 		if ($desc) {
-			$encoded_item->{description} = $desc;
 			$encoded_item->{description} = $desc . getData('rss_story_readmore', {
 				'link'		=> $encoded_item->{link},
 				discussion	=> $story->{discussion},
 			}, 'index');
+
+			my $extra = '';
 			# disabled on slashdot.jp (2008-09-09, tach)
-			#$encoded_item->{description} .= qq{<p><a href="$action"><img src="$channel->{'link'}slashdot-it.pl?from=rss&amp;op=image&amp;style=h0&amp;sid=$story->{sid}"></a></p>};
-			#$encoded_item->{description} .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>" if $action;
+			# If the text of the <img src>'s query string changes,
+			# Stats.pm getTopBadgeURLs() may also have to change.
+			#$extra .= qq{<p><a href="$action"><img src="$channel->{'link'}slashdot-it.pl?from=rss&amp;op=image&amp;style=h0&amp;sid=$story->{sid}"></a></p>}
+			#	if $constants->{rdfbadge};
+			#$extra .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>"
+			#	if $action;
 			# add poll if any
-			$encoded_item->{description} .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+			$extra .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
+			$encoded_item->{description} .= $self->encode($extra) if $extra;
 
 			# add content:encoded for slashdot.jp
 			$item->{'content:encoded'} ||= ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
@@ -612,7 +616,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::XML(3).
-
-=head1 VERSION
-
-$Id$

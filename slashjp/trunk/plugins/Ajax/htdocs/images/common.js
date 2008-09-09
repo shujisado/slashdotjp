@@ -1,43 +1,13 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id$
+; // $Id$
 
-function $dom( id ) {
-	return document.getElementById(id);
-}
-
-jQuery.fn.extend({
-
-	mapClass: function( map ) {
-		map['?'] = map['?'] || [];
-		return this.each(function() {
-			var unique = {};
-			var cl = [];
-			$.each($.map(this.className.split(/\s+/), function(k){
-				return k in map ? map[k] : ('*' in map ? map['*'] : k)
-			}).concat(map['+']), function(i, k) {
-				if ( k && !(k in unique) ) {
-					unique[k] = true;
-					cl.push(k);
-				}
-			});
-			this.className = (cl.length ? cl : map['?']).join(' ');
-		});
-	},
-
-	setClass: function( c1 ) {
-		return this.each(function() {
-			this.className = c1
-		});
-	},
-
-	toggleClasses: function( c1, c2, force ) {
-		var map = { '?': force };
-		map[c1]=c2;
-		map[c2]=c1;
-		return this.mapClass(map);
-	}
-
-});
+/*global setFirehoseAction firehose_get_updates tagsHideBody tagsShowBody attachCompleter createTag
+	firehose_remove_all_items firehose_fix_up_down firehose_toggle_tagui_to ajax_update json_handler
+	json_update firehose_reorder firehose_get_next_updates getFirehoseUpdateInterval run_before_update
+	firehose_play firehose_add_update_timerid firehose_collapse_entry firehose_slider_end
+	firehose_slider_set_color vendorStoryPopup vendorStoryPopup2 firehose_save_tab check_logged_in
+	scrollWindowToFirehose scrollWindowToId viewWindowLeft getOffsetTop firehoseIsInWindow
+	isInWindow viewWindowTop viewWindowBottom firehose_set_cur firehose_get_onscreen */
 
 var reskey_static = '';
 
@@ -55,17 +25,19 @@ var firehose_settings = {};
   firehose_settings.not_id = 0;
   firehose_settings.section = 0;
   firehose_settings.more_num = 0;
+  firehose_settings.metamod = 0;
 
 // Settings to port out of settings object
   firehose_item_count = 0;
-  firehose_updates = Array(0);
+  firehose_updates = [];
   firehose_updates_size = 0;
-  firehose_ordered = Array(0);
-  firehose_before = Array(0);
-  firehose_after = Array(0);
+  firehose_ordered = [];
+  firehose_before = [];
+  firehose_after = [];
   firehose_removed_first = '0';
   firehose_removals = null;
   firehose_future = null;
+  firehose_more_increment = 10;
 
   var firehose_cur = 0;
 
@@ -73,22 +45,23 @@ var firehose_settings = {};
 var fh_play = 0;
 var fh_is_timed_out = 0;
 var fh_is_updating = 0;
-var fh_update_timerids = Array(0);
+var fh_update_timerids = [];
 var fh_is_admin = 0;
 var console_updating = 0;
-var fh_colorslider; 
+var fh_colorslider;
 var fh_ticksize;
-var fh_colors = Array(0);
+var fh_colors = [];
 var fh_use_jquery = 0;
-var vendor_popup_timerids = Array(0);
+var vendor_popup_timerids = [];
 var vendor_popup_id = 0;
 var fh_slider_init_set = 0;
 var ua=navigator.userAgent;
 var is_ie = ua.match("/MSIE/");
 
 
+
 function createPopup(xy, titlebar, name, contents, message, onmouseout) {
-	var body = document.getElementsByTagName("body")[0]; 
+	var body = document.getElementsByTagName("body")[0];
 	var div = document.createElement("div");
 	div.id = name + "-popup";
 	div.style.position = "absolute";
@@ -99,7 +72,7 @@ function createPopup(xy, titlebar, name, contents, message, onmouseout) {
 
 	var leftpos = xy[0] + "px";
 	var toppos  = xy[1] + "px";
-	
+
 	div.style.left = leftpos;
 	div.style.top = toppos;
 	div.style.zIndex = "100";
@@ -159,12 +132,48 @@ function moveByXY(div, x, y) {
 	}
 }
 
-function getXYForId(id, addWidth, addHeight) {
-	var div = $('#'+id);
-	var offset = div.offset();
-	if (addWidth) offset.left += div.attr('offsetWidth');
-	if (addHeight) offset.top += div.attr('offsetHeight');
-	return [ offset.left, offset.top ];
+function getXYForSelector( selector, addWidth, addHeight ){
+	var $elem = $(selector);
+	var dX = addWidth ? $elem.attr('offsetWidth') : 0;
+	var dY = addHeight ? $elem.attr('offsetHeight') : 0;
+
+	var o = $elem.offset();
+	return [ o.left+dX, o.top+dY ];
+}
+
+// function getXYForId(id, addWidth, addHeight){ return getXYForSelector('#'+id, addWidth, addHeight); }
+
+function firehose_id_of( expr ) {
+	try {
+		// We accept a number, or...
+		if ( typeof expr === 'number' ) {
+			return expr;
+		}
+
+		// ...a dom element that is or is within a firehose entry, or...
+		else if ( typeof expr === 'object' && expr.parentNode ) {
+			if ( expr.id && expr.id.match(/-\d+$/) ) {
+				expr = expr.id;
+			} else {
+				expr = $(expr).parents('[id^=firehose-]').attr('id');
+			}
+		}
+
+		// ...a string that is a number or the id of
+		//	a dom element that is or is within a firehose entry.
+		var match = /(?:.+-)?(\d+)$/.exec(expr);
+
+		// We return an integer id.
+		if ( match ) {
+			return parseInt(match[1], 10);
+		}
+	}
+	catch ( e ) {
+		// If we can't deduce an integer id; we won't throw...
+	}
+
+	// ...but we won't return an answer, either.
+	return undefined;
 }
 
 function firehose_toggle_advpref() {
@@ -189,8 +198,13 @@ function toggleIntro(id, toggleid) {
 	$('#'+toggleid).setClass(new_class).html(new_html);
 }
 
+
 function tagsToggleStoryDiv(id, is_admin, type) {
-	($('#toggletags-body-'+id).hasClass('tagshide') ? tagsShowBody : tagsHideBody)(id, is_admin, '', type);
+	if ( $('#toggletags-body-'+id).hasClass('tagshide') ) {
+		tagsShowBody(id, is_admin, '', type);
+	} else {
+		tagsHideBody(id);
+	}
 }
 
 function tagsHideBody(id) {
@@ -216,67 +230,69 @@ function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
 	$('#tagbox-'+id).setClass("tags");			// Make the tagbox change to the slashbox class
 	$('#tagbox-title-'+id).setClass("tagtitleopen");	// Make the title of the tagbox change to white-on-green
 	$('#toggletags-body-'+id).setClass("tagbody");		// Make the body of the tagbox visible
-	
-	// If the tags-user div hasn't been filled, fill it.
-	var tagsuser = $('#tags-user-' + id);
-	if (tagsuser.html() == "") {
-		// The tags-user-123 div is empty, and needs to be
-		// filled with the tags this user has already
-		// specified for this story, and a reskey to allow
-		// the user to enter more tags.
-		tagsuser.html("Retrieving...");
-		var params = {};
-		if (type == "stories") {
-			params['op'] = 'tags_get_user_story';
-			params['sidenc'] = id;
-		} else if (type == "urls") {
-			//alert('getting user urls ' + id);
-			params['op'] = 'tags_get_user_urls';
-			params['id'] = id;
-		} else if (type == "firehose") {
-			params['op'] = 'tags_get_user_firehose';
-			params['id'] = id;
-		}
-		params['newtagspreloadtext'] = newtagspreloadtext;
-		var handlers = {
-			onComplete: function() { 
-				$dom('newtags-'+id).focus();
-			}
-		}
-		ajax_update(params, 'tags-user-' + id, handlers);
-		//alert('after ajax_update ' + tagsuserid);
 
-		// Also fill the admin div.  Note that if the user
-		// is not an admin, this call will not actually
-		// return the necessary form (which couldn't be
-		// submitted anyway).  The is_admin parameter just
-		// saves us an ajax call to find that out, if the
-		// user is not actually an admin.
-		if (is_admin) {
-			var tagsadminid = 'tags-admin-' + id;
-			params = {};
+	// If there is a tags-user div, and it hasn't been filled, fill it.
+	var $tagsuser = $('#tags-user-' + id);
+	if ( $tagsuser.length ) {
+		if ($tagsuser.html() === "") {
+			// The tags-user-123 div is empty, and needs to be
+			// filled with the tags this user has already
+			// specified for this story, and a reskey to allow
+			// the user to enter more tags.
+			$tagsuser.html("Retrieving...");
+			var params = {};
 			if (type == "stories") {
-				params['op'] = 'tags_get_admin_story';
-				params['sidenc'] = id;
+				params.op = 'tags_get_user_story';
+				params.sidenc = id;
 			} else if (type == "urls") {
-				params['op'] = 'tags_get_admin_url';
-				params['id'] = id;
+				//alert('getting user urls ' + id);
+				params.op = 'tags_get_user_urls';
+				params.id = id;
 			} else if (type == "firehose") {
-				params['op'] = 'tags_get_admin_firehose';
-				params['id'] = id;
+				params.op = 'tags_get_user_firehose';
+				params.id = id;
 			}
-			ajax_update(params, tagsadminid);
-		}
+			params.newtagspreloadtext = newtagspreloadtext;
+			var handlers = {
+				onComplete: function() {
+					$dom('newtags-'+id).focus();
+				}
+			};
+			ajax_update(params, 'tags-user-' + id, handlers);
+			//alert('after ajax_update ' + tagsuserid);
 
-	} else {
-		if (newtagspreloadtext) {
-			// The box was already open but it was requested
-			// that we append some text to the user text.
-			// We can't do that by passing it in, so do it
-			// manually now.
-			var textinput = $dom('newtags-'+id);
-			textinput.value += ' ' + newtagspreloadtext;
-			textinput.focus();
+			// Also fill the admin div.  Note that if the user
+			// is not an admin, this call will not actually
+			// return the necessary form (which couldn't be
+			// submitted anyway).  The is_admin parameter just
+			// saves us an ajax call to find that out, if the
+			// user is not actually an admin.
+			if (is_admin) {
+				var tagsadminid = 'tags-admin-' + id;
+				params = {};
+				if (type == "stories") {
+					params.op = 'tags_get_admin_story';
+					params.sidenc = id;
+				} else if (type == "urls") {
+					params.op = 'tags_get_admin_url';
+					params.id = id;
+				} else if (type == "firehose") {
+					params.op = 'tags_get_admin_firehose';
+					params.id = id;
+				}
+				ajax_update(params, tagsadminid);
+			}
+
+		} else {
+			if (newtagspreloadtext) {
+				// The box was already open but it was requested
+				// that we append some text to the user text.
+				// We can't do that by passing it in, so do it
+				// manually now.
+				var textinput = $dom('newtags-'+id);
+				textinput.value += ' ' + newtagspreloadtext;
+				textinput.focus();
+			}
 		}
 	}
 }
@@ -287,24 +303,27 @@ function tagsOpenAndEnter(id, tagname, is_admin, type) {
 }
 
 function completer_renameMenu( s, params ) {
-	if ( s )
+	if ( s ) {
 		params._sourceEl.innerHTML = s;
+	}
 }
 
 function completer_setTag( s, params ) {
 	createTag(s, params._id, params._type);
 	var tagField = document.getElementById('newtags-'+params._id);
 	if ( tagField ) {
-		var s = tagField.value.slice(-1);
-		if ( s.length && s != " " )
+		var end_char = tagField.value.slice(-1);
+		if ( end_char.length && end_char != " " ) {
 			tagField.value += " ";
+		}
 		tagField.value += s;
 	}
 }
 
 function completer_handleNeverDisplay( s, params ) {
-	if ( s == "neverdisplay" )
+	if ( s == "neverdisplay" ) {
 		admin_neverdisplay("", "firehose", params._id);
+	}
 }
 
 function completer_save_tab(s, params) {
@@ -318,25 +337,29 @@ function clickCompleter( obj, id, is_admin, type, tagDomain, customize ) {
 function focusCompleter( obj, id, is_admin, type, tagDomain, customize ) {
 	if ( navigator.vendor !== undefined ) {
 		var vendor = navigator.vendor.toLowerCase();
-		if ( vendor.indexOf("apple") != -1
-				|| vendor.indexOf("kde") != -1 )
+		if ( vendor.indexOf("apple") != -1 ||
+				vendor.indexOf("kde") != -1 ) {
 			return false;
+		}
 	}
 
 	return attachCompleter(obj, id, is_admin, type, tagDomain, customize);
 }
 
 function attachCompleter( obj, id, is_admin, type, tagDomain, customize ) {
-	if ( customize === undefined )
-		customize = new Object();
+	if ( customize === undefined ) {
+		customize = {};
+	}
 	customize._id = id;
 	customize._is_admin = is_admin;
 	customize._type = type;
-	if ( tagDomain != 0 && customize.queryOnAttach === undefined )
+	if ( tagDomain !== 0 && customize.queryOnAttach === undefined ) {
 		customize.queryOnAttach = true;
-	
-	if ( !YAHOO.slashdot.gCompleterWidget )
+	}
+
+	if ( !YAHOO.slashdot.gCompleterWidget ) {
 		YAHOO.slashdot.gCompleterWidget = new YAHOO.slashdot.AutoCompleteWidget();
+	}
 
 	YAHOO.slashdot.gCompleterWidget.attach(obj, customize, tagDomain);
 	return false;
@@ -349,16 +372,16 @@ function reportError(request) {
 
 function createTag(tag, id, type) {
 	var params = {};
-	params['id'] = id;
-	params['type'] = type;
+	params.id = id;
+	params.type = type;
 	if ( fh_is_admin && ("_#)^*".indexOf(tag[0]) != -1) ) {
-	  params['op'] = 'tags_admin_commands';
-	  params['reskey'] = $('#admin_commands-reskey-' + id).val();
-	  params['command'] = tag;
+	  params.op = 'tags_admin_commands';
+	  params.reskey = $('#admin_commands-reskey-' + id).val();
+	  params.command = tag;
 	} else {
-	  params['op'] = 'tags_create_tag';
-	  params['reskey'] = reskey_static;
-	  params['name'] = tag;
+	  params.op = 'tags_create_tag';
+	  params.reskey = reskey_static;
+	  params.name = tag;
 	  if ( fh_is_admin && (tag == "hold") ) {
 	    firehose_collapse_entry(id);
 	  }
@@ -402,10 +425,9 @@ function setOneTopTagForFirehose(id, newtag) {
 		tags: newtag
 	});
 }
-
 function tagsCreateForFirehose(id) {
 	var status = $('#toggletags-message-'+id).html('Saving tags...');
-	
+
 	ajax_update({
 		op:	'tags_create_for_firehose',
 		id:	id,
@@ -419,26 +441,28 @@ function tagsCreateForFirehose(id) {
 function toggle_firehose_body(id, is_admin) {
 	var params = {};
 	setFirehoseAction();
-	params['op'] = 'firehose_fetch_text';
-	params['id'] = id;
+	params.op = 'firehose_fetch_text';
+	params.id = id;
 	var fhbody = $dom('fhbody-'+id);
 	var fh = $dom('firehose-'+id);
+
 	var usertype = fh_is_admin ? " adminmode" : " usermode";
 	if (fhbody.className == "empty") {
 		var handlers = {
 			onComplete: function() {
-				if(firehoseIsInWindow(id)) { 
-					scrollToWindowFirehose(id); 
+				if(firehoseIsInWindow(id)) {
+					scrollWindowToFirehose(id);
 				}
-				firehose_get_admin_extras(id); 
+				firehose_get_admin_extras(id);
 			}
 		};
-		params['reskey'] = reskey_static;
+		params.reskey = reskey_static;
 		ajax_update(params, 'fhbody-'+id, is_admin ? handlers : null);
 		fhbody.className = "body";
 		fh.className = "article" + usertype;
-		if (is_admin)
-			tagsShowBody(id, is_admin, '', "firehose");
+		if (is_admin) {
+			firehose_toggle_tagui_to(true, fh);
+		}
 	} else if (fhbody.className == "body") {
 		fhbody.className = "hide";
 		fh.className = "briefarticle" + usertype;
@@ -447,6 +471,9 @@ function toggle_firehose_body(id, is_admin) {
 	} else if (fhbody.className == "hide") {
 		fhbody.className = "body";
 		fh.className = "article" + usertype;
+		if (is_admin) {
+			firehose_toggle_tagui_to(true, fh);
+		}
 		/*if (is_admin)
 			tagsShowBody(id, is_admin, '', "firehose"); */
 	}
@@ -457,8 +484,12 @@ function toggleFirehoseTagbox(id) {
 }
 
 function firehose_set_options(name, value) {
+	if (name == "color" && value === undefined) {
+		return;
+	}
+
 	var pairs = [
-		// name		value		curid		newid		newvalue 	title 
+		// name		value		curid		newid		newvalue 	title
 		["orderby", 	"createtime", 	"popularity",	"time",		"popularity"	],
 		["orderby", 	"popularity", 	"time",		"popularity",	"createtime"	],
 		["orderdir", 	"ASC", 		"asc",		"desc",		"DESC"],
@@ -467,24 +498,20 @@ function firehose_set_options(name, value) {
 		["mode", 	"fulltitle", 	"full",		"abbrev",	"full"]
 	];
 	var params = {};
-	params['op'] = 'firehose_set_options';
-	params['reskey'] = reskey_static;
-	var theForm = document.forms["firehoseform"];
+	params.setting_name = name;
+	params.op = 'firehose_set_options';
+	params.reskey = reskey_static;
+	var theForm = document.forms.firehoseform;
 	if (name == "firehose_usermode") {
-		if (value ==  true) {
-			value = 1;
-		}
-		if (value == false) {
-			value = 0;
-		}
-		params['setusermode'] = 1;
+		value = value ? 1 : 0;
+		params.setusermode = 1;
 		params[name] = value;
 	}
 
 	if (name == "nodates" || name == "nobylines" || name == "nothumbs" || name == "nocolors" || name == "mixedmode" || name == "nocommentcnt" || name == "nomarquee" || name == "noslashboxes") {
-		value = value == true ? 1 : 0;
+		value = value ? 1 : 0;
 		params[name] = value;
-		params['setfield'] = 1;
+		params.setfield = 1;
 		var classname;
 		if (name == "nodates") {
 			classname = "date";
@@ -506,18 +533,26 @@ function firehose_set_options(name, value) {
 		firehose_settings.page = 0;
 		firehose_settings.more_num = 0;
 	}
+
+	if (name == "setfhfilter") {
+		firehose_settings.fhfilter = value;
+		firehose_settings.page = 0;
+		firehose_settings.more_num = 0;
+	}
+
 	if (name != "color") {
 	for (i=0; i< pairs.length; i++) {
 		var el = pairs[i];
 		if (name == el[0] && value == el[1]) {
 			firehose_settings[name] = value;
-			if ($dom(el[2])) {
-				$dom(el[2]).id = el[3];
-				if($dom(el[3])) {
-					var namenew = el[0];
-					var valuenew = el[4];
-					$dom(el[3]).firstChild.onclick = function() { firehose_set_options(namenew, valuenew); return false;}
-				}
+			var $ctrl = $('#'+el[2]);
+			if ( $ctrl.length ) {
+				$ctrl.attr('id', el[3]);
+				var namenew = el[0], valuenew = el[4];
+				$ctrl.children().eq(0).click(function(){
+					firehose_set_options(namenew, valuenew);
+					return false;
+				});
 			}
 		}
 	}
@@ -529,12 +564,12 @@ function firehose_set_options(name, value) {
 		if ($dom('firehoselist')) {
 			// set page
 			page = 0;
-			
+
 			if (!is_ie) {
-				var attributes = { 
+				var attributes = {
 					opacity: { from: 1, to: 0 }
 				};
-				var myAnim = new YAHOO.util.Anim("firehoselist", attributes); 
+				var myAnim = new YAHOO.util.Anim("firehoselist", attributes);
 				myAnim.duration = 1;
 				myAnim.onComplete.subscribe(function() {
 					$dom('firehoselist').style.opacity = "1";
@@ -542,12 +577,12 @@ function firehose_set_options(name, value) {
 				myAnim.animate();
 			}
 			// remove elements
-			setTimeout(firehose_remove_all_items, 600);
+			firehose_remove_all_items();
 		}
 	}
 	}
 
-	if (name == "color" || name == "tab" || name == "pause" || name == "startdate" || name == "duration" || name == "issue" || name == "pagesize") { 
+	if (name == "color" || name == "tab" || name == "pause" || name == "startdate" || name == "duration" || name == "issue" || name == "pagesize") {
 		params[name] = value;
 		if (name == "startdate") {
 			firehose_settings.startdate = value;
@@ -577,7 +612,7 @@ function firehose_set_options(name, value) {
 	}
 
 	var handlers = {
-		onComplete: function(transport) { 
+		onComplete: function(transport) {
 			json_handler(transport);
 			firehose_get_updates({ oneupdate: 1 });
 		}
@@ -585,17 +620,19 @@ function firehose_set_options(name, value) {
 
 	if (name == 'tabsection') {
 		firehose_settings.section = value;
-		params['tabtype'] = 'tabsection';
+		params.tabtype = 'tabsection';
 	}
 
 	if (name == 'tabtype') {
-		params['tabtype'] = value;
+		params.tabtype = value;
 	}
 
-	params['section'] = firehose_settings.section;
-	for (i in firehose_settings) {
-		params[i] = firehose_settings[i];
+	if (name == 'more_num') {
+		params.ask_more = 1;
 	}
+
+	params.section = firehose_settings.section;
+	$.extend(params, firehose_settings);
 	ajax_update(params, '', handlers);
 }
 
@@ -604,23 +641,64 @@ function firehose_remove_all_items() {
 }
 
 
-function firehose_up_down(id, dir) {
-	if (!check_logged_in()) return;
+function firehose_up_down(id, dir, type) {
+	if (!check_logged_in()) { return; }
 
 	setFirehoseAction();
+	var meta = 0;
+	if (type && type == "comment") {
+		meta = 1;
+	}
 	ajax_update({
 		op:	'firehose_up_down',
 		id:	id,
 		reskey:	reskey_static,
-		dir:	dir
+		dir:	dir,
+		meta:	meta
 	}, '', { onComplete: json_handler });
 
-	$('#updown-'+id).setClass(dir=='+' ? 'votedup' : 'voteddown');
 
-	if (dir == "-" && fh_is_admin) {
-		firehose_collapse_entry(id);
+	// We changed the tags outside the notice of the tag widget (if any).
+	// If there is one, we need to tell it.  Look for the tag widget.
+	var new_context = {'+':'nod', '-':'nix'}[dir];
+	var found_widgets = 0;
+
+	var $server = $('#firehoselist > [tag-server='+id+']');
+	$server.find('.tag-widget').
+			each(function(){
+				++found_widgets;
+				this.set_context(new_context);
+			});
+
+	if ( found_widgets ) {
+		$server[0].fetch_tags();
+	} else {
+		// No tag widget; we have to call directly...
+		firehose_fix_up_down(id, {'+':'votedup', '-':'voteddown'}[dir]);
 	}
 }
+
+function firehose_fix_up_down(id, new_state) {
+	// Find the (possibly) affected +/- capsule.
+	var $updown = $('#updown-'+id);
+
+	if ( $updown.length && ! $updown.hasClass(new_state) ) {
+		// We found the capsule, and it's state needs to be fixed.
+		$updown.setClass(new_state);
+	}
+}
+
+function firehose_click_nodnix_reason( event ) {
+	var $entry = $(event.target).nearest_parent('[tag-server]');
+	var id = $entry.attr('tag-server');
+
+	if ( (fh_is_admin || firehose_settings.metamod) && ($('#updown-'+id).hasClass('voteddown') || $entry.is('[type=comment]')) ) {
+		firehose_collapse_entry(id);
+	}
+
+	return true;
+}
+
 
 function firehose_remove_tab(tabid) {
 	setFirehoseAction();
@@ -634,43 +712,278 @@ function firehose_remove_tab(tabid) {
 }
 
 
+//
+// firehose + tagui
+//
+
+var $related_trigger = $().filter();
+
+function firehose_toggle_tagui_to( if_expanded, selector ){
+	var	$server = $(selector).nearest_parent('[tag-server]'),
+		$widget = $server.find('.tag-widget.body-widget'),
+		id	= $server.attr('tag-server');
+
+	setFirehoseAction();
+	$server.find('.tag-widget').each(function(){ this.set_context(); });
+
+	$widget.toggleClassTo('expanded', if_expanded);
+
+	var toggle_button={}, toggle_div={};
+	if ( if_expanded ){
+		$server.each(function(){ this.fetch_tags(); });
+		if ( fh_is_admin ) {
+			firehose_get_admin_extras(id);
+		}
+		$widget.find('.tag-entry:visible:first').each(function(){ this.focus(); });
+
+		toggle_button['+'] = (toggle_button.collapse = 'expand');
+		toggle_div['+'] = (toggle_div.tagshide = 'tagbody');
+	} else {
+		toggle_button['+'] = (toggle_button.expand = 'collapse');
+		toggle_div['+'] = (toggle_div.tagbody = 'tagshide');
+	}
+
+	$widget.find('a.edit-toggle .button').mapClass(toggle_button);
+	$server.find('#toggletags-body-'+id).mapClass(toggle_div);
+}
+
+function firehose_toggle_tagui( toggle ) {
+	firehose_toggle_tagui_to( ! $(toggle.parentNode).hasClass('expanded'), toggle );
+}
+
+function firehose_click_tag( event ) {
+	var $target = $(event.target);
+	var command='';
+
+	$related_trigger = $target;
+
+	if ( $target.is('a.up') ) {
+		command = 'nod';
+	} else if ( $target.is('a.down') ) {
+		command = 'nix';
+	} else if ( $target.is('.tag') ) {
+		command = $target.text();
+	} else if ( $target.nearest_parent('.tmenu').length ) {
+		var op = $target.text();
+		var $tag = $target.nearest_parent(':has(span.tag)').find('.tag');
+		$related_trigger = $tag;
+
+		var tag = $tag.text();
+		command = normalize_tag_menu_command(tag, op);
+	} else {
+		$related_target = $().filter();
+	}
+
+	if ( command ) {
+		var $server = $target.nearest_parent('[tag-server]');
+
+		if ( event.shiftKey ) {
+			// if the shift key is down, append the tag to the edit field
+			$server.find('.tag-entry:text:visible:first').each(function(){
+				if ( this.value ) {
+					var last_char = this.value[ this.value.length-1 ];
+					if ( '-^#!)_ '.indexOf(last_char) == -1 ) {
+						this.value += ' ';
+					}
+				}
+				this.value += command;
+				this.focus();
+			});
+		} else {
+			// otherwise, send it the server to be processed
+			$server.each(function(){
+				this.submit_tags(command, { fade_remove: 400, order: 'prepend', classes: 'not-saved'});
+			});
+		}
+		return false;
+	}
+
+	return true;
+}
+
+
+function firehose_handle_context_triggers( commands ){
+	var context;
+	commands = $.map(commands, function(cmd){
+		if ( cmd in context_triggers ) {
+			context = cmd;
+			cmd = null;
+		}
+		return cmd;
+	});
+
+	$('.tag-widget:not(.nod-nix-reasons)', this).
+		each(function(){
+			this.set_context(context);
+		});
+
+	return commands;
+}
+
+
+function firehose_handle_nodnix( commands ){
+	if ( commands.length ) {
+		var $reasons = $('.nod-nix-reasons', this);
+		var nodnix_context = function( ctx ){
+			$reasons.each(function(){
+				this.set_context(ctx);
+			});
+		};
+
+		var tag_server=this, context_not_set=true;
+		$.each(commands.slice(0).reverse(), function(i, cmd){
+			if ( cmd=='nod' || cmd=='nix' ) {
+				nodnix_context(cmd);
+				context_not_set = false;
+				firehose_fix_up_down(
+					tag_server.getAttribute('tag-server'),
+					{ nod:'votedup', nix:'voteddown' }[cmd] );
+				return false;
+			}
+		});
+
+		if ( context_not_set ) {
+			nodnix_context(undefined);
+		}
+	}
+
+	return commands;
+}
+
+function firehose_handle_comment_nodnix( commands ){
+	if ( commands.length ) {
+		var tag_server=this, handled_underlying=false;
+		commands = $.map(commands.reverse(), function( cmd ){
+			var match = /^([\-!]*)(nod|nix)$/.exec(cmd);
+			if ( match ) {
+				var modifier = match[1], vote = match[2];
+				cmd = modifier + 'meta' + vote;
+				if ( !handled_underlying && !modifier ) {
+					var id = tag_server.getAttribute('tag-server');
+					firehose_fix_up_down(
+						id,
+						{ nod:'votedup', nix:'voteddown' }[vote] );
+					firehose_collapse_entry(id);
+					handled_underlying = true;
+				}
+			}
+			return cmd;
+		}).reverse();
+
+		$('.nod-nix-reasons', this).each(function(){
+			this.set_context(undefined);
+		});
+	}
+
+	return commands;
+}
+
+
+function firehose_init_tagui( $new_entries ){
+	if ( ! $new_entries || ! $new_entries.length ) {
+		var $firehoselist = $('#firehoselist');
+		if ( $firehoselist.length ) {
+			$new_entries = $firehoselist.children('[id^=firehose-][class*=article]');
+		} else {
+			$new_entries = $('[id^=firehose-][class*=article]');
+		}
+	}
+
+	$new_entries = $new_entries.filter(':not([tag-server])');
+
+	$new_entries.
+		each(function(){
+			var $this = $(this), id = firehose_id_of(this);
+
+			install_tag_server(this, id);
+
+			if ( fh_is_admin ) {
+				this.command_pipeline.push(firehose_handle_admin_commands);
+
+				var $note_flag = $this.find('.title h3').
+					append('<span class="note-flag">note</span>').
+					find('.note-flag').
+					attr('title', "don't click; I am not a button");
+
+				var $note_wrapper = $this.find('.note-wrapper');
+				if ( ! $note_wrapper.length || $note_wrapper.hasClass('no-note') ) {
+					$note_flag.addClass('no-note');
+				}
+			}
+
+			this.command_pipeline.push(
+				firehose_handle_context_triggers,
+				($this.attr('type') == 'comment') ?
+					firehose_handle_comment_nodnix :
+					firehose_handle_nodnix );
+
+			$this.
+				find('.title').
+					append('<div class="tag-widget-stub nod-nix-reasons" init="context_timeout:15000">' +
+							'<div class="tag-display-stub" context="related" init="legend:\'why\', menu:false" />' +
+						'</div>').
+					find('.tag-display-stub').
+						click(firehose_click_nodnix_reason);
+		});
+
+	var $widgets = $init_tag_widgets($new_entries.find('.tag-widget-stub'));
+
+	if ( fh_is_admin ) {
+		$widgets.
+			filter('.body-widget').
+				each(function(){
+					this.modify_context = firehose_admin_context;
+				});
+	}
+
+	init_tagui_styles($new_entries);
+}
 // firehose functions end
 
 // helper functions
-function ajax_update(request_params, id, handlers, request_url) {
+function ajax_update(request_params, id, handlers, options) {
 	// make an ajax request to request_url with request_params, on success,
 	//  update the innerHTML of the element with id
+	if ( !options ) {
+		options = {};
+	}
 
 	var opts = {
-		url: request_url || '/ajax.pl',
+		url: options.request_url || '/ajax.pl',
 		data: request_params,
 		type: 'POST',
 		contentType: 'application/x-www-form-urlencoded'
 	};
 
+	if ( options.async_off ) {
+		opts.async = false;
+	}
+
 	if ( id ) {
-		opts['success'] = function(html){
+		opts.success = function(html){
 			$('#'+id).html(html);
-		}
+		};
 	}
 
 	if ( handlers && handlers.onComplete ) {
-		opts['complete'] = handlers.onComplete;
+		opts.complete = handlers.onComplete;
 	}
 
 	jQuery.ajax(opts);
 }
 
-function ajax_periodic_update(interval_in_seconds, request_params, id, handlers, request_url) {
+function ajax_periodic_update(interval_in_seconds, request_params, id, handlers, options) {
 	setInterval(function(){
-		ajax_update(request_params, id, handlers, request_url);
+		ajax_update(request_params, id, handlers, options);
 	}, interval_in_seconds*1000);
 }
 
 function eval_response(transport) {
 	var response;
 	try {
-		eval("response = " + transport.responseText)
+/*jslint evil: true */
+		eval("response = " + transport.responseText);
+/*jslint evil: false */
 	} catch (e) {
 		//alert(e + "\n" + transport.responseText)
 	}
@@ -686,50 +999,67 @@ function json_handler(transport) {
 function json_update(response) {
 	if (response.eval_first) {
 		try {
-			eval(response.eval_first)
-		} catch (e) {
+/*jslint evil: true */
+			eval(response.eval_first);
+/*jslint evil: false */
+		} catch (e0) {
 
 		}
 	}
 
 	if (response.html) {
-		for (el in response.html) {
-			$('#'+el).html(response.html[el]);
+		var new_content = response.html;
+		for (id in new_content) {
+			if ( new_content.hasOwnProperty(id) ) {
+				$('#'+id).html(new_content[id]);
+			}
 		}
-		
-	} 
+
+	}
 
 	if (response.value) {
-		for (el in response.value) {
-			$('#'+el).val(response.value[el]);
+		var new_value = response.value;
+		for (id in new_value) {
+			if ( new_value.hasOwnProperty(id) ) {
+				$('#'+id).val(new_value[id]);
+			}
 		}
 	}
 
 	if (response.html_append) {
-		for (el in response.html_append) {
-			$('#'+el).each(function(){
-				this.innerHTML += response.html_append[el];
-			});
+		new_content = response.html_append;
+		for (id in new_content) {
+			if ( new_content.hasOwnProperty(id) ) {
+				$('#'+id).each(function(){
+					this.innerHTML += new_content[id];
+				});
+			}
 		}
 	}
 
 	if (response.html_append_substr) {
-		for (el in response.html_append_substr) {
-			var found = $('#'+el);
-			if (found.size()) {
-				var this_html = found.html();
-				var pos = this_html.search(/<span class="?substr"?> ?<\/span>[\s\S]*$/i);
-				if ( pos != -1 )
-					this_html = this_html.substr(0, pos);
-				found.html(this_html + response.html_append_substr[el]);
+		new_content = response.html_append_substr;
+		for (id in new_content) {
+			if ( new_content.hasOwnProperty(id) ) {
+				var $found = $('#'+id);
+				if ($found.size()) {
+					var existing_content = $found.html();
+					var pos = existing_content.search(/<span class="?substr"?> ?<\/span>[\s\S]*$/i);
+					if ( pos != -1 ) {
+						existing_content = existing_content.substr(0, pos);
+					}
+					$found.html(existing_content + new_content[id]);
+				}
 			}
 		}
-	}		
-	
+	}
+
 	if (response.eval_last) {
 		try {
-			eval(response.eval_last)
-		} catch (e) {
+/*jslint evil: true */
+			eval(response.eval_last);
+/*jslint evil: false */
+		} catch (e1) {
 
 		}
 	}
@@ -737,33 +1067,50 @@ function json_update(response) {
 
 
 function firehose_handle_update() {
+	var saved_selection = new $.TextSelection(gFocusedText);
+	var $menu = $('.ac_results:visible');
+
 	if (firehose_updates.length > 0) {
 		var el = firehose_updates.pop();
 		var fh = 'firehose-' + el[1];
 		var wait_interval = 800;
+		var need_animate = 1;
+
+		var attributes = {};
+		var myAnim;
+
 		if(el[0] == "add") {
 			if (firehose_before[el[1]] && $('#firehose-' + firehose_before[el[1]]).size()) {
 				$('#firehose-' + firehose_before[el[1]]).after(el[2]);
+				if (!isInWindow($dom('title-'+ firehose_before[el[1]]))) {
+					need_animate = 0;
+				}
 			} else if (firehose_after[el[1]] && $('#firehose-' + firehose_after[el[1]]).size()) {
 				$('#firehose-' + firehose_after[el[1]]).before(el[2]);
+				if (!isInWindow($dom('title-'+ firehose_after[el[1]]))) {
+					need_animate = 0;
+				}
 			} else if (insert_new_at == "bottom") {
 				$('#firehoselist').append(el[2]);
+				if (!isInWindow($dom('fh-paginate'))) {
+					need_animate = 0;
+				}
 			} else {
 				$('#firehoselist').prepend(el[2]);
 			}
-		
+
 			var toheight = 50;
 			if (fh_view_mode == "full") {
 				toheight = 200;
 			}
 
-			var attributes = { 
+			attributes = {
 				height: { from: 0, to: toheight }
 			};
 			if (!is_ie) {
 				attributes.opacity = { from: 0, to: 1 };
 			}
-			var myAnim = new YAHOO.util.Anim(fh, attributes); 
+			myAnim = new YAHOO.util.Anim(fh, attributes);
 			myAnim.duration = 0.7;
 
 			if (firehose_updates_size > 10) {
@@ -781,36 +1128,37 @@ function firehose_handle_update() {
 			}
 
 			myAnim.onComplete.subscribe(function() {
-				if ($dom(fh)) {
-					$dom(fh).style.height = "";
+				var fh_node = $dom(fh);
+				if (fh_node) {
+					fh_node.style.height = "";
 					if (fh_use_jquery) {
-						jQuery("#" + fh + " h3 a[class!='skin']").click(
-				                	function(){
-                	        				jQuery(this).parent('h3').next('div.hide').toggle("fast");
-				                        	jQuery(this).parent('h3').find('a img').toggle("fast");
-                        			        	return false;
-                        				}
-                				);
+						$("h3 a[class!='skin']", fh_node).click(function(){
+							var h3 = $(this).parent('h3');
+							h3.next('div.hid').and(h3.find('a img')).toggle("fast");
+							return false;
+						});
 					}
 				}
 			});
-			myAnim.animate();
+			if (need_animate) {
+				myAnim.animate();
+			}
 		} else if (el[0] == "remove") {
 			var fh_node = $dom(fh);
 			if (fh_is_admin && fh_view_mode == "fulltitle" && fh_node && fh_node.className == "article" ) {
 				// Don't delete admin looking at this in expanded view
 			} else {
-				var attributes = { 
+				attributes = {
 					height: { to: 0 }
 				};
-				
+
 				if (!is_ie) {
 					attributes.opacity = { to: 0};
 				}
-				var myAnim = new YAHOO.util.Anim(fh, attributes); 
+				myAnim = new YAHOO.util.Anim(fh, attributes);
 				myAnim.duration = 0.4;
 				wait_interval = 500;
-				
+
 				if (firehose_updates_size > 10) {
 					myAnim.duration = myAnim.duration * 2;
 					if (!firehose_removed_first) {
@@ -820,14 +1168,18 @@ function firehose_handle_update() {
 					}
 				}
 				firehose_removed_first = 1;
-				if (firehose_removals < 10 ) {
+				if (!isInWindow(fh_node)) {
+					need_animate = 0;
+				}
+
+				if ((firehose_removals < 10 ) || !need_animate) {
 					myAnim.onComplete.subscribe(function() {
 						var elem = this.getEl();
 						if (elem && elem.parentNode) {
 							elem.parentNode.removeChild(elem);
 						}
 					});
-					myAnim.animate(); 
+					myAnim.animate();
 				} else {
 					var elem = $dom(fh);
 					wait_interval = 25;
@@ -837,14 +1189,39 @@ function firehose_handle_update() {
 				}
 			}
 		}
+		if(!need_animate) {
+			wait_interval = 10;
+		}
 		setTimeout(firehose_handle_update, wait_interval);
 	} else {
 		firehose_reorder();
 		firehose_get_next_updates();
 	}
+
+	firehose_init_tagui();
+
+	saved_selection.restore().focus();
+	$menu.show();
+}
+
+function firehose_adjust_window(onscreen) {
+	var i=0;
+	var on = 0;
+	while(i < onscreen.length && on === 0) {
+		if(isInWindow($(onscreen[i]))) {
+			on = 1;
+		} else {
+			scrollWindowToId(onscreen[i]);
+			if(isInWindow($(onscreen[i]))) {
+				on = 1;
+			}
+		}
+		i++;
+	}
 }
 
 function firehose_reorder() {
+	var onscreen = firehose_get_onscreen();
 	if (firehose_ordered) {
 		var fhlist = $('#firehoselist');
 		if (fhlist) {
@@ -860,7 +1237,13 @@ function firehose_reorder() {
 					$('#ttype-'+firehose_ordered[i]+'.future').setClass('story');
 				}
 			}
-			document.title = "[% sitename %] - " + (console_updating ? "Console" : "Firehose") + " (" + firehose_item_count + ")";
+			var newtitle = document.title;
+			if (/\(\d+\)/.test(newtitle)) {
+				newtitle = newtitle.replace(/(\(\d+\))/,"(" + firehose_item_count + ")");
+			} else {
+				newtitle = newtitle + " (" + firehose_item_count + ")";
+			}
+			document.title = newtitle;
 		}
 	}
 
@@ -873,16 +1256,15 @@ function firehose_get_next_updates() {
 	firehose_add_update_timerid(setTimeout(firehose_get_updates, interval));
 }
 
-
 function firehose_get_updates_handler(transport) {
-	$('#busy').setClass('hide');
+	$('.busy').hide();
 	var response = eval_response(transport);
 	var processed = 0;
 	firehose_removals = response.update_data.removals;
 	firehose_ordered = response.ordered;
 	firehose_future = response.future;
-	firehose_before = Array(0);
-	firehose_after = Array(0);
+	firehose_before = [];
+	firehose_after = [];
 	for (i = 0; i < firehose_ordered.length; i++) {
 		if (i > 0) {
 			firehose_before[firehose_ordered[i]] = firehose_ordered[i - 1];
@@ -914,16 +1296,16 @@ function firehose_get_item_idstring() {
 function firehose_get_updates(options) {
 	options = options || {};
 	run_before_update();
-	if ((fh_play == 0 && !options.oneupdate) || fh_is_updating == 1) {
+	if ((fh_play === 0 && !options.oneupdate) || fh_is_updating == 1) {
 		firehose_add_update_timerid(setTimeout(firehose_get_updates, 2000));
 	//	alert("wait loop: " + fh_is_updating);
 		return;
 	}
 	if (fh_update_timerids.length > 0) {
 		var id = 0;
-		while(id = fh_update_timerids.pop()) { clearTimeout(id) };
+		while((id = fh_update_timerids.pop())) { clearTimeout(id); }
 	}
-	fh_is_updating = 1
+	fh_is_updating = 1;
 	var params = {
 		op:		'firehose_get_updates',
 		ids:		firehose_get_item_idstring(),
@@ -933,13 +1315,14 @@ function firehose_get_updates(options) {
 	};
 
 	for (i in firehose_settings) {
-		params[i] = firehose_settings[i];
+		if ( firehose_settings.hasOwnProperty(i) ) {
+			params[i] = firehose_settings[i];
+		}
 	}
 
-	$('#busy').removeClass();
+	$('.busy').show();
 	ajax_update(params, '', { onComplete: firehose_get_updates_handler });
 }
-
 
 function setFirehoseAction() {
 	var thedate = new Date();
@@ -950,7 +1333,7 @@ function setFirehoseAction() {
 		firehose_play();
 		firehose_get_updates();
 		if (console_updating) {
-			console_update(1, 0)
+			console_update(1, 0);
 		}
 	}
 }
@@ -979,7 +1362,7 @@ function run_before_update() {
 	var secs = getSecsSinceLastFirehoseAction();
 	if (secs > inactivity_timeout) {
 		fh_is_timed_out = 1;
-		$('#message_area').html("Automatic updates have been slowed due to inactivity")
+		$('#message_area').html("Automatic updates have been slowed due to inactivity");
 		//firehose_pause();
 	}
 }
@@ -1007,26 +1390,28 @@ function firehose_pause() {
 }
 
 function firehose_add_update_timerid(timerid) {
-	fh_update_timerids.push(timerid);		
+	fh_update_timerids.push(timerid);
 }
 
 function firehose_collapse_entry(id) {
-	$('#fhbody-'+id+'.body').setClass('hide');
-	$('#firehose-'+id).setClass('briefarticle');
-	tagsHideBody(id)
-
+	$('#firehoselist > #firehose-'+id).
+		find('#fhbody-'+id+'.body').
+			setClass('hide').
+		end().
+		setClass('briefarticle');
+	tagsHideBody(id);
 }
 
 function firehose_remove_entry(id) {
 	var fh = $dom('firehose-' + id);
 	if (fh) {
-		var attributes = { 
+		var attributes = {
 			height: { to: 0 }
 		};
 		if (!is_ie) {
 			attributes.opacity = { to: 0 };
 		}
-		var myAnim = new YAHOO.util.Anim(fh, attributes); 
+		var myAnim = new YAHOO.util.Anim(fh, attributes);
 		myAnim.duration = 0.5;
 		myAnim.onComplete.subscribe(function() {
 			var el = this.getEl();
@@ -1036,12 +1421,12 @@ function firehose_remove_entry(id) {
 	}
 }
 
-var firehose_cal_select_handler = function(type,args,obj) { 
+var firehose_cal_select_handler = function(type,args,obj) {
 	var selected = args[0];
 	firehose_settings.issue = '';
 	firehose_set_options('startdate', selected.startdate);
 	firehose_set_options('duration', selected.duration);
-}; 
+};
 
 
 function firehose_calendar_init( widget ) {
@@ -1055,17 +1440,21 @@ function firehose_slider_init() {
 		var fh_get_val_return = fh_colorslider.getValue();
 		fh_colorslider.subscribe("slideEnd", firehose_slider_end);
 	}
-}	
+}
 
 function firehose_slider_end(offsetFromStart) {
-	var newVal = fh_colorslider.getValue();
+	var newVal = Math.round(fh_colorslider.getValue());
 	if (newVal) {
 		fh_slider_init_set = 1;
 	}
 	var color = fh_colors[ newVal / fh_ticksize ];
-	$dom('fh_slider_img').title = "Firehose filtered to " + color;
-	if (fh_slider_init_set) {
-		firehose_set_options("color", color)
+	if (color !== undefined) {
+		$dom('fh_slider_img').title = "Firehose filtered to " + color;
+		if (fh_slider_init_set) {
+			firehose_set_options("color", color);
+		}
+	} else if (firehohse_settings.color !== undefined) {
+		firehose_slider_set_color(firehose_settings.color);
 	}
 }
 
@@ -1093,16 +1482,16 @@ function vendorStoryPopup() {
 	var buttons = createPopupButtons("<a href=\"#\" onclick=\"closePopup('vendorStory-" + id + "-popup')\">[X]</a>");
 	title = title + buttons;
 	var closepopup = function (e) {
-	if (!e) var e = window.event;
-	var relTarg = e.relatedTarget || e.toElement;
-	if (relTarg && relTarg.id == "vendorStory-26-popup") {
-		closePopup("vendorStory-26-popup");
-	}
+		if (!e) { e = window.event; }
+		var relTarg = e.relatedTarget || e.toElement;
+		if (relTarg && relTarg.id == "vendorStory-26-popup") {
+			closePopup("vendorStory-26-popup");
+		}
 	};
-	createPopup(getXYForId('sponsorlinks', 0, 0), title, "vendorStory-" + id, "Loading", "", closepopup );
+	createPopup(getXYForSelector('#sponsorlinks'), title, "vendorStory-" + id, "Loading", "", closepopup );
 	var params = {};
-	params['op'] = 'getTopVendorStory';
-	params['skid'] = id;
+	params.op = 'getTopVendorStory';
+	params.skid = id;
 	ajax_update(params, "vendorStory-" + id + "-contents");
 }
 
@@ -1118,16 +1507,16 @@ function vendorStoryPopup2() {
 	var buttons = createPopupButtons("<a href=\"#\" onclick=\"closePopup('vendorStory-" + id + "-popup')\">[X]</a>");
 	title = title + buttons;
 	var closepopup = function (e) {
-		if (!e) var e = window.event;
+		if (!e) { e = window.event; }
 		var relTarg = e.relatedTarget || e.toElement;
 		if (relTarg && relTarg.id == "vendorStory-26-popup") {
 			closePopup("vendorStory-26-popup");
 		}
 	};
-	createPopup(getXYForId('sponsorlinks2', 0, 0), title, "vendorStory-" + id, "Loading", "", closepopup );
+	createPopup(getXYForSelector('#sponsorlinks'), title, "vendorStory-" + id, "Loading", "", closepopup );
 	var params = {};
-	params['op'] = 'getTopVendorStory';
-	params['skid'] = id;
+	params.op = 'getTopVendorStory';
+	params.skid = id;
 	ajax_update(params, "vendorStory-" + id + "-contents");
 }
 
@@ -1152,8 +1541,6 @@ function firehose_save_tab(id) {
 	$('#tab-form-'+id).setClass('hide');
 	$('#tab-text-'+id).removeClass();
 }
-
-
 var logged_in   = 1;
 var login_cover = 0;
 var login_box   = 0;
@@ -1165,14 +1552,17 @@ function init_login_divs() {
 }
 
 function install_login() {
-	if (login_inst)
+	if (login_inst) {
 		return;
+	}
 
-	if (!login_cover || !login_box)
+	if (!login_cover || !login_box) {
 		init_login_divs();
+	}
 
-	if (!login_cover || !login_box)
+	if (!login_cover || !login_box) {
 		return;
+	}
 
 	login_cover.parentNode.removeChild(login_cover);
 	login_box.parentNode.removeChild(login_box);
@@ -1184,8 +1574,9 @@ function install_login() {
 }
 
 function show_login_box() {
-	if (!login_inst)
+	if (!login_inst) {
 		install_login();
+	}
 
 	if (login_cover && login_box) {
 		login_cover.style.display = '';
@@ -1196,8 +1587,9 @@ function show_login_box() {
 }
 
 function hide_login_box() {
-	if (!login_inst)
+	if (!login_inst) {
 		install_login();
+	}
 
 	if (login_cover && login_box) {
 		login_box.style.display = 'none';
@@ -1214,7 +1606,6 @@ function check_logged_in() {
 	}
 	return 1;
 }
-
 var modal_cover = 0;
 var modal_box   = 0;
 var modal_inst  = 0;
@@ -1225,14 +1616,17 @@ function init_modal_divs() {
 }
 
 function install_modal() {
-	if (modal_inst)
+	if (modal_inst) {
 		return;
+	}
 
-	if (!modal_cover || !modal_box)
+	if (!modal_cover || !modal_box) {
 		init_modal_divs();
+	}
 
-	if (!modal_cover || !modal_box)
+	if (!modal_cover || !modal_box) {
 		return;
+	}
 
 	modal_cover.parentNode.removeChild(modal_cover);
 	modal_box.parentNode.removeChild(modal_box);
@@ -1244,8 +1638,9 @@ function install_modal() {
 }
 
 function show_modal_box() {
-	if (!modal_inst)
+	if (!modal_inst) {
 		install_modal();
+	}
 
 	if (modal_cover && modal_box) {
 		modal_cover.style.display = '';
@@ -1256,8 +1651,9 @@ function show_modal_box() {
 }
 
 function hide_modal_box() {
-	if (!modal_inst)
+	if (!modal_inst) {
 		install_modal();
+	}
 
 	if (modal_cover && modal_box) {
 		modal_box.style.display = 'none';
@@ -1268,8 +1664,9 @@ function hide_modal_box() {
 }
 
 function getModalPrefs(section, title, tabbed) {
-	if (!reskey_static)
+	if (!reskey_static) {
 		return show_login_box();
+	}
 	$('#preference_title').html(title);
 	ajax_update({
 		op:		'getModalPrefs',
@@ -1291,14 +1688,15 @@ function firehose_get_media_popup(id) {
 
 function saveModalPrefs() {
 	var params = {};
-	params['op'] = 'saveModalPrefs';
-	params['data'] = jQuery("#modal_prefs").serialize();
-	params['reskey'] = reskey_static;
+	params.op = 'saveModalPrefs';
+	params.data = jQuery("#modal_prefs").serialize();
+	params.reskey = reskey_static;
 	var handlers = {
 		onComplete: function() {
 			hide_modal_box();
-			if (document.forms['modal_prefs'].refreshable.value)
+			if (document.forms.modal_prefs.refreshable.value) {
 				document.location=document.URL;
+			}
 		}
 	};
 	ajax_update(params, '', handlers);
@@ -1329,12 +1727,12 @@ function toggle_filter_prefs() {
 	var fps = $dom('filter_play_status');
 	var fp  = $dom('filter_prefs');
 	if (fps) {
-		if (fps.className == "") {
+		if (fps.className === "") {
 			fps.className = "hide";
 			if (fp) {
 				fp.className = "";
 				setTimeout(firehose_slider_init,500);
-			} 
+			}
 		} else if (fps.className == "hide") {
 			fps.className = "";
 			if (fp) {
@@ -1347,19 +1745,22 @@ function toggle_filter_prefs() {
 
 function admin_signoff(stoid, type, id) {
 	var params = {};
-	params['op'] = 'admin_signoff';
-	params['stoid'] = stoid;
-	params['reskey'] = reskey_static;
+	params.op = 'admin_signoff';
+	params.stoid = stoid;
+	params.reskey = reskey_static;
 	ajax_update(params, 'signoff_' + stoid);
 	if (type == "firehose") {
 		firehose_collapse_entry(id);
 	}
 }
 
-
 function scrollWindowToFirehose(fhid) {
-	var firehose_y = getOffsetTop($('firehose-' + fhid));
-	scroll(viewWindowLeft(), firehose_y);
+	scrollWindowToId('firehose-'+fhid);
+}
+
+function scrollWindowToId(id) {
+	var id_y = getOffsetTop($dom(id));
+	scroll(viewWindowLeft(), id_y);
 }
 
 function viewWindowLeft() {
@@ -1379,11 +1780,13 @@ function viewWindowLeft() {
 }
 
 function getOffsetTop (el) {
-	if (!el)
+	if (!el) {
 		return false;
+	}
 	var ot = el.offsetTop;
-	while((el = el.offsetParent) != null)
+	while((el = el.offsetParent)) {
 		ot += el.offsetTop;
+	}
 	return ot;
 }
 
@@ -1467,13 +1870,16 @@ function firehose_go_prev() {
 }
 
 function firehose_more() {
-	var increment_by = 10;
-	firehose_settings.more_num = firehose_settings.more_num + increment_by;
-	
-	if (((firehose_item_count + increment_by) >= 200) && !fh_is_admin) {
+	firehose_settings.more_num = firehose_settings.more_num + firehose_more_increment;
+
+	if (((firehose_item_count + firehose_more_increment) >= 200) && !fh_is_admin) {
 		$('#firehose_more').hide();
 	}
 	firehose_set_options('more_num', firehose_settings.more_num);
 }
 
-
+function firehose_get_onscreen() {
+	var onscreen = [];
+	$('#firehoselist').children().each(function() { if(isInWindow(this)){ onscreen.push(this.id);} });
+	return onscreen;
+}

@@ -1,5 +1,5 @@
 #
-# $Id: schema.sql,v 1.1 2006/09/28 21:42:35 pudge Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS search_index_dump;

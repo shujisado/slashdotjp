@@ -22,12 +22,12 @@ __template__
 [% IF user.is_anon %]
 <div class="warning">
 	[% IF constants.allow_anonymous %]
-You are not logged in.  You can <a href=\"${gSkin.rootdir}/login.pl\">log
-in now</a>, or <a href="[% gSkin.rootdir %]/users.pl">Create an Account</a>.
-	[% ELSE %]
-You are not logged in.  You can <a href=\"${gSkin.rootdir}/login.pl\">log
+You are not logged in.  You can <a href="[% gSkin.rootdir %]/login.pl">log
 in now</a>, <a href="[% gSkin.rootdir %]/users.pl">Create an Account</a>,
 or post as <b>[% user.nickname | strip_literal %]</b>.
+	[% ELSE %]
+You are not logged in.  You can <a href="[% gSkin.rootdir %]/login.pl">log
+in now</a>, or <a href="[% gSkin.rootdir %]/users.pl">Create an Account</a>.
 	[% END %]
 </div>
 [% END %]
@@ -55,8 +55,7 @@ or post as <b>[% user.nickname | strip_literal %]</b>.
 				</div>
 			</div>
 			<div class="generalbody">
-				<p>If you have difficulty with this form, please use the <a href="[% gSkin.rootdir %]/comments.pl?op=Reply&amp;sid=[% sid %]&amp;pid=[% pid %]">old form</a>.</p>
-				<textarea wrap="virtual" name="postercomment_[% pid %]" id="postercomment_[% pid %]" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]"></textarea>	
+				<textarea wrap="virtual" name="postercomment_[% pid %]" id="postercomment_[% pid %]" rows="[% user.textarea_rows || constants.textarea_rows %]" cols="[% user.textarea_cols || constants.textarea_cols %]"></textarea>
 			</div>
 		</div>
 		<div id="replyto_msg_[% pid %]" class="replyto_msg" style="display: none"></div>
@@ -83,4 +82,4 @@ or post as <b>[% user.nickname | strip_literal %]</b>.
 __seclev__
 1000
 __version__
-$Id: edit_comment;ajax;default,v 1.1 2008/02/28 21:39:31 pudge Exp $
+$Id$

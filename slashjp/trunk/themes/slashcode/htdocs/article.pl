@@ -15,6 +15,7 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
+	my $gSkin     = getCurrentSkin();
 
 	my $story;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
@@ -83,6 +84,9 @@ sub main {
 		my $SECT = $reader->getSection($story->{section});
 		# This should be a getData call for title
 		my $title = "$constants->{sitename} | $story->{title}";
+		if ($gSkin->{name} eq "idle") {
+			$title = "$gSkin->{hostname} | $story->{title}";
+		}
 
 		my $authortext;
 		if ($user->{is_admin} ) {
@@ -224,7 +228,7 @@ sub main {
 			# is being called by slashd, and we need to write
 			# that file, then here's where we print an empty
 			# file that will satisfy slashd. - Jamie
-			Slash::_print_cchp({ stoid => "dummy" });
+			Slash::Utility::Comments::_print_cchp({ stoid => "dummy" });
 		}
 	} else {
 		header('Error', $form->{section}) or return;

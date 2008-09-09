@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: process_file_queue.pl,v 1.1 2007/10/16 22:59:52 tvroom Exp $
+# $Id$
 
 use File::Path;
 use File::Temp;
@@ -21,7 +21,11 @@ $task{$me}{on_startup} = 1;
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin) = @_;
-	
+
+	if (!$constants->{imagemagick_convert}) {
+		slashdLog("no imagemagick convert location specified, exiting");
+	}
+
 	my $file_queue_cmds = [];
 	my $cmd;
 	while (!$task_exit_flag) {
@@ -46,6 +50,9 @@ $task{$me}{code} = sub {
 sub handleFileCmd {
 	my($cmd) = @_;
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $convert = $constants->{imagemagick_convert};
+
 	if ($cmd->{action} eq "thumbnails") {
 		slashdLog("Creating Thumbnails");
 		my $files = uploadFile($cmd);
@@ -57,8 +64,14 @@ sub handleFileCmd {
 			my ($namebase, $suffix) = $name =~ /^(\w+\-\d+)\.(\w+)$/;
 			my $thumb = $namebase . "-thumb." . $suffix;
 			my $thumbsm = $namebase . "-thumbsm." . $suffix;
+			my $thumblg = $namebase . "-thumblg." . $suffix;
+
 			slashdLog("About to create thumb $path$thumb");
-			system("/usr/bin/convert -size 260x194  $path$name  -resize '130x97>'  -bordercolor transparent  -border 48 -gravity center -crop 130x97+0+0 -page +0+0 $path$thumb");
+			system("$convert -size 260x194  $path$name  -resize '130x97>'  -bordercolor transparent  -border 48 -gravity center -crop 130x97+0+0 -page +0+0 -colors 256 -depth 8 -compress BZip $path$thumb");
+
+			if ($constants->{optipng} && $suffix eq "png") {
+				system("$constants->{optipng} -q $path$thumb");
+			}
 			my $data = {
 				stoid => $cmd->{stoid} || 0,
 				fhid  => $cmd->{fhid} || 0 ,
@@ -74,11 +87,26 @@ sub handleFileCmd {
 			}
 
 			slashdLog("About to create thumbsms $path$thumbsm");
-			system("/usr/bin/convert -size 100x74 $path$name  -resize '50x37>'  -bordercolor transparent -border 18 -gravity center -crop 50x37+0+0 -page +0+0 $path$thumbsm");
+			system("$convert -size 100x74 $path$name  -resize '50x37>'  -bordercolor transparent -border 18 -gravity center -crop 50x37+0+0 -page +0+0 -colors 256 -depth 8 -compress BZip $path$thumbsm");
 			$data = {
 				stoid => $cmd->{stoid} || 0,
 				fhid  => $cmd->{fhid} || 0,
 				name => "$path$thumbsm"
+			};
+			if ($constants->{optipng} && $suffix eq "png") {
+				system("$constants->{optipng} -q $path$thumbsm");
+			}
+			addFile($data);
+
+			slashdLog("About to create thumblg $path$thumblg");
+			system("$convert $path$name  -resize '309x250>' -colors 256 -depth 8 -compress BZip $path$thumblg");
+			if ($constants->{optipng} && $suffix eq "png") {
+				system("$constants->{optipng} -q $path$thumblg");
+			}
+			$data = {
+				stoid => $cmd->{stoid} || 0,
+				fhid  => $cmd->{fhid} || 0,
+				name => "$path$thumblg"
 			};
 			addFile($data);
 		}
@@ -141,6 +169,9 @@ sub uploadFile {
 	my($cmd) = @_;
 	my @suffixlist = ();
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $convert = $constants->{imagemagick_convert};
+
 	my $story = $slashdb->getStory($cmd->{stoid});
 	my @files;
 
@@ -148,8 +179,13 @@ sub uploadFile {
 	if ($file =~ /\.(gif|jpg)$/i) {
 		my $filepng = $file;
 		$filepng =~s /\.(gif|jpg)$/\.png/;
-		system("/usr/bin/convert $file $filepng");
+		if ($convert) {
+			system("$convert $file $filepng");
+		}
 		$file = $filepng;
+		if ($constants->{optipng}) {
+			system("$constants->{optipng} -q $filepng");
+		}
 	}
 
 	if ($story->{sid}) {
