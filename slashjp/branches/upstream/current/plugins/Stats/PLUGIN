@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.17 2003/08/29 15:21:08 jamie Exp $
+# $Id$
 name=Stats
 description="Stats system"
 htdoc=stats.pl
@@ -19,3 +19,4 @@ template=templates/make_graph;stats;default
 template=templates/report;stats;default
 template=templates/stats_days;stats;default
 template=templates/table;stats;default
+template=templates/topic_stats;stats;default

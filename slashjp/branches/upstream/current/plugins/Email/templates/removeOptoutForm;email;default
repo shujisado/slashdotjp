@@ -31,4 +31,4 @@ Enter email address to be removed from the opt-out list:<br>
 </form>
 
 __version__
-$Id: removeOptoutForm;email;default,v 1.5 2005/07/27 22:53:54 pudge Exp $
+$Id$

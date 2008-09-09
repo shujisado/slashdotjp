@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id: newsvac_gc.pl,v 1.4 2005/03/11 19:58:11 pudge Exp $
+# $Id$
 #
 # SlashD Task (c) OSTG 2001
 #

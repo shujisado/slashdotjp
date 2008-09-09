@@ -3,7 +3,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: convertDBto200406_render,v 1.4 2005/03/11 19:58:48 pudge Exp $
+# $Id$
 
 # This script finishes up an update of old-style to new-style
 # stories tables, namely by rendering topic choices from
@@ -19,7 +19,7 @@ use Slash::Utility;
 use vars qw( $slashdb
         $stoids );
 
-(my $VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts, %family_tree);

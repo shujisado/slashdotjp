@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHose.pm,v 1.235 2008/04/16 17:52:28 scc Exp $
 
 package Slash::FireHose;
 
@@ -40,9 +39,9 @@ use Time::HiRes;
 
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.235 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
+
 sub createFireHose {
 	my($self, $data) = @_;
 	$data->{dept} ||= "";
@@ -103,12 +102,12 @@ sub createUpdateItemFromJournal {
 		my($itemid) = $self->sqlSelect("*", "firehose", "globjid=$globjid_q");
 		if ($itemid) {
 			my $introtext = balanceTags(strip_mode($journal->{article}, $journal->{posttype}), { deep_nesting => 1 });
-			$self->setFireHose($itemid, { 
-				introtext => $introtext, 
-				title => $journal->{description}, 
-				tid => $journal->{tid}, 
-				discussion => $journal->{discussion}, 
-				word_count => countWords($introtext) 
+			$self->setFireHose($itemid, {
+				introtext => $introtext,
+				title => $journal->{description},
+				tid => $journal->{tid},
+				discussion => $journal->{discussion},
+				word_count => countWords($introtext)
 			});
 
 		} else {
@@ -131,6 +130,55 @@ sub getFireHoseColors {
 	return $colors;
 }
 
+sub createItemFromComment {
+	my($self, $cid) = @_;
+	my $comment = $self->getComment($cid);
+	my $text = $self->getCommentText($cid);
+	my $globjid = $self->getGlobjidCreate("comments", $cid);
+	my $score = constrain_score($comment->{points} + $comment->{tweak});
+
+	# Set initial popularity scores, but we'll be forcing a quick
+	# recalculation of them.
+	my($popularity, $editorpop, $neediness);
+	if ($score >= 3) {
+		$popularity = $self->getEntryPopularityForColorLevel(4);
+	} elsif ($score == 2) {
+		$popularity = $self->getEntryPopularityForColorLevel(5);
+	} elsif ($score >= 0) {
+		$popularity = $self->getEntryPopularityForColorLevel(6);
+	} else {
+		$popularity = $self->getEntryPopularityForColorLevel(7);
+	}
+	$editorpop = $self->getEntryPopularityForColorLevel(5);
+	$neediness = $self->getEntryPopularityForColorLevel(5);
+
+	my $data = {
+		uid		=> $comment->{uid},
+		public		=> "yes",
+		title		=> $comment->{subject},
+		introtext	=> $text,
+		ipid		=> $comment->{ipid},
+		subnetid 	=> $comment->{subnetid},
+		type		=> "comment",
+		srcid		=> $comment->{cid},
+		popularity	=> $popularity,
+		editorpop	=> $editorpop,
+		globjid		=> $globjid,
+		discussion	=> $comment->{sid},
+	};
+	my $fhid = $self->createFireHose($data);
+
+	my $tagboxdb = getObject('Slash::Tagbox');
+	if ($tagboxdb) {
+		for my $tbname (qw( FHPopularity FHEditorPop CommentScoreReason )) {
+			my $tagbox = $tagboxdb->getTagboxes($tbname);
+			next unless $tagbox;
+			$tagboxdb->forceFeederRecalc($tagbox->{tbid}, $globjid);
+		}
+	}
+
+	return $fhid;
+}
 
 
 sub createItemFromJournal {
@@ -185,6 +233,7 @@ sub createUpdateItemFromBookmark {
 	my $url_globjid = $self->getGlobjidCreate("urls", $bookmark->{url_id});
 	my $type = $options->{type} || "bookmark";
 	my($count) = $self->sqlCount("firehose", "globjid=$url_globjid");
+	my $firehose_id;
 	my $popularity = defined $options->{popularity}
 		? $options->{popularity}
 		: $type eq "feed"
@@ -210,12 +259,12 @@ sub createUpdateItemFromBookmark {
 		};
 		$data->{introtext} = $options->{introtext} if $options->{introtext};
 		if ($type eq "feed") {
-			my $feed = $bookmark_db->getBookmarkFeedByUid($bookmark->{uid});	
+			my $feed = $bookmark_db->getBookmarkFeedByUid($bookmark->{uid});
 			if ($feed && $feed->{feedname}) {
-				$data->{srcname} = $feed->{feedname};	
+				$data->{srcname} = $feed->{feedname};
 			}
 		}
-		my $firehose_id = $self->createFireHose($data);
+		$firehose_id = $self->createFireHose($data);
 		if ($firehose_id && $type eq "feed") {
 			my $discussion_id = $self->createDiscussion({
 				uid		=> 0,
@@ -229,8 +278,7 @@ sub createUpdateItemFromBookmark {
 					discussion	=> $discussion_id,
 				});
 			}
-			
-		}		
+		}
 
 		if (!isAnon($bookmark->{uid})) {
 			my $constants = getCurrentStatic();
@@ -243,6 +291,7 @@ sub createUpdateItemFromBookmark {
 			});
 		}
 	}
+	return $firehose_id;
 }
 
 sub createItemFromSubmission {
@@ -288,6 +337,61 @@ sub createItemFromSubmission {
 
 }
 
+sub createItemFromProject {
+	my($self, $id) = @_;
+	my $constants = getCurrentStatic();
+	my $proj = $self->getProject($id);
+	my $globjid = $self->getGlobjidCreate("projects", $proj->{id});
+	my $midpop = $self->getEntryPopularityForColorLevel(5);
+
+	my $data = {
+		uid		=> $proj->{uid},
+		title		=> $proj->{textname},
+		srcid		=> $proj->{id},
+		type		=> "project",
+		url_id		=> $proj->{url_id},
+		globjid		=> $globjid,
+		srcname		=> $proj->{srcname},
+		introtext 	=> $proj->{description},
+		public		=> "yes",
+		editorpop	=> $midpop,
+		popularity	=> $midpop,
+		createtime	=> $proj->{createtime}
+	};
+	my $firehose_id = $self->createFireHose($data);
+	my $discussion_id = $self->createDiscussion({
+		uid		=> 0,
+		kind		=> 'project',
+		title		=> $proj->{textname},
+		commentstatus	=> 'logged_in',
+		url		=> "$constants->{rootdir}/firehose.pl?op=view&id=$firehose_id"
+	});
+
+	if ($discussion_id) {
+		$self->setFireHose($firehose_id, {
+			discussion	=> $discussion_id,
+		});
+	}
+	return $firehose_id;
+}
+
+sub updateItemFromProject {
+	my($self, $id);
+	my $proj = $self->getProject($id);
+	if ($proj && $proj->{id}) {
+		my $item = $self->getFireHoseByTypeSrcid("projects", $proj->{id});
+		if ($item && $item->{id}) {
+			my $data = {
+				uid		=> $proj->{uid},
+				url_id		=> $proj->{url_id},
+				title 		=> $proj->{textname},
+				introtext 	=> $proj->{description},
+				createtime	=> $proj->{createtime}
+			};
+			$self->setFireHose($item->{id}, $data);
+		}
+	}
+}
 sub updateItemFromStory {
 	my($self, $id) = @_;
 	my $constants = getCurrentStatic();
@@ -314,8 +418,14 @@ sub updateItemFromStory {
 				body_length	=> $story->{body_length},
 				word_count	=> $story->{word_count},
 				thumb		=> $story->{thumb},
-				
 			};
+			if(defined $story->{mediatype}) {
+				if(!$story->{mediatype}) {
+					$data->{mediatype} = "none";
+				} else {
+					$data->{mediatype} = $story->{mediatype};
+				}
+			}
 			$self->setFireHose($id, $data);
 		}
 	}
@@ -355,6 +465,13 @@ sub createItemFromStory {
 			discussion	=> $story->{discussion},
 			thumb		=> $story->{thumb},
 		};
+		if(defined $story->{mediatype}) {
+			if(!$story->{mediatype}) {
+				$data->{mediatype} = "none";
+			} else {
+				$data->{mediatype} = $story->{mediatype};
+			}
+		}
 		$self->createFireHose($data);
 	}
 }
@@ -387,7 +504,7 @@ sub getFireHoseEssentials {
 	$options->{limit} += $options->{more_num} if $options->{more_num};
 
 	my $fetch_size = $options->{limit};
-	if ($options->{orderby} eq "createtime") {
+	if ($options->{orderby} && $options->{orderby} eq "createtime") {
 		$fetch_extra = 1;
 		$fetch_size++;
 	}
@@ -715,8 +832,8 @@ sub getNextDayAndCount {
 	my $where = join ' AND ', @$where_ar, "createtime $it_cmp $i_time_q", "createtime $bt_cmp $border_time_q";
 
 	my $day_count = $self->sqlSelect("count(*)", $tables, $where, $other);
-	
-	my $day_labels = getOlderDaysFromDay($item_day, 0, 0, { skip_add_today => 1, show_future_days => 1 });
+
+	my $day_labels = getOlderDaysFromDay($item_day, 0, 0, { skip_add_today => 1, show_future_days => 1, force => 1 });
 
 	return($day_labels->[0]->[0], $day_labels->[0]->[1], $day_count);
 }
@@ -743,26 +860,30 @@ sub getUserFireHoseVotesForGlobjs {
 	return {} if @$globjs < 1;
 	my $uid_q = $self->sqlQuote($uid);
 	my $glob_str = join ",", map { $self->sqlQuote($_) } @$globjs;
-	
+
 	my $upvote   = $constants->{tags_upvote_tagname}   || 'nod';
 	my $downvote = $constants->{tags_downvote_tagname} || 'nix';
+
+	my $metaup =   "metanod";
+	my $metadown = "metanix";
 
 	my $tags = getObject("Slash::Tags", { db_type => "reader" });
 	my $upid = $tags->getTagnameidCreate($upvote);
 	my $dnid = $tags->getTagnameidCreate($downvote);
+	my $metaupid = $tags->getTagnameidCreate($metaup);
+	my $metadnid = $tags->getTagnameidCreate($metadown);
 
 	my $results = $self->sqlSelectAllKeyValue(
 		"globjid,tagnameid",
-		"tags", 
+		"tags",
 		"globjid IN ($glob_str) AND inactivated IS NULL
-		 AND uid = $uid_q AND tagnameid IN ($upid,$dnid)"
+		 AND uid = $uid_q AND tagnameid IN ($upid,$dnid,$metaupid,$metadnid)"
 	);
 
 	foreach (keys %$results) {
-		$results->{$_} = "up" if $results->{$_} == $upid;
-		$results->{$_} = "down" if $results->{$_} == $dnid;
+		$results->{$_} = "up" if $results->{$_} == $upid || $results->{$_} == $metaupid;
+		$results->{$_} = "down" if $results->{$_} == $dnid || $results->{$_} == $metadnid;
 	}
-	
 	return $results;
 }
 
@@ -803,9 +924,10 @@ sub getFireHose {
 	# instead.  Firehose notes are/were designed to never be undef,
 	# the empty string instead.
 	$answer->{note} = $self->getGlobjAdminnote($answer->{globjid}) || '';
-	
+
 	if ($mcd && $answer->{title}) {
-		my $item = $mcd->set("$mcdkey:$id", $answer);
+		my $exptime = $constants->{firehose_memcached_exptime} || 600;
+		$mcd->set("$mcdkey:$id", $answer, $exptime);
 	}
 
 	return $answer;
@@ -935,10 +1057,14 @@ sub fetchItemText {
 	if ($user->{is_admin}) {
 		$firehose->setFireHoseSession($item->{id});
 	}
+
+	my $tags = getObject("Slash::Tags", { db_type => 'reader' })->setGetCombinedTags($id, 'firehose');
 	my $data = {
 		item		=> $item,
 		mode		=> "bodycontent",
-		tags_top	=> $tags_top,
+		tags_top	=> $tags_top,		# old-style
+		top_tags	=> $tags->{top},	# new-style
+		system_tags	=> $tags->{'system'},	# new-style
 	};
 
 	my $slashdb = getCurrentDB();
@@ -997,7 +1123,7 @@ sub reject {
 				private	=> 	1
 			});
 		}
-		
+
 		if ($item->{type} eq "submission") {
 			if ($item->{srcid}) {
 				my $n_q = $self->sqlQuote($item->{srcid});
@@ -1052,29 +1178,17 @@ sub ajaxRemoveUserTab {
 	});
 }
 
-sub ajaxFireHoseSetOptions {
-	my($slashdb, $constants, $user, $form, $options) = @_;
-	$options->{content_type} = 'application/json';
-	my $firehose = getObject("Slash::FireHose");
-	my $opts = $firehose->getAndSetOptions();
 
-	$firehose->createSettingLog({ 
-		uid => $user->{uid}, 
-		name => $form->{setting_name}, 
-		value => $form->{$form->{setting_name}}, 
-		"-ts" => "NOW()"}
-	);
+sub genSetOptionsReturn {
+	my($slashdb, $constants, $user, $form, $options, $opts) = @_;
+	my $data = {};
+	$data->{html}->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}  }, { Return => 1});
+	$data->{html}->{fhoptions} = slashDisplay("firehose_options", { nowrapper => 1, options => $opts }, { Return => 1});
+	$data->{html}->{fhadvprefpane} = slashDisplay("fhadvprefpane", { options => $opts }, { Return => 1});
 
-	my $html = {};
-	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}  }, { Return => 1});
-	$html->{fhoptions} = slashDisplay("firehose_options", { nowrapper => 1, options => $opts }, { Return => 1});
-	$html->{fhadvprefpane} = slashDisplay("fhadvprefpane", { options => $opts }, { Return => 1});
-
-	my $values = {};
-	$values->{'firehose-filter'} = $opts->{fhfilter};
-	my $eval_last = "";
+	$data->{value}->{'firehose-filter'} = $opts->{fhfilter};
 	if ($form->{tab} || $form->{tabtype}) {
-		$eval_last = "firehose_slider_set_color('$opts->{color}')";
+		$data->{eval_last} = "firehose_slider_set_color('$opts->{color}');";
 	}
 
 	my $eval_first = "";
@@ -1089,15 +1203,26 @@ sub ajaxFireHoseSetOptions {
 		if ($o eq 'more_num') {
 			$value ||= 0;
 		}
-		$eval_first .= "firehose_settings.$o = " . Data::JavaScript::Anon->anon_dump("$value") . "; ";
+		$data->{eval_first} .= "firehose_settings.$o = " . Data::JavaScript::Anon->anon_dump("$value") . "; ";
 	}
+	return $data;
+}
 
-	return Data::JavaScript::Anon->anon_dump({
-		html		=> $html,
-		value		=> $values,
-		eval_first	=> $eval_first,
-		eval_last	=> $eval_last
-	});
+sub ajaxFireHoseSetOptions {
+	my($slashdb, $constants, $user, $form, $options) = @_;
+	$options->{content_type} = 'application/json';
+	my $firehose = getObject("Slash::FireHose");
+	my $opts = $firehose->getAndSetOptions();
+
+	$firehose->createSettingLog({
+		uid => $user->{uid},
+		name => $form->{setting_name},
+		value => $form->{$form->{setting_name}},
+		"-ts" => "NOW()"}
+	);
+
+	my $data = genSetOptionsReturn($slashdb, $constants, $user, $form, $options, $opts);
+	return Data::JavaScript::Anon->anon_dump($data);
 }
 
 sub ajaxSaveNoteFirehose {
@@ -1142,7 +1267,7 @@ sub ajaxSaveFirehoseTab {
 			my $uid_q = $slashdb->sqlQuote($user->{uid});
 			my $tabid_q = $slashdb->sqlQuote($tabid);
 			my $tabname_q = $slashdb->sqlQuote($tabname);
-		
+
 			$slashdb->sqlDelete("firehose_tab", "uid=$uid_q and tabname=$tabname_q and tabid!=$tabid_q");
 			$slashdb->sqlUpdate("firehose_tab", { tabname => $tabname }, "tabid=$tabid_q");
 			$slashdb->setUser($user->{uid}, { last_fhtab_set => $slashdb->getTime() });
@@ -1190,9 +1315,18 @@ sub ajaxGetUserFirehose {
 	my $newtagspreloadtext = join ' ', @newtagspreload;
 	#print STDERR "ajaxGetUserFirehose $newtagspreloadtext\n\n";
 
-	return slashDisplay($form->{nodnix} ? 'tagsnodnixuser' : 'tagsfirehosedivuser', {
+	my $template;
+	if ( $form->{no_markup} ) {
+		$template = 'combined_tags';
+	} elsif ( $form->{nodnix} ) {
+		$template = 'tagsnodnixuser';
+	} else {
+		$template = 'tagsfirehosedivuser';
+	}
+
+	return slashDisplay($template, {
 		id =>		$id,
-		newtagspreloadtext =>	$newtagspreloadtext,
+		user_tags =>	$newtagspreloadtext,
 	}, { Return => 1 });
 }
 
@@ -1214,7 +1348,10 @@ sub ajaxGetAdminFirehose {
 
 sub ajaxFireHoseGetUpdates {
 	my($slashdb, $constants, $user, $form, $options) = @_;
+	my $gSkin = getCurrentSkin();
 	my $start = Time::HiRes::time();
+
+	slashProfInit();
 
 	my $update_data = { removals => 0, items => 0, updates => 0, new => 0 };
 
@@ -1227,7 +1364,9 @@ sub ajaxFireHoseGetUpdates {
 	my %ids = map { $_ => 1 } @ids;
 	my %ids_orig = ( %ids ) ;
 	my $opts = $firehose->getAndSetOptions({ no_set => 1 });
+	slashProf("firehose_update_gfe");
 	my($items, $results, $count, $future_count, $day_num, $day_label, $day_count) = $firehose_reader->getFireHoseEssentials($opts);
+	slashProf("","firehose_update_gfe");
 	my $num_items = scalar @$items;
 	my $future = {};
 	my $globjs = [];
@@ -1239,11 +1378,11 @@ sub ajaxFireHoseGetUpdates {
 			$base_page = "users.pl";
 		}
 	}
-	
+
 	$update_data->{items} = scalar @$items;
 
 	foreach (@$items) {
-		push @$globjs, $_->{globjid} if $_->{globjid} 
+		push @$globjs, $_->{globjid} if $_->{globjid}
 	}
 
 
@@ -1265,6 +1404,12 @@ sub ajaxFireHoseGetUpdates {
 	my $mode = $opts->{mode};
 	my $curmode = $opts->{mode};
 	my $mixed_abbrev_pop = $firehose->getMinPopularityForColorLevel(1);
+	my $vol = $firehose->getSkinVolume($gSkin->{skid});
+	$vol->{story_vol} ||= 0;
+	if ($vol->{story_vol} < 25) {
+		$mixed_abbrev_pop = $firehose->getMinPopularityForColorLevel(3);
+	}
+
 
 	foreach (@$items) {
 		if ($opts->{mixedmode}) {
@@ -1302,7 +1447,19 @@ sub ajaxFireHoseGetUpdates {
 				push @$updates, ["add", $_->{id}, slashDisplay("daybreak", { options => $opts, cur_day => $_->{day}, last_day => $_->{last_day}, id => "firehose-day-$_->{day}", fh_page => $base_page }, { Return => 1, Page => "firehose" }) ];
 			} else {
 				$update_data->{new}++;
-				push @$updates, ["add", $_->{id}, slashDisplay("dispFireHose", { mode => $curmode, item => $item, tags_top => $tags_top, vote => $votes->{$item->{globjid}}, options => $opts }, { Return => 1, Page => "firehose" })];
+				my $tags = getObject("Slash::Tags", { db_type => 'reader' })->setGetCombinedTags($_->{id}, 'firehose');
+				my $data = {
+					mode => $curmode,
+					item => $item,
+					tags_top => $tags_top,			# old-style
+					top_tags => $tags->{top},		# new-style
+					system_tags => $tags->{'system'},	# new-style
+					vote => $votes->{$item->{globjid}},
+					options => $opts
+				};
+				slashProf("firehosedisp");
+				push @$updates, ["add", $_->{id}, $firehose->dispFireHose($item, $data) ];
+				slashProf("","firehosedisp");
 			}
 			$added->{$_->{id}}++;
 		}
@@ -1327,9 +1484,9 @@ sub ajaxFireHoseGetUpdates {
 	if (scalar (keys %$next_to_old) == 1) {
 		my ($key) = keys %$next_to_old;
 		$target_pos = $pos->{$key};
-		
+
 	}
-	
+
 	@$updates  = sort {
 		$next_to_old->{$a->[1]} <=> $next_to_old->{$b->[1]} ||
 		abs($pos->{$b->[1]} - $target_pos) <=> abs($pos->{$a->[1]} - $target_pos);
@@ -1339,12 +1496,12 @@ sub ajaxFireHoseGetUpdates {
 		push @$updates, ["remove", $_, ""];
 		$update_data->{removals}++;
 	}
-	
-	my $firehose_more_data = { 
-		future_count => $future_count, 
+
+	my $firehose_more_data = {
+		future_count => $future_count,
 		options => $opts,
 		day_num	=> $day_num,
-		day_label => $day_label, 
+		day_label => $day_label,
 		day_count => $day_count,
 		contentsonly => 0,
 	};
@@ -1373,6 +1530,9 @@ sub ajaxFireHoseGetUpdates {
 		search_results	=> $results
 	}, { Return => 1 });
 
+	my $recent = $slashdb->getTime({ add_secs => "-300"});
+	$update_time = $recent if $recent gt $update_time;
+
 	$html->{local_last_update_time} = timeCalc($slashdb->getTime(), "%H:%M");
 	$html->{filter_text} = "Filtered to ".strip_literal($opts->{color})." '".strip_literal($opts->{fhfilter})."'";
 	$html->{gmt_update_time} = " (".timeCalc($slashdb->getTime(), "%H:%M", 0)." GMT) " if $user->{is_admin};
@@ -1388,14 +1548,16 @@ sub ajaxFireHoseGetUpdates {
 		future		=> $future,
 	});
 	my $reskey_dump = "";
+	my $update_time_dump;
 	my $reskey = getObject("Slash::ResKey");
 	my $user_rkey = $reskey->key('ajax_user_static', { no_state => 1 });
 	$reskey_dump .= "reskey_static = '" . $user_rkey->reskey() . "';\n" if $user_rkey->create();
 
 	my $duration = Time::HiRes::time() - $start;
 	my $more_num = $options->{more_num} || 0;
-	
-	my $retval =  "$data_dump\n$reskey_dump";
+
+	$update_time_dump = "update_time= ".Data::JavaScript::Anon->anon_dump($update_time);
+	my $retval =  "$data_dump\n$reskey_dump\n$update_time_dump";
 
 	my $updatelog = {
 		uid 		=> $user->{uid},
@@ -1408,23 +1570,28 @@ sub ajaxFireHoseGetUpdates {
 		bytes 		=> length($retval)
 	};
 	$firehose->createUpdateLog($updatelog);
+	slashProfEnd();
 
 	return $retval;
 
 }
 
 sub firehose_vote {
-	my($self, $id, $uid, $dir) = @_;
-
-	my $tag; 
+	my($self, $id, $uid, $dir, $meta) = @_;
+	my $tag;
 	my $constants = getCurrentStatic();
 	my $tags = getObject('Slash::Tags');
 	my $item = $self->getFireHose($id);
 	return if !$item;
-	
+
 	my $upvote   = $constants->{tags_upvote_tagname}   || 'nod';
 	my $downvote = $constants->{tags_downvote_tagname} || 'nix';
-	
+
+	if ($meta) {
+		$upvote = "metanod";
+		$downvote = "metanix";
+	}
+
 	if ($dir eq "+") {
 		$tag = $upvote;
 	} elsif ($dir eq "-") {
@@ -1449,11 +1616,12 @@ sub ajaxUpDownFirehose {
 	my $firehose = getObject('Slash::FireHose');
 	my $item = $firehose->getFireHose($id);
 	my $tags = getObject('Slash::Tags');
+	my $meta = $form->{meta};
 
 	my($table, $itemid) = $tags->getGlobjTarget($item->{globjid});
 
-	$firehose->firehose_vote($id, $user->{uid}, $form->{dir});
-	
+	$firehose->firehose_vote($id, $user->{uid}, $form->{dir}, $meta);
+
 	my $now_tags_ar = $tags->getTagsByNameAndIdArrayref($table, $itemid,
 		{ uid => $user->{uid}, include_private => 1 });
 	my $newtagspreloadtext = join ' ', sort map { $_->{tagname} } @$now_tags_ar;
@@ -1464,6 +1632,10 @@ sub ajaxUpDownFirehose {
 	my $votetype = $form->{dir} eq "+" ? "Up" : $form->{dir} eq "-" ? "Down" : "";
 	#$html->{"updown-$id"} = "Voted $votetype";
 	$value->{"newtags-$id"} = $newtagspreloadtext;
+
+	if ($user->{is_admin}) {
+		$firehose->setFireHoseSession($id, "rating");
+	}
 
 	return Data::JavaScript::Anon->anon_dump({
 		html	=> $html,
@@ -1498,7 +1670,7 @@ sub ajaxCreateForFirehose {
 
 	my $retval = slashDisplay('tagsfirehosedivuser', {
 		id =>		$id,
-		newtagspreloadtext =>	$newtagspreloadtext,
+		content =>	$newtagspreloadtext,
 	}, { Return => 1 });
 
 #print STDERR scalar(localtime) . " ajaxCreateForFirehose 4 for id=$id tagnames='@tagnames' newtagspreloadtext='$newtagspreloadtext' returning: $retval\n";
@@ -1576,7 +1748,8 @@ sub ajaxGetAdminExtras {
 sub setSectionTopicsFromTagstring {
 	my($self, $id, $tagstring) = @_;
 	my $constants = getCurrentStatic();
-
+	
+	print STDERR "sstft $id: $tagstring\n";
 	my @tags = split(/\s+/, $tagstring);
 	my $data = {};
 
@@ -1615,10 +1788,11 @@ sub setSectionTopicsFromTagstring {
 
 sub setFireHose {
 	my($self, $id, $data) = @_;
+	my $constants = getCurrentStatic();
 	return undef unless $id && $data;
 	return 0 if !%$data;
 	my $id_q = $self->sqlQuote($id);
-	
+
 	my $mcd = $self->getMCD();
 	my $mcdkey;
 	if ($mcd) {
@@ -1659,8 +1833,13 @@ sub setFireHose {
 	$rows += $self->sqlUpdate('firehose_text', $text_data, "id=$id_q") if keys %$text_data;
 #{ use Data::Dumper; my $dstr = Dumper($text_data); $dstr =~ s/\s+/ /g; print STDERR "setFireHose B rows=$rows for id=$id_q data: $dstr\n"; }
 
-	if ($mcd) {
+	if ($mcd && $constants->{firehose_mcd_disp}) {
 		 $mcd->delete("$mcdkey:$id", 3);
+		 my $keys = $self->genFireHoseMCDAllKeys($id);
+		 foreach (@$keys) {
+			$mcd->delete($_, 3);
+		 }
+
 	}
 
 	my $searchtoo = getObject('Slash::SearchToo');
@@ -1674,20 +1853,79 @@ sub setFireHose {
 	return $rows;
 }
 
+
+# This generates the key for memcaching dispFireHose results
+# if no key is returned no caching or fetching from cache will
+# take place
+
+sub genFireHoseMCDKey {
+	my($self, $id, $options) = @_;
+	my $gSkin = getCurrentSkin();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
+	my $mcd = $self->getMCD();
+	my $mcdkey;
+
+	return if $gSkin->{skid} != $constants->{mainpage_skid};
+	return if !$constants->{firehose_mcd_disp};
+
+	if ($mcd && !$options->{nodates} && !$options->{nobylines} && !$options->{nocolors} && !$options->{nothumbs} && !$form->{skippop} && !$form->{index} && !$options->{vote} && !$user->{is_admin}) {
+		$mcdkey = "$self->{_mcd_keyprefix}:dispfirehose-$options->{mode}:$id";
+	}
+	return $mcdkey;
+
+}
+
+sub genFireHoseMCDAllKeys {
+	my($self, $id) = @_;
+	my $keys = [];
+	my $mcd = $self->getMCD();
+	my $mcdkey;
+	if ($mcd) {
+		foreach my $mode (qw(full fulltitle)) {
+			push @$keys, "$self->{_mcd_keyprefix}:dispfirehose-$mode:$id";
+		}
+	}
+	return $keys;
+}
+
+
 sub dispFireHose {
 	my($self, $item, $options) = @_;
 	$options ||= {};
+	my $mcd = $self->getMCD();
+	my $mcdkey;
+	if ($mcd) {
+		$mcdkey = $self->genFireHoseMCDKey($item->{id}, $options);
+		my $cached;
+		if ($mcdkey) {
+			$cached = $mcd->get("$mcdkey");
+		}
+		return $cached if $cached;
+	}
 
-	slashDisplay('dispFireHose', {
+	my $retval = slashDisplay('dispFireHose', {
 		item			=> $item,
 		mode			=> $options->{mode},
-		tags_top		=> $options->{tags_top},
+		tags_top		=> $options->{tags_top},	# old-style
+		top_tags		=> $options->{top_tags},	# new-style
+		system_tags		=> $options->{system_tags},	# new-style
 		options			=> $options->{options},
 		vote			=> $options->{vote},
 		bodycontent_include	=> $options->{bodycontent_include},
 		nostorylinkwrapper	=> $options->{nostorylinkwrapper},
 		view_mode		=> $options->{view_mode}
 	}, { Page => "firehose",  Return => 1 });
+
+	if ($mcd) {
+		$mcdkey = $self->genFireHoseMCDKey($item->{id}, $options);
+		if ($mcdkey) {
+			$mcd->set($mcdkey, $retval, 180);
+		}
+	}
+	return $retval;
 }
 
 sub getMemoryForItem {
@@ -1760,9 +1998,9 @@ sub getAndSetOptions {
 	$opts 	        ||= {};
 	my $options 	= {};
 
-	my $types = { feed => 1, bookmark => 1, submission => 1, journal => 1, story => 1, vendor => 1, misc => 1 }; 
-	my $tabtypes = { tabsection => 1, tabpopular => 1, tabrecent => 1, tabuser => 1};
-	
+	my $types = { feed => 1, bookmark => 1, submission => 1, journal => 1, story => 1, vendor => 1, misc => 1, comment => 1, project => 1 };
+	my $tabtypes = { tabsection => 1, tabpopular => 1, tabrecent => 1, tabuser => 1, metamod => 1};
+
 	my $tabtype = '';
 	$tabtype = $form->{tabtype} if $form->{tabtype} && $tabtypes->{ $form->{tabtype} };
 
@@ -1829,7 +2067,7 @@ sub getAndSetOptions {
 			$form->{issue} = "";
 		}
 	}
-	
+
 
 	my $colors = $self->getFireHoseColors();
 	if ($form->{color} && $colors->{$form->{color}}) {
@@ -1844,6 +2082,8 @@ sub getAndSetOptions {
 			} else {
 				$options->{orderby} = 'popularity';
 			}
+		} elsif ($form->{orderby} eq 'neediness') {
+			$options->{orderby} = 'neediness';
 		} else {
 			$options->{orderby} = "createtime";
 		}
@@ -1898,11 +2138,18 @@ sub getAndSetOptions {
 		$form->{color} = "black";
 	} elsif ($tabtype eq 'tabuser') {
 		$form->{fhfilter} = "\"user:$user->{nickname}\"";
-		$options->{orderby} = "popularity";
 		$options->{color} = "black";
 		$form->{color} = "black";
 		$options->{orderdir} = "DESC";
 		$options->{orderby} = "createtime";
+	} elsif ($tabtype eq 'metamod') {
+		$form->{fhfilter} = "comment";
+		$options->{color} = "black";
+		$form->{color} = "black";
+		$options->{orderdir} = "DESC";
+		$options->{orderby} = "neediness";
+		$options->{mode} = "full";
+		$options->{mixedmode} = 0;
 	}
 
 	if ($tabtype) {
@@ -1929,7 +2176,7 @@ sub getAndSetOptions {
 	if ($the_skin && $the_skin->{name} && $the_skin->{skid} != $constants->{mainpage_skid})  {
 		$skin_prefix = "$the_skin->{name} ";
 	}
-	my $system_tabs = [ 
+	my $system_tabs = [
 		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story", orderby => 'createtime'},
 		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story", orderby => 'popularity'},
 		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story", orderby => 'createtime'},
@@ -1941,9 +2188,9 @@ sub getAndSetOptions {
 
 	my $sel_tabtype;
 
-	my $tab_compare = { 
-		color 		=> "color", 
-		filter 		=> "fhfilter" 
+	my $tab_compare = {
+		color 		=> "color",
+		filter 		=> "fhfilter"
 	};
 
 	my $tab_match = 0;
@@ -1954,7 +2201,6 @@ sub getAndSetOptions {
 		%$this_tab_compare = %$tab_compare;
 
 		$this_tab_compare->{orderby} = 'orderby' if defined $tab->{tabtype};
-		
 
 		foreach (keys %$this_tab_compare) {
 			$options->{$this_tab_compare->{$_}} ||= "";
@@ -1968,10 +2214,10 @@ sub getAndSetOptions {
 			if (defined $tab->{tabtype}) {
 				$sel_tabtype = $tab->{tabtype};
 			}
-			
+
 			# Tab match if new option is being set update tab
 			if ($form->{orderdir} || $form->{orderby} || $form->{mode}) {
-				
+
 				my $data = {};
 				$data->{orderdir} = $options->{orderdir};
 				$data->{orderby}  = $options->{orderby};
@@ -2023,36 +2269,6 @@ sub getAndSetOptions {
 		}
 	}
 
-	# number of firehose items per page in the normal case
-	if ($mode eq "full") {
-		if ($user->{is_admin}) {
-			$options->{limit} = $pagesize eq "large" ? 50 : 25;
-		} else {
-			$options->{limit} = $pagesize eq "large" ? 25 : 15;
-		}
-	} else {
-		if ($user->{is_admin}) {
-			$options->{limit} = 50;
-		} else {
-			$options->{limit} = $pagesize eq "large" ? 30 : 25;
-		}
-	}
-
-	# the non-normal cases: a small device (e.g., iPhone) or an embedded use (e.g., Google Gadget)
-	my $force_smaller = $form->{embed};
-	if (!$force_smaller && $constants->{smalldevices_ua_regex}) {
-		my $smalldev_re = qr($constants->{smalldevices_ua_regex});
-		if ($ENV{HTTP_USER_AGENT} && $ENV{HTTP_USER_AGENT} =~ $smalldev_re) {
-			$force_smaller = 1;
-		}
-	}
-
-	# ...for which we'll have fewer items per page
-	if ($force_smaller) {
-		$options->{smalldevices} = 1;
-		$options->{limit} = 10;
-	}
-
 	if ($user->{is_admin} && $form->{setusermode}) {
 		$self->setUser($user->{uid}, { firehose_usermode => $form->{firehose_usermode} ? 1 : "" });
 	}
@@ -2084,7 +2300,6 @@ sub getAndSetOptions {
 		}
 	}
 	my $fh_ops = $self->splitOpsFromString($fhfilter);
-	
 
 	my $skins = $self->getSkins();
 	my %skin_names = map { $skins->{$_}{name} => $_ } keys %$skins;
@@ -2174,7 +2389,6 @@ sub getAndSetOptions {
 			$options->{mixedmode} = 0;
 		}
 	}
-	
 
 	foreach (keys %$fh_options) {
 		$options->{$_} = $fh_options->{$_};
@@ -2223,7 +2437,7 @@ sub getAndSetOptions {
 		if ($firehose_page ne "user") {
 			$options->{accepted} = "no" if !$options->{accepted};
 		}
-		
+
 		$options->{duration} ||= 1;
 		if ($user->{is_subscriber} && !$no_saved) {
 			$options->{createtime_subscriber_future} = 1;
@@ -2250,8 +2464,90 @@ sub getAndSetOptions {
 			$self->setUser($user->{uid}, { firehose_max_more_num => $options->{more_num}});
 		}
 	}
-
+	if ($user->{state}{firehose_init_list} && $options->{sel_tabtype}) {
+		my $set_opts = $self->getInitTabtypeOptions($options->{sel_tabtype});
+		foreach (keys %$set_opts) {
+			$options->{$_} = $set_opts->{$_};
+		}
+	}
+	$options->{smalldevices} = 1 if $self->shouldForceSmall();
+	$options->{limit} = $self->getFireHoseLimitSize($options->{mode}, $pagesize, $options->{smalldevices});
 	return $options;
+}
+
+sub getFireHoseLimitSize {
+	my($self, $mode, $pagesize, $forcesmall) = @_;
+	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
+
+	my $limit;
+
+	if ($mode eq "full") {
+		if ($user->{is_admin}) {
+			$limit = $pagesize eq "large" ? 50 : 25;
+		} else {
+			$limit = $pagesize eq "large" ? 25 : 15;
+		}
+	} else {
+		$limit = $user->{is_admin} ? 50 :
+			$pagesize eq "large" ? 30 : 25;
+	}
+
+	$limit = 10 if $forcesmall || $form->{metamod};
+	return $limit;
+}
+
+sub shouldForceSmall {
+	my($self) = @_;
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
+	# the non-normal cases: a small device (e.g., iPhone) or an embedded use (e.g., Google Gadget)
+	my $force_smaller = $form->{embed} ? 1 : 0;
+	if (!$force_smaller && $constants->{smalldevices_ua_regex}) {
+		my $smalldev_re = qr($constants->{smalldevices_ua_regex});
+		if ($ENV{HTTP_USER_AGENT} && $ENV{HTTP_USER_AGENT} =~ $smalldev_re) {
+			$force_smaller = 1;
+		}
+	}
+	return $force_smaller;
+}
+
+sub getInitTabtypeOptions {
+	my($self, $name) = @_;
+	my $gSkin = getCurrentSkin();
+	my $form = getCurrentForm();
+	my $vol = $self->getSkinVolume($gSkin->{skid});
+	my $day_specified = $form->{startdate} || $form->{issue};
+	my $set_option;
+
+	$vol ||= { story_vol => 0, other_vol => 0};
+
+	if ($name eq "tabsection") {
+		$set_option->{mixedmode} = "1";
+		$set_option->{mode} = "full";
+		if (!$day_specified) {
+			if ($vol->{story_vol} > 25) {
+				$set_option->{duration} = 7;
+			} else {
+				$set_option->{duration} = -1;
+			}
+		}
+		$set_option->{startdate} = "";
+	} elsif (($name eq "tabpopular" || $name eq "tabrecent") && !$day_specified) {
+		if ($vol->{story_vol} > 25) {
+			$set_option->{duration} = 7;
+		} else {
+			$set_option->{duration} = -1;
+		}
+		$set_option->{startdate} = "";
+		$set_option->{mixedmode} = "1";
+	} elsif ($name eq "metamod") {
+		$set_option->{duration} = 7;
+		$set_option->{startdate} = '';
+	}
+	return $set_option;
 }
 
 sub getFireHoseTagsTop {
@@ -2274,7 +2570,7 @@ sub getFireHoseTagsTop {
 	} else {
 		push @$tags_top, $item->{type};
 	}
-	
+
 	if ($item->{primaryskid} && $item->{primaryskid} != $constants->{mainpage_skid}) {
 		my $the_skin = $self->getSkin($item->{primaryskid});
 		push @$tags_top, "$the_skin->{name}:2";
@@ -2284,7 +2580,7 @@ sub getFireHoseTagsTop {
 		push @$tags_top, "$the_topic->{keyword}:3";
 	}
 	my %seen_tags = map { $_ => 1 } @$tags_top;
-	
+
 	# 0 = is a link, not a menu
 	my $user_tags_top = [];
 	push @$user_tags_top, map { "$_:0" } grep {!$seen_tags{$_}} split (/\s+/, $item->{toptags});
@@ -2292,17 +2588,16 @@ sub getFireHoseTagsTop {
 	if ($constants->{smalldevices_ua_regex}) {
 		my $smalldev_re = qr($constants->{smalldevices_ua_regex});
 		if ($ENV{HTTP_USER_AGENT} =~ $smalldev_re) {
-			$#{@$user_tags_top} = 2;
+			$#$user_tags_top = 2;
 		}
 	}
 
 	if ($form->{embed}) {
-		$#{@$user_tags_top} = 2;
+		$#$user_tags_top = 2;
 	}
 
 	push @$tags_top, @$user_tags_top;
 
-	
 	return $tags_top;
 }
 
@@ -2350,6 +2645,8 @@ sub listView {
 	my $gSkin = getCurrentSkin();
 	my $form = getCurrentForm();
 
+	$user->{state}{firehose_init_list} = 1;
+
 	my $firehose_reader = getObject('Slash::FireHose', {db_type => 'reader'});
 	my $featured;
 
@@ -2368,21 +2665,22 @@ sub listView {
 		}
 	}
 	my $initial = ($form->{tab} || $form->{tabtype} || $form->{fhfilter} || defined $form->{page} || $lv_opts->{fh_page} eq "console.pl" || $form->{ssi} && defined $form->{fhfilter}) ? 0 : 1;
-
 	my $options = $lv_opts->{options} || $self->getAndSetOptions({ initial => $initial });
 	my $base_page = $lv_opts->{fh_page} || "firehose.pl";
 
 	if ($featured && $featured->{id}) {
 		$options->{not_id} = $featured->{id};
 	}
+	slashProf("get_fhe");
 	my($items, $results, $count, $future_count, $day_num, $day_label, $day_count) = $firehose_reader->getFireHoseEssentials($options);
+	slashProf("","get_fhe");
 
 	my $itemnum = scalar @$items;
 
 	my $globjs;
 
 	foreach (@$items) {
-		push @$globjs, $_->{globjid} if $_->{globjid} 
+		push @$globjs, $_->{globjid} if $_->{globjid}
 	}
 
 	if ($options->{orderby} eq "createtime") {
@@ -2403,8 +2701,13 @@ sub listView {
 	my $mode = $options->{mode};
 	my $curmode = $options->{mode};
 	my $mixed_abbrev_pop = $self->getMinPopularityForColorLevel(1);
+	my $vol = $self->getSkinVolume($gSkin->{skid});
+	$vol->{story_vol} ||= 0;
+	if ($vol->{story_vol} < 25) {
+		$mixed_abbrev_pop = $self->getMinPopularityForColorLevel(3);
+	}
 	my $constants = getCurrentStatic();
-	
+
 	foreach (@$items) {
 		if ($options->{mixedmode}) {
 			$curmode = "full";
@@ -2414,19 +2717,24 @@ sub listView {
 		$maxtime = $_->{createtime} if $_->{createtime} gt $maxtime && $_->{createtime} lt $now;
 		my $item =  $firehose_reader->getFireHose($_->{id});
 		my $tags_top = $firehose_reader->getFireHoseTagsTop($item);
+		my $tags = getObject("Slash::Tags", { db_type => 'reader' })->setGetCombinedTags($_->{id}, 'firehose');
 		if ($_->{day}) {
 			my $day = $_->{day};
 			$day =~ s/ \d{2}:\d{2}:\d{2}$//;
 			$itemstext .= slashDisplay("daybreak", { options => $options, cur_day => $day, last_day => $_->{last_day}, id => "firehose-day-$day", fh_page => $base_page }, { Return => 1, Page => "firehose" });
 		} else {
 	$last_day = timeCalc($item->{createtime}, "%Y%m%d");
+			slashProf("firehosedisp");
 			$itemstext .= $self->dispFireHose($item, {
 				mode			=> $curmode,
-				tags_top		=> $tags_top,
+				tags_top		=> $tags_top,		# old-style
+				top_tags		=> $tags->{top},	# new-style
+				system_tags		=> $tags->{'system'},	# new-style
 				options			=> $options,
 				vote			=> $votes->{$item->{globjid}},
 				bodycontent_include	=> $user->{is_anon} 
 			});
+			slashProf("","firehosedisp");
 		}
 		$i++;
 	}
@@ -2438,23 +2746,23 @@ sub listView {
 	} else {
 		$refresh_options->{insert_new_at} = "top";
 	}
-	
+
 	my $section = 0;
 	if ($gSkin->{skid} != $constants->{mainpage_skid}) {
 		$section = $gSkin->{skid};
 	}
-	my $firehose_more_data = { 
-		future_count => $future_count, 
+	my $firehose_more_data = {
+		future_count => $future_count,
 		options => $options,
 		day_num	=> $day_num,
-		day_label => $day_label, 
+		day_label => $day_label,
 		day_count => $day_count
 	};
 
 	slashDisplay("list", {
-		itemstext		=> $itemstext, 
+		itemstext		=> $itemstext,
 		itemnum			=> $itemnum,
-		page			=> $options->{page}, 
+		page			=> $options->{page},
 		options			=> $options,
 		refresh_options		=> $refresh_options,
 		votes			=> $votes,
@@ -2472,21 +2780,25 @@ sub listView {
 }
 
 sub setFireHoseSession {
-	my ($self, $id) = @_;
+	my ($self, $id, $action) = @_;
 	my $user = getCurrentUser();
 	my $item = $self->getFireHose($id);
+
+	$action ||= "reviewing";
+
 	my $data = {};
 	$data->{lasttitle} = $item->{title};
 	if ($item->{type} eq "story") {
 		my $story = $self->getStory($item->{srcid});
 		$data->{last_sid} = $story->{sid} if $story && $story->{sid};
-	} 
+	}
 
 	if (!$data->{last_sid}) {
 		$data->{last_fhid} = $item->{id};
 	}
 	$data->{last_subid} ||= '';
 	$data->{last_sid} ||= '';
+	$data->{last_action} = $action;
 	$self->setSession($user->{uid}, $data);
 }
 
@@ -2501,12 +2813,12 @@ sub getUserTabs {
 	my $where = join ' AND ', @where;
 
 	my $tabs = $self->sqlSelectAllHashrefArray("*", "firehose_tab", $where, "ORDER BY tabname ASC");
-	@$tabs = sort { 
-			$b->{tabname} eq "untitled" ? -1 : 
+	@$tabs = sort {
+			$b->{tabname} eq "untitled" ? -1 :
 				$a->{tabname} eq "untitled" ? 1 : 0	||
-			$b->{tabname} eq "User" ? -1 : 
+			$b->{tabname} eq "User" ? -1 :
 				$a->{tabname} eq "User" ? 1 : 0	||
-			$a->{tabname} cmp $b->{tabname} 
+			$a->{tabname} cmp $b->{tabname}
 	} @$tabs;
 	return $tabs;
 }
@@ -2543,7 +2855,7 @@ sub splitOpsFromString {
 	my ($self, $str) = @_;
 	my @fh_ops_orig = map { lc($_) } split((/\s+|"/), $str);
 	my @fh_ops;
-	
+
 	my $in_quotes = 0;
 	my $cur_op = "";
 	foreach (@fh_ops_orig) {
@@ -2581,7 +2893,7 @@ sub addDayBreaks {
 		} else {
 			$last_days_processed++;
 		}
-		
+
 		push @retitems, $_;
 		$last_day = $cur_day;
 		$days_processed++;
@@ -2632,29 +2944,40 @@ sub getFireHoseItemsByUrl {
 sub ajaxFireHoseUsage {
 	my($slashdb, $constants, $user, $form) = @_;
 
-	my $tags = getObject('Slash::Tags');
+	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+
 	my $downlabel = $constants->{tags_downvote_tagname} || 'nix';
-	my $down_id = $tags->getTagnameidFromNameIfExists($downlabel);
-	
+	my $down_id = $tags_reader->getTagnameidFromNameIfExists($downlabel);
+
 	my $uplabel = $constants->{tags_upvote_tagname} || 'nod';
-	my $up_id = $tags->getTagnameidFromNameIfExists($uplabel);
+	my $up_id = $tags_reader->getTagnameidFromNameIfExists($uplabel);
 	my $data = {};
 
+#	$data->{fh_users} = $tags_reader->sqlSelect("COUNT(DISTINCT uid)", "tags",
+#		"tagnameid IN ($up_id, $down_id)");
+	my $d_clause = " AND created_at > DATE_SUB(NOW(), INTERVAL 1 DAY)";
+	my $h_clause = " AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)";
+	$data->{fh_users_day} = $tags_reader->sqlSelect("COUNT(DISTINCT uid)", "tags",
+		"tagnameid IN ($up_id, $down_id) $d_clause");
+	$data->{fh_users_hour} = $tags_reader->sqlSelect("COUNT(DISTINCT uid)", "tags",
+		"tagnameid IN ($up_id, $down_id) $h_clause");
+	$data->{tag_cnt_day} = $tags_reader->sqlSelect("COUNT(*)", "tags,users,firehose",
+		"firehose.globjid=tags.globjid AND tags.uid=users.uid AND users.seclev = 1 $d_clause");
+	$data->{tag_cnt_hour} = $tags_reader->sqlSelect("COUNT(*)", "tags,users,firehose",
+		"firehose.globjid=tags.globjid AND tags.uid=users.uid AND users.seclev = 1 $h_clause");
+	$data->{nod_cnt_day} = $tags_reader->sqlSelect("COUNT(*)", "tags,users",
+		"tags.uid=users.uid AND users.seclev = 1 AND tagnameid IN ($up_id) $d_clause");
+	$data->{nod_cnt_hour} = $tags_reader->sqlSelect("COUNT(*)", "tags,users",
+		"tags.uid=users.uid AND users.seclev = 1 AND tagnameid IN ($up_id) $h_clause");
+	$data->{nix_cnt_day} = $tags_reader->sqlSelect("COUNT(*)", "tags,users",
+		"tags.uid=users.uid AND users.seclev = 1 AND tagnameid IN ($down_id) $d_clause");
+	$data->{nix_cnt_hour} = $tags_reader->sqlSelect("COUNT(*)", "tags,users",
+		"tags.uid=users.uid AND users.seclev = 1 AND tagnameid IN ($down_id) $h_clause");
+	$data->{globjid_cnt_day} = $tags_reader->sqlSelect("COUNT(DISTINCT globjid)", "tags,users",
+		"tags.uid=users.uid AND users.seclev = 1 AND tagnameid IN ($up_id, $down_id) $d_clause");
+	$data->{globjid_cnt_hour} = $tags_reader->sqlSelect("COUNT(DISTINCT globjid)", "tags,users",
+		"tags.uid=users.uid AND users.seclev = 1 AND tagnameid IN ($up_id, $down_id) $h_clause");
 
-	$data->{fh_users} = $slashdb->sqlSelect("count(distinct uid)", "tags", "tagnameid in($up_id, $down_id)");
-	my $d_clause = " and created_at > date_sub(now(), interval 1 day)";
-	my $h_clause = " and created_at > date_sub(now(), interval 1 hour)";
-	$data->{fh_users_day} = $slashdb->sqlSelect("count(distinct uid)", "tags", "tagnameid in($up_id, $down_id) $d_clause");
-	$data->{fh_users_hour} = $slashdb->sqlSelect("count(distinct uid)", "tags", "tagnameid in($up_id, $down_id) $h_clause");
-	$data->{tag_cnt} = $slashdb->sqlSelect("count(*)", "tags,users,firehose", "firehose.globjid=tags.globjid AND tags.uid=users.uid AND users.seclev = 1 $d_clause");
-	$data->{tag_cnt_hour} = $slashdb->sqlSelect("count(*)", "tags,users,firehose", "firehose.globjid=tags.globjid AND tags.uid=users.uid AND users.seclev = 1 $h_clause");
-	$data->{nod_cnt} = $slashdb->sqlSelect("count(*)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($up_id) $d_clause");
-	$data->{nod_cnt_hour} = $slashdb->sqlSelect("count(*)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($up_id) $h_clause");
-	$data->{nix_cnt} = $slashdb->sqlSelect("count(*)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($down_id) $d_clause");
-	$data->{nix_cnt_hour} = $slashdb->sqlSelect("count(*)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($down_id) $h_clause");
-
-	$data->{globjid_cnt} = $slashdb->sqlSelect("count(distinct globjid)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($up_id, $down_id) $d_clause");
-	$data->{globjid_cnt_hour} = $slashdb->sqlSelect("count(distinct globjid)", "tags,users", "tags.uid=users.uid AND users.seclev = 1 AND tagnameid in($up_id, $down_id) $h_clause");
 	slashDisplay("firehose_usage", $data, { Return => 1 });
 }
 
@@ -2680,14 +3003,13 @@ sub createSectionSelect {
 			$menu->{$skid} = $skins->{$skid}{title};
 		}
 	}
-	my $onchange = $user->{is_anon} 
-		? "firehose_change_section_anon(this.options[this.selectedIndex].value)" 
+	my $onchange = $user->{is_anon}
+		? "firehose_change_section_anon(this.options[this.selectedIndex].value)"
 		: "firehose_set_options('tabsection', this.options[this.selectedIndex].value)";
 
 	@$ordered = sort {$a == 0 ? -1 : $b == 0 ? 1 : 0 || $menu->{$a} cmp $menu->{$b} } keys %$menu;
 	return createSelect("section", $menu, { default => $default, return => 1, nsort => 0, ordered => $ordered, multiple => 0, onchange => $onchange });
 
-	
 }
 
 sub linkFireHose {
@@ -2708,7 +3030,10 @@ sub linkFireHose {
 		$link_url = $story_link_ar->[0];
 	} elsif ($item->{type} eq "journal") {
 		my $the_user = $self->getUser($item->{uid});
-		$link_url = $constants->{rootdir} . "/~" . fixparam($the_user->{nickname}) . "/journal/$item->{srcid}"; 
+		$link_url = $constants->{rootdir} . "/~" . fixparam($the_user->{nickname}) . "/journal/$item->{srcid}";
+	} elsif ($item->{type} eq "comment") {
+		my $com = $self->getComment($item->{srcid});
+		$link_url = $gSkin->{rootdir} . "/comments.pl?sid=$com->{sid}&amp;cid=$com->{cid}";
 	} else {
 		$link_url = $gSkin->{rootdir} . '/firehose.pl?op=view&amp;id=' . $item->{id};
 	}
@@ -2726,13 +3051,13 @@ sub genFireHoseParams {
 	my @params;
 
 	foreach my $label (qw(fhfilter color orderdir orderby startdate duration mode)) {
-	
+
 		my $value = defined $data->{$label} ? $data->{$label} : $options->{$label};
 		if ($label eq "startdate") {
 			$value =~s /-//g;
 		}
 		push @params, "$label=$value";
-		
+
 	}
 
 	my $str =  join('&amp;', @params);
@@ -2755,6 +3080,42 @@ sub createSettingLog {
 	$data->{uid} ||= getCurrentUser('uid');
 	$self->sqlInsert("firehose_setting_log", $data);
 }
+
+sub getSkinVolume {
+	my($self, $skid) = @_;
+	my $skid_q = $self->sqlQuote($skid);
+	return $self->sqlSelectHashref("*", "firehose_skin_volume", "skid=$skid_q");
+}
+
+sub genFireHoseWeeklyVolume {
+	my($self, $options) = @_;
+	$options ||= {};
+	my $colors = $self->getFireHoseColors();
+	my @where;
+
+	if ($options->{type}) {
+		push @where, "type=" . $self->sqlQuote($options->{type});
+	}
+	if ($options->{not_type}) {
+		push @where, "type!=" . $self->sqlQuote($options->{not_type});
+	}
+	if ($options->{color}) {
+		my $pop;
+		$pop = $self->getMinPopularityForColorLevel($colors->{$options->{color}});
+		push @where, "popularity >= " . $self->sqlQuote($pop);
+	}
+	if ($options->{primaryskid}) {
+		push @where, "primaryskid=" . $self->sqlQuote($options->{primaryskid});
+	}
+	push @where, "createtime >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+	my $where = join ' AND ', @where;
+	return $self->sqlCount("firehose", $where);
+}
+
+sub setSkinVolume {
+	my($self, $data) = @_;
+	$self->sqlReplace("firehose_skin_volume", $data);
+}
 1;
 
 __END__
@@ -2763,7 +3124,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id: FireHose.pm,v 1.235 2008/04/16 17:52:28 scc Exp $

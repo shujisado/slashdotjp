@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: rebuildAutoPoll,v 1.6 2006/08/31 13:39:58 jamiemccarthy Exp $
+# $Id$
 
 # What's this script for?  Is it still used? - Jamie 2006-08-27
 
@@ -16,7 +16,7 @@ use Slash::PollBooth;
 
 use vars qw( $pollbooth_db $werder $constants $junk );
 
-(my $VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my %opts;

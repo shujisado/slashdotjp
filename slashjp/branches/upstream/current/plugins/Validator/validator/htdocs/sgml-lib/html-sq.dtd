@@ -7,7 +7,7 @@
         Document Type Definition for the HyperText Markup Language
 		 (HTML DTD)
 
-        $Id: html-sq.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+        $Id$
 
 	Author: Daniel W. Connolly <connolly@w3.org>
 	See Also: html.decl, html-1.dtd

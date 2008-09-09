@@ -1,20 +1,17 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Hook.pm,v 1.12 2008/03/04 21:49:10 pudge Exp $
 
 package Slash::Hook;
 use strict;
 use Slash::Utility::Environment; # avoid cross-caller issues
-use vars qw($VERSION);
 
 # Arrrr Matey...
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.12 $ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT	   = qw(slashHook);
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(slashHook);
 
 my %classes;
 

@@ -49,4 +49,4 @@ __template__
 [% END %]
 
 __version__
-$Id: firehose_options;misc;default,v 1.7 2007/11/08 21:50:30 jamiemccarthy Exp $
+$Id$

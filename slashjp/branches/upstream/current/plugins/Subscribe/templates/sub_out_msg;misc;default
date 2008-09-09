@@ -22,4 +22,4 @@ __template__
 	You can renew your subscription at [% absolutedir %]/subscribe.pl
 [% END %]
 __version__
-$Id: sub_out_msg;misc;default,v 1.2 2007/01/03 18:37:31 pudge Exp $
+$Id$

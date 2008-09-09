@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.13 2005/11/01 19:45:42 tvroom Exp $
+# $Id$
 name=Search
 htdoc=search.pl
 css=search.css

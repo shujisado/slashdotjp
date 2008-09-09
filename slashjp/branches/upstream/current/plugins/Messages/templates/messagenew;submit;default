@@ -31,4 +31,4 @@ submission.subj | strip_paramattr %]">[% submission.subj | strip_literal %]</a><
 __seclev__
 100
 __version__
-$Id: messagenew;submit;default,v 1.8 2006/01/23 20:42:59 pudge Exp $
+$Id$

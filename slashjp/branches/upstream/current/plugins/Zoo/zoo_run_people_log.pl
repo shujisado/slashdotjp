@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: zoo_run_people_log.pl,v 1.13 2005/05/17 17:53:01 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash::Constants qw( :messages :slashd :people );

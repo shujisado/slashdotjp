@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.1 2005/04/14 15:08:19 pudge Exp $
+# $Id$
 name=Validator
 description="HTML Validator"
 template=templates/html_invalid_subj;misc;default

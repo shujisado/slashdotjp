@@ -1057,7 +1057,7 @@ get/gets/set/sets/create/exists/delete
 
 =head1 CHANGES
 
-	$Log: slashstyle.pod,v $
+	$Log$
 	Revision 1.11  2006/06/01 14:35:35  jamiemccarthy
 	Make the 8-space tab rule strict;  make the unnecessary-quotes-around-
 	function-names rule lax.
@@ -1126,4 +1126,4 @@ get/gets/set/sets/create/exists/delete
 
 =head1 VERSION
 
-$Id: slashstyle.pod,v 1.11 2006/06/01 14:35:35 jamiemccarthy Exp $
+$Id$

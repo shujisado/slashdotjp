@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tagdataview.pl,v 1.3 2007/09/26 21:25:50 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ use Slash::XML;
 use GD::Graph::lines;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {

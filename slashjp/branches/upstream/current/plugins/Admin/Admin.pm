@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Admin.pm,v 1.39 2008/03/18 16:13:45 tvroom Exp $
 
 package Slash::Admin;
 
@@ -11,12 +10,10 @@ use Slash;
 use Slash::Display;
 use Slash::Utility;
 
-use vars qw($VERSION);
-use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.39 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -336,6 +333,25 @@ sub getSignoffData {
 
 }
 
+sub showAdminTodo {
+	my($self) = @_;
+	my $gSkin = getCurrentSkin();
+	my $pb_reader = getObject("Slash::PollBooth", { db_type => 'reader' });
+	my $text = "";
+	my $days = $pb_reader->getPollDaysOld();
+	if ($days > 3 ) {
+		$text .= "<b><a href=\"" . $gSkin->{rootdir} . "/pollBooth.pl\">Poll</a> has not been updated in $days days</b><br>";
+		$text .= '<a href="#" onclick=\'firehose_set_options("setfhfilter", "polls hold")\'>View current poll submissions</a><br><hr>';
+	}
+	if ($text) {
+		slashDisplay('sidebox', {
+			title 		=> 'Admin Todo',
+			contents	=> $text,
+			name 		=> 'admintodo',
+		}, { Return => 1});
+	}
+}
+
 sub showStoryAdminBox {
 	my ($self, $storyref, $options) = @_;
 	my $user = getCurrentUser();
@@ -521,7 +537,8 @@ sub showAuthorActivityBox {
 	my $now = timeCalc($self->getTime(), "%s", 0);
 
 	foreach my $admin (@$cur_admin) {
-		my ($nickname, $time, $title, $subid, $sid, $uid, $fhid) = @$admin;
+		my ($nickname, $time, $title, $subid, $sid, $uid, $fhid, $last_action) = @$admin;
+		$last_action ||= "reviewing";
 		push @activity, {
 			nickname => $nickname,
 			title	=> $title,
@@ -530,7 +547,7 @@ sub showAuthorActivityBox {
 			uid	=> $uid,
 			fhid	=> $fhid,
 			'time'	=> $time,
-			verb	=> "reviewing"
+			verb	=> $last_action
 		};
 	}
 
@@ -627,6 +644,34 @@ sub ajax_learnword {
 	if (!$rows) {
 		errorLog("Spellcheck: personal dictionary not updated.");
 	}
+}
+
+sub getStoryThumbLargeLink {
+	my($self, $id, $stoid) = @_;
+	my $file = $self->getStaticFile($id);
+	my $full_name = $file->{name};
+	$full_name =~ s/(-thumb[^.]*)\././g;
+	my $thumb_lg_name = $full_name;
+	$thumb_lg_name =~ s/\./-thumblg./;
+
+	my $stoid_q = $self->sqlQuote($stoid);
+	my $name_q = $self->sqlQuote($full_name);
+
+	my $full_img = $self->sqlSelectHashref("*", "static_files", "stoid=$stoid_q AND name = $name_q");
+
+	$name_q = $self->sqlQuote($thumb_lg_name);
+	my $thumb_lg_img = $self->sqlSelectHashref("*", "static_files", "stoid=$stoid_q AND name = $name_q");
+
+	if ($full_img && $full_img->{sfid} && $thumb_lg_img && $thumb_lg_img->{sfid}) {
+		if ($full_img->{height} > $thumb_lg_img->{height} || $full_img->{width} > $thumb_lg_img->{height}) {
+			return getData('thumb_link_large', { full_img => $full_img, thumb_img => $thumb_lg_img });
+		} else {
+			return getData('thumb_link_large', { thumb_img => $thumb_lg_img });
+		}
+	}
+
+
+
 }
 
 sub DESTROY {

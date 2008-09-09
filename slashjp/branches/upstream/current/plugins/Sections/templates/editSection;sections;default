@@ -206,4 +206,4 @@ key = "del_subsection_${form.DEL_subsection}" %]
 __seclev__
 10000
 __version__
-$Id: editSection;sections;default,v 1.18 2005/07/27 22:54:13 pudge Exp $
+$Id$

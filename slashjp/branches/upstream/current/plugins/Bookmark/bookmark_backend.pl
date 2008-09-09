@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: bookmark_backend.pl,v 1.3 2006/04/27 03:47:57 tvroom Exp $
+# $Id$
 
 use strict;
 use Slash;

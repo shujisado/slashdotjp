@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: XML.pm,v 1.16 2005/11/26 16:41:51 jamiemccarthy Exp $
 
 package Slash::XML;
 
@@ -31,10 +30,9 @@ use Slash;
 use Slash::Utility;
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.16 $ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT = qw(xmlDisplay);
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT = qw(xmlDisplay);
 
 # FRY: There must be layers and layers of old stuff down there!
 

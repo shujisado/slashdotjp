@@ -16,4 +16,4 @@ __seclev__
 __template__
 [% story.title %]
 __version__
-$Id: email_subj;email;default,v 1.3 2003/08/12 21:35:38 pudge Exp $
+$Id$

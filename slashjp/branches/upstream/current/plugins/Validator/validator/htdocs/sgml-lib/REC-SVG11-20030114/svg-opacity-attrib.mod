@@ -4,7 +4,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: svg-opacity-attrib.mod,v 1.1 2005/04/14 14:57:08 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 

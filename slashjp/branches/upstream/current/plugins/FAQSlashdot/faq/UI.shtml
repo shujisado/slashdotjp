@@ -3,7 +3,7 @@
 <html>
 <head>
         <title>Slashdot FAQ - User Interface</title>
-<!-- $Id: UI.shtml,v 1.12 2008/04/10 04:34:09 pudge Exp $ -->
+<!-- $Id$ -->
 <!--#include virtual="/slashcssbase.inc"-->
 <!--#include virtual="/slashhead-gen-full.inc"-->
 

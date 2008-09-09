@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: users.pl,v 1.347 2008/03/25 19:54:23 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Digest::MD5 'md5_hex';
@@ -1838,7 +1838,7 @@ sub tildeEd {
 			$story023_default{nexus}{$tid} = 3;
 		} elsif ($prefs{story_full_best_nexus}{$tid}) {
 			$story023_default{nexus}{$tid} = 2;
-		} elsif ($prefs{story_brief_best_nexus}) {
+		} elsif ($prefs{story_brief_best_nexus}{$tid}) {
 			$story023_default{nexus}{$tid} = 1;
 		} else {
 			# If brief_sectional_mainpage is set, then all

@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.4 2003/08/29 15:21:07 jamie Exp $
+# $Id$
 name=Email
 description="Allows users to email text versions of articles to someone else."
 

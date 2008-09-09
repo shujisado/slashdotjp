@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump,v 1.7 2004/06/17 16:11:55 jamiemccarthy Exp $
+# $Id$
 #
 
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin', 'Email Opt-out List', '[% gSkin.rootdir %]/email.pl?op=optoutrem_form', 5000, 200);

@@ -54,4 +54,4 @@ END %]
 __seclev__
 500
 __version__
-$Id: journalhead;journal;default,v 1.17 2005/10/25 19:03:19 tvroom Exp $
+$Id$

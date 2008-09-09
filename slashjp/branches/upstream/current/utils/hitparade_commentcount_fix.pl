@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: hitparade_commentcount_fix.pl,v 1.8 2005/03/11 19:58:48 pudge Exp $
+# $Id$
 
 use strict;
 use vars qw( %task );
@@ -13,7 +13,7 @@ use Slash::Display;
 use Slash::Utility;
 use Getopt::Std;
 
-(my $VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 #my $PROGNAME = basename($0);
 my $PROGNAME = 'hitparade_commentcount_fix.pl';
 

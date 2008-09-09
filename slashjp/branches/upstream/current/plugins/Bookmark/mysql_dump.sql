@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.7 2007/11/01 20:35:18 jamiemccarthy Exp $
+# $Id$
 #
 
 INSERT IGNORE INTO reskey_vars VALUES (8,'duration_creation-use', 2, 'min duration (in seconds) between creation and use');

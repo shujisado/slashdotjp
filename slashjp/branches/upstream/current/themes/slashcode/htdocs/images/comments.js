@@ -1,12 +1,11 @@
-// $Id: comments.js,v 1.135 2008/04/17 20:01:07 pudge Exp $
-
 var comments;
-var root_comments;
+var root_comments = [];
 var noshow_comments;
 var pieces_comments;
 var placeholder_comments = [];
 var placeholder_no_update = {};
 var abbrev_comments = {};
+var read_comments = {};
 var init_hiddens = [];
 var fetch_comments = [];
 var fetch_comments_pieces = {};
@@ -29,9 +28,20 @@ var prehiddendisplaymode = {};
 var viewmodevalue = { full: 3, oneline: 2, hidden: 1};
 var currents = { full: 0, oneline: 0, hidden: 0 };
 var commentelements = {};
-var thresh_totals = {};
+var thresh_totals = {
+	"-1":{"-1":0,0:0,1:0,2:0,3:0,4:0,5:0,6:0},
+	   0:{0:0,1:0,2:0,3:0,4:0,5:0,6:0},
+	   1:{1:0,2:0,3:0,4:0,5:0,6:0},
+	   2:{2:0,3:0,4:0,5:0,6:0},
+	   3:{3:0,4:0,5:0,6:0},
+	   4:{4:0,5:0,6:0},
+	   5:{5:0,6:0},
+	   6:{6:0}
+};
 var d2_keybindings_off = 0;
 var d2_keybindings_disable = {};
+var d2_reverse_shift = 0;
+var d2_comment_order = 0; // 0 == score, 1 == chrono
 
 var submitCountdowns = {};
 var ajaxCommentsWaitQueue = [];
@@ -39,15 +49,21 @@ var boxStatusQueue = [];
 var comment_body_reply = [];
 var root_comment = 0;
 var discussion_id = 0;
+
 var user_is_subscriber = 0;
 var user_is_admin = 0;
 var user_is_anon = 0;
 var user_uid = 0;
+
+var no_lower_threshold = 0;
+var user_threshold_save = 1;
 var user_threshold = 0;
 var user_highlightthresh = 0;
 var user_threshold_orig = -9;
 var user_highlightthresh_orig = -9;
 var user_d2asp = 0;
+
+var async_off = 0;
 var loaded = 0;
 var shift_down = 0;
 var alt_down = 0;
@@ -59,8 +75,8 @@ var low_bandwidth = 0;
 var adTimerSecs;
 var adTimerClicks;
 var adTimerInsert;
-var adTimerSecsMax   = 120;
-var adTimerClicksMax = 10;
+var adTimerSecsMax   = 90;
+var adTimerClicksMax = 8;
 var adTimerSeen = {};
 var adTimerUrl  = '';
 resetAdTimer();
@@ -126,50 +142,23 @@ function updateComment(cid, mode) {
 	return void(0);
 }
 
-function updateCommentTree(cid, threshold, subexpand) {
+function updateCommentTree(cid, threshold, lowestmode, skip_read) {
 	setDefaultDisplayMode(cid);
 	var comment = comments[cid];
 
-	// skip the root comment, if it exists; leave it full, but let user collapse
-	// if he chooses, and leave it that way: this comment will not move with
-	// T/HT changes
-	if ((subexpand || threshold) && cid != root_comment) {
-		if (subexpand && subexpand == 1) {
-			if (prehiddendisplaymode[cid] == 'oneline' || prehiddendisplaymode[cid] == 'full') {
-				futuredisplaymode[cid] = 'full';
-			} else {
-				futuredisplaymode[cid] = 'hidden';
-			}
-		} else {
-			futuredisplaymode[cid] = determineMode(cid, threshold, user_highlightthresh);
-		}
+	// skip the root comment, if it exists; leave it full
+	if (threshold && cid != root_comment)
+		futuredisplaymode[cid] = determineMode(cid, threshold, user_highlightthresh, lowestmode, skip_read);
 
+	if (displaymode[cid] != futuredisplaymode[cid]) {
 		updateDisplayMode(cid, futuredisplaymode[cid], 1);
+		update_comments[cid] = futuredisplaymode[cid];
 	}
-
-//	if (subexpand && subexpand == 2) {
-//		updateComment(cid, 'hidden');
-//		prehiddendisplaymode[cid] = futuredisplaymode[cid];
-//	} else if (futuredisplaymode[cid] && futuredisplaymode[cid] != displaymode[cid]) {
-		//updateComment(cid, futuredisplaymode[cid]);
-		if (displaymode[cid] != futuredisplaymode[cid]) {
-			update_comments[cid] = futuredisplaymode[cid];
-		}
-//	}
 
 	var kidhiddens = 0;
 	if (comment && comment['kids'] && comment['kids'].length) {
-// 		if (!subexpand) {
-// 			if (shift_down && !alt_down && futuredisplaymode[cid] == 'full') {
-// 				subexpand = 1;
-// 			} else if (shift_down && !alt_down && futuredisplaymode[cid] == 'oneline') {
-// 				subexpand = 2;
-// 				threshold = user_threshold;
-// 			}
-// 		}
-
 		for (var kiddie = 0; kiddie < comment['kids'].length; kiddie++) {
-			kidhiddens += updateCommentTree(comment['kids'][kiddie], threshold, subexpand);
+			kidhiddens += updateCommentTree(comment['kids'][kiddie], threshold, lowestmode, skip_read);
 		}
 	}
 
@@ -274,7 +263,7 @@ function changeHT(delta) {
 	changeThreshold(user_threshold + ''); // needs to be a string value
 }
 
-function changeT(delta, skip_ht) {
+function changeT(delta, skip_ht, lowestmode) {
 	if (!delta)
 		return void(0);
 
@@ -283,10 +272,10 @@ function changeT(delta, skip_ht) {
 	threshold = Math.min(Math.max(threshold, -1), 6);
 
 	// HT moves with T, but that is taken care of by changeThreshold()
-	changeThreshold(threshold + '', skip_ht); // needs to be a string value
+	changeThreshold(threshold + '', skip_ht, lowestmode); // needs to be a string value
 }
 
-function changeThreshold(threshold, skip_ht) {
+function changeThreshold(threshold, skip_ht, lowestmode) {
 	var threshold_num = parseInt(threshold);
 	var t_delta = threshold_num + (user_highlightthresh - user_threshold);
 	user_threshold = threshold_num;
@@ -298,7 +287,7 @@ function changeThreshold(threshold, skip_ht) {
 	}
 
 	for (var root = 0; root < root_comments.length; root++) {
-		updateCommentTree(root_comments[root], threshold);
+		updateCommentTree(root_comments[root], threshold, lowestmode, skip_ht);
 	}
 	finishCommentUpdates(1);
 
@@ -306,6 +295,26 @@ function changeThreshold(threshold, skip_ht) {
 
 	return void(0);
 }
+
+// not currently used
+function parseCommentBitmap(bitmap) {
+	if (!bitmap)
+		return;
+
+	var lastcid = 0;
+	var comments_hash = {};
+	var temp = bitmap.split(',');
+
+	for (var i = 0; i < temp.length; i++) {
+		var thiscid = parseInt(temp[i]);
+		thiscid = lastcid ? (lastcid + thiscid) : thiscid;
+		comments_hash[thiscid] = 1;
+		lastcid = thiscid;
+	}
+
+	return comments_hash;
+}
+
 
 
 /*******************************/
@@ -344,23 +353,28 @@ function kidHiddens(cid, kidhiddens) {
 	return 0;
 }
 
-function revealKids(cid) {
+function revealKids(cid, not_top) {
 	if (!loaded)
 		return false;
 
 	setDefaultDisplayMode(cid);
 	var comment = comments[cid];
+	var len = comment['kids'].length;
 
-	if (comment['kids'].length) {
-		for (var kiddie = 0; kiddie < comment['kids'].length; kiddie++) {
+	if (len) {
+		var only_one = 0;
+		if (!not_top && len == 1)
+			only_one = 1;
+
+		for (var kiddie = 0; kiddie < len; kiddie++) {
 			var kid = comment['kids'][kiddie];
 			setDefaultDisplayMode(kid);
 			if (comments[kid]['points'] == -2) { // -2 is special case for placeholder-hiddens
-				revealKids(kid);
+				revealKids(kid, 1); // 1 == not at the top level
 				continue;
 			}
 			if (displaymode[kid] == 'hidden') {
-				futuredisplaymode[kid] = 'oneline';
+				futuredisplaymode[kid] = only_one ? 'full' : 'oneline';
 				updateDisplayMode(kid, futuredisplaymode[kid], 1);
 				updateComment(kid, futuredisplaymode[kid]);
 			}
@@ -486,8 +500,8 @@ function addComment(cid, comment, html, front) {
 	html = html || dummyComment(cid);
 
 	if (pid) {
-		var tree = $dom('tree_' + pid);
-		if (tree) {
+		var tree = $('#tree_' + pid);
+		if (tree.length) {
 			setDefaultDisplayMode(pid);
 			var parent = comments[pid];
 			if (front)
@@ -495,24 +509,25 @@ function addComment(cid, comment, html, front) {
 			else
 				parent['kids'].push(cid);
 
-			var commtree = $dom('commtree_' + pid);
-			if (commtree) {
+			var commtree = $('#commtree_' + pid);
+			if (commtree.length) {
 				if (front)
-					commtree.innerHTML = html + commtree.innerHTML;
+					commtree.prepend(html);
 				else
-					commtree.innerHTML = commtree.innerHTML + html;
+					commtree.append(html);
 			} else {
-				tree.innerHTML = tree.innerHTML + '<ul id="commtree_' + pid + '">' + html + '</ul>';
+				tree.append('<ul id="commtree_' + pid + '">' + html + '</ul>');
 			}
 		}
 
 	} else {
-		var commlist = $dom('commentlisting');
-		if (commlist) {
+		var commlist = $('#commentlisting');
+
+		if (commlist.length) {
 			root_comments.push(cid);
 			root_comments_hash[cid] = 1;
 
-			commlist.innerHTML = commlist.innerHTML.replace(/(<li id="roothiddens" class="hide".*?>)/i, html + "$1");
+			$('#roothiddens').before(html);
 		}
 	}
 
@@ -648,18 +663,29 @@ function getSliderTotals(thresh, hthresh) {
 	];
 }
 
-function determineMode(cid, thresh, hthresh) {
+function determineMode(cid, thresh, hthresh, lowestmode, skip_read) {
 	if (!thresh)
 		thresh  = user_threshold;
 	if (!hthresh)
 		hthresh = user_highlightthresh;
 
+	// lowestmode tells us to NOT change the mode of a comment
+	// that is above a certain mode
+	if (lowestmode && viewmodevalue[displaymode[cid]] > viewmodevalue[lowestmode])
+		return displaymode[cid];
+
+	var mode;
 	if (thresh >= 6 || (comments[cid]['points'] < thresh && (user_is_anon || user_uid != comments[cid]['uid'])))
-		return 'hidden';
+		mode = 'hidden';
 	else if (comments[cid]['points'] < (hthresh - (root_comments_hash[cid] ? 1 : 0)))
-		return 'oneline';
+		mode = 'oneline';
 	else
-		return 'full';
+		mode = 'full';
+
+	if (skip_read && comments[cid]['read'] && (viewmodevalue[mode] > viewmodevalue['oneline']))
+		mode = 'oneline';
+
+	return mode;
 }
 
 function finishCommentUpdates(thresh) {
@@ -715,6 +741,15 @@ function toHash(thisobject) {
 	}).join(';');
 }
 
+function toArray(thisobject) {
+	return map_hash(thisobject, function (pair) {
+		return pair[0];
+	});
+}
+
+// option = 1: get more, 2: just send update data
+// thresh = send threshold
+// highlight = 1: go to next comment after loading; 2: collapse previous comment
 function ajaxFetchComments(cids, option, thresh, highlight) {
 	if (cids && !cids.length)
 		return;
@@ -722,11 +757,12 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 	if (!cids && ajaxCommentsWait())
 		return;
 
-	if (option)
+	if (option && option == 1)
 		thresh = 1;
 
-	var params = {};
-	params['op']              = 'comments_fetch';
+	var options = {};
+	var params  = {};
+	params['op'] = 'comments_fetch';
 
 	var newoldstuff = cids ? 0 : 1;
 
@@ -734,11 +770,17 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 		params['cids']    = cids;
 	} else {
 		cids              = [];
-		if (option && d2_seen)
-			params['d2_seen']  = d2_seen;
+		if (option && option == 1 && d2_seen)
+			params['d2_seen'] = d2_seen;
+		else if (option && option == 2)
+			options['async_off'] = 1; // otherwise browser closes before data sent!
 		else
 			params['cids']    = noshow_comments;
 	}
+
+	if (async_off) // global
+		options['async_off'] = 1;
+
 	if (thresh) {
 		params['threshold']       = user_threshold;
 		params['highlightthresh'] = user_highlightthresh;
@@ -756,7 +798,7 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 			abbrev[cids[i]] = abbrev_comments[cids[i]];
 	}
 	params['abbreviated'] = toHash(abbrev);
-
+	params['read_comments'] = toArray(read_comments);
 	params['pieces'] = toHash(cids ? fetch_comments_pieces : pieces_comments);
 
 	if (placeholder_comments.length) {
@@ -812,30 +854,18 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 			}
 
 			if (do_update) {
-				if (newoldstuff) {
-					for (var i = 0; i < last_updated_comments.length; i++) {
-						var this_cid = last_updated_comments[i];
-						var this_id  = fetchEl('comment_top_' + this_cid);
-						if (this_id)
-							this_id.className = this_id.className.replace(' newcomment', ' oldcomment');
-					}
-				}
-				last_updated_comments_index = last_updated_comments.length - 1;
-
 				for (var i = 0; i < update.new_cids_order.length; i++) {
 					var this_cid = update.new_cids_order[i];
 					if (!placeholder_no_update[this_cid] && comments[this_cid]['points'] >= -1) {
-						var mode = determineMode(this_cid);
+						var mode = determineMode(this_cid, null, null, null, (highlight > 1));
 						updateDisplayMode(this_cid, mode, 1);
 						currents[displaymode[this_cid]]++;
 						updateComment(this_cid, mode);
 					}
 
 					var this_id  = fetchEl('comment_top_' + this_cid);
-					if (this_id) {
-						this_id.className = this_id.className.replace(' oldcomment', ' newcomment');
+					if (this_id)
 						last_updated_comments.push(this_cid);
-					}
 				}
 
 				// later we may need to find a known point and scroll
@@ -845,6 +875,14 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 				//}
 			}
 
+			if (response.read_comments) {
+				for (var i = 0; i < response.read_comments.length; i++) {
+					var this_cid = response.read_comments[i];
+					// it has been updated now, ignore from now on
+					comments[this_cid]['read'] = 1;
+					delete read_comments[this_cid];
+				}
+			}
 			if (update && update.new_thresh_totals) {
 				for (var thresh in update.new_thresh_totals) {
 					for (var hthresh in update.new_thresh_totals[thresh]) {
@@ -853,34 +891,65 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 						}
 					}
 				}
-				$dom('titlecountnum').innerHTML = thresh_totals[6][6][1]; // total
+				$('#titlecountnum').html(thresh_totals[6][6][1]); // total
 				updateTotals();
 			}
 
 			updateHiddens(cids);
-			if (do_update && highlight && last_updated_comments.length) {
-				var next_cid = commTreeNextComm(0, 0, 1);
-				if (next_cid) {
-					if (highlight > 1)
-						setFocusComment('-' + current_cid, 1);
-					setCurrentComment(next_cid);
-					setFocusComment(next_cid, 1);
-				}
-			}
+
 			ajaxCommentsStatus(0);
 
+			var next_cid_check = 0;
+			var next_cid_lower_thresh = 0;
+
+			if (highlight && last_updated_comments.length)
+				next_cid_check = 1;
+
+			if (!d2_comment_order)
+				next_cid_lower_thresh = 1;
+			else if (!do_update) {
+				next_cid_lower_thresh = 1;
+				if (highlight)
+					next_cid_check = 1;
+			}
+
+			if (next_cid_check) {
+				var next_cid = 0;
+
+				if (do_update)
+					next_cid = commTreeNextComm(0, 0, 1);
+
+//				while (next_cid_lower_thresh && !next_cid && currents['hidden'] > 0 && user_threshold > -1) {
+//					alert("No more visible comments; " + currents['hidden'] + " hidden comments.  Dropping threshold from " + user_threshold + " to " + (user_threshold - 1) + ".");
+//					user_threshold_save = 0;
+//					// if we are collapsing, then do not move HT too, so the comments stay closed
+//					changeT(-1, (highlight > 1));
+//					gCommentControlWidget.setTHT(user_threshold, user_highlightthresh);
+//					next_cid = commTreeNextComm(0, 0, 1);
+//				}
+
+				if (!next_cid && next_cid_lower_thresh)
+					reduceThresholdPrint(highlight);
+
+				else if (next_cid) {
+					if (highlight > 1)
+						setFocusComment('-' + current_cid, 1);
+					setFocusComment(next_cid, 1);
+					setCurrentComment(next_cid);
+				}
+			}
+
 			if (adTimerInsert) {
-				var tree = $dom('tree_' + adTimerInsert);
-				if (tree) {
+				var tree = $('#tree_' + adTimerInsert);
+				if (tree.length) {
 					var adcall = '<iframe src="' + adTimerUrl + '" height="110" width="740" frameborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
 					var html = '<li id="comment_ad_' + adTimerInsert + '" class="inlinead"> ' + adcall +'  </li>';
 
-					var commtree = $dom('commtree_' + adTimerInsert);
-					if (commtree) {
-						commtree.innerHTML = html + commtree.innerHTML;
-					} else {
-						tree.innerHTML = tree.innerHTML + '<ul id="commtree_' + adTimerInsert + '">' + html + '</ul>';
-					}
+					var commtree = $('#commtree_' + adTimerInsert);
+					if (commtree.length)
+						commtree.prepend(html);
+					else
+						tree.append('<ul id="commtree_' + adTimerInsert + '">' + html + '</ul>');
 					resetAdTimer();
 				}
 			}
@@ -888,7 +957,7 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 	};
 
 	ajaxCommentsStatus(1);
-	ajax_update(params, '', handlers);
+	ajax_update(params, '', handlers, options);
 
 	if (cids) {
 		for (var cid in fetch_comments_pieces) {
@@ -922,6 +991,8 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 
 function savePrefs() {
 	if (!user_is_anon
+		&&
+	    user_threshold_save
 		&&
 	    ((user_threshold_orig != user_threshold)
 		||
@@ -1084,6 +1155,15 @@ function submitReply(pid) {
 				// add it to the totals (for subtraction in updateComment())
 				currents[displaymode[cid]]++;
 				setFocusComment(cid, 1, 1);
+				var threshes = [-1,0,1,2,3,4,5,6];
+				for (var i = 0; i <= threshes.length; i++) {
+					var thresh = threshes[i];
+					for (var hthresh in thresh_totals[thresh]) {
+						var mode = determineMode(cid, thresh, hthresh);
+						thresh_totals[thresh][hthresh][ viewmodevalue[mode] ]++;
+					}
+				}
+				$('#titlecountnum').html(thresh_totals[6][6][1]); // total
 			}
 		}
 	});
@@ -1107,13 +1187,13 @@ function previewReply(pid) {
 	});
 }
 
-function replyTo(pid) {
-	var replydiv = $dom('replyto_' + pid);
-	if (!replydiv)
+function replyTo(pid, nofocus) {
+	var replydiv = $('#replyto_' + pid);
+	if (!replydiv.length)
 		return false; // seems we shouldn't be here ...
 
-	var postercomment = $dom('postercomment_' + pid);
-	if (postercomment) {
+	var postercomment = $('#postercomment_' + pid);
+	if (postercomment.length) {
 		postercomment.focus(); // already have one, bail
 		return false;
 	}
@@ -1123,21 +1203,22 @@ function replyTo(pid) {
 	params['pid'] = pid;
 	params['sid'] = discussion_id;
 
-	replydiv.innerHTML = '<span class="loading">Loading...</span>';
+	replydiv.html('<span class="loading">Loading...</span>');
 
 	var handlers = {
 		onComplete: function(transport) {
 			json_handler(transport);
 			if (pid) { // XXX
-				var reply_link = $dom('reply_link_' + pid);
+				var reply_link = $('#reply_link_' + pid);
 				// in some cases this won't exist; if not, fine, we
 				// just don't do it
-				if (reply_link) {
-					reply_link_html[pid] = reply_link.innerHTML;
-					reply_link.innerHTML = '<p><b><a href="#" onclick="cancelReply(' + pid + '); return false;">Cancel Reply</a></b></p>';
+				if (reply_link.length) {
+					reply_link_html[pid] = reply_link.html();
+					reply_link.html('<p><b><a href="#" onclick="cancelReply(' + pid + '); return false;">Cancel Reply</a></b></p>');
 				}
 			}
-			$dom('postercomment_' + pid).focus();
+			if (!nofocus)
+				$('#postercomment_' + pid).focus();
 		}
 	};
 
@@ -1933,22 +2014,44 @@ function setCurrentComment (cid) {
 		if (cid == current_cid)
 			return;
 
-		this_id = $('#comment_top_' + current_cid);
-		this_id.removeClass('newcomment');
-		this_id.addClass('oldcomment');
-
-		this_id = $('#comment_' + current_cid);
-		this_id.removeClass('currcomment');
+		$('#comment_top_' + current_cid).removeClass('newcomment').addClass('oldcomment');
+		$('#comment_' + current_cid).removeClass('currcomment');
 		$('.current').remove();
+
+		setCommentRead(current_cid);
 	}
 
+	$('#comment_top_' + cid).removeClass('newcomment').addClass('oldcomment');
+	$('#comment_' + cid).addClass('currcomment').before('<span class="current">&rsaquo;</span>');
 
-	this_id = $('#comment_' + cid);
-	this_id.addClass('currcomment');
-	this_id.before('<span class="current">&rsaquo;</span>');
+	setCommentRead(cid);
 
 	current_cid = cid;
 }
+
+function setCommentRead (cid) {
+	if (!comments[cid]['read']
+		&& !read_comments[cid]
+		&& $('#comment_otherdetails_' + cid).length
+		&& !noSeeFirstComment(cid)
+	) {
+		// this happens later for logged-in users
+		if (user_is_anon)
+			comments[cid]['read'] = 1;
+		else
+			read_comments[cid] = 1;
+	}
+}
+
+function updateReadComments () {
+	for (var cid in read_comments) {
+		ajaxFetchComments(0, 2, '', 1); // if we have at least one, do it
+		break;
+	}
+}
+
+$(window).bind('beforeunload', updateReadComments);
+
 
 
 /* keys
@@ -2030,6 +2133,8 @@ function keyHandler(e, k) {
 			if (!k)
 				doModifiers(e);
 			var collapseCurrent = shift_down;
+			if (d2_reverse_shift)
+				collapseCurrent = !collapseCurrent;
 			var getNextUnread   = ctrl_down; // not working right, and interfering anyway -- pudge
 			var skipit = 0;
 			if (meta_down || alt_down || ctrl_down)
@@ -2064,7 +2169,11 @@ function keyHandler(e, k) {
 
 					} else if (keyo['parent']) {
 						if (current_cid && comments[current_cid] && comments[current_cid]['pid'])
-							selectParent(comments[current_cid]['opid'] || comments[current_cid]['pid']);
+							next_cid =
+								comments[current_cid]['opid']
+									||
+								comments[current_cid]['pid'];
+							update = 1;
 					}
 
 
@@ -2128,11 +2237,11 @@ function keyHandler(e, k) {
 				else if (keyo['thread']) {
 					update = 1;
 					if (keyo['next']) {
-						if (noSeeFirstComment(current_cid))
+						if (keyo['unread'])
+							getNextUnread = 1;
+						if (current_cid && noSeeFirstComment(current_cid, getNextUnread))
 							next_cid = current_cid;
 						else {
-							if (keyo['unread'])
-								getNextUnread = 1;
 							if (keyo['comment']) {
 								next_cid = commTreeNextComm(current_cid, 0, getNextUnread);
 								if (!next_cid) { // && getNextUnread) {
@@ -2167,17 +2276,18 @@ function keyHandler(e, k) {
 }
 
 // at first comment, and comment is not in window OR comment is not full
-function noSeeFirstComment (cid) {
+function noSeeFirstComment (cid, getNextUnread) {
 	setDefaultDisplayMode(cid);
 	if (!comments_started && (!commentIsInWindow(cid) || (viewmodevalue[displaymode[cid]] < viewmodevalue['full']))) {
-		return 1;
+		if (!getNextUnread || isUnread(cid))
+			return 1;
 	}
 	return 0;
 }
 
 // XXX somehow sync this with the prev/next by load order?  might require
 // a quick grep to find the position
-function commTreeNextComm (cid, old_cid, getNextUnread) {
+function commTreeNextComm (cid, old_cid, getNextUnread, no_parent) {
 	var kids;
 	if (cid)
 		kids = sortKids(cid);
@@ -2195,13 +2305,31 @@ function commTreeNextComm (cid, old_cid, getNextUnread) {
 		}
 
 		if (this_cid) {
-			if (!getNextUnread || (this_cid = getNextUnreadCid(this_cid)))
+			if (!getNextUnread) {
+				setDefaultDisplayMode(this_cid);
+				if (displaymode[this_cid] == 'hidden' || comments[this_cid]['points'] <= -2) {
+					// try to dig deeper to find non-hidden
+					// if available
+					if (comments[this_cid].kids.length) {
+						var this_child = commTreeNextComm(
+							this_cid,
+							0,
+							getNextUnread,
+							1
+						);
+						if (this_child)
+							return this_child;
+					}
+				} else
+					return this_cid;
+			} else if (this_cid = getNextUnreadCid(this_cid))
 				return this_cid;
-			continue;
 		}
 	}
 
-	if (!cid)
+	// no_parent is if we are doing the "dig deeper" for non-hiddens
+	// we don't want to climb back out
+	if (!cid || no_parent)
 		return 0; // at the end, stay where we are
 
 	// we can't continue here, go back up a level
@@ -2233,8 +2361,12 @@ function commTreeFirstComm () {
 }
 
 function commTreePrevComm (cid, to_parent) {
+	if (!cid)
+		return;
 	var root_kids = rootSort();
 	var comm = comments[cid];
+	if (!comm)
+		return;
 	var pid = comm.pid;
 
 	if (to_parent == 1) {
@@ -2271,15 +2403,37 @@ function sortKids(cid) { // maybe cache later
 }
 
 function isUnread(cid) {
-	var this_id  = fetchEl('comment_top_' + cid);
-	if (this_id)
-		if (this_id.className.match(' newcomment'))
-			return 1;
-		else
-			return 0;
+	// XXX should we loook at read_comments[cid],
+	// not just comments[cid]['read'] ?  -- pudge
+	setDefaultDisplayMode(cid);
+	// skip if hidden, or a placeholder (-2)
+	if (
+		(
+			(displaymode[cid] != 'hidden')
+				&&
+			(
+				(parseInt(comments[cid]['read']) == 0)
+					&&
+				!read_comments[cid]
+			)
+				&&
+			(comments[cid]['points'] > -2)
+		)
+	) {
+		return 1;
+	} else if (parseInt(comments[cid]['read']) == 1) {
+		// sometimes things happen in the wrong order, and
+		// a comment was not fully rendered when it was set
+		// to read, so clean up here just in case; this is a
+		// good place to do it, because this is where we might
+		// be confused if we are going to the next unread
+		// comment, but it is already read, but looks like
+		// it is not -- pudge
+		$('#comment_top_' + cid).removeClass('newcomment').addClass('oldcomment');
+		return 0;
+	}
 }
 
-// XXX should we climb all the way back up the tree if we find nothing?
 function getNextUnreadCid(cid) {
 	if (isUnread(cid))
 		return cid;
@@ -2316,3 +2470,65 @@ function dummyComment(cid) {
 
 	return(html.replace(/\-\-CID\-\-/g, cid));
 }
+
+function reduceThreshold(highlight, no_save) {
+	if (highlight < 0) {
+		hide_modal_box();
+		no_lower_threshold = 1;
+		return;
+	}
+
+	if (no_save)
+		user_threshold_save = 0;
+
+	hide_modal_box();
+	$('#modal_box_content').html('');
+
+	// this could trigger a comment load, which could interfere with the
+	// comment load on setFocusComment if they return in the wrong order
+	async_off = 1;
+
+	// if we are collapsing, then do not move HT too, so the comments stay closed
+	changeT(-1, (highlight > 1), 'hidden');
+	gCommentControlWidget.setTHT(user_threshold, user_highlightthresh);
+	async_off = 0;
+
+	var next_cid = commTreeNextComm(0, 0, 1);
+	if (!next_cid)
+		return;
+	if (highlight)
+		setFocusComment('-' + current_cid, 1);
+	setFocusComment(next_cid, 1);
+	setCurrentComment(next_cid);
+}
+
+function reduceThresholdPrint(highlight) {
+	if (currents['hidden'] <= 0 || user_threshold <= -1 || no_lower_threshold)
+		return;
+
+	$('#preference_title').html('No More Comments At This Threshold');
+	show_modal_box();
+
+	var html = '<div>\
+<p>There are no more comments available at Score:--SCORE--, but there might be more at Score:--SCORE1--.</p><p>Would you like to lower your threshold for \
+<input type="button" value="this" onclick="reduceThreshold(--HIGHLIGHT--,1)"> ';
+	if (!user_is_anon)
+		html = html + '<input type="button" value="all"  onclick="reduceThreshold(--HIGHLIGHT--)"> ';
+	html = html + 'discussion(s)?<br>\
+<input type="button" value="No Thanks" onclick="reduceThreshold(-1)">\
+</p>\
+\
+<p><i>(Remember that you can always adjust these controls with the slider widget \
+visible to the --LEFTORTOP-- of the discussion.)</i></p>\
+</div>';
+
+	html = html.replace(/\-\-SCORE\-\-/g, user_threshold);
+	html = html.replace(/\-\-SCORE1\-\-/g, (user_threshold-1));
+	html = html.replace(/\-\-HIGHLIGHT\-\-/g, highlight);
+
+	var leftortop = $('#d2out').hasClass('horizontal') ? 'top' : 'left';
+	html = html.replace(/\-\-LEFTORTOP\-\-/g, leftortop);
+
+	$('#modal_box_content').html(html);
+}
+

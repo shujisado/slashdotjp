@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Despam.pm,v 1.10 2008/04/09 17:08:48 jamiemccarthy Exp $
 
 package Slash::Tagbox::Despam;
 
@@ -27,8 +26,7 @@ use Slash::Tagbox;
 
 use Data::Dumper;
 
-use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.10 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -309,6 +307,10 @@ sub run {
 				main::tagboxLog(sprintf("%s->run force recalc tbid=%d globjid=%d",
 					ref($self), $tbid, $globjid));
 			}
+			# Add this change to the daily stats.
+			my $statsSave = getObject('Slash::Stats::Writer');
+			$statsSave->addStatDaily('firehose_binspam_despam',
+				$is_spam ? '+1' : '-1');
 		}
 	}
 

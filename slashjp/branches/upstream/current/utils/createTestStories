@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: createTestStories,v 1.36 2006/05/17 15:15:58 jamiemccarthy Exp $
+# $Id$
 # Based on Cliff's createTestComments, bugs are probably his fault :)
 
 BEGIN {
@@ -26,7 +26,7 @@ use Slash::Relocate;
 
 use vars qw( $slashdb $werder $constants );
 
-(my $VERSION) = ' $Revision: 1.36 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts, %family_tree);

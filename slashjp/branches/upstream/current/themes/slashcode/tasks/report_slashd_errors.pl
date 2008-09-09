@@ -2,7 +2,7 @@
 ## This code is a part of Slash, and is released under the GPL.
 ## Copyright 1997-2005 by Open Source Technology Group. See README
 ## and COPYING for more information, or see http://slashcode.com/.
-## $Id: report_slashd_errors.pl,v 1.9 2006/01/24 05:19:36 pudge Exp $
+## $Id$
 
 use strict;
 use Slash::Constants qw( :messages :slashd );

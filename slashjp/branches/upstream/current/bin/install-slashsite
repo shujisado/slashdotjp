@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: install-slashsite,v 1.50 2008/03/07 15:58:53 jamiemccarthy Exp $
+# $Id$
 
 # This is the uber install script.
 # -Brian (brian@tangent.org)
@@ -20,7 +20,7 @@ use Slash;
 use Slash::DB;
 use Slash::Install;
 
-(my $VERSION) = ' $Revision: 1.50 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 (my $SLASH_PREFIX = $Bin) =~ s|/[^/]+/?$||;
 

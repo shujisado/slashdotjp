@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id: run_moderatord.pl,v 1.67 2006/10/26 17:33:08 jamiemccarthy Exp $
+# $Id$
 # 
 # Deprecated in favor of the process_moderation.pl task now
 # located in plugins/(your moderation plugin here).

@@ -55,4 +55,4 @@ maxsize=num_sizes.highval;
 __seclev__
 100
 __version__
-$Id: showMinerUrlInf;newsvac;default,v 1.5 2005/07/27 22:54:12 pudge Exp $
+$Id$

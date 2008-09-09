@@ -4,7 +4,7 @@
 	with Mosaic Communications Copr Extensions and 	with strict 
 	validation (HTML Strict DTD).
 
-	$Id: html-mcoms.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+	$Id$
 
 	Author: Daniel W. Connolly <connolly@w3.org>
 	See Also: html.decl, ISOlat1.sgml

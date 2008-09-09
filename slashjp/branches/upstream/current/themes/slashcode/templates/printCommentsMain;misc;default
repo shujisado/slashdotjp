@@ -28,6 +28,7 @@ __template__
    ELSE;
    	horiz = 1 IF constants.comments_control_horizontal;
    END;
+   count = count || 0;
    discussion2 = Slash.discussion2();
    this_title = title;
    spilltext = "Spill at <b>${user.commentspill}</b>!";
@@ -68,18 +69,18 @@ __template__
 [% ELSE %]
 		<a href="[% gSkin.rootdir %]/my/comments">Preferences</a>
 [% END %]
-
+[% IF sid %]
 		| [% Slash.linkComment({
 			sid	=> sid,
 			pid	=> 0,
 			subject	=> 'Top',
 			subject_only => 1,
-		}) %]
+		}); END %]
 
 [% IF user.points; modpoints; END %]
 [% IF count %]| <b>[% count %]</b> comments[% END %]
 [% IF lvl && user.mode == 'thread' %]([% spilltext %]) | Index Only[% END %]
-[% IF form.startat %]| Starting at #[% form.startat %][% END %]
+[% IF sid && form.startat %]| Starting at #[% form.startat %][% END %]
 		| <a href="[% gSkin.rootdir %]/search.pl?op=comments&amp;sid=[% sid %]">Search Discussion</a>
 </div>
 [% END %]
@@ -134,10 +135,14 @@ __template__
 		<div class="loki" id="gods">
 		<div class="block">
 			<div class="title">
+[% IF user.state.d2asp -%]<span class="soda pop[% options.fh_item.popval || 0 %]"></span>
+<a href="[% gSkin.rootdir %]/firehose.pl?op=view&amp;id=[% options.fh_item.id %]"><span id="updown-[% options.fh_item.id %]" class="vote[% IF vote == "down" %]ddown[% ELSIF vote == "up" %]dup[% END %]" style="top: 0.3em">
+<span class="up">+</span><span class="down">-</span>
+</span></a>[% END %]
 				<h4>
 				[% IF this_title %]
 					<span class="h-inline">[% IF user.state.d2asp -%]
-					<a href="[% constants.rootdir %]/" title="[% constants.sitename | strip_attribute %]">[% constants.sitename %]</a>:[% END %]
+					<a href="[% constants.rootdir %]/" title="[% constants.sitename | strip_attribute %]" style="margin-left:4em">[% constants.sitename %]</a>:[% END %]
 					<a href="[% link | strip_urlattr %]" title="Back to Article - [% this_title | strip_attribute %]">[% this_title %]</a></span>
 					<span class="titlecount"><a href="[% link | strip_urlattr %]#topcomment" title="Back to Top Comment - [% this_title | strip_attribute %]"><span id="titlecountnum">[% count %]</span>&nbsp;Comment[% count == 1 ? '' : 's' %]</a></span>
 				[% ELSE %] 
@@ -214,7 +219,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 		</div>
 		<div class="commentControlFooter">[% 
 			PROCESS printCommentsLinks commentslinks_id => 'c';
-			IF user.is_anon;
+			IF user.is_anon;  # XXX no sid?
 			   	PROCESS userlogin_cover return_url = gSkin.rootdir _ '/comments.pl?sid=' _ sid;
    			END;
 		%]</div>
@@ -233,4 +238,4 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
 __seclev__
 10000
 __version__
-$Id: printCommentsMain;misc;default,v 1.115 2008/04/16 22:25:45 pudge Exp $
+$Id$

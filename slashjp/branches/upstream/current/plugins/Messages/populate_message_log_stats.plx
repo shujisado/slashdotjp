@@ -6,7 +6,7 @@
 # you probably only want to run it once, but running it multiple times
 # shouldn't hurt anything
 #
-# $Id: populate_message_log_stats.plx,v 1.2 2003/08/29 16:18:44 jamie Exp $
+# $Id$
 
 use strict;
 use Slash::Test shift;

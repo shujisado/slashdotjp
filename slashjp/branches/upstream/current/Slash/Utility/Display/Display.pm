@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Display.pm,v 1.125 2007/11/08 08:52:57 pudge Exp $
 
 package Slash::Utility::Display;
 
@@ -31,10 +30,9 @@ use Slash::Utility::Data;
 use Slash::Utility::Environment;
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.125 $ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT	   = qw(
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(
 	cleanSlashTags
 	createMenu
 	createSelect
@@ -1725,7 +1723,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::Utility(3).
-
-=head1 VERSION
-
-$Id: Display.pm,v 1.125 2007/11/08 08:52:57 pudge Exp $

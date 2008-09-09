@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: stats.pl,v 1.32 2006/09/02 02:52:38 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use File::Path;
@@ -13,7 +13,7 @@ use Slash::Utility;
 use URI::Escape;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.32 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
 	my $slashdb   = getCurrentDB();
@@ -37,6 +37,7 @@ sub main {
 		table	=> [ $admin,		\&table		],
 		csv	=> [ $admin,		\&csv		],
 		list	=> [ $admin_post,	\&list		],
+		topics	=> [ $admin,		\&topics	],
 
 		default	=> [ $admin,		\&list		]
 	);
@@ -260,6 +261,15 @@ sub _get_skins {
 	my %skins = %{$slashdb->getDescriptions('skins')};
 	$skins{0} = 'All';
 	return \%skins;
+}
+
+sub topics {
+	my($slashdb, $constants, $user, $form, $stats) = @_;
+	my $days = $form->{days} ||= 30;
+	my $sort = $form->{sort} eq "name" ? "name" : "hits";
+	my $topic_stats = $stats->getTopicStats($days, $sort);
+	slashDisplay("topic_stats", { topic_stats => $topic_stats });
+
 }
 
 createEnvironment();

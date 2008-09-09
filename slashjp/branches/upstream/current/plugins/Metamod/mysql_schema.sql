@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.2 2006/10/23 16:40:41 jamiemccarthy Exp $
+# $Id$
 #
 
 ALTER TABLE users_info ADD COLUMN m2info varchar(64) DEFAULT '' NOT NULL AFTER lastgranted, ADD COLUMN lastm2 datetime DEFAULT '1970-01-01 00:00' NOT NULL AFTER totalcomments, ADD COLUMN m2_mods_saved varchar(120) DEFAULT '' NOT NULL AFTER lastm2;

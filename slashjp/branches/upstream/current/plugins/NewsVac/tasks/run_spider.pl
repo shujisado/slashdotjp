@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id: run_spider.pl,v 1.8 2005/03/11 19:58:11 pudge Exp $
+# $Id$
 #
 # SlashD Task (c) OSTG 2001
 #

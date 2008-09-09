@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: OAI.pm,v 1.5 2005/05/04 17:10:48 pudge Exp $
 
 package Slash::XML::OAI;
 
@@ -30,9 +29,8 @@ use Slash;
 use Slash::Utility;
 use XML::RSS;
 use base 'Slash::XML';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 our %Verbs = (
 	GetRecord		=> \&GetRecord,
@@ -470,7 +468,7 @@ sub _get_identifier {
 	if ($data->{type} eq 'article') {
 		my $record = $reader->getStory($data->{id});
 		if ($record) {
-			($data->{datestamp} = $record->{'last_update'}) =~
+			($data->{datestamp} = $record->{'archive_last_update'}) =~
 				s{^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})}
 				 {$1-$2-$3T$4:$5:$6Z}x;
 
@@ -594,7 +592,7 @@ sub _find_records {
 	my $type = $options->{type} || 'article';
 	my($records, @return);
 
-	my $timecol = 'last_update';
+	my $timecol = 'archive_last_update';
 
 	my $start = $options->{nextStart} || 1;
 
@@ -669,7 +667,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::XML(3), L<http://www.openarchives.org/OAI/openarchivesprotocol.html>.
-
-=head1 VERSION
-
-$Id: OAI.pm,v 1.5 2005/05/04 17:10:48 pudge Exp $

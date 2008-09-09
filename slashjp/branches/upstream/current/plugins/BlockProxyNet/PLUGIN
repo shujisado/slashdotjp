@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.1 2005/05/28 12:03:19 jamiemccarthy Exp $
+# $Id$
 name=BlockProxyNet
 description="Apply an access modifier like nopost to a proxy network"
 mysql_dump=mysql_dump.sql

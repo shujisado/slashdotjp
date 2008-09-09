@@ -51,4 +51,4 @@ linkrel.prev.url = "${gSkin.rootdir}/index.pl?issue=$yesterday" -%]
 __seclev__
 10000
 __version__
-$Id: next_prev_issue;index;default,v 1.3 2004/06/17 16:12:25 jamiemccarthy Exp $
+$Id$

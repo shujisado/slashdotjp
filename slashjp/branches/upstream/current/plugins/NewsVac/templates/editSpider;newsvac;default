@@ -98,4 +98,4 @@ date.format(t.last_run, "%F %R") -%] for [% t.duration %]s, '[% t.results %]')</
 __seclev__
 100
 __version__
-$Id: editSpider;newsvac;default,v 1.10 2005/07/27 22:54:12 pudge Exp $
+$Id$

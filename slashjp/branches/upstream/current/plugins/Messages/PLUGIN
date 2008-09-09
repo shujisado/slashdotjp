@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.15 2007/11/08 08:56:20 pudge Exp $
+# $Id$
 name=Messages
 description="Messaging system"
 mysql_schema=mysql_schema

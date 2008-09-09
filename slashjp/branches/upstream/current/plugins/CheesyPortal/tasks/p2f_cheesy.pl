@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: p2f_cheesy.pl,v 1.4 2003/08/29 16:18:44 jamie Exp $
+# $Id$
 
 use strict;
 my $me = 'p2f_cheesy.pl';

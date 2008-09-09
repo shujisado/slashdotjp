@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: compareSecPrePost200406,v 1.2 2005/03/11 19:58:48 pudge Exp $
+# $Id$
 
 # This script compares number of stories per section/skin from before
 # and after section topics conversion.  Only works if you keep your
@@ -17,7 +17,7 @@ use Slash::Utility;
 
 use vars qw( $slashdb $sections_all $skins_all $overall_summary $sections_year $skins_year $year_summary);
 
-(my $VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 $Data::Dumper::Sortkeys = 1;
 

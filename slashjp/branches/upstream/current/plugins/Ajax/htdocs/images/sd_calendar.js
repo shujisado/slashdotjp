@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: sd_calendar.js,v 1.9 2008/03/28 20:53:43 pudge Exp $
+; // $Id$
 
 YAHOO.namespace("slashdot");
 

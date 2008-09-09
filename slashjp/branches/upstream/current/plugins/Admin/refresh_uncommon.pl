@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: refresh_uncommon.pl,v 1.3 2003/08/29 16:18:44 jamie Exp $
+# $Id$
 
 use strict;
 

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: daypass.pl,v 1.6 2006/01/18 18:57:19 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash;

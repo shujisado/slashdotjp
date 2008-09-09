@@ -19,4 +19,4 @@ __template__
 	<a href="#" onclick="location.href='[% constants.absolutedir %]/bookmark.pl?url='+encodeURIComponent(location.href)+'&amp;title='+encodeURIComponent(document.title); return false">[% title || "Post to $constants.sitename" %]</a>
 [% END %]
 __version__
-$Id: bookmarklink;misc;default,v 1.4 2007/10/24 00:30:07 scc Exp $
+$Id$

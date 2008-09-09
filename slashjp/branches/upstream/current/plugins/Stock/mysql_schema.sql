@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.3 2003/08/29 16:18:45 jamie Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS stocks;

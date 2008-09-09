@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: RecentTags.pm,v 1.4 2008/04/03 22:18:39 jamiemccarthy Exp $
 
 package Slash::Tagbox::RecentTags;
 
@@ -27,8 +26,7 @@ use Slash::Tagbox;
 
 use Data::Dumper;
 
-use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -153,7 +151,7 @@ sub run {
 	@$tagnames_ar = grep { !$exclude_tagname{$_} } @$tagnames_ar;
 
 	# Max of 5 or whatever.
-	$#$tagnames_ar = 4 if scalar(@$tagnames_ar) > $num_wanted;
+	$#$tagnames_ar = $num_wanted-1 if scalar(@$tagnames_ar) > $num_wanted;
 
 	if (scalar(@$tagnames_ar) < $num_wanted) {
 		# If we don't get as many as we wanted, leave up

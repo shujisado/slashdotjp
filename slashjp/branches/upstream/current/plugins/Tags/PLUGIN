@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.16 2008/03/24 20:18:01 jamiemccarthy Exp $
+# $Id$
 name=Tags
 description="Tags"
 htdoc=tags.pl

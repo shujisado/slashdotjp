@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Journal.pm,v 1.1 2005/11/21 17:31:47 pudge Exp $
 
 package Slash::Client::Journal;
 
@@ -182,8 +181,3 @@ Work on error handling.
 =head1 SEE ALSO
 
 Slash::Client(3).
-
-
-=head1 VERSION
-
-$Id: Journal.pm,v 1.1 2005/11/21 17:31:47 pudge Exp $

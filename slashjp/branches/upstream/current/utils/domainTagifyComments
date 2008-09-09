@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: domainTagifyComments,v 1.6 2005/03/11 19:58:48 pudge Exp $
+# $Id$
 
 use strict;
 use URI;
@@ -16,7 +16,7 @@ use Slash::DB;
 
 use vars qw( $slashdb $constants $vars $comment_table );
 
-(my $VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my %opts;

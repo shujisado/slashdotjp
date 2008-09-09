@@ -32,5 +32,5 @@ What to do after installing the RPM to have a working Slash site:
 3. Restart Apache.
 
 VERSION
-    $Id: INSTALL.rpm,v 1.4 2003/08/29 15:21:07 jamie Exp $
+    $Id$
 

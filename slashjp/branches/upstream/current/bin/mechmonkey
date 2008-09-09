@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: mechmonkey,v 1.2 2005/12/21 19:35:23 jamiemccarthy Exp $
+# $Id$
 
 # A script to test a Slash site by clicking around in it.  Not
 # really intended for load testing but if you run 100 copies of
@@ -37,7 +37,7 @@ use vars qw(
 	$url_tilde_regex	$url_comment_regex	$url_mode_regex
 );
 
-($VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 init();
 run();

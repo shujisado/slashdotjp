@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: eventsadmin.pl,v 1.8 2005/08/12 21:37:48 pudge Exp $
+# $Id$
 
 use strict;
 use Slash;

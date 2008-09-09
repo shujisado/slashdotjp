@@ -629,4 +629,4 @@ Spider '[% spider %]' is stale [% IF count %](iter: [% count %])[% END -%]
 __seclev__
 100
 __version__
-$Id: data;newsvac;default,v 1.16 2005/07/27 22:54:11 pudge Exp $
+$Id$

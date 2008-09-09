@@ -1,19 +1,17 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Static.pm,v 1.4 2007/06/19 21:20:46 jamiemccarthy Exp $
 
 package Slash::Metamod::Static;
 
 use strict;
 use Slash::Utility;
 
-use vars qw($VERSION);
 use base 'Exporter';
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub new {
 	my($class, $user) = @_;

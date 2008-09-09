@@ -233,4 +233,4 @@ IF do_br %]<br>[% END %]
 __seclev__
 1000
 __version__
-$Id: edit_comment;comments;default,v 1.55 2008/04/15 00:27:37 pudge Exp $
+$Id$

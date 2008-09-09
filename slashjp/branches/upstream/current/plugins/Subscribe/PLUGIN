@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.7 2005/02/08 18:30:09 tvroom Exp $
+# $Id$
 name=Subscribe
 description="Subscription system"
 htdoc=subscribe.pl

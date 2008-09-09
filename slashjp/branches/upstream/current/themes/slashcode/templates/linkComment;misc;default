@@ -59,4 +59,4 @@ END %]"[% IF onclick %] onclick="[% onclick %]"[% END
 __seclev__
 10000
 __version__
-$Id: linkComment;misc;default,v 1.17 2007/10/23 23:20:19 pudge Exp $
+$Id$

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Daypass.pm,v 1.15 2006/03/13 22:15:54 jamiemccarthy Exp $
 
 package Slash::Daypass;
 
@@ -9,10 +8,9 @@ use strict;
 use Slash::Utility;
 use Slash::DB::Utility;
 use Apache::Cookie;
-use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 
-($VERSION) = ' $Revision: 1.15 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 

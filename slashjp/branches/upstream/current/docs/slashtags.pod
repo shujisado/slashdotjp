@@ -305,4 +305,4 @@ and second SLASH-BREAK tags, and no bodytext is displayed.  And so on.
 
 =head1 VERSION
 
-$Id: slashtags.pod,v 1.1 2003/09/02 20:02:00 pudge Exp $
+$Id$

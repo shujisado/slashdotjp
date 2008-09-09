@@ -1,10 +1,10 @@
-// $Id: sectionprefs.js,v 1.10 2008/03/14 18:45:51 scc Exp $
+; // $Id$
 
 function configSectionPopup() { 
 	var title = "<a href=\"#\" onclick=\"window.location.reload()\" style=\"color:#fff;\">Sectional&nbsp;Display&nbsp;Prefs</a>&nbsp;";
 	var buttons = createPopupButtons("<a href=\"/faq/UI.shtml#ui500\">[?]</a>","<a href=\"#\" onclick=\"window.location.reload()\">[X]</a>");
 	title = title + buttons;
-	createPopup(getXYForId('links-sections-title'), title, "sectionprefs", "", "Loading...");
+	createPopup(getXYForSelector('#links-sections-title'), title, "sectionprefs", "", "Loading...");
 	
 	var url = 'ajax.pl';
 	var params = {};

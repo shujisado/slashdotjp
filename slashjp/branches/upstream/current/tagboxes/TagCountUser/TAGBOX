@@ -1,4 +1,4 @@
-# $Id: TAGBOX,v 1.2 2006/05/30 18:37:54 jamiemccarthy Exp $
+# $Id$
 name=TagCountUser
 description=Count active tags for each user
 mysql_dump=mysql_dump.sql

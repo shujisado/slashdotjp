@@ -1,12 +1,10 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Email.pm,v 1.6 2005/03/11 19:58:06 pudge Exp $
 
 package Slash::Email;
 
 use strict;
-use vars qw($VERSION);
 
 use Slash 2.003;	# require Slash 2.3
 
@@ -15,7 +13,7 @@ use base "Slash::DB::MySQL";
 
 use Slash::Utility;
 
-($VERSION) = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 ########################################################
 

@@ -79,4 +79,4 @@ For your [% msg1 %] moderation, you have been [% msg2 %].
 __seclev__
 500
 __version__
-$Id: msg_m2;messages;default,v 1.14 2005/07/27 22:54:11 pudge Exp $
+$Id$

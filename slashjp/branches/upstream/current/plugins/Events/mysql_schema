@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.4 2003/08/29 16:18:44 jamie Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS event_dates;

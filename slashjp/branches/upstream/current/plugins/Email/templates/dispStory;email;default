@@ -59,4 +59,4 @@ To opt-out of further emailings:
 Copyright 1997-2008 [% constants.sitepublisher %].  All rights reserved.
 
 __version__
-$Id: dispStory;email;default,v 1.10 2008/03/13 14:22:37 entweichen Exp $
+$Id$

@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.6 2007/12/14 21:57:24 tvroom Exp $
+# $Id$
 name=PollBooth
 description="PollBooth"
 mysql_schema=mysql_schema

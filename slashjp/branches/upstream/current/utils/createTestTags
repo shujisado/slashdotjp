@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: createTestTags,v 1.7 2008/03/24 19:03:14 jamiemccarthy Exp $
+# $Id$
 
 BEGIN {
 	{
@@ -22,7 +22,7 @@ use Benchmark;
 
 use vars qw( $slashdb $werder $constants $junk $tagsdb );
 
-(my $VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my %opts;

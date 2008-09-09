@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: help.pl,v 1.2 2008/02/20 17:04:38 entweichen Exp $
+# $Id$
 
 use strict;
 

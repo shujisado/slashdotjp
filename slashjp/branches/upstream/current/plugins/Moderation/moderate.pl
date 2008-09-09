@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: moderate.pl,v 1.2 2006/10/26 17:28:44 jamiemccarthy Exp $
+# $Id$
 
 # This script is not all that useful since moderation is largely
 # done by ajax now.  Users with browsers that don't support it

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Rating.pm,v 1.8 2008/03/19 08:25:31 pudge Exp $
 
 package Slash::Rating;
 
@@ -12,11 +11,10 @@ use Slash::Constants;
 use Slash::Utility;
 use Slash::DB::Utility;
 
-use vars qw($VERSION @EXPORT);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 #Right, this is not needed at the moment but will be in the near future
 sub new {

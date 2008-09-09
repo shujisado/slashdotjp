@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: rss_submit.pl,v 1.11 2005/05/04 18:48:09 pudge Exp $
+# $Id$
 
 use strict;
 

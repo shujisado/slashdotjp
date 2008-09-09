@@ -2,7 +2,7 @@
 # this attempts to make sure there are no dependency conflicts.
 # run it every once in awhile if you care to.
 #
-# $Id: dependencies.plx,v 1.8 2008/02/21 01:01:52 pudge Exp $
+# $Id$
 #
 
 sub warner { warn @_ unless $_[0] =~ /(?:Use of uninitialized value|[Ss]ubroutine \S+ redefined)/ }

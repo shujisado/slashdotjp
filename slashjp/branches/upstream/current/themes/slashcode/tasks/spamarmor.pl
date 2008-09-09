@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: spamarmor.pl,v 1.8 2005/03/11 19:58:47 pudge Exp $
+# $Id$
 
 use strict;
 use vars qw( %task $me );
@@ -12,7 +12,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = '30 0 * * *';
 $task{$me}{timespec_panic_1} = ''; # not that important

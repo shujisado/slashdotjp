@@ -1,4 +1,4 @@
-# $Id: TAGBOX,v 1.1 2007/09/28 03:33:20 jamiemccarthy Exp $
+# $Id$
 name=FireHoseScores
 description=Keep track of popularity of firehose entries (final)
 mysql_dump=mysql_dump.sql

@@ -22,7 +22,7 @@
      It is provided "as is" without expressed or implied warranty.
 
         Author:     Murray M. Altheim <altheim@eng.sun.com>
-        Revision:   $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $
+        Revision:   $Id$
 
 -->
 <!-- This is the driver file for version 1.1 of the XHTML DTD.
@@ -99,7 +99,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -147,7 +147,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -193,7 +193,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -314,7 +314,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -407,7 +407,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -684,7 +684,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -811,7 +811,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -899,7 +899,7 @@
 
      This is XHTML 1.1, a reformulation of HTML as a modular XML application.
      Copyright 1998-2000 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1156,7 +1156,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1732,7 +1732,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1760,7 +1760,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1829,7 +1829,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2039,7 +2039,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2103,7 +2103,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2278,7 +2278,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2340,7 +2340,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2479,7 +2479,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2553,7 +2553,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2610,7 +2610,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1999-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $
+     Revision: $Id$
 
      This module is based on the W3C Ruby Annotation Specification:
 
@@ -2860,7 +2860,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2888,7 +2888,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3033,7 +3033,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3084,7 +3084,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3151,7 +3151,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3206,7 +3206,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3267,7 +3267,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3341,7 +3341,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3396,7 +3396,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Rovision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Rovision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3454,7 +3454,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3576,7 +3576,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3616,7 +3616,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3672,7 +3672,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3740,7 +3740,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -4081,7 +4081,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -4388,7 +4388,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml11-flat.dtd,v 1.1 2005/04/14 14:57:11 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 

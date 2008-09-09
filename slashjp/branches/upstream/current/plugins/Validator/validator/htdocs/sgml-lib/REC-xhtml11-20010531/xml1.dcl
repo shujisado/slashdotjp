@@ -9,7 +9,7 @@
 
         changes made to accommodate validation are noted with 'VALID:'
      --
-     -- $Id: xml1.dcl,v 1.1 2005/04/14 14:57:11 pudge Exp $ --
+     -- $Id$ --
 
      CHARSET
          BASESET

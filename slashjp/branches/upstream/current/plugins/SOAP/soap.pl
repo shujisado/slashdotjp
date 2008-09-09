@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: soap.pl,v 1.8 2005/03/11 19:58:13 pudge Exp $
+# $Id$
 
 # NOTE: package Slash::SOAP will be in its own .pm file later,
 # the SQL at the bottom will be in the schema and dump files,

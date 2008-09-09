@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FireHoseScores.pm,v 1.8 2008/01/18 21:27:20 jamiemccarthy Exp $
 
 package Slash::Tagbox::FireHoseScores;
 
@@ -22,13 +21,13 @@ use strict;
 
 use Slash;
 use Slash::DB;
+use Slash::Utility::Comments;
 use Slash::Utility::Environment;
 use Slash::Tagbox;
 
 use Data::Dumper;
 
-use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
@@ -204,6 +203,16 @@ sub run {
 		}
 	}
 
+	# Also, admins may get reduced upvote clout.
+	if ($constants->{firehose_adminupclout} && $constants->{firehose_adminupclout} != 1) {
+		my $admins = $tagsdb->getAdmins();
+		for my $tag_hr (@$tags_ar) {
+			$tag_hr->{total_clout} *= $constants->{firehose_adminupclout}
+				if    $tag_hr->{tagnameid} == $upvoteid
+				   && $admins->{ $tag_hr->{uid} };
+		}
+	}
+
 	# Early in a globj's lifetime, if there have been few votes,
 	# upvotes count for more, and downvotes for less.
 	my($up_mult, $down_mult) = (1, 1);
@@ -290,6 +299,18 @@ sub getStartingColorLevel {
 			# This firehose entry gets the minimum color level of 
 			# all its nexuses.
 			$color_level = $this_color_level if $this_color_level < $color_level;
+		}
+	} elsif ($type eq "comments") {
+		my $comment = $self->getComment($target_id);
+		my $score = constrain_score($comment->{points} + $comment->{tweak});
+		if ($score >= 3) {
+			$color_level = 4;
+		} elsif ($score == 2) {
+			$color_level = 5
+		} elsif ($score >= 0) {
+			$color_level = 6
+		} else {
+			$color_level = 7;
 		}
 	}
 	return($color_level, $extra_pop);

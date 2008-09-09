@@ -31,4 +31,4 @@ setTimeout("displayMessage()", cntdwn * 1000);
 __seclev__
 10000
 __version__
-$Id: main;daypass;default,v 1.4 2006/01/30 18:10:26 jamiemccarthy Exp $
+$Id$

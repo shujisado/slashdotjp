@@ -1,5 +1,5 @@
 #
-# $Id: mysql_prep,v 1.10 2006/02/10 14:59:18 jamiemccarthy Exp $
+# $Id$
 #
 
 # If you are using a replicated slave to search on, which we

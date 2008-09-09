@@ -23,4 +23,4 @@ Main page
 [% user.currentSection %] section page
 [% END %]
 __version__
-$Id: metakeywordsd;misc;default,v 1.1 2003/11/18 16:46:44 jamie Exp $
+$Id$

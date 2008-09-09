@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.2 2006/02/06 20:55:18 pudge Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS ajax_ops;

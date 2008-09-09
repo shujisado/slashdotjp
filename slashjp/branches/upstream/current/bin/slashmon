@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: slashmon,v 1.36 2005/08/26 14:27:27 jamiemccarthy Exp $
+# $Id$
 
 use File::Basename;
 use Getopt::Std;
@@ -28,7 +28,7 @@ use vars qw(
 	$lines_since_header
 );
 
-($VERSION) = ' $Revision: 1.36 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 init();
 run();

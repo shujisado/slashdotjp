@@ -40,6 +40,6 @@ installing on Solaris x86. See COPYING for license information.
     Continue the installation as suggestion in the main INSTALL documentation.
 
 VERSION
-    $Id: INSTALL.solaris,v 1.2 2003/08/29 15:21:07 jamie Exp $
+    $Id$
 
 __END__

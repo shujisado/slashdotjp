@@ -26,7 +26,7 @@
                     Jun Fujisawa <fujisawa.jun@canon.co.jp> (SVG modules)
                     Masayasu Ishikawa <mimasa@w3.org> (DTD driver)
         Revision:
-          $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+          $Id$
 
 -->
 <!-- This is the driver for an XHTML 1.1 plus MathML 2.0 plus SVG 1.1 DTD.
@@ -379,7 +379,7 @@
      It is provided "as is" without expressed or implied warranty.
 
         Author:   Jun Fujisawa <fujisawa.jun@canon.co.jp>
-        Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+        Revision: $Id$
 
 -->
 <!-- This is the driver file for version 1.1 of the SVG DTD.
@@ -433,7 +433,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -464,7 +464,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -558,7 +558,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -820,7 +820,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1022,7 +1022,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1226,7 +1226,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1284,7 +1284,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1329,7 +1329,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1379,7 +1379,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1500,7 +1500,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1552,7 +1552,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1629,7 +1629,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1696,7 +1696,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1784,7 +1784,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1841,7 +1841,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1929,7 +1929,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -1973,7 +1973,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2299,7 +2299,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2437,7 +2437,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2535,7 +2535,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2620,7 +2620,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -2926,7 +2926,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3344,7 +3344,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3485,7 +3485,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3564,7 +3564,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3713,7 +3713,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3846,7 +3846,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -3953,7 +3953,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -4092,7 +4092,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -4847,7 +4847,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -4931,7 +4931,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -5060,7 +5060,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -5130,7 +5130,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -5197,7 +5197,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -5470,7 +5470,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -5843,7 +5843,7 @@
 
      This is SVG, a language for describing two-dimensional graphics in XML.
      Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -5986,7 +5986,7 @@
      It is provided "as is" without expressed or implied warranty.
 
         Author:     Murray M. Altheim <altheim@eng.sun.com>
-        Revision:   $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+        Revision:   $Id$
 
 -->
 <!-- This is the driver file for version 1.1 of the XHTML DTD.
@@ -6063,7 +6063,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -6111,7 +6111,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -6157,7 +6157,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -6278,7 +6278,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -6374,7 +6374,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -6452,7 +6452,7 @@
      both its structure and content.
 
      Copyright 1998-2000 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ 
+     Revision: $Id$ 
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -6926,7 +6926,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -7053,7 +7053,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -7141,7 +7141,7 @@
 
      This is XHTML 1.1, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -7398,7 +7398,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -7974,7 +7974,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8002,7 +8002,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8071,7 +8071,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8281,7 +8281,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8345,7 +8345,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8520,7 +8520,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8582,7 +8582,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8721,7 +8721,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8795,7 +8795,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -8852,7 +8852,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1999-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+     Revision: $Id$
 
      This module is based on the W3C Ruby Annotation Specification:
 
@@ -9102,7 +9102,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9130,7 +9130,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9275,7 +9275,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9326,7 +9326,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9393,7 +9393,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9448,7 +9448,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9509,7 +9509,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9583,7 +9583,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9638,7 +9638,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Rovision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Rovision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9696,7 +9696,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9818,7 +9818,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9858,7 +9858,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9914,7 +9914,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -9982,7 +9982,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -10323,7 +10323,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -10630,7 +10630,7 @@
 
      This is XHTML, a reformulation of HTML as a modular XML application.
      Copyright 1998-2001 W3C (MIT, INRIA, Keio), All Rights Reserved.
-     Revision: $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $ SMI
+     Revision: $Id$ SMI
 
      This DTD module is identified by the PUBLIC and SYSTEM identifiers:
 
@@ -10786,7 +10786,7 @@
 
      It is provided "as is" without expressed or implied warranty.
 
-        Revision:   $Id: xhtml-math-svg-flat-20020430.dtd,v 1.1 2005/04/14 14:57:05 pudge Exp $
+        Revision:   $Id$
 
      This entity may be identified by the PUBLIC and SYSTEM identifiers:
 

@@ -1,7 +1,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Makefile,v 1.1 2006/05/17 20:39:57 jamiemccarthy Exp $
+# $Id$
 
 ##
 ##  Makefile -- Tagboxes Makefile, implements only one target: clean.

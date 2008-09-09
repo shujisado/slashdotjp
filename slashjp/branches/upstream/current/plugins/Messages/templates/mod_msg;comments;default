@@ -46,4 +46,4 @@ It is currently scored [% reasons.${comment.reason}.name %] ([% cur_score %]).
 __seclev__
 500
 __version__
-$Id: mod_msg;comments;default,v 1.12 2006/10/26 17:33:03 jamiemccarthy Exp $
+$Id$

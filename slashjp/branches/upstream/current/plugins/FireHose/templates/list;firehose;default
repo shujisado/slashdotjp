@@ -13,6 +13,10 @@ list
 __seclev__
 10000
 __template__
+[% IF form.metamod %]
+<div id="metamodwrap">
+[% END %]
+[% PROCESS init_tagui -%]
 [% firehose = Slash.getObject("Slash::FireHose"); %]
 [% IF env.script_name == "/firehose.pl" || form.ssi %]
 <script type="text/javascript">
@@ -45,11 +49,10 @@ __template__
 YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 </script>
 [% ua = env.HTTP_USER_AGENT %]
-
 <div id="slashboxes">
 [% Slash.getAd(2) %]
 [% UNLESS user.noboxes %]
-  [% IF slashboxes && !(form.smalldevices || form.embed || (constants.smalldevices_ua_regex && ua.match(constants.smalldevices_ua_regex)));
+  [% IF slashboxes && !(form.smalldevices || form.embed || form.metamod || (constants.smalldevices_ua_regex && ua.match(constants.smalldevices_ua_regex)));
     slashboxes %]
   [% END %]
 [% END %]
@@ -57,12 +60,17 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 <div id="message">
 	<div class="content">
 		<p>
-		[% PROCESS rand_mesg %]
+		[% IF form.metamod %]
+			Meta-Moderation
+		[% ELSE %]
+			[% PROCESS rand_mesg %]
+		[% END %]
 		</p>
 	</div>
 </div>
 [% END %]
 <div id="messagearea"></div>
+[% IF form.metamod %][% Slash.getData('metamod_msg') %][% END %]
 [% login_block = BLOCK;
    this_fhfilter = form.fhfilter | fixparam;
    PROCESS userlogin_cover
@@ -164,6 +172,7 @@ cmdrtaco dot net but be forgiving of beta code!
 	[% END %]
 	firehose_settings.issue = [% firehose.js_anon_dump(options.issue) %];
 	firehose_settings.section = [% firehose.js_anon_dump(section) %];
+	firehose_settings.metamod = [% form.metamod ? 1 : 0 %];
 	[% IF fh_page == "console.pl" %]
 		firehose_settings.pageval = 1;
 	[% ELSIF fh_page == "users.pl" %]
@@ -171,7 +180,7 @@ cmdrtaco dot net but be forgiving of beta code!
 	[% END %]
 
 	var firehose_action_time = 0;
-	[% IF options.pagesize == "large" %]
+	[% IF options.pagesize == "large" && !form.metamod %]
 	firehose_more_increment = 15;
 	[% END %]
 	[% options_color = (options.color || user.firehose_color || "indigo") %]
@@ -183,7 +192,7 @@ cmdrtaco dot net but be forgiving of beta code!
 	}
 	var fh_view_mode = [% firehose.js_anon_dump(options.mode) %];
 	firehose_settings.page = [% firehose.js_anon_dump(page) %];
-	[% IF form.embed %]
+	[% IF form.embed || form.tabtype == "1" %]
 	firehose_settings.is_embedded = 1; // defined in common.js
 	[% END %]
 	fh_is_admin = [% IF user.is_admin && !user.firehose_usermode %]1[% ELSE %]0[% END %];
@@ -200,11 +209,18 @@ cmdrtaco dot net but be forgiving of beta code!
 
 fh_ticksize = 15;
 firehose_slider_init();
+$(function(){
+	$('#firehoselist').click(firehose_click_tag);
+	firehose_init_tagui();
+});
 
 
 
 [% END %]
 </script>
+[% IF form.metamod %]
+</div>
+[% END %]
 
 __version__
-$Id: list;firehose;default,v 1.116 2008/04/16 19:00:54 scc Exp $
+$Id$

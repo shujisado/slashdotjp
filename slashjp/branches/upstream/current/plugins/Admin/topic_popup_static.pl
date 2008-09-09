@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: topic_popup_static.pl,v 1.4 2004/10/25 22:52:18 pudge Exp $
+# $Id$
 
 use strict;
 

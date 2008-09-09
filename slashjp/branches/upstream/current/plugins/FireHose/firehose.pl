@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: firehose.pl,v 1.49 2008/01/29 17:35:37 tvroom Exp $
+# $Id$
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.49 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -31,6 +31,7 @@ sub main {
 		view		=> [1, 	\&view, 0,  ""],
 		default		=> [1,	\&list, 1,  $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1, change => 1, section => 1 }],
 		edit		=> [1,	\&edit, 100,  ""],
+		metamod		=> [1,  \&metamod, 1, ""],
 		rss		=> [1,  \&rss, 1, ""]
 	);
 
@@ -73,6 +74,12 @@ sub main {
 
 	if ($op ne "rss") {
 		my $title = "$constants->{sitename} - Firehose";
+		if ($gSkin->{name} eq "idle") {
+			$title = "$gSkin->{hostname} - Firehose";
+		}
+		if ($op eq "metamod") {
+			$title = "$constants->{sitename} - Metamod";
+		}
 		if ($form->{index}) {
 			$title = "$constants->{sitename} - $constants->{slogan}";
 		}
@@ -89,9 +96,24 @@ sub main {
 
 sub list {
 	my($slashdb, $constants, $user, $form, $gSkin) = @_;
+	slashProfInit();
 	my $firehose = getObject("Slash::FireHose");
 	print $firehose->listView();
+	slashProfEnd();
 }
+
+sub metamod {
+	my($slashdb, $constants, $user, $form, $gSkin) = @_;
+	my $firehose = getObject("Slash::FireHose");
+	$form->{tabtype} 	= "metamod";
+	$form->{skipmenu} 	= 1;
+	$form->{metamod} 	= 1;
+	$form->{pause} 		= 1;
+	$form->{no_saved} 	= 1;
+	print $firehose->listView();
+}
+
+
 
 sub view {
 	my($slashdb, $constants, $user, $form, $gSkin) = @_;
@@ -145,6 +167,35 @@ sub edit {
 		return;
 	}
 	my $item = $firehose->getFireHose($form->{id});
+
+	if ($item->{type} eq 'submission') {
+		# here we fix up some things for authors, namely the subject
+		# line and do some (extremely) simple quote manipulation. This
+		# is also where someday we'll contact the jabber bot to alert
+		# authors that a story is being edited.         --Pater
+		if ($item->{introtext} =~ m/^[^"]*"[^"]*"[^"]*$/s) {
+			$item->{introtext} =~ s/"/'/g;
+		}
+
+		my @words = split / /, $item->{title};
+		my @newwords;
+
+		for (my $i = 0; $i < @words; $i++) {
+			my $word = $words[$i];
+			if ($i == 0) {
+				$word = ucfirst $word;
+			} elsif ($word =~ m/^a(n|nd)?$|^the$|^of$/i) {
+				$word = lcfirst $word;
+			} else {
+				$word = ucfirst $word;
+			}
+
+			push @newwords, $word;
+		}
+
+		$item->{title} = join(' ', @newwords);
+	}
+
 	my $url;
 	$url = $slashdb->getUrl($item->{url_id}) if $item->{url_id};
 	my $the_user = $slashdb->getUser($item->{uid});

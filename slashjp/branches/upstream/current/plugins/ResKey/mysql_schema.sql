@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.7 2006/08/31 04:08:34 pudge Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS reskeys;

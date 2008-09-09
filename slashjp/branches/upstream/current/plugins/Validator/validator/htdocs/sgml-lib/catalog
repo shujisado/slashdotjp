@@ -1,6 +1,6 @@
 
 	-- SGML catalog for the W3C HTML Validation Service --
-	-- $Id: catalog,v 1.1 2005/04/14 14:57:04 pudge Exp $ --
+	-- $Id$ --
 
 OVERRIDE YES	-- prefer public identifiers to system identifiers --
 SGMLDECL REC-html401-19991224/HTML4.decl

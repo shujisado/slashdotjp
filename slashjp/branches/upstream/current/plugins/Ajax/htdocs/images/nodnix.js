@@ -1,5 +1,5 @@
 // _*_ Mode: JavaScript; tab-width: 8; indent-tabs-mode: true _*_
-// $Id: nodnix.js,v 1.20 2008/03/28 22:04:32 pudge Exp $
+; // $Id$
 
 var nod_completer = null;
 var nix_completer = null;

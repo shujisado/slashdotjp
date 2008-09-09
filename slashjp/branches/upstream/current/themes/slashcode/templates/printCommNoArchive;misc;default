@@ -65,4 +65,4 @@ This discussion was created[% IF discussion.uid %] by <a href="[% gSkin.rootdir 
 __seclev__
 10000
 __version__
-$Id: printCommNoArchive;misc;default,v 1.21 2007/06/19 22:22:51 pudge Exp $
+$Id$

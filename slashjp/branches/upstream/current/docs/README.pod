@@ -215,4 +215,4 @@ Suite 330, Boston, MA 02111-1307, USA.
 
 =head1 VERSION
 
-$Id: README.pod,v 1.21 2005/03/11 19:58:04 pudge Exp $
+$Id$

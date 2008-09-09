@@ -1,5 +1,5 @@
 #
-# $Id: mysql_prep,v 1.11 2003/08/29 16:18:45 jamie Exp $
+# $Id$
 #
 
 INSERT INTO vars (name,value,description) VALUES ('people_max','200','Maximum number of friends/foes you can have');

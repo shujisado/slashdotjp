@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.5 2004/06/21 16:30:28 tvroom Exp $
+# $Id$
 #
 
 # Not going to install this unless the pollbooth plugin is installed

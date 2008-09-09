@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: dailyStuff,v 1.18 2005/03/11 19:58:23 pudge Exp $
+# $Id$
 
 ###############################################################################
 # dailyStuff - this program runs various housekeeping tasks, sends out the

@@ -69,4 +69,4 @@ END  # SWITCH / CASE
 
 -%]
 __version__
-$Id: data;email;default,v 1.9 2005/07/27 22:53:54 pudge Exp $
+$Id$

@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.9 2007/10/04 17:14:09 scc Exp $
+# $Id$
 name=FAQSlashdot
 description="Slashdot FAQ"
 htdoc_faq=faq/UI.shtml

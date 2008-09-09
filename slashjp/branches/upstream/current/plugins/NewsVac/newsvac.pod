@@ -302,7 +302,7 @@ Consider adding a counter to the URLs in the database, so we can see if a URL ha
 
 =head1 CHANGES
 
-  $Log: newsvac.pod,v $
+  $Log$
   Revision 1.8  2005/03/11 19:58:11  pudge
   Update 2005, OSTG, etc.
 
@@ -343,4 +343,4 @@ This document is being maintained by Chris Nandor E<lt>pudge@ostg.comE<gt>, with
 
 =head1 VERSION
 
-$Id: newsvac.pod,v 1.8 2005/03/11 19:58:11 pudge Exp $
+$Id$

@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.15 2005/01/18 16:39:36 tvroom Exp $
+# $Id$
 #
 
 ALTER TABLE users_hits ADD COLUMN hits_bought INT DEFAULT 0 NOT NULL AFTER hits, ADD COLUMN hits_bought_today SMALLINT UNSIGNED DEFAULT 0 NOT NULL AFTER hits_bought, ADD COLUMN hits_paidfor INT DEFAULT 0 NOT NULL AFTER hits_bought_today;

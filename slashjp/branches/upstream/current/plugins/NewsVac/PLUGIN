@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.8 2004/11/24 21:42:45 pudge Exp $
+# $Id$
 name=NewsVac
 description="NewsForge NewsVac"
 mysql_schema=mysql_schema

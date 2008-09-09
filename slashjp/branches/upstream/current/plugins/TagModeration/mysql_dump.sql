@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.2 2008/01/31 17:53:44 jamiemccarthy Exp $
+# $Id$
 #
 
 REPLACE INTO ajax_ops VALUES (NULL, 'comments_moderate_cid', 'Slash::TagModeration', 'ajaxModerateCid', 'comments-moderation-ajax', 'use');

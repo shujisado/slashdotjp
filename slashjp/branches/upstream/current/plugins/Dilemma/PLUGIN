@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.6 2005/04/07 23:50:08 jamiemccarthy Exp $
+# $Id$
 name=Dilemma
 description="Prisoner's Dilemma tournaments
 htdoc=dilemma.pl

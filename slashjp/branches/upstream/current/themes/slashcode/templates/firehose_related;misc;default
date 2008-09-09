@@ -17,4 +17,4 @@ __template__
 	<span class="storytitle"><a href="[% rootdir %]/firehose.pl?id=[% fh_item.id %]&amp;op=view">Firehose:[% fh_item.title %]</a></span> by [% IF !is_anon %]<a href="[% constants.real_rootdir %]/~[% fh_user.nickname | strip_paramattr %]">[% END %][% fh_user.nickname | strip_literal%][% IF !is_anon %] ([% fh_user.uid %])</a>[% END %]
 </div>
 __version__
-$Id: firehose_related;misc;default,v 1.1 2007/08/02 17:17:41 tvroom Exp $
+$Id$

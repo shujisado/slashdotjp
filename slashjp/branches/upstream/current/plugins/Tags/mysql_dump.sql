@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.40 2008/04/03 20:39:11 jamiemccarthy Exp $
+# $Id$
 #
 
 INSERT INTO vars (name, value, description) VALUES ('memcached_exptime_tags', '3600', 'Seconds to cache tag data in memcached');
@@ -10,6 +10,9 @@ INSERT INTO vars (name, value, description) VALUES ('tags_admin_private_tags', '
 INSERT INTO vars (name, value, description) VALUES ('tags_admin_autoaddstorytopics', '1', 'Auto-add tags for story topic keywords?');
 INSERT INTO vars (name, value, description) VALUES ('tags_cache_expire', '180', 'Local data cache expiration for tags');
 INSERT INTO vars (name, value, description) VALUES ('tags_list_mintc', '4', 'Minimum value of total_clout for tagged items shown at /tags/foo');
+INSERT INTO vars (name, value, description) VALUES ('tags_overnight_minweightsum', '0.1', 'Minimum tagbox weight sum for overnight processing. To disable overnight difference, set to 1');
+INSERT INTO vars (name, value, description) VALUES ('tags_overnight_starthour', '7', 'GMT hour at which overnight processing begins');
+INSERT INTO vars (name, value, description) VALUES ('tags_overnight_stophour', '10', 'GMT hour after which overnight processing ends');
 INSERT INTO vars (name, value, description) VALUES ('tags_prefixlist_minc', '4', 'Minimum value of c (count) for tagnames returned by listTagnamesByPrefix');
 INSERT INTO vars (name, value, description) VALUES ('tags_prefixlist_minlen', '3', 'Minimum length of a tag prefix to bother looking up suggestions for');
 INSERT INTO vars (name, value, description) VALUES ('tags_prefixlist_mins', '3', 'Minimum value of s (clout sum) for tagnames returned by listTagnamesByPrefix');
@@ -24,6 +27,7 @@ INSERT INTO vars (name, value, description) VALUES ('tags_stories_examples_pre',
 INSERT INTO vars (name, value, description) VALUES ('tags_stories_examples', '', 'Example tags for stories');
 INSERT INTO vars (name, value, description) VALUES ('tags_stories_lastscanned', '0', 'The last tagid scanned to update stories');
 INSERT INTO vars (name, value, description) VALUES ('tags_stories_top_minscore', '2', 'Minimum score a tag must have to make it into the top tags for a story');
+INSERT INTO vars (name, value, description) VALUES ('tags_feederlog_largerows', '50000', 'Number of rows at which the feederlog is considered "large", slowing additions');
 INSERT INTO vars (name, value, description) VALUES ('tags_udc_daysback', '182', 'Days back to crunch numbers for tags_udc related tables, should be a multiple of 7');
 INSERT INTO vars (name, value, description) VALUES ('tags_unknowntype_default_clid', '1', 'For tags of unknown type, which clout id do we pretend they are?');
 INSERT INTO vars (name, value, description) VALUES ('tags_unknowntype_default_mult', '0.3', 'For tags of unknown type, what multiplier do we give to the tagging user clout or type tags_unknowntype_default_clid?');
@@ -36,6 +40,7 @@ INSERT INTO vars (name, value, description) VALUES ('tags_urls_neg_tags', 'minus
 INSERT INTO vars (name, value, description) VALUES ('tags_userfrac_read', '1', 'Fraction (0.0-1.0) of user UIDs which are allowed to read tags, if tags_*_allow* is set that way');
 INSERT INTO vars (name, value, description) VALUES ('tags_userfrac_write', '0.95', 'Fraction (0.0-1.0) of user UIDs which are allowed to tag, if tags_*_allow* is set that way');
 INSERT INTO vars (name, value, description) VALUES ('tags_usershow_cutoff', '200', 'More tags than this, and instead of showing the full taglist /~user/tags will show the list of tagnames');
+INSERT INTO vars (name, value, description) VALUES ('tags_tagbox_lastglobjid', '0', 'Last globjid that the tagbox scanned for possible insertion into feeder log');
 INSERT INTO vars (name, value, description) VALUES ('tags_tagname_regex', '^\!?[a-z][a-z0-9/]{0,63}$', 'Regex that tag names must conform to');
 INSERT INTO vars (name, value, description) VALUES ('tags_updateclouts_debuguids', '', 'UIDs to print debug info on during clout recalculation');
 INSERT INTO vars (name, value, description) VALUES ('tags_upvote_tagname', 'nod', 'Tag for upvote');
@@ -52,6 +57,7 @@ INSERT INTO ajax_ops VALUES (NULL, 'tags_admin_commands', 'Slash::Tags', 'ajaxPr
 INSERT INTO ajax_ops VALUES (NULL, 'tags_history', 'Slash::Tags', 'ajaxTagHistory', 'ajax_admin', 'createuse');
 INSERT INTO ajax_ops VALUES (NULL, 'tags_list_tagnames', 'Slash::Tags', 'ajaxListTagnames', 'ajax_tags_read', 'createuse');
 INSERT INTO ajax_ops VALUES (NULL, 'tags_deactivate', 'Slash::Tags', 'ajaxDeactivateTag', 'ajax_tags_write', 'use');
+INSERT INTO ajax_ops VALUES (NULL, 'tags_setget_combined', 'Slash::Tags', 'ajaxSetGetCombinedTags', 'ajax_user_static', 'createuse');
 
 INSERT INTO menus VALUES (NULL, 'tagszg', 'Active', 'active', '[% gSkin.rootdir %]/tags',        1, 1, 1);
 INSERT INTO menus VALUES (NULL, 'tagszg', 'Recent', 'recent', '[% gSkin.rootdir %]/tags/recent', 1, 1, 2);

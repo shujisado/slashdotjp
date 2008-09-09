@@ -7,11 +7,10 @@ use File::Path;
 use File::Spec::Functions;
 use Slash::Utility;
 use Slash::DB::Utility;
-use vars qw($VERSION);
 use base 'Slash::SearchToo';
 require Slash::SearchToo::Classic;
 
-($VERSION) = ' $Revision: 1.14 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: I did it!  And it's all thanks to the books at my local library.
 
@@ -83,8 +82,8 @@ sub findRecords {
 	# let Classic handle for now
 	return Slash::SearchToo::Classic::findRecords(@_) unless $self->handled($type);
 
-slashProfInit();
-slashProf('findRecords setup');
+# slashProfInit();
+# slashProf('findRecords setup');
 
 	my $constants = getCurrentStatic();
 
@@ -131,9 +130,9 @@ slashProf('findRecords setup');
 		%$terms = (%$terms, %$query);
 	}
 
-slashProf('_findRecords', 'findRecords setup');
+# slashProf('_findRecords', 'findRecords setup');
 	$self->_findRecords($results, $records, $sopts, $terms, $opts);
-slashProf('getRecords', '_findRecords');
+# slashProf('getRecords', '_findRecords');
 	$self->getRecords($type => $records, {
 		alldata		=> 1,
 		sort		=> $sopts->{sort},
@@ -142,11 +141,11 @@ slashProf('getRecords', '_findRecords');
 		offset		=> $sopts->{start},
 		carryover	=> $opts->{carryover}
 	});
-slashProf('prepResults', 'getRecords');
+# slashProf('prepResults', 'getRecords');
 	$self->prepResults($results, $records, $sopts);
-slashProf('', 'getRecords');
+# slashProf('', 'getRecords');
 
-slashProfEnd();
+# slashProfEnd();
 
 	return $results;
 
@@ -517,8 +516,16 @@ sub copyBackup {
 			while (my $f = readdir($dh)) {
 				next if $f =~ /^\./;
 				my $file = catfile($back, 'invindex', $f);
-				if (-f $file && -s _ == 0 && -M _ > 1) {
-					unlink $file;
+
+				lstat $file;
+				# file is empty ...
+				if (-f _ && -s _ == 0) {
+					# ... and more than an hour old
+					# current time - (time script started -
+					# file modify time since script started)
+					my $time = time - ($^T - ((-M _) * 86400));
+					# convert $time to days
+					unlink $file if (($time/86400) > 1/24);
 				}
 			}
 		} else {

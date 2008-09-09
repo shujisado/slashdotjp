@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.3 2004/06/17 16:12:02 jamiemccarthy Exp $
+# $Id$
 #
 
 INSERT INTO blocks (bid, block, seclev, type, description, skin, ordernum, title, portal, url, rdf, retrieve) VALUES ('stockquotes','',500,'static','','mainpage',8,'Stock Quotes',1,'','',0);

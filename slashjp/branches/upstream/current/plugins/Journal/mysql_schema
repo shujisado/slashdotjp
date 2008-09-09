@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.17 2007/11/01 20:35:18 jamiemccarthy Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS journals;

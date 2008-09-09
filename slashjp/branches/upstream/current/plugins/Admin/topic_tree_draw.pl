@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: topic_tree_draw.pl,v 1.4 2006/02/02 15:30:36 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 

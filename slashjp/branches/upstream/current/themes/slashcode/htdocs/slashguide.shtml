@@ -314,7 +314,7 @@ DIV.pod TD {
                 <p>The send_mail var turns the headline mailer on/off. You may need to set smtp_server too. And the stats_reports one will get you a daily stats report.</p>
                 <hr>
                 <h1><a name="changes" id="changes">CHANGES</a></h1>
-                <p>$Log: slashguide.shtml,v $
+                <p>$Log$
                 <p>Revision 1.5  2005/08/22 22:41:27  pudge
                 <p>Update to proper includes and valid HTML
                 <p></p>
@@ -335,7 +335,7 @@ DIV.pod TD {
                 <p>Originally, CmdrTaco probably. Revised for Slash 2.0.0 by Nathan Vonnahme and Dan Stahlke</p>
                 <hr>
                 <h1><a name="version" id="version">VERSION</a></h1>
-                <p>$Id: slashguide.shtml,v 1.5 2005/08/22 22:41:27 pudge Exp $</p>
+                <p>$Id$</p>
         </div>
 
 <!--#include virtual="/slashfoot.inc"-->

@@ -71,7 +71,7 @@ SYNOPSIS
 
     The version of this file that you are currently reading is:
 
-    $Id: INSTALL,v 1.56 2008/03/12 17:02:02 jamiemccarthy Exp $
+    $Id$
 
     If there are more recent versions of this file, you can find a list of
     those changes at:
@@ -120,8 +120,11 @@ INSTALLATION
         might:
 
                 GRANT SELECT, INSERT, UPDATE, DELETE, LOCK TABLES, CREATE, DROP,
-                INDEX, ALTER, PROCESS ON slash.* TO 'slash'@'localhost'
+                INDEX, ALTER ON slash.* TO 'slash'@'localhost'
                 IDENTIFIED BY (quoted password);
+
+                GRANT PROCESS ON *.* TO 'slash'@'localhost' IDENTIFIED BY
+                (quoted password);
 
         In this case, 'slash' would also be the name of your MySQL user as
         described in "Types of Users" below. You'll have to give your MySQL
@@ -356,7 +359,8 @@ INSTALLATION
         proceeding. Note that Net::Cmd has a history of being a little
         broken in its tests; if it fails on tests 8 and 9 of t/require, then
         it's OK; just do "force install Net::Cmd" and repeat "install
-        Bundle::LWP".
+        Bundle::LWP". On Mac OS X and possibly other operating systems, if
+        LWP's live/https tests fail, "install Net::SSL" manually and retry.
 
         Assuming you chose to install the LWP, then after it's been
         configured successfully, again, "exit" the CPAN and reinvoke it.
@@ -1483,5 +1487,5 @@ SECURITY NOTES
                 https://lists.sourceforge.net/lists/listinfo/slashcode-announce
 
 VERSION
-    $Id: INSTALL,v 1.56 2008/03/12 17:02:02 jamiemccarthy Exp $
+    $Id$
 

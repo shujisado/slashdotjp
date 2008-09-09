@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: metamod.pl,v 1.4 2006/10/26 17:33:04 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash;
@@ -17,6 +17,10 @@ sub main {
 	my $form = getCurrentForm();
 	my $op = getCurrentForm('op') || '';
 	my $section = $slashdb->getSection($form->{section});
+
+	if ($user->{is_subscriber} && $constants->{plugin}{FireHose}) {
+		redirect("$constants->{rootdir}/firehose.pl?op=metamod");
+	}
 
 	header(getData('header'), $section->{section}) or return;
 

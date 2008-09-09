@@ -3,7 +3,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: convertDBto200406,v 1.31 2005/10/31 23:29:20 jamiemccarthy Exp $
+# $Id$
 
 # This script converts a Slash DB from old-style (pre-June 2004)
 # to new-style (June 2004), commonly called the "section-topics"
@@ -59,7 +59,7 @@ use vars qw( $slashdb
         $old_section_topics_ar
         %topics %skins %nexuses %subsections );
 
-(my $VERSION) = ' $Revision: 1.31 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 $Data::Dumper::Sortkeys = 1;
 

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: new_headfoot.pl,v 1.21 2008/01/25 06:04:33 tvroom Exp $
+# $Id$
 
 use strict;
 use Slash;

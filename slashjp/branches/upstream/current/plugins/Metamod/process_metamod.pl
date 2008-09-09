@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: process_metamod.pl,v 1.5 2006/10/26 17:33:04 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash::Utility;
@@ -20,6 +20,10 @@ $task{$me}{code} = sub {
 
 	if (!$constants->{m2}) {
 		slashdLog("$me - metamoderation inactive") if verbosity() >= 2;
+		return ;
+	}
+	if ($constants->{tagbox}{Metamod}) {
+		slashdLog("$me - superceded by Metamod tagbox");
 		return ;
 	}
 

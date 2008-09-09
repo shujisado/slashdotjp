@@ -46,4 +46,4 @@ Selected story: <i>[% story.title %]</i>
 </form>
 
 __version__
-$Id: emailStoryForm;email;default,v 1.5 2005/07/27 22:53:54 pudge Exp $
+$Id$

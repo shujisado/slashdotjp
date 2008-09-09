@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.1 2007/08/03 20:24:04 jamiemccarthy Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS submissions_notes;

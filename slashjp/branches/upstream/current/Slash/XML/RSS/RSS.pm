@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: RSS.pm,v 1.42 2008/04/14 18:49:06 pudge Exp $
 
 package Slash::XML::RSS;
 
@@ -30,9 +29,8 @@ use Slash;
 use Slash::Utility;
 use XML::RSS;
 use base 'Slash::XML';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.42 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 
 #========================================================================
@@ -435,6 +433,8 @@ sub rss_story {
 			$encoded_item->{description} = $desc;
 
 			my $extra = '';
+			# If the text of the <img src>'s query string changes,
+			# Stats.pm getTopBadgeURLs() may also have to change.
 			$extra .= qq{<p><a href="$action"><img src="$channel->{'link'}slashdot-it.pl?from=rss&amp;op=image&amp;style=h0&amp;sid=$story->{sid}"></a></p>}
 				if $constants->{rdfbadge};
 			$extra .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>"
@@ -578,7 +578,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::XML(3).
-
-=head1 VERSION
-
-$Id: RSS.pm,v 1.42 2008/04/14 18:49:06 pudge Exp $

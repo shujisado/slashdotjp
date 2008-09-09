@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: messages.pl,v 1.33 2007/10/24 21:21:12 jamiemccarthy Exp $
+# $Id$
 
 # this program does some really cool stuff.
 # so i document it here.  yay for me!
@@ -16,7 +16,7 @@ use Slash::XML;
 use Time::HiRes;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.33 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
 my $start_time = Time::HiRes::time;

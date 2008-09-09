@@ -30,7 +30,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: print.pl,v 1.18 2006/01/11 23:15:35 pudge Exp $
+# $Id$
 
 use strict;
 use HTML::TreeBuilder;
@@ -39,7 +39,7 @@ use Slash::Display;
 use Slash::Utility;
 use vars qw( $VERSION );
 
-($VERSION) = ' $Revision: 1.18 $' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$' =~ /\$Revision:\s+([^\s]+)/;
 
 sub main {
 	my $constants = getCurrentStatic();

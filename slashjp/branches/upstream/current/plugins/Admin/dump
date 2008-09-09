@@ -1,5 +1,5 @@
 #
-# $Id: dump,v 1.24 2008/01/30 22:46:10 jamiemccarthy Exp $
+# $Id$
 #
 
 INSERT INTO menus (menu, label, sel_label, value, seclev, menuorder) VALUES ('admin','Home','Home','[% gSkin.rootdir %]/',1,2);

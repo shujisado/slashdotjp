@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: admin.pl,v 1.332 2008/03/18 16:13:45 tvroom Exp $
+# $Id$
 
 use strict;
 use File::Temp 'tempfile';
@@ -1190,6 +1190,7 @@ sub editStory {
 		$storyref->{commentstatus} = $form->{commentstatus};
 
 		$storyref->{uid} ||= $user->{uid};
+		$storyref->{dept} ||= '';
 		$storyref->{dept} =~ s/[-\s]+/-/g;
 		$storyref->{dept} =~ s/^-//;
 		$storyref->{dept} =~ s/-$//;
@@ -1402,6 +1403,7 @@ sub editStory {
 		last_sid	=> $sid,
 		last_subid	=> '',
 		last_fhid	=> '',
+		last_action	=> 'editing',
 	});
 
 	# Run a spellcheck on introtext, bodytext, and title if they're set.
@@ -1584,6 +1586,7 @@ sub extractRelatedStoriesFromForm {
 
 	# Extract sids from urls in introtext and bodytext
 	foreach ($form->{introtext}, $form->{bodytext}) {
+		next unless $_;
 		push @$related, $1 while /$match/g;
 		push @$related_cids, $1 while /$match_cid/g;
 	}

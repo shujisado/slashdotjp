@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Dilemma.pm,v 1.13 2005/04/08 22:16:10 jamiemccarthy Exp $
 #
 # XXX Every place we have getDilemmaInfo() needs to (a) know the $trid
 # for the tournament and (b) change to getDilemmaTournamentInfo($trid)
@@ -11,13 +10,12 @@ package Slash::Dilemma;
 use strict;
 use Time::HiRes;
 use Safe;
-use Storable qw( freeze thaw dclone );
+use Storable qw( nfreeze thaw dclone );
 use Slash::Utility;
 use Slash::DB::Utility;
-use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 
-($VERSION) = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # ZOIDBERG: Friends! Help! A guinea pig tricked me!
 
@@ -434,7 +432,7 @@ sub setAgents {
 		delete $new_hr->{code};
 		delete $new_hr->{species_name};
 		if (defined $new_hr->{memory}) {
-			my $frozen_memory = freeze(\$new_hr->{memory});
+			my $frozen_memory = nfreeze(\$new_hr->{memory});
 			# Agents can't save memories longer than a certain
 			# limit;  those that try get BRAIN-WIPED.  Mwoohaha.
 			$frozen_memory = "" if length($frozen_memory) > 10_000;

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: search_index.pl,v 1.9 2007/09/14 21:52:28 pudge Exp $
+# $Id$
 
 use strict;
 
@@ -104,12 +104,12 @@ $task{$me}{code} = sub {
 		} else {
 			$searchtoo->deleteStoredRecords(\@iids_d);
 		}
+
+		$searchtoo->finish;
 	}
 
 	$searchtoo->backup(0);
 	$searchtoo->moveLive;
-
-	$searchtoo->finish;
 
 	slashdLog("Moved new index live");
 	slashdLog("Finished");

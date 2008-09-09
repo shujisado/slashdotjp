@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHActivity.pm,v 1.6 2007/10/18 03:02:50 jamiemccarthy Exp $
 
 package Slash::Tagbox::FHActivity;
 
@@ -27,8 +26,7 @@ use Slash::Tagbox;
 
 use Data::Dumper;
 
-use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge

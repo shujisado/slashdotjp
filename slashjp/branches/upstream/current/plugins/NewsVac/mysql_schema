@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.8 2005/10/31 22:35:18 jamiemccarthy Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS newsvac_keywords;

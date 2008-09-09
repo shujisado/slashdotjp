@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: install-tagbox,v 1.5 2006/10/26 17:30:02 jamiemccarthy Exp $
+# $Id$
 
 # This is the tagboxes install script.
 # -Cbrown (cbrown@vasoftware.com)
@@ -14,7 +14,7 @@ use Getopt::Std;
 use File::Copy;
 use Slash::Install;
 
-(my $VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 (my $SLASH_PREFIX = $Bin) =~ s|/[^/]+/?$||;
 

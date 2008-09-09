@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: backup-blocks,v 1.8 2005/03/11 19:58:02 pudge Exp $
+# $Id$
 
 # First version by Brian, brian@tangent.org
 
@@ -11,7 +11,7 @@ use File::Basename;
 use Getopt::Std;
 use DBIx::Password;
 
-(my $VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my %opts;

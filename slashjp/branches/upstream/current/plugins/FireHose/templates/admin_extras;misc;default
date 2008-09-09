@@ -70,4 +70,4 @@ __template__
 	</table>
 [% END %]
 __version__
-$Id: admin_extras;misc;default,v 1.13 2007/12/12 22:21:30 tvroom Exp $
+$Id$

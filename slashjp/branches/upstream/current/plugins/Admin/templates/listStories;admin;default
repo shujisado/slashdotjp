@@ -141,4 +141,4 @@ FOREACH story = storylistref;
 __seclev__
 500
 __version__
-$Id: listStories;admin;default,v 1.32 2006/02/01 23:00:50 pudge Exp $
+$Id$

@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: ajax.pl,v 1.87 2008/04/11 01:12:38 pudge Exp $
 
 use strict;
 use warnings;
@@ -12,9 +11,6 @@ use Data::JavaScript::Anon;
 use Slash 2.003;	# require Slash 2.3.x
 use Slash::Display;
 use Slash::Utility;
-use vars qw($VERSION);
-
-($VERSION) = ' $Revision: 1.87 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -73,7 +69,7 @@ sub main {
 			# feel free to send msgdiv => 'thisdivhere' to the ajax call,
 			# and any reskey error messages will be sent to it
 			if ($form->{msgdiv}) {
-				header_ajax({ content_type => 'application/json' });
+				http_send({ content_type => 'application/json' });
 				(my $msgdiv = $form->{msgdiv}) =~ s/[^\w-]+//g;
 				print Data::JavaScript::Anon->anon_dump({
 					html	  => { $msgdiv => $rkey->errstr },
@@ -93,7 +89,7 @@ sub main {
 #	print STDERR "AJAX7 $$: $user->{uid}, $op ($retval)\n";
 
 	if ($retval) {
-		header_ajax($options);
+		http_send($options);
 		print $retval;
 	}
 
@@ -333,7 +329,7 @@ sub previewReply {
 		error => $error_message,
 	);
 	$to_dump{html} = { "replyto_preview_$pid" => $html } if $html;
-	$to_dump{eval_first} = "\$('gotmodwarning_$pid').value = 1;"
+	$to_dump{eval_first} = "\$dom('gotmodwarning_$pid').value = 1;"
 		if $form->{gotmodwarning} || ($error_message && $error_message eq
 			Slash::Utility::Comments::getError("moderations to be lost")
 		);
@@ -412,16 +408,21 @@ sub readRest {
 sub fetchComments {
 	my($slashdb, $constants, $user, $form, $options) = @_;
 
-	my $cids         = [ grep { defined && /^\d+$/ } ($form->{_multi}{cids} ? @{$form->{_multi}{cids}} : $form->{cids}) ];
-	my $id           = $form->{discussion_id} || 0;
-	my $cid          = $form->{cid} || 0; # root id
-	my $d2_seen      = $form->{d2_seen};
-	my $placeholders = [ grep { defined && /^\d+$/ } ($form->{_multi}{placeholders} ? @{$form->{_multi}{placeholders}} : $form->{placeholders}) ];
+	my $cids          = [ grep { defined && /^\d+$/ } ($form->{_multi}{cids} ? @{$form->{_multi}{cids}} : $form->{cids}) ];
+	my $id            = $form->{discussion_id} || 0;
+	my $cid           = $form->{cid} || 0; # root id
+	my $d2_seen       = $form->{d2_seen};
+	my $placeholders  = [ grep { defined && /^\d+$/ } ($form->{_multi}{placeholders}  ? @{$form->{_multi}{placeholders}}  : $form->{placeholders}) ];
+	my $read_comments = [ grep { defined && /^\d+$/ } ($form->{_multi}{read_comments} ? @{$form->{_multi}{read_comments}} : $form->{read_comments}) ];
 
 	$user->{state}{ajax_accesslog_op} = "ajax_comments_fetch";
-#use Data::Dumper; print STDERR Dumper [ $form, $cids, $id, $cid, $d2_seen ];
+#use Data::Dumper; print STDERR Dumper [ $form, $cids, $id, $cid, $d2_seen, $read_comments ];
+	return unless $id;
+
+	$slashdb->saveCommentReadLog($read_comments, $id, $user->{uid}) if @$read_comments;
+
 	# XXX error?
-	return unless $id && (@$cids || $d2_seen);
+	return unless (@$cids || $d2_seen);
 
 	my $discussion = $slashdb->getDiscussion($id);
 	if ($discussion->{type} eq 'archived') {
@@ -437,18 +438,10 @@ sub fetchComments {
 		no_d2        => 1
 	);
 
-	my %seen;
-	if ($d2_seen || $form->{d2_seen_ex}) {
-		my $lastcid = 0;
-		for my $cid (split /,/, $d2_seen || $form->{d2_seen_ex}) {
-			$cid = $lastcid ? $lastcid + $cid : $cid;
-			$seen{$cid} = 1;
-			$lastcid = $cid;
-		}
-		if ($d2_seen) {
-			$select_options{existing} = \%seen if keys %seen;
-			delete $select_options{no_d2};
-		}
+	my $seen = parseCommentBitmap($d2_seen || $form->{d2_seen_ex});
+	if ($d2_seen) {
+		$select_options{existing} = $seen if keys %$seen;
+		delete $select_options{no_d2};
 	}
 
 	my($comments) = selectComments(
@@ -467,18 +460,13 @@ sub fetchComments {
 	if ($d2_seen || @$placeholders) {
 		my $special_cids;
 		if ($d2_seen) {
-			$special_cids = $cids = [ sort { $a <=> $b } grep { $_ && !$seen{$_} } keys %$comments ];
+			$special_cids = $cids = [ sort { $a <=> $b } grep { $_ && !$seen->{$_} } keys %$comments ];
 		} elsif (@$placeholders) {
 			$special_cids = [ sort { $a <=> $b } @$placeholders ];
 			if ($form->{d2_seen_ex}) {
-				my @seen;
-				my $lastcid = 0;
-				my %check = (%seen, map { $_ => 1 } @$placeholders);
-				for my $cid (sort { $a <=> $b } keys(%check)) {
-					push @seen, $lastcid ? $cid - $lastcid : $cid;
-					$lastcid = $cid;
-				}
-				$d2_seen_0 = join ',', @seen;
+				$d2_seen_0 = makeCommentBitmap({
+					%$seen, map { $_ => 1 } @$placeholders
+				});
 			}
 		}
 
@@ -489,6 +477,7 @@ sub fetchComments {
 					uid     => $comments->{$cid}{uid},
 					pid     => $comments->{$cid}{pid},
 					points  => $comments->{$cid}{points},
+					read    => $comments->{$cid}{has_read} || 0,
 					kids    => []
 				};
 				if ($comments->{$cid}{subject_orig} && $comments->{$cid}{subject_orig} eq 'no') {
@@ -596,26 +585,30 @@ sub fetchComments {
 	}
 
 # XXX update noshow_comments, pieces_comments -- pudge
-#use Data::Dumper; print STDERR Dumper \@hidden_cids, \@pieces_cids, \@abbrev_cids, \%get_pieces_cids, \%keep_hidden, \%pieces, \%abbrev, \%html, \%html_append_substr, $form, \%data;
+#use Data::Dumper; print STDERR Dumper \@hidden_cids, \@pieces_cids, \@abbrev_cids, \%get_pieces_cids, \%keep_hidden, \%pieces, \%abbrev, \%html, \%html_append_substr, $form, \%data, $d2_seen_0;
+
+	$user->{d2_comment_order} ||= 0;
 
 	$options->{content_type} = 'application/json';
 	my %to_dump = (
+		read_comments      => $read_comments,  # send back so we can just mark them
 		update_data        => \%data,
 		html               => \%html,
-		html_append_substr => \%html_append_substr
+		html_append_substr => \%html_append_substr,
+		eval_first         => "d2_comment_order = $user->{d2_comment_order};"
 	);
+
 	if ($d2_seen_0) {
 		my $total = $slashdb->countCommentsBySid($id);
 		$total -= $d2_seen_0 =~ tr/,//; # total
 		$total--; # off by one
-		$to_dump{eval_first} ||= '';
 		$to_dump{eval_first} .= "d2_seen = '$d2_seen_0'; updateMoreNum($total);";
 	}
 	if (@$placeholders) {
-		$to_dump{eval_first} ||= '';
 		$to_dump{eval_first} .= "placeholder_no_update = " . Data::JavaScript::Anon->anon_dump({ map { $_ => 1 } @$placeholders }) . ';';
 	}
 	writeLog($id);
+#print STDERR "\n\n\n", Data::JavaScript::Anon->anon_dump(\%to_dump), "\n\n\n";
 	return Data::JavaScript::Anon->anon_dump(\%to_dump);
 }
 
@@ -785,7 +778,6 @@ sub getModalPrefs {
 		}
 
 	} else {
-		
 		return
 			slashDisplay('prefs_' . $form->{'section'}, {
 				user   => $user,
@@ -813,7 +805,8 @@ sub saveModalPrefs {
 			# we only want to save the pref for people who turn it off, but the checkbox
 			# is on by default, so if the value is true then it is on, and if false,
 			# it is off -- pudge
-			d2_keybindings_switch => $params{'d2_keybindings_switch'}   ? undef : 1,
+			d2_reverse_switch     => $params{'d2_reverse_switch'}     ? 1 : undef,
+			d2_keybindings_switch => $params{'d2_keybindings_switch'} ? undef : 1,
 			d2_comment_q          => $params{'d2_comment_q'}         || undef,
 			d2_comment_order      => $params{'d2_comment_order'}     || undef,
 			nosigs                => ($params{'nosigs'}              ? 1 : 0),
@@ -1101,17 +1094,6 @@ sub saveModalPrefs {
 
 ##################################################################
 sub default { }
-
-##################################################################
-sub header_ajax {
-	my($options) = @_;
-	my $ct = $options->{content_type} || 'text/plain';
-
-	my $r = Apache->request;
-	$r->content_type($ct);
-	$r->header_out('Cache-Control', 'no-cache');
-	$r->send_http_header;
-}
 
 ##################################################################
 sub getOps {

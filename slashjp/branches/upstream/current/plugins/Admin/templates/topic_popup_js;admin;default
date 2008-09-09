@@ -740,4 +740,4 @@ function [% name %]_visit() {
 __seclev__
 10000
 __version__
-$Id: topic_popup_js;admin;default,v 1.23 2007/02/16 05:14:58 tvroom Exp $
+$Id$

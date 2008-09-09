@@ -1,5 +1,5 @@
 #
-# $Id: INSTALL,v 1.3 2004/06/17 16:12:00 jamiemccarthy Exp $
+# $Id$
 #
 
 Don't forget to modify the display;article;default template to add a link to

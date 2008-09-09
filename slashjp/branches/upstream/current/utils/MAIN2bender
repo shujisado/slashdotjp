@@ -2,14 +2,14 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MAIN2bender,v 1.9 2005/03/11 19:58:47 pudge Exp $
+# $Id$
 
 use strict;
 use Getopt::Std;
 use File::Basename;
 
 (my $PROGNAME) = basename($0);
-(my $VERSION) = ' $Revision: 1.9 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 my %opts;
 # Remember to doublecheck these match usage()!

@@ -15,4 +15,4 @@ Unsubscribed [% goodcount %] users, and could not find [% badcount %] users.
 __seclev__
 500
 __version__
-$Id: data;unsubscribe;default,v 1.1 2006/01/27 16:29:37 cowboyneal Exp $
+$Id$

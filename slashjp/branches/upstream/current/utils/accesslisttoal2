@@ -3,7 +3,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: accesslisttoal2,v 1.2 2005/04/26 19:47:10 jamiemccarthy Exp $
+# $Id$
 
 # This script converts your accesslist table into the new al2 table.
 
@@ -17,7 +17,7 @@ use Slash::Utility;
 
 use vars qw( $slashdb );
 
-(my $VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts, %family_tree);

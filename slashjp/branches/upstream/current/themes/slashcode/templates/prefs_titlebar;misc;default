@@ -36,4 +36,4 @@ tabs = [ { link = '/help', label = "Return to Help & Preferences", sel_label = "
 __seclev__
 10000
 __version__
-$Id: prefs_titlebar;misc;default,v 1.17 2008/02/12 22:23:39 entweichen Exp $
+$Id$

@@ -28,4 +28,4 @@ Invalid HTML input was detected in [% opts.data_type %] id [% opts.data_id %]:
 __seclev__
 500
 __version__
-$Id: html_invalid;misc;default,v 1.1 2005/03/28 23:22:28 pudge Exp $
+$Id$

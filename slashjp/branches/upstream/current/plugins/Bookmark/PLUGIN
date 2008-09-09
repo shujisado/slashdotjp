@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.6 2007/04/19 18:53:42 tvroom Exp $
+# $Id$
 name=Bookmark
 description="Bookmark"
 htdoc=bookmark.pl

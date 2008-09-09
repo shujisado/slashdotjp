@@ -2,7 +2,8 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: FHPopularity2.pm,v 1.11 2007/08/19 20:26:02 jamiemccarthy Exp $
+
+# This tagbox is outdated, superceded by FireHoseScores
 
 package Slash::Tagbox::FHPopularity2;
 
@@ -27,8 +28,7 @@ use Slash::Tagbox;
 
 use Data::Dumper;
 
-use vars qw( $VERSION );
-$VERSION = ' $Revision: 1.11 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge

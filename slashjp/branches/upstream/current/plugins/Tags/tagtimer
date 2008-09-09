@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tagtimer,v 1.2 2006/09/20 00:56:23 jamiemccarthy Exp $
+# $Id$
 
 use warnings;
 use strict;
@@ -24,7 +24,7 @@ use vars qw(
 	$tags		$tags_reader
 );
 
-($VERSION) = ' $Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 init();
 run();

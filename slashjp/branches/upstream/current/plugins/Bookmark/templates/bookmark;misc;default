@@ -60,4 +60,4 @@ __template__
 </form>
 [% PROCESS bookmarktext %]
 __version__
-$Id: bookmark;misc;default,v 1.5 2007/04/19 18:53:42 tvroom Exp $
+$Id$

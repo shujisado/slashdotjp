@@ -1,4 +1,4 @@
-$Id: README.Dilemma,v 1.1 2004/08/28 23:11:08 jamiemccarthy Exp $
+$Id$
 
 #################################################################
 
@@ -94,7 +94,7 @@ Opcode.pm tags :default and :base_math (see `perldoc Opcode` as well as
 Almost everything below is likely to change in future, but is current
 as of this file's timestamp:
 
-	$Date: 2004/08/28 23:11:08 $
+	$Date$
 
 If you have suggestions for changes in the API that would make an
 interesting tournament, please submit ideas to <jamie@mccarthy.vg>.

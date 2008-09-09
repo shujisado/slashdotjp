@@ -31,4 +31,4 @@ send your suggestions to the <a href="[% useradmin %]">administrator</a>.
 __seclev__
 1000
 __version__
-$Id: reRegisterMail;messages;default,v 1.5 2005/07/27 22:54:48 pudge Exp $
+$Id$

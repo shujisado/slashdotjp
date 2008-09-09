@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.8 2007/10/12 07:23:03 jamiemccarthy Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS humanconf;

@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.25 2008/04/15 00:27:12 pudge Exp $
+# $Id$
 #
 
 ### NOTE: reserved reskey IDs:

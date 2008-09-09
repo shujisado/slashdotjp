@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: freshenup.pl,v 1.88 2008/02/13 03:56:42 tvroom Exp $
+# $Id$
 
 use File::Path;
 use File::Temp;

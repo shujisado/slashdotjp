@@ -1,5 +1,5 @@
 #
-# $Id: dump,v 1.20 2005/10/18 19:28:11 tvroom Exp $
+# $Id$
 #
 
 INSERT INTO vars (name, value, description) VALUES ('search_default_display', '30', 'Default number of entries to display on Search page');

@@ -1,16 +1,14 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: DB.pm,v 1.22 2007/10/09 18:57:08 jamiemccarthy Exp $
 
 package Slash::DB;
 
 use strict;
 use DBIx::Password;
 use Slash::DB::Utility;
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.22 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: Would you cram a sock in it, Bender?
 

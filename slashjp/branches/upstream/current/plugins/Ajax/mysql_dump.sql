@@ -1,5 +1,5 @@
 #
-# $Id: mysql_dump.sql,v 1.26 2008/03/18 16:26:16 tvroom Exp $
+# $Id$
 #
 
 INSERT INTO reskey_resources VALUES (100, 'ajax_base', 'no');

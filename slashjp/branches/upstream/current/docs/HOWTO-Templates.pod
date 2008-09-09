@@ -109,4 +109,4 @@ Slash::Display(3).
 
 =head1 VERSION
 
-$Id: HOWTO-Templates.pod,v 1.6 2001/11/03 04:22:44 brian Exp $
+$Id$

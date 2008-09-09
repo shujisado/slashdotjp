@@ -10,7 +10,7 @@
 # This source code is available under the license at:
 #     http://www.w3.org/Consortium/Legal/copyright-software
 #
-# $Id: Validator.pm,v 1.6 2006/01/24 05:19:36 pudge Exp $
+# $Id$
 
 package Slash::Validator;
 
@@ -96,7 +96,7 @@ use vars qw($DEBUG $CFG $RSRC $VERSION $HAVE_IPC_RUN);
 
   #
   # Strings
-  ($VERSION    =  q$Revision: 1.6 $) =~ s/Revision: ([\d\.]+) /$1/;
+  ($VERSION    =  q$Revision$) =~ s/Revision: ([\d\.]+) /$1/;
 
 
 use Slash::Constants ':messages';
@@ -248,7 +248,7 @@ $File->{'Header'} = &prepSSI({
                              });
 $File->{'Footer'} = &prepSSI({
                               File => $CFG->{'Footer'},
-                              Date => q$Date: 2006/01/24 05:19:36 $,
+                              Date => q$Date$,
                              });
 
 #

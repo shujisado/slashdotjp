@@ -53,5 +53,5 @@ libwww-perl             libwww-perl
 DateManip               libdate-manip-perl
 
 VERSION
-    $Id: INSTALL.debian,v 1.11 2006/08/08 23:13:28 jamiemccarthy Exp $
+    $Id$
 

@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema.sql,v 1.1 2006/10/31 19:06:06 jamiemccarthy Exp $
+# $Id$
 #
 
 CREATE TABLE IF NOT EXISTS moderatorlog (

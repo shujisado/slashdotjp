@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.3 2003/08/29 15:21:07 jamie Exp $
+# $Id$
 name=Print
 htdoc=print.pl
 image=images/print.gif

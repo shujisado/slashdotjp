@@ -19,4 +19,4 @@ to opt out, then no further action on your part is necessary.
 If this request has been made in error, please send an email 
 to [% constants.adminmail %].
 __version__
-$Id: optout_confirm;email;default,v 1.4 2003/08/12 21:35:38 pudge Exp $
+$Id$

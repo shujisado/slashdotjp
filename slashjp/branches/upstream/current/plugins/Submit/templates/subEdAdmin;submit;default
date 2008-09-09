@@ -124,4 +124,4 @@ BLOCK sub_display -%]
 __seclev__
 10000
 __version__
-$Id: subEdAdmin;submit;default,v 1.39 2006/06/14 16:53:13 cowboyneal Exp $
+$Id$

@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.8 2007/08/03 20:24:04 jamiemccarthy Exp $
+# $Id$
 description="Submission System"
 name=Submit
 htdoc=submit.pl

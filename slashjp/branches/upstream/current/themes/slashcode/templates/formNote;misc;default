@@ -17,4 +17,4 @@ __template__
 [% note %]
 </div>
 __version__
-$Id: formNote;misc;default,v 1.2 2005/07/27 22:54:47 pudge Exp $
+$Id$

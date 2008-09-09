@@ -32,4 +32,4 @@ File to upload: <input type="file" name="file_content"><br>
 __seclev__
 10000
 __version__
-$Id: listsid;fileadmin;default,v 1.4 2005/07/27 22:53:54 pudge Exp $
+$Id$

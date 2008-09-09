@@ -1,5 +1,5 @@
 #
-# $Id: mysql_schema,v 1.13 2004/06/17 16:12:02 jamiemccarthy Exp $
+# $Id$
 #
 
 DROP TABLE IF EXISTS stats_daily; 

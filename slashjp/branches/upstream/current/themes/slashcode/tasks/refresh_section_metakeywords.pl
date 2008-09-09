@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id: refresh_section_metakeywords.pl,v 1.6 2005/03/11 19:58:47 pudge Exp $
+# $Id$
 #
 # SlashD Task (c) OSTG 2001
 #

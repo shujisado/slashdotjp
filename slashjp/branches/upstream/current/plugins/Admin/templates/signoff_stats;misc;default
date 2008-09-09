@@ -49,5 +49,5 @@ __template__
 [% END %]
 </table>
 __version__
-$Id: signoff_stats;misc;default,v 1.4 2008/03/18 16:13:45 tvroom Exp $
+$Id$
 

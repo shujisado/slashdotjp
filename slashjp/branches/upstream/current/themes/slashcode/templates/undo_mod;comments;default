@@ -20,4 +20,4 @@ Undoing moderation to Comment #[% r.cid %]<br>
 __seclev__
 1000
 __version__
-$Id: undo_mod;comments;default,v 1.7 2005/07/27 22:54:48 pudge Exp $
+$Id$

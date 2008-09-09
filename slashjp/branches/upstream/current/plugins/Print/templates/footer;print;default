@@ -53,4 +53,4 @@ END -%]
 </body>
 </html>
 __version__
-$Id: footer;print;default,v 1.8 2005/07/27 22:54:12 pudge Exp $
+$Id$

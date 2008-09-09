@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: createTestSubmissions,v 1.13 2007/06/19 22:22:18 pudge Exp $
+# $Id$
 
 # Based on jamie's createTestStories. Any bugs are probably HIS fault
 # but I'll take the heat for them, because he's a really cool guy.
@@ -28,7 +28,7 @@ use Benchmark;
 
 use vars qw( $slashdb $werder $constants $gSkin );
 
-(my $VERSION) = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts, %family_tree);

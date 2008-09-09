@@ -55,4 +55,4 @@ mt_align=""; mt_valign=""; mt_rowspan = 0; mt_colspan=0; mt_width=""; mt_height=
 __seclev__
 10000
 __version__
-$Id: maintable_td;misc;default,v 1.12 2005/07/27 22:54:48 pudge Exp $
+$Id$

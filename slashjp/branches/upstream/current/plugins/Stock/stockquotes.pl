@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# $Id: stockquotes.pl,v 1.6 2006/01/24 15:56:51 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash;

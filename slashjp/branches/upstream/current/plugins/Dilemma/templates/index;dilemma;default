@@ -72,4 +72,4 @@ message_count.read %] old message[% message_count.read == 1 ? "" : "s";
 __seclev__
 10000
 __version__
-$Id: index;dilemma;default,v 1.3 2005/07/27 22:53:54 pudge Exp $
+$Id$

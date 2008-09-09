@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.1 2007/06/12 13:21:04 jamiemccarthy Exp $
+# $Id$
 name=TagDataView
 description="Tag-related stats data for admins"
 htdoc=tagdataview.pl

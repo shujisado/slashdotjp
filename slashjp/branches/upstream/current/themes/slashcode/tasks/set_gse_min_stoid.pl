@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: set_gse_min_stoid.pl,v 1.8 2006/01/26 00:17:54 pudge Exp $
+# $Id$
 
 # Does the most common getStoriesEssentials call, determines the
 # minimum stoid returned, and writes it to a var.
@@ -15,7 +15,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = "59 10 * * *";
 $task{$me}{timespec_panic_1} = ''; # not that important

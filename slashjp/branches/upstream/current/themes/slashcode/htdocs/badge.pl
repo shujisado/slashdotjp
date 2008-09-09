@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# $Id: badge.pl,v 1.2 2008/02/05 23:15:59 scc Exp $
+# $Id$
 
 use strict;
 use Slash;
@@ -91,8 +91,9 @@ sub forward {
 		}
 
 		# ...and _now_ we can head into submit.pl
-		my $safe = strip_paramattr($form->{url});
-		$dest_url = "/submit.pl?url=${safe}";
+		my $safe_url = strip_paramattr($form->{url});
+		my $safe_title = strip_paramattr($form->{title});
+		$dest_url = "/submit.pl?url=$safe_url&subj=$safe_title";
 	} else {
 		$dest_url = "/faq/badges.shtml";
 	}

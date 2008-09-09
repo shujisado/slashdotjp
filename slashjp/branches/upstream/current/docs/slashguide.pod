@@ -752,7 +752,7 @@ report.
 
 =head1 CHANGES
 
-$Log: slashguide.pod,v $
+$Log$
 Revision 1.8  2005/08/28 17:30:41  jamiemccarthy
 Minor correction notes
 
@@ -788,7 +788,7 @@ Revised for Slash 2.0.0 by Nathan Vonnahme and Dan Stahlke.
 
 =head1 VERSION
 
-$Id: slashguide.pod,v 1.8 2005/08/28 17:30:41 jamiemccarthy Exp $
+$Id$
 
 =begin html
 </div>

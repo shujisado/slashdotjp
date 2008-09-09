@@ -34,4 +34,4 @@ Enter email address to be removed from further story mailings:<br>
 </form>
 
 __version__
-$Id: emailOptoutForm;email;default,v 1.5 2005/07/27 22:53:54 pudge Exp $
+$Id$

@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.5 2003/08/29 15:21:07 jamie Exp $
+# $Id$
 name=PubKey
 description="Just allows a user's pubkey to be displayed"
 htdoc=pubkey.pl

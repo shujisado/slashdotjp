@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: console.pl,v 1.8 2008/03/21 16:53:32 tvroom Exp $
+# $Id$
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Slash::Utility;
 use Slash::XML;
 use vars qw($VERSION);
 
-($VERSION) = ' $Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
 sub main {
@@ -56,6 +56,7 @@ sub display {
 	my $storyadmin 	= $admindb->showStoryAdminBox("");
 	my $perfbox	= $admindb->showPerformanceBox();
 	my $authorbox	= $admindb->showAuthorActivityBox();
+	my $admintodo	= $admindb->showAdminTodo();
 	my $firehosebox = "";
 	if ($constants->{plugin}{FireHose}) {
 		my $firehose = getObject("Slash::FireHose");

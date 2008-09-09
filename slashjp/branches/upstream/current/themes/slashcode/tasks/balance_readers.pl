@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: balance_readers.pl,v 1.17 2008/01/16 17:28:14 jamiemccarthy Exp $
+# $Id$
 
 # For now this just gathers data.  The actual reweighting will come
 # later. - Jamie 2004/11/10

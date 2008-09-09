@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tags_update.pl,v 1.14 2006/07/07 23:10:52 jamiemccarthy Exp $
+# $Id$
 
 # This task is now defunct, replaced by the Top tagbox.
 
@@ -13,7 +13,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.14 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = "5 0 1 1 *";
 $task{$me}{timespec_panic_1} = ''; # not that important

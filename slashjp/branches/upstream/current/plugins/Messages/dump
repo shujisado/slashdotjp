@@ -1,5 +1,5 @@
 #
-# $Id: dump,v 1.27 2007/01/23 19:52:52 entweichen Exp $
+# $Id$
 #
 
 INSERT INTO code_param (type, code, name) VALUES ('deliverymodes', -1, 'No Messages');

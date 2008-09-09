@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: adminmail.pl,v 1.220 2008/04/16 00:15:35 scc Exp $
 
 use strict;
 use Slash::Constants qw( :messages :slashd );
@@ -448,7 +447,7 @@ EOT
 	# 1 hour
 	slashdLog("Sectional Stats Begin");
 	my $skins =  $slashdb->getDescriptions('skins');
-	my $stats_from_rss = $logdb->countFromRSSStatsBySections();
+	my $stats_from_rss = $logdb->countFromRSSStatsBySections({ no_op => $constants->{op_exclude_from_countdaily} });
 	#XXXSECTIONTOPICS - don't think we need this anymore but just making sure
 	#$sections->{index} = 'index';
 	
@@ -940,6 +939,17 @@ EOT
 			$fh_report .= "Firehose objects $_->{type}: $_->{cnt}\n";
 		}
 		$data{firehose_report} = $fh_report;
+	}
+
+	if ($firehose && $tags) {
+		my($binspam_globj_count, $is_spam_new_count, $autodetected_count)
+			= $stats->tallyBinspam();
+		$data{binspam_globj_count} = $binspam_globj_count;
+		$statsSave->createStatDaily('binspam_globj_count', $binspam_globj_count);
+		$data{is_spam_new_count} = $is_spam_new_count;
+		$statsSave->createStatDaily('is_spam_new_count', $is_spam_new_count);
+		$data{is_spam_autodetected_count} = $autodetected_count;
+		$statsSave->createStatDaily('is_spam_autodetected_count', $autodetected_count);
 	}
 
 	if ($tags) {

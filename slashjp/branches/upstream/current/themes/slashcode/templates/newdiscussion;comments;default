@@ -31,4 +31,4 @@ has been created.  Go to <a href="[% gSkin.rootdir %]/comments.pl?sid=[% id %]">
 __seclev__
 500
 __version__
-$Id: newdiscussion;comments;default,v 1.13 2005/07/27 22:54:48 pudge Exp $
+$Id$

@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.7 2003/08/29 16:18:44 jamie Exp $
+# $Id$
 name=Events
 description="Events System"
 htdoc=events.pl

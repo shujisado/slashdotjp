@@ -1,6 +1,6 @@
 
 	-- SGML catalog for the W3C MarkUp Validation Service --
-	-- $Id: sgml.soc,v 1.1 2005/04/14 14:57:05 pudge Exp $ --
+	-- $Id$ --
 
 OVERRIDE YES	-- prefer public identifiers to system identifiers --
 SGMLDECL sgml.dcl

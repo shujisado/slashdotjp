@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: MySQL.pm,v 1.265 2008/04/16 00:15:17 scc Exp $
 
 package Slash::DB::Static::MySQL;
 
@@ -17,10 +16,9 @@ use Digest::MD5 'md5_hex';
 use Encode 'encode_utf8';
 use Time::HiRes;
 use URI ();
-use vars qw($VERSION);
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.265 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
@@ -881,7 +879,7 @@ sub getTopComments {
 		&& $num_top_comments < $num_wanted
 	) {
 		my $comment = $self->sqlSelectArrayRef(
-			"stories.sid, title, cid, subject, date, nickname, comments.points, comments.reason",
+			"stories.sid, title, cid, subject, date, nickname, comments.points, comments.reason, date",
 			"comments, stories, story_text, users",
 			"cid=$cids->[$num_top_comments]->[0]
 				AND stories.stoid = story_text.stoid
@@ -1084,6 +1082,17 @@ sub getSkinInfo {
 	}
 
 	return \%index;
+}
+
+sub getSkinIndex {
+	my($self) = @_;
+	my @skins;
+	my $skins = $self->getSkins;
+	foreach (sort {$skins->{$a}{title} cmp $skins->{$b}{title}} keys %$skins) {
+		next if $skins->{$_}{skinindex} eq "no";
+		push @skins, $skins->{$_};
+	}
+	return \@skins;
 }
 
 # XXXSRCID This needs to actually be, like, written.
@@ -1910,20 +1919,31 @@ sub avgDynamicDurationForMinutesBack {
 }
 
 sub getUrlsNeedingFirstCheck {
-	my($self) = @_;
-	return $self->sqlSelectAllHashrefArray("*", "urls", "last_attempt IS NULL", "ORDER BY url_id ASC");
+	my($self, $options) = @_;
+	my $constants = getCurrentStatic();
+	$options ||= {};
+	$options->{limit} ||= 50;
+
+	my($extra_tables,$extra_where) = ('','');
+
+	if ($options->{limit_to_firehose} && $constants->{plugin}{FireHose}) {
+		$extra_tables = ",firehose";
+		$extra_where = "AND urls.url_id=firehose.url_id";
+	}
+	return $self->sqlSelectAllHashrefArray("*", "urls $extra_tables", "last_attempt IS NULL $extra_where", "ORDER BY urls.url_id ASC LIMIT $options->{limit}");
 }
 
 sub getUrlsNeedingRefresh {
-	my($self, $limit) = @_;
-	$limit ||= 50;
+	my($self, $options) = @_;
+	$options ||= {};
+	$options->{limit} ||= 50;
 	return $self->sqlSelectAllHashrefArray(
 		"*", 
 		"urls", 
 		"last_attempt IS NOT NULL 
 		 AND believed_fresh_until IS NOT NULL 
 		 AND believed_fresh_until < NOW()", 
-		"ORDER BY believed_fresh_until ASC LIMIT $limit"
+		"ORDER BY believed_fresh_until ASC LIMIT $options->{limit}"
 	);
 }
 

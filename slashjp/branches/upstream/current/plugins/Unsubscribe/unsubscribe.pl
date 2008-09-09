@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: unsubscribe.pl,v 1.2 2006/01/27 16:46:58 cowboyneal Exp $
+# $Id$
 
 use strict;
 use File::Path;

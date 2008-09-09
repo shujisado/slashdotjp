@@ -22,4 +22,4 @@ data.subnetid %]&amp;fieldname=subnetid">[% data.subnetid_vis %]]</a></span>
 __seclev__
 10000
 __version__
-$Id: ipid_display;misc;default,v 1.6 2007/12/13 20:54:56 pudge Exp $
+$Id$

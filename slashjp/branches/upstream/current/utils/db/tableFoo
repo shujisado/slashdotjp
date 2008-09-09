@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: tableFoo,v 1.5 2005/03/11 19:58:57 pudge Exp $
+# $Id$
 
 use strict;
 use File::Basename;
@@ -11,7 +11,7 @@ use DBIx::Password;
 
 use vars qw( $slashdb $constants  );
 
-(my $VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my %opts;

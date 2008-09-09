@@ -229,6 +229,12 @@ Firehose Report
 [% firehose_report %]
 [% END %]
 
+[% IF is_spam_new_count.defined %]
+Yesterday's admin binspammed globjs: [% binspam_globj_count %]
+Yesterday's hose item is_spams: [% is_spam_new_count %]
+Yesterday's Despam autodetects: [% is_spam_autodetected_count %]
+[% END %]
+
 [% IF tags_report %]
 Tags Report
 ------------------------------------
@@ -239,4 +245,4 @@ Tags Report
 __seclev__
 100
 __version__
-$Id: display;adminmail;default,v 1.87 2008/04/16 00:15:35 scc Exp $
+$Id$

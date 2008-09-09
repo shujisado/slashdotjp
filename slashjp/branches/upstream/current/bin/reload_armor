@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: reload_armor,v 1.7 2005/03/11 19:58:02 pudge Exp $
+# $Id$
 
 use strict;
 use Safe;
@@ -10,7 +10,7 @@ use File::Basename;
 use Slash::Install;
 use Getopt::Std;
 
-(my $VERSION) = ' $Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my %opts;

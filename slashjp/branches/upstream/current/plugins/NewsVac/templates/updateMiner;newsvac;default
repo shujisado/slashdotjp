@@ -51,4 +51,4 @@ Delete Miner '[% name %]'?
 __seclev__
 100
 __version__
-$Id: updateMiner;newsvac;default,v 1.6 2005/07/27 22:54:12 pudge Exp $
+$Id$

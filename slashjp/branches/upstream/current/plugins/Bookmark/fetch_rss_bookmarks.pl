@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: fetch_rss_bookmarks.pl,v 1.10 2007/03/02 02:41:49 pudge Exp $
+# $Id$
 
 use strict;
 use Slash;

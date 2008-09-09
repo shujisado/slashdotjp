@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Test.pm,v 1.21 2007/03/13 22:31:13 pudge Exp $
 
 package Slash::Test;
 
@@ -88,7 +87,7 @@ BEGIN { $ENV{TZ} = 'GMT' }
 
 use Data::Dumper;
 use File::Spec::Functions;
-use Storable qw(freeze thaw);
+use Storable qw(nfreeze thaw);
 
 use Slash;
 use Slash::Constants ':all';
@@ -98,17 +97,16 @@ use Slash::XML;
 
 use strict;
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision: 1.21 $ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT = (
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT = (
 	@Slash::EXPORT,
 	@Slash::Constants::EXPORT_OK,
 	@Slash::Display::EXPORT,
 	@Slash::Utility::EXPORT,
 	@Slash::XML::EXPORT,
 	@Data::Dumper::EXPORT,
-	qw(freeze thaw),
+	qw(nfreeze thaw),
 	'slashTest',
 	'Display',
 	'Test',
@@ -191,6 +189,7 @@ sub slashTest {
 		my $object = getObject("Slash::$plugin");
 		if ($object) {
 			no strict 'refs';
+			no warnings 'once';
 			${"main::$name"} = $object;
 		}
 	}
@@ -283,7 +282,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id: Test.pm,v 1.21 2007/03/13 22:31:13 pudge Exp $

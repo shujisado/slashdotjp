@@ -28,5 +28,13 @@ __template__
 		[% firehosetext %]
 	</div>
 </div>
+[% PROCESS init_tagui %]
+<script type="text/javascript">
+$(function(){
+	firehose_init_tagui(
+		$('#firehose > .view > .head > [id^=firehose-]')
+			.click(firehose_click_tag) );
+});
+</script>
 __version__
-$Id: view;firehose;default,v 1.9 2008/01/18 21:20:37 tvroom Exp $
+$Id$

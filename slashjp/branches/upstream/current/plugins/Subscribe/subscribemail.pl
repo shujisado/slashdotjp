@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 
-# $Id: subscribemail.pl,v 1.36 2006/01/12 21:39:21 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash::Constants qw(:messages);

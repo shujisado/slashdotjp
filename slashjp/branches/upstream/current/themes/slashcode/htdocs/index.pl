@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: index.pl,v 1.166 2008/01/30 22:46:10 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash;

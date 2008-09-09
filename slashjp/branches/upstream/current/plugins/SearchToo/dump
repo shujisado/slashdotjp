@@ -1,5 +1,5 @@
 #
-# $Id: dump,v 1.2 2006/09/28 21:42:35 pudge Exp $
+# $Id$
 #
 
 INSERT INTO vars (name, value, description) VALUES ('search_too_class', 'Slash::SearchToo::Classic', 'Default backend search API class');

@@ -52,4 +52,4 @@ END -%]
 [% END %]</ol>
 [% END -%]
 __version__
-$Id: dispStory;print;default,v 1.8 2005/07/27 22:54:12 pudge Exp $
+$Id$

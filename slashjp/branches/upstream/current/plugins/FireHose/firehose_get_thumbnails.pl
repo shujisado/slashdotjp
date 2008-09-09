@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: firehose_get_thumbnails.pl,v 1.4 2008/01/16 22:24:24 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 

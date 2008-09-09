@@ -1,17 +1,15 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Hof.pm,v 1.13 2005/12/21 19:36:04 jamiemccarthy Exp $
 
 package Slash::Hof;
 
 use strict;
 use Slash::Utility;
 use Slash::DB::Utility;
-use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 
-($VERSION) = ' $Revision: 1.13 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -110,7 +108,7 @@ sub countStoriesAuthors {
 	my($self) = @_;
 	my $authors = $self->sqlSelectAll('storycount, nickname, homepage',
 		'authors_cache', '',
-		'GROUP BY uid ORDER BY storycount DESC LIMIT 10'
+		'ORDER BY storycount DESC LIMIT 10'
 	);
 	return $authors;
 }
@@ -161,6 +159,7 @@ sub countStory {
 # time to finish this right now so I've also commented out the code
 # that calls this method, see themes/slashcode/htdocs/hof.pl.
 # - Jamie 2001/07/12
+# Adding "XXX" just in case we ever, you know, fix bugs - Jamie 2008/07/15
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
@@ -172,12 +171,10 @@ sub getCommentsTop {
 		pid, subject, date, time, comments.uid, cid, points',
 		'stories, comments, users',
 		$where,
-		' ORDER BY points DESC, date DESC LIMIT 10 '
+		'ORDER BY points DESC, date DESC LIMIT 10'
 	);
 
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	# XXXSKIN - not sure if this is the best way to do this, but
-	# i figure it is fine ... please change or advise if should be changed ...
 	for (@$stories) {
 		$_->[0] = $reader->getSkin($_->[0])->{name};
 	}

@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: process_moderation.pl,v 1.3 2006/11/06 17:04:43 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use Slash::Utility;
@@ -108,7 +108,7 @@ sub give_out_tokens {
 	my $constants = getCurrentStatic();
 	my $moddb = getObject('Slash::Moderation');
 	my $mod_reader = getObject('Slash::Moderation', { db_type => 'reader' });
-	my $log_reader = getObject('Slash::DB', { db_type => 'log_slave' });
+	my $log_reader = getObject('Slash::Moderation', { db_type => 'log_slave' });
 	my $statsSave = getObject('Slash::Stats::Writer', '');
 
 	my $needed = 0;

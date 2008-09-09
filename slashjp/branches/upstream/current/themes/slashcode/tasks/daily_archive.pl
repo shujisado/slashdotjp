@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: daily_archive.pl,v 1.32 2005/12/04 05:45:31 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Tags.pm,v 1.112 2008/04/03 22:01:38 pudge Exp $
 
 package Slash::Tags;
 
@@ -13,11 +12,10 @@ use Slash::Utility;
 use Slash::DB::Utility;
 #use Slash::Clout;
 use Apache::Cookie;
-use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.112 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: And where would a giant nerd be? THE LIBRARY!
 
@@ -243,7 +241,7 @@ sub ajaxCreateTag {
 
 sub deactivateTag {
 	my($self, $hr, $options) = @_;
-	my $tag = $self->_setuptag($hr, { tagname_not_required => 1 });
+	my $tag = $self->_setuptag($hr, { tagname_not_required => !$options->{tagname_required} });
 	return 0 if !$tag;
 	my $prior_clause = '';
 	$prior_clause = " AND tagid < $options->{tagid_prior_to}" if $options->{tagid_prior_to};
@@ -551,6 +549,9 @@ sub getTagsByGlobjid {
 	if ($options->{tagnameid}) {
 		my $tagnameid_q = $self->sqlQuote($options->{tagnameid});
 		$tagnameid_where = " AND tagnameid = $tagnameid_q";
+	} elsif ($options->{limit_to_tagnames}) {
+		my $in_clause = join ',', grep { $_ } map { $self->getTagnameidFromNameIfExists($_) } @{ $options->{limit_to_tagnames} };
+		$tagnameid_where = " AND tagnameid IN ($in_clause)";
 	}
 
 	my $ar = $self->sqlSelectAllHashrefArray(
@@ -1108,16 +1109,24 @@ sub setTagsForGlobj {
 	# Create any tag specified but only if it does not already exist.
 	my @create_tagnames	= grep { !$old_tagnames{$_} } sort keys %new_tagnames;
 
-	# Deactivate any tags previously specified that were deleted from
-	# the tagbox.
-	my @deactivate_tagnames	= grep { !$new_tagnames{$_} } sort keys %old_tagnames;
+	my @deactivate_tagnames;
+	if ( ! $options->{deactivate_by_operator} ) {
+		# Deactivate any tags previously specified that were deleted from the tagbox.
+		@deactivate_tagnames	= grep { !$new_tagnames{$_} } sort keys %old_tagnames;
+	} else {
+		# Deactivate any tags that are supplied as "-tag"
+		@deactivate_tagnames =
+			map { $1 if /^-(.+)/ }
+			split /[\s,]+/,
+			lc $tag_string;
+	}
 	for my $tagname (@deactivate_tagnames) {
 		$tags->deactivateTag({
 			uid =>		$uid,
 			name =>		$tagname,
 			table =>	$table,
 			id =>		$id
-		});
+		}, { tagname_required => $options->{tagname_required} });
 	}
 
 	my @created_tagnames = ( );
@@ -1135,7 +1144,7 @@ sub setTagsForGlobj {
 	}
 
 	my $now_tags_ar = $tags->getTagsByNameAndIdArrayref($table, $id,
-		{ uid => $uid }); # don't list private tags
+		{ uid => $uid, include_private => $options->{include_private} }); # don't list private tags unless forced
 	my $newtagspreloadtext = join ' ', sort map { $_->{tagname} } @$now_tags_ar;
 	return $newtagspreloadtext;
 }
@@ -1299,6 +1308,119 @@ sub ajaxProcessAdminTags {
 	}
 }
 
+sub getUserNodNixForGlobj {
+	my($self, $globjid, $uid) = @_;
+	my $current_vote_tags_array = $self->getTagsByGlobjid($globjid, {
+		uid => $uid,
+		include_private => 1,
+		limit_to_tagnames => ['nod', 'nix']
+	});
+	return join ' ', sort map { $_->{tagname} } @$current_vote_tags_array;
+}
+
+sub ajaxSetGetCombinedTags {
+	my($slashdb, $constants, $user, $form) = @_;
+
+	my $type = $form->{type} || 'firehose';
+
+	my ($base_item, $base_writer);
+	my $globjid;
+	if ( $type eq 'firehose' ) {
+		$base_writer = getObject('Slash::FireHose');
+		$base_item = $base_writer->getFireHose($form->{id});
+		$globjid = $base_item->{globjid} if $base_item;
+	}
+	# XXX TO DO: handle other types here, setting $base_item appropriately
+
+	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+	if (!$globjid || $globjid !~ /^\d+$/ || !$tags_reader) {
+		return getData('error', {}, 'tags');
+	}
+	my($table, $item_id) = $tags_reader->getGlobjTarget($globjid);
+
+	my $uid = $user && $user->{uid} || 0;
+
+	# if we have to execute commands, do them _before_ we fetch any tag lists
+	my $user_tags = '';
+	if ( $form->{tags} ) {
+		my $tags_writer = getObject('Slash::Tags');
+		$user_tags = $tags_writer->setTagsForGlobj($item_id, $table, '', {
+			deactivate_by_operator => 1,
+			tagname_required => 1,
+			include_private => 1
+		});
+		if ( $user->{is_admin} && $type eq 'firehose' ) {
+			my $added_tags =
+				join ' ',
+				grep { /^[^-]/ }
+				split /\s+/,
+				lc $form->{tags};
+
+			$base_writer->setSectionTopicsFromTagstring($form->{id}, $added_tags);
+			$base_item = $base_writer->getFireHose($form->{id});
+		};
+	} elsif ( ! $form->{global_tags_only} ) {
+		my $current_tags_array = $tags_reader->getTagsByNameAndIdArrayref($table, $item_id, { uid => $uid, include_private => 1 });
+		$user_tags = join ' ', sort map { $_->{tagname} } @$current_tags_array;
+	}
+
+	my $datatype_tag = $base_item ? $base_item->{type} : '';
+	my $top_tags = $base_item ? $base_item->{toptags} : '';
+
+	my $section_tag = '';
+	my $s = $base_item->{primaryskid};
+	if ( $s ) {
+		if ( $s != $constants->{mainpage_skid} ) {
+			my $skin = $base_writer->getSkin($s);
+			$section_tag = $skin->{name};
+		} else {
+			$section_tag = 'mainpage';
+		}
+	}
+
+	my $topic_tags = '';
+	my $t = $base_item->{tid};
+	if ( $t ) {
+		my $topic = $base_writer->getTopic($t);
+		$topic_tags = $topic->{keyword};
+	}
+
+	# XXX how to get the system tags?
+	my $system_tags = $datatype_tag . ' ' . $section_tag . ' ' . $topic_tags;
+
+	my $response = '<system>' . $system_tags . '<top>'. $top_tags;
+	$response .= '<user>' . $user_tags unless $form->{global_tags_only};
+
+	return $response;
+}
+
+sub setGetCombinedTags {
+	my($self, $id, $type, $user, $commands) = @_;
+
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	my $options = {
+		'id'	=> $id,
+		'type'	=> $type,
+	};
+	$options->{global_tags_only} = 1 unless $user;
+	$options->{tags} = $commands if $commands;
+
+	my @tuples = split /<([\w:]*)>/, ajaxSetGetCombinedTags($slashdb, $constants, $user, $options);
+	shift @tuples; # bogus empty first elem when capturing separators
+
+	my $response = {};
+	while ( @tuples ) {
+		my $key = shift @tuples;
+		$response->{$key} = shift @tuples || '' if $key;
+#print STDERR "key => $key; value => $response->{$key}\n";
+	}
+#print STDERR "---------\n";
+
+	return $response;
+}
+
 {
 my %_adcmd_prefix = ( );
 sub normalizeAndOppositeAdminCommands {
@@ -1417,6 +1539,9 @@ sub ajaxTagHistory {
 sub ajaxListTagnames {
 	my($slashdb, $constants, $user, $form) = @_;
 	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+
+	$form->{prefix} ||= $form->{'q'} || '';
+
 	my $prefix = '';
 	$prefix = lc($1) if $form->{prefix} =~ /([A-Za-z0-9]{1,20})/;
 	my $len = length($prefix);
@@ -1444,7 +1569,7 @@ sub ajaxListTagnames {
 
 	my $ret_str = '';
 	for my $tagname (sort { $tnhr->{$b} <=> $tnhr->{$a} } keys %$tnhr) {
-		$ret_str .= sprintf("%s%s\t%d\n", $notize, $tagname, $tnhr->{$tagname});
+		$ret_str .= sprintf("%s%s\n", $notize, $tagname);
 	}
 #use Data::Dumper; print STDERR scalar(localtime) . " ajaxListTagnames uid=$user->{uid} prefix='$prefix' tnhr: " . Dumper($tnhr);
 	return $ret_str;
@@ -1743,7 +1868,11 @@ sub listTagnamesActive {
 
 	# This seems like a horrendous query, but I _think_ it will run
 	# in acceptable time, even under fairly heavy load.
+	# (But see below, in listTagnamesRecent, for a possible
+	# optimization.)
+
 	# Round off time to the last minute.
+
 	my $now_ut = $self->getTime({ unix_format => 1 });
 	my $next_minute_ut = int($now_ut/60+1)*60;
 	my $next_minute_q = $self->sqlQuote( time2str( '%Y-%m-%d %H:%M:00', $next_minute_ut, 'GMT') );
@@ -1847,21 +1976,49 @@ sub listTagnamesRecent {
 	my $seconds =         $options->{seconds}         || (3600*6);
 	my $include_private = $options->{include_private} || 0;
 	my $private_clause = $include_private ? '' : " AND private='no'";
-	my $recent_ar = $self->sqlSelectColArrayref(
-		'DISTINCT tagnames.tagname',
-		"users_info,
-		 tags LEFT JOIN tag_params
-		 	ON (tags.tagid=tag_params.tagid AND tag_params.name='tag_clout'),
-		 tagnames LEFT JOIN tagname_params
-			ON (tagnames.tagnameid=tagname_params.tagnameid AND tagname_params.name='tag_clout')",
-		"tagnames.tagnameid=tags.tagnameid
-		 AND inactivated IS NULL $private_clause
+
+	# Previous versions of this method grabbed tagname string along
+	# with tagnameid, and did a LEFT JOIN on tagname_params to exclude
+	# tagname_params with tagname_clout=0.  Its performance was
+	# acceptable up to about 50K tags, on the order of 1 tag insert/sec
+	# at the time interval used.  But performance fell off a cliff
+	# somewhere before 300K tags.  So I'm optimizing this to do an
+	# initial select of more-raw data from the DB and then do a
+	# second and third select to grab the full data set needed.
+	# Early testing suggests this runs at least 10x faster.
+	# - Jamie 2008-08-28
+
+	my $tagnameids_ar = $self->sqlSelectColArrayref(
+		'DISTINCT tags.tagnameid',
+		"tags LEFT JOIN tag_params
+			ON (tags.tagid=tag_params.tagid AND tag_params.name='tag_clout')",
+		"inactivated IS NULL
+		 $private_clause
 		 AND tags.created_at >= DATE_SUB(NOW(), INTERVAL $seconds SECOND)
 		 AND (tag_params.value IS NULL OR tag_params.value > 0)
-		 AND (tagname_params.value IS NULL OR tagname_params.value > 0)
-		 AND tags.uid=users_info.uid AND users_info.tag_clout > 0",
-		'ORDER BY tagnames.tagname'
+		 AND tags.uid=users_info.uid AND users_info.tag_clout > 0"
 	);
+
+	# Eliminate any tagnameid's with a reduced tagname_clout.
+	# This is probably smaller than the list of distinct tagnames
+	# used in the past n hours, so it's probably faster (and should
+	# never be noticeably slower) to grab them all and do a difference
+	# on the two lists in perl instead of SQL.
+	# XXX Not sure whether it's the best thing here to exclude all
+	# tagnames with even slightly-reduced clout, but I think so.
+	# Those tagnames probably aren't ones that would be valuable to
+	# see in a list of recent tags.
+	my $tagnameids_noclout_ar = $self->sqlSelectColArrayref(
+		'tagnameid',
+		'tagname_params',
+		"name='tag_clout' AND value+0 < 1");
+	my %noclout = ( map { $_, 1 } @$tagnameids_noclout_ar );
+	$tagnameids_ar = grep { ! $noclout{$_} } @$tagnameids_ar;
+
+	# Get the tagnames for those id's.
+	my $tagnameids_str = join(',', sort { $a <=> $b } @$tagnameids_ar);
+	my $recent_ar = $self->sqlSelectColArrayref('tagname', 'tagnames',
+		"tagnameid IN ($tagnameids_str)");
 	@$recent_ar = sort tagnameorder @$recent_ar;
 	return $recent_ar;
 }
@@ -1970,8 +2127,8 @@ sub listTagnamesByPrefix_cache {
 }
 
 sub getPrivateTagnames {
-	my ($self) = @_;
-	my $user = getCurrentUser;
+	my($self) = @_;
+	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
 	my @private_tags = ();
@@ -2139,12 +2296,13 @@ sub getRecentTagnamesOfInterest {
 	if ($firehose) {
 		$fh_min_score = $firehose->getMinPopularityForColorLevel($constants->{tags_rectn_mincare} || 5);
 	}
+	my $target_hr = $self->getGlobjTargets([ map { $_->{globjid} } @$tags_ar ]);
 	for my $tag_hr (@$tags_ar) {
 		my $tc = $tag_hr->{total_clout};
 		next unless $tc;
 		my $tagnameid = $tag_hr->{tagnameid};
 		my $globjid = $tag_hr->{globjid};
-		my($type) = $self->getGlobjTarget($globjid);
+		my $type = $target_hr->{$globjid}[0];
 		if ($firehose) {
 			my $fhid = $firehose->getFireHoseIdFromGlobjid($globjid);
 			my $item = $firehose->getFireHose($fhid) if $fhid;

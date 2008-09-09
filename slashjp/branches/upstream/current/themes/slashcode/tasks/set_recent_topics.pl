@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: set_recent_topics.pl,v 1.16 2005/09/01 19:30:32 tvroom Exp $
+# $Id$
 
 # This task (and its associated templates and other changes)
 # was rewritten almost in its entirety, by Shane Zatezalo

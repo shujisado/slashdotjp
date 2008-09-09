@@ -3,7 +3,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: convertDBto200406_suggest,v 1.5 2005/03/11 19:58:48 pudge Exp $
+# $Id$
 
 # This script checks over the topic tree that has been generated
 # by convertDBto200406, and emits SQL DELETE commands which may
@@ -23,7 +23,7 @@ use Slash::Utility;
 use vars qw( $slashdb
         $stoids );
 
-(my $VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 
 my (%opts, $tree);

@@ -82,4 +82,4 @@ END; note %]
 __seclev__
 500
 __version__
-$Id: changePasswd;login;default,v 1.9 2008/02/06 16:41:02 entweichen Exp $
+$Id$

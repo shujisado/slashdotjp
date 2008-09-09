@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $Id: accesslog_artcom.pl,v 1.5 2006/10/26 18:02:33 jamiemccarthy Exp $
+# $Id$
 # 
 # Transfer article and comments hits from accesslog into a new
 # table, accesslog_artcom, for fast processing by run_moderatord.
@@ -12,7 +12,7 @@ use Slash::DB;
 use Slash::Utility;
 use Slash::Constants ':slashd';
 
-(my $VERSION) = ' $Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # Change this var to change how often the task runs.
 $minutes_run = 6;

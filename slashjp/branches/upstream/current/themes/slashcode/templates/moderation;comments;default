@@ -37,4 +37,4 @@ CASE "moderated" %]
 __seclev__
 1000
 __version__
-$Id: moderation;comments;default,v 1.9 2005/07/27 22:54:48 pudge Exp $
+$Id$

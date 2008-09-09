@@ -1,4 +1,4 @@
-# $Id: PLUGIN,v 1.1 2004/09/03 15:34:34 tvroom Exp $
+# $Id$
 name=Rating
 description="Rating"
 mysql_schema=mysql_schema

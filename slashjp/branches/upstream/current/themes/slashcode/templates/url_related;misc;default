@@ -17,4 +17,4 @@ __template__
 	<span class="section">Offsite:</span> <span class="storytitle"><a href="[% url %]">[% title %]</a></span>
 </div>
 __version__
-$Id: url_related;misc;default,v 1.1 2006/02/01 21:54:02 tvroom Exp $
+$Id$

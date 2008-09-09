@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: message_delivery.pl,v 1.19 2005/11/09 04:02:42 jamiemccarthy Exp $
+# $Id$
 
 use strict;
 use File::Spec::Functions;

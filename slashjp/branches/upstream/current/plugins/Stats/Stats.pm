@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id: Stats.pm,v 1.197 2008/04/17 00:30:39 pudge Exp $
 
 package Slash::Stats;
 
@@ -18,11 +17,10 @@ use Slash::Utility;
 use Slash::DB::Utility;
 use LWP::UserAgent;
 
-use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision: 1.197 $ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub new {
 	my($class, $user, $options) = @_;
@@ -94,7 +92,7 @@ sub new {
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp_rss");
 
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_temp_host_addr");
-		$self->sqlDo("DROP TABLE IF EXISTS accesslog_build_uid_ip");
+		$self->sqlDo("DROP TABLE IF EXISTS accesslog_build_uidip");
 		$self->sqlDo("DROP TABLE IF EXISTS accesslog_build_unique_uid");
 		$self->sqlDo("CREATE TABLE accesslog_temp_host_addr (host_addr char(32) NOT NULL, anon ENUM('no','yes') NOT NULL DEFAULT 'yes', PRIMARY KEY (host_addr, anon)) TYPE = InnoDB");
 		$self->sqlDo("CREATE TABLE accesslog_build_uidip (uidip varchar(32) NOT NULL, op varchar(254) NOT NULL, PRIMARY KEY (uidip, op), INDEX (op)) TYPE = InnoDB");
@@ -119,6 +117,7 @@ sub new {
 			my $new_sql = $create_sql;
 			$new_sql =~ s/__TABLENAME__/$new_table/;
 			$self->sqlDo($new_sql);
+			$self->sqlDo("ALTER TABLE $new_table DROP INDEX ts");
 		}
 
 		# Create the accesslog_temp table, then add indexes to its data.
@@ -136,21 +135,13 @@ sub new {
 			"id BETWEEN $minid AND $maxid AND ts $self->{_day_between_clause}
 			 AND status  = 200 AND op != 'rss'",
 			3, 60);
-		# Some of these (notably ts) may be redundant but that's OK,
-		# they will just throw errors we don't care about.  They're here
-		# in case the table on the DB we're operating on has had its ts
-		# index removed.
+		# Some of these may be redundant but that's OK, they will
+		# just throw errors we don't care about.
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX uid (uid)");
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX skid_op (skid,op)");
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX op_uid_skid (op, uid, skid)");
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX referer (referer(4))");
-		# XXX there should be a way to check whether the source accesslog table
-		# already had this index, and if so, to leave it off.
 		$self->sqlDo("ALTER TABLE accesslog_temp ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_subscriber ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_other ADD INDEX ts (ts)");
-		$self->sqlDo("ALTER TABLE accesslog_temp_rss ADD INDEX ts (ts)");
 
 		# Create the other accesslog_temp_* tables and add their indexes.
 		return undef unless $self->_do_insert_select(
@@ -160,6 +151,7 @@ sub new {
 			"id BETWEEN $minid AND $maxid AND ts $self->{_day_between_clause}
 			 AND status  = 200 AND op = 'rss'",
 			3, 60);
+		$self->sqlDo("ALTER TABLE accesslog_temp_rss ADD INDEX ts (ts)");
 		return undef unless $self->_do_insert_select(
 			"accesslog_temp_errors",
 			"*",
@@ -167,6 +159,7 @@ sub new {
 			"id BETWEEN $minid AND $maxid AND ts $self->{_day_between_clause}
 			 AND status != 200",
 			3, 60);
+		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX ts (ts)");
 
 		my $stats_reader = getObject('Slash::Stats', { db_type => 'reader' });	
 		my $recent_subscribers = $stats_reader->getRecentSubscribers();
@@ -180,6 +173,7 @@ sub new {
 				"accesslog_temp",
 				"uid IN ($recent_subscriber_uidlist)",
 				3, 60);
+			$self->sqlDo("ALTER TABLE accesslog_temp_subscriber ADD INDEX ts (ts)");
 		}
 
 		my @pages;
@@ -197,8 +191,9 @@ sub new {
 			"accesslog_temp",
 			"op NOT IN ($page_list)",
 			3, 60);
+		$self->sqlDo("ALTER TABLE accesslog_temp_other ADD INDEX ts (ts)");
 
-		# Add in the indexes we need for those tables.
+		# Add in the non-ts indexes we need for those tables.
 		$self->sqlDo("ALTER TABLE accesslog_temp_errors ADD INDEX status_op_skid (status, op, skid)");
 		$self->sqlDo("ALTER TABLE accesslog_temp_subscriber ADD INDEX skid (skid)");
 		$self->sqlDo("ALTER TABLE accesslog_temp_other ADD INDEX skid (skid)");
@@ -1013,8 +1008,7 @@ sub countSubmissionsByDay {
 sub countSubmissionsByCommentIPID {
 	my($self, $ipids, $options) = @_;
 	return unless @$ipids;
-	my $slashdb = getCurrentDB();
-	my $in_list = join(",", map { $slashdb->sqlQuote($_) } @$ipids);
+	my $in_list = join(",", map { $self->sqlQuote($_) } @$ipids);
 
 	my $where = "time $self->{_day_between_clause}
 		AND ipid IN ($in_list)";
@@ -1293,11 +1287,20 @@ sub countDailyByPages {
 
 ########################################################
 sub countFromRSSStatsBySections {
-	my ($self) = @_;
+	my($self, $options) = @_;
+	my $op_clause = '';
+	if ($options->{no_op}) {
+		my $no_op = $options->{no_op};
+		$no_op = [ $no_op ] if !ref($no_op);
+		if (@$no_op) {
+			my $op_not_in = join(",", map { $self->sqlQuote($_) } @$no_op);
+			$op_clause = " AND op NOT IN ($op_not_in)";
+		}
+	}
 	$self->sqlSelectAllHashref("skid",
 		"skid, count(*) AS cnt, COUNT(DISTINCT uid) AS uids, COUNT(DISTINCT host_addr) AS ipids",
 		"accesslog_temp",
-		"referer='rss'",
+		"referer='rss'$op_clause",
 		"GROUP BY skid");
 }
 
@@ -1352,7 +1355,7 @@ sub countDailyStoriesAccessRSS {
 		"op='slashdot-it' AND query_string LIKE '%from=rssbadge'",
 		'GROUP BY query_string');
 	my $sid_hr = { };
-	my $regex_sid = regexSid();
+	my $regex_sid = regexSid(1);
 	for my $qs (keys %$qs_hr) {
 		my($sid) = $qs =~ m{sid=\b([\d/]+)\b};
 		next unless $sid =~ $regex_sid;
@@ -1749,11 +1752,14 @@ sub getTopBadgeURLs {
 	my $constants = getCurrentStatic();
 	return [ ] unless $constants->{basedomain} eq 'slashdot.org';
 
+	# If Slash::XML::RSS::rssstory()'s text for its <img src>
+	# badge changes, the query_string check here may also
+	# have to change.
 	my $count = $options->{count} || 10;
 	my $top_ar = $self->sqlSelectAll(
 		"query_string AS qs, COUNT(*) AS c",
 		"accesslog_temp",
-		"op='slashdot-it' AND query_string NOT LIKE '%from=rssbadge'",
+		"op='slashdot-it' AND query_string NOT LIKE 'from=rss%'",
 		"GROUP BY qs ORDER BY c DESC, qs LIMIT $count"
 	);
 	for my $duple (@$top_ar) {
@@ -2146,6 +2152,7 @@ sub _do_insert_select {
 			sleep $sleep_time;
 		} else {
 			print STDERR scalar(localtime) . " INSERT-SELECT $to_table still failed, giving up\n";
+			$self->insertErrnoteLog("adminmail", "Failed creating table '$to_table'", "Checked replication $try_num times without success, giving up");
 			return undef;
 		}
 
@@ -2209,6 +2216,64 @@ sub numTagsForDayByType {
 
 }
 
+sub getTopicStats {
+	my ($self, $days, $order) = @_;
+	$days = 30 if $days !~/^\d+$/;
+	my $order_clause = $order eq "name" ? "1 ASC" : "4 DESC";
+
+	return $self->sqlSelectAllHashrefArray(
+		"topics.textname, story_topics_rendered.tid, count(*) AS cnt, sum(hits) AS sum_hits, sum(commentcount) AS sum_cc, avg(hits) AS avg_hits, avg(commentcount) AS avg_cc, image", 
+		"stories, story_topics_rendered, topics",
+		"time > date_sub(now(), interval $days day) and stories.stoid = story_topics_rendered.stoid and story_topics_rendered.tid = topics.tid group by story_topics_rendered.tid",
+		"order by $order_clause"
+	);
+
+}
+
+sub tallyBinspam {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+	return (undef, undef, undef)
+		unless $constants->{plugin}{Tags} && $constants->{plugin}{FireHose};
+
+	# Count all globjs which got 'binspam' tags applied by admins
+	# during the previous day, but only globjs which did _not_ get
+	# any admin 'binspam' tags in days previous (we already counted
+	# those).
+	my $tagsdb = getObject('Slash::Tags');
+	my $binspam_tagnameid = $tagsdb->getTagnameidCreate('binspam');
+	my $admins = $self->getAdmins();
+	my $admin_uid_str = join(',', sort { $a <=> $b } keys %$admins);
+	my $binspammed_globj = $self->sqlSelect(
+		'COUNT(DISTINCT t1.globjid)',
+		"tags AS t1 LEFT JOIN tags AS t2
+			ON (    t1.globjid=t2.globjid
+			    AND t2.tagnameid=$binspam_tagnameid
+			    AND t2.uid IN ($admin_uid_str)
+			    AND t2.created_at < '$self->{_day} 00:00:00'
+			    AND t2.inactivated IS NULL )",
+		"t1.uid IN ($admin_uid_str)
+		 AND t1.created_at $self->{_day_between_clause}
+		 AND t1.inactivated IS NULL
+		 AND t1.tagnameid=$binspam_tagnameid
+		 AND t2.tagid IS NULL");
+
+	# Get the total is_spam count in the hose.
+	my $old_count = $constants->{stats_firehose_spamcount} || 0;
+	my $is_spam_count = $self->sqlCount('firehose', "is_spam='yes'") || 0;
+	$is_spam_count = $old_count if $is_spam_count < $old_count;
+	my $is_spam_new = $is_spam_count - $old_count;
+	$self->setVar('stats_firehose_spamcount', $is_spam_count);
+
+	# And get the count of is_spams added automatically by tagboxes/Despam.
+	my $statsSave = getObject('Slash::Stats::Writer', { day => $self->{_day} });
+	# Create it if it doesn't exist, so stats have an unbroken sequence.
+	$statsSave->createStatDaily('firehose_binspam_despam', 0);
+	my $autodetected = $self->getStatToday('firehose_binspam_despam');
+ 
+	return($binspammed_globj, $is_spam_new, $autodetected);
+}
+
 ########################################################
 sub DESTROY {
 	my($self) = @_;
@@ -2224,7 +2289,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id: Stats.pm,v 1.197 2008/04/17 00:30:39 pudge Exp $

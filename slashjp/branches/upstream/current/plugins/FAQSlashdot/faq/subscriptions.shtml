@@ -3,7 +3,7 @@
 <html>
 <head>
         <title>Slashdot FAQ - Subscriptions</title>
-<!-- $Id: subscriptions.shtml,v 1.24 2008/04/10 04:34:09 pudge Exp $ -->
+<!-- $Id$ -->
 <!--#include virtual="/slashcssbase.inc"-->
 <!--#include virtual="/slashhead-gen-full.inc"-->
 
