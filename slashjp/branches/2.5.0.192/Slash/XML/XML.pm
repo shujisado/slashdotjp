@@ -130,6 +130,26 @@ sub xmlDisplay {
 		$opt = ($opt && $opt == 1) ? { Return => 1 } : {};
 	}
 
+	if ($opt->{mcdkey}) {
+		my $slashdb = getCurrentDB();
+		my $mcd = $slashdb->getMCD();
+		my $mcdkey = undef;
+		if ($mcd) {
+			$mcdkey = "$slashdb->{_mcd_keyprefix}:xmldcache:$type:$opt->{mcdkey}";
+			my $temp = $content;
+			if ($type =~ /^rss$/i) {
+				$temp =~ s|[dD]ate>[^<]+</||;
+			} elsif ($type =~ /^atom$/) {
+				$temp =~ s|updated>[^<]+</||;
+			}
+
+			$mcd->set($mcdkey, {
+				content	=> $content,
+				etag	=> md5_hex(encode_utf8($temp)),
+			});
+		}
+	}
+
 	if ($opt->{Return}) {
 		return $content;
 	} else {
