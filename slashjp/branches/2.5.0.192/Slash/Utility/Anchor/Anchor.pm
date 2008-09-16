@@ -395,14 +395,15 @@ The 'html-redirect' template block.
 =cut
 
 sub redirect {
-	my($url) = @_;
+	my($url, $code) = @_;
+	$code ||= 302;
 	my $constants = getCurrentStatic();
 	$url = url2abs($url);
 	my $r = Apache->request;
 
 	$r->content_type($constants->{content_type_webpage} || 'text/html');
 	$r->header_out(Location => $url);
-	$r->status(302);
+	$r->status($code);
 	$r->send_http_header;
 
 	slashDisplay('html-redirect', { url => $url });

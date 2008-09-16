@@ -11,8 +11,9 @@ slash (2.5.0.192-17) unstable; urgency=low
     - Fix: slashDisplay() option 'Skin' does not applied
   * Add logcheck ignore rule for SearchEst
   * Add plugins/Journal/journal_update_slashbox.pl to create topjournal blocks
+  * Add feature to change redirect status code on redirect()
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 12 Sep 2008 13:40:01 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 16 Sep 2008 12:02:15 +0000
 
 slash (2.5.0.192-16) unstable; urgency=low
 
