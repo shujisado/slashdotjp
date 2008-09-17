@@ -20,7 +20,6 @@ use base 'Slash::DB';
 use base 'Slash::DB::Utility';
 use Slash::Constants ':messages';
 use Encode;
-use Slash::LDAPDB;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
@@ -1567,7 +1566,6 @@ sub deleteUser {
 	});
 	my $rows = $self->sqlDelete("users_param", "uid=$uid");
 	$self->setUser_delete_memcached($uid);
-	#Slash::LDAPDB->new()->deleteUserByUid($uid); # do NOT delete entry. just remove site data...
 	return $rows;
 }
 
@@ -1645,7 +1643,6 @@ sub getUserAuthenticate {
 					passwd		=> $cryptpasswd
 				}, "uid=$uid_try_q");
 				$newpass = 1;
-				Slash::LDAPDB->new()->setUserByUid($uid_try, {passwd => $cryptpasswd});
 
 				$uid_verified = $db_uid;
 				# delete existing logtokens
@@ -2480,13 +2477,6 @@ sub createUser {
 
 	$self->sqlDo("COMMIT");
 	$self->sqlDo("SET AUTOCOMMIT=1");
-
-	Slash::LDAPDB->new()->createUser($matchname, {
-		realemail	=> $email,
-		nickname	=> $newuser,
-		passwd		=> $passwd,
-		uid		=> $uid,
-	});
 
 	$self->setUser_delete_memcached($uid);
 
@@ -10537,8 +10527,6 @@ sub setUser {
 	# And delete from memcached again after we update the DB
 	$mcd_need_delete = 1 if $rows;
 	$self->setUser_delete_memcached($uid) if $mcd_need_delete;
-
-	Slash::LDAPDB->new()->setUserByUid($uid, $hashref);
 
 	return $rows;
 }

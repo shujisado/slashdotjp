@@ -1119,13 +1119,6 @@ INSERT INTO vars (name, value, description) VALUES ('writestatus','dirty','Simpl
 INSERT INTO vars (name, value, description) VALUES ('xhtml','0','Boolean for whether we are using XHTML');
 
 -- add constants for OSDN Japan
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_attrib_prefix','','attribute prefix for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_base_dn','','base dn for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_dn','','binddn for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_bind_passwd','','bind password for LDAP migration');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_debug_level','0','LDAPDB debug level (default: 5)');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_enable','0','enable LDAP migration (1: enable, 0: disable)');
-INSERT IGNORE INTO vars (name, value, description) VALUES ('ldap_peer_attrib_prefix', '', 'peer attribute prefix for LDAP migration');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mail_charset_body','us-ascii','Character Encoding used for mail body sent by the system (s. Encode::Supported)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mail_charset_header','MIME-Header','Character Encoding used for mail header sent by the system (s. Encode::MIME::Header)');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('rss_entitize_nonascii', 1, 'Convert non-ASCII-printable characters into entities?');
