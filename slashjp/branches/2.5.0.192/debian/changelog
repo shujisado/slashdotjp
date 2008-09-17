@@ -1,11 +1,5 @@
-slash (2.5.0.192-17) unstable; urgency=low
+slash (2.5.0.192-18) unstable; urgency=low
 
-  * Fix journals URL (remove "top")
-    - top recent: /journals/top/recent -> /journals/recent
-    - top posters: /journals/top/posters -> /journals/posters
-    - you can access old URL
-  * Add /faq/ internal redirection at Slash/Apache/Apache.pm
-    - This code is for slash-plugin-wikicontents
   * Use $user->{currentSkin} at $slashdb->getTemplateByName()
     - Fix: slashDisplay() option 'Skin' does not applied
   * Add logcheck ignore rule for SearchEst
@@ -16,7 +10,18 @@ slash (2.5.0.192-17) unstable; urgency=low
   * Add feature to store/get journal and polls RSS content from memcached
   * Remove LDAPDB library
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 17 Sep 2008 03:15:14 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 17 Sep 2008 06:10:21 +0000
+
+slash (2.5.0.192-17) unstable; urgency=low
+
+  * Fix journals URL (remove "top")
+    - top recent: /journals/top/recent -> /journals/recent
+    - top posters: /journals/top/posters -> /journals/posters
+    - you can access old URL
+  * Add /faq/ internal redirection at Slash/Apache/Apache.pm
+    - This code is for slash-plugin-wikicontents
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 25 Jul 2008 14:36:41 +0000
 
 slash (2.5.0.192-16) unstable; urgency=low
 
