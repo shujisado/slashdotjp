@@ -31,8 +31,20 @@ sub main {
 
         # hijack feeds
 	if ($form->{content_type} && $form->{content_type} =~ $constants->{feed_types}) {
+		my $mcd = $slashdb->getMCD();
+		if ($mcd) {
+			my $data = $mcd->get("$slashdb->{_mcd_keyprefix}:xmldcache:$form->{content_type}:pollBooth");
+			if ($data->{content}) {
+				http_send({
+					content_type	=> "application/$form->{content_type}+xml",
+					etag		=> ($data->{etag} || undef),
+					content		=> $data->{content},
+				});
+				return 1;
+			}
+		}
 		listpollsRSS($form, $slashdb, $constants);
-		return;
+		return 1;
 	}
 
 	my $op = $form->{op} && $ops{$form->{op}} ? $form->{op} : 'default';
@@ -403,6 +415,11 @@ sub savepoll {
 		$pollbooth_db->setPollQuestion($qid, { discussion => $discussion })
 			if $discussion && $discussion != $poll->{discussion};
 	}
+	my $mcd = $slashdb->getMCD();
+	if ($mcd) {
+		$mcd->delete("$slashdb->{_mcd_keyprefix}:xmldcache:rss:pollBooth", 1);
+		$mcd->delete("$slashdb->{_mcd_keyprefix}:xmldcache:atom:pollBooth", 1);
+	}
 	$slashdb->setStory($form->{sid}, { qid => $qid }) if $form->{sid};
 }
 
@@ -549,7 +566,7 @@ sub listpollsRSS {
 		});
 	}
 
-	my $ret = xmlDisplay($form->{content_type} => {
+	xmlDisplay($form->{content_type} => {
 		channel			=> {
 			title		=> getData('rss_title'),
 			description	=> getData('rss_descr'),
@@ -563,8 +580,7 @@ sub listpollsRSS {
 		items			=> $items,
 		rdfitemdesc		=> $constants->{dfitemdesc},
 		rdfitemdesc_html	=> $constants->{dfitemdesc_html} || 1,
-	}, $form->{ssi} ? 1 : 0);
-	print "$ret\n" if ($form->{ssi});
+	}, { mcdkey => 'pollBooth' });
 }
 
 #################################################################

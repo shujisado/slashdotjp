@@ -14,9 +14,9 @@ slash (2.5.0.192-17) unstable; urgency=low
   * Add feature to change redirect status code on redirect()
   * Redirect to new journal RSS URL
   * Add feature storing RSS output into memcached
-  * Add feature to store/get journal RSS content from memcached
+  * Add feature to store/get journal and polls RSS content from memcached
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 16 Sep 2008 14:35:19 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 17 Sep 2008 03:04:03 +0000
 
 slash (2.5.0.192-16) unstable; urgency=low
 
