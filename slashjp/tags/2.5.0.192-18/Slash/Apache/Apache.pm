@@ -370,13 +370,16 @@ sub IndexHandler {
 		} elsif (defined($qs->{nick})) {
 			$qs->{nick} =~ s/\+/%20/g;
 			redirect("$constants->{absolutedir}/~$qs->{nick}/journal/rss", 301);
+			return DONE;
 		} elsif (defined($qs->{type}) && $qs->{type} eq 'count' || $qs->{type} eq 'friends') {
 			# not impremented (2008-09-16, tach)
 		} else {
 			redirect("$constants->{absolutedir}/journals/rss", 301);
+			return DONE;
 		}
 	} elsif ($r->the_request =~ m!\bcontent_type=rss\b! && $uri =~ m!/~([^/]+)/journal!i) {
 		redirect("$constants->{absolutedir}/~".URI::Escape::uri_escape($1)."/journal/rss", 301);
+		return DONE;
 	}
 
 	# return shtml internally when AC
