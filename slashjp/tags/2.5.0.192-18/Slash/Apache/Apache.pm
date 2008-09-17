@@ -364,6 +364,7 @@ sub IndexHandler {
 			my $nick = $slashdb->getUser($qs->{uid}, 'nickname');
 			if ($nick) {
 				redirect("$constants->{absolutedir}/~".URI::Escape::uri_escape($nick)."/journal/rss", 301);
+				return DONE;
 			} else {
 				return NOT_FOUND;
 			}
