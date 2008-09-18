@@ -592,6 +592,7 @@ sub displayArticle {
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');
 	slashDisplay($theme, {
+		theme		=> $theme,
 		articles	=> \@sorted_articles,
 		uid		=> $uid,
 		nickname	=> $nickname,
