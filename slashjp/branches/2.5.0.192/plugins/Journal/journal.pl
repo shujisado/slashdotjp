@@ -581,7 +581,7 @@ sub displayArticle {
 			id		=> $article->[3],
 			commentcount	=> $commentcount,
 			prev		=> $prev,
-			next		=> $next,
+			'next'		=> $next,
 		};
 	}
 
