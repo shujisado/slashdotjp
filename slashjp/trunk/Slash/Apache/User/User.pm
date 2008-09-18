@@ -624,10 +624,6 @@ sub userdir_handler {
 		my @args = ($query);
 		if ($word =~ /^rss$/) {
 			push @args, "content_type=rss";
-			if ($constants->{rss_cachedir} && -r "$constants->{rss_cachedir}/pollBooth.rss") {
-				$r->filename("$constants->{rss_cachedir}/pollBooth.rss");
-				return OK;
-			}
 		} elsif ($word =~ /^(\d+)$/) {
 			push @args, "qid=$1";
 		}

@@ -372,6 +372,35 @@ sub IndexHandler {
 	#	$uri =~ s/^\Q$path//;
 	#}
 
+	# redirect to new journal rss URL for slashdot.jp (2008-09-16, tach)
+	# Before: /journal.pl?op=display&uid=3&content_type=rss
+	# After: /~tach/journal/rss
+	if ($uri =~ m!/journal\.pl! && $r->the_request =~ m!\bcontent_type=rss\b!) {
+		my $qs = {$r->the_request =~ m!\b(uid|op|nick|type)=([-\w/+%]+)!g};
+		if (defined($qs->{uid}) && $qs->{uid} =~ /^\d+$/) {
+			my $slashdb = getCurrentDB();
+			my $nick = $slashdb->getUser($qs->{uid}, 'nickname');
+			if ($nick) {
+				redirect("$constants->{absolutedir}/~".URI::Escape::uri_escape($nick)."/journal/rss", 301);
+				return DONE;
+			} else {
+				return NOT_FOUND;
+			}
+		} elsif (defined($qs->{nick})) {
+			$qs->{nick} =~ s/\+/%20/g;
+			redirect("$constants->{absolutedir}/~$qs->{nick}/journal/rss", 301);
+			return DONE;
+		} elsif (defined($qs->{type}) && $qs->{type} eq 'count' || $qs->{type} eq 'friends') {
+			# not impremented (2008-09-16, tach)
+		} else {
+			redirect("$constants->{absolutedir}/journals/rss", 301);
+			return DONE;
+		}
+	} elsif ($r->the_request =~ m!\bcontent_type=rss\b! && $uri =~ m!/~([^/]+)/journal!i) {
+		redirect("$constants->{absolutedir}/~".URI::Escape::uri_escape($1)."/journal/rss", 301);
+		return DONE;
+	}
+
 	# return shtml internally when AC
 	# for slashdot.jp (2008-07-17)
 	if ($uri =~ m!^/(\w+/)?article\.pl$! && !$is_user) {

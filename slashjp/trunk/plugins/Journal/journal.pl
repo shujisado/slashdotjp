@@ -230,6 +230,12 @@ sub displayRSS {
 		$juser  = $journal_reader->getUser($uid);
 	}
 	$juser ||= $user;
+	my $mcdkey = undef;
+
+	if ($form->{op} ne 'friendview') {
+		$mcdkey = "journal:display:$juser->{uid}";
+		_mcd_get($journal, $mcdkey) && return 1;
+	}
 
 	if ($form->{op} && $form->{op} eq 'friendview') {
 		my $zoo   = getObject('Slash::Zoo');
@@ -306,7 +312,7 @@ sub displayRSS {
 		items	=> \@items,
 		rdfitemdesc		=> $constants->{journal_rdfitemdesc},
 		rdfitemdesc_html	=> $rss_html,
-	});
+	}, { mcdkey => $mcdkey });
 }
 
 sub displayTopRSS {
@@ -314,14 +320,21 @@ sub displayTopRSS {
 
 	my $journals;
 	my $type = '';
+	my $mcdkey = undef;
 	if ($form->{type} && $form->{type} eq 'count' && $constants->{journal_top_posters}) {
 		$type = 'count';
+		$mcdkey = "journal:top_count";
+		_mcd_get($journal, $mcdkey) && return 1;
 		$journals = $journal_reader->top;
 	} elsif ($form->{type} && $form->{type} eq 'friends' && $constants->{journal_top_friend}) {
 		$type = 'friends';
 		my $zoo   = getObject('Slash::Zoo');
+		$mcdkey = "journal:top_friend";
+		_mcd_get($journal, $mcdkey) && return 1;
 		$journals = $zoo->topFriends;
 	} elsif ($constants->{journal_top_recent}) {
+		$mcdkey = "journal:top_recent";
+		_mcd_get($journal, $mcdkey) && return 1;
 		$journals = $journal_reader->topRecent;
 	}
 
@@ -367,7 +380,7 @@ sub displayTopRSS {
 		image	=> 1,
 		items	=> \@items,
 		rdfitemdesc		=> $constants->{journal_rdfitemdesc},
-	});
+	}, { mcdkey => $mcdkey });
 }
 
 sub displayArticleFriends {
@@ -798,6 +811,7 @@ sub doSaveArticle {
         }
         } # $event_id
 
+	_mcd_delete($journal, $user->{uid});
 	return 0;
 }
 
@@ -1012,6 +1026,7 @@ sub removeArticle {
 			$journal->remove($id);
 		}
 	}
+	_mcd_delete($journal, $user->{uid});
 
 	listArticle(@_);
 }
@@ -1060,6 +1075,34 @@ sub _checkTheme {
 	return $constants->{journal_default_theme}
 		unless grep $_ eq $theme, @$themes;
 	return $theme;
+}
+
+sub _mcd_get {
+	my ($journal, $mcdkey) = @_;
+	my $mcd = $journal->getMCD();
+	if ($mcd) {
+		my $data = $mcd->get("$journal->{_mcd_keyprefix}:xmldcache:rss:$mcdkey");
+		if ($data->{content}) {
+			http_send({
+				content_type	=> 'application/rss+xml',
+				etag		=> ($data->{etag} || undef),
+				content		=> $data->{content},
+			});
+			return 1;
+		}
+	}
+	return 0;
+}
+
+sub _mcd_delete {
+	my ($journal, $uid) = @_;
+	my $mcd = $journal->getMCD();
+	if ($mcd) {
+		$mcd->delete("$journal->{_mcd_keyprefix}:xmldcache:rss:journal:display:$uid", 1);
+		$mcd->delete("$journal->{_mcd_keyprefix}:xmldcache:rss:journal:top_count", 1);
+		$mcd->delete("$journal->{_mcd_keyprefix}:xmldcache:rss:journal:top_recent", 1);
+		$mcd->delete("$journal->{_mcd_keyprefix}:xmldcache:rss:journal:top_friend", 1);
+	}
 }
 
 createEnvironment();
