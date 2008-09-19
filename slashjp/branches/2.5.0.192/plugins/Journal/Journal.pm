@@ -338,13 +338,19 @@ EOT
 
 sub themes {
 	my($self) = @_;
-	my $uid = getCurrentUser('uid');
-	my $sql;
-	$sql .= "SELECT name from journal_themes";
-	$self->sqlConnect;
-	my $themes = $self->{_dbh}->selectcol_arrayref($sql);
+	return [ keys %{$self->{themes}} ] if ($self->{themes});
+	my $sql = "SELECT name,type from journal_themes";
+	$self->{themes} = $self->sqlSelectAllKeyValue('name,type', 'journal_themes');
 
-	return $themes;
+	return [ keys %{$self->{themes}} ];
+}
+
+sub getThemeType {
+	my ($self, $theme) = @_;
+
+	return undef unless ($theme);
+	$self->themes unless ($self->{themes});
+	return $self->{themes}{$theme};
 }
 
 sub searchUsers {

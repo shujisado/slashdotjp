@@ -591,7 +591,7 @@ sub displayArticle {
 
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');
-	slashDisplay($theme, {
+	slashDisplay('theme_'.$journal_reader->getThemeType($theme), {
 		theme		=> $theme,
 		articles	=> \@sorted_articles,
 		uid		=> $uid,
