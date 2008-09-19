@@ -1,6 +1,7 @@
 slash (2.5.0.192-19) unstable; urgency=low
 
   * Add getThemeType() method to check theme type
+    into plugin/Journal/Journal.pm
 
  -- Taku YASUI <tach@osdn.jp>  Fri, 19 Sep 2008 03:46:04 +0000
 
