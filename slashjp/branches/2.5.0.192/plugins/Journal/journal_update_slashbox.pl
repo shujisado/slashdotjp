@@ -18,6 +18,7 @@ $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my $force = $constants->{task_options}{force} || undef;
 	my $block_suffix = '_topjournals';
+	my $limit = getCurrentStatic('journal_top') || 10;
 	my $skins = $slashdb->getSkins();
 
 	foreach my $skin (values(%$skins)) {
@@ -37,7 +38,7 @@ $task{$me}{code} = sub {
 			'nickname AS author,jid,description AS title',
 			'users_journal JOIN users USING (uid) JOIN journals on (users_journal.jid=journals.id)',
 			$where,
-			'ORDER BY users_journal.date DESC LIMIT 20',
+			"ORDER BY users_journal.date DESC LIMIT $limit",
 		);
 		map { $_->{'link'} = "$constants->{absolutedir}/~" . strip_paramattr($_->{author}) . "/journal/". $_->{jid} } @$result;
 
