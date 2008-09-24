@@ -3,8 +3,9 @@ slash (2.5.0.192-19) unstable; urgency=low
   * Add getThemeType() method to check theme type
     into plugin/Journal/Journal.pm
   * A number of entries in journal slashbox is from constant "journal_top"
+  * Add logcheck ignore rules for journal_update_slashbox.pl
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 24 Sep 2008 04:20:24 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 24 Sep 2008 11:58:27 +0000
 
 slash (2.5.0.192-18) unstable; urgency=low
 

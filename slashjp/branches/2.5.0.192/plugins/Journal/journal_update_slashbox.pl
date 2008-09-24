@@ -29,9 +29,13 @@ $task{$me}{code} = sub {
 			next;
 		}
 		my $tids = [ $slashdb->getAllChildrenTids($skin->{nexus}) ];
+		unless (@$tids > 0) {
+			slashdLog("Could not get tid for \"$name\", skipped");
+			next;
+		}
 		my $where = '1=1';
 		$where .= ' AND tid IN ('.join(',', @$tids).')' if ($skin->{skid} != $constants->{mainpage_skid});
-		next if ($slashdb->sqlCount('journals', $where . ($force ? '' : "AND date > '$block->{last_update}'")) < 1);
+		next if ($slashdb->sqlCount('journals', $where . ($force ? '' : " AND date > '$block->{last_update}'")) < 1);
 
 		slashdLog("Start updating block \"$name\"") if (verbosity() >= 3);
 		my $result = $slashdb->sqlSelectAllHashrefArray(

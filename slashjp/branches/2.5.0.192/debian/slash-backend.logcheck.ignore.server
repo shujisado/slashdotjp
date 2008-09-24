@@ -41,6 +41,8 @@ runtask .* (Begin|End)
 \[daily_archive\.pl\] (Archiving|archived) [0-9/]+
 \[daily_archive\.pl\] (article\.pl|prog2file):?
 \[counthits\.pl\] [0-9]+ of [0-9]+ sids updated for
+\[journal_update_slashbox\.pl\] Updated block
+\[journal_update_slashbox\.pl\] Could not get (block|tid for) ".*", skipped
 \[zoo_run_people_log\.pl\] Zoo fof/eof (Begin|Processing|End)
 (BEGIN|END) MODERATORD EXECUTION
 ^Eligible: [0-9]+
