@@ -24,13 +24,13 @@ $task{$me}{code} = sub {
 	foreach my $skin (values(%$skins)) {
 		my $name = "$skin->{name}$block_suffix";
 		my $block = $slashdb->getBlock($name);
-		unless ($block) {
+		unless ($block->{bid}) {
 			slashdLog("Could not get block \"$name\", skipped");
 			next;
 		}
 		my $tids = [ $slashdb->getAllChildrenTids($skin->{nexus}) ];
 		my $where = '1=1';
-		$where .= 'AND tid IN ('.join(',', @$tids).')' if ($skin->{skid} != $constants->{mainpage_skid});
+		$where .= ' AND tid IN ('.join(',', @$tids).')' if ($skin->{skid} != $constants->{mainpage_skid});
 		next if ($slashdb->sqlCount('journals', $where . ($force ? '' : "AND date > '$block->{last_update}'")) < 1);
 
 		slashdLog("Start updating block \"$name\"") if (verbosity() >= 3);
@@ -47,6 +47,12 @@ $task{$me}{code} = sub {
 			$str .= slashDisplay('topjournals', { 'item' => $item }, { Return => 1, Nocomm => 1, Page => 'portald' });
 		}
 		$str .= "\n</ul>";
+		if ($skin->{skid} == $constants->{mainpage_skid}) {
+			my $morestr = getData('journal_slashbox_more', {
+				'link'	=> "$constants->{absolutedir}/journals/top/recent/?start=$limit",
+			}, 'journal');
+			$str .= $morestr if ($morestr);
+		}
 		$slashdb->setBlock($name, { block => $str });
 
 		slashdLog("Updated block \"$name\"") if (verbosity() >= 2);
