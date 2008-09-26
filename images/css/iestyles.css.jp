@@ -22,22 +22,6 @@ div#contents div#message p {
 #editjournal-description {
 	width: 90%;
 }
-div#journal {
-	word-break: break-all;
-	width: 99%;
-}
-div.journal table {
-	word-break: break-all;
-	position: static;
-}
-.journalentry .generaltitle { position: static; }
-.journal blockquote { display: block; position: static; }
-div.liquid .journalentry { padding-right: 0px !important; margin-right: 0px !important;}
-div.liquid .journalentry { width: 96% !important; }
-div.liquid .journalhead { _width: 103% !important; }
-div.liquid .journalhead h2 { padding-top: 0px; padding-bottom: 0px; }
-div.liquid .journaltext { display: block !important; }
-div.liquid .journaltext { position: static; word-break: break-all; }
 
 div#indexhead div#message {
 	width: 99%;
@@ -64,3 +48,5 @@ div#users-blocks,
 div.quote {
 	position: static;
 }
+
+/* vim: ts=4:ft=css:
