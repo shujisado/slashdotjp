@@ -1,6 +1,6 @@
 body {word-wrap: break-word;}
 #firehose .article h3, #firehose .briefarticle h3, .briefarticle div.tags, .adminoptions, #indexhead, div.generaltitle, div#commentwrap, .commentbox, ul.menu, #usermenu, div#links div.block div.content, #commentlisting ul { position: relative;}
-div#users-blocks {margin: 0 18.5em 0 0; overflow: hidden;}
+div#users-blocks {margin: 0 18.5em 0 0; _overflow: hidden;}
 #slashboxes {margin-right: -1em; _margin: 0;}
 form {width: 94%}
 #users-lists {width: 99%}
@@ -163,22 +163,6 @@ div#contents div#message p {
 #editjournal-description {
 	width: 90%;
 }
-div#journal {
-	word-break: break-all;
-	width: 99%;
-}
-div.journal table {
-	word-break: break-all;
-	position: static;
-}
-.journalentry .generaltitle { position: static; }
-.journal blockquote { display: block; position: static; }
-div.liquid .journalentry { padding-right: 0px !important; margin-right: 0px !important;}
-div.liquid .journalentry { width: 96% !important; }
-div.liquid .journalhead { _width: 103% !important; }
-div.liquid .journalhead h2 { padding-top: 0px; padding-bottom: 0px; }
-div.liquid .journaltext { display: block !important; }
-div.liquid .journaltext { position: static; word-break: break-all; }
 
 div#indexhead div#message {
 	width: 99%;
@@ -205,3 +189,5 @@ div#users-blocks,
 div.quote {
 	position: static;
 }
+
+/* vim: ts=4:ft=css:
