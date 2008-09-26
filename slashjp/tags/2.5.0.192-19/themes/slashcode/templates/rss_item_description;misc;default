@@ -1,0 +1,29 @@
+__skin__
+default
+__description__
+これがそのまま description に入り、XML::RSS モジュールに渡される
+
+ * desc - description 本文
+ * more - 本文に続きがあるときにはその続き
+ * link - URL
+ * comment_link - コメントを書くときの URL
+__title__
+RSS アイテムの description
+__page__
+misc
+__lang__
+en_US
+__name__
+rss_item_description
+__template__
+[% desc %][% IF link %]
+<p>
+<a href="[% link %]">[% IF more && more.length > 0; "続きの" _ more.length _ "バイトを読む..."; ELSE; "続きを読む..."; END %]</a>
+[% IF comment_link %] | <a href="[% comment_link %]">コメントする</a>[% END %]
+</p>[% END %]
+
+
+__seclev__
+10000
+__version__
+
