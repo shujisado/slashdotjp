@@ -587,11 +587,15 @@ sub displayArticle {
 
 	push @sorted_articles, $collection;
 	my $theme = _checkTheme($form->{theme} || $journal_reader->getUser($uid, 'journal_theme'));
-	$theme = 'mobile' if ($user->{mobile});
+	my $theme_type = $journal_reader->getThemeType($theme);
+	if ($user->{mobile}) {
+		$theme = 'mobile';
+		$theme_type = 'mobile';
+	}
 
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');
-	slashDisplay('theme_'.$journal_reader->getThemeType($theme), {
+	slashDisplay("theme_$theme_type", {
 		theme		=> $theme,
 		articles	=> \@sorted_articles,
 		uid		=> $uid,
