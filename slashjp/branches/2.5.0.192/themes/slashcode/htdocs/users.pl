@@ -3104,7 +3104,13 @@ sub saveHome {
 				'noboxes' => 1,
 				'light' => 1,
 				'noicons' => 1,
-				'willing' => 1
+				'willing' => 1,
+				'dfid' => 1,
+				'mylinks' => 1,
+				'simpledesign' => 1,
+				'lowbandwidth' => 1,
+				'dst' => 1,
+				'tzcode' => 1,
 			}, { slashboxes => "" });
 	}
 

@@ -1,3 +1,9 @@
+slash (2.5.0.192-20) unstable; urgency=low
+
+  * Back to default only 'slashboxes' when 'restore_default_slashbox'
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 30 Sep 2008 06:22:58 +0000
+
 slash (2.5.0.192-19) unstable; urgency=low
 
   * Add getThemeType() method to check theme type
