@@ -832,8 +832,16 @@ sub doEditArticle {
 		};
 
 		my $theme = _checkTheme($user->{'journal_theme'});
+		my $theme_type = $journal_reader->getThemeType($theme);
+		if ($user->{mobile}) {
+			$theme = 'mobile';
+			$theme_type = 'mobile';
+		}
+
 		my $zoo   = getObject('Slash::Zoo');
-		slashDisplay($theme, {
+		slashDisplay("theme_$theme_type", {
+			preview		=> 1,
+			theme		=> $theme,
 			articles	=> [{ day => $article->{date}, article => [ $disp_article ] }],
 			uid		=> $article->{uid} || $user->{uid},
 			is_friend	=> $zoo->isFriend($user->{uid}, $article->{uid}),
