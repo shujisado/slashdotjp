@@ -104,6 +104,12 @@ xmp {
 	margin: 4px;
 }
 
+/* override slashdot.org settings */
+blockquote, .quote {
+	position: static;
+}
+
+
 /* fix select item padding */
 select option {
 	margin-right: 0.4em;
@@ -311,72 +317,4 @@ div.adsense_468x60 {
 /* for osdnnavbar: width=0 */
 #top_parent {
   border: 0px solid transparent;
-}
-
-/* upper osdnnavbar */
-#osdnnavbar {
-	width:100%;
-	line-height:1;
-	overflow:hidden;
-	background:#2e2e2e;
-	border-bottom:1px #444 solid;
-	color:#ccc;
-	font-size:12px;
-	margin:0;
-	padding:2px 0;
-}
-
-#osdnnavbar ul {
-	list-style-image:none;
-	list-style-position:outside;
-	list-style-type:none;
-	margin:0;
-	padding:0;
-}
-
-#osdnnavbar ul#osdn_sitename {
-	float:left;
-}
-
-#osdnnavbar ul#osdn_sitename a{
-	font-weight:bold;
-}
-
-
-#osdnnavbar ul#osdn_announce {
-	text-align:right;
-}
-
-#osdnnavbar li{
-	display:inline;
-	border-left:1px solid #ccc;
-	font-family:sans-serif;
-	vertical-align:baseline;
-	white-space:nowrap;
-	margin:0;
-	padding:0 8px;
-	height:12px;
-}
-
-#osdnnavbar li.begin {
-	border-left:0 none;
-}
-
-#osdnnavbar a {
-	text-decoration:none;
-	color:#ccc;
-	margin:0;
-	padding:0;
-}
-
-#osdnnavbar a:hover {
-	color:#fff;
-}
-
-#osdnnavbar:after {
-	height: 0;
-	visibility: hidden;
-	content: ".";
-	display: block;
-	clear: both;
 }
