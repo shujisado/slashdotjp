@@ -128,6 +128,11 @@
 	background: transparent;
 }
 
+/* Fix: https://sourceforge.jp/tracker/index.php?func=detail&aid=13598&group_id=4&atid=101 (But I do not know why it will fix by this setting) */
+.journal .storylinks ul.journal-commentlink li {
+	margin-right: 0.5em;
+}
+
 .journal .storylinks ul li.first:before,
 .journal .storylinks ul.journal-commentlink li:before {
 	content: "";
