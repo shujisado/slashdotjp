@@ -7,9 +7,34 @@
 	_width: 99%; /* IE6 */
 }
 
-/* journal top */
+#journal ul.menu {
+	margin-bottom: 0.8em;
+}
+
+/* journal top and journallist */
 .journaltop .generaltitle {
 	margin-bottom: 0.6em;
+}
+
+.journallist .journallist-head {
+	background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;
+	color: #FFF;
+	font-size: 85%;
+	margin-bottom: 0.5em;
+}
+
+.journallist .journallist-head div {
+	padding: 0.3em 0.6em;
+}
+
+.journallist .journallist-head .title {
+	float: left;
+	font-weight: bold;
+}
+
+.journallist .journallist-head .totalhits {
+	text-align: right;
+	background: url(//images.slashdot.jp/block-title-right.png) no-repeat right top;
 }
 
 .journallist table,
