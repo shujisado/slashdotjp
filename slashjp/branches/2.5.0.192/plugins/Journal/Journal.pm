@@ -157,11 +157,13 @@ sub getsByUids {
 }
 
 sub list {
-	my($self, $uid, $limit) = @_;
+	my($self, $uid, $limit, $start) = @_;
 	$uid ||= 0;	# no SQL syntax error
+	$start ||= 0;
 	my $order = "ORDER BY date DESC";
-	$order .= " LIMIT $limit" if $limit;
-	my $answer = $self->sqlSelectAll('id, date, description', 'journals', "uid = $uid", $order);
+	$order .= " LIMIT $start, $limit" if $limit;
+	my $answer = $self->sqlSelectAll('SQL_CALC_FOUND_ROWS id, date, description', 'journals', "uid = $uid", $order);
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $answer;
 }

@@ -2,8 +2,9 @@ slash (2.5.0.192-20) unstable; urgency=low
 
   * Back to default only 'slashboxes' when 'restore_default_slashbox'
   * Fix journal preview to use new theme system
+  * Add pagination to journal list page
 
- -- Taku YASUI <tach@osdn.jp>  Wed,  1 Oct 2008 07:25:38 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri,  3 Oct 2008 12:46:08 +0000
 
 slash (2.5.0.192-19) unstable; urgency=low
 

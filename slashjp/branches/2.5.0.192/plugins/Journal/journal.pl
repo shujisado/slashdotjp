@@ -931,13 +931,16 @@ sub setPrefs {
 
 sub listArticle {
 	my($journal, $constants, $user, $form, $journal_reader) = @_;
+	my $limit = $constants->{journal_list_default_display} || $constants->{journal_default_display} || 10;
+	my $start = $form->{start} || 0;
 
 	my $uid = $form->{uid} || $user->{uid};
 	if (isAnon($uid)) {
 		return displayFriends(@_);
 	}
 
-	my $list 	= $journal_reader->list($uid);
+	my $list 	= $journal_reader->list($uid, $limit, $start);
+	my $totalhits	= $journal_reader->sqlSelect('@totalhits');
 	my $themes	= $journal_reader->themes;
 	my $theme	= _checkTheme($user->{'journal_theme'});
 	my $nickname	= $form->{uid}
@@ -955,6 +958,9 @@ sub listArticle {
 			articles	=> $list,
 			uid		=> $form->{uid} || $user->{uid},
 			nickname	=> $nickname,
+			start		=> $start,
+			limit		=> $limit,
+			totalhits	=> $totalhits,
 		});
 	} elsif (!$user->{is_anon} && (!$form->{uid} || $form->{uid} == $user->{uid})) {
 		print getData('noentries');
