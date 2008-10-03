@@ -12,11 +12,14 @@
 	margin-bottom: 0.6em;
 }
 
+.journallist table,
 .journaltop table {
 	margin-bottom: 0.6em;
 	width: 100%;
 }
 
+.journallist table th,
+.journallist table td,
 .journaltop table th,
 .journaltop table td {
 	text-align: left;
@@ -24,14 +27,31 @@
 	padding: 0.2em 0.4em;
 }
 
+.journallist table tr.odd,
 .journaltop table tr.odd {
 	background: #EEE;
 }
 
+.journallist table tr th,
+.journallist table tr td.time,
+.journallist table tr td.edit,
 .journaltop table tr th,
 .journaltop table tr td.nickname,
 .journaltop table tr td.lastupdate {
 	white-space: nowrap;
+}
+
+.journallist table input {
+	margin: 0;
+	padding: 0;
+}
+
+.journallist .journalpage .newer {
+	float: left;
+}
+
+.journallist .journalpage .older {
+	text-align: right;
 }
 
 .journaltop .pagination ul li {
@@ -414,3 +434,7 @@ div.bluebox {
 	_padding: 0.75em 0.6em 0.75em 0.2em !important; /* IE6 */
 }
 
+/* ads */
+#journal div.adsense_468x60 {
+	margin-top: 0.8em;
+}
