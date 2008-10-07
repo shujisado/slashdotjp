@@ -24,3 +24,12 @@ body {
 * html body {
 	margin-top: 0;
 }
+
+/* filter table */
+table.list-filters tr.head,
+table.list-filters tr.even {
+	background: #EEE;
+}
+table.list-filters td {
+	padding: 0.1em 0.3em;
+}
