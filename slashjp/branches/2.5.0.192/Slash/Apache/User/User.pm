@@ -793,6 +793,16 @@ sub userdir_handler {
 		my $reader_user = $slashdb->getDB('reader');
 		my $reader = getObject('Slash::DB', { virtual_user => $reader_user });
 		my $uid = $reader->getUserUID($nick);
+		unless ($uid) {
+			my $matchname = nick2matchname($nick);
+			$nick = $reader->sqlSelect('nickname', 'users', "matchname='$matchname'");
+			if ($nick) {
+				$nick = fixparam($nick);
+				$string =~ s!^[^/]+!!;
+				$query = "?$query" if ($query);
+				redirect($constants->{real_rootdir} . "/~$nick$string$query");
+			}
+		}
 		my $nick_orig = $nick;
 		$nick = fixparam($nick);	# make safe to pass back to script
 

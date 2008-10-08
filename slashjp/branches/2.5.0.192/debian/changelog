@@ -4,8 +4,9 @@ slash (2.5.0.192-21) unstable; urgency=low
     - Change white-space to "%20" instead of "+" on fixparam()
     - Change "%20" to white-space on userdir_handler()
     - Not to change "+" to white-space on userdir_handler()
+    - Add to redirect when nickname is not found but matchname is found
 
- -- Taku YASUI <tach@osdn.jp>  Wed,  8 Oct 2008 06:38:49 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed,  8 Oct 2008 10:53:49 +0000
 
 slash (2.5.0.192-20) unstable; urgency=low
 
