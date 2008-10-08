@@ -561,7 +561,7 @@ sub userdir_handler {
 	my $uri = $r->the_request;
 	$uri =~ s/^\S+\s+//;
 	$uri =~ s/\s+\S+$//;
-	$uri =~ s/\+/ /g;
+	$uri =~ s/%20/ /g;
 
 	my $logtoken;
 	if ($uri =~ s{(?:^|/)?(\d+(?::|%3[aA]){2}\w+)$}{}) {
