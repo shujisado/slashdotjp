@@ -248,6 +248,15 @@ div#firehose div.firemenu div.submenu ul#fhtablist {
 div#firehose div.firemenu div.submenu ul#fhtablist select#section {
 	margin: 0;
 }
+#firehose #fhtablist {
+	line-height: 2.6;
+}
+#firehose #fhtablist li select {
+	font-size: 110%;
+}
+#firehose #fhtablist li {
+	font-size: 100%;
+}
 
 /* search top bar */
 div#search-result-top {
