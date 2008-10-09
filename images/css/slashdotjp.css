@@ -252,10 +252,10 @@ div#firehose div.firemenu div.submenu ul#fhtablist select#section {
 	line-height: 2.6;
 }
 #firehose #fhtablist li select {
-	font-size: 110%;
+	font-size: 100%;
 }
 #firehose #fhtablist li {
-	font-size: 100%;
+	font-size: 110%;
 }
 
 /* search top bar */
