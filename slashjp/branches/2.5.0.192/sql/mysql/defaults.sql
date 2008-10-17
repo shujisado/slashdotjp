@@ -1149,6 +1149,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('related_cid_disabled
 INSERT IGNORE INTO vars (name, value, description) VALUES ('modreasons_select_disabled','','Comma separated "modreasons.id"s disable to select when moderation');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('search_query_name','query','alternative query string form name for search.pl');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('journal_list_default_display', '50', 'Number of journals to display on a journal title list page');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('mod_limit_not_m2able_reasons', '0', 'Enable moderation limit for not m2able reasons when it is not eligible');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';

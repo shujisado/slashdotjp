@@ -185,6 +185,20 @@ sub moderateComment {
 		return 0 unless $comment->{time_unixepoch} >= time() - 3600*
 			($constants->{comments_moddable_hours}
 				|| 24*$constants->{archive_delay});
+
+		# Do not moderate by m2able reason (for slashdot.jp, 2008-10-17)
+		if ($constants->{mod_limit_not_m2able_reasons}) {
+			if ($constants->{reasons}->{$reason}->{m2able} != 1 &&
+			    $constants->{reasons}->{$reason}->{val} > 0 &&
+			    $comment->{points} >= $comment->{pointsorig}) {
+				return 0;
+			}
+			if ($constants->{reasons}->{$reason}->{m2able} != 1 &&
+			    $constants->{reasons}->{$reason}->{val} < 0 &&
+			    $comment->{points} <= $comment->{pointsorig}) {
+				return 0;
+			}
+		}
 	}
 
 	# Start putting together the data we'll need to display to

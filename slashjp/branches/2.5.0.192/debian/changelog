@@ -7,8 +7,10 @@ slash (2.5.0.192-21) unstable; urgency=low
     - Add to redirect when nickname is not found but matchname is found
   * Add "reasons_base", "reasons_plused" and "reasons_minused" to constants
     - To change modreasons by moderated score
+  * Select enable/disable moderation for not m2able reasons when it is not
+    eligible
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 17 Oct 2008 06:52:24 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 17 Oct 2008 08:28:27 +0000
 
 slash (2.5.0.192-20) unstable; urgency=low
 
