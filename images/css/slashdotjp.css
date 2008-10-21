@@ -173,6 +173,24 @@ div.commentBody {
 	margin-bottom: 0.4em;
 }
 
+/* poll list */
+#listpolls {
+	margin: 0.3em 0.8em;
+}
+
+#listpolls .pollitem {
+	margin-bottom: 0.9em;
+}
+
+#listpolls .pollitem h4 {
+	font-weight: bold;
+}
+
+#listpolls .pollitem .detail {
+	font-size: 85%;
+	color: #333;
+}
+
 /* FAQ page navigation */
 #wikicontents .pagenavi {
 	background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;
