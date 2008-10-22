@@ -149,6 +149,18 @@ div.commentBody {
 	work-break: break-all;
 }
 
+/* Override moderation summary box for AdSense */
+#mod_summary {
+	margin-left: 0;
+}
+#commentlisting .comment .ads-336x280 {
+	float: right;
+	margin-left: 1em;
+}
+.clear-right {
+	clear: right;
+}
+
 /* Fix pollBooth graph */
 #pollBooth .generalbody table {
 	margin: 0;
