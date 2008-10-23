@@ -9,8 +9,9 @@ slash (2.5.0.192-21) unstable; urgency=low
     - To change modreasons by moderated score
   * Select enable/disable moderation for not m2able reasons when it is not
     eligible
+  * Fix unwanted object creation at plugin/Messages/Messages.pm
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 17 Oct 2008 08:28:27 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 23 Oct 2008 06:31:58 +0000
 
 slash (2.5.0.192-20) unstable; urgency=low
 
