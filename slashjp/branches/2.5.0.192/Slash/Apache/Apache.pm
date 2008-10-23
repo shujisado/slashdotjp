@@ -519,6 +519,32 @@ sub IndexHandler {
 		}
 	}
 
+	# some static contents for slashdot.jp
+	if ($uri =~ m!^/(about|code)(/|\.shtml)?$!x) {
+		my ($word, $sl) = ($1, $2);
+		my @args = ();
+		my $fpath = "/$constants->{sfjp_wikicontents_path}/$word.shtml";
+		my $file = "$constants->{basedir}$fpath";
+		if ($sl) {
+			redirect("$constants->{absolutedir}/$word", 301);
+			return;
+		}
+		unless (-r $file) {
+			return NOT_FOUND;
+		}
+		if ($is_user) {
+			push @args, "name=$word";
+			$r->args(join('&', @args));
+			$r->uri('/wikicontents.pl');
+			$r->filename($constants->{basedir} . '/wikicontents.pl');
+			return OK;
+		} else {
+			$r->uri($fpath);
+			$r->filename($file);
+			return OK;
+		}
+	}
+
 	# faq for slashdot.jp
 	if ($uri =~ m!^/faq (?: (/[^?]*) | /? ) (?: \?(.*) )? $!x) {
 		my($word, $query) = ($1, $2);
