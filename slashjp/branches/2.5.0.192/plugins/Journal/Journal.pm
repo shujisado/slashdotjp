@@ -496,6 +496,25 @@ sub createSubmissionFromJournal {
 	my $subid = $slashdb->createSubmission($submission);
 	if ($subid) {
 		$self->logJournalTransfer($src_journal->{id}, $subid);
+
+		# create messages
+		my $messages = getObject('Slash::Messages');
+		if ($messages) {
+			my $users = $messages->getMessageUsers(MSG_CODE_NEW_SUBMISSION);
+			my $messagesub = { %$submission };
+			$messagesub->{subid} = $subid;
+			$messagesub->{story} = $story;
+			$messagesub->{subj} = $src_journal->{description};
+			my $data = {
+				template_name	=> 'messagenew',
+				template_page	=> 'submit',
+				subject		=> {
+					template_name	=> 'messagenew_subj',
+					template_page	=> 'submit', },
+				submission	=> $messagesub,
+			};
+			$messages->create($users, MSG_CODE_NEW_SUBMISSION, $data) if @$users;
+		}
 	} else {
 		print STDERR ("Failed attempting to transfer journal id: $src_journal->{id}\n");
 	}

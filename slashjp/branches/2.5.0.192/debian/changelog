@@ -10,8 +10,9 @@ slash (2.5.0.192-21) unstable; urgency=low
   * Select enable/disable moderation for not m2able reasons when it is not
     eligible
   * Fix unwanted object creation at plugin/Messages/Messages.pm
+  * Create messages when the journal is submission
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 23 Oct 2008 06:31:58 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 23 Oct 2008 07:56:51 +0000
 
 slash (2.5.0.192-20) unstable; urgency=low
 
