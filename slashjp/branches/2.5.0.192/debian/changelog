@@ -12,8 +12,9 @@ slash (2.5.0.192-21) unstable; urgency=low
   * Fix unwanted object creation at plugin/Messages/Messages.pm
   * Create messages when the journal is submission
   * Add pollquestions to page title and fix title format
+  * Fix poll voting booth layout to use template "poll;pollBooth;default"
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 27 Oct 2008 09:09:33 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 27 Oct 2008 09:39:24 +0000
 
 slash (2.5.0.192-20) unstable; urgency=low
 
