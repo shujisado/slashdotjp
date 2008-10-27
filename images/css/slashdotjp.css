@@ -203,6 +203,11 @@ div.commentBody {
 	color: #333;
 }
 
+/* poll pollBooth */
+#wide #polls form {
+	margin: 0.8em 0;
+}
+
 /* FAQ page navigation */
 #wikicontents .pagenavi {
 	background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;
