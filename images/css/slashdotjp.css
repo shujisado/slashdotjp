@@ -104,6 +104,19 @@ xmp {
 	margin: 4px;
 }
 
+.bottom-navi {
+	margin-top: 1em;
+	font-size: 95%;
+}
+
+.bottom-navi a.gototop {
+	font-weight: bold;
+	color: #055;
+	background: url(//static.sourceforge.jp/ic/caret.gif) no-repeat scroll 0 center;
+	padding-left: 12px;
+	padding-right: 10px;
+}
+
 /* override slashdot.org settings */
 blockquote, .quote {
 	position: static;
