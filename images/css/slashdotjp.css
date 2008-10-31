@@ -380,6 +380,10 @@ div.adsense_468x60 {
 	margin-left: 1em;
 }
 
+.microad-400x200 {
+	margin: 0.8em 0;
+}
+
 /* for osdnnavbar: width=0 */
 #top_parent {
   border: 0px solid transparent;
