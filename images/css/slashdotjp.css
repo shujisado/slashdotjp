@@ -344,6 +344,11 @@ div.search-help {
 	font-weight: bold;
 }
 
+#search .pagination {
+	font-weight: bold;
+	margin: 0.9em 0;
+}
+
 /* users.pl modifiers */
 div#users table#reason_modifiers table.reason_modifiers {
 	padding-left: 1.5em;
