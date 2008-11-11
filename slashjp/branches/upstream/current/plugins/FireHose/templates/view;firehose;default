@@ -14,8 +14,6 @@ __seclev__
 10000
 __template__
 <div class="view">
-	[% PROCESS autocomplete %]
-	[% PROCESS nodnix_menus %]
 	[% IF user.is_anon;
 	   	this_fhid = form.id | fixparam;
 	   	PROCESS userlogin_cover
@@ -28,12 +26,14 @@ __template__
 		[% firehosetext %]
 	</div>
 </div>
-[% PROCESS init_tagui %]
+[% PROCESS init_tag_ui %]
 <script type="text/javascript">
+var firehose_user_class = [% user.is_anon ? 0 : 1 %];
 $(function(){
-	firehose_init_tagui(
-		$('#firehose > .view > .head > [id^=firehose-]')
-			.click(firehose_click_tag) );
+	$().article_info__find_articles().click(firehose_click_tag);
+	if ( fh_is_admin ) {
+		firehose_init_note_flags();
+	}
 });
 </script>
 __version__

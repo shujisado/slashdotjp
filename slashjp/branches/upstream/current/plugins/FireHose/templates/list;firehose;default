@@ -16,38 +16,9 @@ __template__
 [% IF form.metamod %]
 <div id="metamodwrap">
 [% END %]
-[% PROCESS init_tagui -%]
+[% PROCESS init_tag_ui -%]
 [% firehose = Slash.getObject("Slash::FireHose"); %]
-[% IF env.script_name == "/firehose.pl" || form.ssi %]
-<script type="text/javascript">
-  YAHOO.slashdot.SlashBoxApp = function()
-    {
-      return {
-          init: function()
-            {
-              var slashboxes_container = document.getElementById('slashboxes');
-              var block_titles = YAHOO.util.Dom.getElementsByClassName('title', 'div', slashboxes_container);
-
-              for ( i=0; i<block_titles.length; ++i)
-                {
-                  var inner_title = block_titles[i];
-                  var sb = inner_title.parentNode;
-                  // var inner_title = YAHOO.util.Dom.getElementsByClassName('title', 'div', sb)[0];
-                  
-                  if ( ! sb.id )
-                    sb.id = inner_title.id + "-container";
-
-                  var dd = new YAHOO.slashdot.SlashBox(sb.id, "slashboxes");
-                  dd.setHandleElId(inner_title.id);
-                  dd.setXConstraint(0,0);
-                }
-              // var t0 = new YAHOO.util.DDTarget("slashboxes", "slashboxes");
-            }
-        };
-    } ();
-
-YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
-</script>
+[% IF env.script_name == "/firehose.pl" || env.script_name == "/index2.pl" || form.ssi %]
 [% ua = env.HTTP_USER_AGENT %]
 <div id="slashboxes">
 [% Slash.getAd(2) %]
@@ -63,7 +34,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
 		[% IF form.metamod %]
 			Meta-Moderation
 		[% ELSE %]
-			[% PROCESS rand_mesg %]
+			[% PROCESS firehosehead %]
 		[% END %]
 		</p>
 	</div>
@@ -85,8 +56,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
    END; # login_block
    IF form.skipmenu || options.skipmenu;
 	IF user.is_anon; login_block; END;
-   ELSE;
-     PROCESS nodnix_menus %]
+   ELSE; %]
 <div class="firemenu">
 [% theupdatetime = Slash.timeCalc(Slash.db.getTime(), "%H:%M"); %]
 [% refresh_text = "";
@@ -95,7 +65,6 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
    END;
 %]
 [% PROCESS titlebar title="$constants.sitename Firehose $refresh_text" %]
-[% PROCESS autocomplete %]
 <div class="submenu">
 <div id="message_area">
 </div>
@@ -125,7 +94,7 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.SlashBoxApp.init);
      END;
   %]
                         [% PROCESS datewidget id='fhcalendar' init='firehose_calendar_init' date=startdate start_mode = start_mode %]
-<label><input type="text" class="slashdot-tag-completer" name="fhfilter" value="[% options.fhfilter | strip_attribute %]" size="24" autocomplete="off" onfocus="focusCompleter(this,'[% id %]','[% user.is_admin && !user.firehose_usermode %]','firehose-filter', 0)" id="firehose-filter"></label>
+<label><input type="text" class="slashdot-tag-completer" name="fhfilter" value="[% options.fhfilter | strip_attribute %]" size="24" autocomplete="off" id="firehose-filter"></label>
 <div id="colorsliderbg">
         <div id="colorsliderthumb"><img src="[% constants.imagedir %]/slidethumb.png" alt="Filter firehose to" id="fh_slider_img" title="Filter firehose to"></div>
 </div>
@@ -154,6 +123,20 @@ cmdrtaco dot net but be forgiving of beta code!
 [% END %]
 [% END # form.skipmenu %]
 [% Slash.getAd(6) %]
+[% IF form.index %]
+<script type="text/javascript">
+	//<![CDATA[
+	$(document).ready(function(){
+		if (typeof(ad6) != "undefined" && ad6 == "active") {
+			$('.article:first, #firehoselist div:first').css('margin-right','110px');
+			$('#firehose #message').css('margin-right','355px');
+			$('#fad6').css("position","absolute").css("top","0").css("right","0").css("z-index","10000");
+			$('#slashboxes').css("margin-top","320px");
+		}
+	});
+	//]]>
+</script>
+[% END %]
 <div id="firehoselist">
 [% itemstext %]
 [% page = page || "0" %]
@@ -178,8 +161,12 @@ cmdrtaco dot net but be forgiving of beta code!
 	[% ELSIF fh_page == "users.pl" %]
 		firehose_settings.pageval = 2;
 	[% END %]
+	[% IF options.index %]
+		firehose_settings.index = 1;
+	[% END %]
 
 	var firehose_action_time = 0;
+	var firehose_user_class = [% user.is_anon ? 0 : 1 %];
 	[% IF options.pagesize == "large" && !form.metamod %]
 	firehose_more_increment = 15;
 	[% END %]
@@ -207,11 +194,40 @@ cmdrtaco dot net but be forgiving of beta code!
 		firehose_play();
 	[% END %]
 
+[% IF constants.run_ads && !user.state.page_adless && !user.state.page_buying && user.currentSkin != 'admin' && (user.is_admin) # || user.currentPage == 'index2') %]
+	fh_adTimerUrl = '/images/iframe/firehose.html';
+[% END %]
+
 fh_ticksize = 15;
+[% IF !user.is_anon %]
 firehose_slider_init();
+[% END %]
 $(function(){
+	$('#firehose-filter').
+		focus(function(event){
+			gFocusedText = this;
+		}).
+		blur(function(event){
+			if ( gFocusedText === this ) {
+				gFocusedText = null;
+			}
+		}).
+		autocomplete('/ajax.pl', {
+			loadingClass:		'working',
+			multiple:		true,
+			multipleSeparator:	' ',
+			minChars:		3,
+			autoFill:		true,
+			max:			25,
+			extraParams: {
+				op:	'tags_list_tagnames'
+			}
+		});
+
 	$('#firehoselist').click(firehose_click_tag);
-	firehose_init_tagui();
+	if ( fh_is_admin ) {
+		firehose_init_note_flags();
+	}
 });
 
 

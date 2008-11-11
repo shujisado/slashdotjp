@@ -23,6 +23,7 @@ sub main {
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
 	my $gSkin     = getCurrentSkin();
+	my $firehose  = getObject("Slash::FireHose");
 
 	my $anonval = $constants->{firehose_anonval_param} || "";
 
@@ -74,14 +75,19 @@ sub main {
 
 	if ($op ne "rss") {
 		my $title = "$constants->{sitename} - Firehose";
-		if ($gSkin->{name} eq "idle") {
+		if ($gSkin->{name} && $gSkin->{name} eq "idle") {
 			$title = "$gSkin->{hostname} - Firehose";
 		}
 		if ($op eq "metamod") {
 			$title = "$constants->{sitename} - Metamod";
+			$form->{metamod} = 1;
 		}
 		if ($form->{index}) {
 			$title = "$constants->{sitename} - $constants->{slogan}";
+		}
+		if ($form->{op} && $form->{op} eq "view") {
+			my $item = $firehose->getFireHose($form->{id});
+			$title = "$constants->{sitename} - $item->{title}" if $item && $item->{title};
 		}
 		header($title, '') or return;
 	}
@@ -107,7 +113,6 @@ sub metamod {
 	my $firehose = getObject("Slash::FireHose");
 	$form->{tabtype} 	= "metamod";
 	$form->{skipmenu} 	= 1;
-	$form->{metamod} 	= 1;
 	$form->{pause} 		= 1;
 	$form->{no_saved} 	= 1;
 	print $firehose->listView();
@@ -130,12 +135,15 @@ sub view {
 			$firehose->setFireHoseSession($item->{id});
 		}
 		my $tags_top = $firehose_reader->getFireHoseTagsTop($item);
+		my $system_tags = $firehose_reader->getFireHoseSystemTags($item);
 		my $discussion = $item->{discussion};
 
 		my $firehosetext = $firehose_reader->dispFireHose($item, {
 			mode			=> 'full',
 			view_mode		=> 1,
 			tags_top		=> $tags_top,
+			top_tags		=> $item->{toptags},
+			system_tags		=> $system_tags,
 			options			=> $options,
 			nostorylinkwrapper	=> $discussion ? 1 : 0,
 			vote			=> $vote

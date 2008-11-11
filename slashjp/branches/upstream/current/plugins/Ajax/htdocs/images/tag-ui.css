@@ -1,7 +1,16 @@
+
 .tag-widget, .tag-entry {
 	user-select: text;
 	-moz-user-select: text;
 }
+
+/* for unregistered users*/
+.tag-widget-stub span.button.collapse {
+        position:absolute;
+        margin-top:-1.6em;
+        margin-left:7em;
+}
+
 
 span.tag, .tmenu, .tag-display, .tag-display-set,
 .tag-display ul, .tag-display li, .tag-display h1.legend,
@@ -21,7 +30,13 @@ span.tag, .tmenu, .tag-display ul, .tag-display li, .edit-toggle {
 
 .tag-display span.tag,
 .tag-widget .admin-buttons {
-	font-family: Optima, sans serif;
+	font-family: arial, sans serif;
+	color: #666;
+}
+
+div.head .tag-display span.tag,
+div.head .tag-widget .admin-buttons {
+       color: #fff;
 }
 
 /* style tags based on what they are */
@@ -42,7 +57,6 @@ span.tag, .tmenu, .tag-display ul, .tag-display li, .edit-toggle {
 
 /* tag "suggestions" look different than tags actually applied */
 .tag-display[context=related] li.suggestion span.tag {
-	font-style: italic;
 	font-weight: bold;
 }
 
@@ -65,6 +79,7 @@ div.tag-display .tmenu li {
 	text-align: center;
 	margin: 0 !important;
 }
+
 
 div.tag-display .tmenu li.minus,
 div.tag-display .tmenu li.ignore,
@@ -119,6 +134,7 @@ div.tag-display li.t > .tmenu li.descriptive {
 	background-color: inherit;
 }
 
+div.tag-display,
 div.tag-display > h1.legend {
 	width: auto !important;
 }
@@ -136,9 +152,7 @@ div.tag-display > h1.legend {
 
 /* padding so hover highlighting is bigger than the contents */
 div.tag-display > ul,
-#contents div.tag-display > ul,
-div.tag-display .tmenu li span,
-#contents div.tag-display .tmenu li span {
+#contents div.tag-display > ul {
 	padding: 0.1em 0.5em !important;
 	margin: -0.1em -0.5em !important;
 }
@@ -147,7 +161,8 @@ div.tag-display span.tag,
 div.tag-display > h1.legend,
 #contents div.tag-display > h1.legend {
 	padding: 0.1em 0.3em !important;
-	margin: -0.1em -0.3em !important;
+	margin: -0.1em -0.1em !important;
+	color:#333;
 }
 
 div.tag-display .tmenu li span,
@@ -165,8 +180,8 @@ div.tag-display .tmenu li span,
 .tag-display .tmenu {
 	display: none;
 	position: absolute;
-	top: -2.15em;
-	right: -.3em;
+	top:-2em;
+	right: .5em;
 	font-size: 85%;
 	color: #fff;
 	background-color: #066;
@@ -178,6 +193,41 @@ div.tag-display .tmenu li span,
 	margin:0 !important;
 
 }
+
+/*www.*/
+div.tag-display .tmenu
+{
+padding-bottom:0.05em !important;
+}
+
+/*idle.*/
+div.yui-b div.tag-display .tmenu
+{
+padding-bottom:0.5em !important;
+/*
+padding-top:0.3em !important;
+*/
+}
+
+
+
+/*www.*/
+div.tag-display .tmenu li span,
+#contents div.tag-display .tmenu li span
+{
+margin:-0.1em -0.25em !important;
+padding:0 0.55em 0.45em !important;
+}
+
+
+/*idle.*/
+div.yui-b div.tag-display .tmenu li span,
+div.yui-b #contents div.tag-display .tmenu li span
+{
+margin:-0.1em -0.25em !important;
+padding:0 0.55em 0.45em !important;
+}
+
 
 /* ...until you mouse over element to which they are attached */
 .tag-display li:hover ul.tmenu {
@@ -255,18 +305,18 @@ div.tag-display > ul > li + li {
 
 /* ...that's everything _in_ a tag-display... now let's do the display itself */
 
+div.tag-display-stub,
 div.tag-display {
-	display: inline;
+	display: inline !important;
 	position: relative;
 	margin-left: 0 !important;
+	/*	border:1px dotted #000;	*//*	troubleshooting safari		*/
 }
 
 .tag-display:hover > ul {
 	background-color: #dfdfdf;
 }
 
-.tag-widget-stub,
-.tag-display-stub,
 .tag-display.no-tags,
 .tag-display[context=related].no-tags,
 .tag-display[context=user].no-visible-tags {
@@ -289,8 +339,11 @@ div.tag-display {
 
 
 .tag-display-set.train {
-	display: inline;
+
+	display: inline !important;
+
 	margin-right: 1em;
+	/*	border:1px dotted #000;	*//*	troubleshooting safari		*/
 }
 
 .tag-widget.expanded .tag-display-set.train {
@@ -329,24 +382,46 @@ div.tag-display {
 	display: inline;
 }
 
-.tag-widget {
+
+
+div.tag-widget-stub,
+div.tag-widget {
 	display: block;
 	position: absolute;
 	background-color: transparent;
 }
 
 
+
+div.head div.tag-widget-stub,
+{
+	display: block;
+	background-color: transparent;
+	margin-left:10em;
+	margin-top:2.8em;
+}
+
+
 /* firehose-specific [to the end of the file] */
 
-#firehose .tag-widget.body-widget {
+#firehose div.tag-widget-stub.body-widget,
+#firehose div.tag-widget.body-widget {
 	right: -0.5em;
 	bottom: 6px;
 	z-index: 10;
 	padding: 0 0.4em 0 0.8em;
 	text-align: right;
+	/*margin-left:15em;*/
+	left:10em;
 }
 
-#firehose .tag-widget.body-widget.expanded {
+
+
+
+
+
+#firehose div.tag-widget-stub.body-widget.expanded,
+#firehose div.tag-widget.body-widget.expanded {
 	right: 0;
 }
 
@@ -379,6 +454,9 @@ div.tag-display {
 	content: 'Note: ';
 }
 
+
+
+/*
 .tag-widget .admin-buttons a:before,
 .tag-widget .admin-buttons .note-wrapper.no-note a:before {
 	content: '[';
@@ -388,12 +466,14 @@ div.tag-display {
 .tag-widget .admin-buttons .note-wrapper.no-note a:after {
 	content: ']';
 }
+*/
 
 .tag-widget .admin-buttons .note-wrapper a:before,
 .tag-widget .admin-buttons .note-wrapper a:after,
 .tag-widget .admin-buttons .note-wrapper.no-note:before {
 	content: '';
 }
+
 
 .tag-widget div.tags {
 	display: inline;
@@ -403,6 +483,7 @@ div.tag-display {
 	margin-left: 1em;
 }
 
+.briefarticle .tag-widget-stub.body-widget,
 .briefarticle .tag-widget.body-widget {
 	display: none !important;
 }
@@ -434,11 +515,13 @@ div.article div.title div.nod-nix-reasons span.tag {
 	background-color: inherit;
 }
 
-.note-flag {
-	position: absolute;
-	right: 6em;
+a.edit-toggle {
+	text-decoration:none;
 }
 
-.note-flag.no-note {
-	opacity: 0;
+
+
+div.tag-display.ready.dirty  { /* !FIXING safari tag widget bug on idle. */
+border-top:1px solid transparnt !important;
 }
+

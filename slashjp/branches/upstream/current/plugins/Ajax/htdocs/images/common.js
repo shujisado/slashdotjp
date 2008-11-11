@@ -2,12 +2,22 @@
 ; // $Id$
 
 /*global setFirehoseAction firehose_get_updates tagsHideBody tagsShowBody attachCompleter createTag
-	firehose_remove_all_items firehose_fix_up_down firehose_toggle_tagui_to ajax_update json_handler
+	firehose_remove_all_items firehose_fix_up_down firehose_toggle_tag_ui_to ajax_update json_handler
 	json_update firehose_reorder firehose_get_next_updates getFirehoseUpdateInterval run_before_update
 	firehose_play firehose_add_update_timerid firehose_collapse_entry firehose_slider_end
 	firehose_slider_set_color vendorStoryPopup vendorStoryPopup2 firehose_save_tab check_logged_in
 	scrollWindowToFirehose scrollWindowToId viewWindowLeft getOffsetTop firehoseIsInWindow
 	isInWindow viewWindowTop viewWindowBottom firehose_set_cur firehose_get_onscreen */
+
+YAHOO.namespace('slashdot');
+
+;$(function(){
+	$.ajaxSetup({
+		url:	'/ajax.pl',
+		type:	'POST',
+		contentType: 'application/x-www-form-urlencoded'
+	});
+});
 
 var reskey_static = '';
 
@@ -51,13 +61,18 @@ var console_updating = 0;
 var fh_colorslider;
 var fh_ticksize;
 var fh_colors = [];
-var fh_use_jquery = 0;
+var fh_idle_skin = 0;
 var vendor_popup_timerids = [];
 var vendor_popup_id = 0;
 var fh_slider_init_set = 0;
 var ua=navigator.userAgent;
 var is_ie = ua.match("/MSIE/");
 
+// ads
+var fh_adTimerSecsMax   = 15;
+var fh_adTimerClicksMax = 0;
+var fh_adTimerUrl       = '';
+//fh_adTimerUrl = '/images/iframe/firehose.html'; // testing
 
 
 function createPopup(xy, titlebar, name, contents, message, onmouseout) {
@@ -176,6 +191,19 @@ function firehose_id_of( expr ) {
 	return undefined;
 }
 
+function after_article_moved( article ){
+	var data = article ? $(article).nextAll(':visible').andSelf() : null;
+	$('#firehoselist').trigger('articlesMoved', data);
+}
+
+function before_article_removed( article, if_also_trigger_moved ){
+	var next_article = article ? $(article).next(':visible')[0] : null;
+	$('#firehoselist').trigger('beforeArticleRemoved', article);
+	if ( if_also_trigger_moved ) {
+		after_article_moved(next_article);
+	}
+}
+
 function firehose_toggle_advpref() {
 	$('#fh_advprefs').toggleClass('hide');
 }
@@ -212,6 +240,7 @@ function tagsHideBody(id) {
 	$('#tagbox-title-'+id).setClass('tagtitleclosed');	// Make the title of the tagbox change back to regular
 	$('#tagbox-'+id).setClass('tags');			// Make the tagbox change back to regular.
 	$('#toggletags-button-'+id).html('[+]');		// Toggle the button back.
+	after_article_moved($('#firehose-'+id)[0]);
 }
 
 function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
@@ -230,71 +259,7 @@ function tagsShowBody(id, is_admin, newtagspreloadtext, type) {
 	$('#tagbox-'+id).setClass("tags");			// Make the tagbox change to the slashbox class
 	$('#tagbox-title-'+id).setClass("tagtitleopen");	// Make the title of the tagbox change to white-on-green
 	$('#toggletags-body-'+id).setClass("tagbody");		// Make the body of the tagbox visible
-
-	// If there is a tags-user div, and it hasn't been filled, fill it.
-	var $tagsuser = $('#tags-user-' + id);
-	if ( $tagsuser.length ) {
-		if ($tagsuser.html() === "") {
-			// The tags-user-123 div is empty, and needs to be
-			// filled with the tags this user has already
-			// specified for this story, and a reskey to allow
-			// the user to enter more tags.
-			$tagsuser.html("Retrieving...");
-			var params = {};
-			if (type == "stories") {
-				params.op = 'tags_get_user_story';
-				params.sidenc = id;
-			} else if (type == "urls") {
-				//alert('getting user urls ' + id);
-				params.op = 'tags_get_user_urls';
-				params.id = id;
-			} else if (type == "firehose") {
-				params.op = 'tags_get_user_firehose';
-				params.id = id;
-			}
-			params.newtagspreloadtext = newtagspreloadtext;
-			var handlers = {
-				onComplete: function() {
-					$dom('newtags-'+id).focus();
-				}
-			};
-			ajax_update(params, 'tags-user-' + id, handlers);
-			//alert('after ajax_update ' + tagsuserid);
-
-			// Also fill the admin div.  Note that if the user
-			// is not an admin, this call will not actually
-			// return the necessary form (which couldn't be
-			// submitted anyway).  The is_admin parameter just
-			// saves us an ajax call to find that out, if the
-			// user is not actually an admin.
-			if (is_admin) {
-				var tagsadminid = 'tags-admin-' + id;
-				params = {};
-				if (type == "stories") {
-					params.op = 'tags_get_admin_story';
-					params.sidenc = id;
-				} else if (type == "urls") {
-					params.op = 'tags_get_admin_url';
-					params.id = id;
-				} else if (type == "firehose") {
-					params.op = 'tags_get_admin_firehose';
-					params.id = id;
-				}
-				ajax_update(params, tagsadminid);
-			}
-
-		} else {
-			if (newtagspreloadtext) {
-				// The box was already open but it was requested
-				// that we append some text to the user text.
-				// We can't do that by passing it in, so do it
-				// manually now.
-				var textinput = $dom('newtags-'+id);
-				textinput.value += ' ' + newtagspreloadtext;
-				textinput.focus();
-			}
-		}
-	}
+	after_article_moved($('#firehose-'+id)[0]);
 }
 
 function tagsOpenAndEnter(id, tagname, is_admin, type) {
@@ -302,188 +267,67 @@ function tagsOpenAndEnter(id, tagname, is_admin, type) {
 	tagsShowBody(id, is_admin, tagname, type);
 }
 
-function completer_renameMenu( s, params ) {
-	if ( s ) {
-		params._sourceEl.innerHTML = s;
-	}
-}
-
-function completer_setTag( s, params ) {
-	createTag(s, params._id, params._type);
-	var tagField = document.getElementById('newtags-'+params._id);
-	if ( tagField ) {
-		var end_char = tagField.value.slice(-1);
-		if ( end_char.length && end_char != " " ) {
-			tagField.value += " ";
-		}
-		tagField.value += s;
-	}
-}
-
-function completer_handleNeverDisplay( s, params ) {
-	if ( s == "neverdisplay" ) {
-		admin_neverdisplay("", "firehose", params._id);
-	}
-}
-
-function completer_save_tab(s, params) {
-	firehose_save_tab(params._id);
-}
-
-function clickCompleter( obj, id, is_admin, type, tagDomain, customize ) {
-	return attachCompleter(obj, id, is_admin, type, tagDomain, customize);
-}
-
-function focusCompleter( obj, id, is_admin, type, tagDomain, customize ) {
-	if ( navigator.vendor !== undefined ) {
-		var vendor = navigator.vendor.toLowerCase();
-		if ( vendor.indexOf("apple") != -1 ||
-				vendor.indexOf("kde") != -1 ) {
-			return false;
-		}
-	}
-
-	return attachCompleter(obj, id, is_admin, type, tagDomain, customize);
-}
-
-function attachCompleter( obj, id, is_admin, type, tagDomain, customize ) {
-	if ( customize === undefined ) {
-		customize = {};
-	}
-	customize._id = id;
-	customize._is_admin = is_admin;
-	customize._type = type;
-	if ( tagDomain !== 0 && customize.queryOnAttach === undefined ) {
-		customize.queryOnAttach = true;
-	}
-
-	if ( !YAHOO.slashdot.gCompleterWidget ) {
-		YAHOO.slashdot.gCompleterWidget = new YAHOO.slashdot.AutoCompleteWidget();
-	}
-
-	YAHOO.slashdot.gCompleterWidget.attach(obj, customize, tagDomain);
-	return false;
-}
-
 function reportError(request) {
 	// replace with something else
 	alert("error");
 }
 
-function createTag(tag, id, type) {
-	var params = {};
-	params.id = id;
-	params.type = type;
-	if ( fh_is_admin && ("_#)^*".indexOf(tag[0]) != -1) ) {
-	  params.op = 'tags_admin_commands';
-	  params.reskey = $('#admin_commands-reskey-' + id).val();
-	  params.command = tag;
-	} else {
-	  params.op = 'tags_create_tag';
-	  params.reskey = reskey_static;
-	  params.name = tag;
-	  if ( fh_is_admin && (tag == "hold") ) {
-	    firehose_collapse_entry(id);
-	  }
-	}
-	ajax_update(params, '');
-}
-
-function tagsCreateForStory(id) {
-	var status = $('#toggletags-message-'+id).html('Saving tags...');
-
-	ajax_update({
-		op: 'tags_create_for_story',
-		sidenc: id,
-		tags: $('#newtags-'+id).val(),
-		reskey: $('#newtags-reskey-'+id).val()
-	}, 'tags-user-' + id);
-
-	// XXX How to determine failure here?
-	status.html('Tags saved.');
-}
-
-function tagsCreateForUrl(id) {
-	var status = $('#toggletags-message-'+id).html('Saving tags...');
-
-	ajax_update({
-		op:	'tags_create_for_url',
-		id:	id,
-		tags:	$('#newtags-'+id).val(),
-		reskey:	$('#newtags-reskey-'+id).val()
-	}, 'tags-user-' + id);
-
-	// XXX How to determine failure here?
-	status.html('Tags saved.');
-}
-
 //Firehose functions begin
-function setOneTopTagForFirehose(id, newtag) {
-	ajax_update({
-		op: 'firehose_update_one_tag',
-		id: id,
-		tags: newtag
-	});
-}
-function tagsCreateForFirehose(id) {
-	var status = $('#toggletags-message-'+id).html('Saving tags...');
-
-	ajax_update({
-		op:	'tags_create_for_firehose',
-		id:	id,
-		tags:	$('#newtags-'+id).val(),
-		reskey:	$('#newtags-reskey-'+id).val()
-	}, 'tags-user-'+id);
-
-	status.html('Tags saved.');
-}
-
-function toggle_firehose_body(id, is_admin) {
-	var params = {};
+function toggle_firehose_body( id, is_admin ) {
 	setFirehoseAction();
-	params.op = 'firehose_fetch_text';
-	params.id = id;
-	var fhbody = $dom('fhbody-'+id);
-	var fh = $dom('firehose-'+id);
 
-	var usertype = fh_is_admin ? " adminmode" : " usermode";
-	if (fhbody.className == "empty") {
-		var handlers = {
-			onComplete: function() {
-				if(firehoseIsInWindow(id)) {
-					scrollWindowToFirehose(id);
-				}
-				firehose_get_admin_extras(id);
-			}
-		};
-		params.reskey = reskey_static;
-		ajax_update(params, 'fhbody-'+id, is_admin ? handlers : null);
-		fhbody.className = "body";
-		fh.className = "article" + usertype;
-		if (is_admin) {
-			firehose_toggle_tagui_to(true, fh);
-		}
-	} else if (fhbody.className == "body") {
-		fhbody.className = "hide";
-		fh.className = "briefarticle" + usertype;
-		/*if (is_admin)
-			tagsHideBody(id);*/
-	} else if (fhbody.className == "hide") {
-		fhbody.className = "body";
-		fh.className = "article" + usertype;
-		if (is_admin) {
-			firehose_toggle_tagui_to(true, fh);
-		}
-		/*if (is_admin)
-			tagsShowBody(id, is_admin, '', "firehose"); */
+	var	$article	= $('#firehose-'+id),
+		body_id		= 'fhbody-'+id,
+		$body		= $article.find('#'+body_id),
+		$h3 		=  $article.find('h3');
+		usertype	= fh_is_admin ? " adminmode" : "usermode";
+		if_empty	= $body.is('.empty'),
+		if_show		= if_empty || $body.is('.hide');
+
+	if ( if_empty ) {
+		ajax_update({	op:	'firehose_fetch_text',
+				id:	id,
+				reskey:	reskey_static
+			},
+			body_id,
+			is_admin ? {	onComplete: function() {
+						if( firehoseIsInWindow(id) ) {
+							scrollWindowToFirehose(id);
+						}
+						firehose_get_admin_extras(id);
+					}
+				} :
+				null
+		);
 	}
+
+	if ( if_show ) {
+		$body.setClass('body');
+		$article.setClass('article ' + usertype);
+		$h3.find('a img').hide("fast");
+		if ( is_admin ) {
+			firehose_toggle_tag_ui_to(true, $article);
+		}
+	} else {
+		$body.setClass('hide');
+		$h3.find('a img').show("fast");
+		$article.setClass('briefarticle ' + usertype);
+	}
+	after_article_moved($article[0]);
+	inlineAdFirehose( if_show && $article );
+
+	return false;
 }
 
 function toggleFirehoseTagbox(id) {
 	$('#fhtagbox-'+id).toggleClasses('tagbox', 'hide');
+	after_article_moved($('#firehose-'+id)[0]);
 }
 
 function firehose_set_options(name, value) {
+	if (firehose_user_class === 0) {
+		return;
+	}
 	if (name == "color" && value === undefined) {
 		return;
 	}
@@ -637,48 +481,12 @@ function firehose_set_options(name, value) {
 }
 
 function firehose_remove_all_items() {
-	$('#firehoselist').children().remove();
+	$('#firehoselist').empty();
+	after_article_moved();
 }
 
 
-function firehose_up_down(id, dir, type) {
-	if (!check_logged_in()) { return; }
-
-	setFirehoseAction();
-	var meta = 0;
-	if (type && type == "comment") {
-		meta = 1;
-	}
-	ajax_update({
-		op:	'firehose_up_down',
-		id:	id,
-		reskey:	reskey_static,
-		dir:	dir,
-		meta:	meta
-	}, '', { onComplete: json_handler });
-
-
-	// We changed the tags outside the notice of the tag widget (if any).
-	// If there is one, we need to tell it.  Look for the tag widget.
-	var new_context = {'+':'nod', '-':'nix'}[dir];
-	var found_widgets = 0;
-
-	var $server = $('#firehoselist > [tag-server='+id+']');
-	$server.find('.tag-widget').
-			each(function(){
-				++found_widgets;
-				this.set_context(new_context);
-			});
-
-	if ( found_widgets ) {
-		$server[0].fetch_tags();
-	} else {
-		// No tag widget; we have to call directly...
-		firehose_fix_up_down(id, {'+':'votedup', '-':'voteddown'}[dir]);
-	}
-}
-
-function firehose_fix_up_down(id, new_state) {
+function firehose_fix_up_down( id, new_state ){
 	// Find the (possibly) affected +/- capsule.
 	var $updown = $('#updown-'+id);
 
@@ -713,47 +521,54 @@ function firehose_remove_tab(tabid) {
 
 
 //
-// firehose + tagui
+// firehose + tag_ui
 //
 
 var $related_trigger = $().filter();
 
-function firehose_toggle_tagui_to( if_expanded, selector ){
+var kExpanded=true, kCollapsed=false;
+
+function firehose_toggle_tag_ui_to( if_expanded, selector ){
 	var	$server = $(selector).nearest_parent('[tag-server]'),
+		id	= $server.attr('tag-server'),
 		$widget = $server.find('.tag-widget.body-widget'),
-		id	= $server.attr('tag-server');
+		toggle	= if_expanded != $widget.hasClass('expanded');
 
-	setFirehoseAction();
-	$server.find('.tag-widget').each(function(){ this.set_context(); });
+	if ( toggle ) {
+		setFirehoseAction();
+		$server.find('.tag-widget').each(function(){ this.set_context(); });
 
-	$widget.toggleClassTo('expanded', if_expanded);
+		$widget.toggleClassTo('expanded', if_expanded);
 
-	var toggle_button={}, toggle_div={};
-	if ( if_expanded ){
-		$server.each(function(){ this.fetch_tags(); });
-		if ( fh_is_admin ) {
-			firehose_get_admin_extras(id);
+		var toggle_button={}, toggle_div={};
+		if ( if_expanded ){
+			$server.each(function(){ this.fetch_tags(); });
+			if ( fh_is_admin ) {
+				firehose_get_admin_extras(id);
+			}
+			$widget.find('.tag-entry:visible:first').each(function(){ this.focus(); });
+
+			toggle_button['+'] = (toggle_button.collapse = 'expand');
+			toggle_div['+'] = (toggle_div.tagshide = 'tagbody');
+		} else {
+			toggle_button['+'] = (toggle_button.expand = 'collapse');
+			toggle_div['+'] = (toggle_div.tagbody = 'tagshide');
 		}
-		$widget.find('.tag-entry:visible:first').each(function(){ this.focus(); });
 
-		toggle_button['+'] = (toggle_button.collapse = 'expand');
-		toggle_div['+'] = (toggle_div.tagshide = 'tagbody');
-	} else {
-		toggle_button['+'] = (toggle_button.expand = 'collapse');
-		toggle_div['+'] = (toggle_div.tagbody = 'tagshide');
+		$widget.find('a.edit-toggle .button').mapClass(toggle_button);
+		$server.find('#toggletags-body-'+id).mapClass(toggle_div);
+		after_article_moved($server[0]);
 	}
 
-	$widget.find('a.edit-toggle .button').mapClass(toggle_button);
-	$server.find('#toggletags-body-'+id).mapClass(toggle_div);
+	return $widget;
 }
 
-function firehose_toggle_tagui( toggle ) {
-	firehose_toggle_tagui_to( ! $(toggle.parentNode).hasClass('expanded'), toggle );
+function firehose_toggle_tag_ui( toggle ) {
+	firehose_toggle_tag_ui_to( ! $(toggle.parentNode).hasClass('expanded'), toggle );
 }
 
 function firehose_click_tag( event ) {
-	var $target = $(event.target);
-	var command='';
+	var $target = $(event.target), command='', $menu;
 
 	$related_trigger = $target;
 
@@ -763,7 +578,7 @@ function firehose_click_tag( event ) {
 		command = 'nix';
 	} else if ( $target.is('.tag') ) {
 		command = $target.text();
-	} else if ( $target.nearest_parent('.tmenu').length ) {
+	} else if ( ($menu = $target.nearest_parent('.tmenu')).length ) {
 		var op = $target.text();
 		var $tag = $target.nearest_parent(':has(span.tag)').find('.tag');
 		$related_trigger = $tag;
@@ -771,15 +586,35 @@ function firehose_click_tag( event ) {
 		var tag = $tag.text();
 		command = normalize_tag_menu_command(tag, op);
 	} else {
-		$related_target = $().filter();
+		$related_trigger = $().filter();
 	}
 
 	if ( command ) {
+		// No!  You no hurt Dr. Jones!  You log-in first!
+		if ( ! check_logged_in() ) {
+			return false;
+		}
+
 		var $server = $target.nearest_parent('[tag-server]');
 
-		if ( event.shiftKey ) {
-			// if the shift key is down, append the tag to the edit field
-			$server.find('.tag-entry:text:visible:first').each(function(){
+		// Make sure the user sees some feedback...
+		if ( $menu || event.shiftKey ) {
+			// for a menu command or copying a tag into edit field, open the tag_ui
+			var $widget = firehose_toggle_tag_ui_to(kExpanded, $server);
+
+			// the menu is hover css, you did the command, so the menu should go away
+			// but you're still hovering
+			if ( $menu ) {
+				// so explicitly hide the menu
+				$menu.hide();
+				// Yikes! that makes it permanently gone; so undo at our earliest convenience
+				setTimeout(function(){ $menu.removeAttr('style'); });
+				// it can't immediately re-pop because you no longer qualify for the hover
+			}
+		}
+
+		if ( event.shiftKey ) { // if the shift key is down, append the tag to the edit field
+			$widget.find('.tag-entry:text:visible:first').each(function(){
 				if ( this.value ) {
 					var last_char = this.value[ this.value.length-1 ];
 					if ( '-^#!)_ '.indexOf(last_char) == -1 ) {
@@ -789,8 +624,7 @@ function firehose_click_tag( event ) {
 				this.value += command;
 				this.focus();
 			});
-		} else {
-			// otherwise, send it the server to be processed
+		} else { // otherwise, send it the server to be processed
 			$server.each(function(){
 				this.submit_tags(command, { fade_remove: 400, order: 'prepend', classes: 'not-saved'});
 			});
@@ -879,7 +713,30 @@ function firehose_handle_comment_nodnix( commands ){
 }
 
 
-function firehose_init_tagui( $new_entries ){
+function tag_ui_init_new_articles(){
+	if ( $('#firehose').length ) {
+		return firehose_init_tag_ui();
+	}
+
+	var $new_articles = $(document).article_info__find_articles(':not(:has(span.sd-info-block .tag-ui))');
+	$new_articles.
+		click(firehose_click_tag).
+		each(function(){
+			install_tag_server(this);
+			this.command_pipeline.push(firehose_handle_context_triggers);
+		});
+	$init_tag_widgets($new_articles.find('.tag-widget-stub'));
+	init_tag_ui_styles($new_articles);
+	$new_articles.article_info('tag-ui', true);
+	return $new_articles;
+}
+
+$(function(){
+	tag_ui_init_new_articles();
+});
+
+
+function firehose_init_tag_ui( $new_entries ){
 	if ( ! $new_entries || ! $new_entries.length ) {
 		var $firehoselist = $('#firehoselist');
 		if ( $firehoselist.length ) {
@@ -899,16 +756,6 @@ function firehose_init_tagui( $new_entries ){
 
 			if ( fh_is_admin ) {
 				this.command_pipeline.push(firehose_handle_admin_commands);
-
-				var $note_flag = $this.find('.title h3').
-					append('<span class="note-flag">note</span>').
-					find('.note-flag').
-					attr('title', "don't click; I am not a button");
-
-				var $note_wrapper = $this.find('.note-wrapper');
-				if ( ! $note_wrapper.length || $note_wrapper.hasClass('no-note') ) {
-					$note_flag.addClass('no-note');
-				}
 			}
 
 			this.command_pipeline.push(
@@ -918,9 +765,9 @@ function firehose_init_tagui( $new_entries ){
 					firehose_handle_nodnix );
 
 			$this.
-				find('.title').
+				find('> h3').
 					append('<div class="tag-widget-stub nod-nix-reasons" init="context_timeout:15000">' +
-							'<div class="tag-display-stub" context="related" init="legend:\'why\', menu:false" />' +
+							'<div class="tag-display-stub" context="related" init="menu:false" />' +
 						'</div>').
 					find('.tag-display-stub').
 						click(firehose_click_nodnix_reason);
@@ -936,7 +783,7 @@ function firehose_init_tagui( $new_entries ){
 				});
 	}
 
-	init_tagui_styles($new_entries);
+	return init_tag_ui_styles($new_entries);
 }
 // firehose functions end
 
@@ -949,11 +796,12 @@ function ajax_update(request_params, id, handlers, options) {
 	}
 
 	var opts = {
-		url: options.request_url || '/ajax.pl',
-		data: request_params,
-		type: 'POST',
-		contentType: 'application/x-www-form-urlencoded'
+		data: request_params
 	};
+
+	if ( options.request_url ) {
+		opts.url = options.request_url;
+	}
 
 	if ( options.async_off ) {
 		opts.async = false;
@@ -967,6 +815,10 @@ function ajax_update(request_params, id, handlers, options) {
 
 	if ( handlers && handlers.onComplete ) {
 		opts.complete = handlers.onComplete;
+	}
+
+	if ( handlers && handlers.onError ) {
+		opts.error = handlers.onError;
 	}
 
 	jQuery.ajax(opts);
@@ -997,6 +849,10 @@ function json_handler(transport) {
 }
 
 function json_update(response) {
+	if ( ! response ) {
+		return;
+	}
+
 	if (response.eval_first) {
 		try {
 /*jslint evil: true */
@@ -1021,7 +877,10 @@ function json_update(response) {
 		var new_value = response.value;
 		for (id in new_value) {
 			if ( new_value.hasOwnProperty(id) ) {
-				$('#'+id).val(new_value[id]);
+				var elem = $dom(id);
+				if ( elem !== gFocusedText ) {
+					$(elem).val(new_value[id]);
+				}
 			}
 		}
 	}
@@ -1064,7 +923,6 @@ function json_update(response) {
 		}
 	}
 }
-
 
 function firehose_handle_update() {
 	var saved_selection = new $.TextSelection(gFocusedText);
@@ -1130,13 +988,14 @@ function firehose_handle_update() {
 			myAnim.onComplete.subscribe(function() {
 				var fh_node = $dom(fh);
 				if (fh_node) {
+					after_article_moved(fh_node);
 					fh_node.style.height = "";
-					if (fh_use_jquery) {
-						$("h3 a[class!='skin']", fh_node).click(function(){
+					if (fh_idle_skin) {
+						/* $("h3 a[class!='skin']", fh_node).click(function(){
 							var h3 = $(this).parent('h3');
 							h3.next('div.hid').and(h3.find('a img')).toggle("fast");
 							return false;
-						});
+						}); */
 					}
 				}
 			});
@@ -1176,6 +1035,7 @@ function firehose_handle_update() {
 					myAnim.onComplete.subscribe(function() {
 						var elem = this.getEl();
 						if (elem && elem.parentNode) {
+							before_article_removed(elem, true);
 							elem.parentNode.removeChild(elem);
 						}
 					});
@@ -1198,7 +1058,9 @@ function firehose_handle_update() {
 		firehose_get_next_updates();
 	}
 
-	firehose_init_tagui();
+	var $new_entries = firehose_init_tag_ui();
+	if ( fh_idle_skin ) { firehose_init_idle($new_entries); }
+	if ( fh_is_admin ) { firehose_init_note_flags($new_entries); }
 
 	saved_selection.restore().focus();
 	$menu.show();
@@ -1221,22 +1083,25 @@ function firehose_adjust_window(onscreen) {
 }
 
 function firehose_reorder() {
-	var onscreen = firehose_get_onscreen();
 	if (firehose_ordered) {
 		var fhlist = $('#firehoselist');
 		if (fhlist) {
 			firehose_item_count = firehose_ordered.length;
+			var moved = false;
 			for (i = 0; i < firehose_ordered.length; ++i) {
 				if (!/^\d+$/.test(firehose_ordered[i])) {
 					--firehose_item_count;
 				}
-				$('#firehose-'+firehose_ordered[i]).appendTo(fhlist);
+				if ( $('#firehose-'+firehose_ordered[i]).appendTo(fhlist).length ) {
+					moved = true;
+				}
 				if ( firehose_future[firehose_ordered[i]] ) {
 					$('#ttype-'+firehose_ordered[i]).setClass('future');
 				} else {
 					$('#ttype-'+firehose_ordered[i]+'.future').setClass('story');
 				}
 			}
+			if ( moved ) after_article_moved();
 			var newtitle = document.title;
 			if (/\(\d+\)/.test(newtitle)) {
 				newtitle = newtitle.replace(/(\(\d+\))/,"(" + firehose_item_count + ")");
@@ -1259,6 +1124,22 @@ function firehose_get_next_updates() {
 function firehose_get_updates_handler(transport) {
 	$('.busy').hide();
 	var response = eval_response(transport);
+
+	var updated_tags = response.update_data.updated_tags;
+	if ( updated_tags ) {
+		var $tag_servers = $('[tag-server]');
+		$.each(updated_tags, function( id, tags ){
+			var updates = '';
+			if ( tags.system_tags !== undefined )	{ updates += '<system>' + tags.system_tags; }
+			if ( tags.top_tags !== undefined )	{ updates += '<top>' + tags.top_tags; }
+			if ( updates ) {
+				$tag_servers.filter('[tag-server='+id+']').each(function(){
+					this.broadcast_tag_lists(updates);
+				});
+			}
+		});
+	}
+
 	var processed = 0;
 	firehose_removals = response.update_data.removals;
 	firehose_ordered = response.ordered;
@@ -1321,7 +1202,13 @@ function firehose_get_updates(options) {
 	}
 
 	$('.busy').show();
-	ajax_update(params, '', { onComplete: firehose_get_updates_handler });
+	ajax_update(params, '', { onComplete: firehose_get_updates_handler, onError: firehose_updates_error_handler });
+}
+
+function firehose_updates_error_handler(XMLHttpRequest, textStatus, errorThrown) {
+	if (fh_is_admin) {
+		firehose_update_failed_modal();
+	}
 }
 
 function setFirehoseAction() {
@@ -1362,9 +1249,15 @@ function run_before_update() {
 	var secs = getSecsSinceLastFirehoseAction();
 	if (secs > inactivity_timeout) {
 		fh_is_timed_out = 1;
-		$('#message_area').html("Automatic updates have been slowed due to inactivity");
-		//firehose_pause();
+		firehose_inactivity_modal();
 	}
+}
+
+function firehose_inactivity_modal() {
+	$('#preference_title').html('Firehose Paused due to inactivity');
+	show_modal_box();
+	$('#modal_box_content').html("<a href='#' onclick='setFirehoseAction();hide_modal_box()'>Click to unpause</a>");
+	show_modal_box();
 }
 
 function firehose_play() {
@@ -1415,6 +1308,7 @@ function firehose_remove_entry(id) {
 		myAnim.duration = 0.5;
 		myAnim.onComplete.subscribe(function() {
 			var el = this.getEl();
+			after_article_moved(el);
 			el.parentNode.removeChild(el);
 		});
 		myAnim.animate();
@@ -1532,14 +1426,23 @@ function firehose_open_tab(id) {
 }
 
 function firehose_save_tab(id) {
+	var	$tab		= $('#fhtab-'+id),
+		new_name	= $tab.find('#tab-input-'+id).val(),
+		$title		= $tab.find('#tab-text-'+id),
+		$saved		= $title.children().remove(); // please ... think of the children
+	// let's not wait for a server response to reflect the name-change
+	$title.text(new_name).append($saved);
+
+	// XXX: I'm having problems where the server occasionaly refuses,
+	//	resets the title, and gives no explanation as to why
 	ajax_update({
 		op:		'firehose_save_tab',
-		tabname:	$('#tab-input-'+id).val(),
+		tabname:	new_name,
 		section:	firehose_settings.section,
 		tabid:		id
 	}, '',  { onComplete: json_handler });
-	$('#tab-form-'+id).setClass('hide');
-	$('#tab-text-'+id).removeClass();
+	$tab.find('#tab-form-'+id).setClass('hide');
+	$title.removeClass();
 }
 var logged_in   = 1;
 var login_cover = 0;
@@ -1686,6 +1589,17 @@ function firehose_get_media_popup(id) {
 	}, 'modal_box_content');
 }
 
+function firehose_reinit_updates() {
+	fh_is_updating = 0;
+	firehose_add_update_timerid(setTimeout(firehose_get_updates, 5000));
+}
+
+function firehose_update_failed_modal() {
+	$('#preference_title').html('Firehose updates failed');
+	$('#modal_box_content').html('Update failed or timed out.  <a href="#" onclick="firehose_reinit_updates();hide_modal_box();">Click to retry</a>');
+	show_modal_box();
+}
+
 function saveModalPrefs() {
 	var params = {};
 	params.op = 'saveModalPrefs';
@@ -1700,22 +1614,6 @@ function saveModalPrefs() {
 		}
 	};
 	ajax_update(params, '', handlers);
-}
-
-function ajaxSaveSlashboxes() {
-	ajax_update({
-		op:	'page_save_user_boxes',
-		reskey:	reskey_static,
-		bids:	$('#slashboxes div.title').map(function(){
-				return this.id.slice(0,-6);
-			}).get().join(',')
-	});
-}
-
-function ajaxRemoveSlashbox( id ) {
-	if ( $('#slashboxes > #'+id).remove().size() ) {
-		ajaxSaveSlashboxes();
-	}
 }
 
 function displayModalPrefHelp(id) {
@@ -1741,17 +1639,6 @@ function toggle_filter_prefs() {
 		}
 	}
 
-}
-
-function admin_signoff(stoid, type, id) {
-	var params = {};
-	params.op = 'admin_signoff';
-	params.stoid = stoid;
-	params.reskey = reskey_static;
-	ajax_update(params, 'signoff_' + stoid);
-	if (type == "firehose") {
-		firehose_collapse_entry(id);
-	}
 }
 
 function scrollWindowToFirehose(fhid) {
@@ -1875,7 +1762,13 @@ function firehose_more() {
 	if (((firehose_item_count + firehose_more_increment) >= 200) && !fh_is_admin) {
 		$('#firehose_more').hide();
 	}
-	firehose_set_options('more_num', firehose_settings.more_num);
+	if (firehose_user_class) {
+		firehose_set_options('more_num', firehose_settings.more_num);
+	} else {
+		firehose_get_updates({ oneupdate: 1 });
+	}
+
+	inlineAdFirehose();
 }
 
 function firehose_get_onscreen() {
@@ -1883,3 +1776,340 @@ function firehose_get_onscreen() {
 	$('#firehoselist').children().each(function() { if(isInWindow(this)){ onscreen.push(this.id);} });
 	return onscreen;
 }
+
+
+function getSeconds () {
+	return new Date().getTime()/1000;
+}
+
+
+// ads!  ads!  ads!
+var adTimerSeen   = {};
+var adTimerSecs   = 0;
+var adTimerClicks = 0;
+var adTimerInsert = 0;
+
+function inlineAdReset(id) {
+	if (id !== undefined)
+		adTimerSeen[id] = 2;
+	adTimerSecs   = getSeconds();
+	adTimerClicks = 0;
+	adTimerInsert = 0;
+}
+
+
+function inlineAdClick(id) {
+	//adTimerSeen[id] = adTimerSeen[id] || 1;
+	adTimerClicks = adTimerClicks + 1;
+}
+
+
+function inlineAdInsertId(id) {
+	if (id !== undefined)
+		adTimerInsert = id;
+	return adTimerInsert;
+}
+
+
+function inlineAdVisibles() {
+	var $visible_ads = $('.inlinead').filter(function(){ if ( isInWindow(this) ) return this; });
+	return $visible_ads.length;
+}
+
+
+function inlineAdCheckTimer(id, url, clickMax, secsMax) {
+	if (!url || !id)
+		return 0;
+
+	if (adTimerSeen[id] && adTimerSeen[id] == 2)
+		return 0;
+
+	// ignore clicks if adTimerClicksMax == 0
+	if (clickMax > 0 && !adTimerSeen[id])
+		inlineAdClick(id);
+
+	var ad = 0;
+	if (clickMax > 0 && adTimerClicks >= clickMax)
+		ad = 1;
+	else {
+		var secs = getSeconds() - adTimerSecs;
+		if (secs >= secsMax)
+			ad = 1;
+	}
+
+	if (!ad)
+		return 0;
+
+	return inlineAdInsertId(id);
+}
+
+// TODO: remove this jQuery method when integration is complete and this method is really provided by Slash.TagUI
+(function($){
+$.fn.tag_ui__tags = function(){
+	var tags = {};
+	this.find('span.tag').each(function(){
+		tags[ $(this).text() ] = true;
+	});
+	return Slash.Util.qw(tags);
+}
+})(Slash.jQuery);
+
+function inlineAdFirehose($article) {
+	if (!fh_adTimerUrl)
+		return 0;
+
+	if (!$article)
+		$article = Slash.Firehose.choose_article_for_next_ad();
+	if (!$article)
+		return 0;
+
+	var id = $article.article_info__key().key;
+	if (!id)
+		return 0;
+
+	// we need to remove the existing ad from the hash so it can be re-used
+	var old_id = inlineAdInsertId();
+
+	if (! inlineAdCheckTimer(id, fh_adTimerUrl, fh_adTimerClicksMax, fh_adTimerSecsMax))
+		return 0;
+
+	if (Slash.Firehose.floating_slashbox_ad.is_visible())
+		return 0;
+
+	var $system = $article.find('[context=system]');
+	var topic = $system.find('.t2:not(.s1)').tag_ui__tags().join(',');
+	var skin  = $system.find('.s1').tag_ui__tags()[0];
+	var adUrl = fh_adTimerUrl + '?skin=' + (skin || 'mainpage');
+	if (topic)
+		adUrl = adUrl + '&topic=' + topic;
+
+	var ad_content = '<iframe src="' + adUrl + '" height="300" width="300" frameborder="0" border="0" scrolling="no" marginwidth="0" marginheight="0"></iframe>';
+
+	Slash.Firehose.floating_slashbox_ad($article, ad_content);
+
+	inlineAdReset(id);
+	if (old_id)
+		adTimerSeen[old_id] = 0;
+
+	return id;
+}
+
+
+;(function($){
+
+//
+// Firehose Floating Slashbox Ad
+//
+
+
+var	AD_HEIGHT = 300, AD_WIDTH = 300, FOOTER_PADDING = 5,
+
+	current_mode = { has_content: false },
+	$ad_position,		// 300x300 div that holds the current (if any) ad
+	$current_article,	// the article to which that ad is attached
+	$slashboxes,		// the container in which the ad floats
+	$footer;
+
+$(function(){
+	$footer = $('#ft');
+	$slashboxes = $('#slashboxes').
+		append('<div id="floating-slashbox-ad" style="display:none; position:absolute; height:'+AD_HEIGHT+'px; width:'+AD_WIDTH+'px;" />');
+	$ad_position = $slashboxes.find('#floating-slashbox-ad');
+
+	$(window).scroll(fix_ad_position);
+	$('#firehoselist').
+		bind('articlesMoved', fix_ad_position).
+		bind('beforeArticleRemoved', notice_article_removed);
+
+	$ad_position.
+		bind('adArticleRemoved', function(){
+			set_current_ad($current_article.next(':visible'));
+		});
+});
+
+function notice_article_removed( event, removed_article ){
+	if ( current_mode.has_content && $current_article[0]===removed_article ) {
+		$ad_position.trigger('adArticleRemoved');
+	}
+}
+
+function if_same_mode( a, b ){
+	return	(!a.has_content && !b.has_content) ||
+		(
+			(a.has_content == b.has_content) &&
+			(a.is_in_window == b.is_in_window) &&
+			(a.top == b.top) &&
+			(a.pinned == b.pinned)
+		);
+}
+
+function set_mode( next ){
+	var cur = current_mode;
+
+	if ( ! if_same_mode(cur, next) ) {
+		if ( next.has_content ) {
+			if ( cur.has_content && (next.is_in_window || cur.is_in_window) ) {
+				$ad_position.animate({top: next.top}, 'fast');
+			} else {
+				$ad_position.hide().css({top: next.top});
+				if ( !cur.has_content ) {
+					$ad_position.fadeIn('fast');
+				} else {
+					$ad_position.show();
+				}
+			}
+		} else {
+			$ad_position.hide();
+		}
+
+		var event_name;
+		if ( cur.has_content != next.has_content ) {
+			event_name = next.has_content ? 'adInserted' : 'adRemoved';
+		} else if ( cur.pinned != next.pinned ) {
+			event_name = 'adPinnedTo' + next.pinned;
+		} else if ( cur.is_in_window != next.is_in_window ) {
+			event_name = next.is_in_window ? 'adMovedIntoWindow' : 'adMovedOutOfWindow';
+		} else if ( cur.top != next.top ) {
+			event_name = 'adMoved';
+		}
+
+		current_mode = next;
+
+		if ( event_name ) {
+			$ad_position.trigger(event_name);
+		}
+	}
+}
+
+function set_current_ad( $new_article, new_ad ){
+	var	have_new_article	= $new_article && $new_article.length,
+		clear_all		= !have_new_article && !new_ad;
+
+	if ( !current_mode.has_content && !new_ad ) {
+		return;
+	}
+
+	if ( clear_all || new_ad ) {
+		set_mode({ has_content: false });
+		$ad_position.empty();
+	}
+
+	if ( !clear_all ) {
+		if ( new_ad ) {
+			current_mode.will_have_content = true;
+			$ad_position.append(new_ad);
+		}
+		if ( have_new_article ) {
+			$current_article = $new_article.eq(0);
+		}
+		fix_ad_position();
+	} else {
+		$current_article = null;
+	}
+}
+
+function fix_ad_position(){
+	if ( current_mode.has_content || current_mode.will_have_content ) {
+		var	footer		= $footer.offset(),
+			slashboxes	= $slashboxes.offset(),
+			article		= $current_article.offset();
+
+		if ( ! footer || ! slashboxes || ! article ) {
+			return;
+		}
+
+		var	space_top	= slashboxes.top + $slashboxes.height(),
+			space_bottom	= footer.top - FOOTER_PADDING,
+			window_top	= window.pageYOffset,
+			window_bottom	= window_top + window.innerHeight,
+			ad_top		= Math.max(space_top, Math.min(article.top, space_bottom-AD_HEIGHT)),
+			next_mode	= {	has_content:	true,
+						is_in_window:	!( ad_top > window_bottom || ad_top + AD_HEIGHT < window_top ),
+						top:		ad_top - slashboxes.top
+					};
+
+		if ( ad_top == article.top ) {
+			next_mode.pinned = 'Article';
+		} else if ( ad_top < article.top ) {
+			next_mode.pinned = 'Bottom';
+		} else if ( ad_top > (article.top + $current_article.height()) ) {
+			next_mode.pinned = 'TopDisconnected';
+		} else {
+			next_mode.pinned = 'Top';
+		}
+
+		set_mode(next_mode);
+	}
+}
+
+
+Slash.Util.Package({ named: 'Slash.Firehose.floating_slashbox_ad',
+	api: {
+		is_visible:		function(){ return current_mode.has_content && current_mode.is_in_window; },
+		remove:			function(){ set_current_ad() },
+		current_article:	function(){ return $current_article; },
+		is_pinned_to:		function(){ return current_mode.pinned; },
+		bind:			function(){ return $ad_position.bind.apply($ad_position, arguments); },
+		unbind:			function(){ return $ad_position.unbind.apply($ad_position, arguments); }
+	},
+	stem_function: set_current_ad
+});
+
+Slash.Firehose.articles_on_screen = function(){
+	var	window_top = window.pageYOffset,
+		window_bottom = window_top + window.innerHeight,
+		lo,	// index within the jQuery selection of the first article visible on the screen
+		hi=0;	// index one beyond the last article visible on the screen
+
+	var $articles = $('#firehose > #firehoselist').
+		article_info__find_articles().
+			filter(':visible').
+				// examine articles in order until I _know_ no further articles can be on screen
+				each(function(){
+					var $this=$(this), this_top=$this.offset().top;
+					// hi is the index of this article
+
+					if ( this_top >= window_bottom ) {
+						// ...then this article, and all that follow must be entirely below the screen
+						// the last article on screen (if any) must be the previous one (at hi-1)
+						return false;
+					}
+
+					// until we find the first on-screen article...
+					if ( lo === undefined ) {
+						var this_bottom = this_top + $this.height();
+
+						// we know this_top is above window_bottom, so...
+						if ( this_bottom > window_top ) {
+							// ...then _this_ article must be (the first) on screen
+							lo = hi;
+						}
+
+						if ( this_bottom >= window_bottom ) {
+							// ...then we must be the _only_ article on screen
+							++hi; // starting one past this article, everything is below the screen
+							return false;
+						}
+					}
+					++hi;
+				});
+
+	if ( lo === undefined ) {
+		return $([]);
+	} else if ( lo===0 && hi==$articles.length ) {
+		return $articles;
+	} else {
+		return $(Array.prototype.slice.call($articles, lo, hi));
+	}
+}
+
+Slash.Firehose.choose_article_for_next_ad = function(){
+	var $articles = Slash.Firehose.articles_on_screen();
+	// omit the first article (when we have more than one) if it starts above the screen
+	if ( ($articles.length > 1) && ($articles.offset().top < window.pageYOffset) ) {
+		$articles = $articles.filter(':gt(0)');
+	}
+	return $articles.eq( Math.floor(Math.random()*$articles.length) );
+}
+
+})(Slash.jQuery);

@@ -16,7 +16,6 @@ portalmap
 __template__
 
 [% title %]
-<span class="closebox" onClick="ajaxRemoveSlashbox('[% bid %]-container')"></span>
 
 __seclev__
 500

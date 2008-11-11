@@ -21,7 +21,7 @@ __template__
 		%]
 
                 [% IF tabbed == 1 %]
-                <div style="text-align: center;">
+                <div style="margin-top: 1em; text-align: center;">
                 &nbsp;
                 <a href="#" style="font-weight: bold; text-decoration: none; font-size: 14px;" onclick="getModalPrefs('user', 'User', 1); return false;">User</a>
                 &nbsp;|&nbsp;
@@ -95,6 +95,20 @@ __template__
                 	</td>
                 	</tr>
         	[% END %]
+
+                <tr>
+                <td><b>Console Messages</b></td>
+                <td><label><input type="checkbox" name="console_message_toggle"[% constants.markup_checked_attribute %]></label></td>
+                </tr>
+
+                <tr>
+                <td><b>Console Messages Via</b></td>
+                <td><select name="console_message_transfer">
+                        <option value="1">Remarks</option>
+                        <option value="2">Messages</option>
+                    </select>
+                </td>
+                </tr>
         	</table>
 	[% END %]
 

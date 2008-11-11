@@ -5,31 +5,14 @@
 package Slash::Journal;
 
 use strict;
-use DBIx::Password;
+
 use Slash;
 use Slash::Constants qw(:messages);
 use Slash::Utility;
 
-use base 'Slash::DB::Utility';
-use base 'Slash::DB::MySQL';
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Constants::VERSION;
-
-# On a side note, I am not sure if I liked the way I named the methods either.
-# -Brian
-sub new {
-	my($class, $user) = @_;
-	my $self = {};
-
-	my $plugin = getCurrentStatic('plugin');
-	return unless $plugin->{'Journal'};
-
-	bless($self, $class);
-	$self->{virtual_user} = $user;
-	$self->sqlConnect;
-
-	return $self;
-}
 
 sub set {
 	my($self, $id, $values) = @_;
@@ -52,20 +35,19 @@ sub set {
 		}
 	}
 
-	$j2{article}  = delete $j1{article};
+	$j2{article}   = delete $j1{article};
+	$j2{introtext} = $self->getIntrotext($id, $j2{article}) if $j2{article};
 	$j1{"-last_update"} = 'now()';
 
 	$self->sqlUpdate('journals', \%j1, "id=$id") if keys %j1;
 	$self->sqlUpdate('journals_text', \%j2, "id=$id") if $j2{article};
 	if ($constants->{plugin}{FireHose}) {
+		# XXX: this will not work with HumanConf!
 		my $reskey = getObject('Slash::ResKey');
 		my $rkey = $reskey->key('submit', { nostate => 1 });
 		if ($rkey && $rkey->createuse) {
-			my $journal_item = $self->get($id);
 			my $firehose = getObject("Slash::FireHose");
-			if ($journal_item->{promotetype} eq "publicize" || $journal_item->{promotetype} eq "publish") {
-				$firehose->createUpdateItemFromJournal($id);
-			}
+			$firehose->createUpdateItemFromJournal($id);
 		}
 	}
 }
@@ -204,24 +186,23 @@ sub create {
 	my($id) = $self->getLastInsertId({ table => 'journals', prime => 'id' });
 	return unless $id;
 
+	my $introtext = $self->getIntrotext(0, $article, $posttype) || '';
 	$self->sqlInsert("journals_text", {
-		id		=> $id,
-		article 	=> $article,
+		id        => $id,
+		article   => $article,
+		introtext => $introtext
 	});
 
 	my($date) = $self->sqlSelect('date', 'journals', "id=$id");
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($user->{uid}, { journal_last_entry_date => $date });
 	if ($constants->{plugin}{FireHose}) {
+		# XXX: this will not work with HumanConf!
 		my $reskey = getObject('Slash::ResKey');
 		my $rkey = $reskey->key('submit', { nostate => 1 });
 		if ($rkey && $rkey->createuse) {
 			my $firehose = getObject("Slash::FireHose");
-			my $journal = getObject("Slash::Journal");
-			my $j = $journal->get($id);
-			if ($j->{promotetype} eq "publicize" || $j->{promotetype} eq "publish") {
-				$firehose->createItemFromJournal($id);
-			}
+			$firehose->createItemFromJournal($id);
 		}
 	}
 
@@ -249,7 +230,7 @@ sub remove {
 		# if has been submitted as story or submission, don't
 		# delete the discussion
 		if ($journal->{promotetype} eq 'publicize' || $journal->{promotetype} eq "publish") {
-			my $kind = $self->getDiscussion($journal->{discussion}, 'kind');
+			my $kind = $self->getDiscussion($journal->{discussion}, 'dkid');
 			my $kinds = $self->getDescriptions('discussion_kinds');
 			# set to disabled only if the journal has not been
 			# converted to a journal-story (it will get re-enabled
@@ -399,6 +380,7 @@ sub get {
 	my($self, $id, $val) = @_;
 	my $answer;
 
+	# XXX I have no idea what this does ... what is "comment"?
 	if ((ref($val) eq 'ARRAY')) {
 		# the grep was failing before, is this right?
 		my @articles = grep /^comment$/, @$val;
@@ -408,17 +390,18 @@ sub get {
 			$answer = $self->sqlSelectHashref($values, 'journals', "id=$id");
 		}
 		if (@articles) {
-			$answer->{comment} = $self->sqlSelect('article', 'journals', "id=$id");
+			$answer->{comment} = $self->sqlSelect('article', 'journals_text', "id=$id");
 		}
 	} elsif ($val) {
-		if ($val eq 'article') {
-			($answer) = $self->sqlSelect('article', 'journals', "id=$id");
+		if ($val eq 'article' || $val eq 'introtext') {
+			($answer) = $self->sqlSelect($val, 'journals_text', "id=$id");
 		} else {
 			($answer) = $self->sqlSelect($val, 'journals', "id=$id");
 		}
 	} else {
 		$answer = $self->sqlSelectHashref('*', 'journals', "id=$id");
 		($answer->{article}) = $self->sqlSelect('article', 'journals_text', "id=$id");
+		($answer->{introtext}) = $self->sqlSelect('introtext', 'journals_text', "id=$id");
 	}
 
 	return $answer;
@@ -557,6 +540,10 @@ sub createStoryFromJournal {
 	$self->logJournalTransfer($src_journal->{id}, 0, $stoid);
 }
 
+# this is kindof a "dumb" split for stories, we do a smarter split for
+# firehose (see getIntrotext), but it can't be rejoined into intro/body
+# like this one can -- pudge
+
 sub splitJournalTextForStory {
 	my($self, $text) = @_;
 	my($intro, $body) = split(/<br>|<\/p>/i, $text, 2);
@@ -686,6 +673,51 @@ sub updateTransferredJournalDiscussions {
 		}
 	}
 }
+
+
+{
+my $linebreak = qr{(?:
+	<br>\s*<br> |
+	</?p> |
+	</(?:
+		div | (?:block)?quote | [oud]l
+	)>
+)}x;
+my $min_chars = 50;
+my $max_chars = 500;
+
+sub getIntrotext {
+	my($self, $id, $bodytext, $posttype) = @_;
+	return unless $id || $bodytext;
+
+	if ($id && (!$bodytext || !$posttype)) {
+		my $article = $self->get($id);
+		$bodytext ||= $article->{article};
+		$posttype ||= $article->{posttype};
+	}
+	return unless $bodytext && $posttype;
+
+	my $strip_art = balanceTags(
+		strip_mode($bodytext, $posttype),
+		{ deep_nesting => 1 }
+	);
+
+	my $intro;
+	if (length($strip_art) < $min_chars) {
+		$intro = $strip_art;
+	} else {
+		$intro = $1 if $strip_art =~ m/^(.{$min_chars,$max_chars})?$linebreak/s;
+	}
+
+	$intro ||= chopEntity($strip_art, $max_chars);
+	local $Slash::Utility::Data::approveTag::admin = 1;
+	$intro = strip_html($intro);
+	$intro = balanceTags($intro, { admin => 1 });
+	$intro = addDomainTags($intro);
+
+	return $intro;
+} }
+
 
 
 sub DESTROY {

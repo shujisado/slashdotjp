@@ -355,6 +355,10 @@ my %cmds = (
 	lcrset		=> \&cmd_lcrset,
 	re		=> \&cmd_re,
 	d		=> \&cmd_roll,
+
+	amihere		=> \&cmd_ha,
+	amiherenow	=> \&cmd_ha,
+	amibacknow	=> \&cmd_ha,
 );
 sub handle_cmd {
 	my($service, $cmd, $event) = @_;
@@ -460,6 +464,11 @@ sub change_nick {
 		# XXX dunno how to change nicks
 #		$jid->SetResource($newnick);
 	}
+}
+
+sub cmd_ha {
+	my($service, $info) = @_;
+	send_msg("No, $info->{event}{nick}, you're not.", { $service => 1 });
 }
 
 sub cmd_help {

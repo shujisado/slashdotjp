@@ -26,165 +26,130 @@ use strict;
 use Digest::MD5 'md5_hex';
 
 use Slash;
-use Slash::DB;
-use Slash::Utility::Environment;
-use Slash::Tagbox;
-
-use Data::Dumper;
 
 our $VERSION = $Slash::Constants::VERSION;
 
-use base 'Slash::DB::Utility';	# first for object init stuff, but really
-				# needs to be second!  figure it out. -- pudge
-use base 'Slash::DB::MySQL';
-
-sub new {
-	my($class, $user) = @_;
-
-	return undef unless $class->isInstalled();
-
-	# Note that getTagboxes() would call back to this new() function
-	# if the tagbox objects have not yet been created -- but the
-	# no_objects option prevents that.  See getTagboxes() for details.
-	my($tagbox_name) = $class =~ /(\w+)$/;
-	my %self_hash = %{ getObject('Slash::Tagbox')->getTagboxes($tagbox_name, undef, { no_objects => 1 }) };
-	my $self = \%self_hash;
-	return undef if !$self || !keys %$self;
-
-	bless($self, $class);
-	$self->{virtual_user} = $user;
-	$self->sqlConnect();
-
-	return $self;
-}
+use base 'Slash::Tagbox';
 
 sub isInstalled {
-	my($class) = @_;
+	my($self) = @_;
 	my $constants = getCurrentStatic();
-	return undef if !$constants->{plugin}{Tags} || !$constants->{plugin}{TagModeration};
-	my($tagbox_name) = $class =~ /(\w+)$/;
-	return undef if !$constants->{tagbox}{$tagbox_name};
-	return 1;
+	return 0 if ! $constants->{plugin}{TagModeration};
+	return $self->SUPER::isInstalled();
 }
 
-sub feed_newtags {
-	my($self, $tags_ar) = @_;
-	my $constants = getCurrentStatic();
-	if (scalar(@$tags_ar) < 9) {
-		main::tagboxLog("CommentScoreReason->feed_newtags called for tags '" . join(' ', map { $_->{tagid} } @$tags_ar) . "'");
-	} else {
-		main::tagboxLog("CommentScoreReason->feed_newtags called for " . scalar(@$tags_ar) . " tags " . $tags_ar->[0]{tagid} . " ... " . $tags_ar->[-1]{tagid});
-	}
+sub init {
+	my($self) = @_;
+
+	return 0 if ! $self->SUPER::init();
+
+	# Initialize reason-related fields:
+	#
+	# $self->{reasons}{$id} is a hashref of the modreasons row with
+	# that id, for all reasons including Normal.
+	# $self->{reason_ids} is an arrayref of only the reasons with
+	# a nonzero val (i.e. excluding Normal).
+	# $self->{reason_tagnameid}{$id} is a hashref of the modreasons
+	# row with that _tagnameid_, for nonzero vals.
+
 	my $tagsdb = getObject('Slash::Tags');
-
-	# Only tags on comments matter to this tagbox.
-	my $comments_gtid = $self->getGlobjTypes()->{comments};
-	my %all_globjids = ( map { ($_->{globjid}, 1) } @$tags_ar );
-	my $all_globjids_str = join(",", sort { $a <=> $b } keys %all_globjids);
-	return [ ] if !$comments_gtid || !$all_globjids_str;
-	my $globjids_wanted_ar = $self->sqlSelectColArrayref(
-		'globjid',
-		'globjs',
-		"globjid IN ($all_globjids_str) AND gtid=$comments_gtid");
-	my %globjid_wanted = ( map { ($_, 1) } @$globjids_wanted_ar );
-
-	my $ret_ar = [ ];
-	for my $tag_hr (@$tags_ar) {
-		next unless $globjid_wanted{ $tag_hr->{globjid} };
-		my $ret_hr = {
-			affected_id =>	$tag_hr->{globjid},
-			importance =>	1,
-		};
-		# We identify this little chunk of importance by either
-		# tagid or tdid depending on whether the source data had
-		# the tdid field (which tells us whether feed_newtags was
-		# "really" called via feed_deactivatedtags).
-		if ($tag_hr->{tdid})	{ $ret_hr->{tdid}  = $tag_hr->{tdid}  }
-		else			{ $ret_hr->{tagid} = $tag_hr->{tagid} }
-		push @$ret_ar, $ret_hr;
-	}
-	return [ ] if !@$ret_ar;
-
-	main::tagboxLog("CommentScoreReason->feed_newtags returning " . scalar(@$ret_ar));
-	return $ret_ar;
-}
-
-sub feed_deactivatedtags {
-	my($self, $tags_ar) = @_;
-	main::tagboxLog("CommentScoreReason->feed_deactivatedtags called: tags_ar='" . join(' ', map { $_->{tagid} } @$tags_ar) .  "'");
-	my $ret_ar = $self->feed_newtags($tags_ar);
-	main::tagboxLog("CommentScoreReason->feed_deactivatedtags returning " . scalar(@$ret_ar));
-	return $ret_ar;
-}
-
-sub feed_userchanges {
-	my($self, $users_ar) = @_;
-
-	# Do not currently care about any user changes, since this tagbox
-	# just replicates what comment moderation does and moderation does
-	# not care about user tag clout.
-
-	return [ ];
-}
-
-sub run {
-	my($self, $affected_id) = @_;
-	my $constants = getCurrentStatic();
 	my $moddb = getObject('Slash::TagModeration');
+	$self->{reasons} = $moddb->getReasons();
+	$self->{reason_tagnameid} = { };
+	$self->{reason_ids} = [
+		grep { $self->{reasons}{$_}{val} != 0 }
+		keys %{$self->{reasons}}
+	];
+	for my $id (@{$self->{reason_ids}}) {
+		my $name = lc $self->{reasons}{$id}{name};
+		my $tagnameid = $tagsdb->getTagnameidCreate($name);
+		$self->{reason_tagnameid}{$tagnameid} = $self->{reasons}{$id};
+	}
+
+	# Initialize $self->{metamod} and {metanix}.
+
+	for my $tagname (qw( metanod metanix )) {
+		my $tagnameid = $tagsdb->getTagnameidCreate($tagname);
+		$self->{"${tagname}id"} = $tagnameid;
+	}
+
+	1;
+}
+
+sub get_affected_type	{ 'globj' }
+sub get_clid		{ 'moderate' }
+
+	# CommentScoreReason wants to know about each comment globj as
+	# soon as it is created, not waiting until the first tag is
+	# applied to it.
+sub get_nosy_gtids	{ 'comments' }
+
+sub init_tagfilters {
+	my($self) = @_;
+
+	# CommentScoreReason only cares about active tags.
+
+	$self->{filter_activeonly} = 1;
+
+	# CommentScoreReason only cares about tags on comments.
+
+	$self->{filter_gtid} = $self->getGlobjTypes()->{comments};
+
+	# CommentScoreReason only cares about tagnames that are
+	# (non-0-val) moderation reasons, plus nod, nix,
+	# metanod and metanix.
+
+	$self->{filter_tagnameid} = [ ];
+	for my $tagnameid (keys %{ $self->{reason_tagnameid} }) {
+		push @{ $self->{filter_tagnameid} }, $tagnameid;
+	}
+	for my $tagname (qw( nod nix metanod metanix )) {
+		push @{ $self->{filter_tagnameid} }, $self->{"${tagname}id"};
+	}
+
+}
+
+sub run_process {
+	my($self, $affected_id, $tags_ar) = @_;
+	my $constants = getCurrentStatic();
 	my $tagsdb = getObject('Slash::Tags');
 	my $tagboxdb = getObject('Slash::Tagbox');
 
-	my $reasons = $moddb->getReasons();
-	my @reason_ids = (
-		grep { $reasons->{$_}{val} != 0 }
-		keys %$reasons
-	);
-	my %tagnameid_reasons = ( );
-	for my $id (@reason_ids) {
-		my $name = lc $reasons->{$id}{name};
-		my $tagnameid = $tagsdb->getTagnameidCreate($name);
-		$tagnameid_reasons{$tagnameid} = $reasons->{$id};
-	}
-	for my $tagname (qw( nod nix metanod metanix )) {
-		$self->{"${tagname}id"} ||= $tagsdb->getTagnameidCreate($tagname);
-	}
+	# Sanity check.
 
-	my $mod_score_sum = 0;
 	my($type, $cid) = $self->getGlobjTarget($affected_id);
 	if ($type ne 'comments') {
 		my $comments_gtid = $self->getGlobjTypes()->{comments};
-		main::tagboxLog("ERROR - CommentScoreReason->run invoked for non-comment globj $affected_id, type='$type' comments_gtid=$comments_gtid");
+		$self->info_log("ERROR - run invoked for non-comment globj %d, type='%s' comments_gtid=%d",
+			$affected_id, $type, $comments_gtid);
 		return;
 	}
-	my $tags_ar = $tagboxdb->getTagboxTags($self->{tbid}, $affected_id, 0);
-	return unless $tags_ar && @$tags_ar;
+
 	my($keep_karma_bonus, $karma_bonus_downmods_left) = (1, $constants->{mod_karma_bonus_max_downmods});
 	my $current_reason_mode = 0;
 	my $base_neediness = $constants->{tagbox_csr_baseneediness} || 60;
 	my $neediness = $base_neediness;
 
-
-# Sun Jun 29 01:33:40 2008 CommentScoreReason->run setting cid=22886594 fhid=0 globjid=2059928 to score=0 reason=1 neediness=137
-# Sun Jun 29 01:33:40 2008 CommentScoreReason->run setting cid=22886640 fhid=0 globjid=2059992 to score=2 reason=7 neediness=137
-
-
 	# First scan: neediness (comments.f3).
 	my($up_rnf, $down_rnf) = (0, 0);
 	for my $tag (@$tags_ar) {
-		# Do nothing if this tag was inactivated.
-		next if $tag->{inactivated};
 		# If this was a moderation _or_ a nod/nix (indicating dis/agreement),
 		# neediness changes.  If this was done by an admin, neediness
 		# changes a lot.
 		my $tagnameid = $tag->{tagnameid};
-		my $reason = $tagnameid_reasons{$tagnameid};
+		my $reason = $self->{reason_tagnameid}{$tagnameid};
 		my $dir = 0;
-		if ($reason->{val} > 0 || $tagnameid == $self->{nodid} || $tagnameid == $self->{metanodid}) {
+		if ($reason && $reason->{val} > 0
+			|| $tagnameid == $self->{nodid} || $tagnameid == $self->{metanodid}) {
 			$dir = 1;
-		} elsif ($reason->{val} < 0 || $tagnameid == $self->{nixid} || $tagnameid == $self->{metanixid}) {
+		} elsif ($reason && $reason->{val} < 0
+			|| $tagnameid == $self->{nixid} || $tagnameid == $self->{metanixid}) {
 			$dir = -1;
 		}
-		next unless $dir;
+		if (!$dir) {
+			$self->info_log("ERROR - tagid=$tag->{tagid} has no dir");
+			next;
+		}
 		my $mod_user = $self->getUser($tag->{uid});
 		my $net_fairs = $mod_user->{up_fair} + $mod_user->{down_fair}
 			- ($mod_user->{up_unfair} + $mod_user->{down_unfair});
@@ -209,18 +174,19 @@ sub run {
 
 	# Second scan: overall reason (comments.f2), and traditional
 	# comment score (comments.f1).
+	my $mod_score_sum = 0;
+	my $moddb = getObject('Slash::TagModeration');
+	my $reasons = $moddb->getReasons();
 	my $allreasons_hr = {( %{$reasons} )};
 	for my $id (keys %$allreasons_hr) {
 		$allreasons_hr->{$id} = { reason => $id, c => 0 };
 	}
 	for my $tag (@$tags_ar) {
-		# Do nothing if this tag was inactivated.
-		next if $tag->{inactivated};
 		# Currently, only actual moderations (not nod/nixes) change a
 		# comment's score (and reason).  Only continue processing if
 		# this is an actual moderation.
 		my $tagnameid = $tag->{tagnameid};
-		my $reason = $tagnameid_reasons{$tagnameid};
+		my $reason = $self->{reason_tagnameid}{$tagnameid};
 		next unless $reason;
 		if ($reason->{val} < 0) {
 			$keep_karma_bonus = 0 if --$karma_bonus_downmods_left < 0;
@@ -237,9 +203,12 @@ sub run {
 	my $new_score = $points_orig + $mod_score_sum;
 	my $new_karma_bonus = ($karma_bonus eq 'yes' && $keep_karma_bonus) ? 1 : 0;
 
-#main::tagboxLog("CommentScoreReason->run setting cid $cid to score: $new_score, $reasons->{$current_reason_mode}{name} kb '$karma_bonus'->'$new_karma_bonus'");
+	$self->info_log("cid %d to score: %d, %s kb %d->%d, neediness %.1f",
+		$cid, $new_score, $reasons->{$current_reason_mode}{name}, ($karma_bonus eq 'yes' ? 1 : 0), $new_karma_bonus, $neediness);
 
 	if ($firehose) {
+		# If it's already in the hose, don't try to re-create it --
+		# that may cause unnecessary score recalculations.
 		my $fhid = $firehose->getFireHoseIdFromGlobjid($affected_id);
 		if (!$fhid) {
 			$fhid = $self->addCommentToHoseIfAppropriate($firehose,
@@ -254,6 +223,8 @@ sub run {
 			f3 =>	$neediness,
 		}, "cid='$cid'");
 }
+
+# XXX hex_percent should be a library function, it's used by FHEditorPop too
 
 sub addCommentToHoseIfAppropriate {
 	my($self, $firehose, $globjid, $cid, $neediness, $score) = @_;

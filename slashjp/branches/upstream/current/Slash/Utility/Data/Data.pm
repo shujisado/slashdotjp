@@ -38,6 +38,7 @@ use HTML::FormatText;
 use HTML::Tagset ();
 use HTML::TreeBuilder;
 use Lingua::Stem;
+use Mail::Address;
 use POSIX qw(UINT_MAX);
 use Safe;
 use Slash::Constants qw(:strip);
@@ -81,6 +82,7 @@ our @EXPORT  = qw(
 	decode_entities
 	ellipsify
 	emailValid
+	email_to_domain
 	encryptPassword
 	findWords
 	fixHref
@@ -3369,6 +3371,15 @@ sub addDomainTags {
 	$html =~ s{</a>}{}gi;
 
 	return $html;
+}
+
+sub email_to_domain {
+	my($email) = @_;
+	my $addr = Mail::Address->new('', $email);
+	return '' if !$addr;
+	my $host = $addr->host();
+	return '' if !$host;
+	return fullhost_to_domain($host);
 }
 
 sub fullhost_to_domain {

@@ -1,4 +1,4 @@
-; // tagui.js
+; // tag-ui.js
 
 var context_triggers, well_known_tags;
 
@@ -60,11 +60,14 @@ var tag_server_fns = {
 			},
 			options );
 
+		var key = Slash.ArticleInfo.key(this);
+
 		var server_params = $.extend(
 			{},
 			{ // default params for the server-side handler
 				op:		'tags_setget_combined',
-				id:		$(this).attr('tag-server'),
+				key:		key.key,
+				key_type:	key.key_type,
 				reskey:		reskey_static,
 				limit_fetch:	''
 			},
@@ -441,7 +444,7 @@ $init_tag_displays.default_menu = 'x !';
 
 $(function(){
 	if ( fh_is_admin ) {
-		$init_tag_displays.default_menu = 'x ! # ## _ )';
+		$init_tag_displays.default_menu = 'x ! # ## _ ^';
 	}
 });
 
@@ -569,6 +572,10 @@ function normalize_tag_commands( commands, excludes ){
 
 
 function $position_context_display( $display ){
+	if ( ! $related_trigger || ! $related_trigger.length ) {
+		return $display;
+	}
+
 	var RIGHT_PADDING = 18;
 
 	var $entry = $display.nearest_parent('[tag-server]');
@@ -579,12 +586,11 @@ function $position_context_display( $display ){
 	global_align = Math.max(left_edge, global_align);
 
 	var need_minimal_fix = true;
-	if ( $display.nearest_parent(':hidden').length===0 ) {
+	if ( $display.is(':visible') ) {
 		try {
 			var display_width = $display.children('ul:first').width();
 			$display.css({
-				right: '',
-				width: display_width
+				right: ''
 			});
 
 			global_align = Math.max(
@@ -620,7 +626,8 @@ function $position_context_display( $display ){
 
 function $queue_reposition( $display, if_only_width ){
 	return $display.queue(function(){
-		$position_context_display($display, if_only_width).dequeue();
+		$position_context_display($display, if_only_width);
+		$(this).dequeue();
 	});
 }
 
@@ -736,7 +743,9 @@ var tag_widget_fns = {
 				});
 
 			this._current_context = context;
-		} else if ( $previous_context_trigger.length &&
+		} else if ( context &&
+			$related_trigger.length &&
+			$previous_context_trigger.length &&
 			$previous_context_trigger[0] !== $related_trigger[0] ) {
 
 			$position_context_display($('.ready[context=related]', this));
@@ -752,6 +761,21 @@ var tag_widget_fns = {
 		}
 
 		return this;
+	},
+	toggle_widget: function( twisty ){
+		var $tag_widget = $(twisty).
+			find('.button').
+				toggleClasses('expand', 'collapse').
+				nearest_parent('.tag-widget').
+					toggleClass('expanded');
+
+		if ( $tag_widget.is('.expanded') ) {
+			$tag_widget.
+				nearest_parent('[tag-server]').
+					each(function(){
+						this.fetch_tags();
+					});
+		}
 	}
 
 }; // tag_widget_fns
@@ -830,6 +854,207 @@ function update_class_map( css_class_map, css_class, tags ){
 }
 
 $(function(){
+
+YAHOO.slashdot.sectionTags = [ "apache",
+"apple",
+"askslashdot",
+"awards",
+"backslash",
+"books",
+"bsd",
+"developers",
+"entertainment",
+"features",
+"games",
+"hardware",
+"interviews",
+"it",
+"linux",
+"mainpage",
+"news",
+"politics",
+"polls",
+"radio",
+"science",
+"search",
+"tacohell",
+"technology",
+"vendors",
+"vendor_amd",
+"yro" ];
+
+YAHOO.slashdot.topicTags = ["keyword",
+"mainpage",
+"apache",
+"apple",
+"askslashdot",
+"awards",
+"books",
+"bsd",
+"developers",
+"features",
+"games",
+"interviews",
+"polls",
+"radio",
+"science",
+"search",
+"tacohell",
+"yro",
+"be",
+"caldera",
+"comdex",
+"debian",
+"digital",
+"gimp",
+"encryption",
+"gnustep",
+"internet",
+"links",
+"movies",
+"money",
+"pilot",
+"starwars",
+"sun",
+"usa",
+"x",
+"xmas",
+"linux",
+"java",
+"microsoft",
+"redhat",
+"spam",
+"quake",
+"ie",
+"netscape",
+"enlightenment",
+"cda",
+"gnu",
+"intel",
+"eplus",
+"aol",
+"kde",
+"doj",
+"slashdot",
+"wine",
+"tech",
+"bug",
+"tv",
+"unix",
+"gnome",
+"corel",
+"humor",
+"ibm",
+"hardware",
+"amiga",
+"sgi",
+"compaq",
+"music",
+"amd",
+"suse",
+"quickies",
+"perl",
+"ed",
+"mandrake",
+"media",
+"va",
+"linuxcare",
+"graphics",
+"censorship",
+"mozilla",
+"patents",
+"programming",
+"privacy",
+"toys",
+"space",
+"transmeta",
+"announce",
+"linuxbiz",
+"upgrades",
+"turbolinux",
+"editorial",
+"slashback",
+"anime",
+"php",
+"ximian",
+"journal",
+"security",
+"hp",
+"desktops",
+"imac",
+"media",
+"networking",
+"osnine",
+"osx",
+"portables",
+"utilities",
+"wireless",
+"portables",
+"software",
+"ent",
+"biz",
+"media",
+"gui",
+"os",
+"biotech",
+"books",
+"wireless",
+"printers",
+"displays",
+"storage",
+"lotr",
+"matrix",
+"windows",
+"classic",
+"emulation",
+"fps",
+"nes",
+"pcgames",
+"portablegames",
+"puzzlegames",
+"rpg",
+"rts",
+"xbox",
+"ps2",
+"gamecube",
+"wii",
+"scifi",
+"communications",
+"robotics",
+"google",
+"it",
+"politics",
+"military",
+"worms",
+"databases",
+"hardhack",
+"novell",
+"republicans",
+"democrats",
+"mars",
+"inputdev",
+"math",
+"moon",
+"networking",
+"supercomputing",
+"power",
+"sony",
+"nintendo",
+"e3",
+"nasa",
+"yahoo",
+"vendors",
+"vendor_amd",
+"vendor_amd_64chip",
+"vendor_amd_announce",
+"vendor_amd_ask",
+"vendor_amd_64fx",
+"vendor_amd_laptops",
+"vendor_amd_multicore",
+"vendor_amd_ostg",
+"backslash" ];
+
+
 	var data_types = [
 		'submission',
 		'journal',
@@ -967,8 +1192,10 @@ function recompute_css_classes( root ){
 			});
 }
 
-function init_tagui_styles( $entries ){
-	$entries.each(function(){
+function init_tag_ui_styles( $entries ){
+	return $entries.each(function(){
 		recompute_css_classes(this);
 	});
 }
+
+;
