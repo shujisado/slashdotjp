@@ -540,10 +540,8 @@ sub previewSlashbox {
 		title		=> $title,
 		block 		=> $block,
 		is_editable	=> $is_editable,
+		previewbox	=> portalbox($constants->{fancyboxwidth}, $block->{title}, $block->{block}, '', $block->{url}),
 	});
-
-	print portalbox($constants->{fancyboxwidth}, $block->{title},
-		$block->{block}, '', $block->{url});
 }
 
 #################################################################
