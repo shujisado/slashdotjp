@@ -367,6 +367,30 @@ a.feed {
 	padding-left: 16px;
 }
 
+/* usable message classes */
+.info {
+	background: #def url(//images.slashdot.jp/silk/information.png) no-repeat 10px 3px;
+	border: 1px solid #9cf;
+	padding: .2em 40px;
+	margin: .5em 0 1em 0;
+}
+
+.error,
+.err {
+	background: #fdd url(//images.slashdot.jp/silk/delete.png) no-repeat 10px 3px;
+	border: 1px solid #fbb;
+	padding: .2em 40px;
+	margin: .5em 0 1em 0;
+}
+
+.warning,
+.warn {
+	background: #ffd url(//images.slashdot.jp/icon_warning.gif") no-repeat 10px 3px;
+	border: 1px solid #fe6;
+	padding: .2em 40px;
+	margin: .5em 0 1em 0;
+}
+
 /* ads format */
 div.article div.bigbanner,
 div.adsense_468x60 {
