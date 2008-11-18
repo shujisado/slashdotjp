@@ -393,6 +393,11 @@ a.feed {
 	margin: .5em 0 1em 0;
 }
 
+.error .title,
+.err .title {
+	font-size: 120%;
+}
+
 .warning,
 .warn {
 	background: #ffd url(//images.slashdot.jp/icon_warning.gif) no-repeat 10px 3px;
