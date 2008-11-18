@@ -361,6 +361,16 @@ div#users table#reasons_minus td {
 	vertical-align: middle;
 }
 
+/* comment login form */
+.loginform {
+	margin: 0.8em 0;
+}
+
+.loginform label {
+	display: inline;
+	margin-right: 1.2em;
+}
+
 /* code.shtml rss link */
 a.feed {
 	background: url(//images.slashdot.jp/feed-14x14.png) left no-repeat;
