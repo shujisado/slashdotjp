@@ -14,8 +14,9 @@ slash (2.5.0.192-21) unstable; urgency=low
   * Add pollquestions to page title and fix title format
   * Fix poll voting booth layout to use template "poll;pollBooth;default"
   * Fix previewSlashbox layout to use template "previewSlashbox;users;default"
+  * Add some wiki page to wikicontents redirection
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 11 Nov 2008 12:00:54 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 19 Nov 2008 04:46:30 +0000
 
 slash (2.5.0.192-20) unstable; urgency=low
 

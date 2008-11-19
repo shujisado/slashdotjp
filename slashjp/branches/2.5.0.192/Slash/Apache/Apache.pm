@@ -520,7 +520,7 @@ sub IndexHandler {
 	}
 
 	# some static contents for slashdot.jp
-	if ($uri =~ m!^/(about|code)(/|\.shtml)?$!x) {
+	if ($uri =~ m!^/(about|code|prettypictures|supporters|why_login|submit_guide|bookreview_guide)(/|\.shtml)?$!x) {
 		my ($word, $sl) = ($1, $2);
 		my @args = ();
 		my $fpath = "/$constants->{sfjp_wikicontents_path}/$word.shtml";
