@@ -286,7 +286,7 @@ div#search div.search-help ul,
 div#polls div.generalbody ul,
 div#submit div.generalbody ul,
 div#commentBody ul,
-div#metamod ul,
+div#metamod #metamod-intro ul,
 div#bookmark ul,
 div#topics .generalbody ul,
 .error ul,
@@ -368,6 +368,24 @@ div#users table#reason_modifiers td {
 div#users table#reasons_plus td,
 div#users table#reasons_minus td {
 	vertical-align: middle;
+}
+
+/* fix metamod comment */
+#metamod-intro {
+	padding: 0.6em 0;
+}
+
+#metamod #commentlisting li.comment {
+	margin-bottom: 1.2em;
+}
+
+#metamod div.commentTop div.title {
+	padding: 0;
+}
+
+#metamod div.commentTop div.title h4 {
+	padding: 0.3em 0;
+	display: block;
 }
 
 /* comment login form */
