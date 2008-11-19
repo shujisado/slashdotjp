@@ -153,6 +153,12 @@ blockquote,
 	color: #000;
 }
 
+/* notes and note override */
+.notes,
+.note {
+	margin-top: 0.2em;
+}
+
 /* Fix left menu (#links) bottom image */
 div#links {
 	background: #eee url(//images.slashdot.jp/slashbox-bottom-left.png) no-repeat left bottom;
