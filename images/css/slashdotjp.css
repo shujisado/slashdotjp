@@ -134,14 +134,12 @@ select option {
 
 /* Fix list-style image location */
 #slashboxes #slashd ul li,
-#slashboxes #future ul li
-{
+#slashboxes #future ul li {
 	list-style: url(//images.slashdot.jp/drop.gif);
 }
 
 /* Fix slashdot.org <i> impremant */
-div.article div.intro i
-{
+div.article div.intro i {
 	border-left: none;
 	display: inline;
 	font-style: italic;
@@ -150,8 +148,8 @@ div.article div.intro i
 }
 
 /* Fix blockquote color */
-blockquote, .quote
-{
+blockquote,
+.quote {
 	color: #000;
 }
 
@@ -285,6 +283,11 @@ div#commentBody ul,
 div#metamod ul,
 div#bookmark ul,
 div#topics .generalbody ul,
+.error ul,
+.err ul,
+.warning ul,
+.warn ul,
+.info ul,
 form#createuserform ul {
 	margin: 1em 0pt 1em 2em !important;
 }
