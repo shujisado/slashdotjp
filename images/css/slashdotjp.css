@@ -175,6 +175,7 @@ div.commentBody {
 	font-size: 160%;
 	text-align: center;
 	margin-top: 0.1em;
+	padding: 4px;
 }
 
 .write-comment-link a {
