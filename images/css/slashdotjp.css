@@ -170,6 +170,24 @@ div.commentBody {
 	work-break: break-all;
 }
 
+/* write comment big link */
+.write-comment-link {
+	font-size: 160%;
+	text-align: center;
+	margin-top: 0.1em;
+}
+
+.write-comment-link a {
+	-moz-border-radius: 10px;
+	-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	background: #DDD;
+	border: 3px solid #666;
+	color: #055;
+	padding: 0.2em 1em;
+	text-decoration: none;
+}
+
 /* Override moderation summary box for AdSense */
 #mod_summary {
 	margin-left: 0;
@@ -431,6 +449,24 @@ a.feed {
 	border: 1px solid #fe6;
 	padding: 5px 5px 5px 40px;
 	margin: .5em 0 1em 0;
+}
+
+/* show tooltip (http://f32.aaa.livedoor.jp/~azusa/index.php?t=ajax&p=balloonjs_css) */
+a.tooltip span {
+	display: none;
+	padding: 2px 3px;
+	margin-left: 8px;
+	width: 200px;
+	white-space: normal;
+	line-height: 1.4;
+}
+
+a.tooltip:hover span{
+	display: inline;
+	position: absolute;
+	border: 1px solid #cccccc;
+	background: #ffffff;
+	color: #6c6c6c;
 }
 
 /* ads format */
