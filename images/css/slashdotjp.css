@@ -465,6 +465,7 @@ a.tooltip span {
 	width: 200px;
 	white-space: normal;
 	line-height: 1.4;
+	z-index: 10;
 }
 
 a.tooltip:hover span{
