@@ -476,6 +476,12 @@ a.tooltip:hover span{
 	color: #6c6c6c;
 }
 
+#slashboxes #login-content a.tooltip span {
+	width: 160px;
+	margin-left: -60px;
+	margin-top: 20px;
+}
+
 /* ads format */
 div.article div.bigbanner,
 div.adsense_468x60 {
