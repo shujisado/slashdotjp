@@ -425,10 +425,12 @@ div#users table#reasons_minus td {
 /* create user option form */
 #createuserform .options {
 	margin-top: 1em;
+	line-height: 1.8;
 }
 
 #createuserform .options label {
 	display: inline;
+	padding: 0;
 }
 
 /* code.shtml rss link */
