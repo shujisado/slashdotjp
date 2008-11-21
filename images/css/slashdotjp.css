@@ -422,6 +422,15 @@ div#users table#reasons_minus td {
 	margin-right: 1.2em;
 }
 
+/* create user option form */
+#createuserform .options {
+	margin-top: 1em;
+}
+
+#createuserform .options label {
+	display: inline;
+}
+
 /* code.shtml rss link */
 a.feed {
 	background: url(//images.slashdot.jp/feed-14x14.png) left no-repeat;
