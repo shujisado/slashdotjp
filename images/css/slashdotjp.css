@@ -433,6 +433,15 @@ div#users table#reasons_minus td {
 	padding: 0;
 }
 
+/* submission comment link */
+.submit_story_list .sub_title a.comment {
+	background: transparent url(//images.slashdot.jp/sic_icons.png) no-repeat 0 -1400px;
+	padding: 4px 20px 3px 2px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 80%;
+}
+
 /* code.shtml rss link */
 a.feed {
 	background: url(//images.slashdot.jp/feed-14x14.png) left no-repeat;
