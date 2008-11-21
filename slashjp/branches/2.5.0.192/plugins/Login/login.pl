@@ -68,18 +68,42 @@ sub newUserForm {
 sub newUser {
 	my($slashdb, $reader, $constants, $user, $form) = @_;
 
-	if (my $error =	_validFormkey(qw(max_post_check valid_check formkey_check), 1)) {
-		return newUserForm(@_, $error);
-	}
+	#if (my $error =	_validFormkey(qw(max_post_check valid_check formkey_check), 1)) {
+	#	return newUserForm(@_, $error);
+	#}
 
 	my $plugins = $slashdb->getDescriptions('plugins');
 
 	my @note;
 	my $error = 0;
+	my $nc = $constants->{nick_chars} || join('', 'a' .. 'z');
+	my $nr = $constants->{nick_regex} || '^[a-z]$';
+	my $ns = $constants->{nick_regex_start} || '[a-zA-Z_]';
 
 	# check if new nick is OK and if user exists
 	my $newnick = nickFix($form->{newusernick});
 	my $matchname = nick2matchname($newnick);
+
+	if ($form->{newusernick} !~ /^$ns/) {
+		push @note, getData('nick_starts_unavailable_chars');
+		$error = 1;
+	}
+
+	if ($form->{newusernick} =~ /\s{2,}/) {
+		push @note, getData('nick_has_continuous_whitespace');
+		$error = 1;
+	}
+
+	if ($form->{newusernick} !~ /^[$nc]+$/) {
+		push @note, getData('nick_has_unavailable_chars');
+		$error = 1;
+	}
+
+	if (length($form->{newusernick}) > $constants->{nick_maxlen}) {
+		push @note, getData('nick_is_too_long');
+		$error = 1;
+	}
+
 	if (!$newnick) {
 		push @note, getData('nick_invalid');
 		$error = 1;
@@ -135,7 +159,7 @@ sub newUser {
 				? strip_nohtml($form->{pubkey}, 1)
 				: '';
 
-			if ($form->{newsletter} || $form->{comment_reply} || $form->{headlines}) {
+			if (1) {
 				my $messages  = getObject('Slash::Messages');
 				my %params;
 				$params{MSG_CODE_COMMENT_REPLY()} = MSG_MODE_EMAIL()
@@ -144,6 +168,16 @@ sub newUser {
 					if $form->{newsletter};
 				$params{MSG_CODE_HEADLINES()}   = MSG_MODE_EMAIL()
 					if $form->{headlines};
+				$params{MSG_CODE_ZOO_CHANGE()}   = MSG_MODE_EMAIL()
+					if $form->{zoo_change};
+				$params{MSG_CODE_M2()}   = MSG_MODE_EMAIL()
+					if $form->{m2};
+				$params{MSG_CODE_COMMENT_MODERATE()}   = MSG_MODE_EMAIL()
+					if $form->{comment_moderate};
+				$params{MSG_CODE_JOURNAL_FRIEND()}   = MSG_MODE_EMAIL()
+					if $form->{journal_friend};
+				$params{MSG_CODE_JOURNAL_REPLY()}   = MSG_MODE_EMAIL()
+					if $form->{journal_reply};
 				$messages->setPrefs($uid, \%params);
 			}
 

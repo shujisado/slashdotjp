@@ -16,8 +16,10 @@ slash (2.5.0.192-21) unstable; urgency=low
   * Fix previewSlashbox layout to use template "previewSlashbox;users;default"
   * Add some wiki page to wikicontents redirection
   * Fix for invalid form input at Slash/Utility/Environment/Environment.pm
+  * Fix to show correct error message on new user creation
+  * Add to set more messaging preferences on new user creation
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 19 Nov 2008 08:47:10 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 21 Nov 2008 05:03:49 +0000
 
 slash (2.5.0.192-20) unstable; urgency=low
 
