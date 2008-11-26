@@ -1,11 +1,14 @@
 // slashdot.jquery.js: jquery-related general utilities we wrote ourselves
 
-;$(function(){
-	$.ajaxSetup({
-		url:	'/ajax.pl',
-		type:	'POST'
-	});
+// global setup
+
+$.ajaxSetup({
+	url:	'/ajax.pl',
+	type:	'POST',
+	contentType: 'application/x-www-form-urlencoded'
 });
+
+// code to be exported
 
 function $dom( id ) {
 	return document.getElementById(id);
@@ -49,12 +52,12 @@ jQuery.fn.extend({
 
 	nearest_parent: function( selector ) {
 		var answer = this.map(function(){
-			var match;
-
 			var $this = $(this);
-			if ( $this.is(selector) )
-				match = this;
+			if ( $this.is(selector) ) {
+				return this;
+			}
 
+			var match;
 			$this.parents().each(function(){
 				if ( $(this).is(selector) ) {
 					match = this;

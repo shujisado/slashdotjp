@@ -24,13 +24,10 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use DBIx::Password;
 use Slash;
 use Slash::Display;
-use Slash::Utility;
 
-use base 'Slash::DB::Utility';
-use base 'Slash::DB::MySQL';
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Utility::VERSION;
 
@@ -96,6 +93,17 @@ sub getBookmark {
 	my($self, $id) = @_;
 	my $id_q = $self->sqlQuote($id);
 	$self->sqlSelectHashref("*", "bookmarks", "bookmark_id=$id_q");
+}
+
+sub getRecentBookmarksByUid {
+        my($self, $uid, $limit) = @_;
+        $limit ||= 50;
+
+        return $self->sqlSelectAllHashrefArray("*", "bookmarks, urls",
+                "uid = $uid && bookmarks.url_id = urls.url_id",
+                "ORDER BY bookmarks.createdtime DESC LIMIT $limit"
+        );
+
 }
 
 1;

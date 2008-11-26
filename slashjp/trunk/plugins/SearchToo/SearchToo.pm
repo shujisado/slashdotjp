@@ -2,8 +2,8 @@ package Slash::SearchToo;
 
 use strict;
 use Slash::Utility;
-use Slash::DB::Utility;
-use base 'Slash::DB::Utility';
+
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Constants::VERSION;
 
@@ -30,6 +30,8 @@ sub new {
 	if (!$self) {
 		warn "Could not get $api_class: $@";
 		$self = {};
+		# I don't understand why SearchToo *re*blesses this object here -- jamie
+		# it doesn't, it only blesses if there is no $self -- pudge
 		bless($self, $class);
 		$self->{virtual_user} = $user;
 		$self->sqlConnect();
@@ -39,8 +41,13 @@ sub new {
 }
 
 sub isInstalled {
+	my($class) = @_;
+	# Slash::SearchToo is subclassed by Slash::SearchToo::Indexer
+	# and that's subclassed as well.  But all the subclasses are
+	# installed if and only if Slash::SearchToo is.  So override
+	# the default check.
 	my $constants = getCurrentStatic();
-	return $constants->{plugin}{SearchToo} || 0;
+	return $constants->{plugin}{SearchToo};
 }
 
 #################################################################

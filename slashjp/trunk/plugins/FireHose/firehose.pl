@@ -23,13 +23,14 @@ sub main {
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
 	my $gSkin     = getCurrentSkin();
+	my $firehose  = getObject("Slash::FireHose");
 
 	my $anonval = $constants->{firehose_anonval_param} || "";
 
 	my %ops = (
-		list		=> [1,  \&list, 1, $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1, change => 1, section => 1  }],
+		list		=> [1,  \&list, 1, $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1, change => 1, section => 1 , view => 1 }],
 		view		=> [1, 	\&view, 0,  ""],
-		default		=> [1,	\&list, 1,  $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1, change => 1, section => 1 }],
+		default		=> [1,	\&list, 1,  $anonval, { index => 1, issue => 1, page => 1, query_apache => -1, virtual_user => -1, startdate => 1, duration => 1, tab => 1, tabtype => 1, change => 1, section => 1, view => 1 }],
 		edit		=> [1,	\&edit, 100,  ""],
 		metamod		=> [1,  \&metamod, 1, ""],
 		rss		=> [1,  \&rss, 1, ""]
@@ -77,14 +78,19 @@ sub main {
 		if ($constants->{firehose_name}) {
 			$title = "$constants->{sitename} - $constants->{firehose_name}";
 		}
-		if ($gSkin->{name} eq "idle") {
-			$title = "$gSkin->{hostname} - $constants->{firehose_name}";
+		if ($gSkin->{name} && $gSkin->{name} eq "idle") {
+			$title = $constants->{firehose_name} ? "$gSkin->{hostname} - $constants->{firehose_name}" : "$gSkin->{hostname} - Firehose";
 		}
 		if ($op eq "metamod") {
 			$title = "$constants->{sitename} - Metamod";
+			$form->{metamod} = 1;
 		}
 		if ($form->{index}) {
 			$title = "$constants->{sitename} - $constants->{slogan}";
+		}
+		if ($form->{op} && $form->{op} eq "view") {
+			my $item = $firehose->getFireHose($form->{id});
+			$title = "$constants->{sitename} - $item->{title}" if $item && $item->{title};
 		}
 		header($title, '') or return;
 	}
@@ -110,10 +116,9 @@ sub metamod {
 	my $firehose = getObject("Slash::FireHose");
 	$form->{tabtype} 	= "metamod";
 	$form->{skipmenu} 	= 1;
-	$form->{metamod} 	= 1;
 	$form->{pause} 		= 1;
 	$form->{no_saved} 	= 1;
-	print $firehose->listView();
+	print $firehose->listView({ view => 'metamod'});
 }
 
 
@@ -133,12 +138,15 @@ sub view {
 			$firehose->setFireHoseSession($item->{id});
 		}
 		my $tags_top = $firehose_reader->getFireHoseTagsTop($item);
+		my $system_tags = $firehose_reader->getFireHoseSystemTags($item);
 		my $discussion = $item->{discussion};
 
 		my $firehosetext = $firehose_reader->dispFireHose($item, {
 			mode			=> 'full',
 			view_mode		=> 1,
 			tags_top		=> $tags_top,
+			top_tags		=> $item->{toptags},
+			system_tags		=> $system_tags,
 			options			=> $options,
 			nostorylinkwrapper	=> $discussion ? 1 : 0,
 			vote			=> $vote

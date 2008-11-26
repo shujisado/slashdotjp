@@ -15,6 +15,7 @@ __seclev__
 10000
 __template__
 [% IF user.tags_canread_stories %]
+	[%  tags_reader = Slash.getObject('Slash::Tags'); tags = tags_reader.setGetCombinedTags(item.id, 'firehose-id'); %]
 	[%# the nod/nix 'capsule' %]
 	[% IF !form.skipvote && !options.nothumbs && !skipvote %]
 	<div class="tags">
@@ -27,13 +28,6 @@ __template__
 
 	[% IF user.tags_canwrite_stories %]
 	[%# if you can tag... %]
-	<div class="tagshide" id="toggletags-body-[% id %]">
-		[% IF user.is_admin && !user.firehose_usermode %]
-		<div id="tags-admin-[% id %]" class="tagadmin"></div>
-		<div id="admin-extras-[% item.id %]" class="tagadminextra"><a href="#" onclick="firehose_get_admin_extras('[% item.id %]'); return false">Get extras</a></div>
-		[% END %]
-		<div id="toggletags-message-[% id %]" class="message"></div>
-	</div>
 
 	[%# the tag-widget itself %]
 	<div id="tag-widget-[% id %]" class="tag-widget-stub body-widget" init="context_timeout:15000">
@@ -48,34 +42,37 @@ __template__
 				</span>
 				[%# the note button %]
 				<span class="admin-note">
-				<a id="note-text-[% item.id %]" href="#" onclick="firehose_open_note('[% item.id %]'); return false">
-					[%- IF !item.note  %]Note[% END -%][% item.note | strip_literal -%]
-				</a>
+					<a id="note-text-[% item.id %]" href="#" onclick="firehose_open_note('[% item.id %]'); return false">[%- IF !item.note  %]<img src="//images.slashdot.org/sic_notes.png" alt="Note">[% END -%][% item.note | strip_literal -%]</a>
 				</span>
 			</div>
 		</span>
 		[% END %]
 		[%# the disclosure triangle %]
-		<a class="edit-toggle" href="#" onclick="this.blur(); firehose_toggle_tagui(this); return false">
-			<span class="button collapse"></span>
-		</a>
+		<a class="edit-toggle" href="#" onclick="this.blur(); firehose_toggle_tag_ui(this); return false"><span class="button collapse"></span></a>
 		[%# the tag input field %]
 		<form class="tag-editor" onsubmit="form_submit_tags(this, {fade_remove: 400, order: 'prepend', classes:'not-saved'}); return false">
 			<input class="tag-entry" type="text" size="10">
-			<span class="tag-server-busy"><img src="[% constants.imagedir %]/spinner2.gif"></span>
+			<span class="tag-server-busy"><img src="[% constants.imagedir %]/spinner[% IF !featured %]2[% END %].gif"></span>
 		</form>
 		[%# the tag 'bars' %]
-		<div class="tag-display-set train">
-			<div class="tag-display-stub" context="user" init="legend:'my&nbsp;tags'"></div>
-			<div class="tag-display-stub" context="top" init="legend:'top&nbsp;tags'">[% top_tags %]</div>
-			<div class="tag-display-stub" context="system" init="legend:'system&nbsp;tags'">[% system_tags %]</div>
-			[%- IF item.type == "story" &&
-				constants.signoff_use &&
-				((user.is_admin && !user.firehose_usermode) || user.acl.signoff_allowed) &&
-				! Slash.db.hasUserSignedStory(item.srcid, user.uid) -%]
-				<div class="tag-display-stub" context="signoff" stoid="[% item.srcid %]" init="legend:'signoff', menu:false">unsigned</div>
-			[%- END -%]
-		</div>
+		<div class="tag-display-stub" context="user" init="legend:'my&nbsp;tags'"></div>
+		<div class="tag-display-stub" context="top" init="legend:'top&nbsp;tags'">[% tags.top %]</div>
+		<div class="tag-display-stub" context="system" init="legend:'system&nbsp;tags'">[% tags.system;
+IF options.view == "usersubmission";
+	this_submission = Slash.db.getSubmission(item.srcid);
+	SWITCH this_submission.del;
+		CASE 0; ' pending';
+		CASE 1; ' rejected';
+		CASE 2; ' accepted';
+	END;
+END %]</div>
+		[%- IF item.type == "story" &&
+			constants.signoff_use &&
+			((user.is_admin && !user.firehose_usermode) || user.acl.signoff_allowed) &&
+			! Slash.db.hasUserSignedStory(item.srcid, user.uid) -%]
+			<div class="tag-display-stub" context="signoff" stoid="[% item.srcid %]" init="legend:'signoff', menu:false">unsigned</div>
+		[%- END -%]
+		<div class="tag-display-stub" context="datatype" init="legend:'type&nbsp;tag'">[% tags.datatype %]</div>
 		[%# the suggestions bar %]
 		<div class="related">
 			<div class="tag-display-stub" context="related" init="legend:'suggestions', menu:false"></div>
@@ -90,10 +87,17 @@ __template__
 		[%- ELSE				%] href="[% gSkin.rootdir %]/subscribe.pl"
 		[%- END %]><span class="button collapse"></span></a>
 		[%# the tag 'bars' %]
-		<div class="tag-display-set train">
-			<div class="tag-display-stub" context="top" init="legend:'top&nbsp;tags'">[% top_tags %]</div>
-			<div class="tag-display-stub" context="system" init="legend:'system&nbsp;tags'">[% system_tags %]</div>
-		</div>
+		<div class="tag-display-stub" context="top" init="legend:'top&nbsp;tags'">[% tags.top %]</div>
+		<div class="tag-display-stub" context="system" init="legend:'system&nbsp;tags'">[% tags.system;
+IF options.view == "usersubmission";
+	this_submission = Slash.db.getSubmission(item.srcid);
+	SWITCH this_submission.del;
+		CASE 0; ' pending';
+		CASE 1; ' rejected';
+		CASE 2; ' accepted';
+	END;
+END %]</div>
+		<div class="tag-display-stub" context="datatype" init="legend:'type&nbsp;tag'">[% tags.datatype %]</div>
 	</div>
 	[% END %]
 [% END %]

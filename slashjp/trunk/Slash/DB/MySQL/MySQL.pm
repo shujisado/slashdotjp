@@ -3,21 +3,26 @@
 # and COPYING for more information, or see http://slashcode.com/.
 
 package Slash::DB::MySQL;
+
 use strict;
+
 use Socket;
 use Digest::MD5 'md5_hex';
 use Time::HiRes;
 use Time::Local;
 use Date::Format qw(time2str);
 use Data::Dumper;
-use Slash::Utility;
 use Storable qw(thaw nfreeze);
 use URI ();
+
+use Slash::Utility;
 use Slash::Custom::ParUserAgent;
+use Slash::Constants ':messages';
+
 use vars qw($_proxy_port);
+
 use base 'Slash::DB';
 use base 'Slash::DB::Utility';
-use Slash::Constants ':messages';
 use Encode;
 
 our $VERSION = $Slash::Constants::VERSION;
@@ -302,68 +307,7 @@ sub _whereFormkey {
 	return $where;
 };
 
-
-
-
-# XXX I don't think this method is used anywhere.  Also, I'm
-# really sure these "Notes" are about five years out of date.
-# Can we delete this code? - Jamie, August 2006
-# (It's used in Slash::DB::Utility::new)
-
 ########################################################
-# Notes:
-#  formAbuse, use defaults as ENV, be able to override
-#  	(pudge idea).
-#  description method cleanup. (done)
-#  fetchall_rowref vs fetch the hashses and push'ing
-#  	them into an array (good arguments for both)
-#	 break up these methods into multiple classes and
-#   use the dB classes to override methods (this
-#   could end up being very slow though since the march
-#   is kinda slow...).
-#	 the getAuthorEdit() methods need to be refined
-########################################################
-
-########################################################
-sub init {
-	my($self) = @_;
-	# These are here to remind us of what exists
-	$self->{_codeBank} = {};
-
-	$self->{_boxes} = {};
-	$self->{_sectionBoxes} = {};
-
-	$self->{_comment_text} = {};
-	$self->{_comment_text_full} = {};
-
-	$self->{_story_comm} = {};
-
-	# Do all cache elements contain '_cache_' in it, if so, we should
-	# probably perform a delete on anything matching, here.
-}
-
-########################################################
-# Tell server to send us data in UTF-8 encoding, also
-# tell data base handle to set utf8 flag on all strings
-# (blindly assuming MySQL 4.1 and patched DBD::MySQL for now)
-sub sqlConnect{
-	my($self) = @_;
-	$self->SUPER::sqlConnect();
-	$self->{_dbh}->{mysql_enable_utf8} = 1;
-}
-
-########################################################
-# make sure UTF-8 flag is set before we send query to
-# MySQL, assuming all data is actually UTF-8 and only
-# Perl has lost the flag somewhere
-sub sqlDo{
-	my($self, $sql) = @_;
-	Encode::is_utf8($sql) or $sql = decode_utf8($sql);
-	$self->SUPER::sqlDo($sql);
-}
-
-
-
 
 # XXX I'm pretty sure these next 3 methods can be eliminated
 # from the code. Or, they can actually be written properly and
@@ -531,12 +475,13 @@ sub getCSSValuesHashForCol {
 }
 
 sub getCSS {
-	my($self) = @_;
+	my($self, $layout) = @_;
 	my $user = getCurrentUser();
 	my $page = $user->{currentPage};
 	my $skin = getCurrentSkin('name');
 	my $admin = $user->{is_admin};
 	my $theme = ($user->{simpledesign} || $user->{pda}) ? "light" : $user->{css_theme};
+	$layout ||= '';
 	my $constants = getCurrentStatic();
 
 	# force mobile theme
@@ -553,19 +498,22 @@ sub getCSS {
 	my $css_pages_ref	= $self->{_css_pages_cache};
 	my $css_skins_ref	= $self->{_css_skins_cache};
 	my $css_themes_ref	= $self->{_css_themes_cache};
+	my $css_layouts_ref	= $self->{_css_layouts_cache};
 
 	$css_pages_ref = $self->getCSSValuesHashForCol('page') if !$css_pages_ref;
 	$css_skins_ref = $self->getCSSValuesHashForCol('skin')   if !$css_skins_ref;
 	$css_themes_ref= $self->getCSSValuesHashForCol('theme') if !$css_themes_ref;
+	$css_layouts_ref= $self->getCSSValuesHashForCol('layout') if !$css_layouts_ref;
 
 	my $lowbandwidth = ($user->{lowbandwidth} || $user->{pda}) ? "yes" : "no";
 
 	$page   = '' if !$css_pages_ref->{$page};
 	$skin   = '' if !$css_skins_ref->{$skin};
 	$theme  = '' if !$css_themes_ref->{$theme};
+	$layout = '' if !$css_layouts_ref->{$layout};
 
-	return $css_ref->{$skin}{$page}{$admin}{$theme}{$lowbandwidth}
-		if exists $css_ref->{$skin}{$page}{$admin}{$theme}{$lowbandwidth};
+	return $css_ref->{$skin}{$page}{$admin}{$theme}{$lowbandwidth}{$layout}
+		if exists $css_ref->{$skin}{$page}{$admin}{$theme}{$lowbandwidth}{$layout};
 
 	my @clauses;
 
@@ -584,12 +532,15 @@ sub getCSS {
 
 	push @clauses, "lowbandwidth='$lowbandwidth'" if $lowbandwidth eq "no";
 
+	my $layout_q = $self->sqlQuote($layout);
+	push @clauses, "layout=$layout_q";
+
 	my $where = "css.ctid=css_type.ctid AND ";
 	$where .= join ' AND ', @clauses;
 
 	my $css = $self->sqlSelectAllHashrefArray("rel,type,media,file,title,ie_cond", "css, css_type", $where, "ORDER BY css_type.ordernum, css.ordernum");
 
-	$css_ref->{$skin}{$page}{$admin}{$theme}{$lowbandwidth} = $css;
+	$css_ref->{$skin}{$page}{$admin}{$theme}{$lowbandwidth}{$layout} = $css;
 	return $css;
 }
 
@@ -1233,10 +1184,7 @@ sub createSubmission {
 	$data->{subnetid} = getCurrentUser('subnetid');
 	$data->{email} = delete $submission->{email} || '';
 	$data->{email} = $self->truncateStringForCharColumn($data->{email}, 'submissions', 'email');
-	my $emailuri = URI->new($data->{email});
-	my $emailhost = "";
-	$emailhost = $emailuri->host() if $emailuri && $emailuri->can("host");
-	$data->{emaildomain} = fullhost_to_domain($emailhost);
+	$data->{emaildomain} = email_to_domain($data->{email});
 	$data->{emaildomain} = $self->truncateStringForCharColumn($data->{emaildomain}, 'submissions', 'emaildomain');
 	$data->{uid} = delete $submission->{uid} || getCurrentStatic('anonymous_coward_uid');
 	$data->{'-time'} = delete $submission->{'time'};
@@ -1254,7 +1202,7 @@ sub createSubmission {
 	# The next line makes sure that we get any section_extras in the DB - Brian
 	$self->setSubmission($subid, $submission) if $subid && keys %$submission;
 
-	if ($constants->{plugin}{FireHose}) {
+	if ($constants->{plugin}{FireHose} && $subid) {
 		my $firehose = getObject("Slash::FireHose");
 		my $firehose_id = $firehose->createItemFromSubmission($subid);
 
@@ -1608,13 +1556,14 @@ sub getUserCrossSiteAuthenticate {
 	if (!$uid) {
 		my $newnick = sprintf($site->{user_name_format}, $params->{shortname} || $params->{user_id});
 		my $matchname = nick2matchname($newnick);
-		my $email = '';
+		my $email = $params->{shortname}
+			? sprintf($site->{email_format}, $params->{shortname})
+			: '';
 
-		# no email for now, so skip checks for email (and matchname;
-		# we don't care if someone already has an "sfpudge", that
-		# should not stop us from making a "SF:pudge")
+		# for matchname, we don't care if someone already has an
+		# "sfpudge", that should not stop us from making a "SF:pudge"
 		$uid = $self->createUser(
-			$matchname, '', $newnick, { skipchecks => 1 }
+			$matchname, $email, $newnick, { skipchecks => 1 }
 		);
 		$new = 1;
 
@@ -2540,7 +2489,7 @@ sub createUser {
 	# ...users start out as registered...
 	my $constants = getCurrentStatic();
 
-	my $initdomain = fullhost_to_domain($email);
+	my $initdomain = email_to_domain($email);
 	$self->setUser($uid, {
 		'registered'		=> 1,
 		'expiry_comm'		=> $constants->{min_expiry_comm},
@@ -2548,7 +2497,8 @@ sub createUser {
 		'user_expiry_comm'	=> $constants->{min_expiry_comm},
 		'user_expiry_days'	=> $constants->{min_expiry_days},
 		initdomain		=> $initdomain,
-		created_ipid		=> getCurrentUser('ipid'),
+		created_ipid		=> getCurrentUser('ipid') || '',
+		index_beta		=> $constants->{index_new_user_beta} ? 1 : 0,
 	});
 
 	$self->sqlDo("COMMIT");
@@ -3606,7 +3556,7 @@ sub setStory {
 	if (!exists($change_hr->{last_update})
 		&& !exists($change_hr->{-last_update})) {
 		my @non_cchp = grep !/^(commentcount|hitparade|hits)$/, keys %$change_hr;
-		@fh_update_fields = grep /^(title|uid|time|introtext|bodytext|primaryskid|tid|neverdisplay|media|mediatype|thumb)$/, keys %$change_hr;
+		@fh_update_fields = grep /^(title|uid|time|introtext|bodytext|primaryskid|tid|neverdisplay|media|mediatype|thumb|offmainpage)$/, keys %$change_hr;
 		
 		if (@non_cchp > 0) {
 			$change_hr->{-last_update} = 'NOW()';
@@ -8604,7 +8554,7 @@ sub _getMCDStats_percentify {
 # prettier compromise.  I'm just saying. - Jamie
 sub autoUrl {
 	my($self, $section, @data) = @_;
-	my $data = @data ? join(' ', @data) : '';
+	my $data = @data ? join(' ', map { $_ || '' } @data) : '';
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
@@ -10066,6 +10016,7 @@ sub getStoriesTopicsRenderedHash {
 # Pass in $chosen_hr to save a query.
 sub setStoryRenderedFromChosen {
 	my($self, $stoid, $chosen_hr, $info) = @_;
+	my $constants = getCurrentStatic();
 
 	$self->setStory_delete_memcached_by_stoid([ $stoid ]);
 	$chosen_hr ||= $self->getStoryTopicsChosen($stoid);
@@ -10089,6 +10040,11 @@ sub setStoryRenderedFromChosen {
 
 	my $rendered_tids = [ keys %$rendered_hr ];
 	$self->setStory_delete_memcached_by_tid($rendered_tids);
+
+	if ($constants->{plugin}{FireHose}) {
+		my $firehose = getObject("Slash::FireHose");
+		$firehose->setTopicsRenderedForStory($stoid, $rendered_tids);
+	}
 
 	return($primaryskid, $tids);
 }
@@ -11092,7 +11048,7 @@ sub _getUser_do_selects {
 				$this_clout = $clout_hr->{$clid};
 			} else {
 				my $this_info = $clout_info->{$clid};
-				my $clout_obj = getObject($this_info->{class}, { db_type => 'reader' });
+				my $clout_obj = getObject($this_info->{class}, { db_type => 'reader' }); warn "no obj for '$this_info->{class}'" unless $clout_obj;
 				$this_clout = $clout_obj->getUserClout($answer) if $clout_obj;
 			}
 			$answer->{clout}{ $clout_types->{$clid} } = $this_clout
@@ -12255,7 +12211,7 @@ sub getGlobjTarget {
 }
 
 # Given an arrayref of globjids, returns a hashref where each key is a
-# globjid and its value is an arrayref of its gtid,target_id.
+# globjid and its value is an arrayref of its globj_type,target_id.
 # XXX should memcached
 
 sub getGlobjTargets {
@@ -12265,8 +12221,9 @@ sub getGlobjTargets {
 	my $target_hr = { };
 	my $in_str = join(',', grep /^\d+$/, @$globjid_ar);
 	my $ar_ar = $self->sqlSelectAll('globjid, gtid, target_id', 'globjs', "globjid IN ($in_str)");
+	my $types = $self->getGlobjTypes;
 	for my $ar (@$ar_ar) {
-		$target_hr->{ $ar->[0] } = [ $ar->[1], $ar->[2] ];
+		$target_hr->{ $ar->[0] } = [ $types->{ $ar->[1] }, $ar->[2] ];
 	}
 	return $target_hr;
 }
@@ -12315,11 +12272,17 @@ sub setGlobjAdminnote {
 
 sub addGlobjTargetsToHashrefArray {
 	my($self, $ar) = @_;
+	my @globjids =
+		map { $_->{globjid} }
+		grep { $_->{globjid} && !$_->{globj_type} } # skip if already added
+		@$ar;
+	my $target = $self->getGlobjTargets(\@globjids);
 	for my $hr (@$ar) {
-		next unless $hr->{globjid}; # skip if bogus data
-		next if $hr->{globj_type};  # skip if already added
-		my($type, $target_id) = $self->getGlobjTarget($hr->{globjid});
-		next unless $type;          # skip if bogus data
+		next unless $hr->{globjid};	# skip if bogus data
+		next unless $target->{ $hr->{globjid} }; # skip if globj missing (?!)
+		next if $hr->{globj_type};	# skip if already added
+		my($type, $target_id) = @{ $target->{ $hr->{globjid} } };
+		next unless $type;		# skip if bogus data
 		$hr->{globj_type} = $type;
 		$hr->{globj_target_id} = $target_id;
 	}
@@ -12356,19 +12319,22 @@ sub addGlobjEssentialsToHashrefArray {
 	# Add the fields globj_type and globj_target_id to each object.
 	# If this was already done, this runs very quickly.
 	$self->addGlobjTargetsToHashrefArray($ar);
-
 	# Select all the needed information about each object and drop it
 	# into %data.
 
 	my %data = ( );
 
-	$self->_addGlobjEssentials_stories($ar, \%data);
-	$self->_addGlobjEssentials_urls($ar, \%data);
+	# Some of these are not written (yet).
 	$self->_addGlobjEssentials_submissions($ar, \%data);
 	$self->_addGlobjEssentials_journals($ar, \%data);
+	$self->_addGlobjEssentials_urls($ar, \%data);
+#	$self->_addGlobjEssentials_feeds($ar, \%data);
+	$self->_addGlobjEssentials_stories($ar, \%data);
+#	$self->_addGlobjEssentials_vendors($ar, \%data);
+#	$self->_addGlobjEssentials_miscs($ar, \%data);
 	$self->_addGlobjEssentials_comments($ar, \%data);
-
-#use Data::Dumper; print STDERR "data: " . Dumper(\%data);
+#	$self->_addGlobjEssentials_discussions($ar, \%data);
+	$self->_addGlobjEssentials_projects($ar, \%data);
 
 	# Scan over the arrayref and insert the information from %data
 	# for each object.
@@ -12413,7 +12379,7 @@ sub _addGlobjEssentials_urls {
 	my($self, $ar, $data_hr) = @_;
 	my $constants = getCurrentStatic();
 	my $urls_hr = _addGlobjEssentials_getids($ar, 'urls');
-	my @url_ids = sort { $a <=> $b } keys %$urls_hr;
+	my @url_ids = keys %$urls_hr;
 	my $id_str = join(',', @url_ids);
 	my $urldata_hr = $id_str
 		? $self->sqlSelectAllHashref('url_id',
@@ -12450,7 +12416,7 @@ sub _addGlobjEssentials_submissions {
 	my($self, $ar, $data_hr) = @_;
 	my $skins = $self->getSkins();
 	my $submissions_hr = _addGlobjEssentials_getids($ar, 'submissions');
-	my @subids = sort { $a <=> $b } keys %$submissions_hr;
+	my @subids = keys %$submissions_hr;
 	my $subid_str = join(',', @subids);
 	my $submissiondata_hr = $subid_str
 		? $self->sqlSelectAllHashref('subid',
@@ -12509,6 +12475,26 @@ sub _addGlobjEssentials_comments {
 		$data_hr->{$globjid}{url} = "$constants->{rootdir}/comments.pl?sid=$commentdata_hr->{$cid}{sid}&cid=$cid";
 		$data_hr->{$globjid}{title} = $commentdata_hr->{$cid}{subject};
 		$data_hr->{$globjid}{created_at} = $commentdata_hr->{$cid}{date};
+	}
+}
+
+sub _addGlobjEssentials_projects {
+	my($self, $ar, $data_hr) = @_;
+	my $constants = getCurrentStatic();
+	my $projects_hr = _addGlobjEssentials_getids($ar, 'projects');
+	my @project_ids = sort { $a <=> $b } keys %$projects_hr;
+	my $id_str = join(',', @project_ids);
+	my $projectdata_hr = $id_str
+		? $self->sqlSelectAllHashref('id',
+			'id, url, textname, projects.createtime',
+			'projects, urls',
+			"id IN ($id_str) AND projects.url_id=urls.url_id")
+		: { };
+	for my $id (@project_ids) {
+		my $globjid = $projects_hr->{$id};
+		$data_hr->{$globjid}{url} = $projectdata_hr->{$id}{url};
+		$data_hr->{$globjid}{title} = $projectdata_hr->{$id}{textname};
+		$data_hr->{$globjid}{created_at} = $projectdata_hr->{$id}{createtime};
 	}
 }
 
@@ -12919,7 +12905,17 @@ sub DESTROY {
 	# Slash::DB::Utility).
 	$self->_querylog_writecache;
 
-	$self->SUPER::DESTROY if $self->can("SUPER::DESTROY"); # up up up up up up
+	# Slash::Tagbox, a subclass of MySQL.pm, does this too:
+	#	$self->{_dbh}->disconnect if $self->{_dbh} && !$ENV{GATEWAY_INTERFACE};
+	# I'm not sure why we don't do that here instead.  I'm not sure
+	# how often it actually happens that a MySQL.pm is destroyed by
+	# slashd, and I don't know exactly how DBI.pm handles disconnects
+	# for its connect_cached pool, but if DESTROY is called, wouldn't
+	# it make sense to help mysqld manage its connections by releasing
+	# a dbh?
+	# - jamie 2008/08/04
+
+	$self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
 
 

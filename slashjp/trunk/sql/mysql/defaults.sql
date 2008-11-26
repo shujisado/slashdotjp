@@ -767,6 +767,9 @@ INSERT INTO vars (name, value, description) VALUES ('articles_only','0','show on
 INSERT INTO vars (name, value, description) VALUES ('article_nocomment','0','Show no comments in article.pl');
 INSERT INTO vars (name, value, description) VALUES ('authors_unlimited','100','Seclev for which authors have unlimited comment-moderation and -deletion power (see also the ACLs)');
 INSERT INTO vars (name, value, description) VALUES ('backup_db_user','','The virtual user of the database that the code should use for intensive database access that may bring down the live site. If you don\'t know what this is for, you should leave it blank.');
+INSERT INTO vars (name, value, description) VALUES ('badge_icon_ext', 'gif', 'Badge icon extension ("gif" or "png", probably)');
+INSERT INTO vars (name, value, description) VALUES ('badge_icon_size', '15', 'Badge icon height/width');
+INSERT INTO vars (name, value, description) VALUES ('badge_icon_size_wide', '15', 'Badge icon width for wide icons');
 INSERT INTO vars (name, value, description) VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value');
 INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_ip','40','Warn admin if an ip specifies password incorrectly this many times in one day');
 INSERT INTO vars (name, value, description) VALUES ('bad_password_warn_subnet','60','Warn admin if a subnet specifies password incorrectly this many times in one day');
@@ -838,7 +841,7 @@ INSERT INTO vars (name, value, description) VALUES ('cur_performance_stat_ops', 
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_lastid', '0', 'accesslogid to start searching at');
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_weeks', '8', 'number of weeks back to compare current stats to');
 INSERT INTO vars (name, value, description) VALUES ('currentqid',1,'The Current Question on the homepage pollbooth');
-INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode','T_2_5_0_218','The current cvs tag that the code was updated to - this does not affect site behavior but may be useful for your records');
+INSERT INTO vars (name, value, description) VALUES ('cvs_tag_currentcode','T_2_5_0_231','The current cvs tag that the code was updated to - this does not affect site behavior but may be useful for your records');
 INSERT INTO vars (name, value, description) VALUES ('datadir','/usr/local/slash/www.example.com','What is the root of the install for Slash');
 INSERT INTO vars (name, value, description) VALUES ('db_auto_increment_increment','1','If your master DB uses auto_increment_increment, i.e. multiple master replication, echo its value into this var');
 INSERT INTO vars (name, value, description) VALUES ('dbsparklines_disp','0','Display dbsparklines in the currentAdminUsers box?');
@@ -907,6 +910,7 @@ INSERT INTO vars (name, value, description) VALUES ('imagemagick_convert', '/usr
 INSERT INTO vars (name, value, description) VALUES ('index_gse_backup_prob','0','Probability that index.pl getStoriesEssentials will look to backup_db_user instead of the main db: 0=never, 1=always');
 INSERT INTO vars (name, value, description) VALUES ('index_handler','index.pl','The perl servlet to call for connections to the root of the server.');
 INSERT INTO vars (name, value, description) VALUES ('index_handler_noanon','home','The shtml page to call if a user is anon and index_noanon is set');
+INSERT INTO vars (name, value, description) VALUES ('index_new_user_beta', '0', 'Use index beta for new users?');
 INSERT INTO vars (name, value, description) VALUES ('index_noanon','0','Redirect all anonymous users to index_handler_noanon instead of index.shtml. Set to 1 to activate, 0 to remove.');
 INSERT INTO vars (name, value, description) VALUES ('index_readmore_with_bytes', '0', 'Include bytes / word count in readmore link where applicable?');
 INSERT INTO vars (name, value, description) VALUES ('ircslash','0','Enable the ircslash task and connect to an IRC channel whenever slashd starts');

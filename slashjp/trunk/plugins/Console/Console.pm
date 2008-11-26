@@ -24,13 +24,10 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use DBIx::Password;
 use Slash;
 use Slash::Display;
-use Slash::Utility;
 
-use base 'Slash::DB::Utility';
-use base 'Slash::DB::MySQL';
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Utility::VERSION;
 
@@ -50,6 +47,28 @@ sub ajaxConsoleUpdate {
 	return Data::JavaScript::Anon->anon_dump({
 		html	=> 	$html
 	});
+}
+
+sub consoleBoxes {
+	my($self) = @_;
+	my $admindb 	= getObject('Slash::Admin');
+	my $storyadmin 	= $admindb->showStoryAdminBox("");
+	my $perfbox	= $admindb->showPerformanceBox();
+	my $authorbox	= $admindb->showAuthorActivityBox();
+	my $admintodo	= $admindb->showAdminTodo();
+	my $tagnamesbox = '';
+	my $tags = getObject('Slash::Tags');
+	if ($tags) {
+		$tagnamesbox = $tags->showRecentTagnamesBox({ box_only => 1});
+	}
+
+	slashDisplay('console_boxes', {
+		storyadmin 	=> $storyadmin,
+		perfbox		=> $perfbox,
+		authorbox	=> $authorbox,
+		tagnamesbox	=> $tagnamesbox,
+	}, { Return => 1});
+	
 }
 
 1;

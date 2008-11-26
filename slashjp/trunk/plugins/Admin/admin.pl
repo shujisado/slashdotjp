@@ -1483,17 +1483,8 @@ sub editStory {
 		$add_related_text .= "$storyref->{related_urls_hr}{$_} $_\n";
 	}
 
-	my $tagbox_html = '';
-	if ($constants->{plugin}{Tags} && $storyref->{sid}) {
-		my @tags_top = split / /, ($story->{tags_top} || '');
-		my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
-		my @tags_example = $tags_reader->getExampleTagsForStory($story);
-		$tagbox_html .= slashDisplay('tagsstorydivtagbox', {
-			story		=> $storyref,
-			tags_top	=> \@tags_top,
-			tags_example	=> \@tags_example,
-		}, { Return => 1 });
-	}
+	# TODO: add new tagui here
+
 	my $pending_file_count = 0;
 	my $story_static_files = [];
 	$form->{fhid} ||= $admindb->getFireHoseIdBySubid($subid) if ($subid && $constants->{plugin}{FireHose});
@@ -1509,7 +1500,7 @@ sub editStory {
 		storyref 		=> $storyref,
 		story			=> $story,
 		storycontent		=> $storycontent,
-		tagbox_html		=> $tagbox_html,
+		tagbox_html		=> '',
 		sid			=> $sid,
 		subid			=> $subid,
 		fhid			=> $fhid,

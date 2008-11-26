@@ -8,30 +8,13 @@ use strict;
 use DBIx::Password;
 use Slash;
 use Slash::Constants qw(:people :messages);
-use Slash::Utility;
-use Slash::DB::Utility;
 
-use base 'Slash::DB::Utility';
-use base 'Slash::DB::MySQL';
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Constants::VERSION;
 
 # "There ain't no justice" -Niven
 # We can try. 	-Brian
-
-sub new {
-	my($class, $user) = @_;
-	my $self = {};
-
-	my $plugin = getCurrentStatic('plugin');
-	return unless $plugin->{'Zoo'};
-
-	bless($self, $class);
-	$self->{virtual_user} = $user;
-	$self->sqlConnect;
-
-	return $self;
-}
 
 # Get the details for relationships
 sub getRelationships {
@@ -68,14 +51,12 @@ sub getFriendsUIDs {
 
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
-	my $people = $slashdb->getUser($uid, 'people');
-	if ($uid == $user->{uid}) {
-		$people = $user->{people};
-	} else {
-		$people = $slashdb->getUser($uid, 'people');
-	}
-	my @people = keys %{$people->{FRIEND()}};
-	return \@people;
+	my $people = $uid == $user->{uid}
+		? $user->{people}
+		: $slashdb->getUser($uid, 'people');
+
+	return [] if !$people || !$people->{FRIEND()};
+	return [ keys %{$people->{FRIEND()}} ];
 }
 
 sub setFriend {

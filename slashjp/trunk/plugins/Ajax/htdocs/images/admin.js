@@ -30,15 +30,20 @@ function tagsHistory(id, type) {
 		params.id = id;
 	}
 
-	var $entry = $('#firehose-'+id);
-	var $widget = $('#tag-widget-'+id, $entry[0]);
+	var $positioners;
+	if ( type == 'firehose' ) {
+		var $entry = $('#firehose-'+id);
+		var $widget = $entry.find('div.tag-widget.body-widget:first');
 
-	// hang the pop-up from the first available of:
-	var $positioners =
-		$widget.find('.history-button').		// the history button
-			add($related_trigger).			// whatever you clicked
-			add($widget.find('.edit-toggle')).	// the disclosure triangle
-			add($entry.find('#updown-'+id));	// the nod/nix capsule
+		// hang the pop-up from the first available of:
+		$positioners =
+			$widget.find('.history-button').		// the history button
+				add($related_trigger).			// whatever you clicked
+				add($widget.find('.edit-toggle')).	// the disclosure triangle
+				add($entry.find('#updown-'+id));	// the nod/nix capsule
+	} else {
+		$positioners = $('#taghist-'+id);
+	}
 
 	var popupid    = "taghistory-" + id;
 	var title      = "History ";
@@ -49,69 +54,65 @@ function tagsHistory(id, type) {
 }
 
 //
-// firehose + admin + tagui
+// firehose + admin + tag_ui
 //
 
 function firehose_admin_context( display ){
-	display.update_tags('history', { order: 'prepend' });
+	display.update_tags('extras history', { order: 'prepend' });
 }
 
 function firehose_handle_admin_commands( commands ){
-	var neverdisplay, hold, signoff, history;
+	var entry=this, $entry=$(entry), id=$entry.attr('tag-server');
 
-	var non_admin_commands = $.map(commands, function(cmd){
+	return $.map(commands, function( cmd ){
 		var user_cmd = null;
 		switch ( cmd ) {
-			case 'neverdisplay':	neverdisplay = true; break;
-			case 'hold':		hold = true; break;
+			case 'extras':
+				firehose_get_admin_extras(id);
+				break;
 
-			case 'history':		history = true; break;
+			case 'history':
+				tagsHistory(id, 'firehose');
+				break;
+
+			case 'neverdisplay':
+				if ( confirm("Set story to neverdisplay?") ) {
+					non_admin_commands.push('neverdisplay');
+					entry._ajax_request('', {
+						op:	'admin_neverdisplay',
+						stoid:	'',
+						fhid:	id,
+						ajax:	{ success: function(){ firehose_remove_entry(id); } }
+					});
+				}
+				break;
 
 			case 'signed':
 			case 'signoff':
 			case 'unsigned':
-				signoff = true;
+				if ( ! $entry.article_info('awaiting-thumbnail') ) {
+					entry._ajax_request('', {
+						op:	'admin_signoff',
+						stoid:	$entry.article_info('stoid'),
+						ajax:	{ success: function(){ $('[context=signoff]', entry).remove(); } }
+					});
+				}
+				firehose_collapse_entry(id);
 				break;
 
+			case 'binspam':
+				if ( $entry.is('[type=feed]') )
+					break;
+				/* else fall through */
+			case 'hold':
+				firehose_collapse_entry(id);
+				/* fall through */
 			default:
 				user_cmd = cmd;
+				break;
 		}
 		return user_cmd;
 	});
-
-	var id = this.getAttribute('tag-server');
-	if ( neverdisplay && confirm("Set story to neverdisplay?") ) {
-		non_admin_commands.push('neverdisplay');
-		this._ajax_request('', {
-			op:	'admin_neverdisplay',
-			stoid:	'',
-			fhid:	id,
-			ajax:	{ success: function(){ firehose_remove_entry(id); } }
-		});
-	}
-
-	if ( signoff ) {
-		var signoff_tag_server = this;
-		this._ajax_request('', {
-			op:	'admin_signoff',
-			stoid:	$('[stoid]', this).attr('stoid'),
-			ajax:	{ success: function(){ $('[context=signoff]', signoff_tag_server).remove(); } }
-		});
-	}
-
-	if ( hold ) {
-		non_admin_commands.push('hold');
-	}
-
-	if ( hold || signoff ) {
-		firehose_collapse_entry(id);
-	}
-
-	if ( history ) {
-		tagsHistory(id, 'firehose');
-	}
-
-	return non_admin_commands;
 }
 
 
@@ -136,33 +137,6 @@ function admin_submit_memory(fhid) {
 		submatch:	$('#submatch-'+fhid).val(),
 		subnote:	$('#subnote-'+fhid).val()
 	}, 'sub_mem_message-'+fhid);
-}
-
-function adminTagsCommands(id, type) {
-	var toggletags_message_id = '#toggletags-message-' + id;
-	var toggletags_message_el = jQuery(toggletags_message_id)[0];
-	if (toggletags_message_el) {
-		toggletags_message_el.innerHTML = 'Executing commands...';
-	}
-
-	var params = {};
-	type = type || "stories";
-	params.op = 'tags_admin_commands';
-	if (type == "stories") {
-		params.sidenc = id;
-	} else if (type == "urls") {
-		params.id = id;
-	} else if (type == "firehose") {
-		params.id = id;
-	}
-	params.type = type;
-	var tags_admin_commands_el = $dom('tags_admin_commands-' + id);
-	params.commands = tags_admin_commands_el.value;
-	var reskeyel = $dom('admin_commands-reskey-' + id);
-	params.reskey = reskeyel.value;
-	ajax_update(params, 'tags-admin-' + id);
-
-	toggletags_message_el.innerHTML = 'Commands executed.';
 }
 
 function remarks_create() {
@@ -319,28 +293,67 @@ function firehose_reject (el) {
 	firehose_remove_entry(el.value);
 }
 
-function firehose_open_note(id) {
-	var $entry = $('#firehose-'+id);
+function firehose_init_note_flags(){
+	var $entries = $(document).article_info__find_articles(':not(:has(> h3 > span.note-flag))');
 
-	$entry.find('.note-wrapper').removeClass('no-note');
-	$entry.find('#note-form-'+id).removeClass('hide');
-	$entry.find('#note-input-'+id).each(function(){this.focus();});
-	$entry.find('#note-text-'+id).addClass('hide');
+	// set up the "note flag"
+	return $entries.each(function(){
+		var $entry = $(this);
+		var $note = $entry.find('.note-wrapper');
+		var note_text='', no_note = ! $note.length || $note.hasClass('no-note');
+		if ( ! no_note ) {
+			note_text = $.trim($note.find('.admin-note a').text());
+		}
+
+		var $note_flag = $entry.find('> h3').
+			append('<span class="note-flag">note</span>').
+			find('.note-flag').
+				attr('title', note_text).
+				click(function(){
+					firehose_open_note($entry)
+				});
+
+		if ( no_note ) {
+			$note_flag.addClass('no-note');
+		}
+	});
+}
+
+function firehose_open_note( expr ) {
+	if ( typeof expr === 'string' || typeof expr === 'number' ) {
+		expr = '#firehose-' + expr;
+	}
+	return $(expr).
+		each(function(){
+			var $entry = $(this), id = firehose_id_of(this);
+			if ( $entry.is('[class^=brief]') ) {
+				toggle_firehose_body(id, true);
+			}
+			$entry.find('.note-wrapper').removeClass('no-note');
+			$entry.find('#note-form-'+id).removeClass('hide');
+			$entry.find('#note-input-'+id).each(function(){this.focus();});
+			$entry.find('#note-text-'+id).addClass('hide');
+		});
 }
 
 function firehose_save_note(id) {
 	var $entry = $('#firehose-'+id);
 
-	var note_text = $entry.find('#note-input-'+id).val();
-	$entry.find('.note-flag, .note-wrapper').toggleClassTo('no-note', !note_text);
+	var note_text = $.trim($entry.find('#note-input-'+id).val());
+	$entry.find('.note-flag, .note-wrapper').
+		toggleClassTo('no-note', !note_text).
+		filter('.note-flag').
+			attr('title', note_text);
 
 	ajax_update({
 		op:	'firehose_save_note',
 		note:	note_text,
 		id:	id
-	}, 'note-text-'+id);
+	});
 	$entry.find('#note-form-'+id).addClass('hide');
-	$entry.find('#note-text-'+id).removeClass('hide');
+	$entry.find('#note-text-'+id).text(note_text || 'Note').removeClass('hide');
+
+	return $entry;
 }
 
 function firehose_get_admin_extras(id) {
@@ -382,3 +395,10 @@ function appendToMedia(text) {
 		obj.value = obj.value  + text;
 	}
 }
+
+$(function(){
+	// edit icons positioning fix
+	if( $.browser.safari || $.browser.opera ) {
+		$('.edit a').css('margin-top','0pt');
+	}
+});

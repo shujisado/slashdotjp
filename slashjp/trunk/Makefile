@@ -46,7 +46,7 @@ SBINFILES = `find sbin -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*
 THEMEFILES = `find themes -name CVS -prune -o -name .git -prune -o -name [a-zA-z]\*.pl -print`
 PLUGINFILES = `find plugins themes/*/plugins -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print`
 TAGBOXFILES = `find tagboxes themes/*/tagboxes -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print`
-PLUGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins/[a-zA-Z]+$$'`
+PLUGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins/[a-zA-Z0-9]+$$'`
 TAGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes/[a-zA-Z]+$$'`
 PLUGINDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins$$'`
 TAGBOXDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes$$'`
@@ -271,6 +271,7 @@ reload: install
 	apachectl start
 
 #   cleanup
+# We need this to remove Makefile.old's as well, and *.xs.orig
 clean:
 	(cd Slash; if [ ! -f Makefile ]; then perl Makefile.PL; fi; $(MAKE) clean)
 	(rm Slash/Apache/Apache.xs Slash/Apache/User/User.xs)
