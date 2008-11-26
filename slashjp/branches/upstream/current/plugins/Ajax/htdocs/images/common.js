@@ -29,6 +29,10 @@ var firehose_settings = {};
   firehose_settings.color = '';
   firehose_settings.orderby = '';
   firehose_settings.orderdir = '';
+  firehose_settings.view = '';
+  firehose_settings.tab = '';
+  firehose_settings.fhfilter  = '';
+  firehose_settings.base_filter = '';
 
   firehose_settings.issue = '';
   firehose_settings.is_embedded = 0;
@@ -324,7 +328,7 @@ function toggleFirehoseTagbox(id) {
 	after_article_moved($('#firehose-'+id)[0]);
 }
 
-function firehose_set_options(name, value) {
+function firehose_set_options(name, value, context) {
 	if (firehose_user_class === 0) {
 		return;
 	}
@@ -343,10 +347,11 @@ function firehose_set_options(name, value) {
 	];
 	var params = {};
 	params.setting_name = name;
+	params.context = context;
 	params.op = 'firehose_set_options';
 	params.reskey = reskey_static;
 	var theForm = document.forms.firehoseform;
-	if (name == "firehose_usermode") {
+	if (name == "usermode") {
 		value = value ? 1 : 0;
 		params.setusermode = 1;
 		params[name] = value;
@@ -376,10 +381,26 @@ function firehose_set_options(name, value) {
 		}
 		firehose_settings.page = 0;
 		firehose_settings.more_num = 0;
+		params.filterchanged = 1;
 	}
 
 	if (name == "setfhfilter") {
 		firehose_settings.fhfilter = value;
+		firehose_settings.page = 0;
+		firehose_settings.more_num = 0;
+		params.filterchanged = 1;
+	}
+
+	if (name == "view") {
+		firehose_settings.view = value;	
+		params.viewchanged = 1;
+		firehose_settings.page = 0;
+		firehose_settings.more_num = 0;
+	}
+	
+	if (name == "tab") {
+		firehose_settings.tab = value;	
+		params.tabchanged = 1;
 		firehose_settings.page = 0;
 		firehose_settings.more_num = 0;
 	}
@@ -400,7 +421,7 @@ function firehose_set_options(name, value) {
 			}
 		}
 	}
-	if (name == "mode" || name == "firehose_usermode" || name == "tab" || name == "mixedmode" || name == "nocolors" || name == "nothumbs") {
+	if (name == "mode" || name == "firehose_usermode" || name == "tab" || name == "mixedmode" || name == "nocolors" || name == "nothumbs" || name == "view") {
 		// blur out then remove items
 		if (name == "mode") {
 			fh_view_mode = value;
@@ -568,6 +589,9 @@ function firehose_toggle_tag_ui( toggle ) {
 }
 
 function firehose_click_tag( event ) {
+	// _any_ click can trigger, but click-specific ad will win
+	setTimeout(function(){ inlineAdFirehose(); }, 0);
+
 	var $target = $(event.target), command='', $menu;
 
 	$related_trigger = $target;
@@ -1097,8 +1121,10 @@ function firehose_reorder() {
 				}
 				if ( firehose_future[firehose_ordered[i]] ) {
 					$('#ttype-'+firehose_ordered[i]).setClass('future');
+					$('#firehose-'+firehose_ordered[i] + "h3").setClass('future');
 				} else {
 					$('#ttype-'+firehose_ordered[i]+'.future').setClass('story');
+					$('#firehose-'+firehose_ordered[i] + "h3.future").setClass('story');
 				}
 			}
 			if ( moved ) after_article_moved();
@@ -1260,10 +1286,10 @@ function firehose_inactivity_modal() {
 	show_modal_box();
 }
 
-function firehose_play() {
+function firehose_play(context) {
 	fh_play = 1;
 	setFirehoseAction();
-	firehose_set_options('pause', '0');
+	firehose_set_options('pause', '0', context);
 	$('#message_area').html('');
 	$('#pauseorplay').html('Updated');
 	$('#play').setClass('hide');
@@ -1274,12 +1300,12 @@ function is_firehose_playing() {
   return fh_play==1;
 }
 
-function firehose_pause() {
+function firehose_pause(context) {
 	fh_play = 0;
 	$('#pause').setClass('hide');
 	$('#play').setClass('show');
 	$('#pauseorplay').html('Paused');
-	firehose_set_options('pause', '1');
+	firehose_set_options('pause', '1', context);
 }
 
 function firehose_add_update_timerid(timerid) {
@@ -1858,9 +1884,12 @@ function inlineAdFirehose($article) {
 	if (!fh_adTimerUrl)
 		return 0;
 
-	if (!$article)
+	if ($article)
+		$article = Slash.Firehose.at_or_below_ad_space($article);
+	else
 		$article = Slash.Firehose.choose_article_for_next_ad();
-	if (!$article)
+
+	if (!$article || !$article.length)
 		return 0;
 
 	var id = $article.article_info__key().key;
@@ -1913,7 +1942,7 @@ var	AD_HEIGHT = 300, AD_WIDTH = 300, FOOTER_PADDING = 5,
 $(function(){
 	$footer = $('#ft');
 	$slashboxes = $('#slashboxes').
-		append('<div id="floating-slashbox-ad" style="display:none; position:absolute; height:'+AD_HEIGHT+'px; width:'+AD_WIDTH+'px;" />');
+		append('<div id="floating-slashbox-ad" />');
 	$ad_position = $slashboxes.find('#floating-slashbox-ad');
 
 	$(window).scroll(fix_ad_position);
@@ -1938,7 +1967,6 @@ function if_same_mode( a, b ){
 		(
 			(a.has_content == b.has_content) &&
 			(a.is_in_window == b.is_in_window) &&
-			(a.top == b.top) &&
 			(a.pinned == b.pinned)
 		);
 }
@@ -1946,20 +1974,32 @@ function if_same_mode( a, b ){
 function set_mode( next ){
 	var cur = current_mode;
 
+	// if it's actually a change...
 	if ( ! if_same_mode(cur, next) ) {
-		if ( next.has_content ) {
-			if ( cur.has_content && (next.is_in_window || cur.is_in_window) ) {
-				$ad_position.animate({top: next.top}, 'fast');
-			} else {
-				$ad_position.hide().css({top: next.top});
-				if ( !cur.has_content ) {
-					$ad_position.fadeIn('fast');
-				} else {
-					$ad_position.show();
-				}
-			}
-		} else {
+		if ( ! next.has_content ) {
 			$ad_position.hide();
+		} else if ( cur.pinned != next.pinned ) {
+			$ad_position.hide();
+
+			var next_class = next.pinned || '';
+			if ( next.pinned == 'Article' ) {
+				$current_article.
+					prepend($ad_position).
+					css('overflow', 'visible');
+			} else if ( next.pinned == 'Bottom' ) {
+				$slashboxes.after($ad_position);
+				next_class += ' yui_b';
+			} else {
+				$slashboxes.append($ad_position);
+			}
+
+			$ad_position.setClass(next_class);
+
+			if ( !cur.has_content ) {
+				$ad_position.fadeIn('fast');
+			} else {
+				$ad_position.show();
+			}
 		}
 
 		var event_name;
@@ -2028,7 +2068,9 @@ function fix_ad_position(){
 						top:		ad_top - slashboxes.top
 					};
 
-		if ( ad_top == article.top ) {
+		if ( space_bottom - space_top < AD_HEIGHT ) {
+			next_mode.pinned = 'SqueezedOut';
+		} else if ( ad_top == article.top ) {
 			next_mode.pinned = 'Article';
 		} else if ( ad_top < article.top ) {
 			next_mode.pinned = 'Bottom';
@@ -2103,12 +2145,16 @@ Slash.Firehose.articles_on_screen = function(){
 	}
 }
 
+Slash.Firehose.at_or_below_ad_space = function( $articles ){
+	var min_top = Math.max(window.pageYOffset, $slashboxes.offset().top + $slashboxes.height());
+	return $articles.filter(function(){
+		return $(this).offset().top >= min_top;
+	});
+
+}
+
 Slash.Firehose.choose_article_for_next_ad = function(){
-	var $articles = Slash.Firehose.articles_on_screen();
-	// omit the first article (when we have more than one) if it starts above the screen
-	if ( ($articles.length > 1) && ($articles.offset().top < window.pageYOffset) ) {
-		$articles = $articles.filter(':gt(0)');
-	}
+	var Fh=Slash.Firehose, $articles=Fh.at_or_below_ad_space(Fh.articles_on_screen());
 	return $articles.eq( Math.floor(Math.random()*$articles.length) );
 }
 

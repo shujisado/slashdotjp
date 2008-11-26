@@ -197,7 +197,7 @@ sub createItemFromJournal {
 		my $publish    = $journal->{promotetype} eq 'publish';
 		my $color_lvl  = $publicize ? 5 : $publish ? 6 : 7; # post == 7
 		my $editor_lvl = $publicize ? 5 : $publish ? 6 : 8; # post == 8
-		my $public     = ($publish || $publicize) ? 'yes' : 'no';
+		my $public     = 'yes';
 		my $popularity = $self->getEntryPopularityForColorLevel($color_lvl);
 		my $editorpop  = $self->getEntryPopularityForColorLevel($editor_lvl);
 
@@ -631,10 +631,18 @@ sub getFireHoseEssentials {
 	my @where;
 	my $tables = 'firehose';
 	my $filter_globjids;
-	if ($options->{tagged_by_uid} && (!$doublecheck || $options->{ignore_nix})) {
-		my $tag_by_uid_q = $self->sqlQuote($options->{tagged_by_uid});
+	my $tags = getObject('Slash::Tags');
+
+	if ($options->{tagged_as} || $options->{tagged_by_uid}) {
 		$tables .= ', tags';
 		push @where, 'tags.globjid=firehose.globjid';
+	}
+	if ($options->{tagged_as}) {
+		my $tag_id = $tags->getTagnameidFromNameIfExists($options->{tagged_as}) || 0;
+		push @where, "tags.tagnameid = $tag_id";
+	}
+	if ($options->{tagged_by_uid} && (!$doublecheck || $options->{ignore_nix})) {
+		my $tag_by_uid_q = $self->sqlQuote($options->{tagged_by_uid});
 		push @where, "tags.uid = $tag_by_uid_q";
 
 		if ($options->{ignore_nix}) {
@@ -645,7 +653,6 @@ sub getFireHoseEssentials {
 		} elsif ($options->{tagged_positive} || $options->{tagged_negative} || $options->{tagged_non_negative}) {
 			my $labels;
 			my $not = '';
-			my $tags = getObject('Slash::Tags');
 
 			if ($options->{tagged_positive}) {
 				$labels = $tags->getPositiveTags;
@@ -820,7 +827,7 @@ sub getFireHoseEssentials {
 	my $where = (join ' AND ', @where) || '';
 
 	my $other = '';
-	$other = 'GROUP BY firehose.id' if $options->{tagged_by_uid} || $options->{nexus};
+	$other = 'GROUP BY firehose.id' if $options->{tagged_by_uid} || $options->{tagged_as} || $options->{nexus};
 
 	my $count_other = $other;
 	my $offset;
@@ -1251,7 +1258,8 @@ sub ajaxRemoveUserTab {
 	my $firehose = getObject("Slash::FireHose");
 	my $opts = $firehose->getAndSetOptions();
 	my $html = {};
-	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section} }, { Return => 1});
+	my $views = $firehose->getUserViews({ tab_display => "yes"});
+	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}, views => $views }, { Return => 1});
 
 	return Data::JavaScript::Anon->anon_dump({
 		html	=> $html
@@ -1262,17 +1270,20 @@ sub ajaxRemoveUserTab {
 sub genSetOptionsReturn {
 	my($slashdb, $constants, $user, $form, $options, $opts) = @_;
 	my $data = {};
-	$data->{html}->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}  }, { Return => 1});
+	
+	my $firehose = getObject("Slash::FireHose");
+	my $views = $firehose->getUserViews({ tab_display => "yes"});
+	$data->{html}->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}, views => $views  }, { Return => 1});
 	$data->{html}->{fhoptions} = slashDisplay("firehose_options", { nowrapper => 1, options => $opts }, { Return => 1});
 	$data->{html}->{fhadvprefpane} = slashDisplay("fhadvprefpane", { options => $opts }, { Return => 1});
 
 	$data->{value}->{'firehose-filter'} = $opts->{fhfilter};
-	if ($form->{tab} || $form->{tabtype}) {
+	if ($form->{view} && $form->{viewchanged}) {
 		$data->{eval_last} = "firehose_slider_set_color('$opts->{color}');";
 	}
 
 	my $eval_first = "";
-	for my $o (qw(startdate mode fhfilter orderdir orderby startdate duration color more_num)) {
+	for my $o (qw(startdate mode fhfilter orderdir orderby startdate duration color more_num tab view fhfilter base_filter)) {
 		my $value = $opts->{$o};
 		if ($o eq 'orderby' && $value eq 'editorpop') {
 			$value = 'popularity';
@@ -1356,7 +1367,8 @@ sub ajaxSaveFirehoseTab {
 
 	my $opts = $firehose->getAndSetOptions();
 	my $html = {};
-	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section} }, { Return => 1});
+	my $views = $firehose->getUserViews({ tab_display => "yes"});
+	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}, views => $views }, { Return => 1});
 	$html->{message_area} = $message;
 	return Data::JavaScript::Anon->anon_dump({
 		html	=> $html
@@ -1700,6 +1712,10 @@ sub ajaxGetAdminExtras {
 		$num_with_ipid = $slashdb->countSubmissionsFromIPID($item->{ipid});
 		$accepted_from_ipid = $slashdb->countSubmissionsFromIPID($item->{ipid}, { del => 2});
 	}
+	
+	if ($user->{is_admin}) {
+		$firehose->setFireHoseSession($item->{id});
+	}
 
 	my $the_user = $slashdb->getUser($item->{uid});
 
@@ -1986,24 +2002,330 @@ sub getSimilarForItem {
 	return $similar_stories;
 }
 
+sub getOptionsValidator {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+	
+	my $colors = $self->getFireHoseColors();
+	my %categories = map { ($_, $_) } (qw(hold quik),
+		(ref $constants->{submit_categories}
+			? map {lc($_)} @{$constants->{submit_categories}}
+			: ()
+		)
+	);
+
+	my $valid = {
+		mode 		=> { full => 1, fulltitle => 1 },
+		type 		=> { feed => 1, bookmark => 1, submission => 1, journal => 1, story => 1, vendor => 1, misc => 1, comment => 1, project => 1 },
+		orderdir 	=> { ASC => 1, DESC => 1},
+		orderby 	=> { createtime => 1, popularity => 1, editorpop => 1, neediness => 1 },
+		pagesizes 	=> { "small" => 1, "large" => 1 },
+		colors		=> $colors,
+		categories 	=> \%categories
+	};
+	return $valid;
+}
+
+sub getGlobalOptionDefaults {
+	my($self) = @_;
+
+	my $defaults = {
+		pause		=> 1,
+		mode 		=> 'full',
+		orderdir	=> 'DESC',
+		orderby		=> 'createtime',
+		mixedmode 	=> 0,
+		color 		=> 'blue',
+		nodates		=> 0,
+		nobylines	=> 0,
+		nothumbs	=> 0,
+		nocolors	=> 0,
+		nocommentcnt	=> 0,
+		noslashboxes 	=> 0,
+		nomarquee	=> 0,
+		mixedmode	=> 0,
+		pagesize	=> "small",
+		usermode	=> 0,
+	};
+
+	return $defaults;	
+}
+
+sub getAndSetGlobalOptions {
+	my($self) = @_;
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $options = $self->getGlobalOptionDefaults();
+	my $validator = $self->getOptionsValidator();
+	my $set_options = {};
+
+	if (!$user->{is_anon}) {
+		foreach (keys %$options) {
+			my $set_opt = 0;
+			if (defined $form->{$_} && $form->{setting_name} eq $_ && $form->{context} eq "global") {
+				if (defined $validator->{$_}) {
+					if ($validator->{$_}{$form->{$_}}) {
+						$set_options->{"firehose_$_"} = $form->{$_};
+						$options->{$_} = $set_options->{"firehose_$_"};
+						$set_opt = 1;
+					}
+				} else {
+					$set_opt = 1;
+					$set_options->{"firehose_$_"} = $form->{$_} ? 1 : 0;
+					$options->{$_} = $set_options->{"firehose_$_"};
+				}
+			}
+
+			# if we haven't set the option, pull from saved user options
+			if(!$set_opt) { 
+				$options->{$_} = $user->{"firehose_$_"} if defined $user->{"firehose_$_"};
+			}
+			
+		}
+		if (keys %$set_options > 0) {
+			$self->setUser($user->{uid}, $set_options);
+		}
+	}
+
+	return $options;
+}
+
+sub getUserViews {
+	my($self, $options) = @_;
+	my $user = getCurrentUser();
+
+	my ($where, @where);
+
+	my @uids = (0);
+
+	if($options->{tab_display}) {
+		push @where, "tab_display=" . $self->sqlQuote($options->{tab_display});
+	}
+
+	if (!$user->{is_anon}) {
+		push @uids, $user->{uid};
+		push @where, "uid in (" . (join ',', @uids) . ")";
+	}
+
+	$where = join ' AND ', @where;
+	return $self->sqlSelectAllHashrefArray("*","firehose_view", $where, "ORDER BY uid, id");
+}
+
+sub getUserViewByName {
+	my($self, $name, $options) = @_;
+	my $user = getCurrentUser();
+	my $uid_q = $self->sqlQuote($user->{uid});
+	my $name_q = $self->sqlQuote($name);
+	my $uview = $self->sqlSelectHashref("*", "firehose_view", "uid=$uid_q && viewname = $name_q");
+
+	return $uview if $uview;
+
+	my $sview =  $self->getSystemViewByName($name);
+	
+
+	return $sview;
+}
+
+sub getSystemViewByName {
+	my($self, $name, $options) = @_;
+	my $user = getCurrentUser();
+	my $name_q = $self->sqlQuote($name);
+	return $self->sqlSelectHashref("*", "firehose_view", "uid=0 && viewname = $name_q and seclev <= $user->{seclev}");
+}
+
+sub applyViewOptions {
+	my($self, $view, $options, $second) = @_;
+	my $gSkin = getCurrentSkin();
+
+	$options->{view} = $view->{viewname};
+	$options->{viewref} = $view;
+
+
+	if ($view->{useparentfilter} eq "no") {
+		$options->{fhfilter} = "$view->{filter}";
+		$options->{basefilter} = "";
+		$options->{tab} = "";
+		$options->{tab_ref} = "";
+	} else {
+		# Set skin as base filter
+		$options->{fhfilter} = $gSkin->{name};
+		
+		$options->{base_filter} = $options->{fhfilter};
+		$options->{fhfilter} = "$options->{fhfilter} $view->{filter}";
+	}
+
+	foreach (qw(mode mixedmode pause color duration orderby orderdir)) {
+		$options->{$_} = $view->{$_} if $view->{$_} ne "";
+	}
+
+	return $options;
+}
+
+sub genUntitledTab {
+	my($self, $user_tabs, $options) = @_;
+	my $user = getCurrentUser();
+
+	my $tab_compare = {
+		filter 		=> "fhfilter"
+	};
+
+	my $tab_match = 0;
+	foreach my $tab (@$user_tabs) {
+
+		my $this_tab_compare;
+		%$this_tab_compare = %$tab_compare;
+
+		my $equal = 1;
+
+		foreach (keys %$this_tab_compare) {
+			$options->{$this_tab_compare->{$_}} ||= "";
+			if ($tab->{$_} ne $options->{$this_tab_compare->{$_}}) {
+				$equal = 0;
+			}
+		}
+
+		if ($options->{tab} eq $tab->{tabname}) {
+			$tab->{active} = 1;
+		}
+		
+		if ($equal) {
+			$tab_match = 1;
+		}
+	}
+
+	if (!$tab_match) {
+		my $data = {};
+		foreach (keys %$tab_compare) {
+			$data->{$_} = $options->{$tab_compare->{$_}} || '';
+		}
+		if (!$user->{is_anon}) {
+			$self->createOrReplaceUserTab($user->{uid}, "untitled", $data);
+		}
+		$user_tabs = $self->getUserTabs();
+		foreach (@$user_tabs) {
+			$_->{active} = 1 if $_->{tabname} eq "untitled" 
+		}
+	}
+	return $user_tabs;
+}
+
+
 sub getAndSetOptions {
 	my($self, $opts) = @_;
+
 	my $user 	= getCurrentUser();
 	my $constants 	= getCurrentStatic();
 	my $form 	= getCurrentForm();
 	my $gSkin	= getCurrentSkin();
 
+	my ($f_change, $v_change, $t_change);
+
+	if (!$opts->{initial}) {
+		($f_change, $v_change, $t_change) = ($form->{filterchanged}, $form->{viewchanged}, $form->{tabchanged});
+	}
+	
+	my $validator = $self->getOptionsValidator();
+
 	$opts 	        ||= {};
-	my $options 	= {};
 
-	my $types = { feed => 1, bookmark => 1, submission => 1, journal => 1, story => 1, vendor => 1, misc => 1, comment => 1, project => 1 };
-	my $tabtypes = { tabsection => 1, tabpopular => 1, tabrecent => 1, tabuser => 1, metamod => 1};
+	my $global_opts = $self->getAndSetGlobalOptions();
+	my $user_tabs        = $self->getUserTabs();
+	my %user_tab_names   = map { $_->{tabname} => 1 } @$user_tabs;
+	my %user_tab_by_name   = map { $_->{tabname} => $_ } @$user_tabs;
+	my %user_tab_filters = map { $_->{filter} => $_->{tabname} } @$user_tabs;
+	my $options = {};
 
-	my $tabtype = '';
-	$tabtype = $form->{tabtype} if $form->{tabtype} && $tabtypes->{ $form->{tabtype} };
+	# Beginning of initial pageload handling
+	if ($opts->{initial}) {
+		# Start off with global options if initial load
+		%$options = %$global_opts;
 
-	my $modes = { full => 1, fulltitle => 1 };
-	my $pagesizes = { "small" => 1, "large" => 1 };
+		if (defined $opts->{fhfilter} || defined $form->{fhfilter}) {
+			my $fhfilter = defined $opts->{fhfilter} ? $opts->{fhfilter} : $form->{fhfilter};
+
+			$options->{fhfilter} = $fhfilter;
+			$options->{base_filter} = $fhfilter;
+
+			if (defined $user_tab_filters{$fhfilter}) {
+				$opts->{tab} = $user_tab_filters{$fhfilter};
+			} else {
+				$opts->{tab} = '';
+			} 
+			$form->{tab} = '';
+			$opts->{view} = '';
+			$form->{view} = '';
+			
+		}
+		
+		my $tab = $opts->{tab} || $form->{tab};
+		if ($tab) {
+			my $ret_tab = $user_tab_by_name{$tab}; 
+			$options->{tab} = $tab;
+			$options->{tab_ref} = $ret_tab;
+			$options->{base_filter} = $ret_tab->{filter};
+			$options->{fhfilter} = $ret_tab->{filter}
+		}
+
+		# Jump to default view as necessary
+		if (!$tab && !defined $options->{fhfilter} && !$opts->{view} && !$form->{view}) {
+			$opts->{view} = "stories";
+		}
+
+		my $view;
+		if ($opts->{view} || $form->{view}) {
+			my $viewname = $opts->{view} || $form->{view};
+			$view = $self->getUserViewByName($viewname);
+		}
+
+		if ($view) {
+			$options = $self->applyViewOptions($view, $options);
+		}
+
+	} else {
+		# set only global options
+		$options->{$_} = $global_opts->{$_} foreach qw(nocommentcnt nobylines nodates nothumbs nomarquee nocolors noslashboxes);
+
+		# handle non-initial pageload
+		$options->{fhfilter} = $form->{fhfilter} if defined $form->{fhfilter};
+		
+		if ($f_change && defined $form->{fhfilter}) {
+			my $fhfilter = $form->{fhfilter};
+
+			$options->{fhfilter} = $fhfilter;
+			$options->{base_filter} = $fhfilter;
+
+			if (defined $user_tab_filters{$fhfilter}) {
+				$form->{tab} = $user_tab_filters{$fhfilter};
+			} else {
+				$form->{tab} = '';
+			} 
+			$opts->{tab} = '';
+			$opts->{view} = '';
+			$form->{view} = '';
+		}
+
+		if($t_change && defined $form->{tab}) {
+			my $ret_tab = $user_tab_by_name{$form->{tab}}; 
+			$options->{tab} = $form->{tab};
+			$options->{tab_ref} = $ret_tab;
+			$options->{base_filter} = $ret_tab->{filter};
+			$options->{fhfilter} = $ret_tab->{filter}
+		}
+		
+		if($form->{view}) {
+			my $view = $self->getUserViewByName($form->{view});
+			if($view) {
+				$options->{view} = $form->{view};
+				$options->{viewref} = $view;
+			} 
+		}	
+		$options->{tab} = $form->{tab} if $form->{tab} && !$t_change;
+	}
+
+	$options->{global} = $global_opts;
+
+
+	my $fhfilter = $options->{fhfilter};
 
 	my $no_saved = $form->{no_saved};
 	$opts->{no_set} ||= $no_saved;
@@ -2011,35 +2333,29 @@ sub getAndSetOptions {
 
 	if (defined $form->{mixedmode} && $form->{setfield}) {
 		$options->{mixedmode} = $form->{mixedmode} ? 1 : 0;
-	} else {
-		$options->{mixedmode} = $user->{firehose_mixedmode};
 	}
 
 	if (defined $form->{nocommentcnt} && $form->{setfield}) {
 		$options->{nocommentcnt} = $form->{nocommentcnt} ? 1 : 0;
-	} else {
-		$options->{nocommentcnt} = $user->{firehose_nocommentcnt};
-	}
-	my $mode = $form->{mode} || $user->{firehose_mode} || '';
+	} 
+	
+	my $mode = $form->{mode} || $options->{mode} || '';
 	$mode = "fulltitle" if $mode eq "mixed";
 
-	my $pagesize = $form->{pagesize} && $pagesizes->{$form->{pagesize}}
-		? $form->{pagesize} : $user->{firehose_pagesize} || "small";
-	$options->{pagesize} = $pagesize;
+	my $pagesize = $form->{pagesize} && $validator->{pagesize}{$form->{pagesize}};
+	$options->{pageize} = $pagesize || $options->{pagesize}  || "small";
 
-	$mode = $mode && $modes->{$mode} ? $mode : "fulltitle";
 	$options->{mode} = $mode;
-	$options->{pause} = defined $user->{firehose_pause} ? $user->{firehose_pause} : 1;
+
+	$options->{pause} = defined $options->{pause} ? $options->{pause} : 1;
 	$form->{pause} = 1 if $no_saved;
 
 	my $firehose_page = $user->{state}{firehose_page} || '';
 
 	if (defined $form->{pause}) {
-		$options->{pause} = $user->{firehose_paused} = $form->{pause} ? 1 : 0;
-		if ($firehose_page ne 'user') {
-			$self->setUser($user->{uid}, { firehose_paused => $options->{pause} });
-		}
+		$options->{pause} = $form->{pause} ? 1 : 0;
 	}
+
 	if (defined $form->{duration}) {
 		if ($form->{duration} =~ /^-?\d+$/) {
 			$options->{duration} = $form->{duration};
@@ -2070,10 +2386,9 @@ sub getAndSetOptions {
 
 
 	my $colors = $self->getFireHoseColors();
-	if ($form->{color} && $colors->{$form->{color}}) {
+	if ($form->{color} && $validator->{colors}->{$form->{color}}) {
 		$options->{color} = $form->{color};
 	}
-	$options->{color} ||= $user->{firehose_color};
 
 	if ($form->{orderby}) {
 		if ($form->{orderby} eq "popularity") {
@@ -2089,7 +2404,6 @@ sub getAndSetOptions {
 		}
 
 	} else {
-		$options->{orderby} = $user->{firehose_orderby} unless $no_saved;
 		$options->{orderby} ||= 'createtime';
 	}
 
@@ -2101,187 +2415,37 @@ sub getAndSetOptions {
 		}
 
 	} else {
-		$options->{orderdir} = $user->{firehose_orderdir} unless $no_saved;
 		$options->{orderdir} ||= 'DESC';
 	}
-
-	my $fhfilter;
 
 	if ($opts->{initial}) {
 		if (!defined $form->{section}) {
 			$form->{section} = $gSkin->{skid} == $constants->{mainpage_skid} ? 0 : $gSkin->{skid};
 		}
-		if (!$tabtype) {
-			$tabtype = 'tabsection';
-		}
 	}
 
 	my $the_skin = defined $form->{section} ? $self->getSkin($form->{section}) : $gSkin;
-
-	if ($tabtype eq 'tabsection') {
-		$form->{fhfilter} = "story";
-		$options->{orderdir} = "DESC";
-		$options->{orderby} = "createtime";
-		$options->{color} = "black";
-		$form->{color} = "black";
-	} elsif ($tabtype eq 'tabrecent') {
-		$form->{fhfilter} = "-story";
-		$options->{orderby} = "createtime";
-		$options->{orderdir} = "DESC";
-		$options->{color} = "indigo";
-		$form->{color} = "indigo";
-	} elsif ($tabtype eq 'tabpopular') {
-		$form->{fhfilter} = "-story";
-		$options->{orderby} = "popularity";
-		$options->{orderdir} = "DESC";
-		$options->{color} = "black";
-		$form->{color} = "black";
-	} elsif ($tabtype eq 'tabuser') {
-		$form->{fhfilter} = "\"user:$user->{nickname}\"";
-		$options->{color} = "black";
-		$form->{color} = "black";
-		$options->{orderdir} = "DESC";
-		$options->{orderby} = "createtime";
-	} elsif ($tabtype eq 'metamod') {
-		$form->{fhfilter} = "comment";
-		$options->{color} = "black";
-		$form->{color} = "black";
-		$options->{orderdir} = "DESC";
-		$options->{orderby} = "neediness";
-		$options->{mode} = "full";
-		$options->{mixedmode} = 0;
-	}
-
-	if ($tabtype) {
-		$form->{fhfilter} = "$the_skin->{name} $form->{fhfilter}" if $the_skin->{skid} != $constants->{mainpage_skid} || $tabtype eq "tabsection";
-	}
-
-
-	if (defined $form->{fhfilter}) {
-		$fhfilter = $form->{fhfilter};
-		$options->{fhfilter} = $fhfilter;
-	} else {
-		$fhfilter = $user->{firehose_fhfilter} unless $no_saved;
-		$options->{fhfilter} = $fhfilter;
-	}
-
-	my $user_tabs = $self->getUserTabs();
-	my %user_tab_names = map { $_->{tabname} => 1 } @$user_tabs;
-	my @tab_fields = qw(tabname filter mode color orderdir orderby);
-
-	$user_tabs = $self->getUserTabs();
 
 
 	my $skin_prefix="";
 	if ($the_skin && $the_skin->{name} && $the_skin->{skid} != $constants->{mainpage_skid})  {
 		$skin_prefix = "$the_skin->{name} ";
 	}
-	my $system_tabs = [
-		{ tabtype => 'tabsection', color => 'black', filter => $skin_prefix . "story", orderby => 'createtime'},
-		{ tabtype => 'tabpopular', color => 'black', filter => "$skin_prefix\-story", orderby => 'popularity'},
-		{ tabtype => 'tabrecent',  color => 'indigo',  filter => "$skin_prefix\-story", orderby => 'createtime'},
-	];
+	
+	$user_tabs = $self->genUntitledTab($user_tabs, $options);	
 
-	if (!$user->{is_anon}) {
-		push @$system_tabs, { tabtype => 'tabuser', color => 'black', filter => $skin_prefix . "\"user:$user->{nickname}\""};
-	}
-
-	my $sel_tabtype;
-
-	my $tab_compare = {
-		color 		=> "color",
-		filter 		=> "fhfilter"
-	};
-
-	my $tab_match = 0;
-	foreach my $tab (@$user_tabs, @$system_tabs) {
-		my $equal = 1;
-
-		my $this_tab_compare;
-		%$this_tab_compare = %$tab_compare;
-
-		$this_tab_compare->{orderby} = 'orderby' if defined $tab->{tabtype};
-
-		foreach (keys %$this_tab_compare) {
-			$options->{$this_tab_compare->{$_}} ||= "";
-			if ($tab->{$_} ne $options->{$this_tab_compare->{$_}}) {
-				$equal = 0;
-			}
-		}
-		if ($equal) {
-			$tab_match = 1;
-			$tab->{active} = 1;
-			if (defined $tab->{tabtype}) {
-				$sel_tabtype = $tab->{tabtype};
-			}
-
-			# Tab match if new option is being set update tab
-			if ($form->{orderdir} || $form->{orderby} || $form->{mode}) {
-
-				my $data = {};
-				$data->{orderdir} = $options->{orderdir};
-				$data->{orderby}  = $options->{orderby};
-				$data->{mode}  	  = $options->{mode};
-				$data->{filter}	  = $options->{fhfilter};
-				$data->{color}	  = $options->{color};
-				if (!$user->{is_anon} && $tab->{tabname}) {
-					$self->createOrReplaceUserTab($user->{uid}, $tab->{tabname}, $data) ;
-				}
-			}
-		}
-	}
-
-	if (!$tab_match) {
-		my $data = {};
-		foreach (keys %$tab_compare) {
-			$data->{$_} = $options->{$tab_compare->{$_}} || '';
-		}
-		if (!$user->{is_anon}) {
-			$self->createOrReplaceUserTab($user->{uid}, "untitled", $data);
-		}
-		$user_tabs = $self->getUserTabs();
-		foreach (@$user_tabs) {
-			$_->{active} = 1 if $_->{tabname} eq "untitled" 
-		}
-	}
-
-	if (defined $form->{tab}) {
-		my $tabnames_hr = {};
-		foreach (@$user_tabs) {
-			$tabnames_hr->{$_->{tabname}} = $_;
-		}
-		if ($tabnames_hr->{$form->{tab}}) {
-			my $curtab = $tabnames_hr->{$form->{tab}};
-			$options->{color} = $curtab->{color};
-			$fhfilter = $options->{fhfilter} = $curtab->{filter};
-			$options->{mode} = $curtab->{mode};
-			$options->{orderby} = $curtab->{orderby};
-			$options->{orderdir} = $curtab->{orderdir};
-
-			$_->{active} = $_->{tabname} eq $form->{tab} ? 1 : 0  foreach @$user_tabs;
-		}
-	}
-
-	if ($form->{index}) {
-		$mode = "fulltitle";
-		if ($the_skin->{nexus} != $constants->{mainpage_nexus_tid}) {
-			$mode = "full";
-		}
-	}
 
 	if ($user->{is_admin} && $form->{setusermode}) {
-		$self->setUser($user->{uid}, { firehose_usermode => $form->{firehose_usermode} ? 1 : "" });
+		$self->setUser($user->{uid}, { firehose_usermode => $form->{firehose_usermode} ? 1 : "0" });
 	}
 
 	foreach (qw(nodates nobylines nothumbs nocolors noslashboxes nomarquee)) {
 		if ($form->{setfield}) {
 			if (defined $form->{$_}) {
 				$options->{$_} = $form->{$_} ? 1 : 0;
-			} else {
-				$options->{$_} = $user->{"firehose_$_"};
 			}
 		}
-		$options->{$_} = defined $form->{$_} ? $form->{$_} : $user->{"firehose_$_"};
+		$options->{$_} = defined $form->{$_};
 	}
 
 	my $page = $form->{page} || 0;
@@ -2292,27 +2456,36 @@ sub getAndSetOptions {
 
 
 	$fhfilter =~ s/^\s+|\s+$//g;
-	if ($form->{index}) {
-		$fhfilter = "story";
-		my $gSkin = getCurrentSkin();
-		if ($gSkin->{nexus} != $constants->{mainpage_nexus_tid}) {
-			$fhfilter .= " $gSkin->{name}";
+
+	if ($fhfilter =~ /\{nickname\}/) {
+		if (!$opts->{user_view}) {
+			if ($form->{user_view_uid}) {
+					$opts->{user_view} = $self->getUser($form->{user_view_id});
+				if(!$opts->{user_view}) {
+					$opts->{user_view} = $user;
+				}
+			}
 		}
+		my $the_nickname = $opts->{user_view}{nickname};
+		$options->{user_view_uid} = $opts->{user_view}{uid};
+		
+		$fhfilter =~ s/\{nickname\}/$the_nickname/g;
+		$options->{fhfilter} =~ s/\{nickname\}/$the_nickname/g;
+		$options->{base_filter} =~ s/\{nickname\}/$the_nickname/g;
 	}
+
+	if ($fhfilter =~ /\{tag}/) {
+		my $the_tag = $opts->{tag} || $form->{tagname};
+		$fhfilter =~ s/\{tag\}/$the_tag/g;
+		$options->{fhfilter} =~ s/\{tag\}/$the_tag/g;
+		$options->{base_filter} =~ s/\{tag\}/$the_tag/g;
+	}	
+	
 	my $fh_ops = $self->splitOpsFromString($fhfilter);
 
 	my $skins = $self->getSkins();
 	my %skin_nexus = map { $skins->{$_}{name} => $skins->{$_}{nexus} } keys %$skins;
 
-	my %categories = map { ($_, $_) } (qw(hold quik),
-		(ref $constants->{submit_categories}
-			? map {lc($_)} @{$constants->{submit_categories}}
-			: ()
-		)
-	);
-
-	my $authors = $self->getAuthors();
-	my %author_names = map { lc($authors->{$_}{nickname}) => $_ } keys %$authors;
 	my $fh_options = {};
 
 
@@ -2323,9 +2496,9 @@ sub getAndSetOptions {
 			$not = "not_";
 			$_ =~ s/^-//g;
 		}
-		if ($types->{$_} && !defined $fh_options->{type}) {
+		if ($validator->{type}->{$_} && !defined $fh_options->{type}) {
 			push @{$fh_options->{$not."type"}}, $_;
-		} elsif ($user->{is_admin} && $categories{$_} && !defined $fh_options->{category}) {
+		} elsif ($user->{is_admin} && $validator->{categories}{$_} && !defined $fh_options->{category}) {
 			$fh_options->{category} = $_;
 		} elsif ($skin_nexus{$_}) {
 				push @{$fh_options->{$not."nexus"}}, $skin_nexus{$_};
@@ -2345,6 +2518,17 @@ sub getAndSetOptions {
 				$uid ||= $user->{uid};
 			}
 			push @{$fh_options->{$not."uid"}}, $uid;
+		} elsif (/^authorfriend:(.*)$/ && $constants->{plugin}{Zoo}) {
+			my $uid;
+			my $nick = $1;
+			if ($nick) {
+				$uid = $self->getUserUID($nick);
+				$uid ||= $user->{uid};
+			}
+			my $zoo = getObject("Slash::Zoo");
+			my $friends = $zoo->getFriendsUIDs($uid);
+			$friends = [-1], if @$friends < 1;   # No friends, pass a UID that won't match
+			push @{$fh_options->{$not."uid"}}, @$friends;
 		} elsif (/^user:/) {
 			my $nick = $_;
 			$nick =~ s/user://g;
@@ -2356,6 +2540,10 @@ sub getAndSetOptions {
 			$fh_options->{tagged_by_uid} = $uid;
 			$fh_options->{tagged_non_negative} = 1;
 #			$fh_options->{ignore_nix} = 1;
+		} elsif (/^tag:/) {
+			my $tag = $_;
+			$tag =~s/tag://g;
+			$fh_options->{tagged_as} = $tag;
 		} else {
 			if (!defined $fh_options->{filter}) {
 				$fh_options->{filter} = $_;
@@ -2384,48 +2572,18 @@ sub getAndSetOptions {
 		@{$fh_options->{nexus}} = grep { !$not_nexus{$_} } @{$fh_options->{nexus}};
 		delete $fh_options->{nexus} if @{$fh_options->{nexus}} == 0;
 	}
+	
+	my $color = defined $form->{color} && $validator->{colors}->{$form->{color}} ? $form->{color} : "";
+	$color = defined $options->{color} && $validator->{colors}->{$options->{color}} ? $options->{color} : "" if !$color;
 
-	if ($form->{color} && $colors->{$form->{color}}) {
-		$fh_options->{color} = $form->{color};
-	}
+	$fh_options->{color} = $color;
 
-	if ($form->{index}) {
-		$options->{index} = 1;
-		$options->{skipmenu} = 1;
-		if (!$form->{issue} && getCurrentSkin()->{nexus} != $constants->{mainpage_nexus_tid}) {
-			$options->{duration} = -1;
-			$options->{startdate} = '';
-		}
-		$options->{color} = 'black';
-		if ($the_skin->{nexus} == $constants->{mainpage_nexus_tid}) {
-			$options->{mixedmode} = 1;
-			$options->{mode} = 'fulltitle';
-		} else {
-			$options->{mode} = 'full';
-			$options->{mixedmode} = 0;
-		}
-	}
 
 	foreach (keys %$fh_options) {
 		$options->{$_} = $fh_options->{$_};
 	}
 
-	if (!$user->{is_anon} && !$opts->{no_set} && !$form->{index}) {
-		my $data_change = {};
-		my @skip_options_save = qw(uid not_uid type not_type nexus not_nexus primaryskid not_primaryskid smalldevices mainpage);
-		if ($firehose_page eq 'user') {
-			push @skip_options_save, "nothumbs", "nocolors", "pause", "mode", "orderdir", "orderby", "fhfilter", "color";
-		}
-		my %skip_options = map { $_ => 1 } @skip_options_save;
-		foreach (keys %$options) {
-			next if $skip_options{$_};
-			$data_change->{"firehose_$_"} = $options->{$_} if !defined $user->{"firehose_$_"} || $user->{"firehose_$_"} ne $options->{$_};
-		}
-		$self->setUser($user->{uid}, $data_change) if keys %$data_change > 0;
-	}
-
 	$options->{tabs} = $user_tabs;
-	$options->{sel_tabtype} = $sel_tabtype;
 
 	if ($user->{is_admin} && $form->{setusermode}) {
 		$options->{firehose_usermode} = $form->{firehose_usermode} ? 1 : "";
@@ -2466,10 +2624,39 @@ sub getAndSetOptions {
 		$options->{duration} = 1;
 	}
 
+	$options->{not_id} = $opts->{not_id} if $opts->{not_id};
 	if ($form->{not_id} && $form->{not_id} =~ /^\d+$/) {
 		$options->{not_id} = $form->{not_id};
 	}
 
+	
+
+	if ($v_change) {
+		$self->applyViewOptions($options->{viewref}, $options)
+	}
+	
+	if ($form->{index}) {
+		$options->{index} = 1;
+		$options->{pause} = 1;
+		$options->{skipmenu} = 1;
+		if (!$form->{issue} && getCurrentSkin()->{nexus} != $constants->{mainpage_nexus_tid}) {
+			$options->{duration} = -1;
+			$options->{startdate} = '';
+		}
+		if (!$form->{issue} && getCurrentSkin()->{nexus} == $constants->{mainpage_nexus_tid}) {
+			$options->{duration} = 7;
+			$options->{startdate} = '';
+		}
+		
+		$options->{color} = 'black';
+		if ($the_skin->{nexus} == $constants->{mainpage_nexus_tid}) {
+			$options->{mixedmode} = 1;
+			$options->{mode} = 'fulltitle';
+		} else {
+			$options->{mode} = 'full';
+			$options->{mixedmode} = 0;
+		}
+	}
 
 	if ($form->{more_num} && $form->{more_num} =~ /^\d+$/) {
 		$options->{more_num} = $form->{more_num};
@@ -2480,34 +2667,43 @@ sub getAndSetOptions {
 			$self->setUser($user->{uid}, { firehose_max_more_num => $options->{more_num}});
 		}
 	}
-	if ($user->{state}{firehose_init_list} && $options->{sel_tabtype}) {
-		my $set_opts = $self->getInitTabtypeOptions($options->{sel_tabtype});
-		foreach (keys %$set_opts) {
-			$options->{$_} = $set_opts->{$_};
-		}
-	}
+
 	$options->{smalldevices} = 1 if $self->shouldForceSmall();
-	$options->{limit} = $self->getFireHoseLimitSize($options->{mode}, $pagesize, $options->{smalldevices});
+	$options->{limit} = $self->getFireHoseLimitSize($options->{mode}, $pagesize, $options->{smalldevices}, $options);
+	
 	return $options;
 }
 
 sub getFireHoseLimitSize {
-	my($self, $mode, $pagesize, $forcesmall) = @_;
+	my($self, $mode, $pagesize, $forcesmall, $options) = @_;
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 
 	my $limit;
 
-	if ($mode eq "full") {
+	if ($options->{view} && $options->{viewref}) {
 		if ($user->{is_admin}) {
-			$limit = $pagesize eq "large" ? 50 : 25;
+			$limit = $options->{viewref}{admin_maxitems};
 		} else {
-			$limit = $pagesize eq "large" ? 20 : 15;
+			$limit = $options->{viewref}{maxitems};
 		}
-	} else {
-		$limit = $user->{is_admin} ? 50 :
+		if ($mode eq "full") {
+			$limit = int($limit / 2);
+		}
+	}
+
+	if (!$limit) {
+		if ($mode eq "full") {
+			if ($user->{is_admin}) {
+				$limit = $pagesize eq "large" ? 50 : 25;
+			} else {
+				$limit = $pagesize eq "large" ? 20 : 15;
+			}
+		} else {
+			$limit = $user->{is_admin} ? 50 :
 			$pagesize eq "large" ? 30 : 20;
+		}
 	}
 
 	$limit = 10 if $forcesmall || $form->{metamod};
@@ -2680,13 +2876,14 @@ sub getPopLevelForPopularity {
 
 sub listView {
 	my($self, $lv_opts) = @_;
+
 	$lv_opts ||= {};
+	$lv_opts->{initial} = 1;
+
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $gSkin = getCurrentSkin();
 	my $form = getCurrentForm();
-
-	$user->{state}{firehose_init_list} = 1;
 
 	my $firehose_reader = getObject('Slash::FireHose', {db_type => 'reader'});
 	my $featured;
@@ -2705,9 +2902,9 @@ sub listView {
 			$featured = $firehose_reader->getFireHose($res->[0]->{id});
 		}
 	}
-	my $initial = ($form->{tab} || $form->{tabtype} || $form->{fhfilter} || defined $form->{page} || $lv_opts->{fh_page} eq "console.pl" || $form->{ssi} || $form->{taskgen} && defined $form->{fhfilter}) ? 0 : 1;
-	my $options = $lv_opts->{options} || $self->getAndSetOptions({ initial => $initial });
-	my $base_page = $lv_opts->{fh_page} || "firehose.pl";
+	$lv_opts->{fh_page} ||= "firehose.pl";
+	my $base_page = $lv_opts->{fh_page};
+	my $options = $self->getAndSetOptions($lv_opts);
 
 	if ($featured && $featured->{id}) {
 		$options->{not_id} = $featured->{id};
@@ -2807,6 +3004,8 @@ sub listView {
 		day_count => $day_count
 	};
 
+	my $views = $self->getUserViews({ tab_display => "yes"});
+
 	slashDisplay("list", {
 		itemstext		=> $itemstext,
 		itemnum			=> $itemnum,
@@ -2823,7 +3022,8 @@ sub listView {
 		search_results		=> $results,
 		featured		=> $featured,
 		section			=> $section,
-		firehose_more_data 	=> $firehose_more_data
+		firehose_more_data 	=> $firehose_more_data,
+		views			=> $views,
 	}, { Page => "firehose", Return => 1 });
 }
 
@@ -2869,6 +3069,15 @@ sub getUserTabs {
 			$a->{tabname} cmp $b->{tabname}
 	} @$tabs;
 	return $tabs;
+}
+
+sub getUserTabByName {
+	my($self, $name, $options) = @_;
+	$options ||= {};
+	my $user = getCurrentUser();
+	my $uid_q = $self->sqlQuote($user->{uid});
+	my $tabname_q = $self->sqlQuote($name);
+	return $self->sqlSelectHashref("*", "firehose_tab", "uid=$uid_q && tabname=$tabname_q");
 }
 
 sub getSystemDefaultTabs {

@@ -41,15 +41,30 @@ sub set {
 
 	$self->sqlUpdate('journals', \%j1, "id=$id") if keys %j1;
 	$self->sqlUpdate('journals_text', \%j2, "id=$id") if $j2{article};
-	if ($constants->{plugin}{FireHose}) {
-		# XXX: this will not work with HumanConf!
+
+	$self->insertFireHose($id, $j1{promotetype});
+}
+
+sub insertFireHose {
+	my($self, $id, $promotetype) = @_;
+
+	return unless getCurrentStatic()->{plugin}{FireHose};
+
+	if ($promotetype ne 'post') {
 		my $reskey = getObject('Slash::ResKey');
 		my $rkey = $reskey->key('submit', { nostate => 1 });
-		if ($rkey && $rkey->createuse) {
-			my $firehose = getObject("Slash::FireHose");
-			$firehose->createUpdateItemFromJournal($id);
+		if (!$rkey || !$rkey->createuse) {
+			# user is not able to submit, so we make it
+			# a "non-submitted" FH entry
+			$self->sqlUpdate('journals',
+				{ promotetype => 'post' },
+				"id=" . $self->sqlQuote($id)
+			);
 		}
 	}
+
+	my $firehose = getObject("Slash::FireHose");
+	$firehose->createUpdateItemFromJournal($id);
 }
 
 sub getsByUid {
@@ -196,16 +211,8 @@ sub create {
 	my($date) = $self->sqlSelect('date', 'journals', "id=$id");
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($user->{uid}, { journal_last_entry_date => $date });
-	if ($constants->{plugin}{FireHose}) {
-		# XXX: this will not work with HumanConf!
-		my $reskey = getObject('Slash::ResKey');
-		my $rkey = $reskey->key('submit', { nostate => 1 });
-		if ($rkey && $rkey->createuse) {
-			my $firehose = getObject("Slash::FireHose");
-			$firehose->createItemFromJournal($id);
-		}
-	}
 
+	$self->insertFireHose($id, $promotetype);
 
 	return $id;
 }
@@ -226,23 +233,25 @@ sub remove {
 	$self->sqlDelete("journals_text", "id=$id");
 
 	if ($journal->{discussion}) {
-		my $slashdb = getCurrentDB();
+#		my $slashdb = getCurrentDB();
 		# if has been submitted as story or submission, don't
 		# delete the discussion
-		if ($journal->{promotetype} eq 'publicize' || $journal->{promotetype} eq "publish") {
-			my $kind = $self->getDiscussion($journal->{discussion}, 'dkid');
-			my $kinds = $self->getDescriptions('discussion_kinds');
-			# set to disabled only if the journal has not been
-			# converted to a journal-story (it will get re-enabled
-			# later if it is converted to a journal-story)
-			if ($kinds->{$kind} eq 'journal') {
-				$slashdb->setDiscussion($journal->{discussion}, {
-					commentstatus	=> 'disabled',
-				});
-			}
-		} else {
-			$slashdb->deleteDiscussion($journal->{discussion});
-		}
+#		my $kind = $self->getDiscussion($journal->{discussion}, 'dkid');
+#		my $kinds = $self->getDescriptions('discussion_kinds');
+
+		# discussions can be re-used in the hose and stories ...
+		# just leave it alone entirely -- pudge 2008-11-17
+
+		# set to disabled only if the journal has not been
+		# converted to a journal-story (it will get re-enabled
+		# later if it is converted to a journal-story)
+#		if ($kinds->{$kind} eq 'journal') {
+#			$slashdb->setDiscussion($journal->{discussion}, {
+#				commentstatus	=> 'disabled',
+#			});
+#		} else {
+#			$slashdb->deleteDiscussion($journal->{discussion});
+#		}
 	}
 
 	my $date = $self->sqlSelect('MAX(date)', 'journals', "uid=$uid");
@@ -253,6 +262,15 @@ sub remove {
 	}
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { -journal_last_entry_date => $date });
+
+	if (getCurrentStatic()->{plugin}{FireHose}) {
+		$slashdb->sqlUpdate('firehose',
+			{ public => 'no' },
+			"type='journal' AND srcid=$id"
+		);
+	}
+
+
 	return $count;
 }
 

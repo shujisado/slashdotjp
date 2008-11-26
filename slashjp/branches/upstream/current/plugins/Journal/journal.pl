@@ -571,19 +571,7 @@ sub doSaveArticle {
 		return($rkey->errstr, $rkey->failure);
 	}
 
-	# don't allow submission if user can't submit stories
-	# note: this may not work properly with SOAP, but submissions
-	# not enabled with SOAP now anyway
-	if ($constants->{journal_create_submission} && $form->{promotetype} eq 'publicize') {
-		my $reskey = getObject('Slash::ResKey');
-		my $submit_rkey = $reskey->key('submit', { nostate => 1 });
-		unless ($submit_rkey->createuse) {
-			return($submit_rkey->errstr, $submit_rkey->failure);
-		}
-	}
-
 	my $slashdb = getCurrentDB();
-        my $event_id;
 	if ($form->{id}) {
 		my %update;
 		my $article = $journal_reader->get($form->{id});
@@ -615,7 +603,6 @@ sub doSaveArticle {
 				url	=> "$rootdir/~" . fixparam($user->{nickname}) . "/journal/$form->{id}",
 			});
 			$update{discussion}  = $did;
-                        $event_id = $did;
 
 		# update description if changed
 		} elsif (!$form->{comments_on} && $article->{discussion} && $article->{description} ne $description) {
@@ -657,7 +644,6 @@ sub doSaveArticle {
 				url	=> "$rootdir/~" . fixparam($user->{nickname}) . "/journal/$id",
 			});
 			$journal->set($id, { discussion => $did });
-                        $event_id = $did;
 		}
 
 		slashHook('journal_save_success', { id => $id });
@@ -697,46 +683,6 @@ sub doSaveArticle {
 			message		=> 1
 		}) if $validator;
 	}
-
-        # Add the User2 event.
-        if ($event_id) {
-        my $events = $slashdb->sqlSelectAllHashref(
-                'eid', 'eid, date', 'user_events', "uid = " . $user->{uid} . " and code = 2");
-
-        if ((scalar keys %$events) == 5) {
-                my $eid = [sort keys %$events]->[0];
-                $slashdb->sqlDelete('user_events', "uid = " . $user->{uid} . " and code = 2 and eid = $eid");
-        }
-
-        $slashdb->sqlInsert('user_events', {
-                code  => 2,
-                uid   => $user->{uid},
-                event => $event_id,
-                -date  => 'NOW()',
-        });
-
-        my $event_blocks = $slashdb->sqlSelectAllHashref(
-                'uid', 'bid, uid, block', 'user_event_blocks', "uid = " . $user->{uid} . " and code = 2");
-
-        if (!%$event_blocks) {
-                $slashdb->sqlInsert('user_event_blocks', {
-                        code  => 2,
-                        uid   => $user->{uid},
-                        block => $event_id,
-                });
-        } else {
-                my @blocks = split(/,/, $event_blocks->{$user->{uid}}->{block});
-
-                if (scalar @blocks == 5) {
-                        @blocks = @blocks[1 .. 4];
-                }
-
-                $blocks[$#blocks + 1] = $event_id;
-                my $new_blocks = join(",", @blocks);
-
-                $slashdb->sqlUpdate('user_event_blocks', { block => $new_blocks }, "uid = " . $user->{uid} . " and code = 2");
-        }
-        } # $event_id
 
 	return 0;
 }

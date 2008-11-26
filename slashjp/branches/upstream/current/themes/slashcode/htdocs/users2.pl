@@ -533,7 +533,7 @@ sub previewSlashbox {
 		title		=> $title,
 		block 		=> $block,
 		is_editable	=> $is_editable,
-	});
+	}, { Page => 'users' });
 
 	print portalbox($constants->{fancyboxwidth}, $block->{title},
 		$block->{block}, '', $block->{url});
@@ -792,7 +792,7 @@ sub showSubmissions {
 		nickmatch_flag		=> ($user->{uid} == $uid ? 1 : 0),
 		stories 		=> $stories,
 		storycount 		=> $storycount,
-	});
+	}, { Page => 'users' });
 }
 
 #################################################################
@@ -867,7 +867,7 @@ sub showComments {
 		reasons			=> $mod_reader->getReasons(),
 		karma_flag		=> 0,
 		admin_flag		=> $user->{is_admin},
-	});
+	}, { Page => 'users' });
 }
 
 sub noUser {
@@ -895,16 +895,10 @@ sub showFireHose {
 		tab_selected	=> $user_edit->{uid} == $user->{uid} ? 'me' : 'otheruser',
 	});
 	
-	$form->{mode} = "full";
-	$form->{color} = "black";
-	$form->{orderby} = "createtime";
-	$form->{orderdidr} = "DESC";
 	$form->{skipmenu} = 1;
-	$form->{duration} = -1;
-	$form->{fhfilter} = "\"user:$user_edit->{nickname}\"";
 	$form->{pause} = 1;
 
-	my $fhbox = $firehose->listView({ fh_page => 'users.pl'});
+	my $fhbox = $firehose->listView({ fh_page => 'users.pl', tab => 'userfirehose', user_view => $user_edit });
 	slashDisplay("userFireHose", { firehosebox => $fhbox, uid => $uid, useredit => $user_edit });
 }
 
@@ -916,11 +910,13 @@ sub showInfo {
 	my $id = $hr->{uid} || 0;
 
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $fh_reader = getObject('Slash::FireHose', { db_type => 'reader' });
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-
+	
+	$user->{state}{firehose_page} = "user";
 
 	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my($title, $admin_block, $fieldkey) = ('', '', '');
@@ -998,12 +994,12 @@ sub showInfo {
 				$uid = $requested_user->{uid};
 				$nick = $requested_user->{nickname};
 				if ((my $conflict_id = $reader->getUserUID($id)) && $form->{userinfo}) {
-					#slashDisplay('showInfoConflict', {
-						#op		=> 'userinfo',
-						#id		=> $uid,
-						#nick		=> $nick,
-						#conflict_id	=> $conflict_id
-					#});
+					slashDisplay('showInfoConflict', {
+						op		=> 'userinfo',
+						id		=> $uid,
+						nick		=> $nick,
+						conflict_id	=> $conflict_id
+					}, { Page => 'users' });
 					return 1;
 				}
 			}
@@ -1073,7 +1069,7 @@ sub showInfo {
 	# the target user's info is not available until here.
 	vislenify($requested_user);
         my $msg = getMessage('user_header', { useredit => $requested_user, fieldkey => $fieldkey });
-        header($msg, '', { shill_id => $requested_user->{shill_id} }) or return;
+        header($msg, '', { shill_id => $requested_user->{shill_id}, U2 => 1 }) or return;
 	# This is a hardcoded position, bad idea and should be fixed -Brian
 	# Yeah, we should pull this into a template somewhere...
 	print getMessage('note', { note => $hr->{note} }) if defined $hr->{note};
@@ -1121,7 +1117,7 @@ sub showInfo {
 
 		$title = getTitle('user_netID_user_title', $data);
 
-		$admin_block = getUserAdmin($netid, $fieldkey, 0) if $admin_flag;
+		$admin_block = getUserAdmin($netid, $fieldkey, 0) if ($form->{dp} && $form->{dp} eq 'admin' && $admin_flag);
 
 		if ($form->{fieldname}) {
 			if ($form->{fieldname} eq 'ipid') {
@@ -1161,7 +1157,7 @@ sub showInfo {
 			}
 		}	
 	} else {
-		$admin_block = getUserAdmin($id, $fieldkey, 1) if $admin_flag;
+		$admin_block = getUserAdmin($id, $fieldkey, 1) if ($form->{dp} && $form->{dp} eq 'admin' && $admin_flag);
 
 		$commentcount      = $reader->countCommentsByUID($requested_user->{uid});
 		$commentcount_time = $reader->countCommentsByUID($requested_user->{uid}, { cid_at_or_after => $cid_for_time_period });
@@ -1303,24 +1299,24 @@ sub showInfo {
 	my $uid_hoursback = $constants->{istroll_uid_hours} || 72;
 
 	if ($requested_user->{nonuid}) {
-		#slashDisplay('netIDInfo', {
-			#title			=> $title,
-			#id			=> $id,
-			#useredit		=> $requested_user,
-			#commentstruct		=> $commentstruct || [],
-			#commentcount		=> $commentcount,
-			#min_comment		=> $min_comment,
-			#admin_flag		=> $admin_flag,
-			#admin_block		=> $admin_block,
-			#netid			=> $netid,
-			#netid_vis		=> $netid_vis,
-			#reasons			=> $mod_reader->getReasons(),
-			#subcount		=> $subcount,
-			#submissions		=> $submissions,
-			#hr_hours_back		=> $ipid_hoursback,
-			#cids_to_mods		=> $cids_to_mods,
-			#comment_time		=> $comment_time
-		#});
+		slashDisplay('netIDInfo', {
+			title			=> $title,
+			id			=> $id,
+			useredit		=> $requested_user,
+			commentstruct		=> $commentstruct || [],
+			commentcount		=> $commentcount,
+			min_comment		=> $min_comment,
+			admin_flag		=> $admin_flag,
+			admin_block		=> $admin_block,
+			netid			=> $netid,
+			netid_vis		=> $netid_vis,
+			reasons			=> $mod_reader->getReasons(),
+			subcount		=> $subcount,
+			submissions		=> $submissions,
+			hr_hours_back		=> $ipid_hoursback,
+			cids_to_mods		=> $cids_to_mods,
+			comment_time		=> $comment_time
+		}, { Page => 'users' });
 
 	} else {
 		if (! $requested_user->{uid}) {
@@ -1356,134 +1352,79 @@ sub showInfo {
 			$metamods = $metamod_reader->getMetamodlogForUser($uid, 30);
 		}
 
+		my $users2 = getObject('Slash::Users2', { db_type => 'reader' });
+
+		# Tags slashbox
 		my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
 		my $tagshist;
 		if ($tags_reader) {
-			$tagshist = $tags_reader->getGroupedTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', limit => 5, include_private => 1 });
+			$tagshist = $tags_reader->getGroupedTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', include_private => 1, limit => 100 });
 		}
 
-                my $latest_comments = 
-                        $reader->sqlSelectAllHashref('cid',
-                                                     "sid, cid, subject, UNIX_TIMESTAMP(date) as date",
-                                                     'comments',
-                                                     "uid = $uid",
-                                                     'order by date desc limit 5');
-        
-                my $latest_comment;
-                $latest_comment->{'ts'} = 0;
-                foreach my $latest_id (keys %$latest_comments) {
-                        my ($id, $ts) = ($latest_id, $latest_comments->{$latest_id}{'date'});
-                        ($latest_comment->{'id'}, $latest_comment->{'ts'}) = ($id, $ts) if $ts > $latest_comment->{'ts'};
+		# Comments slashbox
+		my $latest_comments = $users2->getLatestComments($uid);
+
+		# Journals slashbox
+		my $latest_journals = $users2->getLatestJournals($uid);
+
+		# Submissions slashbox
+		my $latest_submissions = $users2->getLatestSubmissions($uid);
+
+		# Bookmarks slashbox
+		my $latest_bookmarks =
+                        $users2->getLatestBookmarks($uid, $latest_journals, $latest_submissions);
+
+		# Friends slashbox
+		my $latest_friends = $users2->getLatestFriends($uid);
+
+		# Relationship pane
+		my $relations_datapane;
+                if ($form->{dp} && $form->{dp} =~ /^(?:friends|fans|freaks|foes|fof|eof|all)$/) {
+			# Need better use of Zoo constants here.
+			my %relations = (
+                                friends => 1,
+                                freaks  => 2,
+                                fans    => 3,
+                                foes    => 4,
+                                fof     => 5,
+                                eof     => 6,
+                                all     => undef,
+                        );
+
+			$relations_datapane =
+				$users2->getRelations($uid, $relations{$form->{dp}}, $nick, $user->{uid});
+		}
+
+		# Tags pane
+		my $tags_datapane;
+                if ($form->{dp} && $form->{dp} eq 'tags') {
+                        $tags_datapane =
+				$users2->getTagsDatapane($uid, $requested_user, $user->{is_admin});
                 }
 
-                my $latest_journals =
-                        $reader->sqlSelectAllHashref('id',
-                                                     'id, description, UNIX_TIMESTAMP(date) as date',
-                                                     'journals',
-                                                     "uid = $uid and promotetype = 'publish'",
-                                                     'order by date desc limit 5');
+		# Set up default view (remove marquee for subsections)
+		my $main_view = 0;
+                my $marquee;
+		my $not_fhid;
+                if ((!$form->{dp}) || ($form->{dp} eq 'admin' && !$user->{is_admin})) {
+                        $main_view = 1;
+                        $form->{dp} = 'firehose';
+			# Marquee is the "latest thing"
+			$marquee = $users2->getMarquee($latest_comments, $latest_journals, $latest_submissions);
+			$not_fhid = $users2->getMarqueeFireHoseId($marquee);
+		}
 
-                my $latest_journal;
-                $latest_journal->{ts} = 0;
-                foreach my $latest_id (keys %$latest_journals) {
-                        my ($id, $ts) = ($latest_id, $latest_journals->{$latest_id}{'date'});
-                        ($latest_journal->{'id'}, $latest_journal->{'ts'}) = ($id, $ts) if $ts > $latest_journal->{'ts'};
-                }
+		if ($form->{dp} eq 'firehose' || $form->{dp} =~ /^journal/ || $form->{dp} eq 'submissions' || $form->{dp} eq 'bookmarks' || $form->{dp} eq 'usertag') {
 
-                my $latest_submissions =
-                        $reader->sqlSelectAllHashref('id',
-                                                     'id, UNIX_TIMESTAMP(createtime) as date',
-                                                     'firehose',
-                                                     "uid = $uid and rejected = 'no' and (type = 'submission' or type = 'feed')",
-                                                     'order by createtime desc limit 5');
-
-                foreach my $latest_subid (keys %$latest_submissions) {
-                        ($latest_submissions->{$latest_subid}{'title'}, $latest_submissions->{$latest_subid}{'introtext'}) =
-                                $reader->sqlSelect('title, introtext',
-                                                   'firehose_text',
-                                                   "id = $latest_subid");
-                }
-
-                my $latest_submission;
-                $latest_submission->{ts} = 0;
-                foreach my $latest_id (keys %$latest_submissions) {
-                        my ($id, $ts) = ($latest_id, $latest_submissions->{$latest_id}{'date'});
-                        ($latest_submission->{'id'}, $latest_submission->{'ts'}) = ($id, $ts) if $ts > $latest_submission->{'ts'};
-                }
-
-                # Latest bookmarks
-                my $bookmarks_reader = getObject('Slash::Bookmark');
-                my $latest_bookmarks;
-                if ($bookmarks_reader) {
-                        $latest_bookmarks = $bookmarks_reader->getRecentBookmarksByUid($uid, 5);
-                }
-
-                my $latest_thing;
-                if (($latest_comment->{'ts'} > $latest_journal->{'ts'}) &&
-                    ($latest_comment->{'ts'} > $latest_submission->{'ts'})) {
-                        my $id = $latest_comment->{'id'};
-                        $latest_thing->{'type'} = 'comment';
-                        $latest_thing->{'id'} = $id;
-                        $latest_thing->{'sid'} = $latest_comments->{$id}{'sid'};
-                        $latest_thing->{'subject'} = $latest_comments->{$id}{'subject'};
-                        $latest_thing->{'body'} = $reader->sqlSelect('comment', 'comment_text', "cid = $id");
-
-                } elsif (($latest_journal->{'ts'} > $latest_comment->{'ts'}) &&
-                         ($latest_journal->{'ts'} > $latest_submission->{'ts'})) {
-                        my $id = $latest_journal->{'id'};
-                        $latest_thing->{'type'} = 'journal';
-                        $latest_thing->{'id'} = $id;
-                        $latest_thing->{'subject'} = $latest_journals->{$id}{'description'};
-                        $latest_thing->{'body'} = $reader->sqlSelect('article', 'journals_text', "id = $id");
-
-                } elsif (($latest_submission->{'ts'} > $latest_comment->{'ts'}) &&
-                         ($latest_submission->{'ts'} > $latest_journal->{'ts'})) {
-                        my $id = $latest_submission->{'id'};
-                        $latest_thing->{'type'} = 'submission';
-                        $latest_thing->{'id'} = $id;
-                        $latest_thing->{'subject'} = $latest_submissions->{$id}{'title'};
-                        $latest_thing->{'body'} = $latest_submissions->{$id}{'introtext'};
-                }
-
-                my $latest_friends = $reader->sqlSelectAllHashref('person', 'person', 'people', "uid = $uid", "order by id limit 5");
-                foreach my $friend_id (keys %$latest_friends) {
-                        $latest_friends->{$friend_id}->{nickname} =
-                                $reader->sqlSelect("nickname", "users", "uid = $friend_id");
-                }
-
-                # Datapanes should be caluclated elsewhere. This is a temp kludge.
-                my $friends_datapane;
-                if ($form->{dp} eq 'friends') {
-                        my $zoo = getObject('Slash::Zoo');
-                        my $people = $zoo->getRelationships($uid, 1);
-
-                        if (@$people) {     
-                                $friends_datapane = slashDisplay('plainlist', {
-                                        people          => $people,
-                                        nickname        => $nick
-                                        }, { Page => 'zoo', Return => 1 }
-                                );
-                        }
-                }
-
-                my $tags_datapane;
-                $tags_datapane = showTags() if ($form->{dp} eq 'tags');
-
-		if ($form->{dp} && $form->{dp} == "firehose") {
 			$form->{listonly} = 1;
 			$form->{mode} = "full";
 			$form->{color} = "black";
 			$form->{orderby} = "createtime";
 			$form->{orderdir} = "DESC";
 			$form->{skipmenu} = 1;
-			$form->{duration} = -1;
-			$form->{fhfilter} = "\"user:$requested_user->{nickname}\"";
-			$form->{pause} = 1;
 		}
 
-                my $data_pane = $form->{dp};
-
-		slashDisplay('userInfo2', {
+		slashDisplay('u2MainView', {
 			title			=> $title,
 			uid			=> $uid,
 			useredit		=> $requested_user,
@@ -1510,10 +1451,12 @@ sub showInfo {
                         latest_submissions      => $latest_submissions,
                         latest_bookmarks        => $latest_bookmarks,
                         latest_friends          => $latest_friends,
-                        latest_thing            => $latest_thing,
-                        friends_datapane        => $friends_datapane,
-                        tags_datapane           => $tags_datapane,
-                        data_pane               => $data_pane,
+			marquee                 => $marquee,
+			relations_datapane      => $relations_datapane,
+			tags_datapane           => $tags_datapane,
+			data_pane               => $form->{dp},
+			main_view               => $main_view,
+			not_fhid		=> $not_fhid,
 		}, { Page => 'users', Skin => 'default'});
 	}
 

@@ -13,6 +13,44 @@ list
 __seclev__
 10000
 __template__
+[%# this stuff may move later -- pudge %]
+[% IF options.view == "usersubmission";
+	submission_list = Slash.db.getSubmissionsByUID(options.user_view_uid);
+	submission_count = 0;
+	submission_reject = 0;
+	submission_pend = 0;
+	submission_hash = {};
+	FOR submission = submission_list;
+		submission_count = submission_count + 1;
+		IF submission.del == 0;
+			submission_pend = submission_pend + 1;
+		ELSIF submission.del == 1;
+			submission_reject = submission_reject + 1;
+		END;
+		submission_hash.${submission.subid} = submission;
+	END;
+	submission_accept = submission_count - (submission_reject + submission_pend) %]
+<div id="message"><div class="content">Submission Summary:
+[% submission_pend %] pending,
+[% submission_reject %] rejected,
+[% submission_accept %] accepted ([%
+	submission_count;
+	" total, ";
+	USE format;
+	percentage = format('%.2f');
+	percentage((100 * submission_accept) / (submission_accept + submission_reject + submission_pend))
+%]% accepted)</div></div>
+
+
+[% ELSIF options.view == "userjournal" AND (user.uid == options.user_view_uid) %]
+<div id="message"><div class="content">
+	<a href="[% gSkin.rootdir %]/journal.pl?op=list">Manage Journal Entries</a> |
+	<a href="[% gSkin.rootdir %]/journal.pl?op=editprefs">Edit Journal Preferences</a>
+</div></div>
+
+[% END %]
+
+
 [% IF form.metamod %]
 <div id="metamodwrap">
 [% END %]
@@ -146,7 +184,7 @@ cmdrtaco dot net but be forgiving of beta code!
 </span>
 [% PROCESS paginate options = options ulid = "fh-paginate" divid = "fh-pag-div" num_items = itemnum fh_page = fh_page last_day = last_day firehose_more_data = firehose_more_data %]
 <script type="text/javascript">
-	[% FOR opt = [ 'startdate', 'mode', 'fhfilter', 'orderdir', 'orderby', 'startdate', 'duration', 'color'] %]
+	[% FOR opt = [ 'startdate', 'mode', 'fhfilter', 'orderdir', 'orderby', 'startdate', 'duration', 'color', 'view', 'tab', 'base_filter'] %]
 		[%- opt_value = options.$opt -%]
 		[% IF opt == 'startdate' %]
 			[% opt_value = opt_value.replace('-',''); %]
@@ -194,7 +232,7 @@ cmdrtaco dot net but be forgiving of beta code!
 		firehose_play();
 	[% END %]
 
-[% IF constants.run_ads && !user.state.page_adless && !user.state.page_buying && user.currentSkin != 'admin' && (user.is_admin) # || user.currentPage == 'index2') %]
+[% IF 0 && constants.run_ads && !user.state.page_adless && !user.state.page_buying %]
 	fh_adTimerUrl = '/images/iframe/firehose.html';
 [% END %]
 
