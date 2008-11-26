@@ -1,0 +1,23 @@
+div#topnav { background: #666 url(//images.slashdot.org/topnav-bg-ask.png) repeat-x left top; }
+    div#topnav div#logo h1 a { background: url(//images.slashdot.org/logo-ask.png) no-repeat left top; }
+div.article div.title,
+div.generaltitle div.title,
+div.commentTop div.title
+{ background: #666 url(//images.slashdot.org/block-title-bg.png) repeat-x left top; }
+  div.article div.title h3,
+  div.generaltitle div.title h3,
+  div.commentTop div.title h4
+  { background: url(//images.slashdot.org/block-title-left.png) no-repeat left top; }
+div#links div.block div.content ul li a:hover {background: #666 url(//images.slashdot.org/link-arrow.gif) no-repeat right center; color: #fff;}
+.data_head, .barColor, .tb_col, , .thor .commentControlFooter { background: #666; }
+.data_head { color: #fff; }
+div.article div.title span,
+div.article div.title span a { color: #eee; }
+.comment > .oneline .commentTop .title h4 a { color: #666; }
+
+//firehose related css begin
+.story, .story a  {color: #fff !important;}
+.story .date, .story a.skin {color: #ffffff !important;}
+div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.article .story div.title h3, div.article .story div.title, .firemenu div.title, .firemenu div.title h3
+{ background: #666 url(//images.slashdot.org/block-title-bg.pnh) repeat-x left top !important}
+// firehose related css end

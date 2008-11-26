@@ -1,0 +1,35 @@
+/* Fixed admin menu */
+div#adminmenu {
+	background: transparent url(//images.slashdot.jp/storylinks-bg.png) repeat-x scroll left bottom;
+	font-size: 93%;
+	overflow: auto;
+	margin: 0;
+	padding: 0.3em 1em;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	line-height: 1.2;
+	z-index: 10000;
+}
+div#adminmenu ul.menu {
+	display: inline;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+}
+body {
+	margin-top: 1.6em;
+}
+* html body {
+	margin-top: 0;
+}
+
+/* filter table */
+table.list-filters tr.head,
+table.list-filters tr.even {
+	background: #EEE;
+}
+table.list-filters td {
+	padding: 0.1em 0.3em;
+}

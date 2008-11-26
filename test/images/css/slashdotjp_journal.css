@@ -1,0 +1,465 @@
+/* CSS File for Slashdot Japan Journals, (c) 2004-2008 Slashdot Japan */
+
+/* common settings */
+
+.journal {
+	margin-bottom: 0.6em;
+	_width: 99%; /* IE6 */
+}
+
+#journal ul.menu {
+	margin-bottom: 0.8em;
+}
+
+/* journal top and journallist */
+.journaltop .generaltitle {
+	margin-bottom: 0.6em;
+}
+
+.journallist .journallist-head {
+	background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;
+	color: #FFF;
+	font-size: 85%;
+	margin-bottom: 0.5em;
+}
+
+.journallist .journallist-head div {
+	padding: 0.3em 0.6em;
+}
+
+.journallist .journallist-head .title {
+	float: left;
+	font-weight: bold;
+}
+
+.journallist .journallist-head .totalhits {
+	text-align: right;
+	background: url(//images.slashdot.jp/block-title-right.png) no-repeat right top;
+}
+
+.journallist table,
+.journaltop table {
+	margin-bottom: 0.6em;
+	width: 100%;
+}
+
+.journallist table th,
+.journallist table td,
+.journaltop table th,
+.journaltop table td {
+	text-align: left;
+	vertical-align: top;
+	padding: 0.2em 0.4em;
+}
+
+.journallist table tr.odd,
+.journaltop table tr.odd {
+	background: #EEE;
+}
+
+.journallist table tr th,
+.journallist table tr td.time,
+.journallist table tr td.edit,
+.journaltop table tr th,
+.journaltop table tr td.nickname,
+.journaltop table tr td.lastupdate {
+	white-space: nowrap;
+}
+
+.journallist table input {
+	margin: 0;
+	padding: 0;
+}
+
+.journallist .journalpage .newer {
+	float: left;
+}
+
+.journallist .journalpage .older {
+	text-align: right;
+}
+
+.journaltop .pagination ul li {
+	display: inline;
+}
+
+.journaltop .pagination ul.prev {
+	float: left;
+	padding: 0.75em 0.6em;
+	background: transparent;
+}
+
+.journaltop .pagination ul.next {
+	text-align: right;
+	padding: 0.75em 0.6em;
+}
+
+.journaltop .pagination ul li.prev:before,
+.journaltop .pagination ul li.next:before {
+	content: "";
+}
+
+/* user journals */
+
+.journal .journalentry {
+	margin-bottom: 1em;
+}
+
+.journal .journalmain {
+	padding: 0.5em 0.7em;
+	min-height: 80px;
+	word-break: break-all;
+	border: none;
+}
+
+.journal .generaltitle {
+	position: static;
+}
+
+.journal .journalmain div {
+	overflow-x: auto;
+	padding-bottom: 2px;
+	_height: 80px /* IE6 */
+}
+
+.journal .journalmain ul {
+	margin-left: 1em;
+	margin-bottom: 0.5em;
+}
+
+.journal .journalmain li {
+	margin-left: 0.5em;
+	_width: 99%; /* IE6 */
+}
+
+.journal .journaltopic {
+	margin: 0 0.7em 0;
+	float: right;
+}
+
+.journal .details {
+	padding: 0.4em 1em;
+	font-size: 90%;
+	line-height: 1.3;
+	background: #ddd url(//images.slashdot.jp/article-details-bg.png) repeat-x left top;
+}
+
+.journal .journalnav {
+	text-align: right;
+	font-size: 90%;
+	margin-top: 1em;
+}
+
+.journal .entrynav {
+	display: none;
+	float: right;
+}
+
+.journal .storylinks {
+	margin: 0;
+}
+
+.journal .journalpage {
+	margin: 0.8em 0;
+}
+
+.journal .storylinks ul {
+	padding: 0.75em 0.6em;
+}
+
+.journal .storylinks ul.journal-commentlink {
+	float: right;
+	text-align: right;
+	background: transparent;
+}
+
+/* Fix: https://sourceforge.jp/tracker/index.php?func=detail&aid=13598&group_id=4&atid=101 (But I do not know why it will fix by this setting) */
+.journal .storylinks ul.journal-commentlink li {
+	margin-right: 0.5em;
+}
+
+.journal .storylinks ul li.first:before,
+.journal .storylinks ul.journal-commentlink li:before {
+	content: "";
+}
+
+.journal .storylinks ul li.more {
+	font-weight: bold;
+}
+
+div.storylinks,
+div.storylinks div,
+div.storylinks ul {
+	_position: static !important; /* IE6 */
+	_height: auto !important; /* IE6 */
+}
+
+div.storylinks ul {
+	_padding: 0.75em 0.6em !important; /* IE6 */
+}
+
+/* liquid */
+div.liquid .journalentry {
+  padding-bottom: 0.4em;
+  border-bottom: solid 2px #d6d6d6;
+  border-right: solid 2px #d6d6d6;
+  border-left: solid 2px #d6d6d6;
+  background: url(http://images.slashdot.jp/stripe_background.gif);
+}
+
+div.liquid .journalhead {
+	_width: 100%;  /* IE6 */
+	background: url(http://images.slashdot.jp/macbarbw.gif) repeat-x;
+	border-bottom: solid 1px #d6d6d6;
+}
+
+.liquid .generaltitle .title,
+.liquid .generaltitle .title h3,
+.liquid .storylinks div,
+.liquid .storylinks div ul,
+.liquid .journalhead .details {
+	background: transparent;
+}
+
+.liquid .generaltitle .title h3 a {
+	color: #111;
+}
+
+.liquid .entrynav {
+  display: block;
+  padding: 0.3em;
+}
+
+.liquid .storylinks li,
+.liquid .storylinks li.comments {
+  background: url(http://images.slashdot.jp/macbarbw.gif) repeat-x;
+  padding: 0.4em;
+  border: solid 1px #666666;
+  margin: 0 0.2em;
+}
+
+.liquid .storylinks a {
+	color: #111;
+}
+
+.liquid .storylinks ul li.more:before,
+.liquid .storylinks ul li:before {
+	content: "";
+}
+
+/* generic */
+.generic .journalday {
+	border-bottom: 2px solid #055;
+	border-right: 2px solid #055;
+	border-left: 2px solid #055;
+}
+
+.generic .journalday-title {
+	text-align: right;
+	color: #FFF;
+	background: #055;
+	font-weight: bold;
+	padding: 0.2em 0.4em;
+}
+
+.generic .journalentry {
+	margin: 0.3em;
+}
+
+.generic .journaltime,
+.generic .generaltitle,
+.generic .generaltitle .title,
+.generic .generaltitle .title h3 {
+	display: inline;
+	background: transparent;
+	color: #000;
+	font-size: 100%;
+	padding: 0;
+}
+
+.generic .generaltitle .title h3 a {
+	color: #055;
+}
+
+.generic .generaltitle .title h3 a:visited {
+	color: #555;
+}
+
+.generic .journalmain {
+	padding: 0.5em 0;
+}
+
+.generic .storylinks div,
+.generic .storylinks div ul {
+	background: transparent;
+	padding-left: 0;
+}
+
+/* bluebox */
+div.bluebox {
+	border: 2px solid #000;
+}
+
+.bluebox .journalday-title {
+	text-align: right;
+	color: #FFF;
+	background: #369;
+	font-weight: bold;
+	padding: 0.2em 0.4em;
+}
+
+.bluebox .journalentry {
+	margin: 0.3em 0.4em 0;
+}
+
+.bluebox .journaltime,
+.bluebox .generaltitle,
+.bluebox .generaltitle .title,
+.bluebox .generaltitle .title h3 {
+	display: inline;
+	background: transparent;
+	color: #000;
+	font-size: 100%;
+	padding: 0;
+}
+
+.bluebox .storylinks a,
+.bluebox .generaltitle .title h3 a {
+	color: #369;
+}
+
+.bluebox .generaltitle .title h3 a:visited {
+	color: #555;
+}
+
+.bluebox .journalmain {
+	padding: 0.5em 0;
+}
+
+.bluebox .storylinks div,
+.bluebox .storylinks div ul {
+	background: transparent;
+	padding-left: 0;
+}
+
+.bluebox .journalpage {
+	margin-bottom: 0;
+	background: #369;
+	color: #CCC;
+}
+
+.bluebox .journalpage a {
+	color: #FFF;
+}
+
+/* greypage, yellowpage */
+.greypage .journalday,
+.yellowpage .journalday {
+	border-bottom: 2px solid #FFF;
+}
+
+.greypage .journalday-title,
+.yellowpage .journalday-title {
+	color: #111;
+	font-weight: bold;
+	padding: 0.2em 0.4em;
+}
+
+.greypage .journalday-title {
+	background: #C0C0C0;
+}
+
+.yellowpage .journalday-title {
+	background: #C0C0FF;
+}
+
+.greypage .journalentry,
+.yellowpage .journalentry {
+	border-top: 2px solid #FFF;
+	margin: 0;
+}
+
+.greypage .journalentry {
+	background: #E0E0E0;
+}
+
+.yellowpage .journalentry {
+	background: #E0E0FF;
+}
+
+.greypage .journaltime,
+.yellowpage .journaltime {
+	background: transparent;
+	float: left;
+	padding: 0.2em;
+}
+
+.greypage .generaltitle,
+.yellowpage .generaltitle,
+.greypage .journalmain,
+.yellowpage .journalmain,
+.greypage .storylinks,
+.yellowpage .storylinks {
+	margin-left: 5.5em;
+	background: #FFF;
+	padding-left: 0.2em;
+}
+
+.greypage .generaltitle,
+.yellowpage .generaltitle {
+	padding-top: 0.2em;
+}
+
+.greypage .generaltitle .title,
+.yellowpage .generaltitle .title,
+.greypage .generaltitle .title h3,
+.yellowpage .generaltitle .title h3 {
+	background: transparent;
+	font-size: 100%;
+	padding: 0;
+}
+
+.greypage .storylinks a,
+.yellowpage .storylinks a,
+.greypage .generaltitle .title h3 a,
+.yellowpage .generaltitle .title h3 a {
+	color: #055;
+}
+
+.greypage .generaltitle .title h3 a:visited,
+.yellowpage .generaltitle .title h3 a:visited {
+	color: #555;
+}
+
+.greypage .journalmain,
+.yellowpage .journalmain {
+	padding: 0.5em 0.2em;
+}
+
+.greypage .storylinks div,
+.yellowpage .storylinks div,
+.yellowpage .storylinks div ul,
+.greypage .storylinks div ul {
+	background: transparent;
+	padding-left: 0;
+}
+
+.greypage .journalpage {
+	margin-top: 0;
+	background: #C0C0C0;
+}
+
+.yellowpage .journalpage {
+	margin-top: 0;
+	background: #C0C0FF;
+}
+
+.greypage div.storylinks ul,
+.yellowpage div.storylinks ul {
+	_padding: 0.75em 0.6em 0.75em 0.2em !important; /* IE6 */
+}
+
+/* ads */
+#journal div.adsense_468x60 {
+	margin-top: 0.8em;
+}

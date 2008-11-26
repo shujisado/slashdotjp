@@ -1,0 +1,525 @@
+/*
+ * slashdotjp.css - override slashdot.org css for slashdot.jp
+ */
+
+/* main layout */
+body {
+	font-size: 98%;
+	line-height: 1.3;
+	min-width: 750px;
+}
+div#topnav,
+div.copyright {
+	margin-left: 13px;
+	margin-right: 13px;
+}
+div#wrapper {
+	padding-left: 13px;
+	padding-right: 13px;
+}
+div#user-section {
+	margin-bottom: 10px;
+	font-size: 82%;
+}
+div#links {
+	font-size: 88%;
+	margin-right: 0;
+}
+div#links div.block div.content ul * {
+	line-height: 1.2;
+}
+div#message div.content {
+	font-size: 82%;
+}
+div#contents {
+	margin-top: 0;
+	margin-left: 8.15em;
+	padding-left: 10px;
+}
+div#slashboxes {
+	width: 200px;
+	margin-left: 12px;
+	font-size: 88%;
+	overflow: hidden;
+}
+#wrapper #articles,
+#wrapper #indexhead,
+#search.aduserbox .generaltitle,
+#search.aduserbox .generalbody,
+#firehoselist,
+#firehose #message,
+#firehose #messagearea,
+#firehose #itemsreturned,
+#firehose .firemenu,
+#firehose .paginate,
+#pollBooth #wide,
+div#users-blocks {
+	margin-right: 212px;
+}
+div#slashboxes div.block img.map {
+	float: right;
+}
+.map {
+	background: transparent;
+	padding: 0;
+	position: relative;
+	text-indent: inherit;
+	width: 21px;
+}
+.edit a {
+	float: none;
+	margin-top: 0;
+	display: inline;
+	width: auto;
+	text-indent: 0;
+	background: url(//images.slashdot.org/sic_edit.png) left no-repeat;
+	padding-left: 20px;
+}
+#topnav #logo h1 a {
+	overflow: hidden;
+}
+div.storylinks ul {
+	font-size: 90%;
+}
+input {
+	margin: 3px;
+}
+
+div#message div.content div.microad {
+	margin: 0.3em 0.7em;
+}
+
+div.microad_comment {
+	overflow: hidden;
+	background: #FFF;
+	padding: 0.2em;
+	width: 99%;
+}
+
+xmp {
+	overflow-x: scroll;
+	background: #FFF;
+	border: solid 1px #055;
+	padding: 4px;
+	margin: 4px;
+}
+
+.moderate-button {
+	margin: 1em 0;
+}
+
+.bottom-navi {
+	margin-top: 1em;
+	font-size: 95%;
+}
+
+.bottom-navi a.gototop {
+	font-weight: bold;
+	color: #055;
+	background: url(//static.sourceforge.jp/ic/caret.gif) no-repeat scroll 0 center;
+	padding-left: 12px;
+	padding-right: 10px;
+}
+
+/* override slashdot.org settings */
+blockquote, .quote {
+	position: static;
+}
+
+
+/* fix select item padding */
+select option {
+	margin-right: 0.4em;
+}
+
+/* Fix list-style image location */
+#slashboxes #slashd ul li,
+#slashboxes #future ul li {
+	list-style: url(//images.slashdot.jp/drop.gif);
+}
+
+/* Fix slashdot.org <i> impremant */
+div.article div.intro i {
+	border-left: none;
+	display: inline;
+	font-style: italic;
+	margin: 0;
+	padding: 0;
+}
+
+/* Fix blockquote color */
+blockquote,
+.quote {
+	color: #000;
+}
+
+/* notes and note override */
+.notes,
+.note {
+	margin-top: 0.2em;
+}
+
+/* Fix left menu (#links) bottom image */
+div#links {
+	background: #eee url(//images.slashdot.jp/slashbox-bottom-left.png) no-repeat left bottom;
+}
+
+/* author link become black */
+.article .details a.author {
+	color: #111;
+}
+
+/* Suppress long URLs/words */
+div.commentBody {
+	overflow-x: auto;
+	work-break: break-all;
+}
+
+/* write comment big link */
+.write-comment-link {
+	font-size: 160%;
+	text-align: center;
+	margin-top: 0.1em;
+	padding: 4px;
+}
+
+.write-comment-link a {
+	-moz-border-radius: 10px;
+	-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	background: #DDD;
+	border: 3px solid #666;
+	color: #055;
+	padding: 0.2em 1em;
+	text-decoration: none;
+}
+
+/* Override moderation summary box for AdSense */
+#mod_summary {
+	margin-left: 0;
+}
+#commentlisting .comment .ads-336x280 {
+	float: right;
+	margin-left: 1em;
+}
+.clear-right {
+	clear: right;
+}
+
+/* Fix pollBooth graph */
+#pollBooth .generalbody table {
+	margin: 0;
+	width: 100%;
+}
+#pollBooth .generalbody caption {
+	margin-left: 0;
+}
+#pollBooth .totalVotes {
+	display: block;
+	margin: 0.2em 0;
+	text-align: right;
+	float: none;
+}
+#pollBooth #resultgraph {
+	margin: 0 1em;
+}
+#pollBooth .polllinks {
+	margin: 1em 0;
+}
+#pollBooth #listpolls li {
+	margin-bottom: 0.4em;
+}
+
+/* poll list */
+#listpolls {
+	margin: 0.3em 0.8em;
+}
+
+#listpolls .pollitem {
+	margin-bottom: 0.9em;
+}
+
+#listpolls .pollitem h4 {
+	font-weight: bold;
+}
+
+#listpolls .pollitem .detail {
+	font-size: 85%;
+	color: #333;
+}
+
+/* poll pollBooth */
+#wide #polls form {
+	margin: 0.8em 0;
+}
+
+/* FAQ page navigation */
+#wikicontents .pagenavi {
+	background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;
+	margin-bottom: 0.6em;
+	padding: 2px 4px;
+	font-size: 85%;
+	color: #fff;
+}
+#wikicontents .pagenavi .prev {
+	float: left;
+}
+#wikicontents .pagenavi .next {
+	text-align: right;
+	height: 1.3em;
+}
+#wikicontents .pagenavi .label {
+	display: none;
+}
+#wikicontents .pagenavi a {
+	color: #fff;
+	font-weight: bold;
+	text-decoration: none;
+}
+#wikicontents .pagenavi a:hover {
+	text-decoration: underline;
+}
+#wikicontents .pagenavi .up a {
+	background: transparent url(//images.slashdot.jp/pagenavi_up.gif) no-repeat scroll left center;
+	padding-left: 12px;
+}
+#wikicontents .pagenavi .prev a {
+	background: transparent url(//images.slashdot.jp/pagenavi_left.gif) no-repeat scroll left center;
+	padding-left: 12px;
+}
+#wikicontents .pagenavi .next a {
+	background: transparent url(//images.slashdot.jp/pagenavi_right.gif) no-repeat scroll right center;
+	padding-right: 12px;
+}
+
+/* slashdot.jp announce area */
+div#slashdotjp-site-announce {
+	background: #FFC;
+	border: 1px solid #055;
+	margin-bottom: 4px;
+	padding: 2px;
+	font-weight: bold;
+	font-size: 82%;
+}
+
+/* Fix normal ul */
+div.general_contents ul,
+div#wikicontents ul,
+div#search div.sectiontitle table td ul,
+div#search div.search-help ul,
+div#polls div.generalbody ul,
+div#submit div.generalbody ul,
+div#commentBody ul,
+div#metamod #metamod-intro ul,
+div#bookmark ul,
+div#topics .generalbody ul,
+.error ul,
+.err ul,
+.warning ul,
+.warn ul,
+.info ul,
+form#createuserform ul {
+	margin: 1em 0pt 1em 2em !important;
+}
+
+div#bookmark ul.menu {
+	margin: 0 !important;
+}
+
+/* firehose tablist */
+div#firehose div.firemenu div.submenu ul#fhtablist {
+	padding-right: 40px;
+}
+div#firehose div.firemenu div.submenu ul#fhtablist select#section {
+	margin: 0;
+}
+#firehose #fhtablist {
+	line-height: 2.6;
+}
+#firehose #fhtablist li select {
+	font-size: 100%;
+}
+#firehose #fhtablist li {
+	font-size: 110%;
+}
+
+/* search top bar */
+div#search-result-top {
+	font-size: 88%;
+	border-top: 2px #044 solid;
+	background: #EEE;
+	padding: 5px;
+	margin-bottom: 5px;
+}
+div#search-result-topleft {
+	float: left;
+	text-align: left;
+}
+div#search-result-topright {
+	text-align: right;
+}
+
+div.search-results,
+div.search-help {
+	margin: 1.2em 5px;
+	line-height: 1.5;
+}
+
+.search-results .intro {
+	font-size: 80%;
+}
+.search-results .data {
+	font-size: 80%;
+	color: #666;
+}
+
+.search-help h3 {
+	font-weight: bold;
+}
+
+#search .pagination {
+	font-weight: bold;
+	margin: 0.9em 0;
+}
+
+/* users.pl modifiers */
+div#users table#reason_modifiers table.reason_modifiers {
+	padding-left: 1.5em;
+}
+div#users table#reason_modifiers td {
+	vertical-align: top;
+}
+div#users table#reasons_plus td,
+div#users table#reasons_minus td {
+	vertical-align: middle;
+}
+
+/* fix metamod comment */
+#metamod-intro {
+	padding: 0.6em 0;
+}
+
+#metamod #commentlisting li.comment {
+	margin-bottom: 1.2em;
+}
+
+#metamod div.commentTop div.title {
+	padding: 0;
+}
+
+#metamod div.commentTop div.title h4 {
+	padding: 0.3em 0;
+	display: block;
+}
+
+/* comment login form */
+.loginform {
+	margin: 0.8em 0;
+}
+
+.loginform label {
+	display: inline;
+	margin-right: 1.2em;
+}
+
+/* create user option form */
+#createuserform .options {
+	margin-top: 1em;
+	line-height: 1.8;
+}
+
+#createuserform .options label {
+	display: inline;
+	padding: 0;
+}
+
+/* submission comment link */
+.submit_story_list .sub_title a.comment {
+	background: transparent url(//images.slashdot.jp/sic_icons.png) no-repeat 0 -1400px;
+	padding: 4px 20px 3px 2px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 80%;
+}
+
+/* code.shtml rss link */
+a.feed {
+	background: url(//images.slashdot.jp/feed-14x14.png) left no-repeat;
+	padding-left: 16px;
+}
+
+/* usable message classes */
+.info {
+	background: #def url(//images.slashdot.jp/silk/information.png) no-repeat 10px 3px;
+	border: 1px solid #9cf;
+	padding: 5px 5px 5px 40px;
+	margin: .5em 0 1em 0;
+}
+
+.error,
+.err {
+	background: #fdd url(//images.slashdot.jp/silk/delete.png) no-repeat 10px 3px;
+	border: 1px solid #fbb;
+	padding: 5px 5px 5px 40px;
+	margin: .5em 0 1em 0;
+}
+
+.error .title,
+.err .title {
+	font-size: 120%;
+}
+
+.warning,
+.warn {
+	background: #ffd url(//images.slashdot.jp/icon_warning.gif) no-repeat 10px 3px;
+	border: 1px solid #fe6;
+	padding: 5px 5px 5px 40px;
+	margin: .5em 0 1em 0;
+}
+
+/* show tooltip (http://f32.aaa.livedoor.jp/~azusa/index.php?t=ajax&p=balloonjs_css) */
+a.tooltip span {
+	display: none;
+	padding: 2px 3px;
+	margin-left: 8px;
+	width: 200px;
+	white-space: normal;
+	line-height: 1.4 !important;
+	z-index: 10;
+}
+
+a.tooltip:hover span{
+	display: inline;
+	position: absolute;
+	border: 1px solid #cccccc;
+	background: #ffffff;
+	color: #6c6c6c;
+}
+
+#slashboxes #login-content a.tooltip span {
+	width: 160px;
+	margin-left: -60px;
+	margin-top: 20px;
+}
+
+/* ads format */
+div.article div.bigbanner,
+div.adsense_468x60 {
+	overflow: hidden;
+	width: 99%;
+}
+
+.generalbody #ads-login-336x280 {
+	float: right;
+	background: #EEE;
+	margin-left: 1em;
+}
+
+.microad-400x200 {
+	margin: 0.8em 0;
+}
+
+/* for osdnnavbar: width=0 */
+#top_parent {
+  border: 0px solid transparent;
+}

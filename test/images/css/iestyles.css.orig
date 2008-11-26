@@ -1,0 +1,140 @@
+body {word-wrap: break-word;}
+#firehose .article h3, #firehose .briefarticle h3, .briefarticle div.tags, .adminoptions, #indexhead, div.generaltitle, div#commentwrap, .commentbox, ul.menu, #usermenu, div#links div.block div.content, #commentlisting ul { position: relative;}
+div#users-blocks {margin: 0 18.5em 0 0; overflow: hidden;}
+#slashboxes {margin-right: -1em; _margin: 0;}
+form {width: 94%}
+#users-lists {width: 99%}
+div#message {padding: 0; margin: 0 0 1em 0; border-bottom: 1px solid #333; }
+  div#message div.content { padding: 0; margin: 0; background: #666 url(//images.slashdot.org/slc.gif) no-repeat left top; }
+
+.user .sub_title { position: absolute; left: 10em; width: 19em; height: 1.3em; overflow: hidden; }
+.user .sub_info { position: absolute; left: 30em; width: 10em; height: 1.3em; overflow: hidden; }
+
+
+ul.menu li {float: left;}
+ul.menu:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+.aduserbox {width: 99%}
+
+div#links div.block div.content ul li { border-bottom: 1px solid #eee; }
+div.commentwrap { border: 1px solid #fff; border-width: 1px 0; }
+div#contents div#message { background-color: #fff; }
+  div#contents div#message p { padding: .35em .7em .3em .7em; border-bottom: 1px solid #fff; }
+
+/* Comments */
+#commentwrap {clear: both;}
+#ccw-panel-container, div.ccw-panel, .ccw-count-pos, .ccw-count-text, .horizontal #ccw-body, .horizontal div.ccw-panel { left: 0; }
+#commentlisting {width: 99%;}
+#commentlisting ul li { background: url(//images.slashdot.org/comment-line.png) no-repeat 3px 4px; }
+
+
+/* Thanks: http://positioniseverything.net/easyclearing.html */
+div#user-section div.content,
+div#contents {display: inline-table;}
+/* Hides from IE-mac \*/
+* html ul.menu,
+* html div#user-section div.content,
+* html div#contents {height: 1%;}
+div#user-section div.content,
+div#contents {display: block;}
+/* End hide from IE-mac */
+
+/* D2 comment control widget */
+#ccw-control { left: 0; top: 0; }
+
+/* Search */
+#search table {width: 98%;}
+
+/* Ads */
+
+/* Sponsor Sections */
+#sponsorlinks {
+        font-size: 95%;
+        text-align: right;
+        width: 20em;
+        background: transparent !important;
+        z-index: 10000 !important;
+        _top: 3.2em;
+        position: absolute;
+        _right: 3.3em;
+        margin: 0;
+}
+
+
+
+/* FireHose */
+#firehose div.article div.firehose .title h3 {margin-top: .2em;}
+#colorsliderbg { background: url('//images.slashdot.org/colorscale.png') no-repeat 0px 3px; }
+ul.menu#fhtablist li.active { padding: .1em 1.5em .1em 0 !important; }
+
+#fhtabdel
+{
+        font-size: 85%;
+        font-weight: normal;
+        position: absolute;
+        top: .1em;
+        right: 0;
+}
+
+#firehose .paginate { margin-right: 19.5em; }
+#firehose .paginate ul.menu { margin-right: -3px; background: url('//images.slashdot.org/slcb.png') right bottom no-repeat; }
+
+.title h3 a {cursor: pointer}
+#firehoselist, #firehose #message, .firemenu { margin-right: 19.5em; }
+.tags {_margin: 0 !important; _padding: 0 !important; position: static !important;}
+.tags .vote {margin: 0 !important; padding: 0 !important; position: absolute !important;}
+#firehose div.tags div.tagtitleopen, #firehose div.tags div.tagtitleclosed, div.taguser {height: 1.5em; _height: 2em; z-index: 1000;}
+#firehose div.tags div.tagtitleclosed {width: 57%}
+#firehose div.taguser {margin-bottom: 1em}
+#firehose div.tags div.tagbody .message {bottom: 0; z-index: 1001;}
+
+#firehose .article div.storylinks, #firehose .article div.storylinks div, #firehose .article div.storylinks ul {position: relative !important; margin: 0 !important; padding: 0 !important; height: 3em;}
+.article div.storylinks {margin-top: 1em !important}
+.article div.storylinks div {height: 2.3em; margin: 0 0 1em 0 !important}
+#firehose .article div.storylinks ul {height: 2.3em; padding: 0 0 0 3em !important; z-index: 100}
+
+/* ie6 */
+#articles {_float: left; _margin-right: 0 !important}
+#firehose div.details, #firehose div.body {_padding-left: 1em !important; padding-left: 2em !important; position: relative}
+#firehose .options { _right: 22.5em; }
+#firehoselist {_float: left; _margin: 0 !important; _position: relative}
+#firehose .tags .vote {_top: -1px; _z-index: 1000000 !important}
+#firehose .vote, #firehose .votedup, #firehose .voteddown { _background-image: none; _filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//images.slashdot.org/unvote.png');}
+#firehose div.tags div.tagtitleopen, #firehose div.tags div.tagtitleclosed {_position: static !important; _height: 1em; _margin: 2em 0 -1.6em 0; z-index: 10000}
+#firehose .soda {top: 0 !important; _height: 1.7em; }
+#firehose .soda span {bottom: -1px; _bottom: -2px !important; _height: 1em}
+#firehose .article .generaltitle h3, #firehose .briefarticle .generaltitle h3 {font-size: 1.1em !important; height: 1.8em !important; margin-top: 0 !important; padding-top: 0 !important; z-index: 1;}
+#firehose .article div.storylinks, #firehose .article div.storylinks div, #firehose .article div.storylinks ul { z-index: -1; height: 2.5em;}
+#firehose .article div.storylinks {margin-bottom: 1em !important;}
+#firehose .briefarticle div.storylinks {display: none !important}
+#firehose .article .generaltitle, #firehose .briefarticle .generaltitle, #firehose .briefarticle .generaltitle .title, #firehose .article .generaltitle .title { _background: transparent !important;}
+#firehose .subdue { background-color: #222; height: 100%; z-index: 10000}
+#firehose .submenu {_display: none}
+#footer {clear: both}
+#login_box_close {_visibility: hidden}
+h3 .close {_filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//images.slashdot.org/sic_close.png'), sizingMethod='scale'; position: _relative}
+.lb {_overflow: hidden; _margin-top: -1em !important; _position: relative; margin-bottom: 1em}
+.lb .ad1 {_position: absolute; _top: 0; _left: 0;}
+.tagsheader {_margin-left: -20px}
+#firehose .paginate, div.tags {height: 100%}
+#firehose div.tags {background: transparent}
+
+/* Random */
+#articles div.taguser {margin-bottom: 1em}
+#articles div.tags div.tagbody .message {bottom: 0; z-index: 1001;}
+#articles div.storylinks, div.storylinks div, div.storylinks ul {position: relative !important; margin: 0 !important; padding: 0 !important; height: 3em;}
+#articles div.storylinks {margin-top: 1em !important}
+#articles div.storylinks div {height: 2.3em; margin: 0 0 1em 0 !important} 
+#articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100; 
+div.storylinks ul {padding: .75em 8em .75em .6em; }
+#articles div.storylinks ul li a { _position: relative;}
+
+
+
+
+

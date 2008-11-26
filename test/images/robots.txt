@@ -1,0 +1,30 @@
+# robots.txt for slashdot.jp
+# $Id$
+#
+# "Any empty [Disallow] value, indicates that all URLs can be retrieved.
+# At least one Disallow field needs to be present in a record."
+
+User-agent: Mediapartners-Google
+Disallow:
+
+User-agent: *
+Crawl-delay: 5
+Disallow: /404.pl
+Disallow: /admin.pl
+Disallow: /ajax.pl
+Disallow: /blob.pl
+Disallow: /bookmark.pl
+Disallow: /fileadmin.pl
+Disallow: /firehose.pl
+Disallow: /hof.pl
+Disallow: /login.pl
+Disallow: /messages.pl
+Disallow: /metamod.pl
+Disallow: /pubkey.pl
+Disallow: /relocate.pl
+Disallow: /slashdot-it.pl
+Disallow: /stats.pl
+Disallow: /submit.pl
+Disallow: /tags.pl
+Disallow: /users.pl
+Disallow: /zoo.pl

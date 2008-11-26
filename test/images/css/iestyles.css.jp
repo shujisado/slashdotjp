@@ -1,0 +1,52 @@
+/* Override iestyles.css for slashdot.jp */
+
+* html body {
+	width: expression(document.documentElement.clientWidth < 750 ? "750px" : "auto");
+}
+
+/* topnav search width */
+#topnav div.search {
+	width: 20em;
+}
+
+/* override for original iestyles.css */
+ul.menu li {
+	float: none;
+}
+
+div#contents div#message p {
+	border-bottom: none;
+}
+
+/* journal fix */
+#editjournal-description {
+	width: 90%;
+}
+
+div#indexhead div#message {
+	width: 99%;
+}
+
+div.ad200 {
+	margin-bottom: 0.5em;
+}
+
+
+/* Reset margin for slashdot.jp */
+div#users-blocks,
+#firehoselist,
+#firehose #message,
+#firehose .firemenu,
+#firehose .paginate {
+	margin-right: 212px;
+}
+
+#slashboxes div.block div.content {
+  word-break: break-all;
+}
+
+div.quote {
+	position: static;
+}
+
+/* vim: ts=4:ft=css:

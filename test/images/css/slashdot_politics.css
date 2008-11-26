@@ -1,0 +1,29 @@
+a {color: #061b46}
+div#topnav { background: #061b46 url(//images.slashdot.jp/topnav-bg-politics.png) repeat-x left top; }
+  div#topnav div#logo h1 a { background: url(//images.slashdot.jp/logo-politics.png) no-repeat left top; }
+div.article div.title,
+div.generaltitle div.title,
+div.commentTop div.title
+{ background: #061b46 url(//images.slashdot.jp/article-title-bg-politics.png) repeat-x left top; }
+  div.article div.title h3,
+  div.generaltitle div.title h3,
+  div.commentTop div.title h4
+  { background: url(//images.slashdot.jp/article-title-left-politics.png) no-repeat left top; }
+    div.article div.title span,
+    div.article div.title span a { color: #4e7ab3; }
+div#links div.block div.content ul li a:hover {background: #061b46 url(//images.slashdot.jp/link-arrow.gif) no-repeat right center; color: #fff;}
+.data_head, .barColor, .tb_col, .thor .commentControlFooter { background: #061b46; }
+.date_head { color: #fff; }
+.comment > .oneline .commentTop .title h4 a { color: #061b46; }
+div.commentSub { border-bottom: 1px solid #061b46; }
+
+
+
+.story, .story a  {color: #fff !important;}
+.story .date, .story a.skin {color: #ffffff !important;}
+#firehose .article div.tagtitleclosed span span, #firehose .article div.tagtitleopen span span, #firehose div.tags div.tagtitleclosed a, #firehose div.tags div.tagtitleclosed, #firehose div.tags div.tagtitleopen a, #firehose div.tags div.tagtitleopen {color: #061b46 !important}
+div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.article .story div.title h3, div.article .story div.title, .firemenu div.title, .firemenu div.title h3
+{ background: #061b46 url(//images.slashdot.jp/article-title-bg-politics.png) repeat-x left top !important}
+.story .generaltitle .title a { color: #fff !important; }
+
+

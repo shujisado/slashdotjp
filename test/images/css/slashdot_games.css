@@ -1,0 +1,26 @@
+a {color: #30c}
+div#topnav { background: #004 url(//images.slashdot.jp/topnav-bg-games.png) repeat-x left top; }
+  div#topnav div#logo h1 a { background: url(//images.slashdot.jp/logo-games.png) no-repeat left top; }
+div.article div.title,
+div.generaltitle div.title,
+div.commentTop div.title
+{ background: #004 url(//images.slashdot.jp/article-title-bg-games.png) repeat-x left top; }
+  div.article div.title h3,
+  div.generaltitle div.title h3,
+  div.commentTop div.title h4
+  { background: url(//images.slashdot.jp/article-title-left-games.png) no-repeat left top; }
+div#links div.block div.content ul li a:hover {background: #30c url(//images.slashdot.jp/link-arrow.gif) no-repeat right center; color: #fff;}
+.data_head, .barColor, .tb_col, .thor .commentControlFooter { background: #30c; }
+.comment > .oneline .commentTop .title h4 a { color: #30c; }
+div.commentSub { border-bottom: 1px solid #30c; }
+
+
+
+.story, .story a  {color: #fff !important;}
+.story .date, .story a.skin {color: #ffffff !important;}
+#firehose .article div.tagtitleclosed span span, #firehose .article div.tagtitleopen span span, #firehose div.tags div.tagtitleclosed a, #firehose div.tags div.tagtitleclosed,  #firehose div.tags div.tagtitleopen a,  #firehose div.tags div.tagtitleopen  {color: #30c !important}
+div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.article .story div.title h3, div.article .story div.title, .firemenu div.title, .firemenu div.title h3
+{ background: #004 url(//images.slashdot.jp/article-title-bg-games.png) repeat-x left top !important}
+.story .generaltitle .title a { color: #fff !important; }
+
+
