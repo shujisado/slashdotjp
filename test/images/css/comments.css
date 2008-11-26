@@ -1,28 +1,17 @@
-/* Move the links div to the right */
-.comment div.title {
-  border-bottom: 1px solid #fff;
-  background: #044 url("//images.slashdot.jp/article-title-bg.png") repeat-x left top;
-}
-.comment div.title h4 a { margin: 0 .7em; color: #fff; background: none !important;}
-.comment div.title h4 { font-size: 100%; padding: .3em 0; color: #fff; font-weight: bold; background: url("//images.slashdot.jp/article-title-left.png") no-repeat left top; }
+frame {border: none; overflow: hidden}
 
+ul li {list-style-type: none}
 
 #commentlisting ul li {
-  padding-left: 1.55em;
-  margin: 0 0 .75em 0;
-  background: url("//images.slashdot.jp/comment-line.png") no-repeat 3px 0px;
+  padding-left: 2em;
+  background: url("//images.slashdot.jp/comment-line.png") no-repeat 10px 0px;
 }
+
+#commentlisting ul li.contain {padding-left: 0; margin-right: 2px; margin-bottom: 2px;}
+
 #commentlisting .commentBody ul {background: transparent}
 
-#commentlisting div.commentTop a,
-#commentlisting div.commentBody a,
-#commentlisting div.commentSub a,
-#commentlisting div.commentTop a:visited,
-#commentlisting div.commentBody a:visited,
-#commentlisting div.commentSub a:visited { padding-left: 0; background: none; }
-
-#commentlisting { margin-bottom: 15px; }
-
+/* Control box */
 div.commentwrap {
   position: relative;
   margin: .5em 0 1.25em 0;
@@ -49,10 +38,8 @@ div.commentBoxForm {
   background: #eee url("//images.slashdot.jp/commentboxform-bg.png") repeat-x left bottom;
 }
   div.commentBoxForm form { padding: 0; }
-    div.commentBoxForm fieldset { }
   div.commentBoxForm div.commentBox {
-    padding: .75em 0 .5em 0;
-    background: url("//images.slashdot.jp/commentboxform-bottom-right.png") no-repeat right bottom;
+    padding: 1em 0 .5em 0;
   }
   div.commentBoxForm div.commentBox small {
     color: #555;
@@ -79,39 +66,100 @@ div.commentBoxForm {
            padding: .5em .7em;
            display: inline;
  }
-  div.commentTop div.details {
-    padding: .2em .7em .4em .7em;
+
+
+
+
+/* Comment titlebar */
+
+.comment div.title { background: #044 url("http://images.slashdot.jp/article-title-bg.png") repeat-x left top; }
+.comment .full div.title, .comment .full div.details {margin: 0 -4px}
+.comment .full {border-bottom: 1px solid #eee}
+.comment div.title h4 a { color: #fff; background: none;}
+.comment div.title h4 { padding: .3em .7em; color: #fff; font-weight: bold; background: url("http://images.slashdot.jp/article-title-left.png") no-repeat left top; }
+
+/* comment styling */
+#commentlisting li { padding: 0; margin: 1em 0 1em 1em; }
+#commentlisting li .oneline {margin-top: .3em}
+.comment .oneline .score {color: #000}
+.comment .oneline div.title, .comment .oneline div.title h4, .comment .oneline div.title h4 a {color: #044}
+.comment .oneline div.commentBody {color: #555;}
+/* Review for removal */
+.comment .oneline div.title, .comment .oneline div.details, .comment .oneline div.title h4, .comment .oneline div, .comment .oneline div.title h4 a,
+#commentlisting div.commentTop a,
+#commentlisting div.commentBody a,
+#commentlisting div.commentSub a,
+#commentlisting div.commentTop a:visited,
+#commentlisting div.commentBody a:visited,
+#commentlisting div.commentSub a:visited,
+#commentlisting .commentBody ul { background: none; }
+
+
+div.commentTop div.details {
+    padding: .3em .7em;
     font-size: 93%;
-    background: #e6e6e6 url("//images.slashdot.jp/article-details-bg.png") repeat-x left bottom;
-  }
-  div.commentTop div.details a { padding-left: 0; }
-  div.commentTop div.details small { font-size: 100%; }
-  
+    background: #e6e6e6;
+}
+.full div.commentTop div.details {
+    font-size: 93%;
+    background: #e6e6e6;
+}
 
-div.commentBody { padding: .6em .7em 1em .7em; }
 
+div.commentBody { padding: 1em 1em 0; line-height: 160%; overflow: hidden; }
+#commentlisting { padding: 1em 0 1em 2em; }
+
+/* Sub button */
 div.commentSub {
-  margin-bottom: .4em;
-  padding: .2em .7em .4em .7em;
+  padding: .7em;
   font-size: 93%;
   font-weight: bold;
   color: #ccc;
-  border-bottom: 1px solid #066;
-  background: url("//images.slashdot.jp/commentsub-bg.png") repeat-x left bottom;
+  border-bottom: none !important;
 }
 
-/* Related Stories */  
-#article div.briefarticle { padding: 0.7em; background: #e8e8e8; }
-#article div.briefarticle a { font-weight: bold; }
-#article div.briefarticle div.introhide { display: none; }
+
+
+/* Action Buttons */
+
+.nbutton{
+    background: #666 url("//images.slashdot.jp/corner_w_tl.png") top left no-repeat;
+	color:#fff;
+	margin:0.25em;
+	padding: .4em 0;
+}
+.nbutton p{
+	display:inline;
+	background: transparent url("//images.slashdot.jp/corner_w_tr.png") top right no-repeat;
+	padding: .4em 0;
+}
+.nbutton p b{
+	display:inline;
+	background: transparent url("//images.slashdot.jp/corner_w_bl.png") bottom left no-repeat;
+	padding: .4em 0;
+}
+.nbutton p b input, .nbutton p b a {
+	background: transparent url("//images.slashdot.jp/corner_w_br.png") bottom right no-repeat !important;
+	padding: .4em 1em;
+	color:#fff !important;
+	font-weight:normal;
+	text-decoration:none;
+	border: none;
+}
+.nbutton:hover {background-color: #444}
+
+
+
+/* Current selected */
+
+span.current {position: absolute; left: .3em; z-index: 0; font-weight: bold;  font-size:42px;}
+.contain {border: 4px solid #e6e6e6; border-top: none;}
+
 
 /* Styles copied from the old comments.css */
 
-.commentshrunk, .commentstatus, .commentload { font-weight: bold }
+.commentshrunk, .commentstatus { font-weight: bold }
 
-#commentlisting { list-style: none; }
-.comment { margin-bottom: 0.5em }
-#commentlisting li.comment { list-style: none; }
 .comment_footer { text-align: center; background: #ddd }
 .modsel {
 	display: inline;
@@ -123,7 +171,7 @@ div.commentSub {
 	margin: 0 0 0 -.3em;
 	padding: 0 .3em;
 	text-decoration: none;
-	background: url("//images.slashdot.jp/comm-minus.gif") 0 .2em no-repeat;
+	background: url("http://images.slashdot.jp/comm-minus.gif") 0 .2em no-repeat;
 	right: -1.4em;
 	z-index: 2;
 	cursor: pointer;
@@ -133,91 +181,38 @@ div.commentSub {
 	margin: 0;
 	padding: 0 .3em;
 	text-decoration: none;
-	background: url("//images.slashdot.jp/comm-plus.gif") 0 .2em no-repeat;
+	background: url("http://images.slashdot.jp/comm-plus.gif") 0 .2em no-repeat;
 	right: -1.4em;
 	z-index: 1;
 	cursor: pointer;
 }
 
-.hide { display: none; }
-.show { display: inline; }
-
-.oldcomment {
-	opacity: .65;
-	filter: alpha(opacity=65);
-}
-.newcomment {
-}
-.currcomment {
-	margin: -2px;
-	border: 2px solid rgb(102,102,102);
-}
+.oldcomment { opacity: .65; }
+.newcomment { }
+.currcomment .oldcomment { opacity: 1; } 
 
 .comment .hidden  { display: none; }
-.comment .full { display: block; }
-.comment .oneline * { display: inline; }
+.comment .full { display: block;}
+.comment .oneline * { display: inline; padding: .3em 0 }
+.comment .oneline .badgeicon img {position: absolute; top: 0; left: 5px; height: 16px; width: 16px;}
+.comment .oneline .badgeicon {padding: 4px 8px 8px !important; position: relative}
+
 .comment .oneline .commentSub, .comment .oneline .otherdetails, .comment .oneline .sig, .comment .oneline .quote, .comment .oneline .readrest, .comment .oneline .zooicon { display: none; }
-.comment .oneline {
-	height: 1.25em !important;
-	padding: .3em 0;
-	width: 99%;
-	overflow: hidden;
-}
-#commentlisting ul li.comment .full div.title h4 a , #commentlisting ul li.comment .oneline div.title h4 a {background: none !important; padding: 0 !important;}
-.comment .oneline div.details { font-size: 100%; padding-left: .5em !important}
-.comment .oneline div.title h4 a, .comment .oneline .commentTop .score, .comment .oneline .commentTop .comment_links, .comment .oneline .commentTop .comment_links a { color: #055;}
-.comment .oneline .commentTop {
-	background: transparent;
-	border: none;
-	padding: 0;
-}
-.score {
-	font-weight: normal;
-	color:#fff; 
-}
-.comment .oneline .commentBody {
-	color: #666;
-	font-size: 100%;
-	background: transparent;
-	border: none;
-	margin: 0;
-	padding: 0;
-}
-.comment .oneline .commentBody * {
-	color: #666;
-	text-decoration: none;
-	font: inherit;
-}
-.comment .oneline div.title h4, 
-.comment .oneline div.title h4 a,
-.comment .oneline div.title,
-.comment .oneline div.details,
-.comment .oneline div.commentBody
- {background: none !important; margin: 0; padding: 0;}
-
-.comment .oneline div.title { padding: 0.75em }
-
+.comment .oneline { overflow: hidden; height: 1.5em; }
+.score { font-weight: normal; color:#fff; }
+.comment .oneline a {padding: .3em 0;}
 
 /* D2 Widget */
-
-#d2prefs { background-color: lightgray; padding: 1em; width: 20em; border: 1px solid black; display: none; position: absolute; z-index: 1; }
-#d2prefs  .pref-group { margin-top: 1.5em; }
-#d2prefs  .pref-group-comment { font-size: smaller; margin: 0.5em 1em; }
-#d2prefs  .pref-group h1 { font-size: 110%; }
-#d2prefs  .reading-prefs, #d2prefs  .writing-prefs { display: none; }
-#d2prefs.reading .reading-prefs, #d2prefs.writing .writing-prefs { display: block; }
-
-#d2prefs-closebox { display: block; position: absolute; right: 4px; top: 4px; height: 12px; width: 12px; border: 1px solid darkgray; }
 
 #d2act {display: none; position: relative; opacity: 1; z-index: 1000; width: 9.3em; text-align: center; }
 .vertical #d2act {position: absolute; left: 1.2em !important}
 .vertical #d2act.rooted {left:-10.6em !important;}
 #d2act div.block {background: transparent}
-#d2act div.block div.title h4 {text-align: left; background: url("//images.slashdot.jp/commentbox-left.png") top left no-repeat !important;}
+#d2act div.block div.title h4 {text-align: left;}
 .rooted #d2act.rooted div.block div.title h4 { background: none !important; }
-#d2act .close {position: absolute; top: .2em; right: .2em; color: #ccc; text-decoration: none; font-style: ; border: 1px solid #bbb; border-bottom: 1px solid #444; border-right: 1px solid #555; padding: 0 .3em;}
-#d2act .close:hover {position: absolute; top: .2em; right: .2em; color: #eee; text-decoration: none; font-style: ; border: 1px solid #444; border-bottom: 1px solid #aaa; border-right: 1px solid #ccc; padding: 0 .3em;}
-#d2act .commentControlFooter {border-bottom: 1px solid #444; border-top: 1px solid #ccc; text-align: right; padding: 3px; background: #666; color: #fff; font-size: 11px; }
+#d2act .close {position: absolute; top: .2em; right: .2em; color: #ccc; text-decoration: none; border: 1px solid #bbb; border-bottom: 1px solid #444; border-right: 1px solid #555; padding: 0 .3em;}
+#d2act .close:hover {position: absolute; top: .2em; right: .2em; color: #eee; text-decoration: none; border: 1px solid #444; border-bottom: 1px solid #aaa; border-right: 1px solid #ccc; padding: 0 .3em;}
+#d2act .commentControlFooter {border-bottom: 1px solid #444; border-top: 1px solid #ccc; text-align: center; padding: 3px; background: #666; color: #fff; font-size: 10px; }
 #d2act .commentControlFooter a {  color: #fff; text-decoration: none; }
 .loki { display: inline;}
 .comment_divider,
@@ -225,14 +220,14 @@ div.commentSub {
 #comment_abbr,
 #comment_hidden {opacity: 1 !important;  border-right: 1px solid #aaa;border-left: 1px solid #aaa;}
 .commentControlFooter {clear: both}
-#commentlisting {clear: right;}
+#commentlisting {clear: right; background: #fff}
 #commentControlBoxStatus {border-bottom: 1px solid #444; border-top: 1px solid #ccc; text-align: center; padding: 3px; background: #666; color: #fff; }
 
 .escape-link { position: relative; float: left; text-align: left;}
 .commentBox div {width: 100%; text-align: right}
 
 .horizontal .loki {display: block; }
-.horizontal #d2act {left: 11.8em !important; margin:0 1.25em 0 0;background: #fff; right: 0; opacity: 1; top: 0; z-index: 1000; border: none; border-right: 2px solid #aaa; width: auto; text-align: center}
+.horizontal #d2act {left: 0 !important; margin:0;background: #fff; right: 0; opacity: 1; top: 0; z-index: 1000; border: none; width: auto; text-align: center; overflow: hidden;}
 .horizontal #d2act.rooted {left: 0 !important; margin:0 0 0 0;}
 .rooted #d2act.rooted { border: 3px solid #555555; }
 /* .horizontal #d2act div.block div.title h4 {background: transparent !important} */
@@ -243,7 +238,7 @@ div.commentSub {
 
 /* new draggable guts for the D2 Widget */
 
-	/* Overall Size and Position */
+/* Overall Size and Position */
 .ccw-panel-border { display: block; position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
 
 #ccw, #ccw-centering-rail,
@@ -289,10 +284,10 @@ div.ccw-panel, #ccw-control,
 #ccw { height: 172px; width: 9.3em; }
 .horizontal #ccw { height: 2em; width: 100%; }
 
-.ccw-bar { height: 4px; width: 9.8em; left: -4.9em; }
-.horizontal .ccw-bar { width: 4px; height: 2.4em; top: -1.3em; left: 0; }
+.ccw-bar { height: 4px; width: 9.8em; left: -4.65em; }
+.horizontal .ccw-bar { width: 4px; height: 2.4em; top: -1.2em; left: -8px; }
 #ccw-abbr-bar { top: -5px; }
-.horizontal #ccw-abbr-bar { top: -1.3em; left: -5px; }
+.horizontal #ccw-abbr-bar { top: -1.2em; left: -7px; }
 
 .ccw-bar-tab { height: 8px; width: 3em; left: 3.5em; }
 .horizontal .ccw-bar-tab { height: 1.2em; width: 4px; }
@@ -319,37 +314,34 @@ div.ccw-panel, #ccw-control,
 .vertical .ccw-panel-border { border-width: 0 1px; }
 .horizontal .ccw-panel-border { border-width: 0 0 1px 0; }
 .horizontal #ccw-full-panel .ccw-panel-border { border-width: 0 0 1px 1px; }
+.horizontal #ccw-full-panel {top: 1px;}
 
 
+/* Borders and Fills */
+#ccw-full-panel                       { background: #fff url("//images.slashdot.jp/dark_fade_30.png") bottom repeat-x; border-bottom: solid 2px #ddd;}
+#ccw-abbr-panel                       { background: #ccc url("//images.slashdot.jp/dark_fade_30.png") bottom repeat-x; border-bottom: solid 2px #ddd;}
+#ccw-hide-panel                       { background: #aaa url("//images.slashdot.jp/dark_fade_30.png") bottom repeat-x; border-bottom: solid 2px #ddd;} 
 
-	/* Borders and Fills */
+/* Grab Bars */
+.horizontal #ccw-abbr-bar      {background: transparent url("/images/d2_button_horizonal.png") center no-repeat; width:19px; height: 33px; z-index:1000;}
+.horizontal #ccw-hide-bar      {background: transparent url("/images/d2_button_horizonal.png") center no-repeat; width:19px; height: 33px; z-index:1001;}
 
+.vertical #ccw-abbr-bar      {background: transparent url("/images/d2_button_horizonal_v2.png") center no-repeat; width:126px; height: 22px;}
+.vertical #ccw-hide-bar      {background: transparent url("/images/d2_button_horizonal_v2.png") center no-repeat; width:126px; height: 14px; margin: -1px 0 0 0;}
 
-#ccw-abbr-bar, #ccw-hide-bar, .ccw-bar-tab { border: 1px solid black; }
-
-/* #ccw-body                          { background-color: white; } */
-#ccw-full-panel                       { background-color: white; }
-#ccw-abbr-panel                       { background-color: #CCCCCC; }
-#ccw-hide-panel                       { background-color: #AAAAAA; }
-.ccw-panel-border                     { border: solid #AAAAAA; }
-
-#ccw-abbr-bar, #ccw-abbr-bar-tab      { background-color: white; }
-#ccw-hide-bar, #ccw-hide-bar-tab      { background-color: #666666; }
-
-
-
-	/* Cursor Behavior */
+/* Cursor Behavior */
 
 #ccw { -khtml-user-select: none; -moz-user-select: none; user-select: none; }
 
-#ccw-abbr-bar, #ccw-hide-bar          { cursor: grab; cursor: -moz-grab; }
+.horizontal #ccw-abbr-bar, .horizontal #ccw-hide-bar          { cursor: grab; cursor:ew-resize; } 
+.vertical #ccw-abbr-bar, .vertical #ccw-hide-bar          { cursor: grab; cursor:ns-resize; } 
 
 #ccw-control.ccw-active,
 .ccw-active #ccw-abbr-bar,
 .ccw-active #ccw-hide-bar             { cursor: grabbing; cursor: -moz-grabbing; }
 
 
-	/* specifics */
+/* specifics */
 
 .horizontal .ccw-count-pos { width: 100%; }
 .h-inline { display: none; }
@@ -373,6 +365,30 @@ div.ccw-panel, #ccw-control,
 #ccw-hide-bar-tab { border-top-width: 0; }
 .horizontal #ccw-abbr-bar-tab { border-bottom-width: 1px; border-right: none; }
 .horizontal #ccw-hide-bar-tab { border-top-width: 1px; border-left: none; }
+#ccw-panel-container, div.ccw-panel, .ccw-count-pos, .ccw-count-text, .horizontal #ccw-body, .horizontal div.ccw-panel { left: 0; }
 
-iframe {border: none; overflow: hidden}
+/* inline ajax commenting */
+
+.inline_comment {border: 2px solid #666; margin: 1em; position: relative; background-color: #e6e6e6}
+.inline_comment input[type="text"] {width: auto}
+.inline_comment textarea {margin: 1em; width: auto}
+.inline_comment .generalbody {margin: 0; padding: 0;}
+.inline_comment .pref {position: absolute; right: 0; top: -.8em}
+.inline_comment .pref a {right: 10px; background-image: url("//images.slashdot.jp/sic_icons.png"); background-repeat: no-repeat; background-position: 0px -1198px;padding: 5px 10px; position:absolute; text-decoration:none; text-indent:-7000em; top: .8em; }
+.inline_comment .state { color:#CCCCCC; font-weight:bold; position:absolute; right:0.5em; top:-.1em;}
+.inline_comment .replyto_buttons, .inlinemsg {margin: .5em 1em;}
+.inline_comment .replyto_buttons, #discussion_buttons { font-size: 93% }
+.inline_comment #commentlisting {padding: 0; margin: 0;}
+.warning {background: #ffd; border: 1px solid #fe6; padding: .5em; margin: .5em 0 1em 0; color: #000;}
+.inline_comment .replyto_msg {background: #fdd; border: 1px solid #fbb; padding: .5em; margin: .5em 1em 0; color: #000 }
+.inline_comment div.generaltitle {background: transparent; margin: 0; padding: 0;}
+.inline_comment div.title { background: #666 !important; margin: -2px -1px 0px -2px; border: none !important }
+.inline_comment .full div.title { margin: -1.5em -1.15em 0 -1.15em}
+.inline_comment .full {border: none}
+.inline_comment .full div.commentTop div.details, .inline_comment .full div.commentBody {margin: 0 -1em 0 -1.1em}
+.inline_comment div.title h3, .inline_comment .full div.title h4 { background: url("//images.slashdot.jp/corner_w_tl.png") no-repeat left top !important; }
+.inline_comment div.title input {font-size: 85%; margin: 0}
+.inline_comment .commentload {margin: 0 1em; font-weight: bold; color: #aaa;}
+.inline_comment .contain {margin: 0; padding: 0; border: none}
+
 

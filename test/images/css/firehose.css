@@ -1,3 +1,8 @@
+/* Slashboxes */
+div #slashboxes {
+       width: 23em;
+}
+
 /* Reset */
 .article .title, .article h3, .article .generaltitle, .briefarticle .title, .briefarticle h3, .briefarticle .generaltitle { background: transparent !important; }
 
@@ -58,10 +63,10 @@
 .paginate li.active, #fhtablist li.active { font-weight: bold; }
 #fhtablist li.active a img { margin-left: .3em}
 #fhtablist li.active a { padding: 0 }
-#firehose_pages a { color: #bbb; border: 1px solid #444; background: #444; padding: 3px !important; }
-#firehose_pages a:hover { color: #ccc; border: 1px solid #666; background: #555;}
-#firehose_pages a.fh_cur_page { margin: 0; color: #fff !important; border: 1px solid #555; background: #666 url('//images.slashdot.jp/block-title-bg.png') repeat-x;}
-#firehose_pages a b {color: #888; font-size: 130%;  }
+#firehose_pages a, #firehose_more a { color: #bbb; border: 1px solid #444; background: #444; padding: 3px !important; }
+#firehose_pages a:hover, #firehose_more a { color: #ccc; border: 1px solid #666; background: #555;}
+#firehose_pages a.fh_cur_page, #firehose_more a { margin: 0; color: #fff !important; border: 1px solid #555; background: #666 url('//images.slashdot.jp/block-title-bg.png') repeat-x;}
+#firehose_pages a b {color: #888; font-size: 130%; font-family: georgia, }
 #fhcalendar_pag {float: left !important;}
 
 
@@ -126,7 +131,7 @@ ul.menu#fhtablist li.active
         border: 1px solid #666;
         border-bottom: 1px solid #777;
         border-left: 1px solid #777;
-        padding: .3em !important;
+        padding: .5em .3em .5em .3em !important;
 	margin: 0 .3em;
 	white-space: nowrap;
 }
@@ -139,24 +144,29 @@ ul.menu#fhtablist li.active a, .paginate .active a
 }
 
 ul.menu#fhtablist li.active:before, .paginate .active:before { content: ""; }
-#beforewidget, .paginate span.active {float: left}
-#beforewidget span, #afterwidget span {line-height:270% !important}
 .paginate .calendar-pane {margin: 0;} 
 
 /* Pagination */
 .daybreak,
 .paginate { background: #666 url('//images.slashdot.jp/block-title-bg.png') repeat-x; }
-.paginate { margin-right: 18.5em; }
+.paginate { margin-right: 25em; }
+#metamodwrap .paginate { margin-right: 0em}
 #users .paginate { margin-right: 0em; }
 
 .admin .paginate { margin-right: 0; }
 .paginate .menu { background: url('//images.slashdot.jp/corner_w_br.png') right bottom no-repeat; 
 height:2.9em;
-padding-top:0.4em;}
+padding-top:0.9em;}
 
 
 /* Articles */
 .imgspace { min-height: 100% !important; }
+.article { margin-top: 1em }
+.watch{position:absolute; z-index: 1000; top: 0; width:130px;height:97px;text-indent:-99999px;background:url(//images.slashdot.jp/icon_play.png) no-repeat center;}
+div.article div.body div.topic{position:relative;float:right;margin:0 0 .3em .5em;}
+div.storylinks{margin:0 0 1.5em; display: inline; }
+div.briefarticle div.storylinks {display: block;}
+div.article {margin-top: 1em}
 
 .storylinks
 {
@@ -167,8 +177,8 @@ padding-top:0.4em;}
 
 .storylinks li.more { margin-left: -1.8em !important; }
 .storylinks li.comments {border-left: 1px solid #ccc; padding-left: 1em !important}
-#firehoselist { padding: 1em 0 0 0; }
-#firehoselist, #firehose #message, .firemenu { margin-right: 18.5em; }
+#firehoselist, #firehose #message, .firemenu, #console { margin-right: 25em; }
+#metamodwrap #firehoselist, #firehose #metamodwrap #message { margin-right: 0em; }
 #users #firehoselist, #users #firehose #message, #users .firemenu { margin-right: 0em; }
 .admin #firehoselist, .admin #firehose #message, .admin .firemenu { margin-right: 0; }
 .article .generaltitle .title .date,
@@ -257,6 +267,8 @@ bottom: -1em;
 right: 0;
 }
 
+div.briefarticle[type=comment] .title a span { background: transparent !important }
+
 /* Icons and imagery for articles */
 
 .edit
@@ -326,7 +338,7 @@ span.date-tab { background:transparent url('//images.slashdot.jp/sic_icons.png')
 #fh-paginate .day.date-tab.active {padding: 10px 17px 10px 0 !important}
 
 span.date-tab.active div.tab-button { background: #066; }
-#.date-widget.all span.date-tab, .date-widget.now span.date-tab { display: none; }
+.date-widget.all span.date-tab, .date-widget.now span.date-tab { display: none; }
 .firemenu #fhcalendar-calendar-pane {right: 1em}
 #fh_change_range { font-size: 80% }
 .firemenu .date-tab-bar {float: right; padding: 0 15px .5em 0; margin-right: .6em}
@@ -353,6 +365,27 @@ div.storylinks ul {padding-right: 60% !important}
 .pop6 { background-color: #609; }
 .pop7 { background-color: #306; }
 .pop8 { background-color: #000; }*/
+
+.pop0 { background-image: url('//images.slashdot.jp/pop0.png'); background-position: left top; }
+.pop1 { background-image: url('//images.slashdot.jp/pop1.png'); background-position: left top; }
+.pop2 { background-image: url('//images.slashdot.jp/pop2.png'); background-position: left top; }
+.pop3 { background-image: url('//images.slashdot.jp/pop3.png'); background-position: left top; }
+.pop4 { background-image: url('//images.slashdot.jp/pop4.png'); background-position: left top; }
+.pop5 { background-image: url('//images.slashdot.jp/pop5.png'); background-position: left top; }
+.pop6 { background-image: url('//images.slashdot.jp/pop6.png'); background-position: left top; }
+.pop7 { background-image: url('//images.slashdot.jp/pop7.png'); background-position: left top; }
+.pop8 { background-image: url('//images.slashdot.jp/pop8.png'); background-position: left top; }
+
+.pop1,
+.pop2,
+.pop3,
+.pop4,
+.pop5,
+.pop6,
+.pop7,
+.pop8 {
+background-position:center top;
+}
 
 .pop0 { background-image: url('//images.slashdot.jp/pop0.png'); }
 .pop1 { background-image: url('//images.slashdot.jp/pop1.png'); }
@@ -401,20 +434,22 @@ div.storylinks ul {padding-right: 60% !important}
 .future {color: #fff; background-color: #900; }
 .firehose {background-color: #ddd; }
 
-.story .date, .story a.skin {color: #699 !important;}
+.story .date, .story .skin {color: #8DC7C0; !important;}
 .future .date, .future a.skin {color: #c99 !important;}
-.firehose .date, .firehose a.skin {color: #777 !important;}
+.firehose .date, .firehose a.skin, .firehose span.skin, .firehose span.reason {color: #777 !important;}
 
 .article .generaltitle, .briefarticle .generaltitle { min-height: 25px; position: relative; background-image: url('//images.slashdot.jp/fh_btr_s.png') !important; background-position: top right !important;}
 .briefarticle .generaltitle .title { background-image: url('//images.slashdot.jp/fh_br_s.png') !important; background-position: bottom right !important;}
 .briefarticle .story a {color: #fff;}
 .briefarticle h3 a {#555}
+
+#firehose div.generaltitle h3 a, #console div.generaltitle h3 a { color: #555; }
+#firehose .story div.generaltitle h3 a, #firehose .future div.generaltitle h3 a, #console .story div.generaltitle h3 a, #console .future div.generaltitle h3 a { color: #fff; }
 .generaltitle a {text-decoration: none}
 
 .tagshide div {display: none}
-.generaltitle h3 a {z-index: 4 !important; position: relative !important;}
-.firehose .generaltitle h3 a {color: #066 !important}
-.firehose h3 a.skin {color: #777 !important;}
+.future h3 a, .story h3 a {z-index: 4 !important; position: relative !important; font-size: 123%}
+.story h3 a.skin {color: #8dc7c0 !important;}
 .briefarticle h3, .article h3 {font-size: 100% !important; padding: .25em 50px 0 58px !important; min-height: 22px !important; display: block !important;}
 .briefarticle h3 {padding-right: .3em !important}
 .briefarticle .novote h3 {padding: .25em .3em  0 1em !important; margin: 0 !important}
@@ -424,10 +459,20 @@ div.storylinks ul {padding-right: 60% !important}
 #firehoselist {position: relative}
 
 /* nodmenu */
+#nod-user-tags, #nix-user-tags {display: none; position: absolute; top:-55px; width:500px;}
+#nod-user-tags ol, #nix-user-tags ol {display: inline; list-style: none; padding: 0 0.2em; margin: 0 -0.2em;}
+#nod-user-tags li, #nix-user-tags li {display: inline; padding: 0 0 0 0.3em; margin: 0; }
+#nod-input, #nix-input {display: inline; font-size: 11px; width: 101px;}
+#nod-user-tags {left: -150px;}
+#nix-user-tags {left: 58px;}
+#nodmenu .menu.autocomplete, #nixmenu .menu.autocomplete {display: none;}
+#nodmenu.editing #nod-user-tags, #nixmenu.editing #nix-user-tags, #nodmenu.editing .menu.autocomplete, #nixmenu.editing .menu.autocomplete {display: block;}
 #nodmenu, #nixmenu {display: none; width: 200px; z-index: 100000; position: absolute !important; font-size: 11px}
 #nodmenu .menu, #nixmenu .menu {top: -35px; width: 150px; height: 15em; z-index: 1000000 !important; position: absolute !important; font-size: 11px}
 #nodmenu .menu {left: -150px !important;  background: url('//images.slashdot.jp/popup_nod.png') no-repeat;}
 #nixmenu .menu {left: 15px !important; text-align: right; background: url('//images.slashdot.jp/popup_nix.png') no-repeat;}
+#nodmenu.editing.soon .menu.basic, #nixmenu.editing.soon .menu.basic {display: block;}
+#nodmenu.editing .menu.basic, #nixmenu.editing .menu.basic {display: none;}
 
 #nodmenu li, #nixmenu li {list-style: none; color: #ddd; padding: 1px 4px}
 #nodmenu ul {margin: 0 43px 0 0; background: #222; opacity: .9; border: 1px solid #111;}
@@ -436,7 +481,17 @@ div.storylinks ul {padding-right: 60% !important}
 
 .embed #nodmenu .menu, #console #nodmenu .menu {left: 20px !important; background: url('//images.slashdot.jp/popup_nix.png') no-repeat;}
 .embed #nixmenu .menu, #console #nixmenu .menu {left: 25px !important;}
+.embed #nod-user-tags, #console #nod-input {left: 63px !important;}
+.embed #nix-user-tags, #console #nix-input {left: 68px !important;}
 .embed #nodmenu ul, #console #nodmenu ul {margin: 0 0 0 43px; background: #222; opacity: .9; border: 1px solid #111;}
+ol#nod-hardened, ol#nix-hardened, ol#nod-hardened li, ol#nix-hardened li {position: relative; background: black !important;}
+ol#nod-hardened, ol#nix-hardened {margin-left: 0 !important; padding-left: 0 !important; cursor: pointer;}
+
+.tag-actions {display: none; position: absolute; opacity: 0.6; top: -0.75em; right: 0; width: 1.5em; font-size: 120%; text-align: center; color: black; background-color: white; -moz-border-radius: 0.1em; -webkit-border-radius: 0.1em;}
+a.not-tag, a.del-tag {text-decoration: none;}
+li:hover .tag-actions {display: inline;}
+li .tag-actions:hover {opacity: 0.9;}
+li .tag-actions .not-tag:hover, li .tag-actions .del-tag:hover {color: red;}
 
 .article .title, .article h3, .article .generaltitle {border: none !important}
 .article .generaltitle, #firehoselist .article .title, .article h3 {line-height: 170% !important;}
@@ -452,4 +507,78 @@ div.storylinks ul {padding-right: 60% !important}
 .briefarticle .storylinks .comments.nocomment, .briefarticle .storylinks .comments span  {display: none}
 
 .embed .paginate, .embed .firemenu, .embed a.skin, .copyright.embed { display: none; }
+#fhtablist li:before { content: "";}
+#fhtablist li { padding-left: 0.5em }
+
+.view div.tags div.tagtitleclosed, .view div.tags div.tagtitleopen {
+margin:0pt 0pt -1.4em 0pt;
+text-align:right;
+}
+
+.view .article div.tagtitleclosed{
+width: 90%;
+left:0pt;
+}
+
+* html .view .article div.tagtitleclosed{ /* IE6 */
+right:0pt;
+}
+
+* html body .view .article div.tagtitleclosed{ /* IE6 as well */
+left:auto;
+right:0pt;
+}
+
+*+html  .view .article div.tagtitleclosed{ /* IE7 */
+left:auto;
+right:0pt;
+}
+.ac_results {
+	padding: 0px;
+	border: 1px solid black;
+	background-color: white;
+	overflow: hidden;
+	z-index: 99999;
+}
+
+.ac_results ul {
+	width: 100%;
+	list-style-position: outside;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.ac_results li {
+	margin: 0px;
+	padding: 2px 5px;
+	cursor: default;
+	display: block;
+	/* 
+	if width will be 100% horizontal scrollbar will apear 
+	when scroll mode will be used
+	*/
+	/*width: 100%;*/
+	font: menu;
+	font-size: 12px;
+	/* 
+	it is very important, if line-height not setted or setted 
+	in relative units scroll will be broken in firefox
+	*/
+	line-height: 16px;
+	overflow: hidden;
+}
+
+.ac_loading {
+	background: white url('indicator.gif') right center no-repeat;
+}
+
+.ac_odd {
+	background-color: #eee;
+}
+
+.ac_over {
+	background-color: #0A246A;
+	color: white;
+}
 

@@ -1,0 +1,127 @@
+div#slogan h2 {
+display:none;
+}
+div.search  legend {
+display:none;
+}
+div#jump {
+display:none;
+}
+
+
+/* Tag widget */
+div.body-widget {
+clear:both;
+position:relative;
+text-indent:2.5em;}
+
+div.body-widget form.tag-editor {
+display:none;
+}
+
+div.body-widget .edit-toggle span {
+margin:-.5em 0pt 0pt -1.5em;
+padding:.5em;
+z-index:11110;
+display:block;
+position:absolute;
+}
+
+
+
+div#firehose {
+width:96%;
+margin:0pt;
+}
+
+div#firehose span.vote {
+display:none;
+}
+
+
+div#firehose .briefarticle h3, div#firehose .article h3 {
+padding-left: 1em !important;
+/*
+background:#004444 url(http://images.slashdot.jp/article-title-bg.png) repeat-x scroll left top !important;
+*/
+}
+
+div#firehose div.briefarticle ,
+div#firehose div.article  {
+background:#004444 url(http://images.slashdot.jp/article-title-bg.png) repeat-x scroll left top !important;
+border-bottom:1px solid #FFFFFF;
+margin:0;
+}
+
+
+div#firehose div.title h3 {
+background:#004444 url(http://images.slashdot.jp/article-title-bg.png) repeat-x scroll left top !important;
+border-bottom:1px solid #FFFFFF;
+margin-bottom:0;
+padding:0;
+}
+
+.pop1 {
+background-image:url(http://images.slashdot.jp/pop1a.gif);
+}
+
+
+.pop2 {
+background-image:url(http://images.slashdot.jp/pop2a.gif);
+}
+
+.pop3 {
+background-image:url(http://images.slashdot.jp/pop3a.gif);
+}
+
+.pop4 {
+background-image:url(http://images.slashdot.jp/pop4a.gif);
+}
+
+.pop5 {
+background-image:url(http://images.slashdot.jp/pop5a.gif);
+}
+
+.pop6 {
+background-image:url(http://images.slashdot.jp/pop6a.gif);
+}
+
+.pop7 {
+background-image:url(http://images.slashdot.jp/pop7a.gif);
+}
+
+.pop8 {
+background-image:url(http://images.slashdot.jp/pop8a.gif);
+}
+
+div#firehose div.body-widget {
+margin-left:80px !important;
+margin-right:180px !important;
+margin-top:-1em !important;
+width:auto !important;
+top:1.3em !important;
+}
+
+div#firehose div.generaltitle {
+margin-top:1em;
+}
+
+.pop1,
+.pop2,
+.pop3,
+.pop4,
+.pop5,
+.pop6,
+.pop7,
+.pop8 {
+border:none !important;
+display:block !important;
+height:180% !important;
+overflow:hidden !important;
+}
+
+div#firehose div.details{
+top:-1px !important;
+border-top:1px solid #000 !important;
+}
+

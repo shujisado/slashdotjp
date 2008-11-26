@@ -1,0 +1,35 @@
+/* Fix for not logged in user viewing /. homepage */
+div#firehoselist div.article,
+div#forehoselist div.firemenu{
+margin-right:5em;
+}
+
+div#message div.content * {
+border:none !important;
+}
+
+/* ~/ticket/313 */
+div#firehose div#firehoselist div.briefarticle,
+div#firehose div#firehoselist div.article {
+border:1px solid transparent !important;
+}
+
+div.firemenu {
+margin-right:24em;
+}
+
+div#firehoselist div.briefarticle ,
+div#firehoselist div.article {
+margin-right:5em;
+}
+
+
+
+/* For logged in users */
+#fhtablist li{
+white-space:nowrap !important;
+}
+
+#fhtablist {
+overflow:hidden;
+}

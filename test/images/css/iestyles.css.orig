@@ -29,8 +29,10 @@ div#contents div#message { background-color: #fff; }
 /* Comments */
 #commentwrap {clear: both;}
 #ccw-panel-container, div.ccw-panel, .ccw-count-pos, .ccw-count-text, .horizontal #ccw-body, .horizontal div.ccw-panel { left: 0; }
-#commentlisting {width: 99%;}
 #commentlisting ul li { background: url(//images.slashdot.org/comment-line.png) no-repeat 3px 4px; }
+.nbutton, .nbutton p, .nbutton p b {padding: 0;} 
+.nbutton, .nbutton p, .nbutton p b, .nbutton p b a { _background-image: none !important;}
+
 
 
 /* Thanks: http://positioniseverything.net/easyclearing.html */
@@ -134,7 +136,7 @@ h3 .close {_filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//im
 div.storylinks ul {padding: .75em 8em .75em .6em; }
 #articles div.storylinks ul li a { _position: relative;}
 
-
-
-
+#login_cover, #modal_cover {filter: alpha(opacity=75);}
+.oldcomment { filter: alpha(opacity=65); }
+.currcomment .oldcomment { filter: alpha(opacity=100); }
 

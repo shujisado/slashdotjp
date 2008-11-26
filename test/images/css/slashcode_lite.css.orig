@@ -52,7 +52,9 @@ div.briefarticles,
 #message,
 #message .content,
 #message .content p,
-#ostgnavbar
+#ostgnavbar,
+#usermenu ul.menu,
+#usermenu,  #wrapper
 {
 	color: #000 !important; background: transparent !important; border: none; font-family: serif;
 }
@@ -155,4 +157,7 @@ div.briefarticles div.briefarticle,
 div.briefarticles
 { background: #ddd !important;}
 
+
+div.commentTop div.title h4, .comment .oneline div.title h4 a {background: transparent !important;}
+ .comment .oneline div.title h4 a {color: #00E !important}
 

@@ -67,3 +67,23 @@ a, a:visited, .btmnav ul li a, .btmnav ul li a:visited { color: #00e; }
 
 .ccw-upzone, .ccw-downzone { display: block; position: absolute; }
 
+body {
+	min-width: 120px;
+}
+
+div#topnav,
+div#wrapper,
+div#wrapper div#contents,
+div#wrapper div#articles,
+div#topnav div#logo {
+	margin: 0;
+	padding: 0;
+	height: auto;
+	width: auto;
+}
+
+a, a:visited,
+.btmnav ul li a,
+.btmnav ul li a:visited {
+	color: #055;
+}

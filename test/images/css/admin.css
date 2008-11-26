@@ -209,6 +209,81 @@ margin: 0 .6em;
 #simstories, #articles .note {margin: 0 0 1em 0; background: transparent; padding: 0 19em 0 1em;}
 tr.data_head {background: #ddd; }
 
+
+span.note-flag {
+color: white !important;
+position: absolute;
+right: 4em;
+bottom: 0;
+z-index: 100;
+}
+
+/*
+div#firehose span.admin-buttons .no-note span.admin-note a{
+overflow:hidden;
+}
+
+span.admin-buttons .no-note span.admin-note a{
+background:transparent url(/images/sic_notes.png) no-repeat scroll 0 0;
+display:inline-block;
+height:1.5em;
+width:1.5em;
+text-indent:99999px !important;
+
+}
+*/
+
+span.admin-buttons .no-note span.admin-note a,
+span.note-flag {
+background:transparent url(/images/sic_notes.png) no-repeat scroll 0 0;
+display:inline-block;
+height:1.5em;
+margin-bottom:-.5em;
+overflow:hidden;
+
+text-indent:99999px !important;
+width:1.5em;
+line-height:2em !important;
+}
+
+div.tag-display.ready.dirty  { /* !FIXING safari tag widget bug on idle. */
+border-top:1px solid transparent;
+}
+
+
+span.note-flag {
+margin-bottom: 0pt !important;
+right:3.25em;
+top:0.4em;
+}
+
+.briefarticle h3, .article h3 {
+margin-right: 1em !important;
+}
+
+
+
+/*
+span.note-flag {
+overflow:hidden;
+}
+
+span.note-flag {
+background:transparent url(/images/sic_notes.png) no-repeat scroll 0 0;
+display:inline-block;
+height:1.5em;
+width:1.5em;
+text-indent:-99999px !important;
+}
+*/
+
+
+span.note-flag.no-note {
+display: none;
+}
+
+.curstory a { border-top: 2px solid #066;}
+
 /* Fixed admin menu */
 div#adminmenu {
 	background: transparent url(//images.slashdot.jp/storylinks-bg.png) repeat-x scroll left bottom;
