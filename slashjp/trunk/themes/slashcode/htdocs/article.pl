@@ -216,12 +216,14 @@ sub main {
 			Slash::Utility::Comments::_print_cchp({ stoid => "dummy" });
 		}
 	} else {
-		header('Error', $form->{section}) or return;
 		my $message;
 		if ($future_err) {
+			header('Error', $form->{section}) or return;
 			$message = getData('article_nosubscription');
 		} else {
-			$message = getData('no_such_sid');
+			my $r = Apache->request;
+			$r->status(404);
+			return;
 		}
 		print $message;
 	}

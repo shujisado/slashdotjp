@@ -1994,7 +1994,7 @@ sub filter_param {
 		$data =~ s|[^a-zA-Z0-9_]+||g;
 	} else {
 		for my $ri (@regints) {
-			$data = fixint($data) if $key =~ /$ri/;
+			$data = fixint($data) if $ri =~ quotemeta($key);
 		}
 
 		# convert input to internal character encoding

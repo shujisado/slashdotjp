@@ -125,7 +125,7 @@ sub create {
 
 	if (!$altto) {
 		# check for $uid existence
-		my $reader = getObject('Slash::Journal', { db_type => 'reader' });
+		my $reader = getObject('Slash::DB', { db_type => 'reader' });
 		for my $u (@$uid) {
 			if ($reader->existsUid($u)) {
 				push @users, $u;

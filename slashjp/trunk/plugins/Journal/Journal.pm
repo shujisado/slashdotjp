@@ -156,11 +156,13 @@ sub getsByUids {
 }
 
 sub list {
-	my($self, $uid, $limit) = @_;
+	my($self, $uid, $limit, $start) = @_;
 	$uid ||= 0;	# no SQL syntax error
+	$start ||= 0;
 	my $order = "ORDER BY date DESC";
-	$order .= " LIMIT $limit" if $limit;
-	my $answer = $self->sqlSelectAll('id, date, description', 'journals', "uid = $uid", $order);
+	$order .= " LIMIT $start, $limit" if $limit;
+	my $answer = $self->sqlSelectAll('SQL_CALC_FOUND_ROWS id, date, description', 'journals', "uid = $uid", $order);
+	$self->sqlDo('SET @totalhits = FOUND_ROWS();');
 
 	return $answer;
 }
@@ -340,13 +342,19 @@ EOT
 
 sub themes {
 	my($self) = @_;
-	my $uid = getCurrentUser('uid');
-	my $sql;
-	$sql .= "SELECT name from journal_themes";
-	$self->sqlConnect;
-	my $themes = $self->{_dbh}->selectcol_arrayref($sql);
+	return [ keys %{$self->{themes}} ] if ($self->{themes});
+	my $sql = "SELECT name,type from journal_themes";
+	$self->{themes} = $self->sqlSelectAllKeyValue('name,type', 'journal_themes');
 
-	return $themes;
+	return [ keys %{$self->{themes}} ];
+}
+
+sub getThemeType {
+	my ($self, $theme) = @_;
+
+	return undef unless ($theme);
+	$self->themes unless ($self->{themes});
+	return $self->{themes}{$theme};
 }
 
 sub searchUsers {
@@ -492,6 +500,25 @@ sub createSubmissionFromJournal {
 	my $subid = $slashdb->createSubmission($submission);
 	if ($subid) {
 		$self->logJournalTransfer($src_journal->{id}, $subid);
+
+		# create messages
+		my $messages = getObject('Slash::Messages');
+		if ($messages) {
+			my $users = $messages->getMessageUsers(MSG_CODE_NEW_SUBMISSION);
+			my $messagesub = { %$submission };
+			$messagesub->{subid} = $subid;
+			$messagesub->{story} = $story;
+			$messagesub->{subj} = $src_journal->{description};
+			my $data = {
+				template_name	=> 'messagenew',
+				template_page	=> 'submit',
+				subject		=> {
+					template_name	=> 'messagenew_subj',
+					template_page	=> 'submit', },
+				submission	=> $messagesub,
+			};
+			$messages->create($users, MSG_CODE_NEW_SUBMISSION, $data) if @$users;
+		}
 	} else {
 		print STDERR ("Failed attempting to transfer journal id: $src_journal->{id}\n");
 	}

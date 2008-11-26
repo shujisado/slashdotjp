@@ -581,17 +581,22 @@ sub displayArticle {
 			id		=> $article->[3],
 			commentcount	=> $commentcount,
 			prev		=> $prev,
-			next		=> $next,
+			'next'		=> $next,
 		};
 	}
 
 	push @sorted_articles, $collection;
 	my $theme = _checkTheme($form->{theme} || $journal_reader->getUser($uid, 'journal_theme'));
-	$theme = 'mobile' if ($user->{mobile});
+	my $theme_type = $journal_reader->getThemeType($theme);
+	if ($user->{mobile}) {
+		$theme = 'mobile';
+		$theme_type = 'mobile';
+	}
 
 	my $show_discussion = $form->{id} && !$constants->{journal_no_comments_item} && $discussion;
 	my $zoo   = getObject('Slash::Zoo');
-	slashDisplay($theme, {
+	slashDisplay("theme_$theme_type", {
+		theme		=> $theme,
 		articles	=> \@sorted_articles,
 		uid		=> $uid,
 		nickname	=> $nickname,
@@ -816,8 +821,16 @@ sub doEditArticle {
 		};
 
 		my $theme = _checkTheme($user->{'journal_theme'});
+		my $theme_type = $journal_reader->getThemeType($theme);
+		if ($user->{mobile}) {
+			$theme = 'mobile';
+			$theme_type = 'mobile';
+		}
+
 		my $zoo   = getObject('Slash::Zoo');
-		slashDisplay($theme, {
+		slashDisplay("theme_$theme_type", {
+			preview		=> 1,
+			theme		=> $theme,
 			articles	=> [{ day => $article->{date}, article => [ $disp_article ] }],
 			uid		=> $article->{uid} || $user->{uid},
 			is_friend	=> $zoo->isFriend($user->{uid}, $article->{uid}),
@@ -907,13 +920,16 @@ sub setPrefs {
 
 sub listArticle {
 	my($journal, $constants, $user, $form, $journal_reader) = @_;
+	my $limit = $constants->{journal_list_default_display} || $constants->{journal_default_display} || 10;
+	my $start = $form->{start} || 0;
 
 	my $uid = $form->{uid} || $user->{uid};
 	if (isAnon($uid)) {
 		return displayFriends(@_);
 	}
 
-	my $list 	= $journal_reader->list($uid);
+	my $list 	= $journal_reader->list($uid, $limit, $start);
+	my $totalhits	= $journal_reader->sqlSelect('@totalhits');
 	my $themes	= $journal_reader->themes;
 	my $theme	= _checkTheme($user->{'journal_theme'});
 	my $nickname	= $form->{uid}
@@ -931,6 +947,9 @@ sub listArticle {
 			articles	=> $list,
 			uid		=> $form->{uid} || $user->{uid},
 			nickname	=> $nickname,
+			start		=> $start,
+			limit		=> $limit,
+			totalhits	=> $totalhits,
 		});
 	} elsif (!$user->{is_anon} && (!$form->{uid} || $form->{uid} == $user->{uid})) {
 		print getData('noentries');

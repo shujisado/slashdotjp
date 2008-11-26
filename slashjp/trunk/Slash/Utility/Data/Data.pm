@@ -2260,7 +2260,7 @@ sub fixparam {
 	no utf8;
 	Encode::is_utf8($url) and $url = Encode::encode_utf8($url);
 	$url =~ s/([^$URI::unreserved ])/$URI::Escape::escapes{$1}/og;
-	$url =~ s/ /+/g;
+	$url =~ s/ /%20/g;
 	return $url;
 }
 

@@ -18,26 +18,31 @@ $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my $force = $constants->{task_options}{force} || undef;
 	my $block_suffix = '_topjournals';
+	my $limit = getCurrentStatic('journal_top') || 10;
 	my $skins = $slashdb->getSkins();
 
 	foreach my $skin (values(%$skins)) {
 		my $name = "$skin->{name}$block_suffix";
 		my $block = $slashdb->getBlock($name);
-		unless ($block) {
+		unless ($block->{bid}) {
 			slashdLog("Could not get block \"$name\", skipped");
 			next;
 		}
 		my $tids = [ $slashdb->getAllChildrenTids($skin->{nexus}) ];
+		unless (@$tids > 0) {
+			slashdLog("Could not get tid for \"$name\", skipped");
+			next;
+		}
 		my $where = '1=1';
-		$where .= 'AND tid IN ('.join(',', @$tids).')' if ($skin->{skid} != $constants->{mainpage_skid});
-		next if ($slashdb->sqlCount('journals', $where . ($force ? '' : "AND date > '$block->{last_update}'")) < 1);
+		$where .= ' AND tid IN ('.join(',', @$tids).')' if ($skin->{skid} != $constants->{mainpage_skid});
+		next if ($slashdb->sqlCount('journals', $where . ($force ? '' : " AND date > '$block->{last_update}'")) < 1);
 
 		slashdLog("Start updating block \"$name\"") if (verbosity() >= 3);
 		my $result = $slashdb->sqlSelectAllHashrefArray(
 			'nickname AS author,jid,description AS title',
 			'users_journal JOIN users USING (uid) JOIN journals on (users_journal.jid=journals.id)',
 			$where,
-			'ORDER BY users_journal.date DESC LIMIT 20',
+			"ORDER BY users_journal.date DESC LIMIT $limit",
 		);
 		map { $_->{'link'} = "$constants->{absolutedir}/~" . strip_paramattr($_->{author}) . "/journal/". $_->{jid} } @$result;
 
@@ -46,6 +51,12 @@ $task{$me}{code} = sub {
 			$str .= slashDisplay('topjournals', { 'item' => $item }, { Return => 1, Nocomm => 1, Page => 'portald' });
 		}
 		$str .= "\n</ul>";
+		if ($skin->{skid} == $constants->{mainpage_skid}) {
+			my $morestr = getData('journal_slashbox_more', {
+				'link'	=> "$constants->{absolutedir}/journals/top/recent/?start=$limit",
+			}, 'journal');
+			$str .= $morestr if ($morestr);
+		}
 		$slashdb->setBlock($name, { block => $str });
 
 		slashdLog("Updated block \"$name\"") if (verbosity() >= 2);

@@ -41,6 +41,46 @@ slash (2.5.0.195-1) unstable; urgency=low
 
  -- Taku YASUI <tach@osdn.jp>  Tue, 26 Feb 2008 11:54:28 +0000
 
+slash (2.5.0.192-21) unstable; urgency=low
+
+  * Fix "+" operation for "fixparam()"
+    - Change white-space to "%20" instead of "+" on fixparam()
+    - Change "%20" to white-space on userdir_handler()
+    - Not to change "+" to white-space on userdir_handler()
+    - Add to redirect when nickname is not found but matchname is found
+  * Add "reasons_base", "reasons_plused" and "reasons_minused" to constants
+    - To change modreasons by moderated score
+  * Select enable/disable moderation for not m2able reasons when it is not
+    eligible
+  * Fix unwanted object creation at plugin/Messages/Messages.pm
+  * Create messages when the journal is submission
+  * Add pollquestions to page title and fix title format
+  * Fix poll voting booth layout to use template "poll;pollBooth;default"
+  * Fix previewSlashbox layout to use template "previewSlashbox;users;default"
+  * Add some wiki page to wikicontents redirection
+  * Fix for invalid form input at Slash/Utility/Environment/Environment.pm
+  * Fix to show correct error message on new user creation
+  * Add to set more messaging preferences on new user creation
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 21 Nov 2008 05:03:49 +0000
+
+slash (2.5.0.192-20) unstable; urgency=low
+
+  * Back to default only 'slashboxes' when 'restore_default_slashbox'
+  * Fix journal preview to use new theme system
+  * Add pagination to journal list page
+
+ -- Taku YASUI <tach@osdn.jp>  Fri,  3 Oct 2008 12:46:08 +0000
+
+slash (2.5.0.192-19) unstable; urgency=low
+
+  * Add getThemeType() method to check theme type
+    into plugin/Journal/Journal.pm
+  * A number of entries in journal slashbox is from constant "journal_top"
+  * Add logcheck ignore rules for journal_update_slashbox.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 24 Sep 2008 11:58:27 +0000
+
 slash (2.5.0.192-18) unstable; urgency=low
 
   * Use $user->{currentSkin} at $slashdb->getTemplateByName()

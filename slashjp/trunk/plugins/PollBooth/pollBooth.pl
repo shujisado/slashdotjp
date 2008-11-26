@@ -58,7 +58,15 @@ sub main {
 		undef $form->{aid} if $form->{aid} < -1 || $form->{aid} > 8;
 	}
 
-	header(getData('title'), $form->{section}, { tab_selected => 'poll'}) or return;
+	# create title
+	my $title = getData('title');
+	if ($form->{qid}) {
+		my $polldb = getObject('Slash::PollBooth', { db_type => 'reader' });
+		$title .= ': ' . $polldb->getPollQuestion($form->{qid})->{question};
+	}
+	$title .= " - $constants->{sitename}";
+
+	header($title, $form->{section}, { tab_selected => 'poll'}) or return;
 
 	$ops{$op}->($form, $slashdb, $constants);
 
@@ -70,7 +78,9 @@ sub main {
 sub poll_booth {
 	my($form) = @_;
 
-	print sidebox('Poll', pollbooth($form->{'qid'}, 0, 1), 'poll', 1);
+	slashDisplay('poll', {
+		pollbooth	=> pollbooth($form->{'qid'}, 0, 1),
+	});
 }
 
 #################################################################

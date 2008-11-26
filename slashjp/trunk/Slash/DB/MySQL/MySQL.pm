@@ -8213,8 +8213,20 @@ sub getSlashConf {
 		$conf{reasons} = $self->sqlSelectAllHashref(
 			"id", "*", "modreasons"
 		);
+		$conf{reasons_base} = $self->sqlSelectAllHashref(
+			"id", "*", "modreasons", "m2able = 1 OR val = 0"
+		);
+		$conf{reasons_plused} = $self->sqlSelectAllHashref(
+			"id", "*", "modreasons", "m2able = 1 OR val <= 0"
+		);
+		$conf{reasons_minused} = $self->sqlSelectAllHashref(
+			"id", "*", "modreasons", "m2able = 1 OR val >= 0"
+		);
 		foreach my $d (split(/,/, $conf{modreasons_select_disabled} || '')) {
 			$conf{reasons}{int($d)}{select_disabled} = 1;
+			$conf{reasons_base}{int($d)}{select_disabled} = 1;
+			$conf{reasons_plused}{int($d)}{select_disabled} = 1;
+			$conf{reasons_minused}{int($d)}{select_disabled} = 1;
 		}
 	}
 
