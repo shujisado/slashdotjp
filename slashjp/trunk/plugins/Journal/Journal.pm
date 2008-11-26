@@ -724,6 +724,15 @@ sub updateTransferredJournalDiscussions {
 	}
 }
 
+sub getJournalByTime {
+	my($self, $sign, $journal, $options) = @_;
+	my $constants = getCurrentStatic();
+	$options = {} if !$options || ref($options) ne 'HASH';
+	my $limit = $options->{limit} || 1;
+	my $uid = int($options->{uid}) || undef;
+	my $where = "";
+	my $name  = 'journal_by_time';
+	my $order = $sign eq '<' ? 'DESC' : 'ASC';
 
 	# $journal->[0]: datetime string
 	# $journal->{1]: journaltext
