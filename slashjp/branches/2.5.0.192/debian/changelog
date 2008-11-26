@@ -1,3 +1,9 @@
+slash (2.5.0.192-22) unstable; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 26 Nov 2008 08:09:06 +0000
+
 slash (2.5.0.192-21) unstable; urgency=low
 
   * Fix "+" operation for "fixparam()"
