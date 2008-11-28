@@ -4,7 +4,7 @@ DESTDIR = /var/lib/slash/site/slashdot.jp/htdocs/images
 
 sections = apple ask books developer games hardware it linux mobile politics yro
 csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw iestyles ie6 ie7 ie8
-jses = all-minified
+jses = all-minified comments sectionprefs
 
 default: update
 update: $(csses) $(sections) $(jses) images
@@ -49,7 +49,7 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/innerHTML="Updated"/innerHTML="更新中"/' | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' > $@
 	echo >> $@
-	test -f $@.jp && cat $@.jp >> $@
+	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
 
 %.js.orig:
 	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
