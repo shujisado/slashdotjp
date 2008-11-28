@@ -52,7 +52,7 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 	test -f $@.jp && cat $@.jp >> $@
 
 %.js.orig:
-	wget --no-proxy --no-verbose http://slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
+	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
 
 force: clean default
 
