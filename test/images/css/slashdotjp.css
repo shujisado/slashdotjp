@@ -132,6 +132,13 @@ select option {
 	margin-right: 0.4em;
 }
 
+/* remove main-menu triangle */
+div#links div.block div.title h4,
+div#links div.block.expanded div.title h4 {
+	background: none;
+	padding-left: 0.8em;
+}
+
 /* Fix list-style image location */
 #slashboxes #slashd ul li,
 #slashboxes #future ul li {
