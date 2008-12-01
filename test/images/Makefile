@@ -3,8 +3,8 @@
 DESTDIR = /var/lib/slash/site/slashdot.jp/htdocs/images
 
 sections = apple ask books developer games hardware it linux mobile politics yro
-csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw iestyles ie6 ie7 ie8
-jses = all-minified comments sectionprefs
+csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw iestyles ie6 ie7 ie8 idlecore-tidied lick comments-idle
+jses = all-minified comments sectionprefs jquery-opt-1
 
 default: update
 update: $(csses) $(sections) $(jses) images

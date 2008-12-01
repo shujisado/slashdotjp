@@ -1,0 +1,701 @@
+/* new stuff */
+#doc3
+{
+	
+	background: #2E2E2E url("//images.slashdot.jp/dark_dwn_fade_100.png") repeat-x scroll 0 4.9em;
+	border-top: 2px solid #111;
+	margin: 0;
+}
+
+#hd
+{
+	height: 3.9em;
+	position: relative;
+	z-index: 2;
+	background: #066 url("//images.slashdot.jp/topnav-bg.png") repeat-x bottom;
+	margin: 1em 1em .1em;
+}
+
+#hd form
+{
+	position: absolute;
+	right: 1.5em;
+	top: 2em;
+	z-index: 2;
+}
+
+#hd .nav ul {margin: 0}
+
+/* if no login is needed this will centralizes search #hd form{top: 1.1em;} */
+#hd form input.query { border: none; }
+
+#logo
+{
+	background: url("/images/logo2.png") no-repeat left top;
+	height: 50px;
+	width: 430px;
+	position: absolute;
+	z-index: 1;
+}
+
+#logo span
+{
+	text-indent: -5000px;
+	text-decoration: none;
+	background: url("//images.slashdot.jp/dark_largecurve.png") no-repeat left top;
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 25px;
+	width: 25px;
+	padding: 0;
+}
+
+#bd
+{
+	margin: 0;
+	padding: 0 1em;
+}
+
+a { color: #066; }
+
+a:hover
+{
+	text-decoration: none !Important;
+	color: #033 !important;
+}
+
+a:visited { color: #444; }
+div.copyright { margin: 0 1em; }
+.content table { margin: 0; }
+#fad1 { background: none; }
+#yui-main { margin: 0; }
+
+#yui-main #firehose .paginate,.title2
+{
+	background: url("//images.slashdot.jp/dark_fade_20.png") repeat-x bottom;
+	position: relative;
+	clear: left;
+	display: block;
+	padding: 1em;
+}
+
+#bd .nav
+{
+	border-top: none;
+	background: #E6E6E6 url("//images.slashdot.jp/sections-bg.png") repeat-x scroll left bottom;
+	clear: both;
+	position: relative !important;
+	padding: .5em .8em;
+	margin: 0;
+}
+
+#bd .nav li { border-left: 1px solid #aaa; }
+.nav ul li.selected, #fhtablist li.active {background: none}
+#bd .nav #fhtablist li.active a, #bd .nav #fhtablist li a
+{
+	text-decoration: none;
+	color: #444 !important;
+	padding: .3em 1em .4em 1em;
+	border: 1px solid #999;
+	border-radius: .8em .8em 0 0;
+	-moz-border-radius: .8em .8em 0 0;
+	-webkit-border-top-right-radius: .8em;
+	-webkit-border-top-left-radius: .8em;
+	background: #aaa url("//images.slashdot.jp/dark_fade_30.png") repeat-x bottom;
+	position: relative;
+	font-size: 100%;
+}
+
+#bd .nav #fhtablist li.active {
+	border-radius: .8em .8em 0 0;
+	-moz-border-radius: .8em .8em 0 0;
+	-webkit-border-top-right-radius: .8em;
+	-webkit-border-top-left-radius: .8em;
+	background: #fff !important;
+	padding: .3em 1em .4em 1em !important;
+}
+#bd .nav #fhtablist li.active a, #bd .nav #fhtablist li.active a:hover
+{
+	background: transparent;
+	border: 1px solid #aaa;
+	color: #333 !important;
+	font-weight: bold;
+	padding: 0;
+	margin: 0;
+}
+
+#bd .nav li:first-child { border-left: none; }
+
+#bd .nav #fhtablist li
+{
+	border: none;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+#bd .nav li a img {vertical-align: middle; padding: 0 .2em;}
+
+
+#bd .nav ul { margin-bottom: -.3em; }
+
+#bd .nav #user-section ul, #bd .nav #user-section ul li {margin: 0; padding: 0;}
+#user-utils{position: absolute; top: .4em; right: 0;}
+#bd .nav #user-section ul, #bd .nav #user-section ul li a {color: #055; text-decoration: none; padding: 0 .5em}
+#bd .nav #fhtablist li a:hover
+{
+	background: #999;
+	border: 1px solid #888;
+	color: #333 !important;
+}
+.msg {background: none; text-align: center;}
+.article, .briefarticle, .message
+{
+	margin: 1em !important;
+	padding: 0 !important;
+	/* issue overflow: hidden; */
+	clear: none !Important;
+	position: relative;
+	border-radius: 0 0 1em 0;
+	-moz-border-radius: 0 0 1em 0;
+	-webkit-border-bottom-right-radius: 1em;
+}
+.article {background: transparent url("//images.slashdot.jp/storylinks-bg.png") repeat-x scroll center bottom !important;}
+.briefarticle { margin: 1px 1em !important; background: none !Important;}
+.article .date {display: none;}
+
+.message
+{
+	border-radius: .8em 0 .8em  0;
+	-moz-border-radius: .8em 0 .8em 0;
+	-webkit-border-bottom-right-radius: .8em;
+	-webkit-border-top-left-radius: .8em;
+	margin-bottom: 0 !Important;
+}
+.message p {margin: 0;}
+
+#remarks_table {padding: 0 1em !important;}
+
+.article h3
+{
+	border-radius: .8em .8em 0 0;
+	-moz-border-radius: .8em .8em 0 0;
+	-webkit-border-top-right-radius: .8em;
+	-webkit-border-top-left-radius: .8em;
+	background: #044 url("//images.slashdot.jp/article-title-bg.png") repeat-x !important;
+}
+
+.briefarticle h3
+{
+	border-radius: .8em;
+	-moz-border-radius: .8em;
+	-webkit-border-radius: .8em;
+	background: #044 url("//images.slashdot.jp/article-title-bg.png") repeat-x !important;}
+
+.article h3 img, .briefarticle h3 img { margin-top: -3px; }
+.article .vballoon-firehoselist {display: none}
+.article .commentcnt {border-left: 1px solid #ddd; padding: 0 0 0 .7em; margin: 0 0 0 .5em}
+.article h3, .briefarticle h3
+{
+	position: relative;
+	color: #fff !important;
+	padding: .3em 0 !important;
+	margin: 0 0 0 .3em !important;
+	padding-left: 3.5em !important;
+	padding-right: 2em !important;
+	font-size: 116% !important;
+}
+.article.adminmode  h3, .briefarticle.adminmode  h3
+{	padding-right: 4em !important; }
+
+.article h3 a, .briefarticle h3 a
+{
+	color: #fff !important;
+	text-decoration: none;
+	line-height: 100% !important;
+}
+
+#yui-main #firehose .article h3 img, #yui-main #firehose .briefarticle h3 img { padding: 0 .5em 0 0; }
+
+.article div.details
+{
+	background: #ddd;
+	padding: .5em 1em;
+	display: block !important;
+	font-size: 93%;
+}
+
+div.details strong { font-weight: normal; }
+
+div.body
+{
+	/*
+	border-radius: 0 0 1em 0;
+	-moz-border-radius: 0 0 1em 0;
+	-webkit-border-bottom-right-radius: 1em;
+	*/
+	background: transparent url("//images.slashdot.jp/storylinks-right.png") no-repeat scroll right bottom;
+	padding: .5em .8em;
+	font-size: 100%;
+}
+
+#yui-main #firehose .body {
+margin-bottom:0pt;
+}
+
+h3 a.skin, .date, .nickname { opacity: .6; color: #fff !important; }
+.date, .nickname {font-size: 77%; white-space: no-wrap;}
+
+.briefarticle h3.future, .article h3.future {background: #900  url("//images.slashdot.jp/dark_fade_30.png") repeat-x bottom !important}
+.briefarticle h3.future, .article h3.future, h3.future a, h3.future .date, h3.future .nickname  {color: #fff !important;}
+.briefarticle h3.firehose, .article h3.firehose {background: #ccc url("//images.slashdot.jp/dark_fade_30.png") repeat-x bottom !important }
+.briefarticle h3.firehose, .article h3.firehose, h3.firehose a, h3.firehose .date, h3.firehose .nickname  {color: #555 !important;}
+.briefarticle h3.firehose a.skin, .article h3.firehose a.skin {color: #055 !important; opacity: 1;}
+
+div.briefarticle a span {width: auto; background: transparent;}
+div.body i
+{
+	display: block;
+	padding-left: 1em;
+	margin: .5em;
+	border-left: 3px #ddd solid;
+	font-style: normal;
+}
+
+span.vballoon-firehoselist { z-index: 1 !important; }
+
+span.vballoon-firehoselist a
+{
+	border-radius: .5em;
+	-moz-border-radius: .5em;
+	-webkit-border-radius: .5em;
+	margin: 0;
+	padding: 0 .3em;
+	width: 2.2em;
+	display: block;
+}
+span.vballoon-firehoselist span {margin: 0; background: none}
+span.vballoon-firehoselist
+{
+	right: .8em;
+	top: .2em;
+	padding: 0;
+	background: none;
+	font-size: 77%;
+}
+
+.vote, .votedup, .voteddown
+{
+	position: absolute;
+	top: 2px;
+	left: .8em;
+}
+.tag-widget.nod-nix-reasons {background: transparent;}
+.tag-widget.nod-nix-reasons .tag-display span.tag {color: #fff !important;}
+
+span.vballoon-firehoselist a {
+	background:#000000 url("//images.slashdot.jp/light_dwn_fade_20.png") repeat-x scroll center top !important;
+	border:1px solid #122 !important;
+	opacity: .6;
+}
+
+/* Someday
+.vote, 
+.votedup, 
+.voteddown,
+.up,
+.down,
+.voted
+{
+	background: none;
+	text-align: center;
+}
+
+.vote a, 
+.votedup a, 
+.voteddown a
+{
+	text-indent: 0;
+	text-decoration: none !important;
+	font-weight: bold;
+	color: #fff !important;
+	width: auto;
+	height: auto;
+}
+
+.up,
+.down,
+span.vballoon-firehoselist a {
+	background:#000000 url("//images.slashdot.jp/light_dwn_fade_20.png") repeat-x scroll center top !important;
+	border:1px solid #122 !important;
+	opacity: .6;
+}
+
+.up:hover,
+.down:hover { background: #111 !important; opacity: .7;}
+
+.votedup .up, 
+.voteddown .down
+{ background: #000 !important; opacity: .8;}
+
+.up
+{
+	border-radius: .8em 0 0 .8em;
+	-moz-border-radius: .8em 0 0 .8em;
+	-webkit-border-top-left-radius: .8em;
+	-webkit-border-bottom-left-radius: .8em;
+	padding: .1em .5em .12em .5em !important;
+	left: .3em;
+}
+
+.down
+{
+	border-radius: 0 .8em .8em 0;
+	-moz-border-radius: 0 .8em .8em 0;
+	-webkit-border-top-right-radius: .8em;
+	-webkit-border-bottom-right-radius: .8em;
+	padding: 0.02em .6em .2em .6em !important;
+	left: 2em;
+}
+*/
+.soda {
+	z-index: -1 !important;
+	left: -.3em;
+}
+.article .soda
+{
+	border-radius: .8em 0 0 0;
+	-moz-border-radius: .8em 0 0 0;
+	-webkit-border-top-left-radius: .8em;
+	width: 2em;
+	background-image: url("//images.slashdot.jp/light_dwn_fade_20.png"); background-position: center top !important;
+background-repeat: repeat-x;
+}
+
+.briefarticle .soda
+{
+	border-radius: .8em 0 0 .8em;
+	-moz-border-radius: .8em 0 0 .8em;
+	-webkit-border-top-left-radius: .8em;
+	-webkit-border-bottom-left-radius: .8em;
+	width: 2em;
+	background-image: url("//images.slashdot.jp/light_dwn_fade_20.png"); background-position: center top !important;
+background-repeat: repeat-x;
+}
+
+#yui-main #firehose .article.thumbs .hide, 
+#yui-main #firehose .briefarticle.thumbs .hide { margin-left: 0; }
+#yui-main #firehose .media { float: right !important; margin: 1em 0 .3em 1em !important; width: auto !important;}
+
+
+/* columns */
+
+.block .title, .message
+{
+	color: #fff;
+	background: #666666 url("//images.slashdot.jp/block-title-bg.png") repeat-x scroll 0 0;
+	padding: .5em 1em !important;
+}
+
+#links
+{
+	border-radius: 0 0 1em 1em;
+	-moz-border-radius: 0 0 1em 1em;
+	-webkit-border-bottom-right-radius: 1em;
+	-webkit-border-bottom-left-radius: 1em;
+	background: #eee;
+	width: 9.5em;
+	position: absolute; 
+	top: 0;
+}
+.maincol {width:auto; margin-left: 9.5em;min-height:80em;}
+
+#links, #slashboxes
+{
+	margin-top: 1em;
+}
+
+
+#slashboxes .block .title
+{
+	border-radius: 0 1em 0 0;
+	-moz-border-radius: 0 1em 0 0;
+	-webkit-border-top-right-radius: 1em;
+}
+
+.block ul
+{
+	padding: 0;
+	margin: 0;
+}
+
+.block ul li
+{
+	padding: .2em 1em;
+	border-bottom: 1px solid #ddd;
+	margin: 0;
+}
+#slashboxes .block ul li, #userboxes .block ul li
+{
+	padding: .2em 0;
+}
+#links h2 {font-size: 100%}
+.block .title {padding: .3em 0}
+.block ul li:last-child { border: none; }
+
+#slashboxes .block .content, #userboxes .block .content
+{
+	border-radius: 0 0 0 1em;
+	-moz-border-radius: 0 0 0 1em;
+	-webkit-border-bottom-left-radius: 1em;
+	background: #eee;
+	margin-bottom: 1em;
+	padding: .5em 1em;
+}
+
+.block .title a, .message a { color: #fff; }
+.block .title, .block .content, .block { border: none !important; }
+
+.block .content
+{
+	background: none;
+	padding: 0;
+}
+
+.block #storyadmin-content.content {padding: 0;}
+.block #storyadmin-content.content table td {padding: 0 0 .3em}
+
+#filter_play_status {text-align: center; padding: .5em 0 0; display: block;}
+
+.reader {display: block; margin-top: 1em; clear: both;}
+
+/* Tagging */
+
+#firehose div.tag-widget-stub.body-widget, #firehose div.tag-widget.body-widget
+{
+	padding:0 1em 0 0;
+	margin: 0;
+	position: absolute;
+	right: 0;
+	float: right;
+	bottom: .5em;
+}
+div.tag-display ul, div.tag-display li {display: inline-block;}
+.article .message, .briefarticle .message {display: none} /* not sure why this is there */
+.tag-widget.nod-nix-reasons {font-size:85%;}
+
+/* Comments */
+.comment .oneline div.title h4 { background: none !important; }
+.comment div.title { background: #fff !important; }
+#commentControlBox, .commentBox { background: none !important; }
+
+/* pagination */
+.paginate
+{
+	display: block;
+	position: relative;
+}
+
+.paginate span.inactive, .paginate span.active { white-space: normal; }
+
+
+/* tabular data */
+table.data {
+background:#DFDFDF;
+clear:none;
+margin: 1em 0 0 0;
+}
+table.data tr.data_head th {
+background:#E6E6E6;
+border-bottom:1px solid #FFFFFF;
+color:#444444;
+padding:0.3em 0.5em;
+text-align:left;
+}
+.data_hl1 td, .data_hl2 td, .data_hl3 td {
+padding:0.3em 0.5em;
+}
+.data_hl1 {
+background:#F8F8F8 none repeat scroll 0 0;
+}
+.data_hl2 {
+background:#DDDDDD none repeat scroll 0 0;
+}
+
+/* icons */
+.edit {width: 20px; position:relative;}
+h3 .edit {
+	position:absolute;
+	right:.5em;
+	top:0.4em;
+}
+
+span.note-flag {
+right:1.5em;
+}
+
+.reject input {
+	visibility:hidden;
+}
+h3 .reject {
+	position:absolute;
+	right:4.5em;
+	top:0em;
+	background:transparent url("//images.slashdot.jp/sic_icons.png") no-repeat scroll 0 -602px;
+	width: 20px;
+	cursor: pointer;
+}
+.edit a{
+	display:block;
+	text-indent:-700em;
+	text-decoration:none;
+	background:url("//images.slashdot.jp/sic_edit.png") right no-repeat;
+	width: 20px;
+}
+#fhtabdel a {position: absolute !important; top: -1px}
+.briefarticle .reject, .briefarticle .edit {display: none;}
+
+span.admin-buttons .no-note span.admin-note a, span.note-flag {width: 20px;}
+/* why is this there */
+div#firehoselist div.article p {clear: none}
+
+/* admin */
+.menu {margin: 0;}
+#adminmenu {background: #000; }
+#adminmenu li {display: inline; padding: .5em; display: inline-block;}
+#adminmenu li a {color: #fff !important;}
+#fh_advprefs, #filter_prefs {margin: 0;}
+#fhoptions a, #options a {top: .4em;}
+#marquee a, #slashboxen a, #pref a {top: .5em;}
+
+#pref a {
+background-position:0 -2398px;
+}
+
+/* slightly fixing positioning of fhoptions by overwriting defaults */
+#pref a {
+background-position:0 -2398px;
+}
+#time a, #advtime {
+background-position:0 -1201px;
+}
+#popularity a, #advpopularity {
+background-position:0 -1402px;
+}
+
+.article.thumbs h3, .briefarticle.thumbs h3 {padding-left: 3.5em !important;}
+.tag-widget .admin-buttons {padding: 0;}
+.tag-widget .note-wrapper {
+margin:0 .5em .5em;
+padding:0;
+vertical-align:middle;
+}
+.tagbody, .tagshide {margin-bottom: 2em;}
+#play a, #pause a {right:11em;}
+#time a, #popularity a {right:5em;}
+#desc a, #asc a {right:9em;}
+#full a, #abbrev a {right:7em;}
+#marquee {display: none}
+#fh_advprefs h4, #filter_prefs h4 {border-top: none;}
+
+
+/* modal */
+#modal_box .generaltitle {background: none; margin: 0; padding: 0; }
+#modal_box #modal_box_content {padding: 1em}
+
+/*
+.article h3, .briefarticle h3 {padding-left: 1em !important;}
+.article h3, .briefarticle h3 {margin: 0 !important} 
+.color_enabled .article h3, .color_enabled .briefarticle h3 {margin: 0 0 0 .5em !important} 
+*/
+
+/* For vanilla article only */
+.head
+{
+	position: relative;
+	overflow: hidden;
+	background: #fff url("//images.slashdot.jp/dark_dwn_fade_30.png") repeat-x top;
+}
+.head .details a, .head .body a, .head a.more, .head h4 a { color: #066 !important; }
+.head h3 .date, .head h3 .nickname {display: none;}
+.head .body, .head .article h3
+{
+	color: #000 !important;
+}
+.head .body, .head .article, .head .details
+{
+	background: none !important;
+}
+.head .collapse {
+background:transparent url("//images.slashdot.jp/login-arrow-collapsed.gif") no-repeat scroll 0 50%;
+padding:8px;
+}
+.head .details, .head h4 { color: #444 !important; }
+div.head .tag-display span.tag {color: #444}
+div.head .tag-display span:hover {color: #fff}
+
+div.nav #fhoptions a, div.nav #options a {
+background-image: url('//images.slashdot.jp/sic_controls_new_666666.png');
+top:0.25em !important;
+}
+
+div.nav #fhoptions a, div.nav #options a {
+ background-image: url('/images/sic_controls_new_666666.png');
+ top:0.25em !important;
+}
+
+
+div#hd div.nav ul li a:hover {
+color:#fff !important;
+text-decoration:underline !important;
+}
+
+/* enabling view of comment count -- because in firehose-idle it was disabled */
+div#firehose span.commentcnt {
+display:inline;
+}
+
+/* overwriting firehose-idle.css */
+div#firehoselist .more {
+display:inline;
+position:relative;
+}
+
+
+/* commented out below, it breaks inline- display of tags on ff2 and safari*/
+/*
+#firehose div.tag-widget-stub.body-widget, #firehose div.tag-widget.body-widget {
+border:1px solid #000000;
+bottom:0.5em;
+float:right;
+margin:0;
+padding:0;
+position:absolute;
+right:0;
+}
+#firehose div.tag-widget-stub.body-widget, #firehose div.tag-widget.body-widget {
+left:13em;
+}
+*/
+
+
+/* enabling view of comment count -- because in firehose-idle it was disabled */
+div#firehose span.commentcnt {
+display:inline;
+}
+
+
+/* overwriting firehose-idle.css */
+div#firehoselist .more {
+display:inline;
+position:relative;
+}
+
+#firehose div.tag-widget-stub.body-widget, #firehose div.tag-widget.body-widget {
+left:13em;
+}
+
+
+span.vballoon-firehoselist a:hover {
+color:#ccc !important ;
+}
+
