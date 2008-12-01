@@ -392,3 +392,17 @@ div.ccw-panel, #ccw-control,
 .inline_comment .contain {margin: 0; padding: 0; border: none}
 
 
+/* Override comments.css for slashdot.jp */
+#d2act .loki {
+		font-size: 88%;
+}
+
+.vertical #d2act.rooted {
+		left: -9em !important;
+}
+
+.vertical #d2act {
+		left: 13px !important;
+}
+
+/* vim: ts=4:ft=css:
