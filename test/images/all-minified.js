@@ -1645,32 +1645,3 @@ function appendToBodytext(text){$('#admin-bodytext').each(function(){this.classN
 function appendToMedia(text){var obj=$dom('admin-media');if(obj){obj.className="show";obj.value=obj.value+text;}}
 $(function(){if($.browser.safari||$.browser.opera){$('.edit a').css('margin-top','0pt');}});
 /* append for slashdot.jp */
-
-/* remove left menu content-height value */
-(function(){
-  var content_height_version = "20080428c";
-  var append = "";
-
-  /* ignore if the version is latest */
-  if ( document.cookie.indexOf("content-height-version=" + content_height_version) > 0 )
-    return null;
-
-  /* check domain */
-  get_domain();
-  append = "; domain=." + domainname
-
-  /* delete cookie if exists and non-zero */
-  $A(document.cookie.split("; ")).each(function(cookie) {
-    var c = cookie.split("=", 2);
-    if ( blocks.indexOf(c[0].replace("-content-height$", "")) && c[1] > 0 ) {
-      document.cookie = c[0] + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + append;
-      if (isdomain)
-        document.cookie = c[0] + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    }
-  });
-
-  /* remember content-height-version */
-  document.cookie = "content-height-version=" + content_height_version + "; path=/" + append;
-  if (isdomain)
-    document.cookie = "content-height-version=" + content_height_version + "; path=/";
-})();
