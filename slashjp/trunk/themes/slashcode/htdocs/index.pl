@@ -587,6 +587,7 @@ sub displayStories {
 	# later (this simulates the old cursor-based method from circa 1997
 	# which was actually not all that smart, but umpteen layers of caching
 	# makes it quite tolerable here in 2004 :)
+	my $num_s = 0;
 	my $story;
 	STORIES_DISPLAY: while ($story = shift @$stories) {
 		my($tmpreturn, $other, @links);
@@ -647,6 +648,8 @@ sub displayStories {
 			? $threshComments[$user->{threshold} + 1]
 			: $story->{commentcount};
 
+		$num_s++;
+		$other->{num} = $num_s;
 		$tmpreturn .= displayStory($story->{sid}, '', $other, $stories_data_cache);
 		
 		if ($other->{dispmode} eq "full") {

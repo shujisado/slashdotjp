@@ -144,6 +144,7 @@ sub dispStory {
 		thresh_commentcount => $other->{thresh_commentcount},
 		expandable 	=> $other->{expandable},
 		getintro	=> $other->{getintro},
+		num		=> $other->{num},
 	);
 
 #use Data::Dumper; print STDERR scalar(localtime) . " dispStory data: " . Dumper(\%data);

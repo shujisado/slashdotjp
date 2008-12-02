@@ -1,8 +1,9 @@
 slash (2.5.0.231-1) unstable; urgency=low
 
   * New upstream git release
+  * Add article count number to articles in index.pl
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 26 Nov 2008 17:36:45 +0900
+ -- Taku YASUI <tach@osdn.jp>  Tue,  2 Dec 2008 10:17:25 +0000
 
 slash (2.5.0.218-1) unstable; urgency=low
 
