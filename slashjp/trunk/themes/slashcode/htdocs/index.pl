@@ -744,6 +744,7 @@ sub displayStories {
 			$tmpreturn .= slashDisplay('storylink', {
 				links	=> \@links,
 				sid	=> $story->{sid},
+				num	=> $num_s,
 			}, { Return => 1 });
 
 		}
