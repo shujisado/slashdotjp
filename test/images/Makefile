@@ -14,7 +14,7 @@ install: default
 
 images: images-stamp
 images-stamp: $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections))
-	perl -ne "print \"http:\$$1\n\" if /url\(['\"]?(\/\/images\.slashdot\.org\/[^)'\"]+)/;" $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections)) | \
+	perl -ne "s|(url\(['\"]?/)([^/])|\$$1/images.slashdot.org/\$$2|g; print \"http:\$$1\n\" if /url\(['\"]?(\/\/images\.slashdot\.org\/[^)'\"]+)/;" $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections)) | \
 		sed -e 's/\.pnh$$/.png/' | \
 		sort -u | \
 		wget --no-proxy --no-host-directories --mirror --no-verbose -i -
