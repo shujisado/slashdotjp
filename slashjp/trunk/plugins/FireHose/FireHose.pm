@@ -2426,7 +2426,7 @@ sub getAndSetOptions {
 		}
 	}
 
-	my $the_skin = defined $form->{section} ? $self->getSkin($form->{section}) : $gSkin;
+	my $the_skin = $form->{section} ? $self->getSkin($form->{section}) : $gSkin;
 
 
 	my $skin_prefix="";
