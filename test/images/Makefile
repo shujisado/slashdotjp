@@ -5,6 +5,7 @@ DESTDIR = /var/lib/slash/site/slashdot.jp/htdocs/images
 sections = apple ask books developer games hardware it linux mobile politics yro
 csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw iestyles ie6 ie7 ie8 idlecore-tidied lick comments-idle
 jses = all-minified comments sectionprefs jquery-opt-1
+aimages = friend.png foe.png freak.png fof.png neutral.png fan.png eof.png
 
 default: update
 update: $(csses) $(sections) $(jses) images
@@ -13,7 +14,7 @@ install: default
 	rsync -avHSC --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp --exclude=\*.jp ./ $(DESTDIR)
 
 images: images-stamp
-images-stamp: $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections))
+images-stamp: $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections)) $(aimages)
 	perl -ne "s|(url\(['\"]?/)([^/])|\$$1/images.slashdot.org/\$$2|g; print \"http:\$$1\n\" if /url\(['\"]?(\/\/images\.slashdot\.org\/[^)'\"]+)/;" $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections)) | \
 		sed -e 's/\.pnh$$/.png/' | \
 		sort -u | \
@@ -53,6 +54,9 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 
 %.js.orig:
 	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst %.js.orig,%.js, $@) -O $@
+
+$(aimages):
+	wget --no-proxy --no-verbose http://images.slashdot.org/$@ -O $@
 
 force: clean default
 
