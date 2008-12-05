@@ -141,6 +141,24 @@ sub getFireHoseColors {
 	return $colors;
 }
 
+sub createUpdateItemFromComment {
+	my($self, $cid) = @_;
+	my $comment = $self->getComment($cid);
+	my $text = $self->getCommentText($cid);
+	
+	my $item = $self->getFireHoseByTypeSrcid("comment", $cid);
+	my $fhid;
+
+	if ($item && $item->{id}) {
+		# update item or do nothing
+		$fhid = $item->{id};
+	} else {
+		$fhid = $self->createItemFromComment($cid);
+	}
+	return $fhid;
+	
+}
+
 sub createItemFromComment {
 	my($self, $cid) = @_;
 	my $comment = $self->getComment($cid);
@@ -167,8 +185,20 @@ sub createItemFromComment {
 		editorpop	=> $editorpop,
 		globjid		=> $globjid,
 		discussion	=> $comment->{sid},
+		createtime	=> $comment->{date},
 	};
 	my $fhid = $self->createFireHose($data);
+
+	if (!isAnon($comment->{uid})) {
+		my $constants = getCurrentStatic();
+		my $tags = getObject('Slash::Tags');
+		$tags->createTag({
+			uid			=> $comment->{uid},
+			name			=> $constants->{tags_upvote_tagname},
+			globjid			=> $globjid,
+			private			=> 1,
+		});
+	}
 
 	my $tagboxdb = getObject('Slash::Tagbox');
 	if ($tagboxdb) {
@@ -660,7 +690,7 @@ sub getFireHoseEssentials {
 				$labels = $tags->getPositiveTags;
 				$labels = ['nod'] unless @$labels;
 			} else { # tagged_non_negative || tagged_negative
-				$labels = $tags->getNegativeTags;
+				$labels = $tags->getFirehoseExcludeTags;
 				$labels = ['nix'] unless @$labels;
 				$not = 'NOT' if $options->{tagged_non_negative};
 			}
@@ -2447,7 +2477,6 @@ sub getAndSetOptions {
 				$options->{$_} = $form->{$_} ? 1 : 0;
 			}
 		}
-		$options->{$_} = defined $form->{$_};
 	}
 
 	my $page = $form->{page} || 0;
@@ -2476,7 +2505,7 @@ sub getAndSetOptions {
 		$options->{base_filter} =~ s/\{nickname\}/$the_nickname/g;
 	}
 
-	if ($fhfilter =~ /\{tag}/) {
+	if ($fhfilter =~ /\{tag\}/) {
 		my $the_tag = $opts->{tag} || $form->{tagname};
 		$fhfilter =~ s/\{tag\}/$the_tag/g;
 		$options->{fhfilter} =~ s/\{tag\}/$the_tag/g;
@@ -2672,7 +2701,7 @@ sub getAndSetOptions {
 
 	$options->{smalldevices} = 1 if $self->shouldForceSmall();
 	$options->{limit} = $self->getFireHoseLimitSize($options->{mode}, $pagesize, $options->{smalldevices}, $options);
-	
+
 	return $options;
 }
 
@@ -3112,7 +3141,7 @@ sub ajaxFirehoseListTabs {
 
 sub splitOpsFromString {
 	my ($self, $str) = @_;
-	my @fh_ops_orig = map { lc($_) } split((/\s+|"/), $str);
+	my @fh_ops_orig = map { lc($_) } split(/(\s+|")/, $str);
 	my @fh_ops;
 
 	my $in_quotes = 0;
@@ -3289,7 +3318,7 @@ sub linkFireHose {
 		$link_url = $story_link_ar->[0];
 	} elsif ($item->{type} eq "journal") {
 		my $the_user = $self->getUser($item->{uid});
-		$link_url = $constants->{rootdir} . "/~" . fixparam($the_user->{nickname}) . "/journal/$item->{srcid}";
+		$link_url = $constants->{real_rootdir} . "/~" . fixparam($the_user->{nickname}) . "/journal/$item->{srcid}";
 	} elsif ($item->{type} eq "comment") {
 		my $com = $self->getComment($item->{srcid});
 		$link_url = $gSkin->{rootdir} . "/comments.pl?sid=$com->{sid}&amp;cid=$com->{cid}";

@@ -350,6 +350,7 @@ sub getBadgeDescriptions {
 sub createComment {
 	my($self, $comment) = @_;
 	return -1 unless dbAvailable("write_comments");
+	my $constants = getCurrentStatic();
 	my $comment_text = $comment->{comment};
 	delete $comment->{comment};
 	$comment->{signature} = md5_hex(encode_utf8($comment_text));
@@ -435,6 +436,11 @@ sub createComment {
 	my $searchtoo = getObject('Slash::SearchToo');
 	if ($searchtoo) {
 #		$searchtoo->storeRecords(comments => $cid, { add => 1 });
+	}
+
+	my $firehose = getObject('Slash::FireHose');
+	if ($firehose && !isAnon($comment->{uid})) {
+		$firehose->createUpdateItemFromComment($cid);
 	}
 
 	return $cid;
@@ -12464,7 +12470,7 @@ sub _addGlobjEssentials_journals {
 		my $fixnick = $journaldata_hr->{$id}{nickname};
 if (!defined $fixnick) { print STDERR scalar(gmtime) . " _addGlobjEssentials_journals no nick for journal $id\n"; }
 		$fixnick = fixparam($fixnick || '');
-		$data_hr->{$globjid}{url} = "$constants->{rootdir}/~$fixnick/journal/$id";
+		$data_hr->{$globjid}{url} = "$constants->{real_rootdir}/~$fixnick/journal/$id";
 		$data_hr->{$globjid}{title} = $journaldata_hr->{$id}{description};
 		$data_hr->{$globjid}{created_at} = $journaldata_hr->{$id}{date};
 	}
@@ -12904,6 +12910,14 @@ sub _getStorySelfLink {
 		skin	=> $skin
 	});
 	return $story_link_ar->[0];
+}
+
+sub getShillInfo {
+        my($self, $shill_id) = @_;
+        my $shill_id_q = $self->sqlQuote($shill_id);
+
+        return $self->sqlSelectHashref('*', 'shill_ids', "shill_id=$shill_id_q");
+
 }
 
 ########################################################
