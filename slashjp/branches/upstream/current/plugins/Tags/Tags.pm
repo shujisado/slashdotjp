@@ -1125,8 +1125,6 @@ sub ajaxSetGetCombinedTags {
 			if ( $skid != $constants->{mainpage_skid} ) {
 				my $skin = $firehose->getSkin($skid);
 				$section_tag = $skin->{name};
-			} else {
-				$section_tag = 'mainpage';
 			}
 		}
 
@@ -2234,6 +2232,11 @@ sub getPositivePopupTags {
 sub getExcludedTags {
 	my($self) = @_;
 	return $self->getTagnamesByParam('exclude', '1');
+}
+
+sub getFirehoseExcludeTags {
+	my($self) = @_;
+	return $self->getTagnamesByParam('fh_exclude', '1');
 }
 
 sub getNegativeTags {

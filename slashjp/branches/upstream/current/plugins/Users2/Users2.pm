@@ -34,7 +34,7 @@ sub getLatestComments {
 	my $uid_q = $self->sqlQuote($uid);
         return $self->sqlSelectAllHashref(
                 'cid',
-                "sid, cid, subject, UNIX_TIMESTAMP(date) as date",
+                "sid, cid, subject, points, reason, UNIX_TIMESTAMP(date) as date",
                 'comments',
                 "uid = $uid_q",
                 'order by date desc limit 5');
@@ -95,10 +95,10 @@ sub getLatestBookmarks {
 
         # Get the latest n bookmarks. These could be contained in journals and
         # submissions, so we want journal size + submissions size + 5.
-        my $num_bookmarks = scalar(keys %$latest_journals) + scalar(keys %$latest_submissions) + 5;
+        #my $num_bookmarks = scalar(keys %$latest_journals) + scalar(keys %$latest_submissions) + 5;
         my $uid_q = $self->sqlQuote($uid);
         my $bookmarks_reader = getObject('Slash::Bookmark');
-        my $latest_bookmarks = $bookmarks_reader->getRecentBookmarksByUid($uid_q, $num_bookmarks);
+        my $latest_bookmarks = $bookmarks_reader->getRecentBookmarksByUid($uid_q, 5);
 
         # Make bookmarks unique against journals
         my $bookmark_count = 0;
@@ -193,7 +193,8 @@ sub getTagsDatapane {
         if ($tagnameid) {
 		# Show all user's tags for one particular tagname.
 		my $tags_hr =
-			$tags_reader->getGroupedTagsFromUser($uid, { tagnameid => $tagnameid });
+			$tags_reader->getGroupedTagsFromUser($uid, { tagnameid => $tagnameid },
+				{ limit => 5000, orderby => 'tagid', orderdir => 'DESC' });
                 my $tags_ar = $tags_hr->{$tagname} || [ ];
                 return slashDisplay('usertagsforname', {
                         useredit => $requested_user,
@@ -203,7 +204,8 @@ sub getTagsDatapane {
                 }, { Page => 'users', Return => 1 });
         } else {
                 my $tags_hr =
-			$tags_reader->getGroupedTagsFromUser($uid, { include_private => $private });
+			$tags_reader->getGroupedTagsFromUser($uid, { include_private => $private },
+				{ limit => 5000, orderby => 'tagid', orderdir => 'DESC' });
                 my $num_tags = 0;
                 for my $tn (keys %$tags_hr) {
                         $num_tags += scalar @{ $tags_hr->{$tn} };
@@ -325,6 +327,35 @@ sub getMarqueeFireHoseId {
 		}
 	}
 	return $fhid;
+}
+
+sub truncateMarquee {
+        my($self, $marquee, $len) = @_;
+
+        my $text;
+        my $linebreak = qr{(?:
+                <br>\s*<br> |
+                </?p> |
+                </(?:
+                        div | (?:block)?quote | [oud]l
+                )>
+        )}x;
+        my $min_chars = 50;
+        my $max_chars = $len || 1000;
+
+        if (length($marquee) < $min_chars) {
+                $text = $marquee;
+        } else {
+                $text = $1 if $marquee =~ m/^(.{$min_chars,$max_chars})?$linebreak/s;
+        }
+
+        $text ||= chopEntity($marquee, $max_chars);
+        local $Slash::Utility::Data::approveTag::admin = 1;
+        $text = strip_html($text);
+        $text = balanceTags($text, { admin => 1 });
+        $text = addDomainTags($text);
+
+        return $text;
 }
 
 sub DESTROY {

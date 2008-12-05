@@ -1121,10 +1121,10 @@ function firehose_reorder() {
 				}
 				if ( firehose_future[firehose_ordered[i]] ) {
 					$('#ttype-'+firehose_ordered[i]).setClass('future');
-					$('#firehose-'+firehose_ordered[i] + "h3").setClass('future');
+					$('#firehose-'+firehose_ordered[i] + " h3").setClass('future');
 				} else {
 					$('#ttype-'+firehose_ordered[i]+'.future').setClass('story');
-					$('#firehose-'+firehose_ordered[i] + "h3.future").setClass('story');
+					$('#firehose-'+firehose_ordered[i] + " h3.future").setClass('story');
 				}
 			}
 			if ( moved ) after_article_moved();
@@ -1941,7 +1941,8 @@ var	AD_HEIGHT = 300, AD_WIDTH = 300, FOOTER_PADDING = 5,
 
 $(function(){
 	$footer = $('#ft');
-	$slashboxes = $('#slashboxes').
+	$slashboxes = $('#slashboxes, #userboxes').
+		eq(0).
 		append('<div id="floating-slashbox-ad" />');
 	$ad_position = $slashboxes.find('#floating-slashbox-ad');
 
@@ -2146,11 +2147,16 @@ Slash.Firehose.articles_on_screen = function(){
 }
 
 Slash.Firehose.at_or_below_ad_space = function( $articles ){
-	var min_top = Math.max(window.pageYOffset, $slashboxes.offset().top + $slashboxes.height());
-	return $articles.filter(function(){
-		return $(this).offset().top >= min_top;
-	});
-
+	try {
+		var min_top = Math.max(window.pageYOffset, $slashboxes.offset().top + $slashboxes.height());
+		return $articles.filter(function(){
+			return $(this).offset().top >= min_top;
+		});
+	} catch ( e ) {
+		// don't throw
+	}
+		// just tell the caller no articles supplied are at or below ad-space
+	return $([]);
 }
 
 Slash.Firehose.choose_article_for_next_ad = function(){

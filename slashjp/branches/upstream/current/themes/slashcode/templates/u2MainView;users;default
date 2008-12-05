@@ -29,7 +29,8 @@ __template__
 </div>
 [% END %]
 
-[% PROCESS u2Menu 
+[% PROCESS u2Menu
+	main_view=main_view
         data_pane=data_pane
         comments_size=latest_comments.size
         journals_size=latest_journals.size
@@ -45,6 +46,7 @@ __template__
 
         [% PROCESS u2UserBoxes
                 latest_comments=latest_comments
+		reasons=reasons
                 latest_journals=latest_journals
                 latest_submissions=latest_submissions
                 latest_bookmarks=latest_bookmarks
@@ -117,7 +119,7 @@ __template__
                                 ELSIF tagshist.$tag.0.globj_type == "journals";
                                         nick = Slash.db.getUser(tagshist.$tag.0.journal.uid, 'nickname');
                                         '<a href="';
-                                        gSkin.rootdir;
+                                        constants.real_rootdir;
                                         '/~';
                                         nick | fixparam;
                                         '/journal/';
@@ -174,12 +176,12 @@ __template__
                 <p>
                 <div id="friendsmenu">
                         <ul>
-                        <li><a href="[% gSkin.rootdir %]/~[% useredit.nickname | strip_paramattr %]/friends">Friends</a></li>
-                        <li><a href="[% gSkin.rootdir %]/~[% useredit.nickname | strip_paramattr %]/fans">Fans</a></li>
-                        <li><a href="[% gSkin.rootdir %]/~[% useredit.nickname | strip_paramattr %]/foes">Foes</a></li>
-                        <li><a href="[% gSkin.rootdir %]/~[% useredit.nickname | strip_paramattr %]/freaks">Freaks</a></li>
-                        <li><a href="[% gSkin.rootdir %]/~[% useredit.nickname | strip_paramattr %]/friends/friends">Friends of Friends</a></li>
-                        <li><a href="[% gSkin.rootdir %]/~[% useredit.nickname | strip_paramattr %]/friends/foes">Foes of Friends</a></li>
+                        <li><a href="[% constants.real_rootdir %]/~[% useredit.nickname | strip_paramattr %]/friends">Friends</a></li>
+                        <li><a href="[% constants.real_rootdir %]/~[% useredit.nickname | strip_paramattr %]/fans">Fans</a></li>
+                        <li><a href="[% constants.real_rootdir %]/~[% useredit.nickname | strip_paramattr %]/foes">Foes</a></li>
+                        <li><a href="[% constants.real_rootdir %]/~[% useredit.nickname | strip_paramattr %]/freaks">Freaks</a></li>
+                        <li><a href="[% constants.real_rootdir %]/~[% useredit.nickname | strip_paramattr %]/friends/friends">Friends of Friends</a></li>
+                        <li><a href="[% constants.real_rootdir %]/~[% useredit.nickname | strip_paramattr %]/friends/foes">Foes of Friends</a></li>
                         </ul>
                 </div>
                 [% relations_datapane %]

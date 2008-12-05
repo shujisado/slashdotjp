@@ -384,6 +384,10 @@ sub main {
 	}
 
 	# Figure out what the op really is.
+	if ($gSkin->{skid} == 36 && (! $form->{op} && ! ($form->{uid} || $form->{nick}))) {
+		# Default to ThinkGeek user if we're in the ThinkGeek skin
+		$form->{uid} = 1387321;
+	}
 	$op = 'userinfo' if (! $form->{op} && ($form->{uid} || $form->{nick}));
 	$op ||= $user->{is_anon} ? 'userlogin' : 'userinfo';
 	if ($user->{is_anon} && ( ($ops->{$op}{seclev} > 0) || ($op =~ /^newuserform|mailpasswdform|displayform$/) )) {
@@ -1068,8 +1072,13 @@ sub showInfo {
 	# showInfo's header information is delayed until here, because
 	# the target user's info is not available until here.
 	vislenify($requested_user);
+	$requested_user->{shill_info} = $reader->getShillInfo($requested_user->{shill_id});
         my $msg = getMessage('user_header', { useredit => $requested_user, fieldkey => $fieldkey });
-        header($msg, '', { shill_id => $requested_user->{shill_id}, U2 => 1 }) or return;
+        header($msg, '', {
+		shill_id   => $requested_user->{shill_id},
+		shill_info => $requested_user->{shill_info},
+		U2         => 1
+	}) or return;
 	# This is a hardcoded position, bad idea and should be fixed -Brian
 	# Yeah, we should pull this into a template somewhere...
 	print getMessage('note', { note => $hr->{note} }) if defined $hr->{note};
@@ -1359,6 +1368,18 @@ sub showInfo {
 		my $tagshist;
 		if ($tags_reader) {
 			$tagshist = $tags_reader->getGroupedTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', include_private => 1, limit => 100 });
+			# This prevents the slashbox from being populated with only private tags,
+			# which leaves it visible but empty for non-admins.
+			my $all_private = 1;
+			if ($tagshist && !$user->{is_admin}) {
+				foreach my $tag (keys %$tagshist) {
+					if (!$tagshist->{$tag}->[0]->{private}) {
+						$all_private = 0;
+						last;
+					}
+				}
+				$tagshist = '' if ($all_private);
+			}
 		}
 
 		# Comments slashbox
@@ -1414,13 +1435,9 @@ sub showInfo {
 			$not_fhid = $users2->getMarqueeFireHoseId($marquee);
 		}
 
-		if ($form->{dp} eq 'firehose' || $form->{dp} =~ /^journal/ || $form->{dp} eq 'submissions' || $form->{dp} eq 'bookmarks' || $form->{dp} eq 'usertag') {
+		if ($main_view || $form->{dp} eq 'firehose' || $form->{dp} =~ /^journal/ || $form->{dp} eq 'submissions' || $form->{dp} eq 'bookmarks' || $form->{dp} eq 'usertag') {
 
 			$form->{listonly} = 1;
-			$form->{mode} = "full";
-			$form->{color} = "black";
-			$form->{orderby} = "createtime";
-			$form->{orderdir} = "DESC";
 			$form->{skipmenu} = 1;
 		}
 
