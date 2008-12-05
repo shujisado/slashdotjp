@@ -1,3 +1,9 @@
+slash (2.5.0.233-1) unstable; urgency=low
+
+  * New upstream git tag
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 05 Dec 2008 14:51:48 +0900
+
 slash (2.5.0.231-1) unstable; urgency=low
 
   * New upstream git release
