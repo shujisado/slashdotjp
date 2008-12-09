@@ -1580,7 +1580,7 @@ sub prepareUser {
 	# no_d2 is set, or they are IE users
 	$user->{state}{no_d2} = $form->{no_d2} ? 1 : 0;
 	if (!$user->{discussion2}) {
-		my $d2 = 'slashdot';  # default for all users
+		my $d2 = $constants->{d2_default} || 'slashdot';  # default for all users
 		if ($user->{state}{no_d2}) {
 			$d2 = 'none';
 		} elsif ($ENV{GATEWAY_INTERFACE}) {
