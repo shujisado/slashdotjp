@@ -389,6 +389,15 @@ div.search-help {
 	margin: 0.9em 0;
 }
 
+/* d1 fix */
+#commentlisting.d1 {
+	padding: 0;
+}
+
+#commentlisting.d1 li {
+	margin: 0;
+}
+
 /* users.pl modifiers */
 div#users table#reason_modifiers table.reason_modifiers {
 	padding-left: 1.5em;
@@ -524,6 +533,10 @@ div.adsense_468x60 {
 
 .microad-400x200 {
 	margin: 0.8em 0;
+}
+
+#ads-bottom-of-comments {
+	margin: 1em 0;
 }
 
 /* for osdnnavbar: width=0 */
