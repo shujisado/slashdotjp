@@ -37,7 +37,7 @@ div#contents {
 	padding-left: 10px;
 }
 div#slashboxes {
-	width: 200px;
+	width: 300px;
 	margin-left: 12px;
 	font-size: 88%;
 	overflow: hidden;
@@ -54,7 +54,7 @@ div#slashboxes {
 #firehose .paginate,
 #pollBooth #wide,
 div#users-blocks {
-	margin-right: 212px;
+	margin-right: 312px;
 }
 div#slashboxes div.block img.map {
 	float: right;
@@ -533,6 +533,10 @@ div.adsense_468x60 {
 
 .microad-400x200 {
 	margin: 0.8em 0;
+}
+
+#ads-index-slashbox-300x300 {
+	margin-bottom: 1.25em;
 }
 
 #ads-bottom-of-comments {
