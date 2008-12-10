@@ -2,3 +2,7 @@ li.comment .title h4 a
 {
 	text-decoration: none;
 }
+
+.generaltitle .title h3 a.skin {
+	color: #999;
+}

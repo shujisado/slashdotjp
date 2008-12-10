@@ -22,3 +22,6 @@ div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.art
 { background: #666 url(//images.slashdot.jp/block-title-bg.pnh) repeat-x left top !important}
 
 
+.generaltitle .title h3 a.skin {
+	color: #CCC;
+}
