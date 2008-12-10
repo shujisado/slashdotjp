@@ -3,7 +3,7 @@
 DESTDIR = /var/lib/slash/site/slashdot.jp/htdocs/images
 
 sections = apple ask books developer games hardware it linux mobile politics yro
-csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw iestyles ie6 ie7 ie8 idlecore-tidied lick comments-idle
+csses = core-tidied comments firehose search polls calendar admin admin-topic-popup print handheld slashcode_lite slashcode_low_bw iestyles ie6 ie7 ie8 idlecore-tidied lick comments-idle ie6-idle ie7-idle ie8-idle
 jses = all-minified comments sectionprefs jquery-opt-1
 aimages = friend.png foe.png freak.png fof.png neutral.png fan.png eof.png
 

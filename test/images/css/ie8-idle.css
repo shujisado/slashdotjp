@@ -1,0 +1,89 @@
+.head div.tags div.tagtitleclosed a span { /*fixing position of the arrow bg, moving [+] farther to the right from overlapping bg beneeth it*/
+background-position: -2px 4px;
+left:-15px !important;
+margin-left:-5px;
+}
+.head span.tagname:first-child{ /*fixing position of the listing of tags*/
+margin-left:-15px !important;
+}
+
+.head p a.more{
+padding: 0pt;
+margin-top:-1em;
+}
+
+#yui-main #firehose .tags  div.tagtitleclosed a span{ /*fixing positioning of arrow bg in #firehose tag area*/
+left:-5px !important;
+margin-left:-5px;
+background-position: 0% 0%;
+width:100px;
+}
+
+/*IE8 BUG: li.active bg doesn't work correctly, below patch works but very randomly disappears when you scroll*/
+/*                 so this need to be tested more on live and watched closely */
+div.nav ul#fhtablist li.active{ /*immitating li.active #fff bg with border*/
+padding-bottom:0pt;
+margin-bottom:0pt;
+border-bottom:20px solid #fff !important;
+border-top:10px solid #fff !important;
+}
+div.nav{
+margin-bottom:-18px; /*removing excess white space*/
+}
+div.nav ul#fhtablist,div.nav ul#fhtablist li{ /*helping immitate bg.*/
+padding-top:4px;
+}
+
+
+input[value="Search"]{ /*aligning header search input text box and search button*/
+float:right;
+}
+
+div.yui-t6{ /*getting rid of extra space in the header*/
+margin-top:-15px !important;
+}
+
+
+span.nbutton { /*fixing .nbutton*/
+position:absolute;
+padding:-0pt !important;
+}
+span.nbutton p b a {
+line-height:2em !important;
+}
+
+
+div.paginate span.nbutton { /*homepage only: aligning .nbutton correctly*/
+margin:-.25em 2em !important;
+}
+
+
+div#discussion_buttons span.nbutton{ /*TEMPORARY*/
+position:relative !important;
+height:100px !important;
+}
+
+.commentwrap{ /*#268*/
+clear:none !important;
+}
+
+
+
+
+
+
+
+
+/*---------------------------------*/
+/* tabs aren't tall enough */
+#bd .nav #fhtablist li a  {
+padding-bottom:1em !important;
+}
+
+#bd .nav {
+height:18px;
+}
+
+
+
+

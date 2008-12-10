@@ -1,0 +1,98 @@
+#logo {
+background:transparent url(//images.slashdot.org/logo-shill-thinkgeek.gif) no-repeat scroll left top;
+}
+
+div#hd {
+left:27px !important;
+width:95% !important;
+}
+
+#logo h1 a span {
+background:none;
+}
+
+div#slogan h2 {
+display:none;
+}
+
+div#hd fieldset legend {
+display:none;
+}
+
+div#doc3 {
+background-image:none;
+}
+
+div.head {
+background-color:#444444;
+background-image:url(//images.slashdot.org/dark_dwn_fade_100.gif);
+}
+
+div#hd form {
+position:absolute;
+right:1em;
+width:300px !important;
+text-align:right;
+}
+
+
+
+.head .block .content {
+background-image:none;
+background:#333;
+}
+
+div.body-widget {
+display:none !important;
+}
+
+span.soda {
+display:none !important;
+}
+
+span.vote {
+display:none !important;
+}
+
+div.article img {
+position:relative;
+}
+
+div.head div.yui-b {
+
+position:relative !important;
+
+}
+
+div#firehoselist h3 a.skin {
+display:none;
+}
+
+div#firehoselist div.article div.details ,
+div#firehoselist div.article h3 {
+margin-left:0pt !important;
+left:0pt !important;
+}
+
+
+#yui-main #firehose .article, #yui-main #firehose .briefarticle {
+background:transparent url(//images.slashdot.org/dark_dwn_fade_30.gif) repeat-x scroll 0 0 !important;
+}
+
+
+div#firehoselist div.article hr {
+display:none !important;
+}
+
+div#firehoselist div.article {
+margin-left: 0 !important;
+left: 0 !important;
+}
+
+div#latest_submissions_content,
+div#latest_bookmarks_content,
+div#latest_friends_content
+ {
+border:1px solid #000;
+position:relative !important;
+}
