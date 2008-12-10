@@ -99,6 +99,10 @@ div#message div.content div.microad {
 	margin: 0.3em 0.7em;
 }
 
+.generaltitle .title h3 a.skin {
+	color: #699;
+}
+
 div.microad_comment {
 	overflow: hidden;
 	background: #FFF;
