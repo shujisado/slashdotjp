@@ -37,7 +37,7 @@ div#contents {
 	padding-left: 10px;
 }
 div#slashboxes {
-	width: 300px;
+	width: 200px;
 	margin-left: 12px;
 	font-size: 88%;
 	overflow: hidden;
@@ -54,8 +54,18 @@ div#slashboxes {
 #firehose .paginate,
 #pollBooth #wide,
 div#users-blocks {
+	margin-right: 212px;
+}
+
+#index #indexhead,
+#index #articles {
 	margin-right: 312px;
 }
+
+#index #slashboxes {
+	width: 300px;
+}
+
 div#slashboxes div.block img.map {
 	float: right;
 }
