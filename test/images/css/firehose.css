@@ -582,3 +582,131 @@ right:0pt;
 	color: white;
 }
 
+div.article {
+	margin-top: 0;
+	margin-bottom: 1em;
+}
+
+.article h3,
+.briefarticle h3 {
+	margin-right: 0 !important;
+	font-weight: bold;
+	background: #DDD url(//images.slashdot.jp/dark_fade_lg.png) repeat-x left bottom !important;
+	position: relative;
+}
+
+.article h3.story,
+.briefarticle h3.story {
+	background: #066 url(//images.slashdot.jp/article-title-bg.png) repeat-x left bottom !important;
+}
+
+.article h3 a,
+.briefarticle h3 a {
+	text-decoration: none;
+}
+
+.article h3.story a,
+.briefarticle h3.story a {
+	color: #FFF;
+}
+
+.briefarticle h3 .date {
+	font-size: 85%;
+}
+
+.article h3 .date {
+	display: none;
+}
+
+.article .body .topic {
+	position: relative;
+	float: right;
+	margin: 0 0 .3em .5em;
+}
+
+/* round off corners of item from lick.css */
+.briefarticle h3 {
+	-moz-border-radius-bottomleft: 0.8em;
+	-moz-border-radius-bottomright: 0.8em;
+	-moz-border-radius-topleft: 0.8em;
+	-moz-border-radius-topright: 0.8em;
+}
+
+.article h3  {
+	-moz-border-radius-bottomleft: 0;
+	-moz-border-radius-bottomright: 0;
+	-moz-border-radius-topleft: 0.8em;
+	-moz-border-radius-topright: 0.8em;
+}
+
+/* body decoration from lick.css */
+.body {
+	/*
+	 * border-radius: 0 0 1em 0;
+	 * -moz-border-radius: 0 0 1em 0;
+	 * -webkit-border-bottom-right-radius: 1em;
+	 */
+	background: transparent url("//images.slashdot.jp/storylinks-right.png") no-repeat scroll right bottom;
+	padding: .5em .8em;
+}
+
+.article {
+	background: transparent url("//images.slashdot.jp/storylinks-bg.png") repeat-x scroll center bottom !important;
+}
+
+/* widget decoration from lick.css */
+#firehose div.tag-widget-stub.body-widget,
+#firehose div.tag-widget.body-widget {
+	padding:0 1em 0 0;
+	float: right;
+}
+
+.reader {
+	display: block;
+	margin-top: 1em;
+}
+
+div#firehoselist .more {
+	display: inline;
+	position: relative;
+	font-weight: bold;
+}
+
+.article .commentcnt {
+	border-left:1px solid #DDD;
+	margin: 0 0 0 0.5em;
+	padding: 0 0 0 0.7em;
+}
+
+/* remove unwanted border */
+.article hr,
+.briefarticle hr {
+	border-color: transparent;
+	display: none;
+}
+
+/* comment balloon for briefarticle */
+.briefarticle .vballoon-firehoselist {
+	border: medium none;
+	display: block;
+	font-size: 75%;
+	position: absolute !important;
+	right: 1.8em !important;
+	text-align: center;
+	top: 0.7em !important;
+	width: 10px;
+}
+
+.briefarticle .vballoon-firehoselist a {
+	background: url(//images.slashdot.jp/sic_icons.png) no-repeat 0 -1400px;
+	padding: 4px 20px 3px 2px;
+	text-align: center;
+	text-decoration: none;
+}
+
+.article .vballoon-firehoselist,
+.briefarticle .vballoon-firehoselist span {
+	display: none;
+}
+
+/* vim: set ft=css: */

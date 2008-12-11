@@ -21,7 +21,7 @@ images-stamp: $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%
 		wget --no-proxy --no-host-directories --mirror --no-verbose -i -
 	touch images-stamp
 
-css/slashcode_lite.css css/slashcode_low_bw.css css/iestyles.css css/admin.css css/comments.css: %: %.orig %.jp
+css/slashcode_lite.css css/slashcode_low_bw.css css/iestyles.css css/admin.css css/comments.css css/firehose.css: %: %.orig %.jp
 $(patsubst %, css/slashdot_%.css, $(sections)): %: %.orig %.jp
 $(csses): %: css/%.css
 $(sections): %: css/slashdot_%.css
