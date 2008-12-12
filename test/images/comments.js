@@ -102,7 +102,7 @@ function updateComment(cid, mode) {
 				if (!cd.innerHTML) {
 					var cs = fetchEl('comment_sub_' + cid);
 					if (cs)
-						cs.innerHTML = '<span class="commentload">Loading...</span>';
+						cs.innerHTML = '<span class="commentload">読み込み中...</span>';
 					fetch_comments.push(cid);
 					fetch_comments_pieces[cid] = 1;
 					doshort = 1;
@@ -713,7 +713,7 @@ function refreshCommentDisplays() {
 	finishCommentUpdates();
 
 	if (roothiddens) {
-		$dom('roothiddens').innerHTML = roothiddens + ' comments are beneath your threshhold';
+		$dom('roothiddens').innerHTML = roothiddens + '個のコメントが現在のしきい値以下です';
 		$dom('roothiddens').className = 'show';
 	} else {
 		$dom('roothiddens').className = 'hide';
@@ -1020,7 +1020,7 @@ function readRest(cid) {
 		}
 	};
 
-	shrunkdiv.innerHTML = '<span class="loading">Loading...</span>';
+	shrunkdiv.innerHTML = '<span class="loading">読み込み中...</span>';
 	ajax_update(params, 'comment_body_' + cid, handlers);
 
 	return false;
@@ -1123,7 +1123,7 @@ function replyPreviewOrSubmit (pid, op, handlers) {
 	if (postanon && postanon.checked)
 		params['postanon'] = postanon.value;
 
-	setReplyMsg(pid, '<span class="loading">Loading...</span>');
+	setReplyMsg(pid, '<span class="loading">読み込み中...</span>');
 	ajax_update(params, '', handlers);
 }
 
@@ -1190,7 +1190,7 @@ function replyTo(pid, nofocus) {
 	params['pid'] = pid;
 	params['sid'] = discussion_id;
 
-	replydiv.html('<span class="loading">Loading...</span>');
+	replydiv.html('<span class="loading">読み込み中...</span>');
 
 	var handlers = {
 		onComplete: function(transport) {
@@ -1201,7 +1201,7 @@ function replyTo(pid, nofocus) {
 				// just don't do it
 				if (reply_link.length) {
 					reply_link_html[pid] = reply_link.html();
-					reply_link.html('<p><b><a href="#" onclick="D2.cancelReply(' + pid + '); return false;">Cancel Reply</a></b></p>');
+					reply_link.html('<p><b><a href="#" onclick="D2.cancelReply(' + pid + '); return false;">返信をキャンセル</a></b></p>');
 				}
 			}
 			if (!nofocus)
@@ -1599,12 +1599,12 @@ function updateMoreNum(num) { // should be an integer, or empty string
 
 	var num_a;
 	if (!num)
-		num_a = 'Get More Comments';
+		num_a = 'さらにコメントを取得';
 	else {
 		if (num == 1)
-			num_a = 'Get 1 More Comment';
+			num_a = 'もう一つコメントを取得';
 		else
-			num_a = 'Get ' + num + ' More Comments';
+			num_a = 'さらにコメントを' + num + '個取得';
 	}
 
 	var a = $dom('more_comments_num_a');

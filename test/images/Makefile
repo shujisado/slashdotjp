@@ -50,6 +50,12 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/innerHTML="Paused"/innerHTML="停止中"/' | \
 		sed -e 's/innerHTML="Updated"/innerHTML="更新中"/' | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' | \
+		sed -e 's/>Cancel Reply</>返信をキャンセル</' | \
+		sed -e 's/>Loading\.\.\./>読み込み中.../' | \
+		sed -e "s/' comments are beneath your threshhold'/'個のコメントが現在のしきい値以下です'/" | \
+		sed -e 's/Get More Comments/さらにコメントを取得/' | \
+		sed -e 's/Get 1 More Comment/もう一つコメントを取得/' | \
+		sed -e "s/'Get ' + num + ' More Comments'/'さらにコメントを' + num + '個取得'/" | \
 		sed -e 's/hidden comment</個の隠れコメント</' | \
 		sed -e 's/hidden comments</個の隠れコメント</' > $@
 	echo >> $@
