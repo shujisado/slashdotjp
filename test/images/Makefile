@@ -49,7 +49,9 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/ Firehose / アレたま /' | \
 		sed -e 's/innerHTML="Paused"/innerHTML="停止中"/' | \
 		sed -e 's/innerHTML="Updated"/innerHTML="更新中"/' | \
-		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' > $@
+		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' | \
+		sed -e 's/hidden comment</個の隠れコメント</' | \
+		sed -e 's/hidden comments</個の隠れコメント</' > $@
 	echo >> $@
 	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
 

@@ -340,9 +340,9 @@ function kidHiddens(cid, kidhiddens) {
 	} else if (kidhiddens) {
 		var kidstring = '<a href="#" onclick="D2.revealKids(' + cid + '); return false">' + kidhiddens;
 		if (kidhiddens == 1) {
-			kidstring += ' hidden comment</a>';
+			kidstring += ' 個の隠れコメント</a>';
 		} else {
-			kidstring += ' hidden comments</a>';
+			kidstring += ' 個の隠れコメント</a>';
 		}
 		hiddens_cid.innerHTML = kidstring; 
 		hiddens_cid.className = 'show';
