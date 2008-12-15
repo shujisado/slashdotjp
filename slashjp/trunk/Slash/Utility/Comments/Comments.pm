@@ -1454,9 +1454,11 @@ sub preProcessComment {
 	if ($comm->{postanon}
 		&& $reader->checkAllowAnonymousPosting
 		&& $user->{karma} > -1
-		&& ($discussion->{commentstatus} eq 'enabled'
-			||
-		    $discussion->{commentstatus} eq 'logged_in')) {
+# disable post using "postanon" by logged_in users (2008-12-15, tach@slashdot.jp)
+#		&& ($discussion->{commentstatus} eq 'enabled'
+#			||
+#		    $discussion->{commentstatus} eq 'logged_in')) {
+		&& $discussion->{commentstatus} eq 'enabled') {
 		$comm->{anon} = 1;
 	}
 
