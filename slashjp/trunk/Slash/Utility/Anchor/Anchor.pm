@@ -640,6 +640,7 @@ sub prepAds {
 
 ########################################################
 sub getAd {
+	return "";
 	my($num, $need_box) = @_;
 	$num ||= 1;
 	$need_box ||= 0;

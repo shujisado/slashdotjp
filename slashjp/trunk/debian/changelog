@@ -2,8 +2,9 @@ slash (2.5.0.233-1) unstable; urgency=low
 
   * New upstream git tag
   * Add selectable d2 default using constants "d2_default"
+  * Disable "getAd()"
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 09 Dec 2008 15:15:52 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon, 15 Dec 2008 09:14:51 +0000
 
 slash (2.5.0.231-1) unstable; urgency=low
 
