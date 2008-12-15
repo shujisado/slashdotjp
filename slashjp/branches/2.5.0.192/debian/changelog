@@ -1,8 +1,10 @@
 slash (2.5.0.192-22) unstable; urgency=low
 
-  * NOT RELEASED YET
+  * Disable post using "postanon" by logged_in users to "logged_in" type
+    discussions
+    (closes: http://sourceforge.jp/ticket/browse.php?group_id=4&tid=12699 )
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 26 Nov 2008 08:09:06 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 15 Dec 2008 08:15:52 +0000
 
 slash (2.5.0.192-21) unstable; urgency=low
 
