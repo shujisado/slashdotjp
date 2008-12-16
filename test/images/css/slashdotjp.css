@@ -99,8 +99,21 @@ div#message div.content div.microad {
 	margin: 0.3em 0.7em;
 }
 
-.generaltitle .title h3 a.skin {
+/* change skin/section link color more light */
+.generaltitle .title h3 a.skin,
+#article .briefarticle .section a {
 	color: #699;
+}
+
+/* related story design */
+#article .briefarticle {
+	background: #E8E8E8;
+	padding: 0.4em;
+}
+
+#article .briefarticle .section a,
+#article .briefarticle .storytitle a {
+	font-weight: bold;
 }
 
 div.microad_comment {
