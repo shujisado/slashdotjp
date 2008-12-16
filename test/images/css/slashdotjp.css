@@ -108,7 +108,7 @@ div#message div.content div.microad {
 /* related story design */
 #article .briefarticle {
 	background: #E8E8E8;
-	padding: 0.4em;
+	padding: 0.4em 0.7em;
 }
 
 #article .briefarticle .section a,
