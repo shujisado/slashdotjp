@@ -1,3 +1,10 @@
+/* change skin/section link color more light */
 .generaltitle .title h3 a.skin {
 	color: #999;
 }
+
+#article .briefarticle .section a {
+	color: #07F;
+}
+
+/* vim: set ft=css: */

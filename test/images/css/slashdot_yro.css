@@ -41,3 +41,16 @@ div.briefarticle .story div.title h3, div.briefarticle .story div.title, div.art
 .story .generaltitle .title a { color: #fff !important; }
 
 
+li.comment .title h4 a
+{
+	text-decoration: none;
+}
+
+/* change skin/section link color more light */
+.generaltitle .title h3 a.skin,
+#article .briefarticle .section a {
+	color: #C70;
+}
+
+/* vim: set ft=css: */
+

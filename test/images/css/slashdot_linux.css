@@ -32,6 +32,11 @@ li.comment .title h4 a
 	text-decoration: none;
 }
 
-.generaltitle .title h3 a.skin {
+/* change skin/section link color more light */
+.generaltitle .title h3 a.skin,
+#article .briefarticle .section a {
 	color: #999;
 }
+
+/* vim: set ft=css: */
+
