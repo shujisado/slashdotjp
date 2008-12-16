@@ -26,6 +26,14 @@ END;
 fh_page = fh_page || "firehose.pl";
 title = item.title;
 
+IF item.type == "bookmark" && options.view == "userbookmark";
+	fh = Slash.getObject("Slash::FireHose");
+	ub = fh.getUserBookmarkForUrl(options.user_view_uid, item.url_id);
+	IF ub && ub.title;
+		title = ub.title;
+	END;
+END;
+
 IF item.primaryskid && item.primaryskid != form.primaryskid && item.primaryskid != constants.mainpage_skid && item.type == "story";
 	the_skin = Slash.db.getSkin(item.primaryskid);
 	IF user.is_anon;
@@ -86,7 +94,7 @@ title = title _ " " _ '<span class="date';
 IF options.nodates; 
 	title = title _ " hide"; 
 END;
-title = title _ '">' _ Slash.timeCalc(item.createtime, "%Y-%m-%d %H:%M") _  "</span> <span class=\"nickname";
+title = title _ '">' _ item.atstorytime _  "</span> <span class=\"nickname";
 IF options.nobylines; 
 	title = title _ " hide"; 
 END;
