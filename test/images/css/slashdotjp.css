@@ -528,7 +528,7 @@ a.tooltip span {
 	width: 200px;
 	white-space: normal;
 	line-height: 1.4 !important;
-	z-index: 10;
+	z-index: 999999;
 }
 
 a.tooltip:hover span{
@@ -540,9 +540,10 @@ a.tooltip:hover span{
 }
 
 #slashboxes #login-content a.tooltip span {
-	width: 160px;
-	margin-left: -60px;
+	width: 180px;
+	margin-left: -80px;
 	margin-top: 20px;
+	font-size: 85%;
 }
 
 /* ads format */
