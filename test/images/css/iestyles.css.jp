@@ -4,11 +4,6 @@
 	width: expression(document.documentElement.clientWidth < 750 ? "750px" : "auto");
 }
 
-/* topnav search width */
-#topnav div.search {
-	width: 20em;
-}
-
 /* override for original iestyles.css */
 ul.menu li {
 	float: none;
