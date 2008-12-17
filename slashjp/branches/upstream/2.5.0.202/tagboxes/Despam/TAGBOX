@@ -1,4 +1,0 @@
-# $Id: TAGBOX,v 1.1 2007/11/01 20:35:18 jamiemccarthy Exp $
-name=Despam
-description=Reduce (firehose) spam
-mysql_dump=mysql_dump.sql

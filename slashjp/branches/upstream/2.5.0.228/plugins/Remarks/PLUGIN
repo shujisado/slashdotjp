@@ -1,7 +1,0 @@
-# $Id$
-name=Remarks
-description="Remarks"
-htdocs=remarks.pl
-template=templates/data;remarks;default
-template=templates/display;remarks;default
-template=templates/config_remarks;misc;default

@@ -1,5 +1,0 @@
-# $Id: TAGBOX,v 1.1 2007/04/19 05:34:47 jamiemccarthy Exp $
-name=FHPopularity2
-description=Keep track of popularity of firehose entries (improved)
-mysql_dump=mysql_dump.sql
-requiresplugin=FireHose
