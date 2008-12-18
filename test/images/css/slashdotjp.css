@@ -547,6 +547,11 @@ a.tooltip:hover span{
 }
 
 /* ads format */
+#ads-superbanner {
+	margin: 0 auto;
+	text-align: center;
+}
+
 div.article div.bigbanner,
 div.adsense_468x60 {
 	overflow: hidden;
