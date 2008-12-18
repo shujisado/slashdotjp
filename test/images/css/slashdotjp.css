@@ -548,7 +548,9 @@ a.tooltip:hover span{
 
 /* ads format */
 #ads-superbanner {
-	margin: 0 auto;
+	width: 728px;
+	margin-left: auto;
+	margin-right: auto;
 	text-align: center;
 }
 
