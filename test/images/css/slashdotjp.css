@@ -69,6 +69,11 @@ div#users-blocks {
 	margin-right: 0;
 }
 
+/* fix for topic icon float */
+#firehoselist .article .body .fhtext {
+	min-height: 80px;
+}
+
 div#slashboxes div.block img.map {
 	float: right;
 }
