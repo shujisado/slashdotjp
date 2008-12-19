@@ -46,24 +46,27 @@ div#slashboxes {
 #wrapper #indexhead,
 #search.aduserbox .generaltitle,
 #search.aduserbox .generalbody,
-#firehoselist,
-#firehose #message,
-#firehose #messagearea,
-#firehose #itemsreturned,
-#firehose .firemenu,
-#firehose .paginate,
 #pollBooth #wide,
 div#users-blocks {
 	margin-right: 212px;
 }
 
 #index #indexhead,
-#index #articles {
+#index #articles,
+#firehose #firehose-main {
 	margin-right: 312px;
 }
 
-#index #slashboxes {
+#index #slashboxes,
+#firehose #slashboxes {
 	width: 300px;
+}
+
+/* fix firehose right margin */
+#firehoselist,
+#firehose #message,
+.firemenu, #console {
+	margin-right: 0;
 }
 
 div#slashboxes div.block img.map {
