@@ -47,9 +47,12 @@ $(jses): %: %.js
 $(patsubst %, %.js, $(jses)): %: %.orig
 	cat $@.orig | \
 		sed -e 's/ Firehose / アレたま /' | \
-		sed -e 's/innerHTML="Paused"/innerHTML="停止中"/' | \
-		sed -e 's/innerHTML="Updated"/innerHTML="更新中"/' | \
+		sed -e "s/html('Paused')/html('停止中')/" | \
+		sed -e "s/html('Updated')/html('更新中')/" | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' | \
+		sed -e 's/Update failed or timed out\./更新に失敗したか、タイムアウトしました。/' | \
+		sed -e 's/Click to retry/もう一度やってみる/' | \
+		sed -e 's/Click to unpause/一時停止を解除する/' | \
 		sed -e 's/>Cancel Reply</>返信をキャンセル</' | \
 		sed -e 's/>Loading\.\.\./>読み込み中.../' | \
 		sed -e "s/' comments are beneath your threshhold'/'個のコメントが現在のしきい値以下です'/" | \

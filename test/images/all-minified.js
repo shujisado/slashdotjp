@@ -1454,10 +1454,10 @@ function getFirehoseUpdateInterval(){var interval=45000;if(updateIntervalType==1
 interval=interval+(5*interval*getSecsSinceLastFirehoseAction()/inactivity_timeout);if(getSecsSinceLastFirehoseAction()>inactivity_timeout){interval=3600000;}
 return interval;}
 function run_before_update(){var secs=getSecsSinceLastFirehoseAction();if(secs>inactivity_timeout){fh_is_timed_out=1;firehose_inactivity_modal();}}
-function firehose_inactivity_modal(){$('#preference_title').html('Firehose Paused due to inactivity');show_modal_box();$('#modal_box_content').html("<a href='#' onclick='setFirehoseAction();hide_modal_box()'>Click to unpause</a>");show_modal_box();}
-function firehose_play(context){fh_play=1;setFirehoseAction();firehose_set_options('pause','0',context);$('#message_area').html('');$('#pauseorplay').html('Updated');$('#play').setClass('hide');$('#pause').setClass('show');}
+function firehose_inactivity_modal(){$('#preference_title').html('Firehose Paused due to inactivity');show_modal_box();$('#modal_box_content').html("<a href='#' onclick='setFirehoseAction();hide_modal_box()'>一時停止を解除する</a>");show_modal_box();}
+function firehose_play(context){fh_play=1;setFirehoseAction();firehose_set_options('pause','0',context);$('#message_area').html('');$('#pauseorplay').html('更新中');$('#play').setClass('hide');$('#pause').setClass('show');}
 function is_firehose_playing(){return fh_play==1;}
-function firehose_pause(context){fh_play=0;$('#pause').setClass('hide');$('#play').setClass('show');$('#pauseorplay').html('Paused');firehose_set_options('pause','1',context);}
+function firehose_pause(context){fh_play=0;$('#pause').setClass('hide');$('#play').setClass('show');$('#pauseorplay').html('停止中');firehose_set_options('pause','1',context);}
 function firehose_add_update_timerid(timerid){fh_update_timerids.push(timerid);}
 function firehose_collapse_entry(id){$('#firehoselist > #firehose-'+id).find('#fhbody-'+id+'.body').setClass('hide').end().setClass('briefarticle');tagsHideBody(id);}
 function firehose_remove_entry(id){var fh=$dom('firehose-'+id);if(fh){var attributes={height:{to:0}};if(!is_ie){attributes.opacity={to:0};}
@@ -1504,9 +1504,9 @@ if(modal_cover&&modal_box){modal_box.style.display='none';modal_cover.style.disp
 return;}
 function getModalPrefs(section,title,tabbed){if(!reskey_static){return show_login_box();}
 $('#preference_title').html(title);ajax_update({op:'getModalPrefs',section:section,reskey:reskey_static,tabbed:tabbed},'modal_box_content',{onComplete:show_modal_box});}
-function firehose_get_media_popup(id){$('#preference_title').html('Media');show_modal_box();$('#modal_box_content').html("<h4>Loading...</h4><img src='/images/spinner_large.gif'>");ajax_update({op:'firehose_get_media',id:id},'modal_box_content');}
+function firehose_get_media_popup(id){$('#preference_title').html('Media');show_modal_box();$('#modal_box_content').html("<h4>読み込み中...</h4><img src='/images/spinner_large.gif'>");ajax_update({op:'firehose_get_media',id:id},'modal_box_content');}
 function firehose_reinit_updates(){fh_is_updating=0;firehose_add_update_timerid(setTimeout(firehose_get_updates,5000));}
-function firehose_update_failed_modal(){$('#preference_title').html('Firehose updates failed');$('#modal_box_content').html('Update failed or timed out.  <a href="#" onclick="firehose_reinit_updates();hide_modal_box();">Click to retry</a>');show_modal_box();}
+function firehose_update_failed_modal(){$('#preference_title').html('Firehose updates failed');$('#modal_box_content').html('更新に失敗したか、タイムアウトしました。  <a href="#" onclick="firehose_reinit_updates();hide_modal_box();">もう一度やってみる</a>');show_modal_box();}
 function saveModalPrefs(){var params={};params.op='saveModalPrefs';params.data=jQuery("#modal_prefs").serialize();params.reskey=reskey_static;var handlers={onComplete:function(){hide_modal_box();if(document.forms.modal_prefs.refreshable.value){document.location=document.URL;}}};ajax_update(params,'',handlers);}
 function displayModalPrefHelp(id){var el=$('#'+id);el.css('display',el.css('display')!='none'?'none':'block');}
 function toggle_filter_prefs(){var fps=$dom('filter_play_status');var fp=$dom('filter_prefs');if(fps){if(fps.className===""){fps.className="hide";if(fp){fp.className="";setTimeout(firehose_slider_init,500);}}else if(fps.className=="hide"){fps.className="";if(fp){fp.className="hide";}}}}
