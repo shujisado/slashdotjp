@@ -51,6 +51,8 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e "s/html('Updated')/html('更新中')/" | \
 		sed -e 's/sitename="Slashdot";/sitename="スラッシュドット ジャパン";/' | \
 		sed -e 's/Update failed or timed out\./更新に失敗したか、タイムアウトしました。/' | \
+		sed -e 's/Firehose updates failed/アレたまの更新に失敗しました/' | \
+		sed -e 's/Firehose Paused due to inactivity/アクティブでないので、アレたまの更新を一時停止しました/' | \
 		sed -e 's/Click to retry/もう一度やってみる/' | \
 		sed -e 's/Click to unpause/一時停止を解除する/' | \
 		sed -e 's/>Cancel Reply</>返信をキャンセル</' | \
