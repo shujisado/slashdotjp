@@ -2063,7 +2063,7 @@ sub getGlobalOptionDefaults {
 
 	my $defaults = {
 		pause		=> 1,
-		mode 		=> 'full',
+		mode 		=> 'fulltitle',
 		orderdir	=> 'DESC',
 		orderby		=> 'createtime',
 		mixedmode 	=> 0,
@@ -2300,7 +2300,7 @@ sub getAndSetOptions {
 
 		# Jump to default view as necessary
 		if (!$tab && !defined $options->{fhfilter} && !$opts->{view} && !$form->{view}) {
-			$opts->{view} = "stories";
+			$opts->{view} = $constants->{firehose_default_tab} || "stories";
 		}
 
 		my $view;
