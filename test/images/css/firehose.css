@@ -709,4 +709,9 @@ div#firehoselist .more {
 	display: none;
 }
 
+/* fix pagination margin */
+.paginate {
+	margin-right: 0;
+}
+
 /* vim: set ft=css: */
