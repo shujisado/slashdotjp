@@ -1,1 +1,13 @@
 /* append for slashdot.jp */
+function toggle_loginform() {
+	obj = document.getElementById("loginform");
+	visible = (obj.style.height == "" || obj.style.height == "0pt") ? false : true;
+	if (visible) {
+		obj.style.height = "0pt";
+		document.getElementById("loginlink").className = 'collapsed';
+	} else {
+		obj.style.height = '39px';
+		document.getElementById("loginlink").className = 'expanded';
+	}
+}
+

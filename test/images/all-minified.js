@@ -1645,3 +1645,15 @@ function appendToBodytext(text){$('#admin-bodytext').each(function(){this.classN
 function appendToMedia(text){var obj=$dom('admin-media');if(obj){obj.className="show";obj.value=obj.value+text;}}
 $(function(){if($.browser.safari||$.browser.opera){$('.edit a').css('margin-top','0pt');}});
 /* append for slashdot.jp */
+function toggle_loginform() {
+	obj = document.getElementById("loginform");
+	visible = (obj.style.height == "" || obj.style.height == "0pt") ? false : true;
+	if (visible) {
+		obj.style.height = "0pt";
+		document.getElementById("loginlink").className = 'collapsed';
+	} else {
+		obj.style.height = '39px';
+		document.getElementById("loginlink").className = 'expanded';
+	}
+}
+
