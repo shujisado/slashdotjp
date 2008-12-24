@@ -236,6 +236,39 @@ div.commentBody {
 	text-decoration: none;
 }
 
+/* users settings format */
+form#editcomm fieldset {
+	border: 1px solid;
+	padding: 0.8em;
+	margin-bottom: 1em;
+}
+
+form#editcomm fieldset legend {
+	display: block;
+	margin: 0 0.5em;
+	padding: 0 0.5em;
+	font-weight: bold;
+}
+
+form#editcomm fieldset legend em {
+	font-weight: normal;
+	font-style: normal;
+}
+
+form#editcomm fieldset div {
+	margin-bottom: 0.8em;
+}
+
+form#editcomm fieldset label {
+	display: inline;
+	font-weight: normal;
+	padding: 0;
+}
+
+form#editcomm fieldset td.foaf-select select {
+	margin-right: 5em;
+}
+
 /* Override moderation summary box for AdSense */
 #mod_summary {
 	margin-left: 0;
