@@ -11,4 +11,11 @@
 		left: 13px !important;
 }
 
+/* fix d2 buttons design */
+.inline_comment .replyto_buttons {
+		margin: 0;
+		padding: 1em;
+		background: #FFF;
+}
+
 /* vim: ts=4:ft=css:
