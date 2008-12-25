@@ -3120,6 +3120,7 @@ sub saveHome {
 				maxstories	=> $gSkin->{artcount_max} || 30,
 				tzcode		=> $constants->{default_tzcode} || "EST",
 				dfid		=> $constants->{default_dfid} || 0,
+				willing		=> 1,
 				# XXX shouldn't this reset ALL the defaults,
 				# not just these two?
 			});
