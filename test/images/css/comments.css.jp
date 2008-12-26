@@ -29,4 +29,11 @@
 		background: #FFF;
 }
 
+/* fix d2 comment anon checkbox */
+.generaltitle h3 label {
+		display: inline;
+		font-weight: normal;
+		font-size: 85%;
+}
+
 /* vim: ts=4:ft=css:
