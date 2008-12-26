@@ -418,4 +418,9 @@ div.ccw-panel, #ccw-control,
 		border: none;
 }
 
+/* fix d2 comment background */
+.inline_comment {
+		background: #FFF;
+}
+
 /* vim: ts=4:ft=css:
