@@ -412,4 +412,10 @@ div.ccw-panel, #ccw-control,
 		background: #FFF;
 }
 
+/* fix d2 error message design */
+.inline_comment .replyto_msg {
+		background: transparent;
+		border: none;
+}
+
 /* vim: ts=4:ft=css:
