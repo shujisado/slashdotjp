@@ -526,7 +526,7 @@ sub previewForm {
 	my $constants = getCurrentStatic();
 
 	my $comment = preProcessComment($form, $user, $discussion, $error_message) or return;
-	return $$error_message if $comment eq '-1';
+	return '' if $comment eq '-1';
 	my $preview = postProcessComment({ %$user, %$form, %$comment }, 0, $discussion);
 
 	if ($constants->{plugin}{Subscribe}) {
