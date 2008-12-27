@@ -22,6 +22,18 @@ __template__
 [% CASE 'no modcommentlog' %]
 	<p>No comment history available.</p>
 
+[% CASE 'moderate score' %]
+	Score: [% score %]
+
+[% CASE 'moderate moderated' %]
+	Moderated '[% reason.name %]'. [% points; points == 1 ? "point" : "points" %] left.
+
+[% CASE 'moderate no_moderation_performed' %]
+	Error: No moderation performed.
+
+[% CASE 'moderate moderation_points_left' %]
+	Error: [% points %] moderation points left.
+
 [% END %]
 __seclev__
 1000

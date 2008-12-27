@@ -6,6 +6,7 @@ package Slash::Moderation;
 
 use strict;
 use Date::Format qw(time2str);
+use Slash;
 use Slash::Utility;
 use Slash::Display;
 
@@ -84,22 +85,21 @@ sub ajaxModerateCid {
 				$self->countUsers({ max => 1 }), $self->getReasons
 			);
 
-			$html->{$score}  = "Score:$points";
+			$html->{$score} = getData("moderate score", { score => $points });
 			$html->{$score} = qq[<a href="#" onclick="getModalPrefs('modcommentlog', 'Moderation Comment Log', $cid); return false">$html->{$score}</a>]
 				if $constants->{modal_prefs_active} && !$user->{is_anon};
 			$html->{$score} .= ", $reasons->{$comment->{reason}}{name}"
 				if $comment->{reason} && $reasons->{$comment->{reason}};
 			$html->{$score} = "($html->{$score})";
 
-			my $ptstr = $user->{points} == 1 ? 'point' : 'points';
-			$html->{$select} = "Moderated '$reasons->{$reason}{name}.'  $user->{points} $ptstr left.";
+			$html->{$select} = getData("moderate moderated", { reason => $reasons->{$reason}, points => $user->{points} });
 			$self->setStory($sid, { writestatus => 'dirty' });
 
 		} elsif (!$ret_val) {
-			$html->{$select} = "Error: No moderation performed.";
+			$html->{$select} = getData("moderate no_moderation_performed");
 
 		} elsif ($ret_val == -1 || $ret_val == -2) {
-			$html->{$select} = "Error: $user->{points} moderation points left.";
+			$html->{$select} = getData("moderate moderation_points_left", { points => $user->{points} });
 		}
 	}
 

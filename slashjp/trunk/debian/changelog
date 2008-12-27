@@ -4,8 +4,9 @@ slash (2.5.0.233-1) unstable; urgency=low
   * Add selectable d2 default using constants "d2_default"
   * Disable "getAd()"
   * Fix to change firehose default tab name
+  * Fix to use getData() for moderation message using ajax.pl
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 19 Dec 2008 12:03:52 +0000
+ -- Taku YASUI <tach@osdn.jp>  Sat, 27 Dec 2008 11:04:05 +0000
 
 slash (2.5.0.231-1) unstable; urgency=low
 
