@@ -50,7 +50,8 @@ sub insertFireHose {
 
 	return unless getCurrentStatic()->{plugin}{FireHose};
 
-	if ($promotetype ne 'post') {
+	# bypass reskey check (slashdot.jp, 2008-12-29)
+	if (0 && $promotetype ne 'post') {
 		my $reskey = getObject('Slash::ResKey');
 		my $rkey = $reskey->key('submit', { nostate => 1 });
 		if (!$rkey || !$rkey->createuse) {
