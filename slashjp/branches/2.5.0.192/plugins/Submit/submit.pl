@@ -624,7 +624,7 @@ sub saveSub {
 	my $submission = {
 		email		=> $form->{email},
 		uid		=> $uid,
-		name		=> $form->{name},
+		name		=> $form->{name} || "Anonymous Coward",
 		story		=> $form->{story},
 		subj		=> $form->{subj},
 		tid		=> $form->{tid},
