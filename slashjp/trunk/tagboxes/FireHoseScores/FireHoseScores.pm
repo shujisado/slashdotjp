@@ -220,7 +220,7 @@ sub getStartingColorLevel {
 	my $constants = getCurrentStatic();
 	my($color_level, $extra_pop) = (0, 0);
 	if ($type eq "submissions") {
-		$color_level = 5;
+		$color_level = 4;
 	} elsif ($type eq "journals") {
 		my $journal = getObject("Slash::Journal");
 		my $j = $journal->get($target_id);
@@ -229,7 +229,7 @@ sub getStartingColorLevel {
 		# Depending on whether the journal author asked for it to be
 		# publicized, published, or merely posted, its starting color
 		# for regular users will be blue, indigo, or violet.
-		$color_level = $publicize ? 5 : $publish ? 6 : 7;
+		$color_level = $publicize ? 4 : $publish ? 5 : 6;
 	} elsif ($type eq 'urls') {
 		# XXX should modify next line by users' vote clout
 		$extra_pop = $self->sqlCount('bookmarks', "url_id=$target_id_q") || 0;
