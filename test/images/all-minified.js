@@ -1598,7 +1598,7 @@ var $positioners;if(type=='firehose'){var $entry=$('#firehose-'+id);var $widget=
 add($related_trigger).
 add($widget.find('.edit-toggle')).
 add($entry.find('#updown-'+id));}else{$positioners=$('#taghist-'+id);}
-var popupid="taghistory-"+id;var title="History ";var buttons=createPopupButtons("<a href=\"#\" onclick=\"return false\">[?]</a></span><span><a href=\"#\" onclick=\"closePopup('"+popupid+"-popup'); return false\">[X]</a>");title=title+buttons;createPopup(getXYForSelector($positioners),title,popupid);ajax_update(params,"taghistory-"+id+"-contents");}
+var popupid="taghistory-"+id;var title="履歴 ";var buttons=createPopupButtons("<a href=\"#\" onclick=\"return false\">[?]</a></span><span><a href=\"#\" onclick=\"closePopup('"+popupid+"-popup'); return false\">[X]</a>");title=title+buttons;createPopup(getXYForSelector($positioners),title,popupid);ajax_update(params,"taghistory-"+id+"-contents");}
 function firehose_admin_context(display){display.update_tags('extras history',{order:'prepend'});}
 function firehose_handle_admin_commands(commands){var entry=this,$entry=$(entry),id=$entry.attr('tag-server');return $.map(commands,function(cmd){var user_cmd=null;switch(cmd){case'extras':firehose_get_admin_extras(id);break;case'history':tagsHistory(id,'firehose');break;case'neverdisplay':if(confirm("Set story to neverdisplay?")){non_admin_commands.push('neverdisplay');entry._ajax_request('',{op:'admin_neverdisplay',stoid:'',fhid:id,ajax:{success:function(){firehose_remove_entry(id);}}});}
 break;case'signed':case'signoff':case'unsigned':if(!$entry.article_info('awaiting-thumbnail')){entry._ajax_request('',{op:'admin_signoff',stoid:$entry.article_info('stoid'),ajax:{success:function(){$('[context=signoff]',entry).remove();}}});}
