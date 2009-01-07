@@ -46,6 +46,7 @@ all-minified.js: %: %.orig %.jp
 $(jses): %: %.js
 $(patsubst %, %.js, $(jses)): %: %.orig
 	cat $@.orig | \
+		sed -e 's/if(name=="usermode"){/if(name=="firehose_usermode"){/' | \
 		sed -e 's/ Firehose / アレたま /' | \
 		sed -e 's/"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"/"日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"/' | \
 		sed -e 's/"Sun","Mon","Tue","Wed","Thu","Fri","Sat"/"日","月","火","水","木","金","土"/' | \
