@@ -25,6 +25,27 @@ body {
 	margin-top: 0;
 }
 
+/* firehose admin fix */
+#firehose .briefarticle h3 {
+	padding-right: 48px !important;
+}
+
+#firehose .edit a {
+	display: block;
+	padding-left: 0;
+	width: 20px;
+	text-indent: -9999px;
+}
+
+#firehose .edit {
+	right: 20px;
+	top: 4px;
+}
+
+span.note-flag {
+	right: 26px;
+}
+
 /* filter table */
 table.list-filters tr.head,
 table.list-filters tr.even {
@@ -33,3 +54,5 @@ table.list-filters tr.even {
 table.list-filters td {
 	padding: 0.1em 0.3em;
 }
+
+/* vim: set ft=css: */
