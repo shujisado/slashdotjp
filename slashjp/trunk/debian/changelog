@@ -6,8 +6,9 @@ slash (2.5.0.233-1) unstable; urgency=low
   * Fix to change firehose default tab name
   * Fix to use getData() for moderation message using ajax.pl
   * bypass reskey check on insertFireHose() at Journal.pm
+  * Fix to set/unset firehose_usermode correctly
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 29 Dec 2008 14:51:26 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed,  7 Jan 2009 07:27:03 +0000
 
 slash (2.5.0.231-1) unstable; urgency=low
 

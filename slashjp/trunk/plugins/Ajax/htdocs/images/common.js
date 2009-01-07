@@ -351,7 +351,7 @@ function firehose_set_options(name, value, context) {
 	params.op = 'firehose_set_options';
 	params.reskey = reskey_static;
 	var theForm = document.forms.firehoseform;
-	if (name == "usermode") {
+	if (name == "firehose_usermode") {
 		value = value ? 1 : 0;
 		params.setusermode = 1;
 		params[name] = value;
