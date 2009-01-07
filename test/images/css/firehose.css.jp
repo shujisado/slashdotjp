@@ -3,6 +3,10 @@ div.article {
 	margin-bottom: 1em;
 }
 
+.briefarticle h3 {
+	padding-right: 30px !important;
+}
+
 .article h3,
 .briefarticle h3 {
 	margin-right: 0 !important;
