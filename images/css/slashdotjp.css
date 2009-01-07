@@ -294,8 +294,8 @@ div.commentBody {
 
 /* slashdot.jp announce area */
 div#slashdotjp-site-announce {
-	background: #FFC;
-	border: 1px solid #055;
+	background: #FFD;
+	border: 1px solid #FE6;
 	margin-bottom: 4px;
 	padding: 2px;
 	font-weight: bold;
