@@ -84,6 +84,11 @@ div#slashboxes div.block img.map {
 	text-indent: inherit;
 	width: 21px;
 }
+
+#slashboxes .title .closebox {
+	cursor: pointer;
+}
+
 .edit a {
 	float: none;
 	margin-top: 0;
