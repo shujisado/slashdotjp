@@ -602,7 +602,7 @@ sub compressOk {
 		# characters being in a comment, but no one should be using
 		# that many wide characters in the standard English
 		# alphabet.  we can adjust filters if necessary. -- pudge
-		$content_slice =~ s/(.)/ord($1) > 2**8-1 ? '_' : $1/ge;
+		$content_slice =~ s/(.)/ord($1) > 2**8-1 ? '_' : $1/ge unless ($constants->{tweak_japanese});
 
 		for (sort { $a <=> $b } keys %$limits) {
 			next unless $length >= $limits->{$_}->[0]

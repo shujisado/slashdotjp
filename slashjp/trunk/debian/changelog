@@ -9,8 +9,9 @@ slash (2.5.0.233-1) unstable; urgency=low
   * Fix to set/unset firehose_usermode correctly
   * Fix regexp match warning
     at /usr/lib/perl5/Slash/Utility/Comments.pm line 625
+  * Fix compress filter enable to use multibyte characters
 
- -- Taku YASUI <tach@osdn.jp>  Thu,  8 Jan 2009 04:12:39 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu,  8 Jan 2009 06:03:51 +0000
 
 slash (2.5.0.231-1) unstable; urgency=low
 
