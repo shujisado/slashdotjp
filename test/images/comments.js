@@ -2213,27 +2213,27 @@ function reduceThresholdPrint(highlight) {
 	if (currents['hidden'] <= 0 || user_threshold <= -1 || no_lower_threshold)
 		return;
 
-	$('#preference_title').html('No More Comments At This Threshold');
+	$('#preference_title').html('このしきい値ではもうコメントはありません');
 	show_modal_box();
 
 	var html = '<div>\
-<p>There are no more comments available at Score:--SCORE--, but there might be more at Score:--SCORE1--.</p><p>Would you like to lower your threshold for \
-<input type="button" value="this" onclick="D2.reduceThreshold(--HIGHLIGHT--,1)"> ';
+<p>スコア: --SCORE-- ではもう表示できるコメントはありませんが、スコア: --SCORE1-- ならありそうです。</p><p>しきい値を下げますか？ \
+<input type="button" value="この議論だけ" onclick="D2.reduceThreshold(--HIGHLIGHT--,1)"> ';
 	if (!user_is_anon)
-		html = html + '<input type="button" value="all"  onclick="D2.reduceThreshold(--HIGHLIGHT--)"> ';
+		html = html + '<input type="button" value="すべての議論で"  onclick="D2.reduceThreshold(--HIGHLIGHT--)"> ';
 	html = html + 'discussion(s)?<br>\
-<input type="button" value="No Thanks" onclick="D2.reduceThreshold(-1)">\
+<input type="button" value="やりません" onclick="D2.reduceThreshold(-1)">\
 </p>\
 \
-<p><i>(Remember that you can always adjust these controls with the slider widget \
-visible to the --LEFTORTOP-- of the discussion.)</i></p>\
+<p><i>（コメントの--LEFTORTOP--に見えるスライダーで制御できますよ） \
+</i></p>\
 </div>';
 
 	html = html.replace(/\-\-SCORE\-\-/g, user_threshold);
 	html = html.replace(/\-\-SCORE1\-\-/g, (user_threshold-1));
 	html = html.replace(/\-\-HIGHLIGHT\-\-/g, highlight);
 
-	var leftortop = $('#d2out').hasClass('horizontal') ? 'top' : 'left';
+	var leftortop = $('#d2out').hasClass('horizontal') ? '上の' : '左の';
 	html = html.replace(/\-\-LEFTORTOP\-\-/g, leftortop);
 
 	$('#modal_box_content').html(html);

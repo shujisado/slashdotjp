@@ -68,6 +68,15 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/Get More Comments/さらにコメントを取得/' | \
 		sed -e 's/Get 1 More Comment/もう一つコメントを取得/' | \
 		sed -e "s/'Get ' + num + ' More Comments'/'さらにコメントを' + num + '個取得'/" | \
+		sed -e "s/'No More Comments At This Threshold'/'このしきい値ではもうコメントはありません'/" | \
+		sed -e 's/>There are no more comments available at Score:--SCORE--, but there might be more at Score:--SCORE1--.</>スコア: --SCORE-- ではもう表示できるコメントはありませんが、スコア: --SCORE1-- ならありそうです。</' | \
+		sed -e 's/>Would you like to lower your threshold for/>しきい値を下げますか？/' | \
+		sed -e 's/value="this"/value="この議論だけ"/' | \
+		sed -e 's/value="all"/value="すべての議論で"/' | \
+		sed -e 's/value="No Thanks"/value="やりません"/' | \
+		sed -e 's/>(Remember that you can always adjust these controls with the slider widget/>（コメントの--LEFTORTOP--に見えるスライダーで制御できますよ）/' | \
+		sed -e 's/visible to the --LEFTORTOP-- of the discussion.)</</' | \
+		sed -e "s/'top' : 'left';/'上の' : '左の';/" | \
 		sed -e 's/hidden comment</個の隠れコメント</' | \
 		sed -e 's/hidden comments</個の隠れコメント</' > $@
 	echo >> $@
