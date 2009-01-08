@@ -36,4 +36,9 @@
 		font-size: 85%;
 }
 
+/* fix d2 slide bar */
+.vertical #ccw-abbr-bar {
+		width: 106px;
+}
+
 /* vim: ts=4:ft=css:
