@@ -622,7 +622,8 @@ sub getError {
 	# are calling from ajax.pl ... easier than reorganizing the code
 	# for now -- pudge 2008/03/04
 	for (0..9) {
-		if ((caller($_))[1] =~ /\bajax\.pl$/) {
+		my $caller_filename = (caller($_))[1];
+		if ($caller_filename && $caller_filename =~ /\bajax\.pl$/) {
 			$hashref->{no_titlebar} = 1;
 			last;
 		}
