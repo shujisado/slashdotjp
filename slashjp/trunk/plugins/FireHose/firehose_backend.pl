@@ -52,7 +52,7 @@ sub gen_firehose_rss {
 	$opts ||= {};
 	$content_type ||= "rss";
 
-	slashdLog("$base $skin $label $color '$filter'");
+	#slashdLog("$base $skin $label $color '$filter'");
 	#use Data::Dumper;
 	#slashdLog(Dumper($opts)) if $opts;
 
