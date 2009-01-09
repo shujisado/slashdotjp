@@ -2711,6 +2711,7 @@ sub getFireHoseLimitSize {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	$pagesize ||= '';
 
 	my $limit;
 
