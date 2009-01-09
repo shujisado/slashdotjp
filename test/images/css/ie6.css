@@ -125,3 +125,13 @@ top:-1px !important;
 border-top:1px solid #000 !important;
 }
 
+/* override loginform for ie6 */
+#loginform legend {
+	display: none;
+}
+
+#loginform label {
+	display: inline;
+}
+
+/* vim: set ft=css: */

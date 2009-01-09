@@ -1,0 +1,10 @@
+/* override loginform for ie6 */
+#loginform legend {
+	display: none;
+}
+
+#loginform label {
+	display: inline;
+}
+
+/* vim: set ft=css: */
