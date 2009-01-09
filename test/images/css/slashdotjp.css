@@ -222,6 +222,11 @@ div.commentBody {
 	work-break: break-all;
 }
 
+/* zoo icon position fix */
+.zooicon img {
+	vertical-align: bottom;
+}
+
 /* write comment big link */
 .write-comment-link {
 	font-size: 160%;

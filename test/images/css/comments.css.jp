@@ -11,6 +11,11 @@
 		left: 13px !important;
 }
 
+/* fix line-height of commentBody */
+div.commentBody {
+		line-height: 1.4;
+}
+
 /* fix d2 buttons design */
 .inline_comment .replyto_buttons {
 		margin: 0;
