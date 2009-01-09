@@ -53,8 +53,8 @@ sub gen_firehose_rss {
 	$content_type ||= "rss";
 
 	slashdLog("$base $skin $label $color '$filter'");
-	use Data::Dumper;
-	slashdLog(Dumper($opts)) if $opts;
+	#use Data::Dumper;
+	#slashdLog(Dumper($opts)) if $opts;
 
 	$form->{color} = $color;
 	$form->{fhfilter} = $filter;

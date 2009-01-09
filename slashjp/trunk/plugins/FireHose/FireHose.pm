@@ -2196,6 +2196,7 @@ sub applyViewOptions {
 sub genUntitledTab {
 	my($self, $user_tabs, $options) = @_;
 	my $user = getCurrentUser();
+	$options ||= {};
 
 	my $tab_compare = {
 		filter 		=> "fhfilter"
@@ -2216,7 +2217,7 @@ sub genUntitledTab {
 			}
 		}
 
-		if ($options->{tab} eq $tab->{tabname}) {
+		if (defined($options->{tab}) && $options->{tab} eq $tab->{tabname}) {
 			$tab->{active} = 1;
 		}
 		
