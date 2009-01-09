@@ -216,6 +216,7 @@ sub create {
 	$slashdb->setUser($user->{uid}, { journal_last_entry_date => $date });
 
 	$self->insertFireHose($id, $promotetype);
+	$self->updateUsersJournal($user->{uid});
 
 	return $id;
 }
@@ -273,6 +274,7 @@ sub remove {
 		);
 	}
 
+	$self->updateUsersJournal($uid);
 
 	return $count;
 }
