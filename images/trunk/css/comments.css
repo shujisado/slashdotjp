@@ -1,6 +1,6 @@
 frame {border: none; overflow: hidden}
 
-ul li {list-style-type: none}
+
 
 #commentlisting ul li {
   padding-left: 2em;
@@ -403,6 +403,11 @@ div.ccw-panel, #ccw-control,
 
 .vertical #d2act {
 		left: 13px !important;
+}
+
+/* fix #commentlisting list-style */
+#commentlisting {
+		list-style: none;
 }
 
 /* fix line-height of commentBody */

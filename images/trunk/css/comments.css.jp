@@ -11,6 +11,11 @@
 		left: 13px !important;
 }
 
+/* fix #commentlisting list-style */
+#commentlisting {
+		list-style: none;
+}
+
 /* fix line-height of commentBody */
 div.commentBody {
 		line-height: 1.4;
