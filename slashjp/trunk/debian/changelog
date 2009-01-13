@@ -1,3 +1,10 @@
+slash (2.5.0.233-3) unstable; urgency=low
+
+  * Improve calculation method giving moderation points for slashdot.jp
+  * Write detail log when granting moderation point
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 13 Jan 2009 05:16:39 +0000
+
 slash (2.5.0.233-2) unstable; urgency=low
 
   * Fix to insert correct entry to users_journal
