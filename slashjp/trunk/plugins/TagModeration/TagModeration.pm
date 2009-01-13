@@ -54,16 +54,25 @@ sub setModPoints {
 	for my $uid (@$uids) {
 		next unless $uid;
 		my $user = $self->getUser($uid);
-		my @clouts = grep { $_ } values %{ $user->{clout} };
-		my $high_clout = $constants->{m1_pointgrant_highclout} || 4;
-		my $high_clout_count = scalar grep { $_ > $high_clout } @clouts;
-		if ($high_clout_count > 0) {
-			$num_high++;
-			$sum_high += $high_clout_count;
-			push @high_uids, $uid;
-		}
-		my $this_pointgain = $opts->{pointtrade} * (1 + $high_clout_count);
-		my $this_maxpoints = $opts->{maxpoints}  * (1 + $high_clout_count);
+
+		# disable calculation for slashdot.org (slashcode original) for slashdot.jp (tach, 2009-01-13)
+		#my @clouts = grep { $_ } values %{ $user->{clout} };
+		#my $high_clout = $constants->{m1_pointgrant_highclout} || 4;
+		#my $high_clout_count = scalar grep { $_ > $high_clout } @clouts;
+		#if ($high_clout_count > 0) {
+		#	$num_high++;
+		#	$sum_high += $high_clout_count;
+		#	push @high_uids, $uid;
+		#}
+		#my $this_pointgain = $opts->{pointtrade} * (1 + $high_clout_count);
+		#my $this_maxpoints = $opts->{maxpoints}  * (1 + $high_clout_count);
+		my ($base, $num, $this_pointgain) = (1, 1, 1);
+		map { $base += $_ } values %{ $user->{clout} };
+		$num = (scalar keys %{ $user->{clout} }) > 1 ? (scalar keys %{ $user->{clout} }) - 1 : 1;
+		$this_pointgain = int($base / $num + 0.5);
+		$this_pointgain = $this_pointgain < 1 ? 1 : $this_pointgain;
+		my $this_maxpoints = $opts->{maxpoints};
+
 		my $rows = $self->setUser($uid, {
 			-lastgranted    => 'NOW()',
 			-tokens         => "GREATEST(0, tokens - $opts->{tokentrade})",
