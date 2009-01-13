@@ -79,6 +79,7 @@ sub setModPoints {
 			-points         => "LEAST(points + $this_pointgain, $this_maxpoints)",
 		});
 		$granted->{$uid} = 1 if $rows;
+		main::slashdLog("uid: $uid, karma: $user->{karma}, calc: $base / $num, points: $this_pointgain");
 	}
 	main::slashdLog("convert_tokens_to_points num_high=$num_high sum_high=$sum_high high_uids='@high_uids'");
 }
