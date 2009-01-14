@@ -32,7 +32,9 @@ runtask .* (Begin|End)
 \[set_cids\.pl\] min_cid_last_
 \[refresh_authors_cache\.pl\] (R|End of r)efreshing authors_cache
 \[process_metamod\.pl\] m2_oldzone was [0-9]+
-\[process_moderation\.pl\] Giving points to [0-9]+ users:
+\[process_(tag)?moderation\.pl\] Giving points to [0-9]+ users:
+\[process_(tag)?moderation\.pl\] convert_tokens_to_points num_high=[0-9]+ sum_high=[0-9]+
+\[process_(tag)?moderation\.pl\] uid: [0-9]+, karma: [0-9]+,
 \[daily\.pl\] Daily Mail \(daily(headlines|news)\) (begin|end)
 \[daily\.pl\] Sending [0-9]+ bytes to [0-9]+ users:
 \[daily_archive\.pl\] (Begin|End) Daily Comment Recycle
