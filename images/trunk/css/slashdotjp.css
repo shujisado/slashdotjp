@@ -216,6 +216,13 @@ div#links {
 	color: #111;
 }
 
+/* fix write comment button */
+.commentBoxForm button .write-comment {
+	font-weight: bold;
+	background: url(//images.slashdot.jp/pencil16.gif) no-repeat;
+	padding-left: 18px;
+}
+
 /* Suppress long URLs/words */
 div.commentBody {
 	overflow-x: auto;
