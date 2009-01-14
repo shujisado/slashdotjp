@@ -217,10 +217,11 @@ div#links {
 }
 
 /* fix write comment button */
-.commentBoxForm button .write-comment {
+.commentBoxForm button span.write-comment {
 	font-weight: bold;
 	background: url(//images.slashdot.jp/pencil16.gif) no-repeat;
-	padding-left: 18px;
+	padding-left: 22px;
+	padding-right: 4px;
 }
 
 /* Suppress long URLs/words */
