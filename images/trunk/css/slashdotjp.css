@@ -227,7 +227,7 @@ div#links {
 /* Suppress long URLs/words */
 div.commentBody {
 	overflow-x: auto;
-	work-break: break-all;
+	word-break: break-all;
 }
 
 /* zoo icon position fix */
