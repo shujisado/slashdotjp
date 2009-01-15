@@ -34,6 +34,7 @@ $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections))
 		sed -e 's/#articles div.storylinks, div.storylinks div, div.storylinks ul {position: relative !important; margin: 0 !important; padding: 0 !important; height: 3em;}/#articles div.storylinks, div.storylinks div, div.storylinks ul {_position: relative !important; _margin: 0 !important; _padding: 0 !important; _height: 3em;}/' | \
 		sed -e 's/#commentwrap {clear: both;}/* html #commentwrap {clear: both;}/' | \
 		sed -e 's/div#users-blocks {margin: 0 18.5em 0 0; overflow: hidden;}/div#users-blocks {margin: 0 18.5em 0 0; _overflow: hidden;}/' | \
+		perl -npe 's/\.briefarticle h3 a {#555}/.briefarticle h3 a { color: #555; }/' | \
 		perl -npe 's/\bfont-family:[^;]+;//' | \
 		perl -npe "s/^\/\/.*$$//" | \
 		perl -npe 's/\bsans-serif\b//' > $@
