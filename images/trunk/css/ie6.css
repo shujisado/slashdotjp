@@ -134,4 +134,8 @@ border-top:1px solid #000 !important;
 	display: inline;
 }
 
+#pollBooth .generalbody #resultgraph table {
+	width: 99%;
+}
+
 /* vim: set ft=css: */
