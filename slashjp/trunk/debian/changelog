@@ -5,8 +5,9 @@ slash (2.5.0.233-3) unstable; urgency=low
   * Add logcheck ignore rules
     - TagModeration messages
     - hc_maintain_pool messages
+  * Fix FireHose item selection rule about "user:username" filter
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 19 Jan 2009 06:39:14 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 19 Jan 2009 09:55:25 +0000
 
 slash (2.5.0.233-2) unstable; urgency=low
 

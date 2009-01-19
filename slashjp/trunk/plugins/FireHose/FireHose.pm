@@ -2569,7 +2569,11 @@ sub getAndSetOptions {
 				$uid = $self->getUserUID($nick);
 			}
 			$uid ||= $user->{uid};
-			$fh_options->{tagged_by_uid} = $uid;
+			if ($constants->{firehose_tagged_by_uid}) {
+				$fh_options->{tagged_by_uid} = $uid;
+			} else {
+				$fh_options->{uid} = $uid;
+			}
 			$fh_options->{tagged_non_negative} = 1;
 #			$fh_options->{ignore_nix} = 1;
 		} elsif (/^tag:/) {
