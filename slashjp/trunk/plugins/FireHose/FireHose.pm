@@ -187,6 +187,7 @@ sub createItemFromComment {
 		globjid		=> $globjid,
 		discussion	=> $comment->{sid},
 		createtime	=> $comment->{date},
+		primaryskid	=> getCurrentStatic('mainpage_skid'),
 	};
 	my $fhid = $self->createFireHose($data);
 

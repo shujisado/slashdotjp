@@ -7640,7 +7640,7 @@ sub createDiscussion {
 	$discussion->{type} ||= 'open';
 	# XXXSKIN this should be pulled from gSkin not constants
 	$discussion->{commentstatus} ||= getCurrentStatic('defaultcommentstatus');
-	$discussion->{primaryskid} ||= 0;
+	$discussion->{primaryskid} ||= getCurrentStatic('mainpage_skid');
 	$discussion->{topic} ||= 0;
 	$discussion->{sid} ||= '';
 	$discussion->{stoid} ||= 0;
