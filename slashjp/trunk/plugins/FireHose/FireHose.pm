@@ -117,6 +117,7 @@ sub createUpdateItemFromJournal {
 				title       => $journal->{description},
 				tid         => $journal->{tid},
 				discussion  => $journal->{discussion},
+				primaryskid => getCurrentStatic('mainpage_skid'),
 				word_count  => countWords($introtext)
 			});
 			$self->setFireHose($itemid, { public => "no" }) if (getCurrentStatic("firehose_disable_to_show_publicized_journals") && $journal->{promotetype} eq "publicize");
@@ -250,6 +251,7 @@ sub createItemFromJournal {
 			type                    => $type,
 			ipid                    => $user->{ipid},
 			subnetid                => $user->{subnetid},
+			primaryskid		=> getCurrentStatic('mainpage_skid'),
 			createtime              => $journal->{date}
 		};
 
