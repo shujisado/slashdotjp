@@ -1,0 +1,21 @@
+__skin__
+default
+__description__
+default rss template for slash system
+__title__
+default rss template
+__page__
+portald
+__lang__
+en_US
+__name__
+topjournals
+__template__
+<li>
+	<a href="[% constants.absolutedir %]/~[% item.author | strip_attribute %]/journal/">[[% item.author | strip_attribute %]]</a>
+	<a href="[% item.link | strip_attribute %]">[% item.title | strip_notags %]</a>
+</li>
+__seclev__
+10000
+__version__
+

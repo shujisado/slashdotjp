@@ -1,0 +1,23 @@
+__section__
+default
+__description__
+Creates imagemap for inclusion in titlebar of a portalbox
+
+* title = title of portalbox
+* bid = block id of block in portalbox
+__title__
+
+__page__
+misc
+__lang__
+en_US
+__name__
+portalmap
+__template__
+
+[% title %]
+
+__seclev__
+500
+__version__
+$Id$
