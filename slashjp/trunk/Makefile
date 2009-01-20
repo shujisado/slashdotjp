@@ -38,18 +38,18 @@ UNAME = `uname`
 MAKE = make -s
 
 # Subdirectories excl. CVS in the current directory (like plugins/ or tagboxes/)
-SUBDIRS = `find . -maxdepth 1 -name CVS -prune -o -type d -name [a-zA-Z]\* -print`
+SUBDIRS = `find . -maxdepth 1 -name CVS -prune -o -type d -name [a-zA-Z]\* -print | grep -v .svn`
 
 # Perl scripts, grouped by directory.
-BINFILES = `find bin -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\* -type f -print`
-SBINFILES = `find sbin -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\* -type f -print`
-THEMEFILES = `find themes -name CVS -prune -o -name .git -prune -o -name [a-zA-z]\*.pl -print`
-PLUGINFILES = `find plugins themes/*/plugins -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print`
-TAGBOXFILES = `find tagboxes themes/*/tagboxes -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print`
-PLUGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins/[a-zA-Z0-9]+$$'`
-TAGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes/[a-zA-Z]+$$'`
-PLUGINDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins$$'`
-TAGBOXDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes$$'`
+BINFILES = `find bin -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\* -type f -print | grep -v .svn`
+SBINFILES = `find sbin -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\* -type f -print | grep -v .svn`
+THEMEFILES = `find themes -name CVS -prune -o -name .git -prune -o -name [a-zA-z]\*.pl -print | grep -v .svn`
+PLUGINFILES = `find plugins themes/*/plugins -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print | grep -v .svn`
+TAGBOXFILES = `find tagboxes themes/*/tagboxes -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print | grep -v .svn`
+PLUGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins/[a-zA-Z0-9]+$$' | grep -v .svn`
+TAGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes/[a-zA-Z]+$$' | grep -v .svn`
+PLUGINDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins$$' | grep -v .svn`
+TAGBOXDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes$$' | grep -v .svn`
 
 # What do we use to invoke perl?
 REPLACEWITH = `$(PERL) -MConfig -e 'print quotemeta($$Config{startperl})' | sed 's/@/\\@/g'`
