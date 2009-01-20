@@ -1,3 +1,9 @@
+slash (2.5.0.233-4) unstable; urgency=low
+
+  * Add regen-all command to re-generate all story shtml files
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 20 Jan 2009 10:24:44 +0000
+
 slash (2.5.0.233-3) unstable; urgency=low
 
   * Improve calculation method giving moderation points for slashdot.jp
