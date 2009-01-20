@@ -6,8 +6,9 @@ slash (2.5.0.233-3) unstable; urgency=low
     - TagModeration messages
     - hc_maintain_pool messages
   * Fix FireHose item selection rule about "user:username" filter
+  * Fix to prevent some warning messages
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 19 Jan 2009 09:55:25 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 20 Jan 2009 07:59:20 +0000
 
 slash (2.5.0.233-2) unstable; urgency=low
 
