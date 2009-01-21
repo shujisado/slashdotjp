@@ -44,9 +44,10 @@ $(patsubst %, css/%.css, $(csses)) $(patsubst %,css/slashdot_%.css, $(sections))
 css/%.css.orig:
 	wget --no-proxy --no-verbose http://images.slashdot.org/$(patsubst css/%.orig,%, $@) -O $@
 
-all-minified.js: %: %.orig %.jp
+all-minified.js: %: %.orig %.jp %.prefix
 $(jses): %: %.js
 $(patsubst %, %.js, $(jses)): %: %.orig
+	if [ -f $@.prefix ]; then cat $@.prefix > $@; fi
 	cat $@.orig | \
 		sed -e 's/if(name=="usermode"){/if(name=="firehose_usermode"){/' | \
 		sed -e 's/ Firehose / アレたま /' | \
@@ -80,7 +81,7 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/visible to the --LEFTORTOP-- of the discussion.)</</' | \
 		sed -e "s/'top' : 'left';/'上の' : '左の';/" | \
 		sed -e 's/hidden comment</個の隠れコメント</' | \
-		sed -e 's/hidden comments</個の隠れコメント</' > $@
+		sed -e 's/hidden comments</個の隠れコメント</' >> $@
 	echo >> $@
 	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
 
