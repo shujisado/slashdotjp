@@ -92,6 +92,8 @@ sub createFormkeyHC {
 
 	# Create an entry in the humanconf table associating the
 	# already-created formkey with this answer/html.
+	my $failed = $slashdb->sqlCount("humanconf", "formkey='$formkey'");
+	return 0 if $failed;
 	my $success = $slashdb->sqlInsert("humanconf", {
 		hcpid	=> $hcpid,
 		formkey	=> $formkey,
