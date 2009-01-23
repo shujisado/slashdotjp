@@ -192,4 +192,8 @@ div.quote {
 	position: static;
 }
 
+.nbutton p {
+		border-right: 1px solid #FFF;
+}
+
 /* vim: ts=4:ft=css:

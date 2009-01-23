@@ -53,4 +53,32 @@ div.commentBody {
 		background: url(/images/d2_button_horizonal_v2_jp.png) no-repeat;
 }
 
+/* fix comment button color */
+.nbutton {
+		background-color: #CCC;
+}
+
+.nbutton p b a {
+		font-weight: bold;
+		color: #666 !important;
+}
+
+.nbutton:hover {
+		background-color: #444;
+}
+
+.nbutton p b a:hover {
+		color: #FFF !important;
+}
+
+.nbutton,
+.nbutton p,
+.nbutton p b {
+		padding: 0.2em 0;
+}
+
+.nbutton p b a {
+		padding: 0.2em 0.5em;
+}
+
 /* vim: ts=4:ft=css:
