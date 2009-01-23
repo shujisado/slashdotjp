@@ -49,6 +49,7 @@ div.quote {
 	position: static;
 }
 
+/* IE MAGIC!: upper right circle equalizer */
 .nbutton p {
 		border-right: 1px solid #FFF;
 }
