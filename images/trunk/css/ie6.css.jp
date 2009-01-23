@@ -16,4 +16,9 @@
 	display: none;
 }
 
+/* comment setting page fix */
+fieldset legend {
+	font-size: 85%;
+}
+
 /* vim: set ft=css: */
