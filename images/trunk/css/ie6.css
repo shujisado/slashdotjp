@@ -138,4 +138,9 @@ border-top:1px solid #000 !important;
 	width: 99%;
 }
 
+/* suppress microad_comment: title of first article has been disappiered */
+.microad_comment {
+	display: none;
+}
+
 /* vim: set ft=css: */
