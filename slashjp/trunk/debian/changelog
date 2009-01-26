@@ -2,8 +2,10 @@ slash (2.5.0.233-4) unstable; urgency=low
 
   * Add regen-all command to re-generate all story shtml files
   * fix HumanConf.pm to prevent warnings
+  * Fix debian/control
+    - Move mysql-server from Depends: to Recommends:
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 21 Jan 2009 08:04:17 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 26 Jan 2009 09:18:00 +0000
 
 slash (2.5.0.233-3) unstable; urgency=low
 

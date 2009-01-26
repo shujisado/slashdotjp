@@ -18,7 +18,8 @@ Description: The code that runs Slashdot - common files
 
 Package: slash-backend
 Architecture: all
-Depends: slash-common, adduser, mysql-server-5.0 | mysql-server-4.1, libschedule-cron-perl, imagemagick, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
+Depends: slash-common, adduser, libschedule-cron-perl, imagemagick, ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
+Recommends: mysql-server-5.0 | mysql-server
 Description: The code that runs Slashdot - Backend server
  Slash -- Slashdot Like Automated Storytelling Homepage -- is an architecture
  to put together web sites.  It comes with functionality for posting articles,
