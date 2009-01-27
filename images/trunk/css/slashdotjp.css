@@ -399,23 +399,24 @@ div#slashdotjp-site-announce {
 	font-size: 82%;
 }
 
-/* Fix normal ul */
-div.general_contents ul,
-div#wikicontents ul,
-div#search div.sectiontitle table td ul,
-div#search div.search-help ul,
-div#polls div.generalbody ul,
-div#submit div.generalbody ul,
-div#commentBody ul,
-div#metamod #metamod-intro ul,
-div#bookmark ul,
-div#topics .generalbody ul,
-.error ul,
-.err ul,
-.warning ul,
-.warn ul,
-.info ul,
-form#createuserform ul {
+/* Fix normal ul and ol */
+div.general_contents ul, div.general_contents ol,
+div#wikicontents ul, div#wikicontents ol,
+div#search div.sectiontitle table td ul, div#search div.sectiontitle table td ol,
+div#search div.search-help ul, div#search div.search-help ol,
+div#polls div.generalbody ul, div#polls div.generalbody ol,
+div#submit div.generalbody ul, div#submit div.generalbody ol,
+div#commentBody ul, div#commentBody ul,
+div#metamod #metamod-intro ul, div#metamod #metamod-intro ol,
+div#bookmark ul, div#bookmark ol,
+div#topics .generalbody ul, div#topics .generalbody ol,
+.error ul, .error ol,
+.err ul, .err ol,
+.warning ul, .warning ol,
+.warn ul, .warn ol,
+.info ul, .info ol,
+.journaltext ul, .journaltext ol,
+form#createuserform ul, form#createuserform ol {
 	margin: 1em 0pt 1em 2em !important;
 }
 
