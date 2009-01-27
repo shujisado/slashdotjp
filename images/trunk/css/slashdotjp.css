@@ -554,20 +554,6 @@ a.feed {
 	padding-left: 16px;
 }
 
-/* journal edit form label */
-#journal form label {
-	font-weight: normal;
-}
-
-#journal form #journal-type-selection {
-	margin-top: 1em;
-}
-
-#journal form #journal-type-selection label {
-	display: inline;
-	padding: 0;
-}
-
 /* usable message classes */
 .info {
 	background: #def url(//images.slashdot.jp/silk/information.png) no-repeat 10px 3px;
