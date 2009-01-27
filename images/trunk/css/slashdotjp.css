@@ -108,6 +108,10 @@ input {
 	margin: 3px;
 }
 
+textarea {
+	width: 98%;
+}
+
 div#message div.content div.microad {
 	margin: 0.3em 0.7em;
 }
@@ -550,6 +554,11 @@ a.feed {
 	padding-left: 16px;
 }
 
+/* journal edit form label */
+#journal form label {
+	font-weight: normal;
+}
+
 /* usable message classes */
 .info {
 	background: #def url(//images.slashdot.jp/silk/information.png) no-repeat 10px 3px;
@@ -577,6 +586,13 @@ a.feed {
 	border: 1px solid #fe6;
 	padding: 5px 5px 5px 40px;
 	margin: .5em 0 1em 0;
+}
+
+span.required,
+span.notice {
+	color: #C00;
+	font-weight: bold;
+	font-size: 85%;
 }
 
 /* show tooltip (http://f32.aaa.livedoor.jp/~azusa/index.php?t=ajax&p=balloonjs_css) */
