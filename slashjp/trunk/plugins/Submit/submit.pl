@@ -237,6 +237,7 @@ sub previewForm {
 		lasttitle	=> $sub->{subj},
 		last_subid	=> $form->{subid},
 		last_sid	=> '',
+		last_action	=> 'reviewing',
 	}) if $user->{is_admin};
 
 	my $num_from_uid = 0;

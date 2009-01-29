@@ -6,8 +6,9 @@ slash (2.5.0.233-4) unstable; urgency=low
     - Move mysql-server from Depends: to Recommends:
   * Change title order at article.pl
   * Fix to remove incorrect admin sessions
+  * Set last_action='reviewing' when viewing submission
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 29 Jan 2009 06:39:24 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 29 Jan 2009 07:20:35 +0000
 
 slash (2.5.0.233-3) unstable; urgency=low
 
