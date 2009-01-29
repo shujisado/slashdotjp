@@ -690,7 +690,7 @@ sub currentAdminUsers {
 	my $now = timeCalc($slashdb->getTime(), "%s", 0);
 	my $aids = $slashdb->currentAdmin();
 	for my $data (@$aids) {
-		my($usernick, $usertime, $lasttitle, $last_subid, $last_sid, $uid) = @$data;
+		my($usernick, $usertime, $lasttitle, $last_subid, $last_sid, $uid, $last_fhid, $last_action) = @$data;
 		if ($usernick eq $user->{nickname}) {
 			$usertime = "-";
 		} else {
@@ -704,7 +704,7 @@ sub currentAdminUsers {
 					. int(($usertime%3600)/60+0.5) . "m";
 			}
 		}
-		@$data = ($usernick, $usertime, $lasttitle, $last_subid, $last_sid, $uid);
+		@$data = ($usernick, $usertime, $lasttitle, $last_subid, $last_sid, $uid, $last_fhid, $last_action);
 	}
 
 	my @reader_vus = $slashdb->getDBVUsForType("reader");
