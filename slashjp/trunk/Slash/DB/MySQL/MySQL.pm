@@ -1242,25 +1242,26 @@ sub getSessionInstance {
 	my $admin_timeout = getCurrentStatic('admin_timeout');
 
 	$self->sqlDelete("sessions",
-		"NOW() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)"
+		"NOW() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE) OR lasttime IS NULL"
 	);
 
-	my($lasttitle, $last_sid, $last_subid, $last_fhid, $last_action) = $self->sqlSelect(
-		'lasttitle, last_sid, last_subid, last_fhid, last_action',
-		'sessions',
-		"uid=$uid"
-	);
-
-	if(!$lasttitle) {
-	$self->sqlReplace('sessions', {
-		-uid		=> $uid,
-		lasttitle	=> $lasttitle    || '',
-		last_sid	=> $last_sid     || '',
-		last_subid	=> $last_subid   || '0',
-		last_fhid	=> $last_fhid	 || '0',
-		last_action	=> $last_action	 || '',
-	});
-	}
+	# Do not create session for slashdot.jp (tach, 2009-01-29)
+	#my($lasttitle, $last_sid, $last_subid, $last_fhid, $last_action) = $self->sqlSelect(
+	#	'lasttitle, last_sid, last_subid, last_fhid, last_action',
+	#	'sessions',
+	#	"uid=$uid"
+	#);
+	#
+	#if(!$lasttitle) {
+	#$self->sqlReplace('sessions', {
+	#	-uid		=> $uid,
+	#	lasttitle	=> $lasttitle    || '',
+	#	last_sid	=> $last_sid     || '',
+	#	last_subid	=> $last_subid   || '0',
+	#	last_fhid	=> $last_fhid	 || '0',
+	#	last_action	=> $last_action	 || '',
+	#});
+	#}
 }
 
 ########################################################
@@ -2539,11 +2540,18 @@ sub setVar {
 
 ########################################################
 sub setSession {
-	my($self, $name, $value) = @_;
+	my ($self, $name, $value) = @_;
+	my $uid = $self->sqlQuote($name);
+
 	if (!$value->{lasttime}) {
 		$value->{'-lasttime'} = "NOW()"
 	}
-	$self->sqlUpdate('sessions', $value, 'uid=' . $self->sqlQuote($name));
+
+	if ($self->sqlCount('sessions', "uid=$uid") < 1) {
+		$self->sqlReplace('sessions', { -uid => $uid });
+	}
+
+	$self->sqlUpdate('sessions', $value, "uid=$uid");
 }
 
 ########################################################
