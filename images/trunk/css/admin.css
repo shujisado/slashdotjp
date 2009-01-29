@@ -311,6 +311,17 @@ body {
 	margin-top: 0;
 }
 
+/* current admin session last_action */
+span.admin-session {
+	font-weight: bold;
+	font-size: 85%;
+	color: #999;
+}
+
+span.editing {
+	color: #C00;
+}
+
 /* firehose admin fix */
 #firehose .briefarticle h3 {
 	padding-right: 48px !important;
