@@ -57,4 +57,10 @@ div.quote {
 		border-right: 1px solid #FFF;
 }
 
+/* IE MAGIC! */
+div.generaltitle {
+		position: relative;
+		border-top: 1px solid #FFF;
+}
+
 /* vim: ts=4:ft=css:
