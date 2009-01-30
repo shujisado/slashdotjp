@@ -130,10 +130,10 @@ h3 .close {_filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//im
 #articles div.taguser {margin-bottom: 1em}
 #articles div.tags div.tagbody .message {bottom: 0; z-index: 1001;}
 #articles div.storylinks, div.storylinks div, div.storylinks ul {_position: relative !important; _margin: 0 !important; _padding: 0 !important; _height: 3em;}
-#articles div.storylinks {margin-top: 1em !important}
+/* #articles div.storylinks {margin-top: 1em !important}
 #articles div.storylinks div {height: 2.3em; margin: 0 0 1em 0 !important} 
 #articles div.storylinks ul {height: 2.3em; padding: 0 0 0 1em !important; z-index: 100; } 
-div.storylinks ul {padding: .75em 8em .75em .6em; }
+div.storylinks ul {padding: .75em 8em .75em .6em; } */
 #articles div.storylinks ul li a { _position: relative;}
 
 #login_cover, #modal_cover {filter: alpha(opacity=75);}

@@ -151,4 +151,17 @@ fieldset legend {
 	display: none;
 }
 
+/* ie6 fix for storylinks */
+#index #articles div.storylinks {
+	padding: 0 !important;
+}
+#index #articles div.storylinks div {
+	padding-top: 0.2em !important;
+	_height: 1.2em !important;
+}
+#index #articles div.storylinks div ul {
+	padding-left: 1em !important;
+	_height: 1.5em !important;
+}
+
 /* vim: set ft=css: */

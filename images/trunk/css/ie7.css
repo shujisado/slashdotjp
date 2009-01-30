@@ -36,6 +36,7 @@ overflow:hidden;
 
 /* override ie7.css for slashdot.jp */
 
+/* firehose layout fix */
 div#firehoselist div.briefarticle ,
 div#firehoselist div.article {
 	margin-right: 0;
