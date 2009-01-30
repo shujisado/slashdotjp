@@ -39,6 +39,7 @@ div#users-blocks {
 
 #firehoselist,
 #firehose #message,
+#firehose .paginate,
 #firehose .firemenu {
 		margin-right: 0;
 }
