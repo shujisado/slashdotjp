@@ -34,3 +34,11 @@ white-space:nowrap !important;
 overflow:hidden;
 }
 
+/* override ie7.css for slashdot.jp */
+
+div#firehoselist div.briefarticle ,
+div#firehoselist div.article {
+	margin-right: 0;
+}
+
+/* vim: set ft=css: */

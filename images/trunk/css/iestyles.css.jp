@@ -33,12 +33,14 @@ div.ad200 {
 
 
 /* Reset margin for slashdot.jp */
-div#users-blocks,
+div#users-blocks {
+	margin-right: 212px;
+}
+
 #firehoselist,
 #firehose #message,
-#firehose .firemenu,
-#firehose .paginate {
-	margin-right: 212px;
+#firehose .firemenu {
+		margin-right: 0;
 }
 
 #slashboxes div.block div.content {
