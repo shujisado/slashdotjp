@@ -7,6 +7,8 @@
 	display: inline;
 }
 
+#journal .journallist table,
+#journal .journaltop table,
 #pollBooth .generalbody #resultgraph table {
 	width: 99%;
 }
