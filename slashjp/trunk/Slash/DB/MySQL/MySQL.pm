@@ -7771,7 +7771,8 @@ sub createStory {
 				$story->{discussion} = $item->{discussion};
 			}
 
-		} elsif ($story->{subid}) {
+		}
+		if ($story->{subid}) {
 			if ($self->sqlSelect('id', 'journal_transfer',
 				'subid=' . $self->sqlQuote($story->{subid})
 			)) {

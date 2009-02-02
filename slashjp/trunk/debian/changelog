@@ -1,3 +1,10 @@
+slash (2.5.0.233-5) unstable; urgency=low
+
+  * Fix to change discussion dkid for "journal-story"
+    submissions/stories/journals.
+
+ -- Taku YASUI <tach@osdn.jp>  Mon,  2 Feb 2009 07:39:35 +0000
+
 slash (2.5.0.233-4) unstable; urgency=low
 
   * Add regen-all command to re-generate all story shtml files
