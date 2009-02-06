@@ -39,10 +39,10 @@ $task{$me}{code} = sub {
 
 		slashdLog("Start updating block \"$name\"") if (verbosity() >= 3);
 		my $result = $slashdb->sqlSelectAllHashrefArray(
-			'nickname AS author,MAX(id) AS jid,description AS title',
-			'journals JOIN users USING (uid)',
+			'nickname AS author,jid,description AS title',
+			'users_journal JOIN users USING (uid) JOIN journals on (users_journal.jid=journals.id)',
 			$where,
-			"GROUP BY uid ORDER BY jid DESC LIMIT $limit",
+			"ORDER BY users_journal.date DESC LIMIT $limit",
 		);
 		map { $_->{'link'} = "$constants->{absolutedir}/~" . strip_paramattr($_->{author}) . "/journal/". $_->{jid} } @$result;
 
