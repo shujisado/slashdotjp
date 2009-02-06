@@ -36,13 +36,15 @@ $task{$me}{code} = sub {
 		my $where = '1=1';
 		$where .= ' AND tid IN ('.join(',', @$tids).')' if ($skin->{skid} != $constants->{mainpage_skid});
 		next if ($slashdb->sqlCount('journals', $where . ($force ? '' : " AND date > '$block->{last_update}'")) < 1);
+		my $ids = $slashdb->sqlSelectColArrayref('MAX(id) AS jid', 'journals', $where, "GROUP BY uid ORDER BY jid DESC LIMIT $limit");
+		$ids = join(',', @$ids);
 
 		slashdLog("Start updating block \"$name\"") if (verbosity() >= 3);
 		my $result = $slashdb->sqlSelectAllHashrefArray(
-			'nickname AS author,jid,description AS title',
-			'users_journal JOIN users USING (uid) JOIN journals on (users_journal.jid=journals.id)',
-			$where,
-			"ORDER BY users_journal.date DESC LIMIT $limit",
+			'nickname AS author,id AS jid,description AS title',
+			'journals JOIN users USING (uid)',
+			"id IN ($ids)",
+			"ORDER BY date DESC",
 		);
 		map { $_->{'link'} = "$constants->{absolutedir}/~" . strip_paramattr($_->{author}) . "/journal/". $_->{jid} } @$result;
 
