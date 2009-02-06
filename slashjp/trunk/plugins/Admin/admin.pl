@@ -1664,9 +1664,6 @@ sub extractChosenFromForm {
 			$chosenc_hr = $chosen{stc};
 		}
 	}
-use Data::Dumper;
-print STDERR Dumper($chosen_hr);
-print STDERR Dumper($chosenc_hr);
 
 	# save the user's topic popup settings
 	if (exists $form->{st_saved_tree} || exists $form->{st_tree_pref}) {
