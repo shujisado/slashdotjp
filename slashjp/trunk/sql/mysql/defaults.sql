@@ -1164,6 +1164,7 @@ INSERT IGNORE INTO vars (name, value, description) VALUES ('journal_list_default
 INSERT IGNORE INTO vars (name, value, description) VALUES ('mod_limit_not_m2able_reasons', '0', 'Enable moderation limit for not m2able reasons when it is not eligible');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('d2_default', '', 'Default discussion2 module name');
 INSERT IGNORE INTO vars (name, value, description) VALUES ('firehose_tagged_by_uid', '0', 'Use as tagged_by_uid instead of uid for FireHose filter "user:username"');
+INSERT IGNORE INTO vars (name, value, description) VALUES ('submission_remove_mainpage_nexus_tid', '0', 'Remove "Index" topic on topic list at story editing from submission');
 UPDATE vars SET value='text/html; charset=UTF-8' WHERE name='content_type_webpage';
 UPDATE vars SET value='0' WHERE name='draconian_charset';
 UPDATE vars SET value='UTF-8' WHERE name='rdfencoding';

@@ -2,8 +2,10 @@ slash (2.5.0.233-5) unstable; urgency=low
 
   * Fix to change discussion dkid for "journal-story"
     submissions/stories/journals.
+  * Remove "Index" topic on topic list at story editing from submission
+    using constants "submission_remove_mainpage_nexus_tid"
 
- -- Taku YASUI <tach@osdn.jp>  Mon,  2 Feb 2009 07:39:35 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri,  6 Feb 2009 04:39:49 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 

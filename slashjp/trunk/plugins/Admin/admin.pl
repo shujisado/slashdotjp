@@ -1625,6 +1625,8 @@ sub extractChosenFromForm {
 			push @topics, $nexus if $nexus;
 		}
 		for my $tid (@topics) {
+			# remove "Index" from topic list from submission for slashdot.jp (2009-02-06, tach)
+			next if ($constants->{submission_remove_mainpage_nexus_tid} && $tid == $constants->{mainpage_nexus_tid});
 			$chosen_hr->{$tid} =
 				$tid == $constants->{mainpage_nexus_tid}
 				? 30
@@ -1662,6 +1664,9 @@ sub extractChosenFromForm {
 			$chosenc_hr = $chosen{stc};
 		}
 	}
+use Data::Dumper;
+print STDERR Dumper($chosen_hr);
+print STDERR Dumper($chosenc_hr);
 
 	# save the user's topic popup settings
 	if (exists $form->{st_saved_tree} || exists $form->{st_tree_pref}) {
