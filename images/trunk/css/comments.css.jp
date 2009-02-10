@@ -21,6 +21,11 @@ div.commentBody {
 		line-height: 1.4;
 }
 
+/* fix preview space */
+#contents .commentBody p {
+	padding: 0;
+}
+
 /* fix d2 buttons design */
 .inline_comment .replyto_buttons {
 		margin: 0;
