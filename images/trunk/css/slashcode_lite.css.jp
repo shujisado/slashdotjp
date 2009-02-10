@@ -1,5 +1,9 @@
 /* Override slashcode_lite.css for slashdot.jp */
 
-div#firehose div.story div.generaltitle div.title a {
-	color: #fff !important;
+#firehose .article h3,
+#firehose .briefarticle h3 {
+	background: none !important;
+	border-bottom: solid 1px #000;
 }
+
+/* vim: set ft=css: */
