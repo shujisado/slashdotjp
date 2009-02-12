@@ -2271,38 +2271,34 @@ var packageObj = {
 	pinToRange:             pinToRange
 };
 
-Slash.Util.qw.each('\
-	abbrev_comments \
-	adTimerUrl \
-	comment_body_reply \
-	comments \
-	currents \
-	d2_comment_order \
-	d2_keybindings_disable \
-	d2_keybindings_off \
-	d2_reverse_shift \
-	d2_seen \
-	discussion_id \
-	init_hiddens \
-	more_comments_num \
-	noshow_comments \
-	pieces_comments \
-	placeholder_no_update \
-	base_comment \
-	root_comment \
-	root_comments \
-	root_comments_hash \
-	thresh_totals \
-	user_d2asp \
-	user_highlightthresh \
-	user_is_admin \
-	user_is_anon \
-	user_is_subscriber \
-	user_threshold \
-	user_uid \
-	', function(){
-	packageObj[this] = eval('(function(v){ if (v===undefined) return '+this+'; '+this+'=v;})');
-});
+packageObj['abbrev_comments'] = function(v){if (v===undefined) return abbrev_comments; abbrev_comments = v;}
+packageObj['adTimerUrl'] = function(v){if (v===undefined) return adTimerUrl; adTimerUrl = v;}
+packageObj['comment_body_reply'] = function(v){if (v===undefined) return comment_body_reply; comment_body_reply = v;}
+packageObj['comments'] = function(v){if (v===undefined) return comments; comments = v;}
+packageObj['currents'] = function(v){if (v===undefined) return currents; currents = v;}
+packageObj['d2_comment_order'] = function(v){if (v===undefined) return d2_comment_order; d2_comment_order = v;}
+packageObj['d2_keybindings_disable'] = function(v){if (v===undefined) return d2_keybindings_disable; d2_keybindings_disable = v;}
+packageObj['d2_keybindings_off'] = function(v){if (v===undefined) return d2_keybindings_off; d2_keybindings_off = v;}
+packageObj['d2_reverse_shift'] = function(v){if (v===undefined) return d2_reverse_shift; d2_reverse_shift = v;}
+packageObj['d2_seen'] = function(v){if (v===undefined) return d2_seen; d2_seen = v;}
+packageObj['discussion_id'] = function(v){if (v===undefined) return discussion_id; discussion_id = v;}
+packageObj['init_hiddens'] = function(v){if (v===undefined) return init_hiddens; init_hiddens = v;}
+packageObj['more_comments_num'] = function(v){if (v===undefined) return more_comments_num; more_comments_num = v;}
+packageObj['noshow_comments'] = function(v){if (v===undefined) return noshow_comments; noshow_comments = v;}
+packageObj['pieces_comments'] = function(v){if (v===undefined) return pieces_comments; pieces_comments = v;}
+packageObj['placeholder_no_update'] = function(v){if (v===undefined) return placeholder_no_update; placeholder_no_update = v;}
+packageObj['base_comment'] = function(v){if (v===undefined) return base_comment; base_comment = v;}
+packageObj['root_comment'] = function(v){if (v===undefined) return root_comment; root_comment = v;}
+packageObj['root_comments'] = function(v){if (v===undefined) return root_comments; root_comments = v;}
+packageObj['root_comments_hash'] = function(v){if (v===undefined) return root_comments_hash; root_comments_hash = v;}
+packageObj['thresh_totals'] = function(v){if (v===undefined) return thresh_totals; thresh_totals = v;}
+packageObj['user_d2asp'] = function(v){if (v===undefined) return user_d2asp; user_d2asp = v;}
+packageObj['user_highlightthresh'] = function(v){if (v===undefined) return user_highlightthresh; user_highlightthresh = v;}
+packageObj['user_is_admin'] = function(v){if (v===undefined) return user_is_admin; user_is_admin = v;}
+packageObj['user_is_anon'] = function(v){if (v===undefined) return user_is_anon; user_is_anon = v;}
+packageObj['user_is_subscriber'] = function(v){if (v===undefined) return user_is_subscriber; user_is_subscriber = v;}
+packageObj['user_threshold'] = function(v){if (v===undefined) return user_threshold; user_threshold = v;}
+packageObj['user_uid'] = function(v){if (v===undefined) return user_uid; user_uid = v;}
 
 Slash.Util.Package({
 	named: 'Slash.Discussion',

@@ -84,7 +84,8 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e "s/params\['postercomment'\] = \$$dom('postercomment_' + pid).value;/&\n\tparams\['posttype'\] = \$$dom('posttype_' + pid).value; var nobonus = \$$dom('nobonus_' + pid); if (nobonus \&\& nobonus.checked) params\['nobonus'\] = nobonus.value; params\['nobonus_present'\] = '1';/" | \
 		sed -e "s/'top' : 'left';/'上の' : '左の';/" | \
 		sed -e 's/hidden comment</個の隠れコメント</' | \
-		sed -e 's/hidden comments</個の隠れコメント</' >> $@
+		sed -e 's/hidden comments</個の隠れコメント</' | \
+		perl fix-comments.js.pl >> $@
 	echo >> $@
 	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
 
