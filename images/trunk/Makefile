@@ -11,7 +11,7 @@ default: update
 update: $(csses) $(sections) $(jses) images
 
 install: default
-	rsync -avHSC --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp --exclude=\*.jp ./ $(DESTDIR)
+	rsync -avHSC --exclude=/hc/ --exclude=Makefile --exclude=\*-stamp --exclude=\*.jp --exclude=\*.pl ./ $(DESTDIR)
 
 images: images-stamp
 images-stamp: $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%.css.orig, $(sections)) $(aimages)
