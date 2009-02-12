@@ -49,7 +49,7 @@ css/%.css.orig:
 all-minified.js: %: %.orig %.jp %.prefix
 $(jses): %: %.js
 $(patsubst %, %.js, $(jses)): %: %.orig
-	if [ -f $@.prefix ]; then cat $@.prefix > $@; fi
+	if [ -f $@.prefix ]; then cat $@.prefix > $@; else echo -n > $@; fi
 	cat $@.orig | \
 		sed -e 's/if(name=="usermode"){/if(name=="firehose_usermode"){/' | \
 		sed -e 's/ Firehose / アレたま /' | \
