@@ -104,8 +104,15 @@ div#slashboxes div.block img.map {
 div.storylinks ul {
 	font-size: 90%;
 }
+
 input {
 	margin: 3px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+	margin: 0.2em 3px 1px;
+	vertical-align: bottom;
 }
 
 textarea {
