@@ -1114,6 +1114,7 @@ function replyPreviewOrSubmit (pid, op, handlers) {
 	params['gotmodwarning'] = $dom('gotmodwarning_' + pid).value;
 	params['postersubj'] = $dom('postersubj_' + pid).value;
 	params['postercomment'] = $dom('postercomment_' + pid).value;
+	params['posttype'] = $dom('posttype_' + pid).value;
 
 	var hcanswer = $dom('hcanswer_' + pid);
 	if (hcanswer)

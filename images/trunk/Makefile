@@ -81,6 +81,7 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/value="No Thanks"/value="やりません"/' | \
 		sed -e 's/>(Remember that you can always adjust these controls with the slider widget/>（コメントの--LEFTORTOP--に見えるスライダーで制御できますよ）/' | \
 		sed -e 's/visible to the --LEFTORTOP-- of the discussion.)</</' | \
+		sed -e "s/params\['postercomment'\] = \$$dom('postercomment_' + pid).value;/&\n\tparams\['posttype'\] = \$$dom('posttype_' + pid).value;/" | \
 		sed -e "s/'top' : 'left';/'上の' : '左の';/" | \
 		sed -e 's/hidden comment</個の隠れコメント</' | \
 		sed -e 's/hidden comments</個の隠れコメント</' >> $@
