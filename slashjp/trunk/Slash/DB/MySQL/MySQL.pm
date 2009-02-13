@@ -10536,7 +10536,8 @@ sub setUser {
 		delete($hashref->{people});
 	}
 	if (exists $hashref->{slashboxes}) {
-		my @slashboxes = grep /^[\w-]+$/, split /,/, $hashref->{slashboxes};
+		my %seen_boxes;
+		my @slashboxes = grep { /^[\w-]+$/; ++$seen_boxes{$_} < 2; } split /,/, $hashref->{slashboxes};
 		map { s/^olderstuff$/mainpage_more/; } @slashboxes;
 		$hashref->{slashboxes} = join ",", @slashboxes;
 	}
