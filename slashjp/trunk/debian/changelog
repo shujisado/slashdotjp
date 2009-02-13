@@ -6,8 +6,9 @@ slash (2.5.0.233-5) unstable; urgency=low
     using constants "submission_remove_mainpage_nexus_tid"
   * Fix SQL to get top journals at journal_update_slashbox.pl
   * Change color to red for "This story will not appear" message at admin.pl
+  * Fix: vanish olderstuff slashbox from top page when moved
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 13 Feb 2009 04:22:33 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 13 Feb 2009 07:32:33 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 

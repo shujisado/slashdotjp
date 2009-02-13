@@ -10537,6 +10537,7 @@ sub setUser {
 	}
 	if (exists $hashref->{slashboxes}) {
 		my @slashboxes = grep /^[\w-]+$/, split /,/, $hashref->{slashboxes};
+		map { s/olderstuff/mainpage_more/; } @slashboxes;
 		$hashref->{slashboxes} = join ",", @slashboxes;
 	}
 
