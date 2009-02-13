@@ -1708,12 +1708,13 @@ sub getDescForTopicsRendered {
 
 	my $desc;
 	if (!@sorted_nexuses) {
-		$desc = "This story will not appear because ";
+		$desc = "<font color=\"#CC0000\">This story will not appear because ";
 		if (!%$topics_rendered) {
 			$desc .= "no topics are selected.";
 		} else {
 			$desc .= "no topics in any nexuses are selected.";
 		}
+		$desc .= "</font>";
 	} else {
 		$desc = "This story ";
 		if ($display) {

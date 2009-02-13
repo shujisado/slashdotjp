@@ -5,8 +5,9 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Remove "Index" topic on topic list at story editing from submission
     using constants "submission_remove_mainpage_nexus_tid"
   * Fix SQL to get top journals at journal_update_slashbox.pl
+  * Change color to red for "This story will not appear" message at admin.pl
 
- -- Taku YASUI <tach@osdn.jp>  Fri,  6 Feb 2009 09:27:14 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 13 Feb 2009 04:22:33 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
