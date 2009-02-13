@@ -66,4 +66,14 @@ table.list-filters td {
 	padding: 0.1em 0.3em;
 }
 
+/* stories will not appear */
+.story_nd {
+	background: #C00;
+	color: #CCC;
+}
+
+.story_nd a {
+	color: #FFF;
+}
+
 /* vim: set ft=css: */
