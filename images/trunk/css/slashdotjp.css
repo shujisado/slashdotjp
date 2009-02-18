@@ -656,6 +656,28 @@ div.adsense_468x60 {
 	margin: 1em 0;
 }
 
+/* text ads */
+.ads-text {
+	border: 1px solid #CCC;
+	padding: 0.3em 0.5em;
+	margin-bottom: 0.5em;
+	font-size: 85%;
+	color: #999;
+}
+
+.ads-text #ads-text-1 {
+	margin-bottom: 0.3em;
+}
+
+.ads-text a {
+	color: #055;
+	text-decoration: none;
+}
+
+.ads-text a:hover {
+	text-decoration: underline;
+}
+
 /* for osdnnavbar: width=0 */
 #top_parent {
   border: 0px solid transparent;
