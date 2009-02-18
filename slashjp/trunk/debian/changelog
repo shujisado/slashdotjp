@@ -8,8 +8,9 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Change color to red for "This story will not appear" message at admin.pl
   * Fix: vanish olderstuff slashbox from top page when moved
   * Fix: dupliicate slashboxes
+  * Add printCommentsSuffix() to show comments suffix (e.g. navigation)
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 13 Feb 2009 09:43:12 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 18 Feb 2009 13:45:06 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 

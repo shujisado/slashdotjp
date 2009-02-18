@@ -1209,6 +1209,7 @@ sub printComments {
 #slashProfEnd();
 
 	print $comment_html;
+	printCommentsSuffix($discussion);
 }
 
 #========================================================================
@@ -2631,6 +2632,32 @@ sub discussion2 {
 		? $user->{discussion2} : 0;
 }
 
+########################################################
+# comments suffix
+sub printCommentsSuffix {
+	my ($discussion, $options) = @_;
+	my $constants = getCurrentStatic();
+	my $reader = getObject('Slash::DB', { db_type => 'reader' });
+	my $stories = {};
+	my $ret = '';
+
+	return $ret if (!$discussion || ref($discussion) ne "HASH");
+
+	my $sid = $reader->getStorySidFromDiscussion($discussion->{id});
+	if ($sid) {
+		my $story = $reader->getStory($sid);
+		if ($constants->{use_prev_next_link}) {
+			$stories->{prev} = $reader->getStoryByTime('<', $story);
+			$stories->{next} = $reader->getStoryByTime('>', $story) unless $story->{is_future};
+		}
+	}
+
+	$ret = slashDisplay('printCommentsSuffix', {
+		stories	=> $stories,
+	}, { Return => $options->{return} });
+
+	return $ret;
+}
 
 1;
 
