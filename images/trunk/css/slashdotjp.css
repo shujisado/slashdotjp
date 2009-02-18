@@ -241,6 +241,37 @@ div.commentBody {
 	word-break: break-all;
 }
 
+/* comments suffix (printCommentsSuffix) */
+#discussion_buttons {
+	margin-bottom: 1em;
+}
+
+.comments-suffix-prev-next {
+	margin-bottom: 1em;
+	padding: 0.5em;
+	background: #EEE;
+	border: 4px solid #CCC;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+}
+
+.comments-suffix-prev-next .suffix-prev {
+	float: left;
+	text-align: left;
+	font-weight: bold;
+}
+
+.comments-suffix-prev-next .suffix-next {
+	float: right;
+	text-align: right;
+	font-weight: bold;
+}
+
+.comments-suffix-prev-next .suffix-up {
+	text-align: center;
+	font-weight: bold;
+}
+
 /* zoo icon position fix */
 .zooicon img {
 	vertical-align: bottom;
