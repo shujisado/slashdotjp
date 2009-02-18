@@ -357,6 +357,28 @@ form#editcomm fieldset td.foaf-select select {
 	margin: 0.8em 0;
 }
 
+/* lower contents for whole site */
+#lower-contents {
+	margin-top: 1em;
+	white-space: nowrap;
+}
+
+/* story widget at the bottom of contents */
+#lower-contents .story-widget {
+	margin-top: 1em;
+	background: #E8E8E8;
+}
+
+#lower-contents .story-widget ol {
+	margin: 0 0 0 2em !important;
+	padding: 0.5em 0.7em;
+	line-height: 1.7;
+}
+
+#lower-contents .story-widget ol li a.comments {
+	font-size: 90%;
+}
+
 /* FAQ page navigation */
 #wikicontents .pagenavi {
 	background: #666 url(//images.slashdot.jp/block-title-bg.png) repeat-x;
