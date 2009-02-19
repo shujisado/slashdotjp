@@ -413,7 +413,12 @@ sub main {
 			adminmenu => $ops->{$op}{adminmenu} || 'admin',
 			tab_selected => $ops->{$op}{tab_selected},
 		};
-		header(getMessage('user_header'), '', $data) or return;
+
+		if ($op =~ /^edit\w+$/) {
+			header(getMessage('useredit_header', { op => $op }), '', $data) or return;
+		} else {
+			header(getMessage('user_header'), '', $data) or return;
+		}
 		# This is a hardcoded position, bad idea and should be fixed -Brian
 		# Yeah, we should pull this into a template somewhere...
 		print getMessage('note', { note => $errornote }) if defined $errornote;
