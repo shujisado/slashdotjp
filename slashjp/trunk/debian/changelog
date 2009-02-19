@@ -11,8 +11,9 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Add printCommentsSuffix() to show comments suffix (e.g. navigation)
   * Fix: HTML title for edituser page
   * Fix: add fhid for submission to submission_param table
+  * Make to fetch fhid on getSubmissionsByUID()
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 19 Feb 2009 09:12:14 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 19 Feb 2009 10:24:11 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 

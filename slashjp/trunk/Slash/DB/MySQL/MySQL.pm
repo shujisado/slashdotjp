@@ -6687,6 +6687,10 @@ sub getSubmissionsByUID {
 		"ORDER BY time DESC $limit");
 
 	for my $sub (@$subs) {
+		$sub->{fhid} = $self->sqlSelect(
+			'value',
+			'submission_param',
+			"subid=" . $self->sqlQuote($sub->{subid}) . " AND name='fhid'");
 		$sub->{sid} = $self->sqlSelect(
 			'value',
 			'submission_param',
