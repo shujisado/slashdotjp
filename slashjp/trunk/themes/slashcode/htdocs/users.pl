@@ -414,7 +414,7 @@ sub main {
 			tab_selected => $ops->{$op}{tab_selected},
 		};
 
-		if ($op =~ /^edit\w+$/) {
+		if ($op =~ /^(?:edit|save)\w+$/) {
 			header(getMessage('useredit_header', { op => $op }), '', $data) or return;
 		} else {
 			header(getMessage('user_header'), '', $data) or return;
