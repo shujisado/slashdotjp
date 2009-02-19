@@ -58,8 +58,34 @@ div#users-blocks {
 }
 
 #index #slashboxes,
-#firehose #slashboxes {
+#firehose #slashboxes,
+#submit #slashboxes {
 	width: 300px;
+}
+
+/* Fix normal ul and ol */
+div.general_contents ul, div.general_contents ol,
+div#wikicontents ul, div#wikicontents ol,
+div#search div.sectiontitle table td ul, div#search div.sectiontitle table td ol,
+div#search div.search-help ul, div#search div.search-help ol,
+div#polls div.generalbody ul, div#polls div.generalbody ol,
+div#submit div.generalbody ul, div#submit div.generalbody ol,
+div#commentBody ul, div#commentBody ul,
+div#metamod #metamod-intro ul, div#metamod #metamod-intro ol,
+div#bookmark ul, div#bookmark ol,
+div#topics .generalbody ul, div#topics .generalbody ol,
+.error ul, .error ol,
+.err ul, .err ol,
+.warning ul, .warning ol,
+.warn ul, .warn ol,
+.info ul, .info ol,
+.journaltext ul, .journaltext ol,
+form#createuserform ul, form#createuserform ol {
+	margin: 1em 0pt 1em 2em !important;
+}
+
+div#bookmark ul.menu {
+	margin: 0 !important;
 }
 
 /* fix firehose right margin */
@@ -74,9 +100,11 @@ div#users-blocks {
 	min-height: 80px;
 }
 
+/* fix slashbox buttons */
 div#slashboxes div.block img.map {
 	float: right;
 }
+
 .map {
 	background: transparent;
 	padding: 0;
@@ -89,6 +117,28 @@ div#slashboxes div.block img.map {
 	cursor: pointer;
 }
 
+/* fix slashboxes internal layout */
+div#slashboxes div.block div.content ul {
+	margin: 0;
+	padding: 0;
+}
+
+div#slashboxes div.block div.content ul li {
+	margin: 0;
+	padding: 0.1em 0.4em 0.3em;
+	border-top: none;
+	border-bottom: 1px solid #DDD;
+}
+
+.generalbody div#slashboxes {
+	margin-top: 0.5em;
+}
+
+.generalbody div#slashboxes div.block div.content ul {
+	margin: 0 !important;
+}
+
+/* fix edit link */
 .edit a {
 	float: none;
 	margin-top: 0;
@@ -449,6 +499,12 @@ form#editcomm fieldset td.foaf-select select {
 	padding-right: 12px;
 }
 
+/* submit.pl layout */
+#submit form {
+	clear: right;
+}
+
+
 /* slashdot.jp announce area */
 div#slashdotjp-site-announce {
 	background: #FFC;
@@ -457,31 +513,6 @@ div#slashdotjp-site-announce {
 	padding: 2px;
 	font-weight: bold;
 	font-size: 82%;
-}
-
-/* Fix normal ul and ol */
-div.general_contents ul, div.general_contents ol,
-div#wikicontents ul, div#wikicontents ol,
-div#search div.sectiontitle table td ul, div#search div.sectiontitle table td ol,
-div#search div.search-help ul, div#search div.search-help ol,
-div#polls div.generalbody ul, div#polls div.generalbody ol,
-div#submit div.generalbody ul, div#submit div.generalbody ol,
-div#commentBody ul, div#commentBody ul,
-div#metamod #metamod-intro ul, div#metamod #metamod-intro ol,
-div#bookmark ul, div#bookmark ol,
-div#topics .generalbody ul, div#topics .generalbody ol,
-.error ul, .error ol,
-.err ul, .err ol,
-.warning ul, .warning ol,
-.warn ul, .warn ol,
-.info ul, .info ol,
-.journaltext ul, .journaltext ol,
-form#createuserform ul, form#createuserform ol {
-	margin: 1em 0pt 1em 2em !important;
-}
-
-div#bookmark ul.menu {
-	margin: 0 !important;
 }
 
 /* firehose tablist */
