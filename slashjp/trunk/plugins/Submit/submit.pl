@@ -134,7 +134,7 @@ sub blankForm {
 	my($constants, $slashdb, $user, $form) = @_;
 	print getData('submit_body_open');
 	slashProf("pendingsubs");
-	yourPendingSubmissions($constants, $slashdb, $user, $form, { skip_submit_body => 1 });
+	#yourPendingSubmissions($constants, $slashdb, $user, $form, { skip_submit_body => 1 });
 	slashProf("","pendingsubs");
 
 	my $reskey = getObject('Slash::ResKey');
@@ -173,15 +173,18 @@ sub previewStory {
 sub yourPendingSubmissions {
 	my($constants, $slashdb, $user, $form, $options) = @_;
 	$options ||= {};
-	return if $user->{is_anon};
-	print getData("submit_body_open") unless $options->{skip_submit_body};
+	my $str = '';
+	return '' if $user->{is_anon};
+	$str .= getData("submit_body_open") unless $options->{skip_submit_body};
 	if (my $submissions = $slashdb->getSubmissionsByUID($user->{uid}, "", { limit_days => 365 })) {
-		slashDisplay('yourPendingSubs', {
+		$str .= slashDisplay('yourPendingSubs', {
 			submissions	=> $submissions,
 			width		=> '100%',
-		});
+		}, { Return => 1 });
 	}
-	print getData("submit_body_close") unless $options->{skip_submit_body};
+	$str .= getData("submit_body_close") unless $options->{skip_submit_body};
+	return $str if ($options->{return});
+	print $str;
 }
 
 #################################################################
@@ -558,6 +561,7 @@ sub displayForm {
 		topic_values	=> $topic_values,
 		skin_values	=> $skin_values,
 		skins		=> $skins,
+		pendingsubs	=> yourPendingSubmissions($constants, $slashdb, $user, $form, { skip_submit_body => 1, 'return' => 1 }),
 	});
 }
 #################################################################
