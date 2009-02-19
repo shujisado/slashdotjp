@@ -1227,6 +1227,7 @@ sub createSubmission {
 					discussion	=> $discussion_id,
 				});
 			}
+			$self->setSubmission($subid, { fhid => $firehose_id });
 		}
 	}
 
