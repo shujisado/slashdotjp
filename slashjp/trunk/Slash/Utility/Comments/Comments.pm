@@ -2638,19 +2638,37 @@ sub printCommentsSuffix {
 	my ($discussion, $options) = @_;
 	my $constants = getCurrentStatic();
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $stories = {};
+	my $stories = { 'prev' => {}, 'next' => {} };
 	my $ret = '';
 
 	return $ret if (!$discussion || ref($discussion) ne "HASH");
 
 	my $sid = $reader->getStorySidFromDiscussion($discussion->{id});
-	if ($sid) {
+	my $kinds = $reader->getDescriptions('discussion_kinds');
+	my $kind = $kinds->{ $discussion->{dkid} };
+print STDERR "kind = $kind\n";
+
+	if ($kind =~ /story$/ && $sid) {
 		my $story = $reader->getStory($sid);
+		$stories->{kinds} = "story";
 		if ($constants->{use_prev_next_link}) {
 			$stories->{prev} = $reader->getStoryByTime('<', $story);
 			$stories->{next} = $reader->getStoryByTime('>', $story) unless $story->{is_future};
 		}
+	} elsif ($kind eq "journal") {
+		my $journal_reader = getObject("Slash::Journal");
+		my $journal = $journal_reader->getJournalByDiscussion($discussion->{id});
+		if (my $prev = $journal_reader->getJournalByTime('<', [ $journal->{date} ], { uid => $journal->{uid} })) {
+use Data::Dumper; print STDERR Dumper($prev);
+			$stories->{prev}->{title} = $prev->{desctiption};
+			$stories->{prev}->{url} = $journal_reader->createJournalUrl($prev);
+		}
+		if (my $next = $journal_reader->getJournalByTime('>', [ $journal->{date} ], { uid => $journal->{uid} })) {
+			$stories->{next}->{title} = $next->{desctiption};
+			$stories->{next}->{url} = $journal_reader->createJournalUrl($next);
+		}
 	}
+use Data::Dumper; print STDERR Dumper($stories);
 
 	$ret = slashDisplay('printCommentsSuffix', {
 		stories	=> $stories,

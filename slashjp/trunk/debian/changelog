@@ -13,8 +13,10 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Fix: add fhid for submission to submission_param table
   * Make to fetch fhid on getSubmissionsByUID()
   * Fix: yourPendingSubs system
+  * Add getJournalByDiscussion() and createJournalUrl() on
+    plugins/Journal/Journal.pm
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 19 Feb 2009 10:25:10 +0000
+ -- Taku YASUI <tach@osdn.jp>  Fri, 20 Feb 2009 11:21:53 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
