@@ -750,7 +750,7 @@ sub getJournalByTime {
 	}
 
 	my $returnable = $self->sqlSelectHashref(
-		'date, article, description, id, posttype, tid, discussion',
+		'date, article, description, id, posttype, tid, discussion, uid',
 		'journals JOIN journals_text USING (id)',
 		"date $sign '$journal->[0]'
 		 AND date <= NOW()
