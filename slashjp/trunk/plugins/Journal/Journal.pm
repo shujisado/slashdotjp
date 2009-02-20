@@ -803,7 +803,25 @@ sub getIntrotext {
 	return $intro;
 } }
 
+sub getJournalByDiscussion {
+	my ($self, $discussion) = @_;
 
+	if (ref($discussion) eq "HASH") {
+		$discussion = $discussion->{dkid};
+	}
+
+	return $self->get($self->sqlSelect('id', 'journals', "discussion=$discussion"));
+}
+
+sub createJournalUrl {
+	my ($self, $journal) = @_;
+	my $ret = getCurrentStatic('rootdir');
+
+	$ret .= '/~';
+	$ret .= $self->getUser($journal->{uid}, 'nickname');
+	$ret .= '/journal/' . $journal->{id};
+	return $ret;
+}
 
 sub DESTROY {
 	my($self) = @_;
