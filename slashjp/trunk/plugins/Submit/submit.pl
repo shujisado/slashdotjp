@@ -311,6 +311,17 @@ sub previewForm {
 		note_options			=> getSubmissionSelections($constants),
 		subnotes_ref			=> $subnotes_ref,
 	});
+
+	if ($constants->{plugin}{Admin} && $constants->{plugin}{FireHose}) {
+		my $admin_reader = getObject("Slash::Admin");
+		my $fh_reader = getObject("Slash::FireHose");
+		my $fhid = $admin_reader->getFireHoseIdBySubid($sub->{subid});
+		if ($fhid && (my $fh_item = $fh_reader->getFireHose($fhid))) {
+			if ($fh_item->{discussion}) {
+				printComments($reader->getDiscussion($fh_item->{discussion}) );
+			}
+		}
+	}
 }
 
 #################################################################

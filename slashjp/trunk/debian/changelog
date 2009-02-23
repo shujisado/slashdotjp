@@ -16,8 +16,9 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Add getJournalByDiscussion() and createJournalUrl() on
     plugins/Journal/Journal.pm
   * Fix to return with uid on getJournalByTime() on plugins/Journal/Journal.pm
+  * Print comments on the page of submission preview for Admin
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 06:25:30 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 06:45:47 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
