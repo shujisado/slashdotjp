@@ -20,8 +20,9 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Add getDiscussionByTime() to Slash/DB/MySQL/MySQL.pm to get next/prev
     discussions
   * Fix poll URL in discussions table
+  * Add fix-discussion-url command to fix url column in discussions table
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 08:58:48 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 09:57:40 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
