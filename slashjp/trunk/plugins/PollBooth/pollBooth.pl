@@ -411,7 +411,7 @@ sub savepoll {
 				title		=> $form->{question},
 				topic		=> $form->{topic},
 				approved	=> 1, # Story discussions are always approved -Brian
-				url		=> "$gSkin->{rootdir}/pollBooth.pl?qid=$qid&aid=-1",
+				url		=> "$gSkin->{rootdir}/polls/$qid?aid=-1",
 			});
 		} elsif ($poll->{discussion}) {
 			# Yep, this is lazy -Brian
