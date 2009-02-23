@@ -23,8 +23,9 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Add fix-discussion-url command to fix url column in discussions table
   * Fix poll discussion kind definition
   * Add fix-poll-discussions - fix discussions.dkid for poll discussion item
+  * Disable discussion2 when mobile mode
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 10:46:34 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 13:13:34 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 

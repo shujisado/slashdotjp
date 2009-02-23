@@ -1648,6 +1648,7 @@ sub prepareUser {
 			$user->{mode} = $constants->{mobile_commentmode} || 'flat'; # show flat
 			$user->{commentsort} = $constants->{mobile_commentsort} || 4; # sorted by date asc
 			$user->{commentlimit} = $constants->{mobile_commentlimit} || 5; # comments per page
+			$user->{discussion2} = $constants->{mobile_discussion2} || ''; # discussion2
 		}
 	}
 
