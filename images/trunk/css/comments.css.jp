@@ -21,6 +21,11 @@ div.commentBody {
 		line-height: 1.4;
 }
 
+/* fix link color in commentControlBox */
+.commentBoxForm .commentBox a {
+		color: #222;
+}
+
 /* fix preview space */
 #contents .commentBody p {
 	padding: 0;
