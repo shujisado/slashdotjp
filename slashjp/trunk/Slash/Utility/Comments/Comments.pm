@@ -2700,6 +2700,20 @@ sub printCommentsSuffix {
 		push(@$stories, $item);
 	}
 
+	# poll
+	if ($kind eq "poll") {
+		my $item = { 'prev' => {}, 'next' => {}, 'up' => {} };
+		if (my $prev = $reader->getDiscussionByTime('<', $discussion, { dkid => $discussion->{dkid} })) {
+			$item->{prev} = { url => $prev->{url}, title => $prev->{title} };
+		}
+		if (my $next = $reader->getDiscussionByTime('>', $discussion, { dkid => $discussion->{dkid} })) {
+			$item->{next} = { url => $next->{url}, title => $next->{title} };
+		}
+		$item->{up}->{title} = Slash::getData('polls', {}, 'misc');
+		$item->{up}->{url} = "$constants->{rootdir}/polls/";
+		push(@$stories, $item);
+	}
+
 #use Data::Dumper; print STDERR Dumper($stories);
 
 	# poll
