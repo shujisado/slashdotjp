@@ -22,8 +22,9 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Fix poll URL in discussions table
   * Add fix-discussion-url command to fix url column in discussions table
   * Fix poll discussion kind definition
+  * Add fix-poll-discussions - fix discussions.dkid for poll discussion item
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 10:14:46 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 10:46:34 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
