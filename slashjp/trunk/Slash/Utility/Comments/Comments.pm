@@ -2637,20 +2637,63 @@ sub discussion2 {
 sub printCommentsSuffix {
 	my ($discussion, $options) = @_;
 	my $constants = getCurrentStatic();
+	my $currentPage = getCurrentUser('currentPage');
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
-	my $stories = {};
+	my $stories = [];
 	my $ret = '';
 
 	return $ret if (!$discussion || ref($discussion) ne "HASH");
 
 	my $sid = $reader->getStorySidFromDiscussion($discussion->{id});
-	if ($sid) {
+	my $kinds = $reader->getDescriptions('discussion_kinds');
+	my $kind = $kinds->{ $discussion->{dkid} };
+#print STDERR "kind = $kind\n";
+#print STDERR "currentPage = $currentPage\n";
+
+	# story
+	if ($kind =~ /story$/ && $currentPage =~ /^(?:article|comments)$/ && $sid) {
 		my $story = $reader->getStory($sid);
 		if ($constants->{use_prev_next_link}) {
-			$stories->{prev} = $reader->getStoryByTime('<', $story);
-			$stories->{next} = $reader->getStoryByTime('>', $story) unless $story->{is_future};
+			my $item = { 'prev' => {}, 'next' => {}, 'up' => {} };
+			if (my $prev = $reader->getStoryByTime('<', $story)) {
+				$prev = linkStory($prev);
+				$item->{prev} = { url => $prev->[0], title => $prev->[1] }
+			}
+			if (!$story->{is_future} && (my $next = $reader->getStoryByTime('>', $story))) {
+				$next = linkStory($next);
+				$item->{next} = { url => $next->[0], title => $next->[1] }
+			}
+			my $skin = $reader->getSkin($story->{primaryskid});
+			$item->{up}->{title} = $skin->{title};
+			$item->{up}->{url} = $skin->{url};
+			push(@$stories, $item);
 		}
 	}
+
+	# journal
+	if ($kind =~ /^journal/ && $currentPage =~ /^(?:journal|comments)$/) {
+		my $journal_reader = getObject("Slash::Journal");
+		my $journal = $journal_reader->getJournalByDiscussion($discussion->{id});
+		my $item = { 'prev' => {}, 'next' => {}, 'up' => {} };
+		if (my $prev = $journal_reader->getJournalByTime('<', [ $journal->{date} ], { uid => $journal->{uid} })) {
+			$item->{prev} = { url => $journal_reader->createJournalUrl($prev), title => $prev->{description} };
+		}
+		if (my $next = $journal_reader->getJournalByTime('>', [ $journal->{date} ], { uid => $journal->{uid} })) {
+			$item->{next} = { url => $journal_reader->createJournalUrl($next), title => $next->{description} };
+		}
+		$item->{up}->{title} = Slash::getData('s_journal', { nickname => $reader->getUser($journal->{uid}, 'nickname') }, 'misc');
+		$item->{up}->{url} = $journal_reader->createJournalUrl({ uid => $journal->{uid} });
+		push(@$stories, $item);
+	}
+#use Data::Dumper; print STDERR Dumper($stories);
+
+	# poll
+
+	# feed
+
+	# submission
+
+	# project
 
 	$ret = slashDisplay('printCommentsSuffix', {
 		stories	=> $stories,

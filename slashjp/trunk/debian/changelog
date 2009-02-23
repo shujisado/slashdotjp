@@ -17,7 +17,7 @@ slash (2.5.0.233-5) unstable; urgency=low
     plugins/Journal/Journal.pm
   * Fix to return with uid on getJournalByTime() on plugins/Journal/Journal.pm
 
- -- Taku YASUI <tach@osdn.jp>  Fri, 20 Feb 2009 11:26:39 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 06:25:30 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
