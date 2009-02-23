@@ -306,6 +306,18 @@ div.commentBody {
 	text-align: center;
 }
 
+.comments-suffix-prev-next div {
+	margin-top: 0.5em;
+	padding-top: 0.5em;
+	border-top: 1px solid #CCC;
+}
+
+.comments-suffix-prev-next div.first {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: 0 none;
+}
+
 .comments-suffix-prev-next ul,
 .comments-suffix-prev-next ul li {
 	display: inline;
