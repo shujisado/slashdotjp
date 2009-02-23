@@ -818,8 +818,9 @@ sub createJournalUrl {
 	my $ret = getCurrentStatic('rootdir');
 
 	$ret .= '/~';
-	$ret .= $self->getUser($journal->{uid}, 'nickname');
-	$ret .= '/journal/' . $journal->{id};
+	$ret .= fixparam($self->getUser($journal->{uid}, 'nickname'));
+	$ret .= '/journal/';
+	$ret .= $journal->{id} if ($journal->{id});
 	return $ret;
 }
 
