@@ -12936,6 +12936,37 @@ sub getShillInfo {
 
 }
 
+sub getDiscussionByTime {
+	my ($self, $sign, $discussion, $options) = @_;
+	my $constants = getCurrentStatic();
+	$options = {} if !$options || ref($options) ne 'HASH';
+	my $uid = int($options->{uid}) || undef;
+	my $dkid = int($options->{dkid}) || undef;
+	my $where = '';
+	my $order = $sign eq '<' ? 'DESC' : 'ASC';
+
+	if (ref($discussion) ne 'HASH') {
+		$discussion = $self->getDiscussion(int($discussion));
+	}
+
+	if ($uid) {
+		$where .= " AND uid=$uid";
+	}
+
+	if ($dkid) {
+		$where .= " AND dkid=$dkid";
+	}
+
+	return $self->sqlSelectHashref(
+		'*',
+		'discussions',
+		"ts $sign '$discussion->{ts}'
+		 AND ts <= NOW()
+		 $where",
+		"ORDER BY ts $order LIMIT 1"
+	);
+}
+
 ########################################################
 sub DESTROY {
 	my($self) = @_;

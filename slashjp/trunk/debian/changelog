@@ -17,8 +17,10 @@ slash (2.5.0.233-5) unstable; urgency=low
     plugins/Journal/Journal.pm
   * Fix to return with uid on getJournalByTime() on plugins/Journal/Journal.pm
   * Print comments on the page of submission preview for Admin
+  * Add getDiscussionByTime() to Slash/DB/MySQL/MySQL.pm to get next/prev
+    discussions
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 06:45:47 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 08:33:46 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 

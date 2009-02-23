@@ -2685,13 +2685,26 @@ sub printCommentsSuffix {
 		$item->{up}->{url} = $journal_reader->createJournalUrl({ uid => $journal->{uid} });
 		push(@$stories, $item);
 	}
+
+	# submission
+	if ($kind eq "submission" && $constants->{plugin}{FireHose}) {
+		my $item = { 'prev' => {}, 'next' => {}, 'up' => {} };
+		if (my $prev = $reader->getDiscussionByTime('<', $discussion, { dkid => $discussion->{dkid} })) {
+			$item->{prev} = { url => $prev->{url}, title => $prev->{title} };
+		}
+		if (my $next = $reader->getDiscussionByTime('>', $discussion, { dkid => $discussion->{dkid} })) {
+			$item->{next} = { url => $next->{url}, title => $next->{title} };
+		}
+		$item->{up}->{title} = Slash::getData('submissions', {}, 'misc');
+		$item->{up}->{url} = "$constants->{rootdir}/firehose.pl?fhfilter=submission";
+		push(@$stories, $item);
+	}
+
 #use Data::Dumper; print STDERR Dumper($stories);
 
 	# poll
 
 	# feed
-
-	# submission
 
 	# project
 
