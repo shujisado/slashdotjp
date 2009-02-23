@@ -36,16 +36,16 @@ foreach my $discussion (@$discussions) {
 		my $nickname = fixparam($slashdb->getUser($uid, 'nickname'));
 		$url = "$gSkin->{rootdir}/~$nickname/journal/$id";
 	} elsif ($discussion->{kind} eq "poll") {
-		next unless ($discussion->{url} =~ m!/\bqid=(\d+?)\b!);
-		my $qid = $1;
-		$url = "$gSkin->{rootdir}/polls/$qid?aid=-1";
+		if (my $qid = $slashdb->sqlSelect('qid', 'pollquestions', "discussion=$discussion->{id}")) {
+			$url = "$gSkin->{rootdir}/polls/$qid?aid=-1";
+		}
 	} else {
 		next;
 	}
 
-	if ($url) {
+	if ($url && $url ne $discussion->{url}) {
+		print STDERR "BEFORE: $discussion->{url}\n";
+		print STDERR "AFTER : $url\n\n";
 		$slashdb->sqlUpdate('discussions', { url => $url }, "id=$discussion->{id}");
 	}
-	print "BEFORE: $discussion->{url}\n";
-	print "AFTER : $url\n\n";
 }
