@@ -77,6 +77,11 @@ div.commentBody {
 		background: url(/images/d2_button_horizonal_v2_jp.png) no-repeat;
 }
 
+/* fix score display */
+.comment .title .score {
+		font-size: 90%;
+}
+
 /* fix comment button color */
 .nbutton {
 		background-color: #CCC;
