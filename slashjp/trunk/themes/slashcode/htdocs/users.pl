@@ -1231,7 +1231,7 @@ sub showInfo {
 			# A comment with no accompanying discussion;
 			# basically we pretend it doesn't exist.
 			next;
-		} elsif ($kinds->{ $discussion->{dkid} } =~ /^journal(?:-story)?$/) {
+		} elsif ($kinds->{ $discussion->{dkid} } eq 'journal') {
 			$type = 'journal';
 		} elsif ($kinds->{ $discussion->{dkid} } eq 'poll') {
 			$type = 'poll';

@@ -26,8 +26,10 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Disable discussion2 when mobile mode
   * Add variable "messages_send_journal_story_comments" to select sending
     messages for "journal-story" comments
+  * Fix: userInfo comment link from "journal" to "story" when kinds are
+    "journal-story"
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 26 Feb 2009 10:21:37 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 26 Feb 2009 11:23:07 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
