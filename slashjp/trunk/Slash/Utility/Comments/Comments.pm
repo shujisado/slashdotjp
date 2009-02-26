@@ -1747,7 +1747,7 @@ sub saveComment {
 	}
 
 	# reply to journal
-	if ($messages && $kinds->{ $discussion->{dkid} } =~ /^journal/) {
+	if ($messages && ($kinds->{ $discussion->{dkid} } eq "journal" || $kinds->{ $discussion->{dkid} } =~ /^journal/ && $constants->{messages_send_journal_story_comments})) {
 		my $users  = $messages->checkMessageCodes(MSG_CODE_JOURNAL_REPLY, [$discussion->{uid}]);
 		if (_send_comment_msg($users->[0], \%users, $pts, $clean_comment)) {
 			my $data  = {

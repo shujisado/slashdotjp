@@ -24,8 +24,10 @@ slash (2.5.0.233-5) unstable; urgency=low
   * Fix poll discussion kind definition
   * Add fix-poll-discussions - fix discussions.dkid for poll discussion item
   * Disable discussion2 when mobile mode
+  * Add variable "messages_send_journal_story_comments" to select sending
+    messages for "journal-story" comments
 
- -- Taku YASUI <tach@osdn.jp>  Mon, 23 Feb 2009 13:13:34 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 26 Feb 2009 10:21:37 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
