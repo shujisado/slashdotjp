@@ -104,7 +104,7 @@ sub skinHeaders {
 		close $fh;
 	}
 
-	setCurrentForm('ssi', 0);
+	setCurrentForm('ssi', 1);
 	my $foot_pages = $slashdb->getHeadFootPages($skinname, 'footer');
 
 	foreach (@$foot_pages) {
