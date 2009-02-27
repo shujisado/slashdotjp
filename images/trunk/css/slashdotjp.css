@@ -453,26 +453,25 @@ form#editcomm fieldset td.foaf-select select {
 	margin: 0.8em 0;
 }
 
-/* lower contents for whole site */
-#lower-contents {
+/* footer navigation for whole site */
+#footer-navigation {
 	margin-top: 1em;
-	white-space: nowrap;
+	clear: right;
 }
 
-/* story widget at the bottom of contents */
-#lower-contents .story-widget {
-	margin-top: 1em;
-	background: #E8E8E8;
+#footer-navigation table.ads-footer-navigation {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-collapse: collapse;
 }
 
-#lower-contents .story-widget ol {
-	margin: 0 0 0 2em !important;
-	padding: 0.5em 0.7em;
-	line-height: 1.7;
-}
-
-#lower-contents .story-widget ol li a.comments {
-	font-size: 90%;
+#footer-navigation table.ads-footer-navigation tbody,
+#footer-navigation table.ads-footer-navigation tr,
+#footer-navigation table.ads-footer-navigation td {
+	margin: 0;
+	padding: 0;
+	border: 0;
 }
 
 /* FAQ page navigation */
