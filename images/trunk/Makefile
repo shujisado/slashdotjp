@@ -19,6 +19,7 @@ images-stamp: $(patsubst %,css/%.css.orig, $(csses)) $(patsubst %,css/slashdot_%
 		sed -e 's/\.pnh$$/.png/' | \
 		sort -u | \
 		wget --no-proxy --no-host-directories --mirror --no-verbose -i -
+	wget --no-proxy --no-verbose http://images.slashdot.org/spinner2.gif
 	touch images-stamp
 
 css/slashcode_lite.css css/slashcode_low_bw.css css/iestyles.css css/admin.css css/comments.css css/firehose.css css/ie6.css css/ie7.css: %: %.orig %.jp
