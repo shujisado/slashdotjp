@@ -7,6 +7,7 @@ body {
 	font-size: 98%;
 	line-height: 1.3;
 	min-width: 750px;
+	border-bottom: 0;
 }
 div#topnav,
 div.copyright {
