@@ -87,6 +87,7 @@ $(patsubst %, %.js, $(jses)): %: %.orig
 		sed -e 's/hidden comment</個の隠れコメント</' | \
 		sed -e 's/hidden comments</個の隠れコメント</' | \
 		sed -e "s/\$$('#slashboxes').sortable(/\$$('.section-mainpage #index #slashboxes').sortable(/" | \
+		sed -e "s/firehohse/firehose/g" | \
 		perl fix-comments.js.pl >> $@
 	echo >> $@
 	if [ -f $@.jp ]; then cat $@.jp >> $@; fi
