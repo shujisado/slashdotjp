@@ -1,8 +1,8 @@
 slash (2.5.0.233-6) unstable; urgency=low
 
-  * NOT RELEASED YET
+  * Change journal prev-next order
 
- -- Taku YASUI <tach@osdn.jp>  Tue,  3 Mar 2009 08:47:03 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue,  3 Mar 2009 11:28:12 +0000
 
 slash (2.5.0.233-5) unstable; urgency=low
 
