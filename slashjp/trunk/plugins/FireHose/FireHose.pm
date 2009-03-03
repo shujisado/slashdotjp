@@ -3322,7 +3322,7 @@ sub linkFireHose {
 			sid	=> $story->{sid},
 			link 	=> $story->{title},
 			tid 	=> $story->{tid},
-			skin	=> $story->{primaryskid}
+			skin	=> $story->{primaryskid} || $constants->{mainpage_skid},
 		}, 0);
 		$link_url = $story_link_ar->[0];
 	} elsif ($item->{type} eq "journal") {

@@ -30,8 +30,11 @@ slash (2.5.0.233-5) unstable; urgency=low
     "journal-story"
   * setCurrentForm('ssi', 1) when creating "slashfoot.inc"
   * enable SSI on firehose.shtml for slashdot.jp
+  * Fix: /firehose.pl:Slash::Utility::Display:/usr/lib/perl5/Slash/Utility/Display.pm:526:cannot
+    getSkin for empty skid ;; Which was called
+    by:Slash::FireHose:/usr/share/perl5/Slash/FireHose.pm:3321
 
- -- Taku YASUI <tach@osdn.jp>  Tue,  3 Mar 2009 04:39:16 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue,  3 Mar 2009 05:44:33 +0000
 
 slash (2.5.0.233-4) unstable; urgency=low
 
