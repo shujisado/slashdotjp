@@ -1942,6 +1942,7 @@ sub genFireHoseMCDAllKeys {
 sub dispFireHose {
 	my($self, $item, $options) = @_;
 	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 	$options ||= {};
 	my $mcd = $self->getMCD();
 	my $mcdkey;
@@ -1967,7 +1968,7 @@ sub dispFireHose {
 		view_mode		=> $options->{view_mode}
 	}, { Page => "firehose",  Return => 1 });
 
-	if ($mcd) {
+	if (!$user->{is_anon} && $mcd) {
 		$mcdkey = $self->genFireHoseMCDKey($item->{id}, $options);
 		if ($mcdkey) {
 			my $exptime = $constants->{firehose_memcached_disp_exptime} || 180;
