@@ -607,6 +607,7 @@ sub gen_firehose_static {
 	my($vu, $filename, $section, $skinname, $opts) = @_;
 	my $constants = getCurrentStatic();
 	my $fargs = "virtual_user=$vu taskgen=1 section='$section'";
+	$fargs .= " ssi=1"; # enable SSI on firehose.shtml for slashdot.jp (2009-03-03, tach)
 	my $basedir = $constants->{basedir};
 	$skinname .= "/" if $skinname;
 
