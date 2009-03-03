@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+#
+# (slash-)regen-all - re-generate all story shtml files
+#
+
+use Slash;
+use Slash::Utility;
+use Slash::DB;
+
+my %opts;
+$opts{'u'} ||= 'slash';
+
+createEnvironment($opts{'u'});
+
+my $slashdb = getCurrentDB();
+$slashdb->sqlDo("INSERT IGNORE INTO story_dirty
+                 SELECT stoid FROM stories WHERE in_trash = 'no'
+                 AND stoid NOT IN (SELECT DISTINCT stoid FROM story_param \
+                 WHERE name = 'neverdisplay' AND value = 1)");

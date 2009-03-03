@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+#
+# (slash-)fix-poll-discussions - fix discussions.dkid for poll discussion item
+#
+
+use Slash;
+use Slash::Utility;
+use Slash::DB;
+use strict;
+
+my %opts;
+$opts{'u'} ||= 'slash';
+
+createEnvironment($opts{'u'});
+
+my $slashdb = getCurrentDB();
+my $dkid = $slashdb->sqlSelect('dkid', 'discussion_kinds', "name='poll'");
+
+my $where = "polltype='section' AND dkid != $dkid";
+my $other = '';
+
+my $ids = $slashdb->sqlSelectAll(
+	"id",
+	"discussions JOIN pollquestions ON (pollquestions.discussion=discussions.id)",
+	$where,
+	$other
+);
+
+foreach my $id (@$ids) {
+	print STDERR "Fix discussion: $id->[0]\n";
+	$slashdb->sqlUpdate('discussions', { dkid => $dkid }, "id=$id->[0]");
+}
