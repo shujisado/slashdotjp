@@ -473,6 +473,7 @@ form#editcomm fieldset td.foaf-select select {
 	margin: 0;
 	padding: 0;
 	border: 0;
+	vertical-align: top;
 }
 
 /* FAQ page navigation */
