@@ -12968,6 +12968,15 @@ sub getDiscussionByTime {
 }
 
 ########################################################
+sub getJournal {
+	return _genericGet({
+		table		=> 'journals',
+		table_prime	=> 'id',
+		arguments	=> \@_,
+	});
+}
+
+########################################################
 sub DESTROY {
 	my($self) = @_;
 
