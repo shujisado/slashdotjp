@@ -1,0 +1,841 @@
+slash (2.5.0.233-6) unstable; urgency=low
+
+  * Change journal prev-next order
+  * Add getJournal() to MySQL.pm for SearchEst2
+  * Add "rdfitem_content_encoded" parameter for Slash/XML/RSS.pm
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 10 Mar 2009 09:45:15 +0000
+
+slash (2.5.0.233-5) unstable; urgency=low
+
+  * Fix to change discussion dkid for "journal-story"
+    submissions/stories/journals.
+  * Remove "Index" topic on topic list at story editing from submission
+    using constants "submission_remove_mainpage_nexus_tid"
+  * Fix SQL to get top journals at journal_update_slashbox.pl
+  * Change color to red for "This story will not appear" message at admin.pl
+  * Fix: vanish olderstuff slashbox from top page when moved
+  * Fix: dupliicate slashboxes
+  * Add printCommentsSuffix() to show comments suffix (e.g. navigation)
+  * Fix: HTML title for edituser page
+  * Fix: add fhid for submission to submission_param table
+  * Make to fetch fhid on getSubmissionsByUID()
+  * Fix: yourPendingSubs system
+  * Add getJournalByDiscussion() and createJournalUrl() on
+    plugins/Journal/Journal.pm
+  * Fix to return with uid on getJournalByTime() on plugins/Journal/Journal.pm
+  * Print comments on the page of submission preview for Admin
+  * Add getDiscussionByTime() to Slash/DB/MySQL/MySQL.pm to get next/prev
+    discussions
+  * Fix poll URL in discussions table
+  * Add fix-discussion-url command to fix url column in discussions table
+  * Fix poll discussion kind definition
+  * Add fix-poll-discussions - fix discussions.dkid for poll discussion item
+  * Disable discussion2 when mobile mode
+  * Add variable "messages_send_journal_story_comments" to select sending
+    messages for "journal-story" comments
+  * Fix: userInfo comment link from "journal" to "story" when kinds are
+    "journal-story"
+  * setCurrentForm('ssi', 1) when creating "slashfoot.inc"
+  * enable SSI on firehose.shtml for slashdot.jp
+  * Fix: /firehose.pl:Slash::Utility::Display:/usr/lib/perl5/Slash/Utility/Display.pm:526:cannot
+    getSkin for empty skid ;; Which was called
+    by:Slash::FireHose:/usr/share/perl5/Slash/FireHose.pm:3321
+  * Fix firehose story link useless use of shtml
+
+ -- Taku YASUI <tach@osdn.jp>  Tue,  3 Mar 2009 07:31:29 +0000
+
+slash (2.5.0.233-4) unstable; urgency=low
+
+  * Add regen-all command to re-generate all story shtml files
+  * fix HumanConf.pm to prevent warnings
+  * Fix debian/control
+    - Move mysql-server from Depends: to Recommends:
+  * Change title order at article.pl
+  * Fix to remove incorrect admin sessions
+  * Set last_action='reviewing' when viewing submission
+  * Return more infomation on currentAdmin()
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 29 Jan 2009 07:39:31 +0000
+
+slash (2.5.0.233-3) unstable; urgency=low
+
+  * Improve calculation method giving moderation points for slashdot.jp
+  * Write detail log when granting moderation point
+  * Add logcheck ignore rules
+    - TagModeration messages
+    - hc_maintain_pool messages
+  * Fix FireHose item selection rule about "user:username" filter
+  * Fix to prevent some warning messages
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 20 Jan 2009 07:59:20 +0000
+
+slash (2.5.0.233-2) unstable; urgency=low
+
+  * Fix to insert correct entry to users_journal
+
+ -- Taku YASUI <tach@osdn.jp>  Fri,  9 Jan 2009 07:09:37 +0000
+
+slash (2.5.0.233-1) unstable; urgency=low
+
+  * New upstream git tag
+  * Add selectable d2 default using constants "d2_default"
+  * Disable "getAd()"
+  * Fix to change firehose default tab name
+  * Fix to use getData() for moderation message using ajax.pl
+  * bypass reskey check on insertFireHose() at Journal.pm
+  * Fix to set/unset firehose_usermode correctly
+  * Fix regexp match warning
+    at /usr/lib/perl5/Slash/Utility/Comments.pm line 625
+  * Fix compress filter enable to use multibyte characters
+
+ -- Taku YASUI <tach@osdn.jp>  Thu,  8 Jan 2009 06:03:51 +0000
+
+slash (2.5.0.231-1) unstable; urgency=low
+
+  * New upstream git release
+  * Add article count number to articles in index.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Tue,  2 Dec 2008 10:17:25 +0000
+
+slash (2.5.0.218-1) unstable; urgency=low
+
+  * New upstream git release
+    - Upstream SCM has been changed to git
+      (git://github.com/scc/slash.git)
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 09 Sep 2008 22:05:52 +0900
+
+slash (2.5.0.201-1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 21 Apr 2008 21:58:15 +0900
+
+slash (2.5.0.200-1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 07 Apr 2008 09:26:13 +0900
+
+slash (2.5.0.198-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix variable name for new Slash/Utility/Comments/Comments.pm
+  * Add imagemagick to Depends: for slash-backend package
+    - task process_file_queue.pl uses /usr/bin/convert command
+  * Change from Apache::PerlRun to Apache::Registry in
+    Slash/Apache/User/PasswordSalt/PasswordSalt.pm
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 04 Apr 2008 15:45:45 +0900
+
+slash (2.5.0.196-1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 04 Mar 2008 18:26:43 +0900
+
+slash (2.5.0.195-1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 26 Feb 2008 11:54:28 +0000
+
+slash (2.5.0.192-21) unstable; urgency=low
+
+  * Fix "+" operation for "fixparam()"
+    - Change white-space to "%20" instead of "+" on fixparam()
+    - Change "%20" to white-space on userdir_handler()
+    - Not to change "+" to white-space on userdir_handler()
+    - Add to redirect when nickname is not found but matchname is found
+  * Add "reasons_base", "reasons_plused" and "reasons_minused" to constants
+    - To change modreasons by moderated score
+  * Select enable/disable moderation for not m2able reasons when it is not
+    eligible
+  * Fix unwanted object creation at plugin/Messages/Messages.pm
+  * Create messages when the journal is submission
+  * Add pollquestions to page title and fix title format
+  * Fix poll voting booth layout to use template "poll;pollBooth;default"
+  * Fix previewSlashbox layout to use template "previewSlashbox;users;default"
+  * Add some wiki page to wikicontents redirection
+  * Fix for invalid form input at Slash/Utility/Environment/Environment.pm
+  * Fix to show correct error message on new user creation
+  * Add to set more messaging preferences on new user creation
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 21 Nov 2008 05:03:49 +0000
+
+slash (2.5.0.192-20) unstable; urgency=low
+
+  * Back to default only 'slashboxes' when 'restore_default_slashbox'
+  * Fix journal preview to use new theme system
+  * Add pagination to journal list page
+
+ -- Taku YASUI <tach@osdn.jp>  Fri,  3 Oct 2008 12:46:08 +0000
+
+slash (2.5.0.192-19) unstable; urgency=low
+
+  * Add getThemeType() method to check theme type
+    into plugin/Journal/Journal.pm
+  * A number of entries in journal slashbox is from constant "journal_top"
+  * Add logcheck ignore rules for journal_update_slashbox.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 24 Sep 2008 11:58:27 +0000
+
+slash (2.5.0.192-18) unstable; urgency=low
+
+  * Use $user->{currentSkin} at $slashdb->getTemplateByName()
+    - Fix: slashDisplay() option 'Skin' does not applied
+  * Add logcheck ignore rule for SearchEst
+  * Add plugins/Journal/journal_update_slashbox.pl to create topjournal blocks
+  * Add feature to change redirect status code on redirect()
+  * Redirect to new journal RSS URL
+  * Add feature storing RSS output into memcached
+  * Add feature to store/get journal and polls RSS content from memcached
+  * Remove LDAPDB library
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 17 Sep 2008 06:10:21 +0000
+
+slash (2.5.0.192-17) unstable; urgency=low
+
+  * Fix journals URL (remove "top")
+    - top recent: /journals/top/recent -> /journals/recent
+    - top posters: /journals/top/posters -> /journals/posters
+    - you can access old URL
+  * Add /faq/ internal redirection at Slash/Apache/Apache.pm
+    - This code is for slash-plugin-wikicontents
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 25 Jul 2008 14:36:41 +0000
+
+slash (2.5.0.192-16) unstable; urgency=low
+
+  * Fix for reason_modifier setting for users.pl
+    - Use reason_id as key instead of name
+  * Add workaround for unicode WAVE DASH problem
+  * Add "dc:source" and "dc:relation" to RSS output
+  * Change "sitename.(rss|ref|xml|atom)" to including all stories even if
+    section local
+  * Change journal top rss including html description and change URL adding
+    journal id
+  * Add new journal top rss url: "/journals/top/rss" and
+    "/journals/top/recent/rss"
+  * Add "readmore" link for journal top rss and journal rss
+  * use $constants->{sitepublisher} when $constants->{rdfpublisher} does not
+    exist on creating RSS
+  * Add content:encoded for story main rss
+  * Add "mainpage" title to "index.rss"
+  * Fix RSS "textinput" handling on Slash/XML/RSS/RSS.pm
+  * Add simple pollBooth URL
+    - "/polls" and "/polls/{qid}"
+  * Add feature: display pollBooth RSS on "/polls/rss"
+  * Improve article.pl performance when non-user access
+    - redirect to shtml internally
+  * Add feature to change query string form name for search.pl
+    - Use variable "search_query_name"
+  * Improve "polls/rss" performance using rss cache
+    - Use variable "rss_cachedir"
+    - cache creating task is not included in slash distribution
+  * Allow firehose.pl for AC when the "id" is specified
+  * move createMenu() into hierarchy and listTopics templates
+  * Redirect topics.pl to topics.shtml internally when when AC access
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jul 2008 07:57:22 +0000
+
+slash (2.5.0.192-15) unstable; urgency=low
+
+  * Add vars "modreasons_select_disabled" to insert "disabled => 1" for getReasons()
+
+ -- Taku YASUI <tach@osdn.jp>  Sat,  5 Jul 2008 12:30:25 +0000
+
+slash (2.5.0.192-14) unstable; urgency=low
+
+  * Fix to change commentsort for mobile mode from 5 to 4
+  * Make to change commentsort, commentmode and commentlimitfor mobile mode
+    using constants
+    - commentsort = mobile_commentsort
+    - commentlimit = mobile_commentlimit
+    - mode = mobile_commentmode
+  * Fix: redirect url when ('?m=1') has been appended
+  * Add "discussion" variable for printCommComments template
+  * enable to show divided top journal pages
+    - top_recent
+    - top_posters
+    - top_friends
+  * add "start" parameter for $journal->top() and $journal->topRecent()
+    - for enabling pagination for top journals
+  * Add new url for userdir_handler
+    - Add "/journals" URL
+  * Add next and previous journal data to journal
+    - use $journal_reader->getJournalByTime()
+  * Disable to show comments when mobile mode
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 27 Jun 2008 07:03:00 +0000
+
+slash (2.5.0.192-13) unstable; urgency=low
+
+  * Fix: linkStory() add '?m=1'
+  * Fix: force mobile mode when ssi=yes and m=1 for prog2file
+  * Fix: Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/XML/FOAF.pm line 170.
+  * Fix: Use of uninitialized value in numeric ge (>=) at
+    /var/lib/slash/site/slashdot.jp/htdocs/zoo.pl line 440.
+  * Fix: Use of uninitialized value in numeric ge (>=) at
+    /var/lib/slash/site/slashdot.jp/htdocs/zoo.pl line 427.
+  * Fix: Use of uninitialized value in numeric ge (>=) at
+    /var/lib/slash/site/slashdot.jp/htdocs/zoo.pl line 428.
+  * Do not show footer when show foaf at plugins/Zoo/zoo.pl
+  * Fix: Use of uninitialized value in concatenation (.) or string at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 10184
+  * Enable to specify encoding for prog2file
+    - use 'encoding' to option
+  * Add feature to write static html file for mobile mode
+  * Add feature to enable/disable PERL / RAWPERL directives on Template
+    - use constant 'enable_template_evalperl'
+  * Add feature to create slashhead/slashfoot file for mobile mode
+  * Fix: Automatic adding related stories and comments
+    - Check sid existance
+    - Select enable/disable to add related comments using variable
+      "related_cid_disabled"
+  * Add to killing orphaned slashd child process when keepalive
+  * Fix next_prev_stories selection code
+    - Make same as mainpage story list
+  * Change mobile mode default charset from Shift_JIS to UTF-8
+  * Fix to specify correct ssi include file for mobile mode
+  * Fix linkStory() for mobile mode
+  * Show mobile mode page when useragent matches "mobile_useragent_regex"
+  * Redirect to mobile story page when mobile clients come to normal shtml
+  * Allow "accesskey" attribute at linkStory()
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 20 Jun 2008 08:10:20 +0000
+
+slash (2.5.0.192-12) unstable; urgency=low
+
+  * Add mobile mode
+    - Use "mobile_enabled" constant to use mobile mode
+    - Force mobile mode when the user-agent matches "mobile_useragent_regex"
+      or URL arg includes "m=1"
+    - getCurrentUser('mobile') is true when mobile mode has been enabled
+    - Do not show any comments on article.pl when mobile mode
+    - Force some settings
+      o Show comments as flat
+      o Comments are sorted by date desc
+      o Show only 5 comments per page
+  * Add number of display journal count to _printHead() on Journal.pm
+    - You can use 'jcount' variable journalhead;journal template
+  * Fix: Use of uninitialized value in length at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 2054.
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 12 May 2008 18:00:12 +0000
+
+slash (2.5.0.192-11) unstable; urgency=low
+
+  * Change RSS item description suffix
+    - use template "rss_item_description;misc;default" to change description
+  * Add feature to change whether nexus topics will be shown or not on topic
+    list
+    - use $constants->{topiclist_dont_show_nexuses}
+  * Add feature to change automatic tag stories to use topic.textname instead
+    of topic.keyword
+    - use $constants->{autoaddstorytopics_use_textname}
+
+ -- Taku YASUI <tach@osdn.jp>  Thu,  1 May 2008 14:27:42 +0000
+
+slash (2.5.0.192-10) unstable; urgency=low
+
+  * Fix to take discussion id from journal-submission
+  * Update journal-story discussions' title/url to story title/url when vars
+    update_journal_story_discussion_to_story has been enabled.
+  * Fix not to show contents when the skin does not exist
+  * Fix to create/update firehose item from Journal correctly
+    - Do not use "submit" reskey
+  * Fix to update story-submitted journal correctly
+    - Do not use "submit" reskey
+  * Add to enable/disable to show publicized(story-submitted) journals to
+    firehose as journal firehose item
+    - Using "update_journal_story_discussion_to_story" variable
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 24 Apr 2008 18:36:57 +0900
+
+slash (2.5.0.192-9) unstable; urgency=low
+
+  * Fix continue: firehose color for bookmark feed to same as normal bookmarks
+    at tagboxes
+  * Fix Prototype mismatch: sub main::EOF: none vs () at
+    /var/lib/slash/site/slashdot.jp/tasks/zoo_run_people_log.pl
+  * Allow to show AC info for admin user
+  * Fix: user karma_bonus settings are vanished...
+  * Fix: comment count fail when user hardthresh setting is enabled
+  * Remove "tid=" from story link at stories
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 21 Apr 2008 21:58:15 +0900
+
+slash (2.5.0.192-8) unstable; urgency=low
+
+  * Enable to select using shtml links at site RSS/RDF by
+    $constants->{rss_use_story_shtml}
+  * Change method to pick up nexus topics for section selection on
+    editHome at users.pl (for slashdot.jp)
+  * Add logcheck ignore rules for fetch_rss_bookmarks.pl
+  * Move processing %special keys to after encode changing at filter_params
+    at Slash/Utility/Environment/Environment.pm
+  * Fix firehose color for bookmark feed to same as normal bookmarks
+  * Fix Use of uninitialized value at tagbox.pl line 285
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 26 Mar 2008 05:00:59 +0000
+
+slash (2.5.0.192-7) unstable; urgency=low
+
+  * Add to forbid Moderation for user doing bad moderation
+  * Fix to remove some unicode control characters from form
+  * Fix to attach discussion to another story when duplicate stories are
+    removed
+
+ -- Taku YASUI <tach@osdn.jp>  Thu,  6 Mar 2008 09:20:58 +0000
+
+slash (2.5.0.192-6) unstable; urgency=low
+
+  * Fix email message for new user creation
+    - You should create "mail_msg_newuser" data to template
+      "data;login;default"
+
+ -- Taku YASUI <tach@osdn.jp>  Mon,  3 Mar 2008 10:06:08 +0000
+
+slash (2.5.0.192-5) unstable; urgency=low
+
+  * Fix admin topic select window to change tree/alpabetical
+  * Fix to show stories that should display
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 26 Feb 2008 20:13:25 +0900
+
+slash (2.5.0.192-4) unstable; urgency=low
+
+  * Backported from 2.5.0.194 at plugins/Stats/Stats.pm
+    to fix table accesslog_temp_uidip create error
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 14 Feb 2008 21:56:15 +0900
+
+slash (2.5.0.192-3) unstable; urgency=low
+
+  * Revert to old (before 2.5.0.190) format of index.pl comment links
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 19:04:13 +0900
+
+slash (2.5.0.192-2) unstable; urgency=low
+
+  * Fix: Undefined subroutine &Slash::Apache::User::PasswordSalt::getSalts
+    called at /usr/lib/perl5/Slash/Utility/Data.pm line 872.
+  * Fix: use "dkid" instead of "kind" at plugins/Journal/Journal.pm
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 19:01:51 +0900
+
+slash (2.5.0.192-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Change bookmark_feed createdtime from NOW() to date of RSS items
+  * Fix logchack ignore rules:
+    - Change case of string
+    - Suppress Delete neverdisplay stories from story_dirty message
+  * Fix: delete discussion when another stories have same discussion
+  * Add "aretama" for Slashdot Japan to Firehose tab
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 08 Feb 2008 01:31:13 +0900
+
+slash (2.5.0.189-3) unstable; urgency=low
+
+  * Exit init.d script when slashd daemon does not exist
+  * Change to delete neverdisplay stories from story_dirty
+  * Change to delete nonexistent stories from story_dirty
+  * Fix: Use of uninitialized value at
+    /usr/lib/perl5/Slash/Utility/Display.pm line 549.
+  * Add logcheck ignore rules
+    - Suppress story deleting message
+    - Suppress Deleted nonexistent stories from story_dirty message
+  * Fix: takeover discussion failed when the story has been created from
+    submit.pl
+  * Fix: remaining firehose url at discussion table when takeover discussion
+    from firehose.
+
+ -- Taku YASUI <tach@osdn.jp>  Thu, 31 Jan 2008 09:05:59 +0000
+
+slash (2.5.0.189-2) unstable; urgency=low
+
+  * Add logcheck ignore rules
+    - Suppress harmless messages about freshenup.pl
+    - Suppress normal runtask messages
+  * Fix: duplicate key error at plugin/Stats/Stats.pm
+  * Fix: suppress _addGlobjEssentials_journals no nick for journal message by
+    tagbox.pl
+    - Do not process for deleted journals
+  * Fix: slashd daemonizes correctly
+  * Add cron.d to check and restart slashd
+  * Fix: remaining top10Comments in sbin/portald ... changed to topComments
+  * Fix: cannot authenticate using LDAP when the users has never changed their
+    password
+    - Add to change LDAP password when the user has new passwords are
+      authenticated
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 22 Jan 2008 17:15:39 +0900
+
+slash (2.5.0.189-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Suppress warning at slash-template-tool -d
+  * Suppress following warning messages:
+    - Use of uninitialized value in numeric gt (>) at
+      message_delivery.pl line 86.
+  * Add logcheck ignore rules for slashd.log to slash-backend
+  * Add to set nice value for slashd
+  * Add to load /etc/default/slash for slashd
+  * Change Email::Valid method to address() to reject wide chars
+  * Disable to change invalid email address
+  * Change binary package arch to all (slash-frontend and slash-backend)
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 18 Jan 2008 08:44:20 +0000
+
+slash (2.5.0.188-6) unstable; urgency=low
+
+  * Fix to use correct db object at
+    plugins/Moderation/process_moderation.pl line 144
+  * Add feature: sending title for badge.js
+
+ -- Taku YASUI <tach@debian.or.jp>  Fri, 11 Jan 2008 16:47:42 +0900
+
+slash (2.5.0.188-5) unstable; urgency=low
+
+  * Suppress "Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 3068"
+    - initialize $series and use it
+  * Fix warning when "HREF" has been capitalized at
+    /usr/share/perl5/Slash/Admin.pm line 177
+  * Suppress "Use of uninitialized value in string eq at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 10182."
+  * Suppress "Use of uninitialized value in list assignment at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 3713."
+  * Return empty array reference when $stoid is empty at
+    getStoryTopicsRendered() function
+  * Suppress "Use of uninitialized value in string ne at
+    /usr/lib/perl5/Slash/DB/MySQL.pm line 1213"
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 20:37:39 +0900
+
+slash (2.5.0.188-4) unstable; urgency=low
+
+  * Fix memcached keyname to get/set stories for correct skin
+    *** THIS FIX IS AD-HOC AND PLEASE USE CAREFULLY ***
+  * Remove unwanted STDERR debug output at index.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 28 Dec 2007 17:05:40 +0900
+
+slash (2.5.0.188-3) unstable; urgency=low
+
+  * Suppress "Use of uninitialized value" when running tasks/daemons at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 441
+  * Add slash-install-tagbox command to run
+    /usr/share/slash/bin/install-tagbox
+  * Fix: subscriber_bonus should be enabled when Subscribe plugin has been
+    installed at users.pl
+
+ -- Taku YASUI <tach@debian.or.jp>  Fri, 28 Dec 2007 01:58:40 +0900
+
+slash (2.5.0.188-2) unstable; urgency=low
+
+  * Remove unwanted code at plugins/Admin/admin.pl
+  * Fix firehose table update error: Unknown column 'media' in 'field list'
+    at /usr/share/perl5/Slash/FireHose.pm:1518
+  * Remove unwanted debug code at plugins/FireHose/FireHose.pm line 302
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 25 Dec 2007 18:49:20 +0900
+
+slash (2.5.0.188-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Suppress warning of portald
+    - Use of uninitialized value in pattern match (m//) at
+      /usr/lib/perl5/Slash/DB/Static/MySQL.pm line 1514
+    - Use of uninitialized value in numeric comparison (<=>) at
+      /usr/lib/perl5/Slash/DB/Static/MySQL.pm line 866.
+  * Fix for FireHose initial data script at
+    /usr/lib/perl5/Slash/Utility/Data.pm line 434
+  * Add journal time to FireHose when journal is added to FireHose
+  * Enable to change "Firehose" name using constants "firehose_name"
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 25 Dec 2007 08:36:25 +0900
+
+slash (2.5.0.187-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: unwanted debug output at Slash/DB/MySQL/MySQL.pm
+  * Suppress warning at plugins/Admin/admin.pl
+  * Change slash.conf filename
+    - before: /etc/apache/conf.d/slash.conf
+    - after: /etc/apache/conf.d/00slash.conf
+  * Add libtimedate-perl-ja to Suggests: at slash-common
+  * Add libfile-type-perl and libfinance-quote-perl to Depends of slash-common
+    - Some plugin need these modules
+  * Suppress "Use of uninitialized value" at
+    plugins/FireHose/FireHose.pm line 2017
+  * Suppress "Use of uninitialized value" at
+    plugins/Tags/tags_udc.pl line 150
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 21 Dec 2007 20:38:58 +0900
+
+slash (2.5.0.186-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: [error] Can't use string ("describe") as a HASH ref while "strict
+    refs" in use at /usr/share/perl5/Slash/Tags.pm line 1514.\n
+  * Fix: Use of uninitialized value in string comparison (cmp) at
+    /usr/share/perl5/Slash/Tags.pm line 1648.
+  * Fix: cannot getSkin for empty skid='0' at firehose.pl
+  * Fix: Supress warning when $item->{link} does not exist at
+    /usr/share/slash/sbin/portald
+  * Add: takeover_discussion_from_firehose constants
+    to takeover discussions before approve.
+  * Add: select adding '?from=rss' phrase to rss link
+    with constants 'rss_no_tracking_query'
+  * Add: select enabling discussion2 or not with constants 'no_d2'
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 17 Dec 2007 17:54:08 +0900
+
+slash (2.5.0.184-1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: Wide character in print warning at following tasks:
+    - new_headfoot.pl
+    - create_sidebar.pl
+  * Add set_sectionlinks.pl to themes/slashcode/tasks
+    - create recentSection template for left menu
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 19 Nov 2007 10:29:29 +0000
+
+slash (2.5.0.183-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix: $uid is not defined at plugins/Journal/Journal.pm
+  * Fix: gSkin.imagedir has not been defined, change to constants.imagedir
+  * Fix: does not apply when ldap_debug_level is 0 at LDAPDB
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 09 Nov 2007 19:15:25 +0900
+
+slash (2.5.0.182-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+
+ -- Taku YASUI <tach@osdn.jp>  Fri, 02 Nov 2007 17:00:48 +0900
+
+slash (2.5.0.181-0.1) unstable; urgency=low
+
+  * New upstream CVS release
+  * Fix syntax error on plugins/Admin/admin.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 16:08:34 +0900
+
+slash (2.5.0.180-0.1) unstable; urgency=low
+
+  * New upstream cvs release
+    - Read upstream changelog
+  * move Slash/LDAPDB/vars.sql contents to sql/mysql/default.sql
+  * Add enable/disable switch to agree privacy statement on create user
+  * Add libdata-javascript-anon-perl to Depends:
+    - for Ajax plugin
+  * Fix: password notification email send fail: plugins/Messages/Messages.pm
+  * Fix: remove filter failed: plugins/Admin/admin.pl
+  * Typo fix at Slash/LDAPDB/lib/Slash/LDAPDB.pm
+  * Fix warning: Wide character in print at plugins/Admin/admin.pl
+  * Fix warning: Use of uninitialized value in substitution iterator at
+    fixparam() in Slash/Utility/Data/Data.pm
+  * Fix warning: Use of uninitialized value and hash key at
+    templateEdit() in plugins/Admin/admin.pl
+  * Allow to change LDAPDB DEBUG_LEVEL using vars "ldap_debug_level"
+  * Fix warning: Use of uninitialized value at
+    getDescForTopicsRendered() at plugins/Admin/admin.pl
+
+ -- Taku YASUI <tach@osdn.jp>  Wed, 31 Oct 2007 14:53:53 +0900
+
+slash (2.5.0.119-17) unstable; urgency=low
+
+  * Merged from OTP
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 16 Oct 2007 13:29:13 +0900
+
+slash (2.5.0.119-otp-12) unstable; urgency=low
+
+  * Add: hide stories of specfied tid at admin story list
+    - use constant "admin_hide_tids" like "17,24,32" ...
+
+ -- Taku YASUI <tach@debian.or.jp>  Wed,  3 Oct 2007 09:49:09 +0900
+
+slash (2.5.0.119-otp-11) unstable; urgency=low
+
+  * add dependency (libgd-gd2-perl libgd-text-perl) for humanconf plugin.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 15 Aug 2007 17:31:56 +0900
+
+slash (2.5.0.119-otp-10) unstable; urgency=low
+
+  * Blob.pm: revert to upsatrem for increase max_allowed_packet.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 27 Jul 2007 15:23:46 +0900
+
+slash (2.5.0.119-otp-9) unstable; urgency=low
+
+  [ Taku YASUI ]
+  * Fix: sql syntax error when "$skid_list" is empty
+
+  [ Tatsuki Sugiura ]
+  * Blob.pm: fix calculation of packet length when entering chunked mode
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 27 Jul 2007 14:02:42 +0900
+
+slash (2.5.0.119-otp-8) unstable; urgency=low
+
+  [ Tatsuki Sugiura ]
+  * search plugin: check total hits
+  * search plugin: fetch dept column
+
+  [ Taku YASUI ]
+  * Change debian/changelog time
+  * Make to get "Content-Transfer-Encoding" value from vars
+
+ -- Taku YASUI <tach@osdn.jp>  Tue, 19 Jun 2007 20:01:40 +0900
+
+slash (2.5.0.119-otp-5) unstable; urgency=low
+
+  * Search plugin: senna full query support
+  * Search plugin: add '*D+' pragma in default
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 25 May 2007 05:23:46 +0000
+
+slash (2.5.0.119-otp-4) unstable; urgency=low
+
+  * plugin/Search/Search.pm: search query was forced IN BOOLEAN MODE
+  * Utility::Data.pm: encode URL each single byte
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 25 May 2007 14:08:12 +0900
+
+slash (2.5.0.119-otp-3) unstable; urgency=low
+
+  * change query string filter to enable japanese search.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu, 24 May 2007 14:18:47 +0900
+
+slash (2.5.0.119-otp-2) unstable; urgency=low
+
+  * Fix for binary data mangle: escape blob column as hex
+    before sending to SQL server.
+  * reverse order of related stories.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 09 May 2007 18:37:56 +0900
+
+slash (2.5.0.119-16) unstable; urgency=low
+
+  * Hex encoding was applied for all binary columns.
+  * Some fix and merge from otp for etch.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 23 Jul 2007 13:59:15 +0900
+
+slash (2.5.0.119-15) unstable; urgency=low
+
+  * admin.pl: fix regex to pick up related stories and comments, again.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 20 Jul 2007 18:33:11 +0900
+
+slash (2.5.0.119-14) unstable; urgency=low
+
+  * admin.pl: fix regex to pick up related stories and comments.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri, 20 Jul 2007 17:19:06 +0900
+
+slash (2.5.0.119-13) unstable; urgency=low
+
+  * task/open_backend.pl: change RSS version from 0.9 to 0.91
+  * remove description from RSS0.91
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed, 27 Jun 2007 17:28:19 +0900
+
+slash (2.5.0.119-12) unstable; urgency=low
+
+  * add uri_encode_safe filter
+  * add content:encoded in RSS1.0 of journal
+    (enabled by rdfitem_content variable.)
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  8 Nov 2006 12:57:03 +0900
+
+slash (2.5.0.119-11) unstable; urgency=low
+
+  * support dirskin in adminmail and counthits.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  1 Nov 2006 12:19:44 +0900
+
+slash (2.5.0.119-10) unstable; urgency=low
+
+  * remove obsolete light mode code
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 30 Oct 2006 17:29:37 +0900
+
+slash (2.5.0.119-9) unstable; urgency=low
+
+  * remove 'SET NAMES utf8' from MySQL.pm.
+    So need to mysql_read_default_file in dbix-password.conf
+    and default-character-set in my.cnf
+  * change schedule of adminmail.pl to 4:50 AM (JST)
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  4 Oct 2006 17:23:16 +0900
+
+slash (2.5.0.119-8) unstable; urgency=low
+
+  * login.pl: fix condition for checking LDAP user when accout creation
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu, 14 Sep 2006 22:14:37 +0900
+
+slash (2.5.0.119-7) unstable; urgency=low
+
+  * fix in chopEntity() (may return reversed string...)
+  * stop messaging for journal-story
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon, 11 Sep 2006 14:02:32 +0900
+
+slash (2.5.0.119-6) unstable; urgency=low
+
+  * login.pl: fix condition for duplicate user error when create user.
+  * article.pl: make enable and strict check in skin redirection for dirskin.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Fri,  8 Sep 2006 14:46:33 +0900
+
+slash (2.5.0.119-5) unstable; urgency=low
+
+  * make disable skin redirection forcely in article.pl
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu,  7 Sep 2006 18:55:30 +0900
+
+slash (2.5.0.119-4) unstable; urgency=low
+
+  * change link of stories submitted by journal to article.pl in search.pl
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Thu,  7 Sep 2006 14:44:14 +0900
+
+slash (2.5.0.119-3) unstable; urgency=low
+
+  * fix <ecode> processing to avoid perl bug?
+  * cut off long URL (partial, a tag only)
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  6 Sep 2006 21:48:50 +0900
+
+slash (2.5.0.119-2) unstable; urgency=low
+
+  * change title link of discussion to article.pl instead of
+    ~/user/journal/nnnn.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Mon,  4 Sep 2006 21:15:55 +0900
+
+slash (2.5.0.119-1) unstable; urgency=low
+
+  * catchup upstream CVS.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Wed,  9 Aug 2006 16:44:50 +0900
+
+slash (2.5.0.94-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Tatsuki Sugiura <sugi@nemui.org>  Tue,  9 May 2006 16:15:50 +0900
+
