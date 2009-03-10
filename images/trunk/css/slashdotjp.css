@@ -564,16 +564,22 @@ div#search-result-topright {
 	text-align: right;
 }
 
-div.search-results,
+div.search-result,
 div.search-help {
 	margin: 1.2em 5px;
 	line-height: 1.5;
 }
 
-.search-results .intro {
-	font-size: 80%;
+.search-result h4 {
+	font-size: 110%;
 }
-.search-results .data {
+
+.search-result .intro {
+	font-size: 90%;
+}
+
+.search-result .data,
+.search-result .section-topics {
 	font-size: 80%;
 	color: #666;
 }
