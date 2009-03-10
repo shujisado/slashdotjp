@@ -164,6 +164,9 @@ sub create {
 	$self->{rdfitem_content} = defined $param->{rdfitem_content}
 		? $param->{rdfitem_content}
 		: $constants->{rdfitem_content};
+	$self->{rdfitem_content_encoded} = defined $param->{rdfitem_content_encoded}
+		? $param->{rdfitem_content_encoded}
+		: $constants->{rdfitem_content_encoded};
 
 	my $rss = XML::RSS->new(
 		version		=> $version,
@@ -334,7 +337,7 @@ sub create {
 						my $desc = $self->rss_item_description($item->{$key});
 						$encoded_item->{$key} = $desc if $desc;
 					}
-				} elsif ($key eq 'content:encoded' && $self->{rdfitem_content}) {
+				} elsif ($key eq 'content:encoded' && $self->{rdfitem_content} && $self->{rdfitem_content_encoded}) {
 					if ($version == 1) {
 						my $rdfitemdesc_html_bak = $self->{rdfitemdesc_html};
 						$self->{rdfitemdesc_html} = 1;

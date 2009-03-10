@@ -2,8 +2,9 @@ slash (2.5.0.233-6) unstable; urgency=low
 
   * Change journal prev-next order
   * Add getJournal() to MySQL.pm for SearchEst2
+  * Add "rdfitem_content_encoded" parameter for Slash/XML/RSS.pm
 
- -- Taku YASUI <tach@osdn.jp>  Sun,  8 Mar 2009 16:15:55 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 10 Mar 2009 09:45:15 +0000
 
 slash (2.5.0.233-5) unstable; urgency=low
 
