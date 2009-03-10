@@ -15,8 +15,6 @@ Disallow: /ajax.pl
 Disallow: /blob.pl
 Disallow: /bookmark.pl
 Disallow: /fileadmin.pl
-Disallow: /firehose.pl
-Disallow: /hof.pl
 Disallow: /login.pl
 Disallow: /messages.pl
 Disallow: /metamod.pl
@@ -24,7 +22,6 @@ Disallow: /pubkey.pl
 Disallow: /relocate.pl
 Disallow: /slashdot-it.pl
 Disallow: /stats.pl
-Disallow: /submit.pl
 Disallow: /tags.pl
 Disallow: /users.pl
 Disallow: /zoo.pl
