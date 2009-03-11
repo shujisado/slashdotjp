@@ -132,6 +132,7 @@ our @EXPORT  = qw(
 	xmlencode_plain
 	validUrl
 	vislenify
+	shorten
 );
 
 
@@ -4524,6 +4525,42 @@ sub validUrl {
 		$scheme = $uri->scheme if $uri && $uri->can("scheme");
 	}		
 	return ($fudgedurl && $scheme && $allowed_schemes{$scheme});
+}
+
+#========================================================================
+=head2 shorten (STRING, LEN)
+
+Shorten given string to given length and add " ... ".
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item STRING
+
+Target string
+
+=item LEN
+
+Length to shorten
+
+=back
+
+=item Return value
+
+Shorten string
+
+=back
+
+=cut
+
+sub shorten {
+	my($str, $len) = @_;
+	return ($len && length($str) > ($len - 1))
+		? substr($str, 0, $len) . ' ... '
+		: $str;
 }
 
 
