@@ -12947,8 +12947,8 @@ sub getDiscussionByTime {
 	my ($self, $sign, $discussion, $options) = @_;
 	my $constants = getCurrentStatic();
 	$options = {} if !$options || ref($options) ne 'HASH';
-	my $uid = int($options->{uid}) || undef;
-	my $dkid = int($options->{dkid}) || undef;
+	my $uid = $options->{uid} ? int($options->{uid}) : undef;
+	my $dkid = $options->{dkid} ? int($options->{dkid}) : undef;
 	my $where = '';
 	my $order = $sign eq '<' ? 'DESC' : 'ASC';
 
