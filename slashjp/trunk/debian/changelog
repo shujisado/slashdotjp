@@ -4,6 +4,7 @@ slash (2.5.0.233-7) unstable; urgency=low
   * Remove warning "Use of uninitialized value in int at
     /usr/lib/perl5/Slash/DB/MySQL.pm line 12950."
   * add shorten() method to Slash/Utility/Data/Data.pm
+  * Add check for journal_obj->get() argument
 
  -- Taku YASUI <tach@osdn.jp>  Wed, 11 Mar 2009 10:13:28 +0000
 

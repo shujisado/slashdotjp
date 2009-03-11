@@ -19,7 +19,7 @@ sub set {
 	my $uid = getCurrentUser('uid');
 	my $constants = getCurrentStatic();
 
-	return unless $self->sqlSelect('id', 'journals', "uid=$uid AND id=$id");
+	return unless ($id && $self->sqlSelect('id', 'journals', "uid=$uid AND id=$id"));
 
 	my(%j1, %j2);
 	%j1 = %$values;
@@ -225,6 +225,7 @@ sub remove {
 	my($self, $id) = @_;
 	my $uid = getCurrentUser('uid');
 
+	return unless $id;
 	my $journal = $self->get($id);
 	return unless $journal->{uid} == $uid;
 
@@ -809,8 +810,8 @@ sub getJournalByDiscussion {
 	if (ref($discussion) eq "HASH") {
 		$discussion = $discussion->{dkid};
 	}
-
-	return $self->get($self->sqlSelect('id', 'journals', "discussion=$discussion"));
+	my $id = $self->sqlSelect('id', 'journals', "discussion=$discussion");
+	return $id ? $self->get($id) : undef;
 }
 
 sub createJournalUrl {
