@@ -5908,6 +5908,7 @@ sub getStoryByTime {
 	my $topic   = $options->{topic}   || '';
 	my $section = $options->{section} || '';
 	my $tables = 'stories JOIN story_text USING (stoid)';
+	my $groupby = '';
 	my $where;
 	my $name  = 'story_by_time';
 	_genericCacheRefresh($self, $name, $constants->{story_expire} || 600);
@@ -5931,6 +5932,7 @@ sub getStoryByTime {
 	my $mp_tid = $constants->{mainpage_nexus_tid} || 1;
 	if (!$section && !$topic && $user->{sectioncollapse}) {
 		$tables .= ' JOIN story_topics_rendered USING (stoid)';
+		$groupby .= 'GROUP BY stories.stoid';
 		my $nexuses = $self->getNexusChildrenTids($mp_tid);
 		my $nexus_clause = join ',', @$nexuses, $mp_tid;
 		$where .= " AND story_topics_rendered.tid IN ($nexus_clause)";
@@ -5947,9 +5949,11 @@ sub getStoryByTime {
 			if ($nexus_clause);
 		if ($user->{story_never_nexus} || $nexus_clause) {
 			$tables .= ' JOIN story_topics_rendered USING (stoid)';
+			$groupby .= 'GROUP BY stories.stoid';
 		}
 	} else {
 		$tables .= ' JOIN story_topics_rendered USING (stoid)';
+		$groupby .= 'GROUP BY stories.stoid';
 		$where .= " AND story_topics_rendered.tid = $mp_tid";
 		$key .= '|=';
 	}
@@ -5991,8 +5995,7 @@ sub getStoryByTime {
 		 AND time <= $now
 		 AND in_trash = 'no'
 		 $where",
-
-		"GROUP BY stories.stoid ORDER BY time $order LIMIT $limit"
+		"$groupby ORDER BY time $order LIMIT $limit"
 	);
 	# needs to be defined as empty
 	$cache->{$key} = $returnable || '' if $key;
