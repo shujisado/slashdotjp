@@ -5907,6 +5907,7 @@ sub getStoryByTime {
 	my $limit   = $options->{limit}   || 1;
 	my $topic   = $options->{topic}   || '';
 	my $section = $options->{section} || '';
+	my $tables = 'stories JOIN story_text USING (stoid)';
 	my $where;
 	my $name  = 'story_by_time';
 	_genericCacheRefresh($self, $name, $constants->{story_expire} || 600);
@@ -5929,6 +5930,7 @@ sub getStoryByTime {
 
 	my $mp_tid = $constants->{mainpage_nexus_tid} || 1;
 	if (!$section && !$topic && $user->{sectioncollapse}) {
+		$tables .= ' JOIN story_topics_rendered USING (stoid)';
 		my $nexuses = $self->getNexusChildrenTids($mp_tid);
 		my $nexus_clause = join ',', @$nexuses, $mp_tid;
 		$where .= " AND story_topics_rendered.tid IN ($nexus_clause)";
@@ -5943,7 +5945,11 @@ sub getStoryByTime {
 		my $nexus_clause .= join ',', @$nexuses;
 		$where .= " AND (story_topics_rendered.stoid NOT IN (SELECT stoid FROM story_topics_rendered WHERE tid IN ($nexus_clause)) OR story_topics_rendered.tid = $mp_tid)"
 			if ($nexus_clause);
+		if ($user->{story_never_nexus} || $nexus_clause) {
+			$tables .= ' JOIN story_topics_rendered USING (stoid)';
+		}
 	} else {
+		$tables .= ' JOIN story_topics_rendered USING (stoid)';
 		$where .= " AND story_topics_rendered.tid = $mp_tid";
 		$key .= '|=';
 	}
@@ -5979,10 +5985,8 @@ sub getStoryByTime {
 
 	my $returnable = $self->sqlSelectHashref(
 		'stories.stoid, sid, title, stories.tid',
-		'stories, story_text, story_topics_rendered',
-		"stories.stoid = story_text.stoid
-		 AND stories.stoid = story_topics_rendered.stoid
-		 AND '$time' > DATE_SUB($now, INTERVAL $bytime_delay DAY)
+		$tables,
+		"'$time' > DATE_SUB($now, INTERVAL $bytime_delay DAY)
 		 AND time $sign '$time'
 		 AND time <= $now
 		 AND in_trash = 'no'
