@@ -631,6 +631,11 @@ div.search-help {
 	font-size: 120%;
 }
 
+#search #hyperestraier {
+	font-size: 85%;
+	text-align: center;
+}
+
 /* d1 fix */
 #commentlisting.d1 {
 	padding: 0;
