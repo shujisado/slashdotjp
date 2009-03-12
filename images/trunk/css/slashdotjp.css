@@ -589,8 +589,46 @@ div.search-help {
 }
 
 #search .pagination {
+	margin-bottom: 1em;
+	padding: 0.5em;
+	background: #EEE;
+	border: 1px solid #CCC;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	text-align: center;
 	font-weight: bold;
-	margin: 0.9em 0;
+	width: 100%;
+}
+
+#search .pagination td {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	text-align: center;
+}
+
+#search .pagination td.first {
+	white-space: nowrap;
+	text-align: left;
+}
+
+#search .pagination td.last {
+	white-space: nowrap;
+	text-align: right;
+}
+
+#search .pagination a {
+	color: #044;
+	text-decoration: none;
+	margin: 0 0.5em;
+}
+
+#search .pagination a:hover {
+	text-decoration: underline;
+}
+
+#search .pagination span.current {
+	font-size: 120%;
 }
 
 /* d1 fix */
