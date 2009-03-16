@@ -1,3 +1,9 @@
+slash (2.5.0.233-8) unstable; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Taku YASUI <tach@osdn.jp>  Mon, 16 Mar 2009 04:28:28 +0000
+
 slash (2.5.0.233-7) unstable; urgency=low
 
   * Fix slow query on getStoryByTime()
