@@ -147,7 +147,9 @@ sub main {
 			my $last = pop @topic_desc;
 			$a = join(', ', @topic_desc) . ", and $last";
 		}
-		my $meta_desc = "$story->{title} -- article related to $a.";
+		my $meta_desc = strip_nohtml($story->{introtext});
+		$meta_desc =~ s/[\r\n]//g;
+		$meta_desc = shorten($meta_desc, 250);
 
 		header($links, $story->{section}, {
 			story_title	=> $story->{title},
