@@ -372,6 +372,11 @@ sub IndexHandler {
 	#	$uri =~ s/^\Q$path//;
 	#}
 
+	# Redirect antenna URL
+	if ($r->the_request =~ m! /(\S*)\?\d+ !) {
+		redirect("$constants->{absolutedir}/$1", 301);
+	}
+
 	# redirect to new journal rss URL for slashdot.jp (2008-09-16, tach)
 	# Before: /journal.pl?op=display&uid=3&content_type=rss
 	# After: /~tach/journal/rss
