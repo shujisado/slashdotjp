@@ -270,6 +270,11 @@ my $start_time = Time::HiRes::time;
 #	$user->{currentSection} = $section->{section};
 	Slash::Utility::Anchor::getSkinColors();
 
+	my $meta_desc = getData('meta_desc');
+	foreach my $s (@{$stories}[0 .. 4]) {
+		$meta_desc .= $slashdb->getStory($s->{stoid}, 'title') . "\x{3002}" if ($s->{stoid});
+	}
+
 	# displayStories() pops stories off the front of the @$stories array.
 	# Whatever's left is fed to displaySlashboxes for use in the
 	# index_more block (aka Older Stuff).
@@ -292,7 +297,7 @@ my $start_time = Time::HiRes::time;
 	);
 
 	my $title = getData('head', { skin => $skin_name });
-	header({ title => $title, link => $linkrel }) or return;
+	header({ title => $title, link => $linkrel }, '', { meta_desc => $meta_desc }) or return;
 
 	if ($form->{remark}
 		&& $user->{is_subscriber}
