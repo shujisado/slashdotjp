@@ -519,6 +519,8 @@ sub displayArticle {
 
 	if (@$articles == 1) {
 	    $head_data->{html_title} = $articles->[0]->[2];
+	    $head_data->{meta_desc} = shorten(strip_nohtml($articles->[0]->[1]), 250);
+	    $head_data->{meta_desc} =~ s/[\r\n\s]+/ /g;
 	}
 	$head_data->{jcount} = scalar(@$articles);
 	_printHead('userhead', $head_data, 1) or return;
@@ -1001,6 +1003,8 @@ sub _printHead {
 	my $title = getData($head, $data);
 	my $html_title = (defined($data->{html_title}) ? $data->{html_title}." - " : '') . $title;
 	my $options = { last_modified => $data->{last_modified} };
+
+	$options->{meta_desc} = $data->{meta_desc} if (defined $data->{meta_desc});
 
 	my $links = {
 		title		=> $html_title,
