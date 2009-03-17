@@ -59,14 +59,28 @@ sub main {
 	}
 
 	# create title
+	my $polldb = getObject('Slash::PollBooth', { db_type => 'reader' });
 	my $title = getData('title');
+	my $meta_desc = '';
 	if ($form->{qid}) {
-		my $polldb = getObject('Slash::PollBooth', { db_type => 'reader' });
-		$title .= ': ' . $polldb->getPollQuestion($form->{qid})->{question};
+		my $pollq = $polldb->getPollQuestion($form->{qid});
+		$title .= ': ' . $pollq->{question};
+		$meta_desc = $pollq->{question} . " ";
+		my $pollans = $polldb->getPollAnswers($form->{qid}, [ 'answer' ]);
+		foreach my $a (@$pollans) {
+			$meta_desc .= $a->[0] . "\x{3002}" if ($a->[0]);
+		}
+	} else {
+		my $questions = $polldb->getPollQuestionList(10);
+		$meta_desc = '';
+		foreach my $q (@$questions) {
+			$meta_desc .= $q->[1] . " " if ($q->[1]);
+		}
 	}
+	$meta_desc = shorten(strip_nohtml($meta_desc), 250);
 	$title .= " - $constants->{sitename}";
 
-	header($title, $form->{section}, { tab_selected => 'poll'}) or return;
+	header($title, $form->{section}, { tab_selected => 'poll', meta_desc => $meta_desc }) or return;
 
 	$ops{$op}->($form, $slashdb, $constants);
 

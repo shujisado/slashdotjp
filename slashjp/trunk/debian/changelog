@@ -5,9 +5,12 @@ slash (2.5.0.233-8) unstable; urgency=low
     - index.pl: add data "meta_desc" and title of first 5 articles
     - journal.pl: add first 250 chars of article on article page
     - journal.pl: add first 250 chars of article titles on index page
+    - pollBooth.pl: add first 250 chars of question and answers on indevidual
+      page
+    - pollBooth.pl: add first 250 chars of questions on index page
   * Redirect Antenna URL on IndexHandler
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 17 Mar 2009 07:44:20 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 17 Mar 2009 08:15:45 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 
