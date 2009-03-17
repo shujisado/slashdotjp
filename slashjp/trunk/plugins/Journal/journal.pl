@@ -518,10 +518,15 @@ sub displayArticle {
 	}
 
 	if (@$articles == 1) {
-	    $head_data->{html_title} = $articles->[0]->[2];
-	    $head_data->{meta_desc} = shorten(strip_nohtml($articles->[0]->[1]), 250);
-	    $head_data->{meta_desc} =~ s/[\r\n\s]+/ /g;
+		$head_data->{html_title} = $articles->[0]->[2];
+		$head_data->{meta_desc} = $articles->[0]->[1];
+	} else {
+		foreach my $a (@$articles) {
+			$head_data->{meta_desc} .= $a->[2] . "\x{3002}" if ($a->[2]);
+		}
 	}
+	$head_data->{meta_desc} = shorten(strip_nohtml($head_data->{meta_desc}), 250);
+	$head_data->{meta_desc} =~ s/[\r\n\s]+/ /g;
 	$head_data->{jcount} = scalar(@$articles);
 	_printHead('userhead', $head_data, 1) or return;
 
