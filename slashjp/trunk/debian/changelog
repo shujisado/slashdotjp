@@ -9,8 +9,9 @@ slash (2.5.0.233-8) unstable; urgency=low
       page
     - pollBooth.pl: add first 250 chars of questions on index page
   * Redirect Antenna URL on IndexHandler
+  * Fix getStoryByTime() condition (never return "neverdisplay" stories)
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 17 Mar 2009 08:15:45 +0000
+ -- Taku YASUI <tach@osdn.jp>  Wed, 18 Mar 2009 09:39:55 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 

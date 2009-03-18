@@ -5994,6 +5994,7 @@ sub getStoryByTime {
 		 AND time $sign '$time'
 		 AND time <= $now
 		 AND in_trash = 'no'
+		 AND stoid NOT IN (SELECT stoid FROM story_param WHERE name='neverdisplay' AND value=1)
 		 $where",
 		"$groupby ORDER BY time $order LIMIT $limit"
 	);
