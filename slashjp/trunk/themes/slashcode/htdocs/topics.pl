@@ -72,6 +72,10 @@ sub listTopics {
 		delete($topics->{$id}) if ($constants->{topiclist_dont_show_nexuses});
 	}
 
+	foreach (keys %$topics) {
+		delete($topics->{$_}) if ($topics->{$_}{searchable} eq 'no');
+	}
+
 	slashDisplay('listTopics', {
 		title		=> getData('current_topics'),
 		width		=> '90%',
