@@ -10,8 +10,9 @@ slash (2.5.0.233-8) unstable; urgency=low
     - pollBooth.pl: add first 250 chars of questions on index page
   * Redirect Antenna URL on IndexHandler
   * Fix getStoryByTime() condition (never return "neverdisplay" stories)
+  * Enable to use absolute path for content:encoded link in RSS.pm
 
- -- Taku YASUI <tach@osdn.jp>  Wed, 18 Mar 2009 09:39:55 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 24 Mar 2009 09:02:10 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 

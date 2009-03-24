@@ -167,6 +167,9 @@ sub create {
 	$self->{rdfitem_content_encoded} = defined $param->{rdfitem_content_encoded}
 		? $param->{rdfitem_content_encoded}
 		: $constants->{rdfitem_content_encoded};
+	$self->{rdfitemdesc_link_absolute} = defined $param->{rdfitemdesc_link_absolute}
+		? $param->{rdfitemdesc_link_absolute}
+		: $constants->{rdfitemdesc_link_absolute};
 
 	my $rss = XML::RSS->new(
 		version		=> $version,
@@ -561,7 +564,7 @@ sub rss_item_description {
 			# slashized links or slash tags ... but if
 			# we do have a problem, we can move this to
 			# rss_story() -- pudge
-			$desc = parseSlashizedLinks($desc);
+			$desc = parseSlashizedLinks($desc, { absolute => $self->{rdfitemdesc_link_absolute} });
 			$desc = processSlashTags($desc);
 
 			# here we could reprocess content as XHTML if we
