@@ -636,6 +636,12 @@ div.search-help {
 	text-align: center;
 }
 
+/* google search form in error */
+div.error form {
+	background: #FDD;
+	padding-left: 0;
+}
+
 /* d1 fix */
 #commentlisting.d1 {
 	padding: 0;
@@ -779,6 +785,12 @@ a.tooltip:hover span{
 	margin-left: auto;
 	margin-right: auto;
 	text-align: center;
+}
+
+#ads-article-premium {
+	width: 360px;
+	height: 250px;
+	overflow: hidden;
 }
 
 div.article div.bigbanner,
