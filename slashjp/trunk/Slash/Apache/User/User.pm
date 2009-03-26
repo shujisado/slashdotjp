@@ -650,7 +650,7 @@ sub userdir_handler {
 		} elsif ($word eq '/journal/') {
 			$file = '/journal.pl';
 			my @args = ($query);
-			push(@args, 'op=authorview');
+			push(@args, 'op=authorsview');
 			$query = join('&', @args);
 		} else {
 			return NOT_FOUND;

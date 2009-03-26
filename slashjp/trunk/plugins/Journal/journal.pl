@@ -74,7 +74,7 @@ sub main {
 		searchusers	=> [ 1,			\&searchUsers		],
 		friends		=> [ 1,			\&displayFriends	],
 		friendview	=> [ 1,			\&displayArticleFriends	],
-		authorview	=> [ 1,			\&displayArticleAuthors	],
+		authorsview	=> [ 1,			\&displayArticleAuthors	],
 
 		default		=> [ 1,			\&displayFriends	],
 	);

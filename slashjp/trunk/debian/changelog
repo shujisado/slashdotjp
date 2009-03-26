@@ -13,12 +13,12 @@ slash (2.5.0.233-8) unstable; urgency=low
   * Enable to use absolute path for content:encoded link in RSS.pm
   * Hide topics that is not searchable
   * Add authors journal mode
-    - /journal.pl?op=authorview
+    - /journal.pl?op=authorsview
   * Smart URL for authors
     - /authors/ => /authors.pl
-    - /authors/journal/ => /journal.pl?op=authorview
+    - /authors/journal/ => /journal.pl?op=authorsview
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 26 Mar 2009 08:33:54 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 26 Mar 2009 09:08:27 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 
