@@ -74,6 +74,7 @@ sub main {
 		searchusers	=> [ 1,			\&searchUsers		],
 		friends		=> [ 1,			\&displayFriends	],
 		friendview	=> [ 1,			\&displayArticleFriends	],
+		authorview	=> [ 1,			\&displayArticleAuthors	],
 
 		default		=> [ 1,			\&displayFriends	],
 	);
@@ -452,6 +453,80 @@ sub displayArticleFriends {
 	}
 
 	slashDisplay('friendsview', {
+		articles	=> \@collection,
+		uid		=> $uid,
+		nickname	=> $nickname,
+		back		=> $back,
+		forward		=> $forward,
+	});
+
+	print getData('journalfoot');
+}
+
+sub displayArticleAuthors {
+	my($journal, $constants, $user, $form, $journal_reader) = @_;
+	my($date, $forward, $back, $nickname, $uid);
+	my @collection;
+	my $header_options = {};
+	my $links = {
+		title		=> 'authors journal',
+	};
+
+	_printHead('authorhead', { no_usermenu => 1 }) or return;
+
+	# clean it up
+	my $start = fixint($form->{start}) || 0;
+	my $uids = [ keys(%{$journal_reader->getAuthors()}) ];
+	my $articles = $journal_reader->getsByUids($uids, $start,
+		$constants->{journal_default_display} + 1
+	);
+
+	unless ($articles && @$articles) {
+		print getData('noviewfriends');
+		print getData('journalfoot');
+		return;
+	}
+
+	# check for extra articles ... we request one more than we need
+	# and if we get the extra one, we know we have extra ones, and
+	# we pop it off
+	if (@$articles == $constants->{journal_default_display} + 1) {
+		pop @$articles;
+		$forward = $start + $constants->{journal_default_display};
+	} else {
+		$forward = 0;
+	}
+
+	# if there are less than journal_default_display remaning,
+	# just set it to 0
+	if ($start > 0) {
+		$back = $start - $constants->{journal_default_display};
+		$back = $back > 0 ? $back : 0;
+	} else {
+		$back = -1;
+	}
+
+	my $topics = $journal_reader->getTopics;
+	for my $article (@$articles) {
+		my $commentcount = $article->[6]
+			? $journal_reader->getDiscussion($article->[6], 'commentcount')
+			: 0;
+
+		# should get comment count, too -- pudge
+		push @collection, {
+			article		=> balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 }),
+			date		=> $article->[0],
+			description	=> strip_notags($article->[2]),
+			topic		=> $topics->{$article->[5]},
+			discussion	=> $article->[6],
+			id		=> $article->[3],
+			commentcount	=> $commentcount,
+			uid		=> $article->[7],
+			nickname	=> $article->[8],
+		};
+	}
+
+	slashDisplay('authorsview', {
 		articles	=> \@collection,
 		uid		=> $uid,
 		nickname	=> $nickname,

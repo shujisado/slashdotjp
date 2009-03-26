@@ -637,6 +637,29 @@ sub userdir_handler {
 		return OK;
 	}
 
+	# authors for slashdot.jp
+	if ($uri =~ m!^/authors(/[^?]*|/?)(\?.*)?$!) {
+		my($word, $query) = ($1, $2);
+		if ($word =~ s!/{2,}!/!g || $word =~ s!([^/])\z!$1/! || $word =~ s!^\z!/!) {
+			redirect($constants->{real_rootdir} . "/authors$word$query", 301);
+		}
+		$query =~ s/^\?//;
+		my $file = undef;
+		if ($word eq '/') {
+			$file = '/authors.pl';
+		} elsif ($word eq '/journal/') {
+			$file = '/journal.pl';
+			my @args = ($query);
+			push(@args, 'op=authorview');
+			$query = join('&', @args);
+		} else {
+			return NOT_FOUND;
+		}
+		$r->uri($file);
+		$r->args($query);
+		$r->filename($constants->{basedir} . $file);
+	}
+
 	# for self-references (/~/ and /my/)
 	if (($saveuri =~ m[^/(?:%7[eE]|~)] && $uri =~ m[^/~ (?: /(.*) | /? ) $]x)
 		# /my/ or /my can match, but not /mything

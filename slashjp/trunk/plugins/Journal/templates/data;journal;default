@@ -94,6 +94,10 @@ __template__
 [% CASE 'rss_fv_desc' %]
 	[% nickname %]'s Friends' [% constants.sitename %] Journals
 
+[% CASE 'authorhead' %]
+	[% returnme.data_constant = 1 %]
+	[% constants.sitename %] Authors' Journal
+
 [% END %]
 
 __seclev__
