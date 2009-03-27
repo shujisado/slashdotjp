@@ -32,6 +32,7 @@ use Date::Format qw(time2str);
 use Date::Language;
 use Date::Parse qw(str2time);
 use Digest::MD5 qw(md5_hex md5_base64);
+use Encode qw(encode_utf8);
 use Email::Valid;
 use HTML::Entities qw(:DEFAULT %char2entity %entity2char);
 use HTML::FormatText;
@@ -46,7 +47,6 @@ use Slash::Utility::Environment;
 use Slash::Apache::User::PasswordSalt;
 use URI;
 use XML::Parser;
-use Encode;
 
 use base 'Exporter';
 
