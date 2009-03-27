@@ -761,7 +761,9 @@ sub userdir_handler {
 					$r->filename($constants->{basedir} . '/users.pl');
 
 				} elsif ($op eq 'amigos') {
-					$r->args("op=friendview");
+					my $args = 'op=friendview';
+					$args .= '&' . $query if ($query);
+					$r->args($args);
 					$r->uri('/journal.pl');
 					$r->filename($constants->{basedir} . '/journal.pl');
 
