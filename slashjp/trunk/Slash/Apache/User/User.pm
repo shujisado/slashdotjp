@@ -590,7 +590,7 @@ sub userdir_handler {
 		return OK;
 	}
 
-	if ($uri =~ m[^/help (?: /([^?]*) | /? ) $]x) {
+	if ($uri =~ m!^/help (?: /([^?]*) | /? ) $!x) {
 		$r->args("op=displayhelp");
 		$r->uri('/help.pl');
 		$r->filename($constants->{basedir} . '/help.pl');
@@ -661,9 +661,9 @@ sub userdir_handler {
 	}
 
 	# for self-references (/~/ and /my/)
-	if (($saveuri =~ m[^/(?:%7[eE]|~)] && $uri =~ m[^/~ (?: /(.*) | /? ) $]x)
+	if (($saveuri =~ m!^/(?:%7[eE]|~)! && $uri =~ m!^/~ (?: /(.*) | /? ) $!x)
 		# /my/ or /my can match, but not /mything
-		|| $uri =~ m[^/my (?: /(.*) | /? ) $]x
+		|| $uri =~ m!^/my (?: /(.*) | /? ) $!x
 	) {
 		my($string, $query) = ($1, '');
 		if ($string =~ s/\?(.+)$//) {
@@ -804,7 +804,7 @@ sub userdir_handler {
 
 		return OK;
 
-	} elsif ($uri =~ m[^/bookmarks (?: /(.*) | /? ) $]x) {
+	} elsif ($uri =~ m!^/bookmarks (?: /(.*) | /? ) $!x) {
 		$r->args('op=showbookmarks');
 		$r->uri('/bookmark.pl');
 		$r->filename($constants->{basedir} . '/bookmark.pl');
@@ -815,7 +815,7 @@ sub userdir_handler {
 	# returning it, we have to re-encode it with fixparam().  that
 	# will change if somehow Apache/mod_perl no longer decodes before
 	# returning the data. -- pudge
-	if (($saveuri =~ m[^/(?:%7[eE]|~)(.+)]) || ($saveuri =~ m[^/(?:%5[eE]|\^)(.+)])) {
+	if (($saveuri =~ m!^/(?:%7[eE]|~)(.+)!) || ($saveuri =~ m!^/(?:%5[eE]|\^)(.+)!)) {
 		my($string, $query) = ($1, '');
 		if ($string =~ s/\?(.+)$//) {
 			$query = $1;
