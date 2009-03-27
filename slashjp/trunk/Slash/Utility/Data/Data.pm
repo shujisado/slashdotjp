@@ -32,7 +32,7 @@ use Date::Format qw(time2str);
 use Date::Language;
 use Date::Parse qw(str2time);
 use Digest::MD5 qw(md5_hex md5_base64);
-use Encode qw(encode_utf8);
+use Encode qw(encode_utf8 decode_utf8 is_utf8);
 use Email::Valid;
 use HTML::Entities qw(:DEFAULT %char2entity %entity2char);
 use HTML::FormatText;
@@ -2259,7 +2259,7 @@ The escaped data.
 sub fixparam {
 	my($url) = @_;
 	no utf8;
-	Encode::is_utf8($url) and $url = Encode::encode_utf8($url);
+	$url = encode_utf8($url) if (is_utf8($url));
 	$url =~ s/([^$URI::unreserved ])/$URI::Escape::escapes{$1}/og;
 	$url =~ s/ /%20/g;
 	return $url;
@@ -2303,7 +2303,7 @@ $allowed .= '#';
 sub fixurl {
 	my($url) = @_;
 	no utf8;
-	Encode::is_utf8($url) and $url = Encode::encode_utf8($url);
+	$url = encode_utf8($url) if (is_utf8($url));
 	$url =~ s/([^$allowed])/$URI::Escape::escapes{$1}/og;
 	$url =~ s/%(?![a-fA-F0-9]{2})/%25/g;
 	return $url;
@@ -2505,12 +2505,12 @@ Chomped string.
 sub chopEntity {
 	my($text, $length, $end) = @_;
 	my $constants = getCurrentStatic();
-	Encode::is_utf8($text) or $text = Encode::decode_utf8($text);
+	$text = decode_utf8($text) unless (is_utf8($text));
 	$end and $text = join('', reverse(split(//, $text)));
 	if ($constants->{tweak_japanese}) {
 		require Jcode;
-		$text = [Jcode->new(Encode::encode_utf8($text), 'utf8')->jfold($length, '')]->[0];
-		$text = Encode::decode('utf-8', $text);
+		$text = [Jcode->new(encode_utf8($text), 'utf8')->jfold($length, '')]->[0];
+		$text = decode_utf8($text);
 	} else {
 		$text = substr($text, 0, $length);
 	}
@@ -2558,7 +2558,7 @@ sub noFollow {
 
 sub html2text {
 	my($html, $col) = @_;
-	my($text, $tree, $form, $refs, $was_utf8);
+	my($text, $tree, $form, $refs);
 
 	my $user      = getCurrentUser();
 	my $gSkin     = getCurrentSkin();
@@ -2569,7 +2569,7 @@ sub html2text {
 	$form = new HTML::FormatText (leftmargin => 0, rightmargin => $col-2);
 	$refs = new HTML::FormatText::AddRefs;
 
-	$was_utf8 = Encode::is_utf8( $html );
+	my $was_utf8 = is_utf8($html);
 	$tree->parse($html);
 	$tree->eof;
 	$refs->parse_refs($tree);
@@ -2577,7 +2577,7 @@ sub html2text {
 	1 while chomp($text);
 
 	# restore UTF-8 Flag lost by HTML::TreeBuilder
-	$text = Encode::decode_utf8( $text );
+	$text = decode_utf8($text) if ($was_utf8);
 
 	return $text, $refs->get_refs($gSkin->{absolutedir});
 }
