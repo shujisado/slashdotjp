@@ -9,7 +9,7 @@ use Config '%Config';
 use Slash::Utility;
 use DBIx::Password;
 use Time::HiRes;
-use Encode;
+use Encode qw(decode_utf8 is_utf8);
 
 our $VERSION = $Slash::Constants::VERSION;
 
@@ -1090,7 +1090,7 @@ sub sqlDo {
 	my($self, $sql) = @_;
 	$self->_refCheck($sql);
 	$self->sqlConnect() or return undef;
-	Encode::is_utf8($sql) or $sql = decode_utf8($sql);
+	is_utf8($sql) or $sql = decode_utf8($sql);
 	my $rows = $self->{_dbh}->do($sql);
 	unless ($rows) {
 		unless ($sql =~ /^INSERT\s+IGNORE\b/i) {
