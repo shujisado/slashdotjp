@@ -289,7 +289,7 @@ sub relatedLinks {
 	my($self, $story_content, $tids, $nick, $uid) = @_;
 	my $relatedtext = '';
 	$relatedtext .= $self->getRelated($story_content, $tids)
-		if ($constants->{relatedtext_only_otherlinks});
+		unless (getCurrentStatic('relatedtext_only_otherlinks'));
 	$relatedtext .= $self->otherLinks($nick, $tids, $uid) if $nick;
 
 	# If getRelated and otherLinks seem to be putting <li>
