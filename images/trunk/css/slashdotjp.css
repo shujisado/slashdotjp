@@ -191,6 +191,15 @@ div#message div.content div.microad {
 	font-weight: bold;
 }
 
+/* article suffix on article.pl */
+#article #articles-suffix {
+	clear: right;
+}
+
+#article #articles-suffix #ads-article td {
+	vertical-align: top;
+}
+
 div.microad_comment {
 	overflow: hidden;
 	background: #FFF;
