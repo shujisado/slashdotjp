@@ -17,8 +17,9 @@ slash (2.5.0.233-8) unstable; urgency=low
   * Smart URL for authors
     - /authors/ => /authors.pl
     - /authors/journal/ => /journal.pl?op=authorsview
+  * Set only otherLinks to relatedtext when "relatedtext_only_otherlinks" is set
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 26 Mar 2009 09:08:27 +0000
+ -- Taku YASUI <tach@osdn.jp>  Tue, 31 Mar 2009 10:28:57 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 
