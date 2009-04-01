@@ -425,21 +425,18 @@ sub rss_story {
 		if $story->{title};
 	if ($story->{sid}) {
 		my $edit = "admin.pl?op=edit&sid=$story->{sid}";
-		$action = "article.pl?sid=$story->{sid}";
-		if (!$constants->{rss_no_tracking_query}) {
-			$action .= "&from=rss";
-		}
+		$action = "article.pl?sid=$story->{sid}&from=rss";
+		$action =~ s/&from=rss$// if ($constants->{rss_no_tracking_query});
 		if ($story->{primaryskid}) {
 			my $dir = url2abs(
 				$reader->getSkin($story->{primaryskid})->{rootdir},
 				$channel->{'link'}
 			);
-			$dir .= "/articles" if ($constants->{rss_use_story_shtml} && $story->{primaryskid} == $constants->{mainpage_skid});
-			$encoded_item->{'link'} = $constants->{rss_use_story_shtml} ? _tag_link("$dir/$story->{sid}.shtml") : _tag_link("$dir/article.pl?sid=$story->{sid}");
+			$encoded_item->{'link'} = _tag_link("$dir/article.pl?sid=$story->{sid}");
 			$edit = "$dir/$edit";
 			$action = "$dir/$action";
 		} else {
-			$encoded_item->{'link'} = $constants->{rss_use_story_shtml} ? _tag_link("$channel->{'link'}$story->{sid}.shtml") : _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
+			$encoded_item->{'link'} = _tag_link("$channel->{'link'}article.pl?sid=$story->{sid}");
 			$edit = "$channel->{'link'}$edit";
 			$action = "$channel->{'link'}$action";
 		}
