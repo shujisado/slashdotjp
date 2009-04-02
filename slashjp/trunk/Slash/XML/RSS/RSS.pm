@@ -160,9 +160,6 @@ sub create {
 	$self->{rdfitemdesc_html} = defined $param->{rdfitemdesc_html}
 		? $param->{rdfitemdesc_html}
 		: $constants->{rdfitemdesc_html};
-	$self->{rdfitem_content} = defined $param->{rdfitem_content}
-		? $param->{rdfitem_content}
-		: $constants->{rdfitem_content};
 	$self->{rdfitem_content_encoded} = defined $param->{rdfitem_content_encoded}
 		? $param->{rdfitem_content_encoded}
 		: $constants->{rdfitem_content_encoded};
@@ -339,7 +336,7 @@ sub create {
 						my $desc = $self->rss_item_description($item->{$key});
 						$encoded_item->{$key} = $desc if $desc;
 					}
-				} elsif ($key eq 'content:encoded' && $self->{rdfitem_content} && $self->{rdfitem_content_encoded}) {
+				} elsif ($self->{rdfitem_content_encoded} && $key eq 'content:encoded') {
 					if ($version == 1) {
 						my $rdfitemdesc_html_bak = $self->{rdfitemdesc_html};
 						$self->{rdfitemdesc_html} = 1;
@@ -457,6 +454,7 @@ sub rss_story {
 	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
 		if ($desc) {
+			$encoded_item->{description} = $desc;
 
 			my $extra = '';
 			# disabled on slashdot.jp (2008-09-09, tach)
