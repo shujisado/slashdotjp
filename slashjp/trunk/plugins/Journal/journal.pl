@@ -262,21 +262,21 @@ sub displayRSS {
 		my $link = "$gSkin->{absolutedir}/~" . fixparam($nickname) . "/journal/$article->[3]";
 		my $journalurl = "$gSkin->{absolutedir}/~" . fixparam($nickname) . "/journal/";
 		my $text = strip_mode($article->[1], $article->[4]);
-		$text .= getData('rss_readmore', {
-			link		=> $link,
-			journalurl	=> $journalurl,
-			nickname	=> $nickname,
+		my $suffix = getData('rss_item_suffix', {
+			item_url         => $link,
+			user_journal_url => $journalurl,
+			nickname         => $nickname,
+			tid              => $article->[5],
 		});
+		$suffix =~ s/\s+/ /g;
 
 		push @items, {
 			story		=> {
-				'time'		=> $article->[0],
-				uid		=> $juid,
-				tid		=> $article->[5],
+				'time'  => $article->[0],
 			},
 			title		=> $article->[2],
-			description	=> strip_notags($article->[1]),
-			'content:encoded' =>  balanceTags($text, { deep_nesting => 1 }),
+			description	=> strip_notags($article->[1]) . $suffix,
+			'content:encoded' =>  balanceTags($text . $suffix, { deep_nesting => 1 }),
 			'link'		=> root2abs() . '/~' . fixparam($nickname) . "/journal/$article->[3]",
 			relation		=> $journalurl,
 		};
@@ -352,25 +352,35 @@ sub displayTopRSS {
 		my $link = "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/$entry->[4]";
 		my $journalurl = "$gSkin->{absolutedir}/~" . fixparam($entry->[1]) . "/journal/";
 		my $text = strip_mode($entry->[6], $entry->[7]);
-		$text .= getData('rss_readmore', {
-			link		=> $link,
-			journalurl	=> $journalurl,
-			nickname	=> $entry->[1],
+		my $suffix = getData('rss_item_suffix', {
+			item_url         => $link,
+			user_journal_url => $journalurl,
+			nickname         => $entry->[1],
+			tid              => $entry->[8],
 		});
+		$suffix =~ s/\s+/ /g;
 
 		push @items, {
 			story	=> {
 				'time'	=> $entry->[3],
-				uid	=> $entry->[2],
-				tid	=> $entry->[8],
 			},
 			title			=> $title,
 			link			=> $link,
-			'content:encoded'	=> balanceTags($text, { deep_nesting => 1 }),
-			description		=> strip_notags($entry->[6]),
+			'content:encoded'	=> balanceTags($text . $suffix, { deep_nesting => 1 }),
+			description		=> strip_notags($entry->[6]) . $suffix,
 			relation		=> $journalurl,
 		};
 	}
+
+	my $rss_html = $constants->{journal_rdfitemdesc_html} && (
+		($user->{is_admin} || isAdmin($user))
+			||
+		($constants->{journal_rdfitemdesc_html} == 1)
+			||
+		($constants->{journal_rdfitemdesc_html} > 1 && ($user->{is_subscriber}))
+			||
+		($constants->{journal_rdfitemdesc_html} > 2 && !$user->{is_anon})
+	);
 
 	xmlDisplay($form->{content_type} => {
 		channel => {
@@ -381,6 +391,7 @@ sub displayTopRSS {
 		image	=> 1,
 		items	=> \@items,
 		rdfitemdesc		=> $constants->{journal_rdfitemdesc},
+		rdfitemdesc_html	=> $rss_html,
 	}, { mcdkey => $mcdkey });
 }
 
