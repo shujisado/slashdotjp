@@ -576,7 +576,7 @@ sub listpollsRSS {
 	foreach my $entry (@$questions) {
 		my $poll = $polls->getPoll($entry->{qid});
 		my $pollbooth = getData('rss_pollbooth', { poll	=> $poll });
-		my $readmore = getData('rss_readmore', { poll => $poll });
+		my $suffix = getData('rss_item_suffix', { poll => $poll });
 		push(@$items, {
 			story	=> {
 				uid	=> $entry->{uid},
@@ -585,8 +585,8 @@ sub listpollsRSS {
 			'link'			=> "$constants->{absolutedir}/polls/$entry->{qid}",
 			title			=> $entry->{question},
 			'time'			=> $entry->{date},
-			description		=> $entry->{question} . $readmore,
-			'content:encoded'	=> $pollbooth . $readmore,
+			description		=> $entry->{question} . $suffix,
+			'content:encoded'	=> $pollbooth . $suffix,
 		});
 	}
 
