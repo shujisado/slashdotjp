@@ -18,8 +18,10 @@ slash (2.5.0.233-8) unstable; urgency=low
     - /authors/ => /authors.pl
     - /authors/journal/ => /journal.pl?op=authorsview
   * Set only otherLinks to relatedtext when "relatedtext_only_otherlinks" is set
+  * Remove needless template
+    - rss_item_description;misc;default
 
- -- Taku YASUI <tach@osdn.jp>  Tue, 31 Mar 2009 10:28:57 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu,  2 Apr 2009 05:24:42 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 
