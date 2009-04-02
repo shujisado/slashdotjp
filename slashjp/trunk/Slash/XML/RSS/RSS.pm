@@ -27,7 +27,6 @@ LONG DESCRIPTION.
 use strict;
 use Slash;
 use Slash::Utility;
-use Slash::Display;
 use XML::RSS;
 use base 'Slash::XML';
 
@@ -346,7 +345,6 @@ sub create {
 						$self->{rdfitemdesc_html} = 1;
 						my $encoded = $self->rss_item_description($item->{$key});
 						# TODO: $self->encode() do NOT work in Unicode-mode.
-						# TODO: If it works properly, we don't need CDATA quote.
 						$encoded_item->{content}->{encoded} = "<![CDATA[${encoded}]]>";
 						$self->{rdfitemdesc_html} = $rdfitemdesc_html_bak;
 					}
@@ -459,10 +457,6 @@ sub rss_story {
 	if ($version >= 1.0) {
 		my $desc = $self->rss_item_description($item->{description} || $story->{introtext});
 		if ($desc) {
-			$encoded_item->{description} = $desc . getData('rss_story_readmore', {
-				'link'		=> $encoded_item->{link},
-				discussion	=> $story->{discussion},
-			}, 'index');
 
 			my $extra = '';
 			# disabled on slashdot.jp (2008-09-09, tach)
@@ -476,11 +470,6 @@ sub rss_story {
 			$extra .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
 			$encoded_item->{description} .= $self->encode($extra) if $extra;
 
-			# add content:encoded for slashdot.jp
-			$item->{'content:encoded'} ||= ($item->{description} || $story->{introtext}) . getData('rss_story_readmore', {
-				'link'		=> $encoded_item->{link},
-				discussion	=> $story->{discussion},
-			}, 'index');
 		}
 	}
 
