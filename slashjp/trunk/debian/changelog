@@ -22,8 +22,10 @@ slash (2.5.0.233-8) unstable; urgency=low
     - rss_item_description;misc;default
   * Change structure of Slash/XML/RSS.pm about inserting dsecription
     - Add "content:encoded" only when type="rss"
+  * Add logcheck ignore rules
+    - prevent to send all runtask messages
 
- -- Taku YASUI <tach@osdn.jp>  Thu,  2 Apr 2009 12:11:44 +0000
+ -- Taku YASUI <tach@osdn.jp>  Thu, 02 Apr 2009 22:24:23 +0900
 
 slash (2.5.0.233-7) unstable; urgency=low
 
