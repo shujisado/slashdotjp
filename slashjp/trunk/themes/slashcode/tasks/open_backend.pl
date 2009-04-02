@@ -110,6 +110,15 @@ sub _do_rss {
 		};
 	}
 
+	# for slashdot.jp (tach, 2009-04-02)
+	if ($type eq 'rss') {
+		@items = ();
+		foreach my $story (@$stories) {
+			my $encoded = $story->{introtext} . getData('rss_item_suffix', { story => $story }, 'article');
+			push @items, { story => $story, 'content:encoded' => $encoded };
+		}
+	}
+
 	my $rss = xmlDisplay($type, {
 		channel		=> {
 			title		=> $title,
