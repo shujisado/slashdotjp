@@ -463,6 +463,9 @@ sub rss_story {
 				if $constants->{rdfbadge};
 			$extra .= "<p><a href=\"$action\">Read more of this story</a> at $constants->{sitename}.</p>"
 				if $action && !$constants->{tweak_japanese};
+			$extra .= getData('rss_item_suffix', { story => $story }, 'article')
+				if $constants->{tweak_japanese};
+			$extra =~ s/\s+/ /g;
 			# add poll if any
 			$extra .= pollbooth($story->{qid},1, 0, 1) if $story->{qid};
 			$encoded_item->{description} .= $self->encode($extra) if $extra;
