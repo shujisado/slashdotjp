@@ -272,7 +272,9 @@ sub displayRSS {
 
 		push @items, {
 			story		=> {
-				'time'  => $article->[0],
+				'time'		=> $article->[0],
+				uid		=> $juid,
+				tid		=> $article->[5],
 			},
 			title		=> $article->[2],
 			description	=> strip_notags($article->[1]) . $suffix,
@@ -363,6 +365,8 @@ sub displayTopRSS {
 		push @items, {
 			story	=> {
 				'time'	=> $entry->[3],
+				uid	=> $entry->[2],
+				tid	=> $entry->[8],
 			},
 			title			=> $title,
 			link			=> $link,
