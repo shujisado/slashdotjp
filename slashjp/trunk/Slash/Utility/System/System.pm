@@ -145,9 +145,11 @@ sub sendEmail {
 		$sender =~ s/###ADDR###/$bounce_addr/;
 	}
 
+	my $mailfrom = ($constants->{mailfrom_comment} || $constants->{sitename}) . " <$constants->{mailfrom}>";
+
 	my %data = (
 		Sender		=> $sender,
-		From		=> $constants->{mailfrom},
+		From		=> $mailfrom,
 		Smtp		=> $constants->{smtp_server},
 		Subject		=> $subject,
 		Message		=> $content,
@@ -223,8 +225,10 @@ sub bulkEmail {
 	$content = encode( $b_code, $content, Encode::FB_PERLQQ );
 	$subject = encode( $h_code, $subject, Encode::FB_PERLQQ );
 
+	my $mailfrom = ($constants->{mailfrom_comment} || $constants->{sitename}) . " <$constants->{mailfrom}>";
+
 	my $bulk = Slash::Custom::Bulkmail->new(
-		From    => $constants->{mailfrom},
+		From    => $mailfrom,
 		Smtp	=> $constants->{smtp_server},
 		Subject => $subject,
 		Message => $content,

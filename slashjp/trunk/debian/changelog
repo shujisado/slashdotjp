@@ -29,8 +29,10 @@ slash (2.5.0.233-8) unstable; urgency=low
   * Enable to select adding "rel=nofollow" to anchor or not using regex by
     constants "nofollow_exclude_regex"
   * Add "rel=nofollow" to authors journals and friends journals page
+  * Add comment to messaging mail "From:" line using constant
+    "mailfrom_comment" or "sitename"
 
- -- Taku YASUI <tach@osdn.jp>  Mon,  6 Apr 2009 09:02:43 +0000
+ -- Taku YASUI <tach@osdn.jp>  Mon,  6 Apr 2009 12:20:47 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 
