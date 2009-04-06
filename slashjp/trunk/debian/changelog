@@ -24,8 +24,10 @@ slash (2.5.0.233-8) unstable; urgency=low
     - Add "content:encoded" only when type="rss"
   * Add logcheck ignore rules
     - prevent to send all runtask messages
+  * Force to add "rel=nofollow" to anchor on displayJournal() when constants
+    "journal_force_nofollow" has set.
 
- -- Taku YASUI <tach@osdn.jp>  Thu, 02 Apr 2009 22:24:23 +0900
+ -- Taku YASUI <tach@osdn.jp>  Mon,  6 Apr 2009 04:57:59 +0000
 
 slash (2.5.0.233-7) unstable; urgency=low
 
