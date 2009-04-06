@@ -453,9 +453,13 @@ sub displayArticleFriends {
 			? $journal_reader->getDiscussion($article->[6], 'commentcount')
 			: 0;
 
+		my $stripped_article = balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 });
+		$stripped_article = noFollow($stripped_article)
+			if ($constants->{journal_force_nofollow});
+
 		# should get comment count, too -- pudge
 		push @collection, {
-			article		=> balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 }),
+			article		=> $stripped_article,
 			date		=> $article->[0],
 			description	=> strip_notags($article->[2]),
 			topic		=> $topics->{$article->[5]},
@@ -526,10 +530,12 @@ sub displayArticleAuthors {
 		my $commentcount = $article->[6]
 			? $journal_reader->getDiscussion($article->[6], 'commentcount')
 			: 0;
+		my $stripped_article = balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 });
+		$stripped_article = noFollow($stripped_article)
+			if ($constants->{journal_force_nofollow});
 
-		# should get comment count, too -- pudge
 		push @collection, {
-			article		=> balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 }),
+			article		=> $stripped_article,
 			date		=> $article->[0],
 			description	=> strip_notags($article->[2]),
 			topic		=> $topics->{$article->[5]},
