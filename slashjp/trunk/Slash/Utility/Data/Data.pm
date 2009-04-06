@@ -2547,10 +2547,20 @@ print STDERR "url2html s/// url='$url' extra='$extra'\n" if !defined($url) || !d
 
 sub noFollow {
 	my($html) = @_;
-	$html =~ s/(<a href=.+?)>/$1 rel="nofollow">/gis;
+	$html =~ s/(<a\s+(?:[^>]*?\s)?href=[^>]+?)>/&_noFollowStr($1)/geis;
 	return $html;
 }
 
+sub _noFollowStr {
+	my($str) = @_;
+	next unless ($str =~ /href="?(.*?)(?:"|\s|$)/);
+	my $url = $1;
+	my $regex = getCurrentStatic('nofollow_exclude_regex');
+	if (!$regex || $url !~ $regex) {
+		$str .= ' rel="nofollow"';
+	}
+	return $str . '>';
+}
 
 
 # DOCUMENT after we remove some of this in favor of
