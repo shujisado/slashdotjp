@@ -666,7 +666,7 @@ sub displayArticle {
 
 		my $stripped_article = balanceTags(strip_mode($article->[1], $article->[4]), { deep_nesting => 1 });
 		$stripped_article = noFollow($stripped_article)
-			unless $karma > $constants->{goodkarma};
+			unless $karma > $constants->{goodkarma} && !$constants->{journal_force_nofollow};
 
 		# should get comment count, too -- pudge
 		push @{$collection->{article}}, {
