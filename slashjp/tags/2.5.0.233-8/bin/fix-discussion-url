@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+#
+# (slash-)fix-discussion-url - fix discussions.url field for slash
+#
+
+use Slash;
+use Slash::Utility;
+use Slash::DB;
+
+# debug
+use Data::Dumper;
+
+my %opts;
+$opts{'u'} ||= 'slash';
+
+createEnvironment($opts{'u'});
+
+my $slashdb = getCurrentDB();
+my $constants = getCurrentStatic();
+my $gSkin = $slashdb->getSkin($constants->{mainpage_skid});
+
+my $where = '';
+my $other = '';
+
+$discussions = $slashdb->sqlSelectAllHashrefArray(
+	"id,discussion_kinds.name AS kind,url",
+	"discussions JOIN discussion_kinds USING (dkid)",
+	$where,
+	$other);
+
+foreach my $discussion (@$discussions) {
+	my $url;
+	if ($discussion->{kind} eq "journal") {
+		next unless ($discussion->{url} =~ m!/journal\.pl\?op=display&id=(\d+?)&uid=(\d+?)!);
+		my ($id, $uid) = ($1, $2);
+		my $nickname = fixparam($slashdb->getUser($uid, 'nickname'));
+		$url = "$gSkin->{rootdir}/~$nickname/journal/$id";
+	} elsif ($discussion->{kind} eq "poll") {
+		if (my $qid = $slashdb->sqlSelect('qid', 'pollquestions', "discussion=$discussion->{id}")) {
+			$url = "$gSkin->{rootdir}/polls/$qid?aid=-1";
+		}
+	} else {
+		next;
+	}
+
+	if ($url && $url ne $discussion->{url}) {
+		print STDERR "BEFORE: $discussion->{url}\n";
+		print STDERR "AFTER : $url\n\n";
+		$slashdb->sqlUpdate('discussions', { url => $url }, "id=$discussion->{id}");
+	}
+}

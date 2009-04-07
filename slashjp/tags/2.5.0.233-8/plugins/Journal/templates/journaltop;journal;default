@@ -1,0 +1,50 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+journaltop
+__template__
+[% IF type == 'top';
+	title = "Top Posters By Number of Entries";
+ELSIF type == 'recent';
+	title = "Top Recent Posters By Date";
+ELSIF type == 'friend';
+	title = "Top Posters By Friends";
+END %]
+
+[% IF type == "friend";
+	col2 = "Popularity";
+ELSE;
+	col2 = "Entries";
+END %]
+
+<fieldset>
+	<legend>[% title %]</legend>
+	<table width="90%" border="0" cellpadding="2" cellspacing="0">
+		<tr>
+			<td valign="top" width="40%"><b>User</b></td>
+			<td valign="top" width="20%"><b>[% col2 %]</b></td>
+			<td valign="top" width="40%"><b>Last Updated</b></td>
+		</tr>
+
+	[% FOREACH journal = journals %]
+		<tr>
+			<td valign="top"><a href="[% constants.real_rootdir %]/~[% journal.1 | strip_paramattr %]/journal/">[% journal.1 | strip_literal %]</a></td>
+			<td valign="top">[% journal.0 %]</td>
+			<td valign="top"><em>[% Slash.timeCalc(journal.3) %]</em></td>
+		</tr>
+	[% END %]
+	</table>
+</fieldset>
+
+__seclev__
+100
+__version__
+$Id$

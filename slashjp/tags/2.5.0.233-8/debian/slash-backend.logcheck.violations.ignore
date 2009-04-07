@@ -1,0 +1,7 @@
+:[0-9]{2} [0-9]{4} [-a-z0-9A-Z_]+\.pl forked;
+:[0-9]{2} [0-9]{4} runtask
+Subroutine [-a-zA-Z0-9_]+ redefined at
+\[?[-a-z0-9A-Z_]+\.pl\]? (begin|end|reaped) \([0-9.]+s?\)
+processed [^;]+; [0-9]+ successful \([-a-z0-9A-Z_. ]+\); 0 failed
+\[firehose_reject_old\.pl\] rejected [0-9]+ items
+\[freshenup\.pl\] updated [0-9]+
